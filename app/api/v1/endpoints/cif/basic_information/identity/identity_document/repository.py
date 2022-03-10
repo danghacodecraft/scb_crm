@@ -145,7 +145,7 @@ async def repos_get_detail_identity(cif_id: str, session: Session) -> ReposRetur
         .outerjoin(CustomerAddress, Customer.id == CustomerAddress.customer_id)
         .outerjoin(CustomerIdentityImage, CustomerIdentity.id == CustomerIdentityImage.identity_id)
         .outerjoin(CustomerCompareImage, CustomerIdentityImage.id == CustomerCompareImage.identity_image_id)
-        .join(CustomerCompareImage, CustomerIdentityImage.id == CustomerCompareImage.identity_image_id)
+        .outerjoin(CustomerCompareImage, CustomerIdentityImage.id == CustomerCompareImage.identity_image_id)
         .outerjoin(CustomerIdentityType, CustomerIdentity.identity_type_id == CustomerIdentityType.id)
 
         .outerjoin(HandSide, CustomerIdentityImage.hand_side_id == HandSide.id)
