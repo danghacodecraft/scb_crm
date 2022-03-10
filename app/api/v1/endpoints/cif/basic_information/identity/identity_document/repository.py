@@ -144,7 +144,8 @@ async def repos_get_detail_identity(cif_id: str, session: Session) -> ReposRetur
         .join(CustomerIndividualInfo, Customer.id == CustomerIndividualInfo.customer_id)
         .outerjoin(CustomerAddress, Customer.id == CustomerAddress.customer_id)
         .outerjoin(CustomerIdentityImage, CustomerIdentity.id == CustomerIdentityImage.identity_id)
-        .join(CustomerCompareImage, CustomerIdentityImage.id == CustomerCompareImage.identity_image_id)
+        .outerjoin(CustomerCompareImage, CustomerIdentityImage.id == CustomerCompareImage.identity_image_id)
+        .outerjoin(CustomerCompareImage, CustomerIdentityImage.id == CustomerCompareImage.identity_image_id)
         .outerjoin(CustomerIdentityType, CustomerIdentity.identity_type_id == CustomerIdentityType.id)
 
         .outerjoin(HandSide, CustomerIdentityImage.hand_side_id == HandSide.id)
@@ -223,25 +224,28 @@ async def repos_get_detail_identity(cif_id: str, session: Session) -> ReposRetur
 
         resident_address = None  # noqa
         for row in identities:
-            if row.CustomerAddress.address_type_id == RESIDENT_ADDRESS_CODE:
-                resident_address = {
-                    "province": dropdown(row.AddressProvince),
-                    "district": dropdown(row.AddressDistrict),
-                    "ward": dropdown(row.AddressWard),
-                    "number_and_street": row.CustomerAddress.address
-                }
-                break
+            if row.CustomerIdentity.identity_type_id != "HO_CHIEU":
+
+                if row.CustomerAddress.address_type_id == RESIDENT_ADDRESS_CODE:
+                    resident_address = {
+                        "province": dropdown(row.AddressProvince),
+                        "district": dropdown(row.AddressDistrict),
+                        "ward": dropdown(row.AddressWard),
+                        "number_and_street": row.CustomerAddress.address
+                    }
+                    break
 
         contact_address = None  # noqa
         for row in identities:
-            if row.CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE:
-                contact_address = {
-                    "province": dropdown(row.AddressProvince),
-                    "district": dropdown(row.AddressDistrict),
-                    "ward": dropdown(row.AddressWard),
-                    "number_and_street": row.CustomerAddress.address
-                }
-                break
+            if row.CustomerIdentity.identity_type_id != "HO_CHIEU":
+                if row.CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE:
+                    contact_address = {
+                        "province": dropdown(row.AddressProvince),
+                        "district": dropdown(row.AddressDistrict),
+                        "ward": dropdown(row.AddressWard),
+                        "number_and_street": row.CustomerAddress.address
+                    }
+                    break
 
         response_data['ocr_result'].update(**{
             'address_information': {
