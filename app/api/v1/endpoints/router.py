@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from app.api.v1.endpoints.casa import router as routers_casa
 from app.api.v1.endpoints.cif import router as routers_cif
 from app.api.v1.endpoints.config import router as routers_config
 from app.api.v1.endpoints.customer_service import view as view_customer_service
@@ -17,3 +18,5 @@ router.include_router(router=view_customer_service.router, prefix="/post-check",
 router.include_router(router=routers_config.router, prefix="/config", tags=["Configs"])
 
 router.include_router(router=routers_cif.router_module, prefix="/cif")
+
+router.include_router(router=routers_casa.router_module, prefix="/casa")
