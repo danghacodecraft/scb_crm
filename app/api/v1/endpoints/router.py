@@ -19,4 +19,4 @@ router.include_router(router=routers_config.router, prefix="/config", tags=["Con
 
 router.include_router(router=routers_cif.router_module, prefix="/cif")
 
-router.include_router(router=routers_casa.router_module, prefix="/casa")
+router.include_router(router=routers_casa.router_module, prefix="/casa", tags=["[Casa] Information"])

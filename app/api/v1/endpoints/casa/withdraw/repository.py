@@ -2,13 +2,13 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn
-from app.api.v1.endpoints.casa.schema import WithdrawResponse
+from app.api.v1.endpoints.casa.withdraw.schema import WithdrawResponse
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
 )
 
 
-async def repos_casa_info(
+async def repos_withdraw_info(
         cif_id: str,
         session: Session
 ) -> ReposReturn:
@@ -19,7 +19,7 @@ async def repos_casa_info(
             "name": "CRM2115200100001"
         },
         "transaction_information": {
-            "total_account": 5,
+            "total_account": "5",
             "source_accounts": [
                 {
                     "user_id": "1",
@@ -30,7 +30,7 @@ async def repos_casa_info(
                         "name": "S-FREE"
                     },
                     "payment_account": "555789490189018",
-                    "available_balances": 123456789000,
+                    "available_balances": "123456789000",
                     "currency": {
                         "id": "1",
                         "code": "VND",
@@ -53,13 +53,13 @@ async def repos_casa_info(
                 },
                 "date_of_issue": "2021-02-18",
                 "exchange_VND_flag": True,
-                "exchange_rate": 23000,
+                "exchange_rate": "23000",
                 "exchanged_money_VND": {
                     "id": "1",
                     "code": "KHONG",
                     "name": "Không"
                 },
-                "reciprocal_rate_headquarters": 23000,
+                "reciprocal_rate_headquarters": "23000",
                 "withdrawal_content": "Rút tiền mặt",
                 "journal_entry_number": "Số bút toán"
             },
@@ -74,10 +74,10 @@ async def repos_casa_info(
                     "code": "BENCHUYEN",
                     "name": "Bên chuyển"
                 },
-                "fee_amount": 100000,
-                "tax_VAT": 100000,
-                "total_fee_amount": 110000,
-                "actual_amount_transferred": 101100000,
+                "fee_amount": "100000",
+                "tax_VAT": "100000",
+                "total_fee_amount": "110000",
+                "actual_amount_transferred": "101100000",
                 "note": "Chuyển tiền bên chuyển chịu phí"
             },
         },
@@ -100,7 +100,7 @@ async def repos_casa_info(
     return ReposReturn(data=data_response)
 
 
-async def repos_save_casa_info(
+async def repos_save_withdraw_info(
         cif_id: str,
         request: WithdrawResponse,
         session: Session
