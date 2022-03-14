@@ -2,7 +2,7 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.casa.withdraw.repository import (
     repos_save_withdraw_info, repos_withdraw_info
 )
-from app.api.v1.endpoints.casa.withdraw.schema import WithdrawResponse
+from app.api.v1.endpoints.casa.withdraw.schema import WithdrawRequest
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 
 
@@ -20,7 +20,7 @@ class CtrWithdraw(BaseController):
 
         return self.response(data=casa_info)
 
-    async def ctr_save_withdraw_info(self, cif_id: str, request: WithdrawResponse):
+    async def ctr_save_withdraw_info(self, cif_id: str, request: WithdrawRequest):
         casa_info = self.call_repos(
             await repos_save_withdraw_info(
                 cif_id=cif_id,
