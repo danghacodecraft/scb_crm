@@ -1,7 +1,7 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.debit_card.repository import (
-    get_data_debit_card_by_cif_num, repos_add_debit_card, repos_debit_card,
-    repos_get_list_debit_card
+    get_data_customer_id, get_data_debit_card_by_cif_num, repos_add_debit_card,
+    repos_debit_card, repos_get_list_debit_card
 )
 from app.api.v1.endpoints.cif.debit_card.schema import DebitCardRequest
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
@@ -201,7 +201,7 @@ class CtrDebitCard(BaseController):
         if debt_card_req.information_sub_debit_card is not None:
             for index, sub_card in enumerate(debt_card_req.information_sub_debit_card.sub_debit_cards):
 
-                """ Check CIF_NUM """  # TODO
+                sub_customer_ids = self.call_repos(await get_data_customer_id(self.oracle_session, sub_card.cif_number))
 
                 """Kiểm tra sub physical_card_type (Tính vật lý) tồn tại"""
                 sub_card_type = []
@@ -309,7 +309,7 @@ class CtrDebitCard(BaseController):
                 # thong tin (the phu)
                 sub_data_debit_card = {
                     "id": generate_uuid(),
-                    "customer_id": cif_id,  # TODO
+                    "customer_id": sub_customer_ids[0],
                     "card_issuance_type_id": sub_card.card_issuance_type.id,
                     "customer_type_id": debt_card_req.issue_debit_card.customer_type.id,
                     "brand_of_card_id": debt_card_req.issue_debit_card.branch_of_card.id,

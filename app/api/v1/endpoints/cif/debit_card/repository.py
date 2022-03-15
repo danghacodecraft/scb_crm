@@ -1,7 +1,7 @@
 import json
 from typing import List
 
-from sqlalchemy import delete, select
+from sqlalchemy import and_, delete, or_, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -28,6 +28,7 @@ from app.utils.functions import dropdown, now
 
 
 async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
+    parent_id = session.execute(select(DebitCard.id).filter(DebitCard.customer_id == cif_id)).scalar()
     list_debit_card_info_engine = session.execute(
         select(
             DebitCard.customer_id,
@@ -80,10 +81,14 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
         ).outerjoin(
             AddressProvince, CardDeliveryAddress.province_id == AddressProvince.id
         ).filter(
-            DebitCard.customer_id == cif_id,
-            DebitCard.active_flag == 1,
-        )
-    ).all()
+            and_(
+                DebitCard.active_flag == 1,
+                or_(
+                    DebitCard.customer_id == cif_id,
+                    DebitCard.parent_card_id == parent_id
+                )
+            )
+        )).all()
 
     if not list_debit_card_info_engine:
         return ReposReturn(is_error=True, msg=ERROR_CIF_ID_NOT_EXIST, loc="cif_id")
@@ -142,9 +147,11 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
                 "note": item.CardDeliveryAddress.card_delivery_address_note
             }
         else:
+            if not item.Customer.cif_number or len(item.Customer.cif_number) != 7:
+                return ReposReturn(is_error=True, msg=ERROR_CIF_ID_NOT_EXIST, loc=item.Customer.cif_number)
             sub_debit_card_data = {
                 "id": item.DebitCard.id,
-                "cif_number": 1234567,  # TODO
+                "cif_number": item.Customer.cif_number,
                 "name_on_card": {
                     "last_name_on_card": item.DebitCard.last_name_on_card,
                     "middle_name_on_card": item.DebitCard.middle_name_on_card,
@@ -270,10 +277,25 @@ async def repos_get_list_debit_card(
 
 
 async def get_data_debit_card_by_cif_num(session: Session, cif_id: str) -> ReposReturn:
+    parent_id = session.execute(select(DebitCard.id).filter(DebitCard.customer_id == cif_id)).scalar()
+
     obj = session.execute(
         select(DebitCard).filter(
-            DebitCard.customer_id == cif_id,
-            DebitCard.active_flag == 1
-        )).scalars().all()
+            and_(
+                DebitCard.active_flag == 1,
+                or_(
+                    DebitCard.customer_id == cif_id,
+                    DebitCard.parent_card_id == parent_id)
+            )
+        )
+    ).scalars().all()
 
     return ReposReturn(data=obj)
+
+
+async def get_data_customer_id(session: Session, cif_id: str) -> ReposReturn:
+    objs = session.execute(select(Customer.id).filter(Customer.cif_number == cif_id)).scalars().all()
+    if not objs:
+        return ReposReturn(is_error=True, msg=ERROR_CIF_ID_NOT_EXIST, loc="information_sub_debit_card -> sub_debit_cards -> cif_number")
+
+    return ReposReturn(data=objs)
