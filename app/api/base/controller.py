@@ -8,12 +8,14 @@ from app.api.base.except_custom import ExceptionHandle
 from app.api.base.repository import ReposReturn
 from app.api.base.schema import Error
 from app.api.base.validator import ValidatorReturn
+from app.api.v1.endpoints.approval.repository import (
+    repos_get_begin_stage, repos_get_next_receiver
+)
 from app.api.v1.endpoints.file.repository import (
     repos_check_is_exist_multi_file, repos_download_multi_file
 )
 from app.api.v1.endpoints.repository import (
-    repos_get_begin_stage, repos_get_model_object_by_id_or_code,
-    repos_get_model_objects_by_ids, repos_get_next_receiver
+    repos_get_model_object_by_id_or_code, repos_get_model_objects_by_ids
 )
 from app.third_parties.oracle.base import Base, SessionLocal
 from app.third_parties.oracle.models.master_data.others import Branch
@@ -375,7 +377,7 @@ class BaseController:
         saving_transaction_stage_id = generate_uuid()
         transaction_daily_id = generate_uuid()
 
-        stage_status, stage = self.call_repos(
+        begin_stage_status, begin_stage = self.call_repos(
             await repos_get_begin_stage(
                 business_type_id=business_type_id,
                 session=self.oracle_session
@@ -383,8 +385,8 @@ class BaseController:
 
         saving_transaction_stage_status = dict(
             id=saving_transaction_stage_status_id,
-            code=stage_status.code,
-            name=stage_status.name
+            code=begin_stage_status.code,
+            name=begin_stage_status.name
         )
 
         saving_transaction_stage = dict(
@@ -394,8 +396,8 @@ class BaseController:
             phase_id=None,
             business_type_id=business_type_id,
             sla_transaction_id=None,  # TODO
-            transaction_stage_phase_code=stage.code,
-            transaction_stage_phase_name=stage.name,
+            transaction_stage_phase_code=begin_stage.code,
+            transaction_stage_phase_name=begin_stage.name,
         )
 
         saving_transaction_daily = dict(
@@ -439,7 +441,7 @@ class BaseController:
 
         _, receiver = self.call_repos(await repos_get_next_receiver(
             business_type_id=business_type_id,
-            stage_id=stage.id,
+            stage_id=begin_stage.id,
             session=self.oracle_session
         ))
 
@@ -471,5 +473,5 @@ class BaseController:
             position_name=None  # TODO
         )
 
-        return (saving_transaction_stage_status, saving_transaction_stage, saving_transaction_daily, saving_transaction_sender,
-                saving_transaction_receiver)
+        return (saving_transaction_stage_status, saving_transaction_stage, saving_transaction_daily,
+                saving_transaction_sender, saving_transaction_receiver)
