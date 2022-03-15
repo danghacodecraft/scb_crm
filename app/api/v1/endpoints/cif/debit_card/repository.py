@@ -88,8 +88,8 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
                     DebitCard.parent_card_id == parent_id
                 )
             )
-        ).all()
-    )
+        )).all()
+
     if not list_debit_card_info_engine:
         return ReposReturn(is_error=True, msg=ERROR_CIF_ID_NOT_EXIST, loc="cif_id")
     issue_debit_card = None
