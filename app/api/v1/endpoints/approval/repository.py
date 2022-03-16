@@ -33,9 +33,9 @@ async def repos_get_current_stage(
             TransactionStageStatus
         )
         .join(Booking, BookingCustomer.booking_id == Booking.id)
-        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
-        .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id)
-        .join(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id)
+        .outerjoin(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
+        .outerjoin(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id)
+        .outerjoin(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id)
         .filter(BookingCustomer.customer_id == cif_id)
     ).first()
 
@@ -99,6 +99,30 @@ async def repos_get_next_stage(
     return ReposReturn(data=next_stage_info)
 
 
+async def repos_get_previous_stage(
+        business_type_id: str,
+        current_stage_code: str,
+        session: Session
+):
+    previous_stage_info = session.execute(  # noqa
+        select(
+            StageStatus,
+            Stage,
+            # StageLane,
+            # StagePhase
+        )
+            .join(StageStatus, Stage.status_id == StageStatus.id)
+            # .join(StageLane, Stage.id == StageLane.stage_id)
+            # .join(StagePhase, Stage.id == StagePhase.stage_id)
+            .filter(and_(
+            Stage.id == current_stage_code,
+            Stage.business_type_id == business_type_id
+        ))
+    ).first()
+
+    return ReposReturn(data=previous_stage_info)
+
+
 async def repos_get_stage_information(
         business_type_id: str,
         stage_id: str,
@@ -126,9 +150,8 @@ async def repos_get_stage_information(
         ))
     ).first()
     if not stage_info:
-        return ReposReturn(is_error=True, msg="Stage is None", loc=f"stage_id: {stage_id}, business_type_id: {business_type_id}")
-    next_stage_status, next_stage, next_stage_lane, next_lane, next_stage_phase, next_phase, next_stage_role = stage_info
-    print(next_stage_status.id, next_stage.id, next_stage_lane.lane_id, next_lane.id, next_stage_phase.phase_id, next_phase.id, next_stage_role.code)
+        return ReposReturn(is_error=True, msg="Stage is None",
+                           loc=f"stage_id: {stage_id}, business_type_id: {business_type_id}")
 
     return ReposReturn(data=stage_info)
 

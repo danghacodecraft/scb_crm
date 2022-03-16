@@ -1,18 +1,19 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.repository import (
     repos_get_current_stage, repos_get_next_receiver, repos_get_next_stage,
-    repos_get_stage_information
+    repos_get_stage_information, repos_get_previous_stage
 )
 from app.api.v1.endpoints.cif.form.repository import (
     repos_approval_process, repos_approve
 )
 from app.api.v1.endpoints.cif.form.schema import CifApproveRequest
+from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.approval import (
     CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_INIT
 )
 from app.utils.constant.cif import BUSINESS_TYPE_INIT_CIF
-from app.utils.functions import generate_uuid
+from app.utils.functions import generate_uuid, now
 
 
 class CtrForm(BaseController):
@@ -25,6 +26,9 @@ class CtrForm(BaseController):
             cif_id: str,
             request: CifApproveRequest
     ):
+        # check cif đang tạo
+        self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
+
         content = request.content
         reject_flag = request.reject_flag
         business_type_id = BUSINESS_TYPE_INIT_CIF
@@ -35,7 +39,30 @@ class CtrForm(BaseController):
                 cif_id=cif_id,
                 session=self.oracle_session
             ))
-        current_stage_code = current_stage.transaction_stage_phase_code
+
+        is_stage_init = False
+        # Nếu là Bước đầu tiên - GDV Gửi hồ sơ để phê duyệt
+        if not current_stage:
+            is_stage_init = True
+            current_stage_code = CIF_STAGE_INIT
+        else:
+            current_stage_code = current_stage.transaction_stage_phase_code
+
+        previous_stage_status, previous_stage = self.call_repos(await repos_get_previous_stage(
+            business_type_id=business_type_id,
+            current_stage_code=current_stage_code,
+            session=self.oracle_session
+        ))
+        (previous_stage_status, previous_stage, previous_stage_lane, previous_lane, previous_stage_phase, previous_phase, previous_stage_role) = self.call_repos(
+            await repos_get_stage_information(
+                business_type_id=business_type_id,
+                stage_id=previous_stage.code,
+                session=self.oracle_session
+            ))
+        print("-------------------------PREVIOUS STAGE-------------------------------------------------------")
+        print(previous_stage_status.id, previous_stage.id, previous_stage_lane.lane_id, previous_lane.id,
+              previous_stage_phase.phase_id,
+              previous_phase.id, previous_stage_role.code)
 
         current_stage_status, current_stage, current_stage_lane, current_lane, current_stage_phase, current_phase, current_stage_role = self.call_repos(
             await repos_get_stage_information(
@@ -43,6 +70,10 @@ class CtrForm(BaseController):
                 stage_id=current_stage_code,
                 session=self.oracle_session
             ))
+        print("-------------------------CURRENT STAGE-------------------------------------------------------")
+        print(current_stage_status.id, current_stage.id, current_stage_lane.lane_id, current_lane.id,
+              current_stage_phase.phase_id,
+              current_phase.id, current_stage_role.code)
 
         next_stage_status, next_stage = self.call_repos(await repos_get_next_stage(
             business_type_id=business_type_id,
@@ -56,6 +87,10 @@ class CtrForm(BaseController):
                 stage_id=next_stage.id,
                 session=self.oracle_session
             ))
+        print("-------------------------NEXT STAGE-------------------------------------------------------")
+        print(next_stage_status.id, next_stage.id, next_stage_lane.lane_id, next_lane.id,
+              next_stage_phase.phase_id,
+              next_phase.id, next_stage_role.code)
 
         saving_transaction_stage_status_id = generate_uuid()
         saving_transaction_stage_id = generate_uuid()
@@ -66,26 +101,26 @@ class CtrForm(BaseController):
 
         saving_transaction_stage_status = dict(
             id=saving_transaction_stage_status_id,
-            code=next_stage_status.code,
-            name=next_stage_status.name
+            code=current_stage_status.code,
+            name=current_stage_status.name
         )
 
         saving_transaction_stage_lane = dict(
             id=saving_transaction_stage_lane_id,
-            code=next_lane.code,
-            name=next_lane.name
+            code=current_lane.code,
+            name=current_lane.name
         )
 
         saving_transaction_stage_phase = dict(
             id=saving_transaction_stage_phase_id,
-            code=next_phase.code,
-            name=next_phase.name
+            code=current_phase.code,
+            name=current_phase.name
         )
 
         saving_transaction_stage_role = dict(
             id=saving_transaction_stage_role_id,
-            code=next_stage_role.code,
-            name=next_stage_role.name
+            code=current_stage_role.code,
+            name=current_stage_role.name
         )
 
         saving_transaction_stage = dict(
@@ -95,45 +130,37 @@ class CtrForm(BaseController):
             phase_id=saving_transaction_stage_phase_id,
             business_type_id=business_type_id,
             sla_transaction_id=None,  # TODO
-            transaction_stage_phase_code=next_stage.code,
-            transaction_stage_phase_name=next_stage.name
+            transaction_stage_phase_code=current_stage.code,
+            transaction_stage_phase_name=current_stage.name
         )
 
-        description = ""
+        json_data = dict(content=content)
         is_completed_cif = False
         # GDV
         if current_stage_code == CIF_STAGE_INIT:
-            description += f"{current_stage_role.code} đã gửi hồ sơ cho {next_stage_role.code}."
+            description = f"{current_stage_role.code} đã gửi hồ sơ cho {next_stage_role.code}."
             print(current_stage_code)
-            if content:
-                description += f" Nội dung: {content}."
-                print("GDV")
+            print("GDV")
         else:
             # KSV
             if current_stage_code == CIF_STAGE_APPROVE_KSV:
                 if not reject_flag:
-                    description += f"Hoàn tất hồ sơ. Hồ sơ đã được phê duyệt bởi {current_stage_role.code}. Hồ sơ đã gửi cho {next_stage_role.code}."
-                    if content:
-                        description += f" Nội dung: {content}."
+                    description = f"Hoàn tất hồ sơ. Hồ sơ đã được phê duyệt bởi {current_stage_role.code}. Hồ sơ đã gửi cho {next_stage_role.code}."
                 else:
                     if not content:
                         return self.response_exception(msg="Content Not None", loc="content")
-                    description += f"Hồ sơ bị từ chối. Lý do: {content}."
+                    description = f"Hồ sơ bị từ chối."
                 print(current_stage_code)
                 print("KSV")
             # KSS
             elif current_stage_code == CIF_STAGE_APPROVE_KSS:
                 if not reject_flag:
                     is_completed_cif = True
-                    description += f"Hoàn thành hồ sơ. Hồ sơ đã được phê duyệt bởi {current_stage_role.code}."
-                    if content:
-                        description += f" Nội dung: {content}."
-
+                    description = f"Hoàn thành hồ sơ. Hồ sơ đã được phê duyệt bởi {current_stage_role.code}."
                 else:
                     if not content:
                         return self.response_exception(msg="Content Not None", loc="content")
-                    description += f"Hồ sơ bị từ chối. Lý do: {content}."
-
+                    description = f"Hồ sơ bị từ chối."
                 print(current_stage_code)
                 print("KSS")
             else:
@@ -146,8 +173,10 @@ class CtrForm(BaseController):
             transaction_parent_id=None,
             transaction_root_id=None,
             is_reject=False,
-            data=None,
-            description=description
+            data=str(json_data),
+            description=description,
+            created_at=now(),
+            updated_at=now()
         )
 
         # sender_branch = await self.get_model_object_by_id(
@@ -236,10 +265,12 @@ class CtrForm(BaseController):
             saving_transaction_daily=saving_transaction_daily,
             saving_transaction_sender=saving_transaction_sender,
             saving_transaction_receiver=saving_transaction_receiver,
+            is_stage_init=is_stage_init,
             session=self.oracle_session
         )))
 
         approval_process.update(
+            previous_stage=previous_stage.code,
             current_stage=current_stage_code,
             next_stage=next_stage.code,
         )

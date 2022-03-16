@@ -85,26 +85,31 @@ async def repos_approve(
         saving_transaction_stage_role: dict,
         saving_transaction_sender: dict,
         saving_transaction_receiver: dict,
+        is_stage_init: bool,
         session: Session
 ):
+    saving_transaction_daily_parent_id = None
+    saving_transaction_daily_root_id = saving_transaction_daily['transaction_id']
 
-    # Lấy thông tin Transaction Daily trước đó
-    _, _, previous_transaction_daily = session.execute(
-        select(
-            BookingCustomer,
-            Booking,
-            TransactionDaily
-        )
-        .join(Booking, BookingCustomer.booking_id == Booking.id)
-        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
-        .filter(BookingCustomer.customer_id == cif_id)
-    ).first()
+    if not is_stage_init:
+        # Lấy thông tin Transaction Daily trước đó
+        _, _, previous_transaction_daily = session.execute(
+            select(
+                BookingCustomer,
+                Booking,
+                TransactionDaily
+            )
+            .join(Booking, BookingCustomer.booking_id == Booking.id)
+            .outerjoin(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
+            .filter(BookingCustomer.customer_id == cif_id)
+        ).first()
 
-    saving_transaction_parent_id = previous_transaction_daily.transaction_id
-    saving_transaction_root_id = previous_transaction_daily.transaction_root_id
+        saving_transaction_daily_parent_id = previous_transaction_daily.transaction_id
+        saving_transaction_daily_root_id = previous_transaction_daily.transaction_root_id
+
     saving_transaction_daily.update(dict(
-        transaction_parent_id=saving_transaction_parent_id,
-        transaction_root_id=saving_transaction_root_id,
+        transaction_parent_id=saving_transaction_daily_parent_id,
+        transaction_root_id=saving_transaction_daily_root_id,
     ))
 
     session.add_all([
