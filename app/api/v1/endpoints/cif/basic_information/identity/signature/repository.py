@@ -7,6 +7,7 @@ from app.api.base.repository import ReposReturn, auto_commit
 from app.api.v1.endpoints.repository import (
     write_transaction_log_and_update_booking
 )
+from app.settings.event import service_ekyc
 from app.third_parties.oracle.models.cif.basic_information.identity.model import (
     CustomerIdentity, CustomerIdentityImage
 )
@@ -62,3 +63,35 @@ async def repos_get_signature_data(cif_id: str, session: Session) -> ReposReturn
         return ReposReturn(is_error=True, msg=ERROR_SIGNATURE_IS_NULL, loc=f"cif_id: {cif_id}")
 
     return ReposReturn(data=query_data)
+
+
+async def repos_compare_signature(cif_id: str, uuid_ekyc: str, session: Session) -> ReposReturn:
+    signature_query = session.execute(
+        select(
+            CustomerIdentityImage
+        )
+        .join(
+            CustomerIdentity, and_(
+                CustomerIdentityImage.identity_id == CustomerIdentity.id,
+                CustomerIdentity.customer_id == cif_id
+            )
+        ).filter(
+            CustomerIdentityImage.image_type_id == IMAGE_TYPE_CODE_SIGNATURE
+        ).order_by(desc(CustomerIdentityImage.maker_at))
+    ).all()
+    if not signature_query:
+        return ReposReturn(is_error=True, msg='ERROR_NO_DATA')
+
+    customer_uuid = signature_query[0].CustomerIdentityImage.ekyc_uuid
+
+    if not customer_uuid:
+        customer_uuid = signature_query[1].CustomerIdentityImage.ekyc_uuid
+
+    json_body = {
+        "image_sign_1_uuid": uuid_ekyc,
+        "image_sign_2_uuid": customer_uuid
+    }
+
+    is_success, response = await service_ekyc.compare_signature(json_body=json_body)
+
+    return ReposReturn(data=response)
