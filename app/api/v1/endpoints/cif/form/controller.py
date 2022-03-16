@@ -9,8 +9,7 @@ from app.api.v1.endpoints.cif.form.repository import (
 from app.api.v1.endpoints.cif.form.schema import CifApproveRequest
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.approval import (
-    CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_BEGIN,
-    CIF_STAGE_INIT
+    CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_INIT
 )
 from app.utils.constant.cif import BUSINESS_TYPE_INIT_CIF
 from app.utils.functions import generate_uuid
@@ -27,6 +26,7 @@ class CtrForm(BaseController):
             request: CifApproveRequest
     ):
         content = request.content
+        reject_flag = request.reject_flag
         business_type_id = BUSINESS_TYPE_INIT_CIF
         current_user = self.current_user
 
@@ -61,6 +61,7 @@ class CtrForm(BaseController):
         saving_transaction_stage_id = generate_uuid()
         saving_transaction_stage_lane_id = generate_uuid()
         saving_transaction_stage_phase_id = generate_uuid()
+        saving_transaction_stage_role_id = generate_uuid()
         transaction_daily_id = generate_uuid()
 
         saving_transaction_stage_status = dict(
@@ -71,14 +72,20 @@ class CtrForm(BaseController):
 
         saving_transaction_stage_lane = dict(
             id=saving_transaction_stage_lane_id,
-            code=current_lane.code,
-            name=current_lane.name
+            code=next_lane.code,
+            name=next_lane.name
         )
 
         saving_transaction_stage_phase = dict(
             id=saving_transaction_stage_phase_id,
-            code=current_phase.code,
-            name=current_phase.name
+            code=next_phase.code,
+            name=next_phase.name
+        )
+
+        saving_transaction_stage_role = dict(
+            id=saving_transaction_stage_role_id,
+            code=next_stage_role.code,
+            name=next_stage_role.name
         )
 
         saving_transaction_stage = dict(
@@ -92,15 +99,52 @@ class CtrForm(BaseController):
             transaction_stage_phase_name=next_stage.name
         )
 
-        description = f"{current_stage_role.code} đã gửi hồ sơ cho {next_stage_role.code}."
-        if content:
-            description = description + f" Nội dung: {content}."
+        description = ""
+        is_completed_cif = False
+        # GDV
+        if current_stage_code == CIF_STAGE_INIT:
+            description += f"{current_stage_role.code} đã gửi hồ sơ cho {next_stage_role.code}."
+            print(current_stage_code)
+            if content:
+                description += f" Nội dung: {content}."
+                print("GDV")
+        else:
+            # KSV
+            if current_stage_code == CIF_STAGE_APPROVE_KSV:
+                if not reject_flag:
+                    description += f"Hoàn tất hồ sơ. Hồ sơ đã được phê duyệt bởi {current_stage_role.code}. Hồ sơ đã gửi cho {next_stage_role.code}."
+                    if content:
+                        description += f" Nội dung: {content}."
+                else:
+                    if not content:
+                        return self.response_exception(msg="Content Not None", loc="content")
+                    description += f"Hồ sơ bị từ chối. Lý do: {content}."
+                print(current_stage_code)
+                print("KSV")
+            # KSS
+            elif current_stage_code == CIF_STAGE_APPROVE_KSS:
+                if not reject_flag:
+                    is_completed_cif = True
+                    description += f"Hoàn thành hồ sơ. Hồ sơ đã được phê duyệt bởi {current_stage_role.code}."
+                    if content:
+                        description += f" Nội dung: {content}."
+
+                else:
+                    if not content:
+                        return self.response_exception(msg="Content Not None", loc="content")
+                    description += f"Hồ sơ bị từ chối. Lý do: {content}."
+
+                print(current_stage_code)
+                print("KSS")
+            else:
+                print(current_stage_code)
+                return self.response_exception(msg="Stage has been completed")
 
         saving_transaction_daily = dict(
             transaction_id=transaction_daily_id,
             transaction_stage_id=saving_transaction_stage_id,
             transaction_parent_id=None,
-            transaction_root_id=transaction_daily_id,
+            transaction_root_id=None,
             is_reject=False,
             data=None,
             description=description
@@ -135,22 +179,26 @@ class CtrForm(BaseController):
             position_name=None  # TODO
         )
 
-        _, receiver = self.call_repos(await repos_get_next_receiver(
-            business_type_id=business_type_id,
-            stage_id=current_stage_code,
-            session=self.oracle_session
-        ))
+        receiver = None
+        receiver_branch = None
+        if not is_completed_cif:
+            _, receiver = self.call_repos(await repos_get_next_receiver(
+                business_type_id=business_type_id,
+                stage_id=next_stage.code,
+                reject_flag=reject_flag,
+                session=self.oracle_session
+            ))
 
-        receiver_branch = await self.get_model_object_by_id(
-            model_id=receiver.branch_id,
-            model=Branch,
-            loc="next_receiver -> branch_id"
-        )
-        # receiver_department = await self.get_model_object_by_id(
-        #     model_id=next_receiver.department_id,
-        #     model=Department,
-        #     loc="next_receiver -> department_id"
-        # )
+            receiver_branch = await self.get_model_object_by_id(
+                model_id=receiver.branch_id,
+                model=Branch,
+                loc="next_receiver -> branch_id"
+            )
+            # receiver_department = await self.get_model_object_by_id(
+            #     model_id=next_receiver.department_id,
+            #     model=Department,
+            #     loc="next_receiver -> department_id"
+            # )
 
         saving_transaction_receiver = dict(
             transaction_id=transaction_daily_id,
@@ -158,10 +206,10 @@ class CtrForm(BaseController):
             user_name=current_user.username,
             user_fullname=current_user.full_name_vn,
             user_email=current_user.email,
-            branch_id=receiver_branch.id,
-            branch_code=receiver_branch.code,
-            branch_name=receiver_branch.name,
-            department_id=receiver.department_id,
+            branch_id=receiver_branch.id if receiver else None,
+            branch_code=receiver_branch.code if receiver else None,
+            branch_name=receiver_branch.name if receiver else None,
+            department_id=receiver.department_id if receiver else None,
             department_code=None,  # TODO
             department_name=None,  # TODO
             position_id=None,  # TODO
@@ -169,22 +217,14 @@ class CtrForm(BaseController):
             position_name=None  # TODO
         )
 
-        if current_stage_code == CIF_STAGE_BEGIN:
-            print(saving_transaction_stage_status)
-            print(saving_transaction_stage_lane)
-            print(saving_transaction_stage_phase)
-            print(saving_transaction_stage)
-            print(saving_transaction_daily)
-            print(saving_transaction_sender)
-            print(saving_transaction_receiver)
-        elif current_stage_code == CIF_STAGE_INIT:
-            print(current_stage_code)
-        elif current_stage_code == CIF_STAGE_APPROVE_KSV:
-            print(current_stage_code)
-        elif current_stage_code == CIF_STAGE_APPROVE_KSS:
-            print(current_stage_code)
-        else:
-            print(current_stage_code)
+        print("saving_transaction_stage_status", saving_transaction_stage_status)
+        print("saving_transaction_stage_lane", saving_transaction_stage_lane)
+        print("saving_transaction_stage_phase", saving_transaction_stage_phase)
+        print("saving_transaction_stage_role", saving_transaction_stage_role)
+        print("saving_transaction_stage", saving_transaction_stage)
+        print("saving_transaction_daily", saving_transaction_daily)
+        print("saving_transaction_sender", saving_transaction_sender)
+        print("saving_transaction_receiver", saving_transaction_receiver)
 
         approval_process = self.call_repos((await repos_approve(
             cif_id=cif_id,
@@ -192,10 +232,16 @@ class CtrForm(BaseController):
             saving_transaction_stage=saving_transaction_stage,
             saving_transaction_stage_lane=saving_transaction_stage_lane,
             saving_transaction_stage_phase=saving_transaction_stage_phase,
+            saving_transaction_stage_role=saving_transaction_stage_role,
             saving_transaction_daily=saving_transaction_daily,
             saving_transaction_sender=saving_transaction_sender,
             saving_transaction_receiver=saving_transaction_receiver,
             session=self.oracle_session
         )))
+
+        approval_process.update(
+            current_stage=current_stage_code,
+            next_stage=next_stage.code,
+        )
 
         return self.response(approval_process)

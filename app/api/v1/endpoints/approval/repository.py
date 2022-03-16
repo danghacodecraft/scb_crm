@@ -9,6 +9,7 @@ from app.third_parties.oracle.models.master_data.others import (
     Lane, Phase, Stage, StageLane, StagePhase, StageRole, StageStatus,
     TransactionStage, TransactionStageStatus
 )
+from app.utils.constant.approval import CIF_STAGE_INIT
 from app.utils.error_messages import (
     ERROR_BEGIN_STAGE_NOT_EXIST, ERROR_NEXT_RECEIVER_NOT_EXIST,
     ERROR_STAGE_NOT_EXIST
@@ -37,7 +38,6 @@ async def repos_get_current_stage(
         .join(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id)
         .filter(BookingCustomer.customer_id == cif_id)
     ).first()
-    print(current_stage)
 
     if not current_stage:
         return ReposReturn(is_error=True, msg=ERROR_STAGE_NOT_EXIST, loc=f"cif_id {cif_id}")
@@ -121,10 +121,14 @@ async def repos_get_stage_information(
         .join(Phase, StagePhase.phase_id == Phase.id)
         .join(StageRole, Stage.id == StageRole.stage_id)
         .filter(and_(
-            Stage.parent_id == stage_id,
+            Stage.id == stage_id,
             Stage.business_type_id == business_type_id
         ))
     ).first()
+    if not stage_info:
+        return ReposReturn(is_error=True, msg="Stage is None", loc=f"stage_id: {stage_id}, business_type_id: {business_type_id}")
+    next_stage_status, next_stage, next_stage_lane, next_lane, next_stage_phase, next_phase, next_stage_role = stage_info
+    print(next_stage_status.id, next_stage.id, next_stage_lane.lane_id, next_lane.id, next_stage_phase.phase_id, next_phase.id, next_stage_role.code)
 
     return ReposReturn(data=stage_info)
 
@@ -132,25 +136,41 @@ async def repos_get_stage_information(
 async def repos_get_next_receiver(
         business_type_id: str,
         stage_id: str,
+        reject_flag: bool,
         session: Session
 ):
-    next_receiver = session.execute(
-        select(
-            Stage,
-            StageLane
-        )
-        .join(StageLane, Stage.id == StageLane.stage_id)
-        .filter(
-            Stage.parent_id == stage_id
-        )
-    ).first()
+    """
+    Nếu từ chối phê duyệt -> Người nhận là GDV
+    """
+    if reject_flag:
+        next_receiver = session.execute(
+            select(
+                Stage,
+                StageLane
+            )
+            .join(StageLane, Stage.id == StageLane.stage_id)
+            .filter(
+                Stage.parent_id == CIF_STAGE_INIT
+            )
+        ).first()
+    else:
+        next_receiver = session.execute(
+            select(
+                Stage,
+                StageLane
+            )
+            .join(StageLane, Stage.id == StageLane.stage_id)
+            .filter(
+                Stage.parent_id == stage_id
+            )
+        ).first()
 
-    if not next_receiver:
-        return ReposReturn(
-            is_error=True,
-            msg=ERROR_NEXT_RECEIVER_NOT_EXIST,
-            detail=f"business_type_id: {business_type_id}, stage_id: {stage_id}"
-        )
+        if not next_receiver:
+            return ReposReturn(
+                is_error=True,
+                msg=ERROR_NEXT_RECEIVER_NOT_EXIST,
+                detail=f"business_type_id: {business_type_id}, stage_id: {stage_id}"
+            )
 
     return ReposReturn(data=next_receiver)
 
