@@ -8,6 +8,7 @@ from app.api.base.schema import BaseSchema
 
 class SignatureRequest(BaseSchema):
     image_url: str = Field(..., description='Đường dẫn hình ảnh định danh chữ ký khách hàng')
+    uuid_ekyc: str = Field(..., description='uuid_ekyc call upload file')
 
 
 class SignaturesRequest(BaseSchema):
@@ -28,3 +29,11 @@ class CompareSignaturesResponse(BaseSchema):
 class SignaturesSuccessResponse(BaseSchema):
     created_date: date = Field(..., description='Ngày tạo')
     signature: List[SignaturesResponse] = Field(..., description='Danh sách ảnh khuôn mặt')
+
+
+class CompareSignatureRequest(BaseSchema):
+    uuid_ekyc: str = Field(...)
+
+
+class CompareSignatureResponse(BaseSchema):
+    similarity_percent: int = Field(..., description='Tỷ lệ phần trăm giống nhau giữa hai hình ảnh')

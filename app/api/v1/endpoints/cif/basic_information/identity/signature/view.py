@@ -10,7 +10,8 @@ from app.api.v1.endpoints.cif.basic_information.identity.signature.controller im
     CtrSignature
 )
 from app.api.v1.endpoints.cif.basic_information.identity.signature.schema import (
-    SignaturesRequest, SignaturesSuccessResponse
+    CompareSignatureRequest, CompareSignatureResponse, SignaturesRequest,
+    SignaturesSuccessResponse
 )
 from app.api.v1.schemas.utils import SaveSuccessResponse
 
@@ -50,3 +51,21 @@ async def view_retrieve_signature(
 ):
     signature_data = await CtrSignature(current_user).ctr_get_signature(cif_id)
     return ResponseData[List[SignaturesSuccessResponse]](**signature_data)
+
+
+@router.post(
+    path="/compare/",
+    name="1. GTĐD - D. Chữ ký - So Sánh",
+    description="Compare signature",
+    responses=swagger_response(
+        response_model=ResponseData[CompareSignatureResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_compare_signature(
+    uuid_ekyc: CompareSignatureRequest,
+    cif_id: str = Path(...),
+    current_user=Depends(get_current_user_from_header())
+):
+    compare_signature = await CtrSignature(current_user).ctr_compare_signature(cif_id=cif_id, uuid_ekyc=uuid_ekyc)
+    return ResponseData[CompareSignatureResponse](**compare_signature)
