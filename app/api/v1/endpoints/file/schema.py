@@ -10,6 +10,7 @@ class FileServiceResponse(BaseSchema):
                                  example='2021-15-12 06:07:08')
     created_by: str = Field(..., description='Tạo mới bởi')
     uuid: str = Field(..., description='Chuỗi định danh file trên service file')
+    uuid_ekyc: str = Field(None, description="uuid call ekyc")
     file_url: str = Field(..., description='Link download file')
     name: str = Field(..., description='Tên file')
     content_type: str = Field(..., description='Content-Type của file')

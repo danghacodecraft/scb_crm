@@ -398,3 +398,27 @@ class ServiceEKYC:
         except Exception as ex:
             logger.error(str(ex))
             return False, {"message": str(ex)}
+
+    async def upload_file(self, file: bytes, name):
+        api_url = f"{self.url}/api/v1/file-service/"
+
+        form_data = aiohttp.FormData()
+        form_data.add_field('file', value=file, filename=name)
+        try:
+            async with self.session.post(url=api_url, data=form_data, headers=self.headers,
+                                         proxy=self.proxy) as response:
+                logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
+
+                if response.status == status.HTTP_201_CREATED:
+                    return True, await response.json()
+                else:
+                    return False, {
+                        "message": ERROR_CALL_SERVICE_EKYC,
+                        "detail": "STATUS " + str(response.status),
+                        "api_url": api_url,
+                        "response": await response.json()
+                    }
+
+        except Exception as ex:
+            logger.error(str(ex))
+            return False, {"message": str(ex)}

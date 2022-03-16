@@ -25,7 +25,6 @@ class CtrSignature(BaseController):
             )
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
-
         # lấy các uuid cần check
         image_uuids = []
         for signature in signatures.signatures:
@@ -48,7 +47,8 @@ class CtrSignature(BaseController):
             'active_flag': ACTIVE_FLAG_CREATE_SIGNATURE,
             'maker_id': self.current_user.user_id,
             'maker_at': now(),
-            'identity_image_front_flag': None
+            'identity_image_front_flag': None,
+            'ekyc_uuid': signature.uuid_ekyc
         } for signature in signatures.signatures]
 
         data = self.call_repos(
