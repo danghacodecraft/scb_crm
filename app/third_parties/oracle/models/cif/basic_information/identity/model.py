@@ -64,6 +64,7 @@ sys_guid()
                                                'Giá trị 0: mặt sau\n')
 
     ekyc_uuid = Column('ekyc_image_uuid', VARCHAR(36), comment='UUID hình trong hệ thống eKYC')
+    ekyc_id = Column('ekyc_id', VARCHAR(36), comment='eKYC ID dùng cho các trường hợp compare')
 
 
 class CustomerIdentityImageTransaction(Base):
