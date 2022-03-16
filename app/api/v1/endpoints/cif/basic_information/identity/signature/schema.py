@@ -8,6 +8,7 @@ from app.api.base.schema import BaseSchema
 
 class SignatureRequest(BaseSchema):
     image_url: str = Field(..., description='Đường dẫn hình ảnh định danh chữ ký khách hàng')
+    uuid_ekyc: str = Field(..., description='uuid_ekyc call upload file')
 
 
 class SignaturesRequest(BaseSchema):
