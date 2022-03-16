@@ -1,9 +1,9 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.basic_information.identity.signature.repository import (
-    repos_get_signature_data, repos_save_signature
+    repos_compare_signature, repos_get_signature_data, repos_save_signature
 )
 from app.api.v1.endpoints.cif.basic_information.identity.signature.schema import (
-    SignaturesRequest
+    CompareSignatureRequest, SignaturesRequest
 )
 from app.api.v1.endpoints.cif.repository import (
     repos_get_customer_identity, repos_get_initializing_customer
@@ -25,7 +25,6 @@ class CtrSignature(BaseController):
             )
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
-
         # lấy các uuid cần check
         image_uuids = []
         for signature in signatures.signatures:
@@ -48,7 +47,8 @@ class CtrSignature(BaseController):
             'active_flag': ACTIVE_FLAG_CREATE_SIGNATURE,
             'maker_id': self.current_user.user_id,
             'maker_at': now(),
-            'identity_image_front_flag': None
+            'identity_image_front_flag': None,
+            'ekyc_uuid': signature.uuid_ekyc
         } for signature in signatures.signatures]
 
         data = self.call_repos(
@@ -90,3 +90,14 @@ class CtrSignature(BaseController):
             'created_date': data_str,
             'signature': signature
         } for data_str, signature in date__signatures.items()])
+
+    async def ctr_compare_signature(self, cif_id: str, uuid_ekyc: CompareSignatureRequest):
+        uuid_compare_ekyc = uuid_ekyc.uuid_ekyc
+
+        compare_signature = self.call_repos(await repos_compare_signature(
+            cif_id=cif_id,
+            uuid_ekyc=uuid_compare_ekyc,
+            session=self.oracle_session
+        ))
+
+        return self.response(data=compare_signature)
