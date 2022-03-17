@@ -8,7 +8,8 @@ from app.api.v1.endpoints.cif.basic_information.identity.fingerprint.controller 
     CtrFingerPrint
 )
 from app.api.v1.endpoints.cif.basic_information.identity.fingerprint.schema import (
-    CompareFingerPrintRequest, TwoFingerPrintRequest, TwoFingerPrintResponse
+    CompareFingerPrintRequest, CompareFingerPrintResponse,
+    TwoFingerPrintRequest, TwoFingerPrintResponse
 )
 from app.api.v1.schemas.utils import SaveSuccessResponse
 
@@ -56,7 +57,7 @@ async def view_retrieve_fingerprint(
     name="1. GTĐD - C. Vân tay - So Sánh",
     description="Tìm kiếm vân tay có trong hệ thống",
     responses=swagger_response(
-        response_model=ResponseData[TwoFingerPrintResponse],
+        response_model=ResponseData[CompareFingerPrintResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -67,4 +68,4 @@ async def view_compare_fingerprint(
 ):
     compare_fingerprint = await CtrFingerPrint(current_user).ctr_compare_fingerprint(cif_id=cif_id, uuid=uuid)
 
-    return ResponseData(**compare_fingerprint)
+    return ResponseData[CompareFingerPrintResponse](**compare_fingerprint)
