@@ -6,15 +6,15 @@ from app.api.base.schema import BaseSchema, CreatedUpdatedBaseModel
 
 
 class UserInfoResponse(BaseSchema):
-    user_id: str = Field(..., description='Id người dùng')
+    user_id: str = Field(None, description='user_id')
+    avatar_url: str = Field(None, description='image')
+    token: str = Field(..., description='Token')
     username: str = Field(..., description='Tên đăng nhập')
     full_name_vn: str = Field(..., description='Họ và tên người dùng')
-    avatar_url: Optional[str] = Field(..., description='Link avatar')
     email: Optional[str] = Field(None, description='Email')
 
 
 class AuthResponse(BaseSchema):
-    token: str = Field(..., description='Token dùng cho các API khác')
     user_info: UserInfoResponse = Field(..., description='Thông tin người dùng')
 
 
@@ -66,6 +66,12 @@ EXAMPLE_RES_SUCCESS_DETAIL_USER = {
 ########################################################################################################################
 # update user
 ########################################################################################################################
+
+class AuthRequest(BaseSchema):
+    username: str = Field(..., alias="username")
+    password: str = Field(..., min_length=8, alias="password")
+
+
 class UserUpdateRequest(BaseSchema):
     full_name_vn: str = Field(..., description='Họ và tên người dùng')
     avatar_url: str = Field(..., description='Link avatar')
