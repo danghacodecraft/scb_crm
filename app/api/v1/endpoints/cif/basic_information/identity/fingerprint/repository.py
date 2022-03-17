@@ -4,9 +4,13 @@ from sqlalchemy import and_, delete, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
+from app.api.v1.endpoints.cif.basic_information.identity.fingerprint.schema import (
+    CompareFingerPrintRequest
+)
 from app.api.v1.endpoints.repository import (
     write_transaction_log_and_update_booking
 )
+from app.settings.event import service_ekyc
 from app.third_parties.oracle.models.cif.basic_information.identity.model import (
     CustomerIdentity, CustomerIdentityImage
 )
@@ -90,3 +94,41 @@ async def repos_get_data_finger(cif_id: str, session: Session) -> ReposReturn:
         return ReposReturn(is_error=True, msg=ERROR_NO_DATA, loc="cif_id")
 
     return ReposReturn(data=query_data)
+
+
+async def repos_add_finger_ekyc(cif_id: str, uuid: str):
+    json_body = {
+        "uuid": uuid
+    }
+    is_success, response = await service_ekyc.add_finger_ekyc(cif_id=cif_id, json_body=json_body)
+
+    return ReposReturn(data=response['id'])
+
+
+async def repos_compare_finger_ekyc(cif_id: str, uuid: CompareFingerPrintRequest, session: Session):
+    finger_print_ids = session.execute(
+        select(
+            CustomerIdentityImage.ekyc_id
+        )
+        .join(
+            CustomerIdentity, and_(
+                CustomerIdentityImage.identity_id == CustomerIdentity.id,
+                CustomerIdentity.customer_id == cif_id
+            )
+        )
+        .filter(
+            CustomerIdentityImage.image_type_id == IMAGE_TYPE_FINGERPRINT
+        )
+    ).scalars().all()
+
+    if not finger_print_ids:
+        return ReposReturn(is_error=True, msg=ERROR_NO_DATA)
+
+    json_body = {
+        "uuid": uuid.uuid,
+        "id_fingers": finger_print_ids,
+        "limit": 1
+    }
+    is_success, response = await service_ekyc.compare_finger_ekyc(cif_id=cif_id, json_body=json_body)
+
+    return ReposReturn(data=response)

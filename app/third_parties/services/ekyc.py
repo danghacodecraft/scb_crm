@@ -444,3 +444,48 @@ class ServiceEKYC:
         except Exception as ex:
             logger.error(str(ex))
             return False, {"message": str(ex)}
+
+    async def add_finger_ekyc(self, cif_id: str, json_body: dict):
+        api_url = f"{self.url}/api/v1/finger-service/add/"
+
+        try:
+            async with self.session.post(url=api_url, json=json_body, headers=self.headers,
+                                         proxy=self.proxy) as response:
+                logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
+
+                if response.status == status.HTTP_201_CREATED:
+                    return True, await response.json()
+                else:
+                    return False, {
+                        "message": ERROR_CALL_SERVICE_EKYC,
+                        "detail": "STATUS " + str(response.status),
+                        "api_url": api_url,
+                        "response": await response.json(),
+                        "headers": self.headers
+                    }
+
+        except Exception as ex:
+            logger.error(str(ex))
+            return False, {"message": str(ex)}
+
+    async def compare_finger_ekyc(self, cif_id: str, json_body: dict):
+        api_url = f"{self.url}/api/v1/finger-service/verify/"
+
+        try:
+            async with self.session.post(url=api_url, json=json_body, headers=self.headers,
+                                         proxy=self.proxy) as response:
+                logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
+
+                if response.status == status.HTTP_200_OK:
+                    return True, await response.json()
+                else:
+                    return False, {
+                        "message": ERROR_CALL_SERVICE_EKYC,
+                        "detail": "STATUS " + str(response.status),
+                        "api_url": api_url,
+                        "response": await response.json(),
+                    }
+
+        except Exception as ex:
+            logger.error(str(ex))
+            return False, {"message": str(ex)}
