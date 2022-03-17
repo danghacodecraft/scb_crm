@@ -64,7 +64,7 @@ ERROR_CONTENT_NOT_NULL = "ERROR_CONTENT_NOT_NULL"
 
 ERROR_NOT_REGISTER = "ERROR_NOT_REGISTER"
 
-ERROR_COMPARE_IMAGE_NOT_EXIST = "ERROR_COMPARE_IMAGE_NOT_EXIST"
+ERROR_COMPARE_IMAGE_IS_EXISTED = "ERROR_COMPARE_IMAGE_IS_EXISTED"
 
 ERROR_E_BANKING = "ERROR_E-BANKING"
 
@@ -131,6 +131,6 @@ MESSAGE_STATUS = {
     ERROR_STAGE_COMPLETED: "Stage completed",
     ERROR_CONTENT_NOT_NULL: "Content is not null",
 
-    ERROR_COMPARE_IMAGE_NOT_EXIST: "Compare Image is existed, please upload new compare image",
+    ERROR_COMPARE_IMAGE_IS_EXISTED: "Compare Image is existed, please upload new compare image",
     ERROR_NOT_REGISTER: "No debit card registration"
 }

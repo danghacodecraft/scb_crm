@@ -25,8 +25,7 @@ from app.third_parties.oracle.models.cif.basic_information.personal.model import
     CustomerIndividualInfo
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingBusinessForm, BookingCustomer, TransactionDaily,
-    TransactionReceiver, TransactionSender
+    Booking, BookingBusinessForm, BookingCustomer
 )
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
@@ -37,7 +36,7 @@ from app.third_parties.oracle.models.master_data.identity import (
     PlaceOfIssue
 )
 from app.third_parties.oracle.models.master_data.others import (
-    Nation, Religion, TransactionStage, TransactionStageStatus
+    Nation, Religion
 )
 from app.utils.constant.cif import (
     ADDRESS_COUNTRY_CODE_VN, BUSINESS_FORM_TTCN_GTDD_GTDD,
@@ -53,7 +52,7 @@ from app.utils.constant.cif import (
 )
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_EKYC, ERROR_CALL_SERVICE_FILE, ERROR_CIF_ID_NOT_EXIST,
-    ERROR_COMPARE_IMAGE_NOT_EXIST
+    ERROR_COMPARE_IMAGE_IS_EXISTED
 )
 from app.utils.functions import (
     date_string_to_other_date_string_format, dropdown, generate_uuid, now
@@ -377,11 +376,11 @@ async def repos_save_identity(
         saving_customer_contact_address: Optional[dict],  # CMND, CCCD mới có
         saving_customer_compare_image: dict,
         saving_customer_identity_images: List[dict],
-        saving_transaction_stage_status: dict,
-        saving_transaction_stage: dict,
-        saving_transaction_daily: dict,
-        saving_transaction_sender: dict,
-        saving_transaction_receiver: dict,
+        # saving_transaction_stage_status: dict,
+        # saving_transaction_stage: dict,
+        # saving_transaction_daily: dict,
+        # saving_transaction_sender: dict,
+        # saving_transaction_receiver: dict,
         request_data: dict,
         session: Session
 ) -> ReposReturn:
@@ -398,7 +397,7 @@ async def repos_save_identity(
     if customer_compare_image:
         return ReposReturn(
             is_error=True,
-            msg=ERROR_COMPARE_IMAGE_NOT_EXIST
+            msg=ERROR_COMPARE_IMAGE_IS_EXISTED
         )
     # Tạo mới
     if not customer_id:
@@ -454,14 +453,15 @@ async def repos_save_identity(
         # create booking & log
         session.add_all([
             # Tạo BOOKING, CRM_TRANSACTION_DAILY -> CRM_BOOKING -> BOOKING_CUSTOMER -> BOOKING_BUSSINESS_FORM
-            TransactionStageStatus(**saving_transaction_stage_status),
-            TransactionStage(**saving_transaction_stage),
-            TransactionDaily(**saving_transaction_daily),
-            TransactionSender(**saving_transaction_sender),
-            TransactionReceiver(**saving_transaction_receiver),
+            # TransactionStageStatus(**saving_transaction_stage_status),
+            # TransactionStage(**saving_transaction_stage),
+            # TransactionDaily(**saving_transaction_daily),
+            # TransactionSender(**saving_transaction_sender),
+            # TransactionReceiver(**saving_transaction_receiver),
             Booking(
                 id=new_booking_id,
-                transaction_id=saving_transaction_daily['transaction_id'],
+                # transaction_id=saving_transaction_daily['transaction_id'],
+                transaction_id=None,
                 created_at=now(),
                 updated_at=now()
             ),
