@@ -128,4 +128,10 @@ class CtrFingerPrint(BaseController):
             session=self.oracle_session
         ))
 
-        return self.response(data=compare_finger_response)
+        response_data = {}
+        for item in compare_finger_response['customers']:
+            response_data.update({
+                "similarity_percent": item['accuracy']
+            })
+
+        return self.response(data=response_data)

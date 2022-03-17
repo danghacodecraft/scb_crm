@@ -121,6 +121,9 @@ async def repos_compare_finger_ekyc(cif_id: str, uuid: CompareFingerPrintRequest
         )
     ).scalars().all()
 
+    if not finger_print_ids:
+        return ReposReturn(is_error=True, msg=ERROR_NO_DATA)
+
     json_body = {
         "uuid": uuid.uuid,
         "id_fingers": finger_print_ids,

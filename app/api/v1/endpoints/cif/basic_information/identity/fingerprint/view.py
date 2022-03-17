@@ -66,4 +66,5 @@ async def view_compare_fingerprint(
         current_user=Depends(get_current_user_from_header())
 ):
     compare_fingerprint = await CtrFingerPrint(current_user).ctr_compare_fingerprint(cif_id=cif_id, uuid=uuid)
+
     return ResponseData(**compare_fingerprint)
