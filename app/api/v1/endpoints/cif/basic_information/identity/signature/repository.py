@@ -94,4 +94,7 @@ async def repos_compare_signature(cif_id: str, uuid_ekyc: str, session: Session)
 
     is_success, response = await service_ekyc.compare_signature(json_body=json_body)
 
+    if not is_success:
+        return ReposReturn(is_error=True, msg=response['message'], loc="COMPARE_SIGNATURE")
+
     return ReposReturn(data=response)
