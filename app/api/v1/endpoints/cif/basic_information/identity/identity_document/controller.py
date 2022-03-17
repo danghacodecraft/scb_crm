@@ -40,7 +40,7 @@ from app.third_parties.oracle.models.master_data.identity import (
 )
 from app.third_parties.oracle.models.master_data.others import Nation, Religion
 from app.utils.constant.cif import (
-    ADDRESS_COUNTRY_CODE_VN, BUSINESS_TYPE_INIT_CIF, CHANNEL_AT_THE_COUNTER,
+    ADDRESS_COUNTRY_CODE_VN, CHANNEL_AT_THE_COUNTER,
     CONTACT_ADDRESS_CODE, CRM_GENDER_TYPE_MALE, CUSTOMER_UNCOMPLETED_FLAG,
     EKYC_DOCUMENT_TYPE_NEW_CITIZEN, EKYC_DOCUMENT_TYPE_NEW_IDENTITY,
     EKYC_DOCUMENT_TYPE_OLD_CITIZEN, EKYC_DOCUMENT_TYPE_OLD_IDENTITY,
@@ -706,13 +706,13 @@ class CtrIdentityDocument(BaseController):
             "maker_at": now()
         }
         ############################################################################################################
-        # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CIF
-        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
-            business_type_id=BUSINESS_TYPE_INIT_CIF
-        )
-
-        (saving_transaction_stage_status, saving_transaction_stage, saving_transaction_daily, saving_transaction_sender,
-         saving_transaction_receiver) = transaction_datas
+        # # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CIF
+        # transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
+        #     business_type_id=BUSINESS_TYPE_INIT_CIF
+        # )
+        #
+        # (saving_transaction_stage_status, saving_transaction_stage, saving_transaction_daily, saving_transaction_sender,
+        #  saving_transaction_receiver) = transaction_datas
 
         request_data = await parse_identity_model_to_dict(
             request=identity_document_request,
@@ -730,11 +730,11 @@ class CtrIdentityDocument(BaseController):
                 saving_customer_contact_address=saving_customer_contact_address,
                 saving_customer_compare_image=saving_customer_compare_image,
                 saving_customer_identity_images=saving_customer_identity_images,
-                saving_transaction_stage_status=saving_transaction_stage_status,
-                saving_transaction_stage=saving_transaction_stage,
-                saving_transaction_daily=saving_transaction_daily,
-                saving_transaction_sender=saving_transaction_sender,
-                saving_transaction_receiver=saving_transaction_receiver,
+                # saving_transaction_stage_status=saving_transaction_stage_status,
+                # saving_transaction_stage=saving_transaction_stage,
+                # saving_transaction_daily=saving_transaction_daily,
+                # saving_transaction_sender=saving_transaction_sender,
+                # saving_transaction_receiver=saving_transaction_receiver,
                 request_data=request_data,
                 session=self.oracle_session
             )
