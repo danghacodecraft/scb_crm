@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 from pydantic import Field
 
@@ -18,3 +18,15 @@ class ProcessInfoResponse(BaseSchema):
 class CifApprovalProcessResponse(BaseSchema):
     created_date: str = Field(..., description="Ngày tạo")
     logs: List[ProcessInfoResponse] = Field(..., description="Danh sách log trong 1 ngày ")
+
+
+class CifApproveRequest(BaseSchema):
+    reject_flag: Optional[bool] = Field(None, description="Cờ từ chối phê duyệt")
+    content: str = Field(..., description="Nội dung phê duyệt")
+
+
+class CifApprovalResponse(BaseSchema):
+    cif_id: str = Field(..., description="Cif ID")
+    previous_stage: Optional[str] = Field(..., description="Bước trước đó")
+    current_stage: str = Field(..., description="Bước hiện tại")
+    next_stage: str = Field(..., description="Bước tiếp theo")
