@@ -175,3 +175,7 @@ def is_valid_number(casa_account_number: str):
     if not regex or len(regex.group()) != len(casa_account_number):
         return False
     return True
+
+
+def convert_string_to_uuidv4(customer_uuid: str) -> str:
+    return f"CRM_{uuid.UUID(customer_uuid)}"

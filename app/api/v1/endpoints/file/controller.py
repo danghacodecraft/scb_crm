@@ -14,12 +14,17 @@ from app.utils.functions import now
 
 
 class CtrFile(BaseController):
-    async def upload_file(self, file_upload: UploadFile):
+    async def upload_file(self, file_upload: UploadFile, ekyc_flag: bool):
         data_file_upload = await file_upload.read()
 
         self.call_validator(await file_validator(data_file_upload))
 
-        info_file = self.call_repos(await repos_upload_file(file=data_file_upload, name=file_upload.filename))
+        info_file = self.call_repos(await repos_upload_file(
+            file=data_file_upload,
+            name=file_upload.filename,
+            ekyc_flag=ekyc_flag
+        ))
+
         info_file['created_at'] = now()
         return self.response(data=info_file)
 
