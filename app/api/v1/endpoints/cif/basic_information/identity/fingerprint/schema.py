@@ -26,3 +26,7 @@ class TwoFingerPrintRequest(BaseSchema):
 
 class CompareFingerPrintRequest(BaseSchema):
     uuid: str = Field(..., description='uuid_ekyc upload file')
+
+
+class CompareFingerPrintResponse(BaseSchema):
+    similarity_percent: int = Field(..., description="Tỷ lệ phần trăm giống nhau")
