@@ -35,11 +35,9 @@ from app.third_parties.oracle.models.master_data.identity import (
     CustomerIdentityType, FingerType, HandSide, PassportCode, PassportType,
     PlaceOfIssue
 )
-from app.third_parties.oracle.models.master_data.others import (
-    Nation, Religion
-)
+from app.third_parties.oracle.models.master_data.others import Nation, Religion
 from app.utils.constant.cif import (
-    ADDRESS_COUNTRY_CODE_VN, BUSINESS_FORM_TTCN_GTDD_GTDD,
+    ACTIVE_FLAG_ACTIVED, ADDRESS_COUNTRY_CODE_VN, BUSINESS_FORM_TTCN_GTDD_GTDD,
     BUSINESS_FORM_TTCN_GTDD_KM, CONTACT_ADDRESS_CODE, CRM_GENDER_TYPE_FEMALE,
     CRM_GENDER_TYPE_MALE, EKYC_GENDER_TYPE_FEMALE,
     EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
@@ -662,6 +660,7 @@ async def create_customer_identity_image_and_customer_compare_image(
             "compare_transaction_parent_id": compare_transaction_parent_id,
             "compare_image_id": saving_customer_compare_image['id'],
             "identity_image_id": saving_customer_compare_image['identity_image_id'],
+            "is_identity_compare": ACTIVE_FLAG_ACTIVED,
             "compare_image_url": saving_customer_compare_image['compare_image_url'],
             "similar_percent": saving_customer_compare_image['similar_percent'],
             "maker_id": saving_customer_compare_image['maker_id'],
