@@ -105,10 +105,10 @@ async def repos_add_finger_ekyc(cif_id: str, uuid: str):
     return ReposReturn(data=response['id'])
 
 
-async def repos_compare_finger_ekyc(cif_id: str, uuid: CompareFingerPrintRequest, session: Session):
+async def repos_get_id_finger_ekyc(cif_id: str, session: Session):
     finger_print_ids = session.execute(
         select(
-            CustomerIdentityImage.ekyc_id
+            CustomerIdentityImage
         )
         .join(
             CustomerIdentity, and_(
@@ -124,11 +124,21 @@ async def repos_compare_finger_ekyc(cif_id: str, uuid: CompareFingerPrintRequest
     if not finger_print_ids:
         return ReposReturn(is_error=True, msg=ERROR_NO_DATA)
 
+    return ReposReturn(data=finger_print_ids)
+
+
+async def repos_compare_finger_ekyc(
+        cif_id: str,
+        uuid: CompareFingerPrintRequest,
+        id_fingers: list,
+        session: Session
+):
     json_body = {
         "uuid": uuid.uuid,
-        "id_fingers": finger_print_ids,
-        "limit": 1
+        "id_fingers": id_fingers,
+        "limit": len(id_fingers)
     }
+
     is_success, response = await service_ekyc.compare_finger_ekyc(cif_id=cif_id, json_body=json_body)
 
     if not is_success:
