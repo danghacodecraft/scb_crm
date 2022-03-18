@@ -9,7 +9,7 @@ from app.api.v1.endpoints.repository import (
 )
 from app.settings.event import service_ekyc
 from app.third_parties.oracle.models.cif.basic_information.identity.model import (
-    CustomerIdentity, CustomerIdentityImage
+    CustomerIdentity, CustomerIdentityImage, CustomerIdentityImageTransaction
 )
 from app.utils.constant.cif import (
     BUSINESS_FORM_TTCN_GTDD_CK, IMAGE_TYPE_CODE_SIGNATURE
@@ -21,13 +21,17 @@ from app.utils.functions import now
 @auto_commit
 async def repos_save_signature(
         cif_id: str,
-        list_data_insert: list,
+        save_identity_image: list,
+        save_identity_image_transaction: list,
         log_data: json,
         session: Session,
         created_by: str
 ) -> ReposReturn:
 
-    session.bulk_save_objects([CustomerIdentityImage(**data_insert) for data_insert in list_data_insert])
+    session.bulk_save_objects([CustomerIdentityImage(**data_insert) for data_insert in save_identity_image])
+    session.bulk_save_objects(
+        [CustomerIdentityImageTransaction(**data_insert) for data_insert in save_identity_image_transaction]
+    )
 
     is_success, booking_response = await write_transaction_log_and_update_booking(
         log_data=log_data,
