@@ -27,7 +27,6 @@ async def repos_save_signature(
         session: Session,
         created_by: str
 ) -> ReposReturn:
-
     session.bulk_save_objects([CustomerIdentityImage(**data_insert) for data_insert in save_identity_image])
     session.bulk_save_objects(
         [CustomerIdentityImageTransaction(**data_insert) for data_insert in save_identity_image_transaction]
@@ -52,15 +51,17 @@ async def repos_save_signature(
 async def repos_get_signature_data(cif_id: str, session: Session) -> ReposReturn:
     query_data = session.execute(
         select(
-            CustomerIdentityImage
-        ).join(
+            CustomerIdentityImageTransaction
+        )
+        .join(CustomerIdentityImage, CustomerIdentityImageTransaction.identity_image_id == CustomerIdentityImage.id)
+        .join(
             CustomerIdentity, and_(
                 CustomerIdentityImage.identity_id == CustomerIdentity.id,
                 CustomerIdentity.customer_id == cif_id
             )
         ).filter(
             CustomerIdentityImage.image_type_id == IMAGE_TYPE_CODE_SIGNATURE
-        ).order_by(desc(CustomerIdentityImage.maker_at))
+        ).order_by(desc(CustomerIdentityImageTransaction.maker_at))
     ).scalars().all()
 
     if not query_data:
