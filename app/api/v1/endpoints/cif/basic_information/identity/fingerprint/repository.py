@@ -12,7 +12,7 @@ from app.api.v1.endpoints.repository import (
 )
 from app.settings.event import service_ekyc
 from app.third_parties.oracle.models.cif.basic_information.identity.model import (
-    CustomerIdentity, CustomerIdentityImage
+    CustomerIdentity, CustomerIdentityImage, CustomerIdentityImageTransaction
 )
 from app.third_parties.oracle.models.master_data.identity import (
     FingerType, HandSide
@@ -30,7 +30,8 @@ async def repos_save_fingerprint(
         identity_id: str,
         log_data: json,
         session: Session,
-        list_data_insert: list,
+        save_identity_image: list,
+        save_identity_image_transaction: list,
         created_by: str
 ) -> ReposReturn:
     # lấy list customer_identity_image theo vân tay
@@ -52,7 +53,8 @@ async def repos_save_fingerprint(
             ).filter(CustomerIdentityImage.id.in_(customer_identity_image))
         )
 
-    session.bulk_save_objects([CustomerIdentityImage(**data_insert) for data_insert in list_data_insert])
+    session.bulk_save_objects([CustomerIdentityImage(**identity_image) for identity_image in save_identity_image])
+    session.bulk_save_objects([CustomerIdentityImageTransaction(**identity_image_transaction) for identity_image_transaction in save_identity_image_transaction])
 
     is_success, booking_response = await write_transaction_log_and_update_booking(
         log_data=log_data,

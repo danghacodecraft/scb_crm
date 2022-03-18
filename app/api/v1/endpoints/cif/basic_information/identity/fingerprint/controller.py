@@ -15,10 +15,10 @@ from app.third_parties.oracle.models.master_data.identity import (
     FingerType, HandSide
 )
 from app.utils.constant.cif import (
-    ACTIVE_FLAG_CREATE_FINGERPRINT, FRONT_FLAG_CREATE_FINGERPRINT,
-    HAND_SIDE_LEFT_CODE, IMAGE_TYPE_FINGERPRINT
+    ACTIVE_FLAG_ACTIVED, ACTIVE_FLAG_CREATE_FINGERPRINT,
+    FRONT_FLAG_CREATE_FINGERPRINT, HAND_SIDE_LEFT_CODE, IMAGE_TYPE_FINGERPRINT
 )
-from app.utils.functions import dropdown, now, parse_file_uuid
+from app.utils.functions import dropdown, generate_uuid, now, parse_file_uuid
 
 
 class CtrFingerPrint(BaseController):
@@ -32,17 +32,22 @@ class CtrFingerPrint(BaseController):
 
         # các uuid cần phải gọi qua service file để check
         image_uuids = []
-        list_data_insert = []
+        save_identity_image = []
+        save_identity_image_transaction = []
 
         identity = self.call_repos(await repos_get_customer_identity(cif_id=cif_id, session=self.oracle_session))
 
         for fingerprint in fingerprints:
+            identity_image_id = generate_uuid()
             uuid = parse_file_uuid(fingerprint.image_url)
+
             fingerprint.image_url = uuid
             image_uuids.append(uuid)
+
             id_ekyc = self.call_repos(await repos_add_finger_ekyc(cif_id=cif_id, uuid=fingerprint.uuid_ekyc))
 
-            list_data_insert.append({
+            save_identity_image.append({
+                "id": identity_image_id,
                 'identity_id': identity.id,
                 'image_type_id': IMAGE_TYPE_FINGERPRINT,
                 'image_url': fingerprint.image_url,
@@ -55,6 +60,14 @@ class CtrFingerPrint(BaseController):
                 'identity_image_front_flag': FRONT_FLAG_CREATE_FINGERPRINT,
                 "ekyc_uuid": fingerprint.uuid_ekyc,
                 "ekyc_id": id_ekyc
+            })
+
+            save_identity_image_transaction.append({
+                "identity_image_id": identity_image_id,
+                "image_url": fingerprint.image_url,
+                "active_flag": ACTIVE_FLAG_ACTIVED,
+                'maker_id': self.current_user.user_id,
+                "maker_at": now()
             })
 
         # gọi qua service file để check exist list uuid
@@ -71,26 +84,14 @@ class CtrFingerPrint(BaseController):
         await self.get_model_objects_by_ids(model_ids=hand_side_ids, model=HandSide, loc='hand_side -> id')
         await self.get_model_objects_by_ids(model_ids=finger_type_ids, model=FingerType, loc='finger_type -> id')
 
-        # list_data_insert = [{
-        #     'identity_id': identity.id,
-        #     'image_type_id': IMAGE_TYPE_FINGERPRINT,
-        #     'image_url': item.image_url,
-        #     'hand_side_id': item.hand_side.id,
-        #     'finger_type_id': item.finger_type.id,
-        #     'vector_data': None,
-        #     'active_flag': ACTIVE_FLAG_CREATE_FINGERPRINT,
-        #     'maker_id': self.current_user.user_id,
-        #     'maker_at': now(),
-        #     'identity_image_front_flag': FRONT_FLAG_CREATE_FINGERPRINT
-        # } for item in fingerprints]
-
         data = self.call_repos(
             await repos_save_fingerprint(
                 cif_id=cif_id,
                 identity_id=identity.id,
                 log_data=finger_request.json(),
                 session=self.oracle_session,
-                list_data_insert=list_data_insert,
+                save_identity_image=save_identity_image,
+                save_identity_image_transaction=save_identity_image_transaction,
                 created_by=self.current_user.full_name_vn
             )
         )
