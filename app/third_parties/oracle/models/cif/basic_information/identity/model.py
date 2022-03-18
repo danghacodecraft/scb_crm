@@ -118,6 +118,13 @@ sys_guid()
     similar_percent = Column(NUMBER(asdecimal=False), nullable=False, comment='Phần trăm tương đồng (range 0-100)')
     maker_id = Column(VARCHAR(36), nullable=False, comment='Mã người thực hiện')
     maker_at = Column(DateTime, nullable=False, comment='Thời gian thực hiện')
+
+    is_identity_compare = Column(NUMBER(1, 0, False), nullable=False, server_default=text("1 "),
+                                 comment='Cờ đánh dấu giấy tờ nằm ở phần GTĐD')
+
+    is_approved = Column(NUMBER(1, 0, False), nullable=False, server_default=text("1 "),
+                         comment='Cờ đánh dấu giấy tờ đã duyệt')
+
     approved_id = Column('approver_id', VARCHAR(36), comment='Mã người duyệt')
     approved_at = Column('approver_at', DateTime, comment='Thời gian duyệt')
 
