@@ -9,6 +9,7 @@ from starlette import status
 from app.settings.config import APPLICATION
 from app.settings.service import SERVICE
 from app.utils.error_messages import ERROR_CALL_SERVICE_EKYC
+from app.utils.functions import convert_string_to_uuidv4
 
 
 class ServiceEKYC:
@@ -423,11 +424,20 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def compare_signature(self, json_body: dict):
+    async def compare_signature(self, cif_id: str, uuid_ekyc: str, sign_uuid: str):
         api_url = f"{self.url}/api/v1/face-service/compare_signature/"
 
+        headers = self.headers
+        # thay đổi giá trị x-transaction-id
+        UUIDV4 = convert_string_to_uuidv4(cif_id)
+        headers['X-TRANSACTION-ID'] = f"CRM_{UUIDV4}"
+
+        json_body = {
+            "image_sign_1_uuid": uuid_ekyc,
+            "image_sign_2_uuid": sign_uuid
+        }
         try:
-            async with self.session.post(url=api_url, json=json_body, headers=self.headers,
+            async with self.session.post(url=api_url, json=json_body, headers=headers,
                                          proxy=self.proxy) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
 
