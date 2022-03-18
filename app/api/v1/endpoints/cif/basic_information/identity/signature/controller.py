@@ -11,7 +11,9 @@ from app.api.v1.endpoints.cif.repository import (
 from app.utils.constant.cif import (
     ACTIVE_FLAG_CREATE_SIGNATURE, IMAGE_TYPE_SIGNATURE
 )
-from app.utils.functions import datetime_to_date, now, parse_file_uuid
+from app.utils.functions import (
+    datetime_to_date, generate_uuid, now, parse_file_uuid
+)
 
 
 class CtrSignature(BaseController):
@@ -36,25 +38,40 @@ class CtrSignature(BaseController):
         await self.check_exist_multi_file(uuids=image_uuids)
 
         identity = self.call_repos(await repos_get_customer_identity(cif_id=cif_id, session=self.oracle_session))
+        save_identity_image = []
+        save_identity_image_transaction = []
+        for signature in signatures.signatures:
+            identity_image_id = generate_uuid()
 
-        list_data_insert = [{
-            'identity_id': identity.id,
-            'image_type_id': IMAGE_TYPE_SIGNATURE,
-            'image_url': signature.image_url,
-            'hand_side_id': None,
-            'finger_type_id': None,
-            'vector_data': None,
-            'active_flag': ACTIVE_FLAG_CREATE_SIGNATURE,
-            'maker_id': self.current_user.user_id,
-            'maker_at': now(),
-            'identity_image_front_flag': None,
-            'ekyc_uuid': signature.uuid_ekyc
-        } for signature in signatures.signatures]
+            save_identity_image.append({
+                'id': identity_image_id,
+                'identity_id': identity.id,
+                'image_type_id': IMAGE_TYPE_SIGNATURE,
+                'image_url': signature.image_url,
+                'hand_side_id': None,
+                'finger_type_id': None,
+                'vector_data': None,
+                'active_flag': ACTIVE_FLAG_CREATE_SIGNATURE,
+                'maker_id': self.current_user.user_id,
+                'maker_at': now(),
+                'identity_image_front_flag': None,
+                'ekyc_uuid': signature.uuid_ekyc,
+                'ekyc_id': None
+            })
+
+            save_identity_image_transaction.append({
+                "identity_image_id": identity_image_id,
+                "image_url": signature.image_url,
+                "active_flag": ACTIVE_FLAG_CREATE_SIGNATURE,
+                'maker_id': self.current_user.user_id,
+                "maker_at": now()
+            })
 
         data = self.call_repos(
             await repos_save_signature(
                 cif_id=cif_id,
-                list_data_insert=list_data_insert,
+                save_identity_image=save_identity_image,
+                save_identity_image_transaction=save_identity_image_transaction,
                 log_data=signatures.json(),
                 session=self.oracle_session,
                 created_by=self.current_user.full_name_vn
