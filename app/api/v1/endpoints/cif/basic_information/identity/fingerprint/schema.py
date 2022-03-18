@@ -29,4 +29,5 @@ class CompareFingerPrintRequest(BaseSchema):
 
 
 class CompareFingerPrintResponse(BaseSchema):
+    image_url: str = Field(..., description='image url')
     similarity_percent: int = Field(..., description="Tỷ lệ phần trăm giống nhau")

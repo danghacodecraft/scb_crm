@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, Path
 from starlette import status
 
@@ -57,7 +59,7 @@ async def view_retrieve_fingerprint(
     name="1. GTĐD - C. Vân tay - So Sánh",
     description="Tìm kiếm vân tay có trong hệ thống",
     responses=swagger_response(
-        response_model=ResponseData[CompareFingerPrintResponse],
+        response_model=ResponseData[List[CompareFingerPrintResponse]],
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -67,5 +69,4 @@ async def view_compare_fingerprint(
         current_user=Depends(get_current_user_from_header())
 ):
     compare_fingerprint = await CtrFingerPrint(current_user).ctr_compare_fingerprint(cif_id=cif_id, uuid=uuid)
-
-    return ResponseData[CompareFingerPrintResponse](**compare_fingerprint)
+    return ResponseData[List[CompareFingerPrintResponse]](**compare_fingerprint)
