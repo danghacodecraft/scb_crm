@@ -58,7 +58,7 @@ async def view_retrieve_signature(
     name="1. GTĐD - D. Chữ ký - So Sánh",
     description="Compare signature",
     responses=swagger_response(
-        response_model=ResponseData[CompareSignatureResponse],
+        response_model=ResponseData[List[CompareSignatureResponse]],
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -68,4 +68,4 @@ async def view_compare_signature(
     current_user=Depends(get_current_user_from_header())
 ):
     compare_signature = await CtrSignature(current_user).ctr_compare_signature(cif_id=cif_id, uuid_ekyc=uuid_ekyc)
-    return ResponseData[CompareSignatureResponse](**compare_signature)
+    return ResponseData[List[CompareSignatureResponse]](**compare_signature)

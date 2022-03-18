@@ -78,23 +78,24 @@ async def repos_compare_signature(cif_id: str, uuid_ekyc: str, session: Session)
         ).filter(
             CustomerIdentityImage.image_type_id == IMAGE_TYPE_CODE_SIGNATURE
         ).order_by(desc(CustomerIdentityImage.maker_at))
-    ).all()
+    ).scalars().all()
+
     if not signature_query:
         return ReposReturn(is_error=True, msg='ERROR_NO_DATA')
 
-    customer_uuid = signature_query[0].CustomerIdentityImage.ekyc_uuid
+    signature_compares = []
 
-    if not customer_uuid:
-        customer_uuid = signature_query[1].CustomerIdentityImage.ekyc_uuid
+    for signature in signature_query:
 
-    json_body = {
-        "image_sign_1_uuid": uuid_ekyc,
-        "image_sign_2_uuid": customer_uuid
-    }
+        is_success, response = await service_ekyc.compare_signature(
+            cif_id=cif_id,
+            uuid_ekyc=uuid_ekyc,
+            sign_uuid=signature.ekyc_uuid
+        )
 
-    is_success, response = await service_ekyc.compare_signature(json_body=json_body)
-
-    if not is_success:
-        return ReposReturn(is_error=True, msg=response['message'], loc="COMPARE_SIGNATURE")
-
-    return ReposReturn(data=response)
+        if is_success:
+            response.update({
+                "image_url": signature.image_url
+            })
+            signature_compares.append(response)
+    return ReposReturn(data=signature_compares)
