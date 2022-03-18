@@ -5,11 +5,14 @@ from loguru import logger
 
 from app.third_parties.services.ekyc import ServiceEKYC
 from app.third_parties.services.file import ServiceFile
+from app.third_parties.services.idm import ServiceIDM
 from app.third_parties.services.soa import ServiceSOA
 
 service_file = ServiceFile()
 service_ekyc = ServiceEKYC()
 service_soa = ServiceSOA()
+service_idm = ServiceIDM()
+
 
 
 def create_start_app_handler(app: FastAPI) -> Callable:  # noqa
@@ -17,6 +20,7 @@ def create_start_app_handler(app: FastAPI) -> Callable:  # noqa
         service_file.start()
         service_ekyc.start()
         service_soa.start()
+        service_idm.start()
     return start_app
 
 
