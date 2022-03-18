@@ -296,8 +296,13 @@ class Stage(Base):
     name = Column('stage_name', VARCHAR(250), comment='Tên bước hiện')
     code = Column('stage_code', VARCHAR(50), comment='Mã bước thực hiện kiểu chữ(vd: IN, DUYET)')
     sla_id = Column(ForeignKey('crm_sla.sla_id'), comment='mã Giai đoạn xử lý')
+
     responsible_flag = Column('stage_responsible_flag', NUMBER(1, 0, False),
                               comment='Cờ người chịu trách nhiệm của bước thực hiện')
+
+    is_reject = Column(NUMBER(1, 0, False), nullable=False, server_default=text("1 "),
+                       comment='Cờ đánh dấu trạng thái TRẢ hồ sơ')
+
     created_at = Column(DateTime, comment='Ngày tạo bước thực hiện')
     updated_at = Column(DateTime, comment='Ngày cập nhật bước thực hiện')
 
