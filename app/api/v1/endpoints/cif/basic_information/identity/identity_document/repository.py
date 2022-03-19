@@ -421,7 +421,7 @@ async def repos_save_identity(
         session.add(
             CustomerIdentity(**saving_customer_identity)
         )
-        is_error, message = await create_customer_identity_image_and_customer_compare_image(
+        is_error, create_response = await create_customer_identity_image_and_customer_compare_image(
             identity_id=new_identity_id,
             new_first_identity_image_id=new_first_identity_image_id,
             new_second_identity_image_id=new_second_identity_image_id,
@@ -431,7 +431,9 @@ async def repos_save_identity(
             session=session
         )
         if is_error:
-            return ReposReturn(is_error=True, msg=message)
+            return ReposReturn(is_error=True, msg=create_response['message'])
+
+        compare_transaction_parent_id = create_response['compare_transaction_parent_id']
 
         if identity_document_type_id != IDENTITY_DOCUMENT_TYPE_PASSPORT:
             # create new CustomerAddress for resident address
@@ -549,6 +551,37 @@ async def repos_save_identity(
         if not is_success:
             return ReposReturn(is_error=True, msg=booking_response['msg'])
 
+        # Tìm CustomerCompareImageTransaction trước đó
+        previous_compare_image_transaction = session.execute(
+            select(
+                CustomerIdentity,
+                CustomerCompareImage,
+                CustomerCompareImageTransaction
+            )
+            .join(CustomerCompareImage, CustomerIdentity.id == CustomerCompareImage.identity_id)
+            .join(CustomerCompareImageTransaction, CustomerCompareImage.id == CustomerCompareImageTransaction.compare_image_id)
+            .filter(CustomerIdentity.customer_id == customer_id)
+            .order_by(desc(CustomerCompareImageTransaction.maker_at))
+        ).first()
+        if not previous_compare_image_transaction:
+            return ReposReturn(is_error=True, detail="Previous Compare Image Transaction is not existed")
+        _, _, compare_image_transaction = previous_compare_image_transaction
+        compare_transaction_parent_id = compare_image_transaction.id
+
+    session.add_all([
+        CustomerCompareImage(**saving_customer_compare_image),
+        CustomerCompareImageTransaction(**{
+            "compare_transaction_parent_id": compare_transaction_parent_id,
+            "compare_image_id": saving_customer_compare_image['id'],
+            "identity_image_id": saving_customer_compare_image['identity_image_id'],
+            "is_identity_compare": ACTIVE_FLAG_ACTIVED,
+            "compare_image_url": saving_customer_compare_image['compare_image_url'],
+            "similar_percent": saving_customer_compare_image['similar_percent'],
+            "maker_id": saving_customer_compare_image['maker_id'],
+            "maker_at": saving_customer_compare_image['maker_at']
+        }),
+    ])
+
     return ReposReturn(data={
         "cif_id": customer_id
     })
@@ -652,23 +685,9 @@ async def create_customer_identity_image_and_customer_compare_image(
             ).scalars().first()
         except Exception as ex:
             logger.error(str(ex))
-            return True, "Write Transaction Error"
+            return True, dict(mesage="Write Transaction Error")
 
-    session.add_all([
-        CustomerCompareImage(**saving_customer_compare_image),
-        CustomerCompareImageTransaction(**{
-            "compare_transaction_parent_id": compare_transaction_parent_id,
-            "compare_image_id": saving_customer_compare_image['id'],
-            "identity_image_id": saving_customer_compare_image['identity_image_id'],
-            "is_identity_compare": ACTIVE_FLAG_ACTIVED,
-            "compare_image_url": saving_customer_compare_image['compare_image_url'],
-            "similar_percent": saving_customer_compare_image['similar_percent'],
-            "maker_id": saving_customer_compare_image['maker_id'],
-            "maker_at": saving_customer_compare_image['maker_at']
-        }),
-    ])
-
-    return False, ""
+    return False, dict(compare_transaction_parent_id=compare_transaction_parent_id)
 
 
 ########################################################################################################################
