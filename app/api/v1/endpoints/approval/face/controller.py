@@ -44,12 +44,9 @@ class CtrApproveFace(BaseController):
         compare_face_images = {}
         compare_face_image_urls = []
         compare_face_image_uuids = []
-        number_of_compare_face_image = 2
+        number_of_compare_face_image = 2  # Số lượng hình trên design
 
-        for index, (
-                customer, customer_identity, customer_identity_image, customer_compare_image,
-                customer_compare_image_transaction
-        ) in enumerate(face_transactions, 1):
+        for index, (_, customer_compare_image_transaction) in enumerate(face_transactions, 1):
             # uuid của service file
             compare_face_images.update({
                 customer_compare_image_transaction.compare_image_id: {
