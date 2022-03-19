@@ -40,6 +40,25 @@ async def repos_login(username: str, password: str) -> ReposReturn:
     key = f"{data_idm['user_info']['username']}:{data_idm['user_info']['token']}"
     key = key.encode('utf-8')
     data_idm['user_info']['token'] = base64.b64encode(key)
+
+    try:
+        # Check has permission in IDM
+        filter_code = list(filter(lambda x: x.get('menu_code') == "CRM", data_idm['menu_list']))[0]
+        filter_group_code = list(filter(lambda x: x.get('group_role_code') == "QUANLY", filter_code['group_role_list']))[0]
+    except IndexError:
+        return ReposReturn(
+            is_error=True,
+            msg="Permission Denied",
+            detail="Permission Denied"
+        )
+    filter_permission_code = list(filter(lambda x: x.get('permission_code') == "ACCESS", filter_group_code['permission_list']))
+
+    if not filter_permission_code or not filter_group_code['is_permission']:
+        return ReposReturn(
+            is_error=True,
+            msg="Permission Denied",
+            detail="Permission Denied"
+        )
     return ReposReturn(data=data_idm)
 
 
@@ -57,7 +76,6 @@ async def repos_check_token(token: str) -> ReposReturn:
             msg=ERROR_CALL_SERVICE_IDM,
             detail="Token is invalid"
         )
-
     return ReposReturn(data=check_token)
 
 
