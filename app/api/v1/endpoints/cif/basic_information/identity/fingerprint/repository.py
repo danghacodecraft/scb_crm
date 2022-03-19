@@ -76,18 +76,20 @@ async def repos_get_data_finger(cif_id: str, session: Session) -> ReposReturn:
     query_data = session.execute(
         select(
             CustomerIdentityImage,
+            CustomerIdentityImageTransaction,
             HandSide,
             FingerType
-        ).join(
+        )
+        .join(
             CustomerIdentity, and_(
                 CustomerIdentityImage.identity_id == CustomerIdentity.id,
                 CustomerIdentity.customer_id == cif_id
             )
-        ).join(
-            HandSide, CustomerIdentityImage.hand_side_id == HandSide.id
-        ).join(
-            FingerType, CustomerIdentityImage.finger_type_id == FingerType.id
-        ).filter(
+        )
+        .join(CustomerIdentityImageTransaction, CustomerIdentityImage.id == CustomerIdentityImageTransaction.identity_image_id)
+        .join(HandSide, CustomerIdentityImage.hand_side_id == HandSide.id)
+        .join(FingerType, CustomerIdentityImage.finger_type_id == FingerType.id)
+        .filter(
             CustomerIdentityImage.image_type_id == IMAGE_TYPE_FINGERPRINT
         ).order_by(CustomerIdentityImage.finger_type_id)
     ).all()

@@ -103,18 +103,18 @@ class CtrFingerPrint(BaseController):
         fingerprint_1 = []
         fingerprint_2 = []
 
-        image_uuids = [finger.image_url for finger, _, _ in fingerprint_data]
+        image_uuids = [row.CustomerIdentityImageTransaction.image_url for row in fingerprint_data]
         uuid__link_downloads = await self.get_link_download_multi_file(uuids=image_uuids)
 
-        for customer_identity_image, hand_side, finger_print in fingerprint_data:
-            customer_identity_image.image_url = uuid__link_downloads[customer_identity_image.image_url]
+        for row in fingerprint_data:
+            row.CustomerIdentityImageTransaction.image_url = uuid__link_downloads[row.CustomerIdentityImageTransaction.image_url]
 
             fingerprint = {
-                'image_url': customer_identity_image.image_url,
-                'hand_side': dropdown(hand_side),
-                'finger_type': dropdown(finger_print)
+                'image_url': row.CustomerIdentityImageTransaction.image_url,
+                'hand_side': dropdown(row.HandSide),
+                'finger_type': dropdown(row.FingerType)
             }
-            if hand_side.code == HAND_SIDE_LEFT_CODE:
+            if row.HandSide.code == HAND_SIDE_LEFT_CODE:
                 fingerprint_1.append(fingerprint)
             else:
                 fingerprint_2.append(fingerprint)
