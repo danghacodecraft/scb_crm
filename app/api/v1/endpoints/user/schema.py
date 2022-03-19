@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import Field
 
@@ -6,16 +6,52 @@ from app.api.base.schema import BaseSchema, CreatedUpdatedBaseModel
 
 
 class UserInfoResponse(BaseSchema):
-    user_id: str = Field(None, description='user_id')
-    avatar_url: str = Field(None, description='image')
+    username: str = Field(None, description='user_id')
+    name: str = Field(None, description='Họ và tên người dùng')
+    code: str = Field(None, description='Mã nhân viên')
+    avatar: str = Field(None, description='image')
     token: str = Field(..., description='Token')
-    username: str = Field(..., description='Tên đăng nhập')
-    full_name_vn: str = Field(..., description='Họ và tên người dùng')
     email: Optional[str] = Field(None, description='Email')
+    hrm_department_id: str = Field(None, description="")
+    hrm_department_code: str = Field(None, description="")
+    hrm_department_name: str = Field(None, description="")
+    hrm_branch_id: str = Field(None, description="")
+    hrm_branch_code: str = Field(None, description="")
+    hrm_branch_name: str = Field(None, description="")
+    hrm_title_id: str = Field(None, description="")
+    hrm_title_code: str = Field(None, description="")
+    hrm_title_name: str = Field(None, description="")
+    hrm_position_id: str = Field(None, description="")
+    hrm_position_code: str = Field(None, description="")
+    hrm_position_name: str = Field(None, description="")
+
+
+class PermissionResponse(BaseSchema):
+    permission_id: str = Field(None, description='ID quyền')
+    permission_name: str = Field(None, description='Tên quyền')
+    permission_code: str = Field(None, description='Mã quyền')
+    active_flag: int = Field(None, description='Cờ')
+
+
+class GroupListResponse(BaseSchema):
+    group_role_id: str = Field(None, description="")
+    group_role_name: str = Field(None, description="")
+    group_role_code: str = Field(None, description="")
+    permission_list: List[PermissionResponse] = Field(..., description="")
+    is_permission: bool = Field(None, description="")
+
+
+class MenuListResponse(BaseSchema):
+    parent_id: str = Field(None, description="")
+    menu_id: str = Field(None, description="")
+    menu_name: str = Field(None, description="")
+    menu_code: str = Field(None, description="")
+    group_role_list: List[GroupListResponse] = Field(..., description='Thông tin biểu mẫu `FATCA`', nullable=True)
 
 
 class AuthResponse(BaseSchema):
     user_info: UserInfoResponse = Field(..., description='Thông tin người dùng')
+    menu_list: List[MenuListResponse] = Field(..., description='Danh sách menu', nullable=True)
 
 
 EXAMPLE_RES_FAIL_LOGIN = {

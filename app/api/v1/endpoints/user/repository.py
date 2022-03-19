@@ -1,3 +1,6 @@
+import base64
+import binascii
+
 from app.api.base.repository import ReposReturn
 from app.settings.event import service_idm
 from app.utils.error_messages import (
@@ -24,6 +27,7 @@ async def repos_get_list_user() -> ReposReturn:
 async def repos_login(username: str, password: str) -> ReposReturn:
     status, data_idm = await service_idm.login(username=username, password=password)
     detail = None
+
     if not status:
         for key, item in data_idm.items():
             detail = data_idm[key][0]
@@ -33,24 +37,28 @@ async def repos_login(username: str, password: str) -> ReposReturn:
             msg=ERROR_CALL_SERVICE_IDM,
             detail=detail
         )
-    data = {
-        "user_info": {
-            "token": data_idm['user_info']['token'],
-            "username": data_idm['user_info']['username'],
-            "email": data_idm['user_info']['email'],
-            "full_name_vn": data_idm['user_info']['name'],
-            "user_id": str(USER_ID),
-            "avatar_url": "cdn/users/avatar/dev1.jpg"
-        }
-    }
-    return ReposReturn(data=data)
+    key = f"{data_idm['user_info']['username']}:{data_idm['user_info']['token']}"
+    key = key.encode('utf-8')
+    data_idm['user_info']['token'] = base64.b64encode(key)
+    return ReposReturn(data=data_idm)
 
 
 async def repos_check_token(token: str) -> ReposReturn:
-    if token == USER_TOKEN:
-        return ReposReturn(data=USER_INFO)
-    else:
+    auth_parts = base64.b64decode(token).decode('utf-8').split(':')
+    try:
+        username, bearer_token = auth_parts[0], auth_parts[1]
+    except (TypeError, UnicodeDecodeError, binascii.Error):
         return ReposReturn(is_error=True, msg=ERROR_INVALID_TOKEN, loc='token')
+    status, check_token = await service_idm.check_token(username=username, bearer_token=bearer_token)
+
+    if not status:
+        return ReposReturn(
+            is_error=True,
+            msg=ERROR_CALL_SERVICE_IDM,
+            detail="Token is invalid"
+        )
+
+    return ReposReturn(data=check_token)
 
 
 async def repos_get_user_info(user_id: str) -> ReposReturn:
