@@ -3,8 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn
 from app.third_parties.oracle.models.cif.basic_information.identity.model import (
-    CustomerCompareImage, CustomerCompareImageTransaction, CustomerIdentity,
-    CustomerIdentityImage
+    CustomerCompareImage, CustomerCompareImageTransaction, CustomerIdentity
 )
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
@@ -18,19 +17,26 @@ async def repos_get_approval_compare_faces(
     """
     Lấy tất cả hình ảnh ở bước GTDD
     """
-    face_compares = session.execute(
+    customer_identities = session.execute(
         select(
             Customer,
             CustomerIdentity,
-            CustomerIdentityImage,
+        )
+        .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id)
+        .filter(Customer.id == cif_id)
+        .order_by(desc(CustomerIdentity.updater_at))
+    ).first()
+
+    _, customer_identity = customer_identities
+    customer_identity_id = customer_identity.id
+    face_compares = session.execute(
+        select(
             CustomerCompareImage,
             CustomerCompareImageTransaction
         )
-        .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id)
-        .join(CustomerCompareImage, CustomerIdentity.id == CustomerCompareImage.identity_id)
         .join(CustomerCompareImageTransaction,
               CustomerCompareImage.id == CustomerCompareImageTransaction.compare_image_id)
-        .filter(Customer.id == cif_id)
+        .filter(CustomerCompareImage.identity_id == customer_identity_id)
         .order_by(desc(CustomerCompareImageTransaction.maker_at))
     ).all()
 

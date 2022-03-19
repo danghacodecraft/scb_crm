@@ -15,6 +15,7 @@ class CtrApproveFace(BaseController):
     async def ctr_upload_face(
             self,
             cif_id: str,
+            amount: int,  # Số lượng hình ảnh so sánh
             image_file: UploadFile
     ):
         # check cif đang tạo
@@ -44,12 +45,10 @@ class CtrApproveFace(BaseController):
         compare_face_images = {}
         compare_face_image_urls = []
         compare_face_image_uuids = []
-        number_of_compare_face_image = 2
+        if amount != 2:
+            amount = amount
 
-        for index, (
-                customer, customer_identity, customer_identity_image, customer_compare_image,
-                customer_compare_image_transaction
-        ) in enumerate(face_transactions, 1):
+        for index, (_, customer_compare_image_transaction) in enumerate(face_transactions, 1):
             # uuid của service file
             compare_face_images.update({
                 customer_compare_image_transaction.compare_image_id: {
@@ -62,7 +61,7 @@ class CtrApproveFace(BaseController):
             # lấy link url của compare face
             compare_face_image_urls.append(customer_compare_image_transaction.compare_image_url)
 
-            if index == number_of_compare_face_image:
+            if index == amount:
                 break
 
         total_face_images = []
