@@ -18,10 +18,6 @@ class CtrApproveFace(BaseController):
             amount: int,  # Số lượng hình ảnh so sánh
             image_file: UploadFile
     ):
-        # cif_id = request.image_file
-        # amount = request.image_file  # Số lượng hình ảnh so sánh
-        # image_file = request.image_file
-
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
 
