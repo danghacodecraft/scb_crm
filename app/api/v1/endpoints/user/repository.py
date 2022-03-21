@@ -39,7 +39,7 @@ async def repos_login(username: str, password: str) -> ReposReturn:
             msg=ERROR_CALL_SERVICE_IDM,
             detail=detail
         )
-    key = f"{data_idm['user_info']['username']}:{data_idm['user_info']['token']}"
+    key = f"{data_idm['user_info']['username']}:{data_idm['user_info']['token']}:{data_idm['user_info']['code']}"
     key = key.encode('utf-8')
     data_idm['user_info']['token'] = base64.b64encode(key)
 
@@ -69,11 +69,11 @@ async def repos_login(username: str, password: str) -> ReposReturn:
 async def repos_check_token(token: str) -> ReposReturn:
     try:
         auth_parts = base64.b64decode(token).decode('utf-8').split(':')
-        username, bearer_token = auth_parts[0], auth_parts[1]
-    except (TypeError, UnicodeDecodeError, binascii.Error):
+        username, bearer_token, user_code = auth_parts[0], auth_parts[1], auth_parts[2]
+    except (TypeError, UnicodeDecodeError, binascii.Error, IndexError):
         return ReposReturn(is_error=True, msg=ERROR_INVALID_TOKEN, loc='token')
 
-    status, check_token = await service_idm.check_token(username=username, bearer_token=bearer_token)
+    status, check_token = await service_idm.check_token(username=username, bearer_token=bearer_token, user_code=user_code)
 
     if not status:
         return ReposReturn(

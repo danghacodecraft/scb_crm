@@ -58,7 +58,7 @@ class ServiceIDM:
             logger.exception(ex)
             return False, {"message": str(ex)}
 
-    async def check_token(self, username, bearer_token) -> (bool, Union[str, Dict]):
+    async def check_token(self, username, bearer_token, user_code) -> (bool, Union[str, Dict]):
         """
         Input: username,token, app_code từ login của CRM
         Output: Thông tin user từ IDM

@@ -15,7 +15,6 @@ class CtrUser(BaseController):
 
     async def ctr_login(self, credentials: HTTPBasicCredentials):
         auth_res = self.call_repos(await repos_login(username=credentials.username, password=credentials.password))
-
         return self.response(data=auth_res)
 
     async def ctr_get_current_user_info(self):
