@@ -1,6 +1,8 @@
 import base64
 import binascii
 
+from starlette import status
+
 from app.api.base.repository import ReposReturn
 from app.settings.event import service_idm
 from app.utils.error_messages import (
@@ -25,10 +27,10 @@ async def repos_get_list_user() -> ReposReturn:
 
 
 async def repos_login(username: str, password: str) -> ReposReturn:
-    status, data_idm = await service_idm.login(username=username, password=password)
+    is_success, data_idm = await service_idm.login(username=username, password=password)
     detail = None
 
-    if not status:
+    if not is_success:
         for key, item in data_idm.items():
             detail = data_idm[key][0]
 
@@ -49,7 +51,8 @@ async def repos_login(username: str, password: str) -> ReposReturn:
         return ReposReturn(
             is_error=True,
             msg="Permission Denied",
-            detail="Permission Denied"
+            detail="Permission Denied",
+            error_status_code=status.HTTP_403_FORBIDDEN
         )
     filter_permission_code = list(filter(lambda x: x.get('permission_code') == "ACCESS", filter_group_code['permission_list']))
 

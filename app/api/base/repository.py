@@ -3,6 +3,7 @@ from typing import Any
 
 from loguru import logger
 from sqlalchemy.exc import SQLAlchemyError
+from starlette import status
 
 from app.utils.error_messages import ERROR_COMMIT
 
@@ -10,6 +11,7 @@ from app.utils.error_messages import ERROR_COMMIT
 @dataclass
 class ReposReturn:
     is_error: bool = False
+    error_status_code: int = status.HTTP_400_BAD_REQUEST
     loc: str = ''
     msg: str = ''
     detail: str = ''

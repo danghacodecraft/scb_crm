@@ -57,7 +57,8 @@ class BaseController:
             self.response_exception(
                 msg=result_call_repos.msg,
                 loc=result_call_repos.loc,
-                detail=result_call_repos.detail
+                detail=result_call_repos.detail,
+                error_status_code=result_call_repos.error_status_code
             )
 
         return result_call_repos.data
