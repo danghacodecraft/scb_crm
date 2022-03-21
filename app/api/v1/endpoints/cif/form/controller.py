@@ -1,7 +1,10 @@
+import ast
+
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.repository import (
-    repos_get_next_receiver, repos_get_next_stage, repos_get_previous_stage,
-    repos_get_stage_information
+    repos_get_begin_transaction_daily, repos_get_next_receiver,
+    repos_get_next_stage, repos_get_previous_stage,
+    repos_get_previous_transaction_daily, repos_get_stage_information
 )
 from app.api.v1.endpoints.cif.form.repository import (
     repos_approval_process, repos_approve
@@ -24,6 +27,151 @@ class CtrForm(BaseController):
     async def ctr_approval_process(self, cif_id: str):
         approval_process = self.call_repos((await repos_approval_process(cif_id)))
         return self.response(approval_process)
+
+    async def ctr_get_approval(self, cif_id: str):
+        # check cif đang tạo
+        self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
+
+        # Kiểm tra xem đang ở bước nào của giao dịch
+        _, _, previous_transaction_daily, previous_transaction_stage, _, previous_transaction_sender = self.call_repos(
+            await repos_get_previous_stage(
+                cif_id=cif_id,
+                session=self.oracle_session
+            ))
+
+        previous_stage_code = None
+        stage_teller = dict()
+        teller_is_completed = False
+        teller_content = None
+        teller_created_at = None
+        teller_created_by = None
+
+        stage_supervisor = dict()
+        supervisor_stage_code = None
+        supervisor_is_disable = True
+        supervisor_is_completed = False
+        supervisor_content = None
+        supervisor_created_at = None
+        supervisor_created_by = None
+
+        stage_audit = dict()
+        audit_stage_code = None
+        audit_is_disable = True
+        audit_is_completed = False
+        audit_content = None
+        audit_created_at = None
+        audit_created_by = None
+
+        if previous_transaction_stage:
+            previous_stage_code = previous_transaction_stage.transaction_stage_phase_code
+
+        stages = []
+        # GDV chưa gửi hồ sơ
+        if not previous_stage_code:
+            teller_is_disable = False
+            teller_stage_code = None
+        # KSV nhận hồ sơ từ GDV
+        elif previous_stage_code == CIF_STAGE_INIT:
+            teller_transaction_daily, teller_transaction_stage, _, _, teller_transaction_sender = self.call_repos(
+                await repos_get_begin_transaction_daily(
+                    cif_id=cif_id,
+                    session=self.oracle_session
+                ))
+            teller_stage_code = previous_stage_code
+            teller_is_disable = False
+            teller_is_completed = True
+            teller_content = ast.literal_eval(teller_transaction_daily.data)["content"]
+            teller_created_at = teller_transaction_daily.created_at
+            teller_created_by = teller_transaction_sender.user_fullname
+
+        # KSS nhận hồ sơ từ KSV
+        elif previous_stage_code == CIF_STAGE_APPROVE_KSV:
+            supervisor_stage_code = previous_stage_code
+            supervisor_transaction_daily = previous_transaction_daily
+            supervisor_transaction_sender = previous_transaction_sender
+            supervisor_is_disable = False
+            supervisor_is_completed = True
+            supervisor_content = ast.literal_eval(supervisor_transaction_daily.data)["content"]
+            supervisor_created_at = supervisor_transaction_daily.created_at
+            supervisor_created_by = supervisor_transaction_sender.user_fullname
+
+            teller_transaction_daily, teller_transaction_sender, teller_transaction_stage, _ = self.call_repos(
+                await repos_get_previous_transaction_daily(
+                    transaction_daily_id=supervisor_transaction_daily.transaction_id,
+                    session=self.oracle_session
+                ))
+            teller_stage_code = teller_transaction_stage.transaction_stage_phase_code
+            teller_is_disable = False
+            teller_is_completed = True
+            teller_content = ast.literal_eval(teller_transaction_daily.data)["content"]
+            teller_created_at = teller_transaction_daily.created_at
+            teller_created_by = teller_transaction_sender.user_fullname
+
+        # KSS đã duyệt hồ sơ
+        else:
+            audit_stage_code = previous_stage_code
+            audit_transaction_daily = previous_transaction_daily
+            audit_transaction_sender = previous_transaction_sender
+            audit_is_disable = False
+            audit_is_completed = True
+            audit_content = ast.literal_eval(audit_transaction_daily.data)["content"]
+            audit_created_at = audit_transaction_daily.created_at
+            audit_created_by = audit_transaction_sender.user_fullname
+
+            supervisor_transaction_daily, supervisor_transaction_sender, supervisor_transaction_stage, _ = self.call_repos(
+                await repos_get_previous_transaction_daily(
+                    transaction_daily_id=audit_transaction_daily.transaction_id,
+                    session=self.oracle_session
+                ))
+            supervisor_stage_code = supervisor_transaction_stage.transaction_stage_phase_code
+            supervisor_is_disable = False
+            supervisor_is_completed = True
+            supervisor_content = ast.literal_eval(supervisor_transaction_daily.data)["content"]
+            supervisor_created_at = supervisor_transaction_daily.created_at
+            supervisor_created_by = supervisor_transaction_sender.user_fullname
+
+            teller_transaction_daily, teller_transaction_sender, teller_transaction_stage, _ = self.call_repos(
+                await repos_get_previous_transaction_daily(
+                    transaction_daily_id=supervisor_transaction_daily.transaction_id,
+                    session=self.oracle_session
+                ))
+            teller_stage_code = teller_transaction_stage.transaction_stage_phase_code
+            teller_is_disable = False
+            teller_is_completed = True
+            teller_content = ast.literal_eval(teller_transaction_daily.data)["content"]
+            teller_created_at = teller_transaction_daily.created_at
+            teller_created_by = teller_transaction_sender.user_fullname
+
+        stage_teller.update(dict(
+            stage_code=teller_stage_code,
+            is_disable=teller_is_disable,
+            is_completed=teller_is_completed,
+            content=teller_content,
+            created_at=teller_created_at,
+            created_by=teller_created_by
+        ))
+        stage_supervisor.update(dict(
+            stage_code=supervisor_stage_code,
+            is_disable=supervisor_is_disable,
+            is_completed=supervisor_is_completed,
+            content=supervisor_content,
+            created_at=supervisor_created_at,
+            created_by=supervisor_created_by
+        ))
+        stage_audit.update(dict(
+            stage_code=audit_stage_code,
+            is_disable=audit_is_disable,
+            is_completed=audit_is_completed,
+            content=audit_content,
+            created_at=audit_created_at,
+            created_by=audit_created_by
+        ))
+
+        stages.extend([stage_teller, stage_supervisor, stage_audit])
+        return self.response(data=dict(
+            cif_id=cif_id,
+            stages=stages
+        ))
 
     async def ctr_approve(
             self,
