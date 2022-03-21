@@ -83,74 +83,77 @@ EXAMPLE_RES_FAIL_LOGIN = {
     }
 }
 
-EXAMPLE_RES_SUCCESS_DETAIL_USER = {
-    "data": {
-        "user_info": {
-            "username": "TUONGHD",
-            "name": "Hồ Đình Tưởng",
-            "code": "00965",
-            "avatar": "/cdn-profile/00965.jpeg",
-            "token": "VFVPTkdIRDo1ZGViNWQzMzdjOGFlODU1NjQ3MTdkZGU2NWY0ODYxOTMwYWU1Yzc1",
-            "email": "tuonghd@scb.com.vn",
-            "hrm_department_id": "12518",
-            "hrm_department_code": "68",
-            "hrm_department_name": "Mảng Phát triển Ứng dụng nội bộ",
-            "hrm_branch_id": "000",
-            "hrm_branch_code": "000",
-            "hrm_branch_name": "HO",
-            "hrm_title_id": "028-146",
-            "hrm_title_code": "028-146",
-            "hrm_title_name": "Giám đốc Phát triển Ứng dụng nội bộ",
-            "hrm_position_id": "028",
-            "hrm_position_code": "028",
-            "hrm_position_name": "Giám đốc Mảng"
-        },
-        "menu_list": [
-            {
-                "parent_id": None,
-                "menu_id": "6bf48caf-fcbe-481c-852c-0e0ce8f0cefc",
-                "menu_name": "Quản lý",
-                "menu_code": "CRM",
-                "group_role_list": [
-                    {
-                        "group_role_id": "6b11731a-dab2-4988-a247-c2abf61e6f8f",
-                        "group_role_name": "Quản lý crm",
-                        "group_role_code": "QUANLY",
-                        "permission_list": [
-                            {
-                                "permission_id": "b0b2afe2-67ba-49d8-a8cf-08b202efb272",
-                                "permission_name": "Đăng nhập",
-                                "permission_code": "ACCESS",
-                                "active_flag": 1
-                            },
-                            {
-                                "permission_id": "391d4698-b403-4dc8-93fd-dc8fe1ee9dde",
-                                "permission_name": "read",
-                                "permission_code": "READ",
-                                "active_flag": 1
-                            },
-                            {
-                                "permission_id": "63124d5c-96ce-407f-81bb-388bb10b8f61",
-                                "permission_name": "edit",
-                                "permission_code": "EDIT",
-                                "active_flag": 1
-                            }
-                        ],
-                        "is_permission": True
-                    }
-                ]
+EXAMPLE_RES_SUCCESS_DETAIL_USER = {"ex1": {
+    "summary": "Đăng nhập thành công",
+    "value": {
+        "data": {
+            "user_info": {
+                "username": "TUONGHD",
+                "name": "Hồ Đình Tưởng",
+                "code": "00965",
+                "avatar": "/cdn-profile/00965.jpeg",
+                "token": "VFVPTkdIRDo1ZGViNWQzMzdjOGFlODU1NjQ3MTdkZGU2NWY0ODYxOTMwYWU1Yzc1",
+                "email": "tuonghd@scb.com.vn",
+                "hrm_department_id": "12518",
+                "hrm_department_code": "68",
+                "hrm_department_name": "Mảng Phát triển Ứng dụng nội bộ",
+                "hrm_branch_id": "000",
+                "hrm_branch_code": "000",
+                "hrm_branch_name": "HO",
+                "hrm_title_id": "028-146",
+                "hrm_title_code": "028-146",
+                "hrm_title_name": "Giám đốc Phát triển Ứng dụng nội bộ",
+                "hrm_position_id": "028",
+                "hrm_position_code": "028",
+                "hrm_position_name": "Giám đốc Mảng"
             },
-            {
-                "parent_id": "6bf48caf-fcbe-481c-852c-0e0ce8f0cefc",
-                "menu_id": "9fc91d04-de5a-4429-b97d-281c09c96729",
-                "menu_name": "Mở CIF",
-                "menu_code": "CIF",
-                "group_role_list": []
-            }
-        ]
-    },
-    "errors": []
-}
+            "menu_list": [
+                {
+                    "parent_id": "null",
+                    "menu_id": "6bf48caf-fcbe-481c-852c-0e0ce8f0cefc",
+                    "menu_name": "Quản lý",
+                    "menu_code": "CRM",
+                    "group_role_list": [
+                        {
+                            "group_role_id": "6b11731a-dab2-4988-a247-c2abf61e6f8f",
+                            "group_role_name": "Quản lý crm",
+                            "group_role_code": "QUANLY",
+                            "permission_list": [
+                                {
+                                    "permission_id": "b0b2afe2-67ba-49d8-a8cf-08b202efb272",
+                                    "permission_name": "Đăng nhập",
+                                    "permission_code": "ACCESS",
+                                    "active_flag": 1
+                                },
+                                {
+                                    "permission_id": "391d4698-b403-4dc8-93fd-dc8fe1ee9dde",
+                                    "permission_name": "read",
+                                    "permission_code": "READ",
+                                    "active_flag": 1
+                                },
+                                {
+                                    "permission_id": "63124d5c-96ce-407f-81bb-388bb10b8f61",
+                                    "permission_name": "edit",
+                                    "permission_code": "EDIT",
+                                    "active_flag": 1
+                                }
+                            ],
+                            "is_permission": True
+                        }
+                    ]
+                },
+                {
+                    "parent_id": "6bf48caf-fcbe-481c-852c-0e0ce8f0cefc",
+                    "menu_id": "9fc91d04-de5a-4429-b97d-281c09c96729",
+                    "menu_name": "Mở CIF",
+                    "menu_code": "CIF",
+                    "group_role_list": []
+                }
+            ]
+        },
+        "errors": []
+    }
+}}
 
 
 ########################################################################################################################
