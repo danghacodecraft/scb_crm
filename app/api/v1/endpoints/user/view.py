@@ -38,7 +38,7 @@ async def view_list_user(
 @router.post(
     path="/login/",
     name="Login",
-    description="Đăng nhập",
+    description="**Đăng nhập:**" + " \n" + "* TUONGHD/Admin@1234",
     responses=swagger_response(
         response_model=ResponseData[AuthResponse],
         success_status_code=status.HTTP_200_OK,
