@@ -145,7 +145,7 @@ class CtrPaymentAccount(BaseController):
             "staff_type_id": STAFF_TYPE_BUSINESS_CODE,
             "acc_salary_org_name": account_salary_organization_account_name,
             "acc_salary_org_acc": account_salary_organization_account_number,
-            "maker_id": self.current_user.user_id,
+            "maker_id": "00965",
             "maker_at": now(),
             "checker_id": 1,
             "checker_at": None,
@@ -161,7 +161,7 @@ class CtrPaymentAccount(BaseController):
                 cif_id=cif_id,
                 data_insert=data_insert,
                 log_data=payment_account_save_request.json(),
-                created_by=self.current_user.full_name_vn,
+                created_by="TUONGHD",
                 session=self.oracle_session,
                 is_created=is_created
             ))

@@ -55,7 +55,7 @@ class CtrFingerPrint(BaseController):
                 'finger_type_id': fingerprint.finger_type.id,
                 'vector_data': None,
                 'active_flag': ACTIVE_FLAG_CREATE_FINGERPRINT,
-                'maker_id': self.current_user.user_id,
+                'maker_id': "00965",
                 'maker_at': now(),
                 'identity_image_front_flag': FRONT_FLAG_CREATE_FINGERPRINT,
                 "ekyc_uuid": fingerprint.uuid_ekyc,
@@ -66,7 +66,7 @@ class CtrFingerPrint(BaseController):
                 "identity_image_id": identity_image_id,
                 "image_url": fingerprint.image_url,
                 "active_flag": ACTIVE_FLAG_ACTIVED,
-                'maker_id': self.current_user.user_id,
+                'maker_id': "00965",
                 "maker_at": now()
             })
 
@@ -92,7 +92,7 @@ class CtrFingerPrint(BaseController):
                 session=self.oracle_session,
                 save_identity_image=save_identity_image,
                 save_identity_image_transaction=save_identity_image_transaction,
-                created_by=self.current_user.full_name_vn
+                created_by="TUONGHD"
             )
         )
         return self.response(data=data)

@@ -40,8 +40,8 @@ from app.third_parties.oracle.models.master_data.identity import (
 )
 from app.third_parties.oracle.models.master_data.others import Nation, Religion
 from app.utils.constant.cif import (
-    ADDRESS_COUNTRY_CODE_VN, CHANNEL_AT_THE_COUNTER,
-    CONTACT_ADDRESS_CODE, CRM_GENDER_TYPE_MALE, CUSTOMER_UNCOMPLETED_FLAG,
+    ADDRESS_COUNTRY_CODE_VN, CHANNEL_AT_THE_COUNTER, CONTACT_ADDRESS_CODE,
+    CRM_GENDER_TYPE_MALE, CUSTOMER_UNCOMPLETED_FLAG,
     EKYC_DOCUMENT_TYPE_NEW_CITIZEN, EKYC_DOCUMENT_TYPE_NEW_IDENTITY,
     EKYC_DOCUMENT_TYPE_OLD_CITIZEN, EKYC_DOCUMENT_TYPE_OLD_IDENTITY,
     EKYC_DOCUMENT_TYPE_PASSPORT, EKYC_GENDER_TYPE_FEMALE,
@@ -291,9 +291,9 @@ class CtrIdentityDocument(BaseController):
             "expired_date": identity_document.expired_date,
             "place_of_issue_id": place_of_issue_id,
             "maker_at": now(),
-            "maker_id": self.current_user.user_id,
+            "maker_id": "00965",
             "updater_at": now(),
-            "updater_id": self.current_user.user_id
+            "updater_id": "00965"
         }
 
         gender_id = basic_information.gender.id
@@ -512,9 +512,9 @@ class CtrIdentityDocument(BaseController):
                     "finger_type_id": None,
                     "vector_data": None,
                     "active_flag": True,
-                    "maker_id": self.current_user.user_id,
+                    "maker_id": "00965",
                     "maker_at": now(),
-                    "updater_id": self.current_user.user_id,
+                    "updater_id": "00965",
                     "updater_at": now(),
                     "identity_image_front_flag": IDENTITY_IMAGE_FLAG_FRONT_SIDE
                 },
@@ -527,9 +527,9 @@ class CtrIdentityDocument(BaseController):
                     "finger_type_id": None,
                     "vector_data": None,
                     "active_flag": True,
-                    "maker_id": self.current_user.user_id,
+                    "maker_id": "00965",
                     "maker_at": now(),
-                    "updater_id": self.current_user.user_id,
+                    "updater_id": "00965",
                     "updater_at": now(),
                     "identity_image_front_flag": IDENTITY_IMAGE_FLAG_BACKSIDE
                 }
@@ -637,9 +637,9 @@ class CtrIdentityDocument(BaseController):
                 "finger_type_id": None,
                 "vector_data": None,
                 "active_flag": True,
-                "maker_id": self.current_user.user_id,
+                "maker_id": "00965",
                 "maker_at": now(),
-                "updater_id": self.current_user.user_id,
+                "updater_id": "00965",
                 "updater_at": now(),
                 "identity_image_front_flag": None
             }]
@@ -702,7 +702,7 @@ class CtrIdentityDocument(BaseController):
             "id": compare_face_uuid_ekyc,
             "compare_image_url": face_compare_image_url,
             "similar_percent": similar_percent,  # gọi qua eKYC để check
-            "maker_id": self.current_user.user_id,
+            "maker_id": "00965",
             "maker_at": now()
         }
         ############################################################################################################

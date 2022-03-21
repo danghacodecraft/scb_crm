@@ -113,7 +113,7 @@ class CtrGuardian(BaseController):
             await repos_save_guardians(
                 cif_id=cif_id,
                 list_data_insert=list_data_insert,
-                created_by=self.current_user.full_name_vn,
+                created_by="TUONGHD",
                 session=self.oracle_session,
                 log_data=log_data,
                 business_form_id=BUSINESS_FORM_TTCN_NGH
