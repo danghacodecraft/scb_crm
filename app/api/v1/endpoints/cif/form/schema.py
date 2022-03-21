@@ -30,3 +30,18 @@ class CifApprovalResponse(BaseSchema):
     previous_stage: Optional[str] = Field(..., description="Bước trước đó")
     current_stage: str = Field(..., description="Bước hiện tại")
     next_stage: str = Field(..., description="Bước tiếp theo")
+
+
+class CIFStageResponse(BaseSchema):
+    stage_code: Optional[str] = Field(..., description="Mã bước giao dịch")
+    is_disable: bool = Field(..., description="Có disable không")
+    is_completed: bool = Field(..., description="Trạng thái phê duyệt")
+    content: Optional[str] = Field(..., description="1. Nội dung phản hồi")
+    action: Optional[str] = Field(None, description="2. Hành động")
+    created_at: Optional[datetime] = Field(..., description="Cập nhật lúc")
+    created_by: Optional[str] = Field(..., description="Cập nhật bởi")
+
+
+class CifApprovalSuccessResponse(BaseSchema):
+    cif_id: str = Field(..., description="Cif ID")
+    stages: List[CIFStageResponse] = Field(..., description="Thông tin các bước phê duyệt")
