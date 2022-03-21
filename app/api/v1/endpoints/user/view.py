@@ -42,7 +42,8 @@ async def view_list_user(
     responses=swagger_response(
         response_model=ResponseData[AuthResponse],
         success_status_code=status.HTTP_200_OK,
-        fail_examples=EXAMPLE_RES_FAIL_LOGIN
+        fail_examples=EXAMPLE_RES_FAIL_LOGIN,
+        success_examples=EXAMPLE_RES_SUCCESS_DETAIL_USER
     ),
 )
 async def view_login(credentials: HTTPBasicCredentials = Depends(security)) -> ResponseData[AuthResponse]:

@@ -60,7 +60,8 @@ async def repos_login(username: str, password: str) -> ReposReturn:
         return ReposReturn(
             is_error=True,
             msg="Permission Denied",
-            detail="Permission Denied"
+            detail="Permission Denied",
+            error_status_code=status.HTTP_403_FORBIDDEN
         )
     return ReposReturn(data=data_idm)
 

@@ -6,47 +6,47 @@ from app.api.base.schema import BaseSchema, CreatedUpdatedBaseModel
 
 
 class UserInfoResponse(BaseSchema):
-    username: str = Field(None, description='user_id')
+    username: str = Field(None, description='Username người dùng')
     name: str = Field(None, description='Họ và tên người dùng')
     code: str = Field(None, description='Mã nhân viên')
-    avatar: str = Field(None, description='image')
+    avatar_url: str = Field(None, description='Avatar url')
     token: str = Field(..., description='Token')
     email: Optional[str] = Field(None, description='Email')
-    hrm_department_id: str = Field(None, description="")
-    hrm_department_code: str = Field(None, description="")
-    hrm_department_name: str = Field(None, description="")
-    hrm_branch_id: str = Field(None, description="")
-    hrm_branch_code: str = Field(None, description="")
-    hrm_branch_name: str = Field(None, description="")
-    hrm_title_id: str = Field(None, description="")
-    hrm_title_code: str = Field(None, description="")
-    hrm_title_name: str = Field(None, description="")
-    hrm_position_id: str = Field(None, description="")
-    hrm_position_code: str = Field(None, description="")
-    hrm_position_name: str = Field(None, description="")
+    hrm_department_id: str = Field(None, description="ID Phòng ban")
+    hrm_department_code: str = Field(None, description="Mã Phòng ban")
+    hrm_department_name: str = Field(None, description="Tên Phòng ban")
+    hrm_branch_id: str = Field(None, description="ID Chi nhánh/Hội sở")
+    hrm_branch_code: str = Field(None, description="Mã Chi nhánh/Hội sở")
+    hrm_branch_name: str = Field(None, description="Tên Chi nhánh/Hội sở")
+    hrm_title_id: str = Field(None, description="ID Chức danh")
+    hrm_title_code: str = Field(None, description="Mã Chức danh")
+    hrm_title_name: str = Field(None, description="Tên Chức danh")
+    hrm_position_id: str = Field(None, description="ID Chức vụ")
+    hrm_position_code: str = Field(None, description="Mã Chức vụ")
+    hrm_position_name: str = Field(None, description="Tên Chức vụ")
 
 
 class PermissionResponse(BaseSchema):
     permission_id: str = Field(None, description='ID quyền')
     permission_name: str = Field(None, description='Tên quyền')
     permission_code: str = Field(None, description='Mã quyền')
-    active_flag: int = Field(None, description='Cờ')
+    active_flag: int = Field(None, description='Cờ họat động')
 
 
 class GroupListResponse(BaseSchema):
-    group_role_id: str = Field(None, description="")
-    group_role_name: str = Field(None, description="")
-    group_role_code: str = Field(None, description="")
-    permission_list: List[PermissionResponse] = Field(..., description="")
-    is_permission: bool = Field(None, description="")
+    group_role_id: str = Field(None, description="ID Nhóm quyền")
+    group_role_name: str = Field(None, description="Tên Nhóm quyền")
+    group_role_code: str = Field(None, description="Mã Nhóm quyền")
+    permission_list: List[PermissionResponse] = Field(..., description="Danh sách quyền")
+    is_permission: bool = Field(None, description="Cờ có quyền hay không")
 
 
 class MenuListResponse(BaseSchema):
-    parent_id: str = Field(None, description="")
-    menu_id: str = Field(None, description="")
-    menu_name: str = Field(None, description="")
-    menu_code: str = Field(None, description="")
-    group_role_list: List[GroupListResponse] = Field(..., description='Thông tin biểu mẫu `FATCA`', nullable=True)
+    parent_id: str = Field(None, description="ID Menu cha")
+    menu_id: str = Field(None, description="ID Menu")
+    menu_name: str = Field(None, description="Tên Menu")
+    menu_code: str = Field(None, description="Mã Menu")
+    group_role_list: List[GroupListResponse] = Field(..., description='Danh sách `Nhóm quyền`', nullable=True)
 
 
 class AuthResponse(BaseSchema):
@@ -84,28 +84,78 @@ EXAMPLE_RES_FAIL_LOGIN = {
 }
 
 EXAMPLE_RES_SUCCESS_DETAIL_USER = {
-    "ex1": {
-        "summary": "Lấy thông tin thành công",
-        "value": {
-            "data": {
-                "user_id": "9651cdfd9a9a4eb691f9a3a125ac46b0",
-                "username": "dev1",
-                "full_name_vn": "Developer 1",
-                "avatar_url": "cdn/users/avatar/dev1.jpg"
+    "data": {
+        "user_info": {
+            "username": "TUONGHD",
+            "name": "Hồ Đình Tưởng",
+            "code": "00965",
+            "avatar": "/cdn-profile/00965.jpeg",
+            "token": "VFVPTkdIRDo1ZGViNWQzMzdjOGFlODU1NjQ3MTdkZGU2NWY0ODYxOTMwYWU1Yzc1",
+            "email": "tuonghd@scb.com.vn",
+            "hrm_department_id": "12518",
+            "hrm_department_code": "68",
+            "hrm_department_name": "Mảng Phát triển Ứng dụng nội bộ",
+            "hrm_branch_id": "000",
+            "hrm_branch_code": "000",
+            "hrm_branch_name": "HO",
+            "hrm_title_id": "028-146",
+            "hrm_title_code": "028-146",
+            "hrm_title_name": "Giám đốc Phát triển Ứng dụng nội bộ",
+            "hrm_position_id": "028",
+            "hrm_position_code": "028",
+            "hrm_position_name": "Giám đốc Mảng"
+        },
+        "menu_list": [
+            {
+                "parent_id": None,
+                "menu_id": "6bf48caf-fcbe-481c-852c-0e0ce8f0cefc",
+                "menu_name": "Quản lý",
+                "menu_code": "CRM",
+                "group_role_list": [
+                    {
+                        "group_role_id": "6b11731a-dab2-4988-a247-c2abf61e6f8f",
+                        "group_role_name": "Quản lý crm",
+                        "group_role_code": "QUANLY",
+                        "permission_list": [
+                            {
+                                "permission_id": "b0b2afe2-67ba-49d8-a8cf-08b202efb272",
+                                "permission_name": "Đăng nhập",
+                                "permission_code": "ACCESS",
+                                "active_flag": 1
+                            },
+                            {
+                                "permission_id": "391d4698-b403-4dc8-93fd-dc8fe1ee9dde",
+                                "permission_name": "read",
+                                "permission_code": "READ",
+                                "active_flag": 1
+                            },
+                            {
+                                "permission_id": "63124d5c-96ce-407f-81bb-388bb10b8f61",
+                                "permission_name": "edit",
+                                "permission_code": "EDIT",
+                                "active_flag": 1
+                            }
+                        ],
+                        "is_permission": True
+                    }
+                ]
             },
-            "errors": []
-        }
-    }
+            {
+                "parent_id": "6bf48caf-fcbe-481c-852c-0e0ce8f0cefc",
+                "menu_id": "9fc91d04-de5a-4429-b97d-281c09c96729",
+                "menu_name": "Mở CIF",
+                "menu_code": "CIF",
+                "group_role_list": []
+            }
+        ]
+    },
+    "errors": []
 }
 
 
 ########################################################################################################################
 # update user
 ########################################################################################################################
-
-class AuthRequest(BaseSchema):
-    username: str = Field(..., alias="username")
-    password: str = Field(..., min_length=8, alias="password")
 
 
 class UserUpdateRequest(BaseSchema):
