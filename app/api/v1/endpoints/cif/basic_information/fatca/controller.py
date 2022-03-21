@@ -148,9 +148,10 @@ class CtrFatca(BaseController):
 
             file_uuid = download_file['uuid']
             file_info = await service_file.get_file_info(file_uuid)
+            code_name = (download_file['file_name']).split(".")[0].upper()
             en_documents.append(dict(
                 id=file_uuid,
-                code=download_file['file_name'],
+                code=code_name,
                 name=download_file['file_name'],
                 size=file_info['size'],
                 url=download_file['file_url'],
