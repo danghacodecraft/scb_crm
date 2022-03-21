@@ -9,7 +9,7 @@ from app.third_parties.oracle.models.master_data.others import (
     Lane, Phase, Stage, StageLane, StagePhase, StageRole, StageStatus,
     TransactionStage, TransactionStageStatus
 )
-from app.utils.constant.approval import CIF_STAGE_COMPLETED, CIF_STAGE_INIT
+from app.utils.constant.approval import CIF_STAGE_APPROVE_KSS, CIF_STAGE_INIT
 from app.utils.error_messages import (
     ERROR_BEGIN_STAGE_NOT_EXIST, ERROR_NEXT_RECEIVER_NOT_EXIST,
     ERROR_NEXT_STAGE_NOT_EXIST
@@ -74,7 +74,7 @@ async def repos_get_previous_stage(
 ):
     """
     Trả về thông tin Stage đã lưu trong DB trước đó
-    Output: BookingCustomer, Booking, TransactionDaily, TransactionStage, TransactionStageStatus
+    Output: BookingCustomer, Booking, TransactionDaily, TransactionStage, TransactionStageStatus, TransactionSender
     """
     previous_stage_info = session.execute(
         select(
@@ -185,7 +185,7 @@ async def repos_get_stage_information(
 
 async def repos_get_next_receiver(
         business_type_id: str,
-        stage_id: str,
+        current_stage_id: str,
         reject_flag: bool,
         session: Session
 ):
@@ -212,18 +212,18 @@ async def repos_get_next_receiver(
             )
             .join(StageLane, Stage.id == StageLane.stage_id)
             .filter(
-                Stage.parent_id == stage_id
+                Stage.parent_id == current_stage_id
             )
         ).first()
 
         if not next_receiver:
-            if stage_id == CIF_STAGE_COMPLETED:
+            if current_stage_id == CIF_STAGE_APPROVE_KSS:
                 return ReposReturn(data=None)
 
             return ReposReturn(
                 is_error=True,
                 msg=ERROR_NEXT_RECEIVER_NOT_EXIST,
-                detail=f"business_type_id: {business_type_id}, stage_id: {stage_id}"
+                detail=f"business_type_id: {business_type_id}, stage_id: {current_stage_id}"
             )
         _, next_receiver = next_receiver
 

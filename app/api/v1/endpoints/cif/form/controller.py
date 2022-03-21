@@ -186,7 +186,7 @@ class CtrForm(BaseController):
         business_type_id = BUSINESS_TYPE_INIT_CIF
         current_user = self.current_user
 
-        _, _, _, previous_transaction_stage, _ = self.call_repos(
+        _, _, _, previous_transaction_stage, _, _ = self.call_repos(
             await repos_get_previous_stage(
                 cif_id=cif_id,
                 session=self.oracle_session
@@ -367,7 +367,7 @@ class CtrForm(BaseController):
         receiver_branch = None
         receiver_lane = self.call_repos(await repos_get_next_receiver(
             business_type_id=business_type_id,
-            stage_id=next_stage_code,
+            current_stage_id=current_stage_code,
             reject_flag=reject_flag,
             session=self.oracle_session
         ))
