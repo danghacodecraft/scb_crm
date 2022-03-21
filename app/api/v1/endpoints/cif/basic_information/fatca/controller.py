@@ -6,11 +6,13 @@ from app.api.v1.endpoints.cif.basic_information.fatca.schema import (
     FatcaRequest
 )
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
+from app.settings.event import service_file
 from app.third_parties.oracle.models.master_data.others import FatcaCategory
 from app.utils.constant.cif import (
     LANGUAGE_ID_EN, LANGUAGE_ID_VN, LANGUAGE_TYPE_EN, LANGUAGE_TYPE_VN
 )
-from app.utils.functions import generate_uuid
+from app.utils.constant.tms_dms import TMS_DMS_DATETIME_FORMAT
+from app.utils.functions import generate_uuid, string_to_datetime
 
 
 class CtrFatca(BaseController):
@@ -130,29 +132,39 @@ class CtrFatca(BaseController):
                     fatca_information[fatca_category.id]["document_depend_language"][LANGUAGE_TYPE_VN] = document
 
         # TODO : xét cứng dữ liệu language -> chưa thấy table lưu
+
+        list_uuid = [
+            "2241329a624349cebfef8b79c074f789",
+            "75f07b53cc16441094f26a7eb286f3e3",
+            "76d713361b8e42a4822e6edc75903830",
+            "016667da70854d0cbc22787f97eddb0e",
+            "d4512a424431435aa8cff41ac4ed9620",
+            "6bb788ca97c84165a7260d9424a4e8c5",
+            "1fc561187b38443ab9f717077178390f"
+        ]
         en_documents = []
-        vi_documents = []
-        for fatca_category_id, fatca_category_data in fatca_information.items():
-            en_document = fatca_category_data['document_depend_language'].get(LANGUAGE_TYPE_EN)
-            vi_document = fatca_category_data['document_depend_language'].get(LANGUAGE_TYPE_VN)
+        download_files = await service_file.download_multi_file(list_uuid)
+        for download_file in download_files:
 
-            en_documents.append(
-                {
-                    "id": fatca_category_data['id'],
-                    "code": fatca_category_data['code'],
-                    "name": fatca_category_data['name'],
-                    "document": en_document
-                }
-            )
+            file_uuid = download_file['uuid']
+            file_info = await service_file.get_file_info(file_uuid)
+            code_name = (download_file['file_name']).split(".")[0].upper()
+            en_documents.append(dict(
+                id=file_uuid,
+                code=code_name,
+                name=download_file['file_name'],
+                size=file_info['size'],
+                url=download_file['file_url'],
+                version=file_info['version'],
+                created_by=file_info['created_by'],
+                created_at=string_to_datetime(string=file_info['created_at'], _format=TMS_DMS_DATETIME_FORMAT),
+                updated_by=file_info['updated_by'],
+                updated_at=string_to_datetime(string=file_info['updated_at'], _format=TMS_DMS_DATETIME_FORMAT),
+                # note=file_info['note']
+                content_type=file_info['content_type']
+            ))
+        vi_documents = en_documents
 
-            vi_documents.append(
-                {
-                    "id": fatca_category_data['id'],
-                    "code": fatca_category_data['code'],
-                    "name": fatca_category_data['name'],
-                    "document": vi_document
-                }
-            )
         return self.response(data={
             "fatca_information": list(fatca_information.values()),
             "document_information": [

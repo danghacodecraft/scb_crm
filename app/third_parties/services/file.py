@@ -145,3 +145,21 @@ class ServiceFile:
             return file_url.replace(f'{file_url_parse_result.scheme}://{file_url_parse_result.netloc}', self.cdn)
         else:
             return file_url
+
+    async def get_file_info(self, uuid: str) -> Optional[dict]:
+        api_url = f"{self.url}/api/v1/files/{uuid}/"
+
+        try:
+            async with self.session.get(url=api_url, headers=self.headers) as response:
+                logger.log("SERVICE", f"[FILE] {response.status} : {api_url}")
+
+                if response.status != status.HTTP_200_OK:
+                    return None
+
+                file_info_response_body = await response.json()
+
+        except Exception as ex:
+            logger.error(str(ex))
+            return None
+
+        return file_info_response_body
