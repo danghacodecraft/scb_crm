@@ -67,11 +67,12 @@ async def repos_login(username: str, password: str) -> ReposReturn:
 
 
 async def repos_check_token(token: str) -> ReposReturn:
-    auth_parts = base64.b64decode(token).decode('utf-8').split(':')
     try:
+        auth_parts = base64.b64decode(token).decode('utf-8').split(':')
         username, bearer_token = auth_parts[0], auth_parts[1]
     except (TypeError, UnicodeDecodeError, binascii.Error):
         return ReposReturn(is_error=True, msg=ERROR_INVALID_TOKEN, loc='token')
+
     status, check_token = await service_idm.check_token(username=username, bearer_token=bearer_token)
 
     if not status:
