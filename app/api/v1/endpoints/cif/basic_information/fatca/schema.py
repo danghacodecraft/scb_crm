@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List
 
 from pydantic import Field
 
@@ -48,30 +48,23 @@ class CategoryDropdownResponse(BaseSchema):
     select_flag: bool = Field(False, description='`False`: Có. `True`: Không của loại Fatca')
 
 
-class DocumentsResponse(BaseSchema):
-    id: str = Field(..., description='Mã biểu mẫu')
-    name: str = Field(..., description='Tên biểu mẫu')
+class DocumentDependFatcaCategoryResponse(BaseSchema):
+    id: str = Field(..., description='`Chuỗi định danh` loại Fatca')
+    code: str = Field(..., description='`Mã` loại Fatca')
+    name: str = Field(..., description='`Tên` loại Fatca')
     url: str = Field(..., description='Đường dẫn biểu mẫu')
-    active_flag: bool = Field(..., description='Trạng thái biểu mẫu')
+    # active_flag: bool = Field(..., description='Trạng thái biểu mẫu')
     version: str = Field(..., description='Phiên bản biểu mẫu')
     content_type: str = Field(..., description='Loại biểu mẫu')
     size: str = Field(..., description='Kích thước biểu mẫu')
-    folder_name: str = Field(..., description='Thư mục biểu mẫu')
+    # folder_name: str = Field(..., description='Thư mục biểu mẫu')
     created_by: str = Field(..., description='Người tạo biểu mẫu')
     created_at: datetime = Field(..., description='Tạo mới vào lúc, format dạng: `YYYY-mm-dd HH:MM:SS`',
                                  example='2021-15-12 06:07:08')
     updated_by: str = Field(..., description='Người cập nhật biểu mẫu')
     updated_at: datetime = Field(..., description='Cập nhật vào lúc, format dạng: `YYYY-mm-dd HH:MM:SS`',
                                  example='2021-15-12 06:07:08')
-    note: str = Field(..., description='Mô tả biểu mẫu')
-
-
-class DocumentDependFatcaCategoryResponse(BaseSchema):
-    id: str = Field(..., description='`Chuỗi định danh` loại Fatca')
-    code: str = Field(..., description='`Mã` loại Fatca')
-    name: str = Field(..., description='`Tên` loại Fatca')
-    document: Optional[DocumentsResponse] = Field(..., description='Thông tin biểu mẫu `FATCA` tương ứng loại Fatca',
-                                                  nullable=True)
+    # note: str = Field(..., description='Mô tả biểu mẫu')
 
 
 class DocumentsListResponse(BaseSchema):
