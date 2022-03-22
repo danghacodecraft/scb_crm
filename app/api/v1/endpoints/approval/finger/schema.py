@@ -16,5 +16,5 @@ class FingerBase(BaseSchema):
 
 
 class FingersResponse(BaseSchema):
-    hand_side_left: List[FingerBase] = Field(..., description='Mẫu vân tay 1')
-    hand_side_right: List[FingerBase] = Field(..., description='Mẫu vân tay 2')
+    left_hand: List[FingerBase] = Field(..., description='Mẫu vân tay trái')
+    right_hand: List[FingerBase] = Field(..., description='Mẫu vân tay phải')
