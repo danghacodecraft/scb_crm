@@ -115,7 +115,7 @@ class CtrSignature(BaseController):
             cif_id=cif_id,
             uuid_ekyc=uuid_compare_ekyc,
             session=self.oracle_session,
-            user_id=self.current_user.user_id
+            user_id=self.current_user.code
         ))
         image_uuids = [signature['image_url'] for signature in compare_signatures]
         # gọi đến service file để lấy link download
