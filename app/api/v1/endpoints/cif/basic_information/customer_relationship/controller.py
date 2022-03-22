@@ -90,7 +90,7 @@ class CtrCustomerRelationship(BaseController):
             await repos_save_guardians(
                 cif_id=cif_id,
                 list_data_insert=list_data_insert,
-                created_by="TUONGHD",
+                created_by=self.current_user.username,
                 session=self.oracle_session,
                 relationship_type=CUSTOMER_RELATIONSHIP_TYPE_CUSTOMER_RELATIONSHIP,
                 log_data=log_data,

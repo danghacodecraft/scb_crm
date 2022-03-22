@@ -135,7 +135,7 @@ class CtrPersonal(BaseController):
                 list_contact_type_data=list_contact_type_data,
                 log_data=personal_request.json(),
                 session=self.oracle_session,
-                created_by="TUONGHD"
+                created_by=self.current_user.username
             )
         )
 
