@@ -52,7 +52,7 @@ class CtrSignature(BaseController):
                 'finger_type_id': None,
                 'vector_data': None,
                 'active_flag': ACTIVE_FLAG_CREATE_SIGNATURE,
-                'maker_id': self.current_user.user_id,
+                'maker_id': self.current_user.code,
                 'maker_at': now(),
                 'identity_image_front_flag': None,
                 'ekyc_uuid': signature.uuid_ekyc,
@@ -63,7 +63,7 @@ class CtrSignature(BaseController):
                 "identity_image_id": identity_image_id,
                 "image_url": signature.image_url,
                 "active_flag": ACTIVE_FLAG_CREATE_SIGNATURE,
-                'maker_id': self.current_user.user_id,
+                'maker_id': self.current_user.code,
                 "maker_at": now()
             })
 
@@ -74,7 +74,7 @@ class CtrSignature(BaseController):
                 save_identity_image_transaction=save_identity_image_transaction,
                 log_data=signatures.json(),
                 session=self.oracle_session,
-                created_by=self.current_user.full_name_vn
+                created_by=self.current_user.username
             )
         )
 

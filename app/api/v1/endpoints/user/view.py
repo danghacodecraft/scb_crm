@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Body, Depends
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from starlette import status
 
 from app.api.base.schema import PagingResponse, ResponseData
@@ -9,11 +10,12 @@ from app.api.v1.endpoints.user.controller import CtrUser
 from app.api.v1.endpoints.user.schema import (
     EXAMPLE_REQ_UPDATE_USER, EXAMPLE_RES_FAIL_LOGIN,
     EXAMPLE_RES_FAIL_UPDATE_USER, EXAMPLE_RES_SUCCESS_DETAIL_USER,
-    EXAMPLE_RES_SUCCESS_UPDATE_USER, AuthRequest, AuthResponse,
-    UserInfoResponse, UserUpdateRequest, UserUpdateResponse
+    EXAMPLE_RES_SUCCESS_UPDATE_USER, AuthResponse, UserInfoResponse,
+    UserUpdateRequest, UserUpdateResponse
 )
 
 router = APIRouter()
+security = HTTPBasic()
 
 
 @router.get(
@@ -36,15 +38,17 @@ async def view_list_user(
 @router.post(
     path="/login/",
     name="Login",
-    description="Đăng nhập",
+    description="**Đăng nhập:**" + " \n" + "* TUONGHD/Admin@1234",
     responses=swagger_response(
         response_model=ResponseData[AuthResponse],
         success_status_code=status.HTTP_200_OK,
-        fail_examples=EXAMPLE_RES_FAIL_LOGIN
+        fail_examples=EXAMPLE_RES_FAIL_LOGIN,
+        success_examples=EXAMPLE_RES_SUCCESS_DETAIL_USER
     ),
 )
-async def view_login(data_login: AuthRequest = Body(..., example={"username": "BICHNTN", "password": "Scb@1234"})):
-    data = await CtrUser(is_init_oracle_session=False).ctr_login(data_login)
+async def view_login(credentials: HTTPBasicCredentials = Depends(security)) -> ResponseData[AuthResponse]:
+    # Header(..., example={"username": "THANGHD", "password": "Admin@123"})):
+    data = await CtrUser(is_init_oracle_session=False).ctr_login(credentials)
     return ResponseData[AuthResponse](**data)
 
 

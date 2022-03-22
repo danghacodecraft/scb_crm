@@ -198,7 +198,7 @@ class CtrEBanking(BaseController):
                 balance_noti=data_eb_reg_balance_noti,
                 account_info=data_account_info,
                 auth_method=auth_method,
-                created_by=self.current_user.full_name_vn
+                created_by=self.current_user.username
             )
         )
 

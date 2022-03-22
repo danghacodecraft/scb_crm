@@ -115,7 +115,7 @@ class CtrSubIdentityDocument(BaseController):
         for _, old_sub_identity_image in old_sub_identities_and_sub_identity_images:
             old_sub_identity_id__image_ids[old_sub_identity_image.identity_id] = old_sub_identity_image.id
 
-        saved_by = self.current_user.full_name_vn
+        saved_by = self.current_user.username
 
         # Giấy tờ định danh phụ:
         # + Nếu có gửi lên id là chỉnh sửa
