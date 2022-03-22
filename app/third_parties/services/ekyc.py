@@ -34,12 +34,16 @@ class ServiceEKYC:
     async def ocr_identity_document(self, file: bytes, filename: str, identity_type: int) -> Tuple[bool, dict]:
         api_url = f"{self.url}/api/v1/card-service/ocr/"
 
+        headers = self.headers
+        # thay đổi giá trị x-transaction-id
+        headers['X-TRANSACTION-ID'] = "CRM_"
+
         form_data = aiohttp.FormData()
         form_data.add_field("file", value=file, filename=filename)
         form_data.add_field("type", value=str(identity_type))
 
         try:
-            async with self.session.post(url=api_url, data=form_data, headers=self.headers,
+            async with self.session.post(url=api_url, data=form_data, headers=headers,
                                          proxy=self.proxy) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
@@ -64,8 +68,12 @@ class ServiceEKYC:
         form_data = aiohttp.FormData()
         form_data.add_field("file", value=file, filename='abc.jpg')
 
+        headers = self.headers
+        # thay đổi giá trị x-transaction-id
+        headers['X-TRANSACTION-ID'] = "CRM_"
+
         try:
-            async with self.session.post(url=api_url, data=form_data, headers=self.headers,
+            async with self.session.post(url=api_url, data=form_data, headers=headers,
                                          proxy=self.proxy) as response:
                 logger.log("SERVICE", f"[ADD FACE] {response.status} : {api_url}")
                 if response.status == status.HTTP_201_CREATED:
@@ -95,13 +103,17 @@ class ServiceEKYC:
         """
         api_url = f"{self.url}/api/v1/face-service/compare/"
 
+        headers = self.headers
+        # thay đổi giá trị x-transaction-id
+        headers['X-TRANSACTION-ID'] = "CRM_"
+
         data = {
             "image_face_1_uuid": face_uuid,
             "image_face_2_uuid": avatar_image_uuid
         }
 
         try:
-            async with self.session.post(url=api_url, json=data, headers=self.headers, proxy=self.proxy) as response:
+            async with self.session.post(url=api_url, json=data, headers=headers, proxy=self.proxy) as response:
                 logger.log("SERVICE", f"[COMPARE FACE] {response.status} : {api_url}")
 
                 if response.status == status.HTTP_200_OK:
@@ -128,6 +140,10 @@ class ServiceEKYC:
     async def validate(self, data, document_type):
         api_url = f"{self.url}/api/v1/card-service/validate/"
 
+        headers = self.headers
+        # thay đổi giá trị x-transaction-id
+        headers['X-TRANSACTION-ID'] = "CRM_"
+
         is_success = True
         request_body = {
             "document_type": document_type,
@@ -135,7 +151,7 @@ class ServiceEKYC:
         }
 
         try:
-            async with self.session.post(url=api_url, json=request_body, headers=self.headers,
+            async with self.session.post(url=api_url, json=request_body, headers=headers,
                                          proxy=self.proxy) as response:
                 logger.log("SERVICE", f"[VALIDATE] {response.status} : {api_url}")
                 if response.status != status.HTTP_200_OK:
@@ -157,8 +173,12 @@ class ServiceEKYC:
     async def get_list_kss(self, query_data):
         api_url = f"{self.url}/api/v1/customer-service/crm/"
 
+        headers = self.headers
+        # thay đổi giá trị x-transaction-id
+        headers['X-TRANSACTION-ID'] = "CRM_"
+
         try:
-            async with self.session.get(url=api_url, headers=self.headers, params=query_data,
+            async with self.session.get(url=api_url, headers=headers, params=query_data,
                                         proxy=self.proxy) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
@@ -177,8 +197,13 @@ class ServiceEKYC:
 
     async def get_list_branch(self, query_param: dict):
         api_url = f"{self.url}/api/v1/customer-service/crm/branch"
+
+        headers = self.headers
+        # thay đổi giá trị x-transaction-id
+        headers['X-TRANSACTION-ID'] = "CRM_"
+
         try:
-            async with self.session.get(url=api_url, headers=self.headers, params=query_param,
+            async with self.session.get(url=api_url, headers=headers, params=query_param,
                                         proxy=self.proxy) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
@@ -197,8 +222,12 @@ class ServiceEKYC:
     async def get_list_zone(self):
         api_url = f"{self.url}/api/v1/customer-service/crm/zone/"
 
+        headers = self.headers
+        # thay đổi giá trị x-transaction-id
+        headers['X-TRANSACTION-ID'] = "CRM_"
+
         try:
-            async with self.session.get(url=api_url, headers=self.headers, proxy=self.proxy) as response:
+            async with self.session.get(url=api_url, headers=headers, proxy=self.proxy) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
@@ -223,8 +252,13 @@ class ServiceEKYC:
 
     async def get_statistics_profiles(self):
         api_url = f"{self.url}/api/v1/customer-service/crm/profilestatistics"
+
+        headers = self.headers
+        # thay đổi giá trị x-transaction-id
+        headers['X-TRANSACTION-ID'] = "CRM_"
+
         try:
-            async with self.session.get(url=api_url, headers=self.headers, proxy=self.proxy) as response:
+            async with self.session.get(url=api_url, headers=headers, proxy=self.proxy) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
@@ -243,11 +277,15 @@ class ServiceEKYC:
     async def get_statistics_months(self, months: int):
         api_url = f"{self.url}/api/v1/customer-service/crm/statisticsbymonth/"
 
+        headers = self.headers
+        # thay đổi giá trị x-transaction-id
+        headers['X-TRANSACTION-ID'] = "CRM_"
+
         query = {
             'month': months
         }
         try:
-            async with self.session.get(url=api_url, headers=self.headers, params=query, proxy=self.proxy) as response:
+            async with self.session.get(url=api_url, headers=headers, params=query, proxy=self.proxy) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
@@ -266,11 +304,15 @@ class ServiceEKYC:
     async def get_history_post_check(self, postcheck_uuid: str):
         api_url = f"{self.url}/api/v1/customer-service/crm/postcontrolhistory/"
 
+        headers = self.headers
+        # thay đổi giá trị x-transaction-id
+        headers['X-TRANSACTION-ID'] = "CRM_"
+
         query = {
             'customer_id': postcheck_uuid
         }
         try:
-            async with self.session.get(url=api_url, headers=self.headers, params=query, proxy=self.proxy) as response:
+            async with self.session.get(url=api_url, headers=headers, params=query, proxy=self.proxy) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
@@ -289,8 +331,12 @@ class ServiceEKYC:
     async def update_post_check(self, request_data):
         api_url = f"{self.url}/api/v1/customer-service/crm/postcontrol/"
 
+        headers = self.headers
+        # thay đổi giá trị x-transaction-id
+        headers['X-TRANSACTION-ID'] = "CRM_"
+
         try:
-            async with self.session.put(url=api_url, json=request_data, headers=self.headers,
+            async with self.session.put(url=api_url, json=request_data, headers=headers,
                                         proxy=self.proxy) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
@@ -312,8 +358,12 @@ class ServiceEKYC:
     async def get_statistics(self, query_param: dict):
         api_url = f"{self.url}/api/v1/customer-service/crm/statistics/"
 
+        headers = self.headers
+        # thay đổi giá trị x-transaction-id
+        headers['X-TRANSACTION-ID'] = "CRM_"
+
         try:
-            async with self.session.get(url=api_url, headers=self.headers, params=query_param,
+            async with self.session.get(url=api_url, headers=headers, params=query_param,
                                         proxy=self.proxy) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
@@ -333,8 +383,12 @@ class ServiceEKYC:
     async def get_customer_detail(self, postcheck_uuid: str):
         api_url = f"{self.url}/api/v1/customer-service/crm/{postcheck_uuid}/"
 
+        headers = self.headers
+        # thay đổi giá trị x-transaction-id
+        headers['X-TRANSACTION-ID'] = "CRM_"
+
         try:
-            async with self.session.get(url=api_url, headers=self.headers, proxy=self.proxy) as response:
+            async with self.session.get(url=api_url, headers=headers, proxy=self.proxy) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
@@ -355,8 +409,12 @@ class ServiceEKYC:
     async def create_post_check(self, payload_data: dict):
         api_url = f"{self.url}/api/v1/customer-service/crm/postcontrol/"
 
+        headers = self.headers
+        # thay đổi giá trị x-transaction-id
+        headers['X-TRANSACTION-ID'] = "CRM_"
+
         try:
-            async with self.session.post(url=api_url, headers=self.headers, json=payload_data,
+            async with self.session.post(url=api_url, headers=headers, json=payload_data,
                                          proxy=self.proxy) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
                 if response.status == status.HTTP_201_CREATED:
@@ -379,8 +437,12 @@ class ServiceEKYC:
     async def get_post_control(self, query_params):
         api_url = f"{self.url}/api/v1/customer-service/crm/postcontrol/"
 
+        headers = self.headers
+        # thay đổi giá trị x-transaction-id
+        headers['X-TRANSACTION-ID'] = "CRM_"
+
         try:
-            async with self.session.get(url=api_url, params=query_params, headers=self.headers,
+            async with self.session.get(url=api_url, params=query_params, headers=headers,
                                         proxy=self.proxy) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
@@ -403,10 +465,14 @@ class ServiceEKYC:
     async def upload_file(self, file: bytes, name):
         api_url = f"{self.url}/api/v1/file-service/"
 
+        headers = self.headers
+        # thay đổi giá trị x-transaction-id
+        headers['X-TRANSACTION-ID'] = "CRM_"
+
         form_data = aiohttp.FormData()
         form_data.add_field('file', value=file, filename=name)
         try:
-            async with self.session.post(url=api_url, data=form_data, headers=self.headers,
+            async with self.session.post(url=api_url, data=form_data, headers=headers,
                                          proxy=self.proxy) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
 
@@ -458,8 +524,13 @@ class ServiceEKYC:
     async def add_finger_ekyc(self, cif_id: str, json_body: dict):
         api_url = f"{self.url}/api/v1/finger-service/add/"
 
+        headers = self.headers
+        # thay đổi giá trị x-transaction-id
+        UUIDV4 = convert_string_to_uuidv4(cif_id)
+        headers['X-TRANSACTION-ID'] = f"CRM_{UUIDV4}"
+
         try:
-            async with self.session.post(url=api_url, json=json_body, headers=self.headers,
+            async with self.session.post(url=api_url, json=json_body, headers=headers,
                                          proxy=self.proxy) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
 
@@ -481,8 +552,13 @@ class ServiceEKYC:
     async def compare_finger_ekyc(self, cif_id: str, json_body: dict):
         api_url = f"{self.url}/api/v1/finger-service/verify/"
 
+        headers = self.headers
+        # thay đổi giá trị x-transaction-id
+        UUIDV4 = convert_string_to_uuidv4(cif_id)
+        headers['X-TRANSACTION-ID'] = f"CRM_{UUIDV4}"
+
         try:
-            async with self.session.post(url=api_url, json=json_body, headers=self.headers,
+            async with self.session.post(url=api_url, json=json_body, headers=headers,
                                          proxy=self.proxy) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
 
