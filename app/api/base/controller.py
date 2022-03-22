@@ -471,11 +471,11 @@ class BaseController:
             branch_code=receiver_branch.code,
             branch_name=receiver_branch.name,
             department_id=receiver.department_id,
-            department_code=None,  # TODO
-            department_name=None,  # TODO
-            position_id=None,  # TODO
-            position_code=None,  # TODO
-            position_name=None  # TODO
+            department_code=current_user.hrm_department_code,
+            department_name=current_user.hrm_department_name,
+            position_id=current_user.hrm_position_id,
+            position_code=current_user.hrm_position_code,
+            position_name=current_user.hrm_position_name
         )
 
         return (saving_transaction_stage_status, saving_transaction_stage, saving_transaction_daily,
