@@ -1,6 +1,8 @@
 import ast
 import json
 
+import orjson
+
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.repository import (
     repos_get_begin_transaction_daily, repos_get_next_receiver,
@@ -21,7 +23,7 @@ from app.utils.constant.cif import BUSINESS_TYPE_INIT_CIF
 from app.utils.error_messages import (
     ERROR_CONTENT_NOT_NULL, ERROR_STAGE_COMPLETED, MESSAGE_STATUS
 )
-from app.utils.functions import generate_uuid, now
+from app.utils.functions import generate_uuid, now, orjson_loads
 
 
 class CtrForm(BaseController):
@@ -48,7 +50,7 @@ class CtrForm(BaseController):
                             "name": transaction_sender.position_name
                         },
                         "created_at": transaction_root_daily.created_at,
-                        "content": json.dumps(transaction_root_daily.data)
+                        "content": orjson_loads(transaction_root_daily.data)['content']
                     })
             response_data.append({
                 "created_at": parent_key,

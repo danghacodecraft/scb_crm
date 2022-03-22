@@ -166,8 +166,20 @@ def parse_file_uuid(url: str, default='') -> str:
     return matches[0] if matches else default
 
 
-def orjson_dumps(data: Union[dict, list]) -> json:
-    return orjson.dumps(data).decode(UTF_8)
+def orjson_dumps(data: Union[dict, list]) -> str:
+    try:
+        json_data = orjson.dumps(data).decode(UTF_8)
+    except orjson.JSONDecodeError:
+        json_data = ""
+    return json_data
+
+
+def orjson_loads(data: str) -> json:
+    try:
+        json_data = orjson.loads(data)
+    except orjson.JSONDecodeError:
+        json_data = ""
+    return json_data
 
 
 def is_valid_number(casa_account_number: str):
