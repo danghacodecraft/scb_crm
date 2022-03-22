@@ -291,9 +291,9 @@ class CtrIdentityDocument(BaseController):
             "expired_date": identity_document.expired_date,
             "place_of_issue_id": place_of_issue_id,
             "maker_at": now(),
-            "maker_id": "00965",
+            "maker_id": self.current_user.code,
             "updater_at": now(),
-            "updater_id": "00965"
+            "updater_id": self.current_user.code
         }
 
         gender_id = basic_information.gender.id
@@ -512,9 +512,9 @@ class CtrIdentityDocument(BaseController):
                     "finger_type_id": None,
                     "vector_data": None,
                     "active_flag": True,
-                    "maker_id": "00965",
+                    "maker_id": self.current_user.code,
                     "maker_at": now(),
-                    "updater_id": "00965",
+                    "updater_id": self.current_user.code,
                     "updater_at": now(),
                     "identity_image_front_flag": IDENTITY_IMAGE_FLAG_FRONT_SIDE
                 },
@@ -527,9 +527,9 @@ class CtrIdentityDocument(BaseController):
                     "finger_type_id": None,
                     "vector_data": None,
                     "active_flag": True,
-                    "maker_id": "00965",
+                    "maker_id": self.current_user.code,
                     "maker_at": now(),
-                    "updater_id": "00965",
+                    "updater_id": self.current_user.code,
                     "updater_at": now(),
                     "identity_image_front_flag": IDENTITY_IMAGE_FLAG_BACKSIDE
                 }
@@ -637,9 +637,9 @@ class CtrIdentityDocument(BaseController):
                 "finger_type_id": None,
                 "vector_data": None,
                 "active_flag": True,
-                "maker_id": "00965",
+                "maker_id": self.current_user.code,
                 "maker_at": now(),
-                "updater_id": "00965",
+                "updater_id": self.current_user.code,
                 "updater_at": now(),
                 "identity_image_front_flag": None
             }]
@@ -702,7 +702,7 @@ class CtrIdentityDocument(BaseController):
             "id": compare_face_uuid_ekyc,
             "compare_image_url": face_compare_image_url,
             "similar_percent": similar_percent,  # gọi qua eKYC để check
-            "maker_id": "00965",
+            "maker_id": self.current_user.code,
             "maker_at": now()
         }
         ############################################################################################################

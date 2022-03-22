@@ -73,7 +73,7 @@ class CtrCoOwner(BaseController):
                 save_account_agree=save_account_agree,
                 log_data=co_owner.json(),
                 session=self.oracle_session,
-                created_by="TUONGHD",
+                created_by=self.current_user.username
             )
         )
 
