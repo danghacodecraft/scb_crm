@@ -13,8 +13,8 @@ from app.api.v1.endpoints.cif.form.schema import CifApproveRequest
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.approval import (
-    CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_COMPLETED,
-    CIF_STAGE_INIT
+    CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_BEGIN,
+    CIF_STAGE_COMPLETED, CIF_STAGE_INIT
 )
 from app.utils.constant.cif import BUSINESS_TYPE_INIT_CIF
 from app.utils.error_messages import (
@@ -67,7 +67,7 @@ class CtrForm(BaseController):
 
         stages = []
         # GDV chưa gửi hồ sơ
-        if not previous_stage_code:
+        if previous_stage_code == CIF_STAGE_BEGIN:
             teller_is_disable = False
             teller_stage_code = None
         # KSV nhận hồ sơ từ GDV
