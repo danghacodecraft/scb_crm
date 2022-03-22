@@ -2,8 +2,7 @@ import ast
 
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.repository import (
-    repos_get_begin_transaction_daily, repos_get_next_receiver,
-    repos_get_next_stage, repos_get_previous_stage,
+    repos_get_next_receiver, repos_get_next_stage, repos_get_previous_stage,
     repos_get_previous_transaction_daily, repos_get_stage_information
 )
 from app.api.v1.endpoints.cif.form.repository import (
@@ -13,8 +12,8 @@ from app.api.v1.endpoints.cif.form.schema import CifApproveRequest
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.approval import (
-    CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_COMPLETED,
-    CIF_STAGE_INIT
+    CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_BEGIN,
+    CIF_STAGE_COMPLETED, CIF_STAGE_INIT
 )
 from app.utils.constant.cif import BUSINESS_TYPE_INIT_CIF
 from app.utils.error_messages import (
@@ -67,22 +66,17 @@ class CtrForm(BaseController):
 
         stages = []
         # GDV chưa gửi hồ sơ
-        if not previous_stage_code:
+        if previous_stage_code == CIF_STAGE_BEGIN:
             teller_is_disable = False
             teller_stage_code = None
         # KSV nhận hồ sơ từ GDV
         elif previous_stage_code == CIF_STAGE_INIT:
-            teller_transaction_daily, teller_transaction_stage, _, _, teller_transaction_sender = self.call_repos(
-                await repos_get_begin_transaction_daily(
-                    cif_id=cif_id,
-                    session=self.oracle_session
-                ))
             teller_stage_code = previous_stage_code
             teller_is_disable = False
             teller_is_completed = True
-            teller_content = ast.literal_eval(teller_transaction_daily.data)["content"]
-            teller_created_at = teller_transaction_daily.created_at
-            teller_created_by = teller_transaction_sender.user_fullname
+            teller_content = ast.literal_eval(previous_transaction_daily.data)["content"]
+            teller_created_at = previous_transaction_daily.created_at
+            teller_created_by = previous_transaction_sender.user_fullname
 
         # KSS nhận hồ sơ từ KSV
         elif previous_stage_code == CIF_STAGE_APPROVE_KSV:
@@ -335,33 +329,21 @@ class CtrForm(BaseController):
             updated_at=now()
         )
 
-        # sender_branch = await self.get_model_object_by_id(
-        #     model_id=current_user.branch_id,
-        #     model=Branch,
-        #     loc="stage_lane"
-        # )
-
-        # sender_department = await self.get_model_object_by_id(
-        #     model_id=stage_lane.department_id,
-        #     model=Department,
-        #     loc="stage_lane"
-        # )
-
         saving_transaction_sender = dict(
             transaction_id=transaction_daily_id,
-            user_id=current_user.user_id,
+            user_id=current_user.code,
             user_name=current_user.username,
-            user_fullname=current_user.full_name_vn,
+            user_fullname=current_user.name,
             user_email=current_user.email,
-            branch_id=None,  # TODO
-            branch_code=None,  # TODO
-            branch_name=None,  # TODO
-            department_id=None,  # TODO
-            department_code=None,  # TODO
-            department_name=None,  # TODO
-            position_id=None,  # TODO
-            position_code=None,  # TODO
-            position_name=None  # TODO
+            branch_id=current_user.hrm_branch_id,
+            branch_code=current_user.hrm_branch_code,
+            branch_name=current_user.hrm_branch_name,
+            department_id=current_user.hrm_department_id,
+            department_code=current_user.hrm_department_code,
+            department_name=current_user.hrm_department_name,
+            position_id=current_user.hrm_position_id,
+            position_code=current_user.hrm_position_code,
+            position_name=current_user.hrm_position_name
         )
 
         receiver_branch = None
@@ -385,9 +367,9 @@ class CtrForm(BaseController):
 
         saving_transaction_receiver = dict(
             transaction_id=transaction_daily_id,
-            user_id=current_user.user_id,
+            user_id=current_user.code,
             user_name=current_user.username,
-            user_fullname=current_user.full_name_vn,
+            user_fullname=current_user.name,
             user_email=current_user.email,
             branch_id=receiver_branch.id if receiver_lane else None,
             branch_code=receiver_branch.code if receiver_lane else None,
