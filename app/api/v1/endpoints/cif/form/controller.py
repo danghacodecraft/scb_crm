@@ -335,33 +335,21 @@ class CtrForm(BaseController):
             updated_at=now()
         )
 
-        # sender_branch = await self.get_model_object_by_id(
-        #     model_id=current_user.branch_id,
-        #     model=Branch,
-        #     loc="stage_lane"
-        # )
-
-        # sender_department = await self.get_model_object_by_id(
-        #     model_id=stage_lane.department_id,
-        #     model=Department,
-        #     loc="stage_lane"
-        # )
-
         saving_transaction_sender = dict(
             transaction_id=transaction_daily_id,
-            user_id=current_user.user_id,
+            user_id=current_user.code,
             user_name=current_user.username,
-            user_fullname=current_user.full_name_vn,
+            user_fullname=current_user.name,
             user_email=current_user.email,
-            branch_id=None,  # TODO
-            branch_code=None,  # TODO
-            branch_name=None,  # TODO
-            department_id=None,  # TODO
-            department_code=None,  # TODO
-            department_name=None,  # TODO
-            position_id=None,  # TODO
-            position_code=None,  # TODO
-            position_name=None  # TODO
+            branch_id=current_user.hrm_branch_id,
+            branch_code=current_user.hrm_branch_code,
+            branch_name=current_user.hrm_branch_name,
+            department_id=current_user.hrm_department_id,
+            department_code=current_user.hrm_department_code,
+            department_name=current_user.hrm_department_name,
+            position_id=current_user.hrm_position_id,
+            position_code=current_user.hrm_position_code,
+            position_name=current_user.hrm_position_name
         )
 
         receiver_branch = None
@@ -385,9 +373,9 @@ class CtrForm(BaseController):
 
         saving_transaction_receiver = dict(
             transaction_id=transaction_daily_id,
-            user_id=current_user.user_id,
+            user_id=current_user.code,
             user_name=current_user.username,
-            user_fullname=current_user.full_name_vn,
+            user_fullname=current_user.name,
             user_email=current_user.email,
             branch_id=receiver_branch.id if receiver_lane else None,
             branch_code=receiver_branch.code if receiver_lane else None,
