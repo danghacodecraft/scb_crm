@@ -2,8 +2,7 @@ import ast
 
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.repository import (
-    repos_get_begin_transaction_daily, repos_get_next_receiver,
-    repos_get_next_stage, repos_get_previous_stage,
+    repos_get_next_receiver, repos_get_next_stage, repos_get_previous_stage,
     repos_get_previous_transaction_daily, repos_get_stage_information
 )
 from app.api.v1.endpoints.cif.form.repository import (
@@ -72,17 +71,12 @@ class CtrForm(BaseController):
             teller_stage_code = None
         # KSV nhận hồ sơ từ GDV
         elif previous_stage_code == CIF_STAGE_INIT:
-            teller_transaction_daily, teller_transaction_stage, _, _, teller_transaction_sender = self.call_repos(
-                await repos_get_begin_transaction_daily(
-                    cif_id=cif_id,
-                    session=self.oracle_session
-                ))
             teller_stage_code = previous_stage_code
             teller_is_disable = False
             teller_is_completed = True
-            teller_content = ast.literal_eval(teller_transaction_daily.data)["content"]
-            teller_created_at = teller_transaction_daily.created_at
-            teller_created_by = teller_transaction_sender.user_fullname
+            teller_content = ast.literal_eval(previous_transaction_daily.data)["content"]
+            teller_created_at = previous_transaction_daily.created_at
+            teller_created_by = previous_transaction_sender.user_fullname
 
         # KSS nhận hồ sơ từ KSV
         elif previous_stage_code == CIF_STAGE_APPROVE_KSV:
