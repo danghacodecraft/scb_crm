@@ -10,8 +10,8 @@ class CtrFingers(BaseController):
     async def ctr_get_fingerprint(self, cif_id: str):
         fingerprint_data = self.call_repos(await repos_get_data_finger(cif_id, self.oracle_session))
 
-        fingerprint_1 = []
-        fingerprint_2 = []
+        hand_side_left = []
+        hand_side_right = []
 
         image_uuids = [row.CustomerIdentityImageTransaction.image_url for row in fingerprint_data]
         uuid__link_downloads = await self.get_link_download_multi_file(uuids=image_uuids)
@@ -27,10 +27,10 @@ class CtrFingers(BaseController):
                 'finger_type': dropdown(row.FingerType)
             }
             if row.HandSide.code == HAND_SIDE_LEFT_CODE:
-                fingerprint_1.append(fingerprint)
+                hand_side_left.append(fingerprint)
             else:
-                fingerprint_2.append(fingerprint)
+                hand_side_right.append(fingerprint)
         return self.response(data={
-            'fingerprint_1': fingerprint_1,
-            'fingerprint_2': fingerprint_2
+            'hand_side_left': hand_side_left,
+            'hand_side_right': hand_side_right
         })
