@@ -25,7 +25,8 @@ from app.third_parties.oracle.models.cif.basic_information.personal.model import
     CustomerIndividualInfo
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingBusinessForm, BookingCustomer
+    Booking, BookingBusinessForm, BookingCustomer, TransactionDaily,
+    TransactionReceiver, TransactionSender
 )
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
@@ -35,7 +36,9 @@ from app.third_parties.oracle.models.master_data.identity import (
     CustomerIdentityType, FingerType, HandSide, PassportCode, PassportType,
     PlaceOfIssue
 )
-from app.third_parties.oracle.models.master_data.others import Nation, Religion
+from app.third_parties.oracle.models.master_data.others import (
+    Nation, Religion, TransactionStage, TransactionStageStatus
+)
 from app.utils.constant.cif import (
     ACTIVE_FLAG_ACTIVED, ADDRESS_COUNTRY_CODE_VN, BUSINESS_FORM_TTCN_GTDD_GTDD,
     BUSINESS_FORM_TTCN_GTDD_KM, CONTACT_ADDRESS_CODE, CRM_GENDER_TYPE_FEMALE,
@@ -374,11 +377,11 @@ async def repos_save_identity(
         saving_customer_contact_address: Optional[dict],  # CMND, CCCD mới có
         saving_customer_compare_image: dict,
         saving_customer_identity_images: List[dict],
-        # saving_transaction_stage_status: dict,
-        # saving_transaction_stage: dict,
-        # saving_transaction_daily: dict,
-        # saving_transaction_sender: dict,
-        # saving_transaction_receiver: dict,
+        saving_transaction_stage_status: dict,
+        saving_transaction_stage: dict,
+        saving_transaction_daily: dict,
+        saving_transaction_sender: dict,
+        saving_transaction_receiver: dict,
         request_data: dict,
         session: Session
 ) -> ReposReturn:
@@ -453,15 +456,14 @@ async def repos_save_identity(
         # create booking & log
         session.add_all([
             # Tạo BOOKING, CRM_TRANSACTION_DAILY -> CRM_BOOKING -> BOOKING_CUSTOMER -> BOOKING_BUSSINESS_FORM
-            # TransactionStageStatus(**saving_transaction_stage_status),
-            # TransactionStage(**saving_transaction_stage),
-            # TransactionDaily(**saving_transaction_daily),
-            # TransactionSender(**saving_transaction_sender),
-            # TransactionReceiver(**saving_transaction_receiver),
+            TransactionStageStatus(**saving_transaction_stage_status),
+            TransactionStage(**saving_transaction_stage),
+            TransactionDaily(**saving_transaction_daily),
+            TransactionSender(**saving_transaction_sender),
+            TransactionReceiver(**saving_transaction_receiver),
             Booking(
                 id=new_booking_id,
-                # transaction_id=saving_transaction_daily['transaction_id'],
-                transaction_id=None,
+                transaction_id=saving_transaction_daily['transaction_id'],
                 created_at=now(),
                 updated_at=now()
             ),
