@@ -39,7 +39,10 @@ async def repos_login(username: str, password: str) -> ReposReturn:
             msg=ERROR_CALL_SERVICE_IDM,
             detail=detail
         )
-    key = f"{data_idm['user_info']['username']}:{data_idm['user_info']['token']}:{data_idm['user_info']['code']}"
+    key = f"{data_idm['user_info']['username']}:{data_idm['user_info']['token']}:{data_idm['user_info']['code']}" \
+          f":{data_idm['user_info']['hrm_branch_code']}:{data_idm['user_info']['hrm_department_code']}" \
+          f":{data_idm['user_info']['hrm_title_code']}:{data_idm['user_info']['hrm_position_code']}"
+
     key = key.encode('utf-8')
     data_idm['user_info']['token'] = base64.b64encode(key)
 
@@ -69,11 +72,19 @@ async def repos_login(username: str, password: str) -> ReposReturn:
 async def repos_check_token(token: str) -> ReposReturn:
     try:
         auth_parts = base64.b64decode(token).decode('utf-8').split(':')
-        username, bearer_token, user_code = auth_parts[0], auth_parts[1], auth_parts[2]
+        username, bearer_token, user_code, branch_code, department_code, title_code, position_code = \
+            auth_parts[0], auth_parts[1], auth_parts[2], auth_parts[3], auth_parts[4], auth_parts[5], auth_parts[6]
     except (TypeError, UnicodeDecodeError, binascii.Error, IndexError):
         return ReposReturn(is_error=True, msg=ERROR_INVALID_TOKEN, loc='token')
 
     status, check_token = await service_idm.check_token(username=username, bearer_token=bearer_token, user_code=user_code)
+
+    resp = dict(username=username,
+                code=user_code,
+                hrm_branch_code=branch_code,
+                hrm_department_code=department_code,
+                hrm_title_code=title_code,
+                hrm_position_code=position_code)
 
     if not status:
         return ReposReturn(
@@ -81,7 +92,7 @@ async def repos_check_token(token: str) -> ReposReturn:
             msg=ERROR_CALL_SERVICE_IDM,
             detail="Token is invalid"
         )
-    return ReposReturn(data=check_token)
+    return ReposReturn(data=resp)
 
 
 async def repos_get_user_info(user_id: str) -> ReposReturn:

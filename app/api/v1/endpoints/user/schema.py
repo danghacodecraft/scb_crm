@@ -5,6 +5,15 @@ from pydantic import Field
 from app.api.base.schema import BaseSchema, CreatedUpdatedBaseModel
 
 
+class CurrentUserInfoResponse(BaseSchema):
+    username: str = Field(..., description='Username người dùng')
+    code: str = Field(..., description='Mã nhân viên')
+    hrm_department_code: str = Field(..., description="Mã Phòng ban")
+    hrm_branch_code: str = Field(..., description="Mã Chi nhánh/Hội sở")
+    hrm_title_code: str = Field(..., description="Mã Chức vụ")
+    hrm_position_code: str = Field(..., description="Mã Chức vụ")
+
+
 class UserInfoResponse(BaseSchema):
     username: str = Field(None, description='Username người dùng')
     name: str = Field(None, description='Họ và tên người dùng')
