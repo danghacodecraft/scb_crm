@@ -114,7 +114,8 @@ class CtrSignature(BaseController):
         compare_signatures = self.call_repos(await repos_compare_signature(
             cif_id=cif_id,
             uuid_ekyc=uuid_compare_ekyc,
-            session=self.oracle_session
+            session=self.oracle_session,
+            user_id=self.current_user.user_id
         ))
         image_uuids = [signature['image_url'] for signature in compare_signatures]
         # gọi đến service file để lấy link download
