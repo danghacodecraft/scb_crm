@@ -8,6 +8,7 @@ from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.api.v1.endpoints.file.repository import repos_upload_file
 from app.api.v1.endpoints.file.validator import file_validator
 from app.settings.event import service_ekyc
+from app.utils.error_messages import ERROR_CALL_SERVICE_EKYC
 from app.utils.functions import now
 
 
@@ -74,8 +75,8 @@ class CtrApproveFace(BaseController):
             is_success, compare_face_info = await service_ekyc.compare_face(face_uuid_ekyc, compare_face_uuid_ekyc)
             if not is_success:
                 return self.response_exception(
-                    msg=compare_face_info['message'],
-                    detail=compare_face_info['detail'],
+                    msg=ERROR_CALL_SERVICE_EKYC,
+                    detail=compare_face_info['message'],
                     loc=f"index {index}, face_uuid: {face_uuid_ekyc}, compare_face_image_uuid: {compare_face_uuid_ekyc}"
                 )
             compare_face_image.update(dict(
