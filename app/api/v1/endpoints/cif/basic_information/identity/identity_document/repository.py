@@ -56,7 +56,7 @@ from app.utils.error_messages import (
     ERROR_COMPARE_IMAGE_IS_EXISTED
 )
 from app.utils.functions import (
-    date_string_to_other_date_string_format, dropdown, generate_uuid, now
+    date_string_to_other_date_string_format, dropdown, generate_uuid, now, orjson_dumps
 )
 from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese
 
@@ -475,7 +475,7 @@ async def repos_save_identity(
                 booking_id=new_booking_id,
                 business_form_id=BUSINESS_FORM_TTCN_GTDD_GTDD,
                 save_flag=True,  # Save_flag đổi lại thành True do Business Form giờ là những Tab nhỏ nhiều cấp
-                form_data=str(request_data),
+                form_data=orjson_dumps(request_data),
                 created_at=now(),
                 updated_at=now()
             ),
@@ -485,7 +485,7 @@ async def repos_save_identity(
                 booking_id=new_booking_id,
                 business_form_id=BUSINESS_FORM_TTCN_GTDD_KM,
                 save_flag=True,
-                form_data=str(request_data),
+                form_data=orjson_dumps(request_data),
                 created_at=now(),
                 updated_at=now()
             )
@@ -545,7 +545,7 @@ async def repos_save_identity(
             return ReposReturn(is_error=True, msg=message)
 
         is_success, booking_response = await write_transaction_log_and_update_booking(
-            log_data=str(request_data),
+            log_data=orjson_dumps(request_data),
             session=session,
             customer_id=customer_id,
             business_form_id=BUSINESS_FORM_TTCN_GTDD_GTDD

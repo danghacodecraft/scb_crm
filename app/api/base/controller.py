@@ -19,7 +19,7 @@ from app.api.v1.endpoints.repository import (
 )
 from app.third_parties.oracle.base import Base, SessionLocal
 from app.third_parties.oracle.models.master_data.others import Branch
-from app.utils.functions import generate_uuid
+from app.utils.functions import generate_uuid, orjson_dumps, now
 
 
 class BaseController:
@@ -407,11 +407,12 @@ class BaseController:
             transaction_parent_id=None,
             transaction_root_id=transaction_daily_id,
             is_reject=False,
-            data=str(dict(
+            data=orjson_dumps(dict(
                 content="Giao dịch viên đang chuẩn bị hồ sơ. "
                         "Mốc thời gian tính từ lúc GDV điền thông tin tab đầu tiên [Thông tin cá nhân]"
             )),
-            description="Khởi tạo CIF"
+            description="Khởi tạo CIF",
+            created_at=now()
         )
 
         # sender_branch = await self.get_model_object_by_id(
@@ -471,11 +472,11 @@ class BaseController:
             branch_code=receiver_branch.code,
             branch_name=receiver_branch.name,
             department_id=receiver.department_id,
-            department_code=None,  # TODO
-            department_name=None,  # TODO
-            position_id=None,  # TODO
-            position_code=None,  # TODO
-            position_name=None  # TODO
+            department_code=current_user.hrm_department_code,
+            department_name=current_user.hrm_department_name,
+            position_id=current_user.hrm_position_id,
+            position_code=current_user.hrm_position_code,
+            position_name=current_user.hrm_position_name
         )
 
         return (saving_transaction_stage_status, saving_transaction_stage, saving_transaction_daily,

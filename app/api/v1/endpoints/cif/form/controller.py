@@ -6,7 +6,7 @@ from app.api.v1.endpoints.approval.repository import (
     repos_get_previous_transaction_daily, repos_get_stage_information
 )
 from app.api.v1.endpoints.cif.form.repository import (
-    repos_approval_process, repos_approve
+    repos_approve, repos_get_approval_process
 )
 from app.api.v1.endpoints.cif.form.schema import CifApproveRequest
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
@@ -19,13 +19,42 @@ from app.utils.constant.cif import BUSINESS_TYPE_INIT_CIF
 from app.utils.error_messages import (
     ERROR_CONTENT_NOT_NULL, ERROR_STAGE_COMPLETED, MESSAGE_STATUS
 )
-from app.utils.functions import generate_uuid, now
+from app.utils.functions import generate_uuid, now, orjson_dumps, orjson_loads
 
 
 class CtrForm(BaseController):
     async def ctr_approval_process(self, cif_id: str):
-        approval_process = self.call_repos((await repos_approval_process(cif_id)))
-        return self.response(approval_process)
+        transactions = self.call_repos((await repos_get_approval_process(cif_id=cif_id, session=self.oracle_session)))
+        response_data = []
+        lst_parent = {}
+
+        for _, _, _, _, transaction_root_daily in transactions:
+            lst_parent.update({transaction_root_daily.created_at.date(): []})
+
+        for parent_key, parent_value in lst_parent.items():
+            childs = []
+
+            for booking_customer, _, transaction_daily, transaction_sender, transaction_root_daily in transactions:
+                content = orjson_loads(transaction_root_daily.data)
+                if parent_key == transaction_root_daily.created_at.date():
+                    childs.append({
+                        "user_id": transaction_sender.user_id,
+                        "full_name_vn": transaction_sender.user_fullname,
+                        "avatar_url": None,
+                        "position": {
+                            "id": transaction_sender.position_id,
+                            "code": transaction_sender.position_code,
+                            "name": transaction_sender.position_name
+                        },
+                        "created_at": transaction_root_daily.created_at,
+                        "content": content['content'] if content else ""
+                    })
+            response_data.append({
+                "created_at": parent_key,
+                "logs": childs
+            })
+
+        return self.response(data=response_data)
 
     async def ctr_get_approval(self, cif_id: str):
         # check cif đang tạo
@@ -323,7 +352,7 @@ class CtrForm(BaseController):
             transaction_parent_id=None,
             transaction_root_id=None,
             is_reject=False,
-            data=str(json_data),
+            data=orjson_dumps(json_data),
             description=description,
             created_at=now(),
             updated_at=now()

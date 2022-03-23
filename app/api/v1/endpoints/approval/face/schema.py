@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List
 
 from fastapi import Depends, File, Form, Path, UploadFile
@@ -15,6 +16,7 @@ class ApprovalCompareFaceImageUrls(BaseSchema):
 class ApprovalFaceSuccessResponse(BaseSchema):
     cif_id: str = Field(..., description='Id CIF ảo')
     face_url: str = Field(..., description='Id CIF ảo')
+    created_at: datetime = Field(..., description='Thời gian tạo')
     compare_face_image_urls: List[ApprovalCompareFaceImageUrls] = Field(..., description='Danh sách hình ảnh so sánh')
 
 
