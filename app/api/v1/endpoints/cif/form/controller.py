@@ -19,7 +19,7 @@ from app.utils.constant.cif import BUSINESS_TYPE_INIT_CIF
 from app.utils.error_messages import (
     ERROR_CONTENT_NOT_NULL, ERROR_STAGE_COMPLETED, MESSAGE_STATUS
 )
-from app.utils.functions import generate_uuid, now
+from app.utils.functions import generate_uuid, now, orjson_dumps
 
 
 class CtrForm(BaseController):
@@ -323,7 +323,7 @@ class CtrForm(BaseController):
             transaction_parent_id=None,
             transaction_root_id=None,
             is_reject=False,
-            data=str(json_data),
+            data=orjson_dumps(json_data),
             description=description,
             created_at=now(),
             updated_at=now()
