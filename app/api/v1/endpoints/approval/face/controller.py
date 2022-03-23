@@ -54,7 +54,12 @@ class CtrApproveFace(BaseController):
             amount = amount
 
         for index, (customer, customer_identity, customer_identity_image) in enumerate(face_transactions, 1):
-            # uuid của service file {uuid_ekyc: uuid}
+            # uuid của service file
+            # {
+            #     uuid_ekyc: {
+            #         "uuid": uuid/image_url
+            #     }
+            # }
             compare_face_images.update({
                 customer_identity_image.ekyc_uuid: {
                     "uuid": customer_identity_image.image_url
@@ -125,7 +130,6 @@ class CtrApproveFace(BaseController):
             "face_url": face_url,
             "created_at": now(),
             "compare_face_image_urls": [dict(
-                # url=uuid__link_downloads[compare_face_image_uuid],
                 url=compare_face_image["url"],
                 similar_percent=compare_face_image['similar_percent']
             ) for compare_face_image_uuid, compare_face_image in compare_face_images.items()]
