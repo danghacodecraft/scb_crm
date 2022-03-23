@@ -10,6 +10,7 @@ from app.api.v1.endpoints.repository import (
     repos_get_model_object_by_id_or_code,
     write_transaction_log_and_update_booking
 )
+from app.api.v1.endpoints.user.schema import UserInfoResponse
 from app.settings.event import service_ekyc, service_file
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
     CustomerAddress
@@ -48,7 +49,7 @@ from app.utils.constant.cif import (
     EKYC_IDENTITY_TYPE_FRONT_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD,
     IDENTITY_DOCUMENT_TYPE_CITIZEN_CARD, IDENTITY_DOCUMENT_TYPE_IDENTITY_CARD,
-    IDENTITY_DOCUMENT_TYPE_PASSPORT, IMAGE_TYPE_CODE_IDENTITY,
+    IDENTITY_DOCUMENT_TYPE_PASSPORT, IMAGE_TYPE_CODE_IDENTITY, IMAGE_TYPE_FACE,
     RESIDENT_ADDRESS_CODE
 )
 from app.utils.error_messages import (
@@ -56,7 +57,8 @@ from app.utils.error_messages import (
     ERROR_COMPARE_IMAGE_IS_EXISTED
 )
 from app.utils.functions import (
-    date_string_to_other_date_string_format, dropdown, generate_uuid, now, orjson_dumps
+    date_string_to_other_date_string_format, dropdown, generate_uuid, now,
+    orjson_dumps
 )
 from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese
 
@@ -383,6 +385,7 @@ async def repos_save_identity(
         saving_transaction_sender: dict,
         saving_transaction_receiver: dict,
         request_data: dict,
+        current_user: UserInfoResponse,
         session: Session
 ) -> ReposReturn:
     new_first_identity_image_id = generate_uuid()  # ID ảnh mặt trước hoặc ảnh hộ chiếu
@@ -570,6 +573,8 @@ async def repos_save_identity(
         _, _, compare_image_transaction = previous_compare_image_transaction
         compare_transaction_parent_id = compare_image_transaction.id
 
+    identity_image_uuid = generate_uuid()
+
     session.add_all([
         CustomerCompareImage(**saving_customer_compare_image),
         CustomerCompareImageTransaction(**{
@@ -582,6 +587,24 @@ async def repos_save_identity(
             "maker_id": saving_customer_compare_image['maker_id'],
             "maker_at": saving_customer_compare_image['maker_at']
         }),
+        # Tạo Khuôn mặt từ CompareImage, khuôn mặt này sẽ sử dụng để so sánh phê duyệt
+        CustomerIdentityImage(**dict(
+            id=identity_image_uuid,
+            identity_id=saving_customer_identity['id'],
+            image_type_id=IMAGE_TYPE_FACE,
+            image_url=saving_customer_compare_image['compare_image_url'],
+            active_flag=True,
+            maker_id=current_user.code,
+            maker_at=now(),
+            ekyc_uuid=saving_customer_compare_image['id']
+        )),
+        CustomerIdentityImageTransaction(**dict(
+            identity_image_id=identity_image_uuid,
+            image_url=saving_customer_compare_image['compare_image_url'],
+            active_flag=True,
+            maker_id=current_user.code,
+            maker_at=now()
+        ))
     ])
 
     return ReposReturn(data={
