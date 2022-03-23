@@ -692,8 +692,8 @@ class CtrIdentityDocument(BaseController):
         if not is_success:
             return self.response_exception(
                 loc="face_uuid_ekyc",
-                msg=compare_response['message'],
-                detail=compare_response['detail']
+                msg=ERROR_CALL_SERVICE_EKYC,
+                detail=compare_response['message']
             )
         similar_percent = compare_response['data']['similarity_percent']
 

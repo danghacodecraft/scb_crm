@@ -122,8 +122,7 @@ class ServiceEKYC:
                     return False, await response.json()
                 else:
                     return False, {
-                        "message": ERROR_CALL_SERVICE_EKYC,
-                        "detail": "STATUS " + str(response.status)
+                        "message": ERROR_CALL_SERVICE_EKYC + " STATUS " + str(response.status)
                     }
 
         except HTTPException as ex:
