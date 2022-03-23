@@ -178,7 +178,7 @@ def orjson_loads(data: str) -> json:
     try:
         json_data = orjson.loads(data)
     except orjson.JSONDecodeError:
-        json_data = ""
+        json_data = None
     return json_data
 
 
