@@ -166,11 +166,11 @@ async def repos_get_stage_information(
             StageRole
         )
         .join(StageStatus, Stage.status_id == StageStatus.id)
-        .join(StageLane, Stage.id == StageLane.stage_id)
-        .join(Lane, StageLane.lane_id == Lane.id)
-        .join(StagePhase, Stage.id == StagePhase.stage_id)
-        .join(Phase, StagePhase.phase_id == Phase.id)
-        .join(StageRole, Stage.id == StageRole.stage_id)
+        .outerjoin(StageLane, Stage.id == StageLane.stage_id)
+        .outerjoin(Lane, StageLane.lane_id == Lane.id)
+        .outerjoin(StagePhase, Stage.id == StagePhase.stage_id)
+        .outerjoin(Phase, StagePhase.phase_id == Phase.id)
+        .outerjoin(StageRole, Stage.id == StageRole.stage_id)
         .filter(and_(
             Stage.id == stage_id,
             Stage.business_type_id == business_type_id

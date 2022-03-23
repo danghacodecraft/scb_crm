@@ -23,9 +23,7 @@ from app.third_parties.oracle.models.master_data.customer import (
     CustomerClassification, CustomerEconomicProfession, CustomerGender,
     CustomerStatus, CustomerType
 )
-from app.third_parties.oracle.models.master_data.identity import (
-    ImageType, PlaceOfIssue
-)
+from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import (
     KYCLevel, MaritalStatus
 )
@@ -191,20 +189,6 @@ async def repos_get_customer_identity(cif_id: str, session: Session):
     if not identity:
         return ReposReturn(is_error=True, msg=ERROR_CIF_ID_NOT_EXIST, loc="cif_id")
     return ReposReturn(data=identity)
-
-
-# TODO: replace with self.get_model_object_by_code
-async def repos_get_image_type(image_type: str, session: Session) -> ReposReturn:
-    image_type = session.execute(
-        select(
-            ImageType
-        ).filter(ImageType.code == image_type)
-    ).scalar()
-
-    if not image_type:
-        return ReposReturn(is_error=True, msg='ERROR_IMAGE_TYPE_NOT_EXIST', loc='image_type')
-
-    return ReposReturn(data=image_type)
 
 
 async def repos_check_not_exist_cif_number(cif_number: str, session: Session) -> ReposReturn:

@@ -25,7 +25,8 @@ from app.third_parties.oracle.models.cif.basic_information.personal.model import
     CustomerIndividualInfo
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingBusinessForm, BookingCustomer
+    Booking, BookingBusinessForm, BookingCustomer, TransactionDaily,
+    TransactionReceiver, TransactionSender
 )
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
@@ -35,7 +36,9 @@ from app.third_parties.oracle.models.master_data.identity import (
     CustomerIdentityType, FingerType, HandSide, PassportCode, PassportType,
     PlaceOfIssue
 )
-from app.third_parties.oracle.models.master_data.others import Nation, Religion
+from app.third_parties.oracle.models.master_data.others import (
+    Nation, Religion, TransactionStage, TransactionStageStatus
+)
 from app.utils.constant.cif import (
     ACTIVE_FLAG_ACTIVED, ADDRESS_COUNTRY_CODE_VN, BUSINESS_FORM_TTCN_GTDD_GTDD,
     BUSINESS_FORM_TTCN_GTDD_KM, CONTACT_ADDRESS_CODE, CRM_GENDER_TYPE_FEMALE,
@@ -53,7 +56,7 @@ from app.utils.error_messages import (
     ERROR_COMPARE_IMAGE_IS_EXISTED
 )
 from app.utils.functions import (
-    date_string_to_other_date_string_format, dropdown, generate_uuid, now
+    date_string_to_other_date_string_format, dropdown, generate_uuid, now, orjson_dumps
 )
 from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese
 
@@ -374,11 +377,11 @@ async def repos_save_identity(
         saving_customer_contact_address: Optional[dict],  # CMND, CCCD mới có
         saving_customer_compare_image: dict,
         saving_customer_identity_images: List[dict],
-        # saving_transaction_stage_status: dict,
-        # saving_transaction_stage: dict,
-        # saving_transaction_daily: dict,
-        # saving_transaction_sender: dict,
-        # saving_transaction_receiver: dict,
+        saving_transaction_stage_status: dict,
+        saving_transaction_stage: dict,
+        saving_transaction_daily: dict,
+        saving_transaction_sender: dict,
+        saving_transaction_receiver: dict,
         request_data: dict,
         session: Session
 ) -> ReposReturn:
@@ -453,15 +456,14 @@ async def repos_save_identity(
         # create booking & log
         session.add_all([
             # Tạo BOOKING, CRM_TRANSACTION_DAILY -> CRM_BOOKING -> BOOKING_CUSTOMER -> BOOKING_BUSSINESS_FORM
-            # TransactionStageStatus(**saving_transaction_stage_status),
-            # TransactionStage(**saving_transaction_stage),
-            # TransactionDaily(**saving_transaction_daily),
-            # TransactionSender(**saving_transaction_sender),
-            # TransactionReceiver(**saving_transaction_receiver),
+            TransactionStageStatus(**saving_transaction_stage_status),
+            TransactionStage(**saving_transaction_stage),
+            TransactionDaily(**saving_transaction_daily),
+            TransactionSender(**saving_transaction_sender),
+            TransactionReceiver(**saving_transaction_receiver),
             Booking(
                 id=new_booking_id,
-                # transaction_id=saving_transaction_daily['transaction_id'],
-                transaction_id=None,
+                transaction_id=saving_transaction_daily['transaction_id'],
                 created_at=now(),
                 updated_at=now()
             ),
@@ -473,7 +475,7 @@ async def repos_save_identity(
                 booking_id=new_booking_id,
                 business_form_id=BUSINESS_FORM_TTCN_GTDD_GTDD,
                 save_flag=True,  # Save_flag đổi lại thành True do Business Form giờ là những Tab nhỏ nhiều cấp
-                form_data=str(request_data),
+                form_data=orjson_dumps(request_data),
                 created_at=now(),
                 updated_at=now()
             ),
@@ -483,7 +485,7 @@ async def repos_save_identity(
                 booking_id=new_booking_id,
                 business_form_id=BUSINESS_FORM_TTCN_GTDD_KM,
                 save_flag=True,
-                form_data=str(request_data),
+                form_data=orjson_dumps(request_data),
                 created_at=now(),
                 updated_at=now()
             )
@@ -543,7 +545,7 @@ async def repos_save_identity(
             return ReposReturn(is_error=True, msg=message)
 
         is_success, booking_response = await write_transaction_log_and_update_booking(
-            log_data=str(request_data),
+            log_data=orjson_dumps(request_data),
             session=session,
             customer_id=customer_id,
             business_form_id=BUSINESS_FORM_TTCN_GTDD_GTDD
