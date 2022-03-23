@@ -1,5 +1,5 @@
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy import desc, select
+from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn, auto_commit
 from app.third_parties.oracle.models.cif.form.model import (
@@ -10,68 +10,35 @@ from app.third_parties.oracle.models.master_data.others import (
     TransactionStage, TransactionStageLane, TransactionStagePhase,
     TransactionStageRole, TransactionStageStatus
 )
-from app.utils.constant.cif import CIF_ID_TEST
 from app.utils.error_messages import ERROR_CIF_ID_NOT_EXIST
 
 
-async def repos_approval_process(cif_id: str) -> ReposReturn:
-    if cif_id == CIF_ID_TEST:
-        return ReposReturn(data=[
-            {
+async def repos_get_approval_process(cif_id: str, session: Session) -> ReposReturn:
+    trans_root_daily = aliased(TransactionDaily, name='TransactionDaily')
 
-                "created_date": "string",
-                "logs":
-
-                    [
-
-                        {
-                            "user_id": "string",
-                            "full_name": "string",
-                            "user_avatar_url": "string",
-                            "id": "string",
-                            "created_at": "2019-08-24T14:15:22Z",
-                            "content": "string"
-                        },
-                        {
-                            "user_id": "string",
-                            "full_name": "string",
-                            "user_avatar_url": "string",
-                            "id": "string",
-                            "created_at": "2019-08-24T14:15:22Z",
-                            "content": "string"
-                        }
-                    ]
-
-            },
-            {
-
-                "created_date": "string",
-                "logs":
-
-                    [
-
-                        {
-                            "user_id": "string",
-                            "full_name": "string",
-                            "user_avatar_url": "string",
-                            "id": "string",
-                            "created_at": "2019-08-24T14:15:22Z",
-                            "content": "string"
-                        },
-                        {
-                            "user_id": "string",
-                            "full_name": "string",
-                            "user_avatar_url": "string",
-                            "id": "string",
-                            "created_at": "2019-08-24T14:15:22Z",
-                            "content": "string"
-                        }
-                    ]
-            }
-        ]
+    transactions = session.execute(
+        select(
+            BookingCustomer,
+            Booking,
+            TransactionDaily,
+            TransactionSender,
+            trans_root_daily
         )
-    else:
+        .join(Booking, BookingCustomer.booking_id == Booking.id)
+        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
+        .join(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
+        .join(
+            trans_root_daily,
+            trans_root_daily.transaction_root_id == TransactionDaily.transaction_root_id
+        )
+        .filter(BookingCustomer.customer_id == cif_id)
+        .order_by(desc(trans_root_daily.created_at))
+    ).all()
+
+    if not transactions:
         return ReposReturn(is_error=True, msg=ERROR_CIF_ID_NOT_EXIST, loc='cif_id')
+
+    return ReposReturn(data=transactions)
 
 
 @auto_commit
