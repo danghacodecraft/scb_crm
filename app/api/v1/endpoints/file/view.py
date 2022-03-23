@@ -8,7 +8,7 @@ from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.file.controller import CtrFile
 from app.api.v1.endpoints.file.schema import (
-    FileServiceDownloadFileResponse, FileServiceResponse
+    FileServiceDownloadFileResponse, FileServiceResponse, FileUploadResponse
 )
 
 router = APIRouter()
@@ -88,3 +88,20 @@ async def view_download_multi_file(
 ):
     res = await CtrFile(is_init_oracle_session=False).download_multi_file(uuid)
     return ResponseData[List[FileServiceDownloadFileResponse]](**res)
+
+
+@router.get(
+    path="/{uuid}/upload-file-ekyc/",
+    name="Upload file from ekyc service",
+    description="Tải file từ ekyc lên CRM",
+    responses=swagger_response(
+        response_model=ResponseData[FileUploadResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_upload_file_ekyc(
+        uuid: str = Query(..., description='Chuỗi định danh của file cần tải'),
+        current_user=Depends(get_current_user_from_header()),  # noqa
+):
+    res = await CtrFile(is_init_oracle_session=False).upload_file_ekyc(uuid)
+    return ResponseData[FileUploadResponse](**res)
