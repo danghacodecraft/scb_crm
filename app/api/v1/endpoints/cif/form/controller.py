@@ -35,6 +35,7 @@ class CtrForm(BaseController):
             childs = []
 
             for booking_customer, _, transaction_daily, transaction_sender, transaction_root_daily in transactions:
+                content = orjson_loads(transaction_root_daily.data)
                 if parent_key == transaction_root_daily.created_at.date():
                     childs.append({
                         "user_id": transaction_sender.user_id,
@@ -46,7 +47,7 @@ class CtrForm(BaseController):
                             "name": transaction_sender.position_name
                         },
                         "created_at": transaction_root_daily.created_at,
-                        "content": orjson_loads(transaction_root_daily.data)['content']
+                        "content": content['content'] if content else ""
                     })
             response_data.append({
                 "created_at": parent_key,
