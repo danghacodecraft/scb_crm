@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn, auto_commit
 from app.third_parties.oracle.models.cif.basic_information.identity.model import (
-    CustomerCompareImage, CustomerIdentity, CustomerIdentityImage
+    CustomerCompareImage, CustomerCompareImageTransaction, CustomerIdentity,
+    CustomerIdentityImage, CustomerIdentityImageTransaction
 )
 from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingCustomer, TransactionDaily, TransactionReceiver,
@@ -119,13 +120,23 @@ async def repos_approval_get_face_authentication(
         select(
             CustomerIdentity,
             CustomerIdentityImage,
-            CustomerCompareImage
+            CustomerIdentityImageTransaction,
+            CustomerCompareImage,
+            CustomerCompareImageTransaction
         )
         .join(CustomerIdentityImage, and_(
             CustomerIdentity.id == CustomerIdentityImage.identity_id,
             CustomerIdentityImage.image_type_id == IMAGE_TYPE_FACE
         ))
+        .join(
+            CustomerIdentityImageTransaction,
+            CustomerIdentityImage.id == CustomerIdentityImageTransaction.identity_image_id
+        )
         .join(CustomerCompareImage, CustomerIdentityImage.id == CustomerCompareImage.identity_image_id)
+        .join(
+            CustomerCompareImageTransaction,
+            CustomerCompareImage.id == CustomerCompareImageTransaction.compare_image_id
+        )
         .filter(CustomerIdentity.customer_id == cif_id)
         .order_by(desc(CustomerIdentity.maker_at))
     ).all()

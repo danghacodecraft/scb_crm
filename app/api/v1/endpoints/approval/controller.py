@@ -218,15 +218,15 @@ class CtrForm(BaseController):
             session=self.oracle_session
         ))
 
+        valid = False
         face_authentications = {}
-        compare_face_image_uuid = ""
-        for _, identity_image, compare_image in authentications:
+        for _, identity_image, identity_image_transaction, _, compare_image_transaction in authentications:
             if identity_image.image_type_id == IMAGE_TYPE_FACE:
                 face_authentications.update({
-                    identity_image.image_url: None
+                    identity_image_transaction.image_url: None
                 })
-                print(compare_image.compare_image_url)
-                compare_face_image_uuid = compare_image.compare_image_url
+                if compare_image_transaction.compare_image_url == request.authentication.compare_face_image_uuid:
+                    valid = True
 
         # Kiểm tra xem khuôn mặt đã upload chưa
         if not face_authentications:
@@ -236,7 +236,7 @@ class CtrForm(BaseController):
             )
 
         # Kiểm tra xem khuôn mặt gửi lên có đúng không
-        if compare_face_image_uuid != request.authentication.compare_face_image_uuid:
+        if not valid:
             return self.response_exception(
                 msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
                 detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FACE],
