@@ -585,11 +585,11 @@ class ServiceEKYC:
             async with self.session.get(url=api_url, headers=headers, proxy=self.proxy) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
-                    return True, await response.read()
+                    return True, await response.json()
                 elif response.status == status.HTTP_400_BAD_REQUEST:
-                    return False, response
+                    return False, await response.json()
                 elif response.status == status.HTTP_404_NOT_FOUND:
-                    return False, response
+                    return False, await response.json()
                 else:
                     return False, {
                         "message": ERROR_CALL_SERVICE_EKYC,
