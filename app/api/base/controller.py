@@ -8,7 +8,7 @@ from app.api.base.except_custom import ExceptionHandle
 from app.api.base.repository import ReposReturn
 from app.api.base.schema import Error
 from app.api.base.validator import ValidatorReturn
-from app.api.v1.endpoints.approval.repository import (
+from app.api.v1.endpoints.approval.common_repository import (
     repos_get_begin_stage, repos_get_next_receiver
 )
 from app.api.v1.endpoints.file.repository import (
@@ -19,7 +19,7 @@ from app.api.v1.endpoints.repository import (
 )
 from app.third_parties.oracle.base import Base, SessionLocal
 from app.third_parties.oracle.models.master_data.others import Branch
-from app.utils.functions import generate_uuid, orjson_dumps, now
+from app.utils.functions import generate_uuid, now, orjson_dumps
 
 
 class BaseController:

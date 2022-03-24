@@ -2,7 +2,7 @@ from fastapi import UploadFile
 
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.face.repository import (
-    repos_get_approval_compare_faces
+    repos_get_approval_compare_faces, repos_save_approval_compare_face
 )
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.api.v1.endpoints.file.repository import repos_upload_file
@@ -19,6 +19,7 @@ class CtrApproveFace(BaseController):
             amount: int,  # Số lượng hình ảnh so sánh
             image_file: UploadFile
     ):
+        current_user = self.current_user
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
 
@@ -37,30 +38,34 @@ class CtrApproveFace(BaseController):
         face_uuid_ekyc = face_info['uuid_ekyc']
         face_uuid = face_info['uuid']
 
-        # Lấy 2 hình ảnh mới nhất ở bước GTDD
+        # Lấy tất cả hình ảnh mới nhất ở bước GTDD
         face_transactions = self.call_repos(await repos_get_approval_compare_faces(
             cif_id=cif_id,
             session=self.oracle_session
         ))
 
+        first_customer, first_customer_identity, first_customer_identity_image = face_transactions[0]
+        identity_image_id = first_customer_identity_image.id
+        customer_identity_id = first_customer_identity.id
+
         compare_face_images = {}
-        compare_face_image_urls = []
         compare_face_image_uuids = []
         if amount != 2:
             amount = amount
 
-        for index, (_, customer_compare_image_transaction) in enumerate(face_transactions, 1):
+        for index, (customer, customer_identity, customer_identity_image) in enumerate(face_transactions, 1):
             # uuid của service file
+            # {
+            #     uuid_ekyc: {
+            #         "uuid": uuid/image_url
+            #     }
+            # }
             compare_face_images.update({
-                customer_compare_image_transaction.compare_image_id: {
-                    "uuid": customer_compare_image_transaction.compare_image_url,
-                    "uuid_ekyc": customer_compare_image_transaction.compare_image_id
+                customer_identity_image.ekyc_uuid: {
+                    "uuid": customer_identity_image.image_url
                 }
             })
-            compare_face_image_uuids.append(customer_compare_image_transaction.compare_image_url)
-
-            # lấy link url của compare face
-            compare_face_image_urls.append(customer_compare_image_transaction.compare_image_url)
+            compare_face_image_uuids.append(customer_identity_image.image_url)
 
             if index == amount:
                 break
@@ -70,6 +75,9 @@ class CtrApproveFace(BaseController):
         total_face_images.append(face_uuid)
 
         uuid__link_downloads = await self.get_link_download_multi_file(uuids=total_face_images)
+
+        saving_customer_compare_images = []
+        saving_customer_compare_image_transactions = []
         # so sánh ảnh được thêm vào với 2 ảnh khuôn mặt so sánh ở bước GTDD
         for index, (compare_face_uuid_ekyc, compare_face_image) in enumerate(compare_face_images.items()):
             is_success, compare_face_info = await service_ekyc.compare_face(face_uuid_ekyc, compare_face_uuid_ekyc)
@@ -79,19 +87,51 @@ class CtrApproveFace(BaseController):
                     detail=compare_face_info['message'],
                     loc=f"index {index}, face_uuid: {face_uuid_ekyc}, compare_face_image_uuid: {compare_face_uuid_ekyc}"
                 )
+            compare_face_image_uuid = compare_face_image['uuid']
+            compare_face_image_url = uuid__link_downloads[compare_face_image['uuid']]
+            similar_percent = compare_face_info['data']['similarity_percent']
             compare_face_image.update(dict(
-                url=uuid__link_downloads[compare_face_image['uuid']],
-                similar_percent=compare_face_info['data']['similarity_percent']
+                url=compare_face_image_url,
+                similar_percent=similar_percent
+            ))
+
+            # Lưu các khuôn mặt được so sánh
+            saving_customer_compare_images.append(dict(
+                id=compare_face_uuid_ekyc,
+                identity_id=customer_identity_id,
+                identity_image_id=identity_image_id,
+                compare_image_url=compare_face_image_uuid,
+                similar_percent=similar_percent,
+                maker_id=current_user.code,
+                maker_at=now()
+            ))
+            saving_customer_compare_image_transactions.append(dict(
+                compare_image_id=compare_face_uuid_ekyc,
+                compare_image_url=compare_face_image_uuid,
+                identity_image_id=identity_image_id,
+                similar_percent=similar_percent,
+                maker_id=current_user.code,
+                is_approved=True,
+                maker_at=now()
             ))
 
         face_url = uuid__link_downloads[face_uuid]
 
+        # Lưu lại hình ảnh vào DB
+
+        self.call_repos(await repos_save_approval_compare_face(
+            saving_customer_compare_images=saving_customer_compare_images,
+            saving_customer_compare_image_transactions=saving_customer_compare_image_transactions,
+            session=self.oracle_session
+        ))
+
         return self.response(data={
             "cif_id": cif_id,
             "face_url": face_url,
+            "face_uuid": face_uuid,
             "created_at": now(),
             "compare_face_image_urls": [dict(
-                url=uuid__link_downloads[compare_face_image['uuid']],
+                url=compare_face_image["url"],
                 similar_percent=compare_face_image['similar_percent']
-            ) for (compare_face_uuid_ekyc, compare_face_image) in compare_face_images.items()],
+            ) for compare_face_image_uuid, compare_face_image in compare_face_images.items()]
         })
