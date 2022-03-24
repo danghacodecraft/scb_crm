@@ -86,7 +86,6 @@ class CtrApproveFace(BaseController):
                     detail=compare_face_info['message'],
                     loc=f"index {index}, face_uuid: {face_uuid_ekyc}, compare_face_image_uuid: {compare_face_uuid_ekyc}"
                 )
-            compare_face_image_uuid = compare_face_image['uuid']
             compare_face_image_url = uuid__link_downloads[compare_face_image['uuid']]
             similar_percent = compare_face_info['data']['similarity_percent']
             compare_face_image.update(dict(
@@ -99,14 +98,14 @@ class CtrApproveFace(BaseController):
                 id=compare_face_uuid_ekyc,
                 identity_id=customer_identity_id,
                 identity_image_id=identity_image_id,
-                compare_image_url=compare_face_image_uuid,
+                compare_image_url=compare_face_uuid,
                 similar_percent=similar_percent,
                 maker_id=current_user.code,
                 maker_at=now()
             ))
             saving_customer_compare_image_transactions.append(dict(
                 compare_image_id=compare_face_uuid_ekyc,
-                compare_image_url=compare_face_image_uuid,
+                compare_image_url=compare_face_uuid,
                 identity_image_id=identity_image_id,
                 similar_percent=similar_percent,
                 maker_id=current_user.code,
@@ -115,7 +114,6 @@ class CtrApproveFace(BaseController):
             ))
 
         compare_face_image_url = uuid__link_downloads[compare_face_uuid]
-
         # Lưu lại hình ảnh vào DB
 
         self.call_repos(await repos_save_approval_compare_face(
