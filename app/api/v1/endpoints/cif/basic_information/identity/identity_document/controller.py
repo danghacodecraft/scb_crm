@@ -736,6 +736,7 @@ class CtrIdentityDocument(BaseController):
                 saving_transaction_sender=saving_transaction_sender,
                 saving_transaction_receiver=saving_transaction_receiver,
                 request_data=request_data,
+                current_user=self.current_user,
                 session=self.oracle_session
             )
         )

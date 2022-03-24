@@ -127,7 +127,7 @@ async def repos_update_other_info(
 
     return ReposReturn(data={
         'created_at': booking_response['created_at'],
-        'created_by': current_user.full_name_vn,
+        'created_by': current_user.name,
         'updated_at': booking_response['updated_at'],
-        'updated_by': current_user.full_name_vn
+        'updated_by': current_user.name
     })
