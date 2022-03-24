@@ -23,7 +23,6 @@ class CtrApproveFace(BaseController):
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
 
-        # image_file_name = image_file.filename
         image_data = await image_file.read()
 
         # Validate File
@@ -35,8 +34,8 @@ class CtrApproveFace(BaseController):
             name=image_file.filename,
             ekyc_flag=True
         ))
-        face_uuid_ekyc = face_info['uuid_ekyc']
-        face_uuid = face_info['uuid']
+        compare_face_uuid_ekyc = face_info['uuid_ekyc']
+        compare_face_uuid = face_info['uuid']
 
         # Lấy tất cả hình ảnh mới nhất ở bước GTDD
         face_transactions = self.call_repos(await repos_get_approval_compare_faces(
@@ -48,8 +47,8 @@ class CtrApproveFace(BaseController):
         identity_image_id = first_customer_identity_image.id
         customer_identity_id = first_customer_identity.id
 
-        compare_face_images = {}
-        compare_face_image_uuids = []
+        face_images = {}
+        face_image_uuids = []
         if amount != 2:
             amount = amount
 
@@ -60,27 +59,27 @@ class CtrApproveFace(BaseController):
             #         "uuid": uuid/image_url
             #     }
             # }
-            compare_face_images.update({
+            face_images.update({
                 customer_identity_image.ekyc_uuid: {
                     "uuid": customer_identity_image.image_url
                 }
             })
-            compare_face_image_uuids.append(customer_identity_image.image_url)
+            face_image_uuids.append(customer_identity_image.image_url)
 
             if index == amount:
                 break
 
         total_face_images = []
-        total_face_images.extend(compare_face_image_uuids)
-        total_face_images.append(face_uuid)
+        total_face_images.extend(face_image_uuids)
+        total_face_images.append(compare_face_uuid)
 
         uuid__link_downloads = await self.get_link_download_multi_file(uuids=total_face_images)
 
         saving_customer_compare_images = []
         saving_customer_compare_image_transactions = []
         # so sánh ảnh được thêm vào với 2 ảnh khuôn mặt so sánh ở bước GTDD
-        for index, (compare_face_uuid_ekyc, compare_face_image) in enumerate(compare_face_images.items()):
-            is_success, compare_face_info = await service_ekyc.compare_face(face_uuid_ekyc, compare_face_uuid_ekyc)
+        for index, (face_uuid_ekyc, compare_face_image) in enumerate(face_images.items()):
+            is_success, compare_face_info = await service_ekyc.compare_face(compare_face_uuid_ekyc, face_uuid_ekyc)
             if not is_success:
                 return self.response_exception(
                     msg=ERROR_CALL_SERVICE_EKYC,
@@ -115,7 +114,7 @@ class CtrApproveFace(BaseController):
                 maker_at=now()
             ))
 
-        face_url = uuid__link_downloads[face_uuid]
+        compare_face_image_url = uuid__link_downloads[compare_face_uuid]
 
         # Lưu lại hình ảnh vào DB
 
@@ -127,11 +126,11 @@ class CtrApproveFace(BaseController):
 
         return self.response(data={
             "cif_id": cif_id,
-            "face_url": face_url,
-            "face_uuid": face_uuid,
+            "compare_face_image_url": compare_face_image_url,
+            "compare_face_image_uuid": compare_face_uuid,
             "created_at": now(),
-            "compare_face_image_urls": [dict(
-                url=compare_face_image["url"],
-                similar_percent=compare_face_image['similar_percent']
-            ) for compare_face_image_uuid, compare_face_image in compare_face_images.items()]
+            "face_image_urls": [dict(
+                url=face_image["url"],
+                similar_percent=face_image['similar_percent']
+            ) for face_image_uuid, face_image in face_images.items()]
         })
