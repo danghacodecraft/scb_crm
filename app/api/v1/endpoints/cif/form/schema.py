@@ -22,13 +22,8 @@ class CifApprovalProcessResponse(BaseSchema):
     logs: List[ProcessInfoResponse] = Field(..., description="Danh sách log trong 1 ngày ")
 
 
-class CompareFaceAuthenticationRequest(BaseSchema):
-    uuid: str = Field(..., description="UUID hình ảnh đối chiếu")
-
-
 class AuthenticationRequest(BaseSchema):
-    face_uuid: str = Field(..., description="UUID hình ảnh upload")
-    compare_images: List[CompareFaceAuthenticationRequest] = Field(..., description="Danh sách hình ảnh so sánh")
+    compare_face_image_uuid: str = Field(..., description="UUID hình ảnh upload")
 
 
 class CifApproveRequest(BaseSchema):

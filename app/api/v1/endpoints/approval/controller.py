@@ -20,8 +20,8 @@ from app.utils.constant.approval import (
 )
 from app.utils.constant.cif import BUSINESS_TYPE_INIT_CIF, IMAGE_TYPE_FACE
 from app.utils.error_messages import (
-    ERROR_APPROVAL_UPLOAD_FACE, ERROR_CONTENT_NOT_NULL, ERROR_STAGE_COMPLETED,
-    MESSAGE_STATUS
+    ERROR_APPROVAL_INCORRECT_UPLOAD_FACE, ERROR_APPROVAL_UPLOAD_FACE,
+    ERROR_CONTENT_NOT_NULL, ERROR_STAGE_COMPLETED, MESSAGE_STATUS
 )
 from app.utils.functions import generate_uuid, now, orjson_dumps, orjson_loads
 
@@ -219,13 +219,14 @@ class CtrForm(BaseController):
         ))
 
         face_authentications = {}
-        # face_uuid = ""
+        compare_face_image_uuid = ""
         for _, identity_image, compare_image in authentications:
             if identity_image.image_type_id == IMAGE_TYPE_FACE:
                 face_authentications.update({
                     identity_image.image_url: None
                 })
-                # face_uuid = compare_image.compare_image_url
+                print(compare_image.compare_image_url)
+                compare_face_image_uuid = compare_image.compare_image_url
 
         # Kiểm tra xem khuôn mặt đã upload chưa
         if not face_authentications:
@@ -234,14 +235,13 @@ class CtrForm(BaseController):
                 detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_FACE]
             )
 
-        # # Kiểm tra xem khuôn mặt gửi lên có đúng không
-        # if face_uuid != request.authentication.face_uuid:
-        #     print(face_uuid, request.authentication.face_uuid)
-        #     return self.response_exception(
-        #         msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
-        #         detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FACE],
-        #         loc="authentication -> face_uuid"
-        #     )
+        # Kiểm tra xem khuôn mặt gửi lên có đúng không
+        if compare_face_image_uuid != request.authentication.compare_face_image_uuid:
+            return self.response_exception(
+                msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
+                detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FACE],
+                loc="authentication -> face_uuid"
+            )
 
         ################################################################################################################
         # PHÊ DUYỆT
