@@ -12,8 +12,8 @@ router = APIRouter()
 
 @router.get(
     path="/finger/",
-    name="Vân tay phê duyệt",
-    description="Vân tay phê duyệt",
+    name="Lấy hình vân tay",
+    description="Lấy hình vân tay",
     responses=swagger_response(
         response_model=ResponseData[FingersResponse],
         success_status_code=status.HTTP_200_OK
