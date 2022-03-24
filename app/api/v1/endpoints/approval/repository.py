@@ -138,7 +138,7 @@ async def repos_approval_get_face_authentication(
             CustomerCompareImage.id == CustomerCompareImageTransaction.compare_image_id
         )
         .filter(CustomerIdentity.customer_id == cif_id)
-        .order_by(desc(CustomerIdentity.maker_at))
+        .order_by(desc(CustomerCompareImageTransaction.maker_at))
     ).all()
 
     return ReposReturn(data=face_authentication)

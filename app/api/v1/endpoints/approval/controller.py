@@ -207,6 +207,8 @@ class CtrForm(BaseController):
     ):
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
+        current_user = self.current_user
+
         ################################################################################################################
         # THÔNG TIN XÁC THỰC
         ################################################################################################################
@@ -218,15 +220,12 @@ class CtrForm(BaseController):
             session=self.oracle_session
         ))
 
-        valid = False
         face_authentications = {}
         for _, identity_image, identity_image_transaction, _, compare_image_transaction in authentications:
             if identity_image.image_type_id == IMAGE_TYPE_FACE:
                 face_authentications.update({
                     identity_image_transaction.image_url: None
                 })
-                if compare_image_transaction.compare_image_url == request.authentication.compare_face_image_uuid:
-                    valid = True
 
         # Kiểm tra xem khuôn mặt đã upload chưa
         if not face_authentications:
@@ -235,8 +234,10 @@ class CtrForm(BaseController):
                 detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_FACE]
             )
 
+        _, _, _, _, new_compare_image_transaction = authentications[0]
         # Kiểm tra xem khuôn mặt gửi lên có đúng không
-        if not valid:
+        # Hình ảnh kiểm tra sẽ là hình ảnh của lần Upload mới nhất
+        if new_compare_image_transaction.compare_image_url != request.authentication.compare_face_image_uuid:
             return self.response_exception(
                 msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
                 detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FACE],
@@ -249,7 +250,6 @@ class CtrForm(BaseController):
         content = request.approval.content
         reject_flag = request.approval.reject_flag
         business_type_id = BUSINESS_TYPE_INIT_CIF
-        current_user = self.current_user
 
         _, _, _, previous_transaction_stage, _, _ = self.call_repos(
             await repos_get_previous_stage(
@@ -273,15 +273,21 @@ class CtrForm(BaseController):
 
         ################################################################################################################
         # CURRENT STAGE
-        if not is_stage_init:
+        if is_stage_init:
+            # Cập nhật trạng thái đã duyệt hình ảnh này
+            new_compare_image_transaction.approved_id = current_user.code
+            new_compare_image_transaction.approved_at = now()
+            self.oracle_session.flush()
+            self.oracle_session.commit()
+
+            current_stage_code = CIF_STAGE_INIT
+        else:
             current_stage = self.call_repos(await repos_get_next_stage(
                 business_type_id=business_type_id,
                 current_stage_code=previous_stage_code,
                 session=self.oracle_session
             ))
             current_stage_code = current_stage.code
-        else:
-            current_stage_code = CIF_STAGE_INIT
 
         if current_stage_code == CIF_STAGE_COMPLETED:
             return self.response_exception(
