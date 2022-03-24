@@ -25,7 +25,7 @@ async def view_fund_refund_info(
     cif_id: str = Path(..., description="Id CIF ảo"),
     current_user=Depends(get_current_user_from_header())
 ):
-    fund_info = await CtrFund().ctr_fund_refund_info(cif_id=cif_id)  # TODO: truyền curent user
+    fund_info = await CtrFund(current_user).ctr_get_fund_refund_info(cif_id=cif_id)
     return ResponseData[FundRefundResponse](**fund_info)
 
 
@@ -38,13 +38,14 @@ async def view_fund_refund_info(
         success_status_code=status.HTTP_200_OK
     )
 )
-async def save_fund_refund_info(
+async def view_save_fund_refund_info(
     cif_id: str = Path(..., description="Id CIF ảo"),
     request: FundRefundRequest = Body(..., description="abc"),
-    current_user=Depends(get_current_user_from_header())  # noqa
+    current_user=Depends(get_current_user_from_header())
 ):
-    fund_refund_info = await CtrFund().ctr_save_fund_refund_info(  # TODO: truyền curent user
+    fund_refund_info = await CtrFund(current_user).ctr_save_fund_refund_info(
         cif_id=cif_id,
         request=request
     )
+
     return ResponseData[FundRefundRequest](**fund_refund_info)

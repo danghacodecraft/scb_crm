@@ -2,10 +2,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn
-from app.api.v1.endpoints.casa.fund_refund.schema import FundRefundResponse
+from app.api.v1.endpoints.casa.fund_refund.schema import FundRefundRequest
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
 )
+from app.utils.error_messages import ERROR_CIF_ID_NOT_EXIST
 
 
 async def repos_fund_info(
@@ -60,37 +61,37 @@ async def repos_fund_info(
                 }
             ]
         },
-        "invoice_list_detail": {
+        "invoice_details": {
             "invoice_list": [
                 {
                     "denomination": 500000,
                     "quantity": 0,
-                    "into_money": 0
+                    "total": 0
                 },
                 {
                     "denomination": 200000,
                     "quantity": 0,
-                    "into_money": 0
+                    "total": 0
                 },
                 {
                     "denomination": 100000,
                     "quantity": 0,
-                    "into_money": 0
+                    "total": 0
                 },
                 {
                     "denomination": 50000,
                     "quantity": 0,
-                    "into_money": 0
+                    "total": 0
                 },
                 {
                     "denomination": 20000,
                     "quantity": 0,
-                    "into_money": 0
+                    "total": 0
                 },
                 {
                     "denomination": 10000,
                     "quantity": 0,
-                    "into_money": 0
+                    "total": 0
                 }
             ],
             "total_list": 1200000,
@@ -104,7 +105,7 @@ async def repos_fund_info(
 
 async def repos_save_fund_info(
     cif_id: str,
-    request: FundRefundResponse,  # FundRefundRequest
+    request: FundRefundRequest,
     session: Session
 
 ) -> ReposReturn:
@@ -114,37 +115,9 @@ async def repos_save_fund_info(
         ).filter(Customer.id == cif_id)
     ).all()
 
-    data_response = {}
-    if customer:
-        sealed_bags = [{
-            "id": item.id,
-            "amount": item.amount,
-            "status": item.status
-        } for item in request.transaction_type.sealed_bags]
-        transaction_type = {
-            "is_fund_flag": request.transaction_type.is_fund_flag,
-            "is_main_fund_flag": request.transaction_type.is_main_fund_flag,
-            "till_or_vault": request.transaction_type.till_or_vault,
-            "full_name_vn": request.transaction_type.full_name_vn,
-            "position": request.transaction_type.position,
-            "currency": request.transaction_type.currency,
-            "amount": request.transaction_type.amount,
-            "content": request.transaction_type.content,
-            "sealed_bags": sealed_bags
-        }
-        invoice_list = [{
-            "denomination": item.denomination,
-            "quantity": item.quantity,
-            "total": item.denomination * item.quantity,
-        } for item in request.invoice_list_detail.invoice_list]
+    if not customer:
+        return ReposReturn(is_error=True, msg=ERROR_CIF_ID_NOT_EXIST, loc="cif_id")
 
-        invoice_list_detail = {
-            "invoice_list": invoice_list,
-        }
+    data_response = request.transaction_code, request.transaction_type, request.invoice_details.invoice_list
 
-        data_response = {
-            "transaction_code": request.transaction_code,
-            "transaction_type": transaction_type,
-            "invoice_list_detail": invoice_list_detail,
-        }
     return ReposReturn(data=data_response)

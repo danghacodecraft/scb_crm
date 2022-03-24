@@ -25,8 +25,6 @@ router.include_router(router=routers_dashboard.router_module, prefix="/dashboard
 
 router.include_router(router=routers_casa.router_module, prefix="/casa", tags=["[Casa] Information"])
 
-<<<<<<< HEAD
+
 router.include_router(router=routers_approval.router_module, prefix="/approval", tags=["[Approval] Information"])
-=======
 router.include_router(router=routers_dashboard.router_module, prefix="/dashboard", tags=["Dashboard"])
->>>>>>> abbbb9dfc6021d8b0e06e0d739313bd744dec837
