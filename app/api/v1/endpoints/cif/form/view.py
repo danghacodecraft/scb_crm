@@ -22,7 +22,8 @@ router = APIRouter()
     responses=swagger_response(
         response_model=ResponseData[List[CifApprovalProcessResponse]],
         success_status_code=status.HTTP_200_OK
-    )
+    ),
+    deprecated=True
 )
 async def view_approval_process(
         cif_id: str = Path(..., description='Id CIF ảo'),
@@ -38,7 +39,8 @@ async def view_approval_process(
     responses=swagger_response(
         response_model=ResponseData[CifApprovalResponse],
         success_status_code=status.HTTP_200_OK
-    )
+    ),
+    deprecated=True
 )
 async def view_approve(
         cif_id: str = Path(..., description='Id CIF ảo'),
@@ -59,7 +61,8 @@ async def view_approve(
     responses=swagger_response(
         response_model=ResponseData[CifApprovalSuccessResponse],
         success_status_code=status.HTTP_200_OK
-    )
+    ),
+    deprecated=True
 )
 async def view_get_approve(
         cif_id: str = Path(..., description='Id CIF ảo'),
