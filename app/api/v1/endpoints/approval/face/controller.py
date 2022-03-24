@@ -128,6 +128,7 @@ class CtrApproveFace(BaseController):
         return self.response(data={
             "cif_id": cif_id,
             "face_url": face_url,
+            "face_uuid": face_uuid,
             "created_at": now(),
             "compare_face_image_urls": [dict(
                 url=compare_face_image["url"],
