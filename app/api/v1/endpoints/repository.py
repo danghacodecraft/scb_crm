@@ -15,7 +15,7 @@ from app.third_parties.oracle.models.master_data.account import (
 from app.utils.constant.cif import ACTIVE_FLAG_ACTIVED
 from app.utils.error_messages import ERROR_ID_NOT_EXIST, ERROR_INVALID_NUMBER
 from app.utils.functions import (
-    dropdown, is_valid_number, now, special_dropdown, orjson_dumps
+    dropdown, is_valid_number, now, orjson_dumps, special_dropdown
 )
 
 
@@ -198,7 +198,7 @@ async def write_transaction_log_and_update_booking(log_data: json,
             save_flag=True,
             created_at=now(),
             updated_at=now(),
-            form_data=orjson_dumps(log_data)
+            form_data=log_data
         )))
         response = dict(
             created_at=now(),

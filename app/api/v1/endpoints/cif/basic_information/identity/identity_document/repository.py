@@ -548,7 +548,7 @@ async def repos_save_identity(
             return ReposReturn(is_error=True, msg=message)
 
         is_success, booking_response = await write_transaction_log_and_update_booking(
-            log_data=orjson_dumps(request_data),
+            log_data=request_data,
             session=session,
             customer_id=customer_id,
             business_form_id=BUSINESS_FORM_TTCN_GTDD_GTDD
