@@ -25,7 +25,7 @@ async def view_fund_refund_info(
     cif_id: str = Path(..., description="Id CIF ảo"),
     current_user=Depends(get_current_user_from_header())
 ):
-    fund_info = await CtrFund().ctr_fund_refund_info(cif_id=cif_id)
+    fund_info = await CtrFund().ctr_fund_refund_info(cif_id=cif_id)  # TODO: truyền curent user
     return ResponseData[FundRefundResponse](**fund_info)
 
 
@@ -43,7 +43,7 @@ async def save_fund_refund_info(
     request: FundRefundRequest = Body(..., description="abc"),
     current_user=Depends(get_current_user_from_header())  # noqa
 ):
-    fund_refund_info = await CtrFund().ctr_save_fund_refund_info(
+    fund_refund_info = await CtrFund().ctr_save_fund_refund_info(  # TODO: truyền curent user
         cif_id=cif_id,
         request=request
     )

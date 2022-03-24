@@ -104,7 +104,7 @@ async def repos_fund_info(
 
 async def repos_save_fund_info(
     cif_id: str,
-    request: FundRefundResponse,
+    request: FundRefundResponse,  # FundRefundRequest
     session: Session
 
 ) -> ReposReturn:
