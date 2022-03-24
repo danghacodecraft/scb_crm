@@ -1,7 +1,10 @@
-from sqlalchemy import desc, select
+from sqlalchemy import and_, desc, select
 from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn, auto_commit
+from app.third_parties.oracle.models.cif.basic_information.identity.model import (
+    CustomerCompareImage, CustomerIdentity, CustomerIdentityImage
+)
 from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingCustomer, TransactionDaily, TransactionReceiver,
     TransactionSender
@@ -10,6 +13,7 @@ from app.third_parties.oracle.models.master_data.others import (
     TransactionStage, TransactionStageLane, TransactionStagePhase,
     TransactionStageRole, TransactionStageStatus
 )
+from app.utils.constant.cif import IMAGE_TYPE_FACE
 from app.utils.error_messages import ERROR_CIF_ID_NOT_EXIST
 
 
@@ -104,3 +108,26 @@ async def repos_approve(
     return ReposReturn(data={
         "cif_id": cif_id
     })
+
+
+async def repos_approval_get_face_authentication(
+        cif_id: str,
+        session: Session
+):
+
+    face_authentication = session.execute(
+        select(
+            CustomerIdentity,
+            CustomerIdentityImage,
+            CustomerCompareImage
+        )
+        .join(CustomerIdentityImage, and_(
+            CustomerIdentity.id == CustomerIdentityImage.identity_id,
+            CustomerIdentityImage.image_type_id == IMAGE_TYPE_FACE
+        ))
+        .join(CustomerCompareImage, CustomerIdentityImage.id == CustomerCompareImage.identity_image_id)
+        .filter(CustomerIdentity.customer_id == cif_id)
+        .order_by(desc(CustomerIdentity.maker_at))
+    ).all()
+
+    return ReposReturn(data=face_authentication)

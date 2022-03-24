@@ -69,6 +69,9 @@ ERROR_COMPARE_IMAGE_IS_EXISTED = "ERROR_COMPARE_IMAGE_IS_EXISTED"
 
 ERROR_E_BANKING = "ERROR_E-BANKING"
 
+ERROR_APPROVAL_UPLOAD_FACE = "ERROR_APPROVAL_UPLOAD_FACE"
+ERROR_APPROVAL_INCORRECT_UPLOAD_FACE = "ERROR_APPROVAL_INCORRECT_UPLOAD_FACE"
+
 MESSAGE_STATUS = {
     # general error
     PAGING_ERROR: "Can not found page!",
@@ -133,5 +136,8 @@ MESSAGE_STATUS = {
     ERROR_CONTENT_NOT_NULL: "Content is not null",
 
     ERROR_COMPARE_IMAGE_IS_EXISTED: "Compare Image is existed, please upload new compare image",
-    ERROR_NOT_REGISTER: "No debit card registration"
+    ERROR_NOT_REGISTER: "No debit card registration",
+
+    ERROR_APPROVAL_UPLOAD_FACE: "Face is not upload, please upload face before submit",
+    ERROR_APPROVAL_INCORRECT_UPLOAD_FACE: "Upload face is incorrect"
 }

@@ -22,9 +22,23 @@ class CifApprovalProcessResponse(BaseSchema):
     logs: List[ProcessInfoResponse] = Field(..., description="Danh sách log trong 1 ngày ")
 
 
+class CompareFaceAuthenticationRequest(BaseSchema):
+    uuid: str = Field(..., description="UUID hình ảnh đối chiếu")
+
+
+class AuthenticationRequest(BaseSchema):
+    face_uuid: str = Field(..., description="UUID hình ảnh upload")
+    compare_images: List[CompareFaceAuthenticationRequest] = Field(..., description="Danh sách hình ảnh so sánh")
+
+
 class CifApproveRequest(BaseSchema):
     reject_flag: Optional[bool] = Field(None, description="Cờ từ chối phê duyệt")
     content: str = Field(..., description="Nội dung phê duyệt")
+
+
+class ApprovalRequest(BaseSchema):
+    approval: CifApproveRequest = Field(..., description="Thông tin các TAB phê duyệt")
+    authentication: AuthenticationRequest = Field(..., description="Thông tin xác thực")
 
 
 class CifApprovalResponse(BaseSchema):

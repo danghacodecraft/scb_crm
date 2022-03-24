@@ -5,19 +5,23 @@ from app.api.v1.endpoints.approval.common_repository import (
     repos_get_next_receiver, repos_get_next_stage, repos_get_previous_stage,
     repos_get_previous_transaction_daily, repos_get_stage_information
 )
+from app.api.v1.endpoints.approval.repository import (
+    repos_approval_get_face_authentication
+)
 from app.api.v1.endpoints.cif.form.repository import (
     repos_approve, repos_get_approval_process
 )
-from app.api.v1.endpoints.cif.form.schema import CifApproveRequest
+from app.api.v1.endpoints.cif.form.schema import ApprovalRequest
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.approval import (
     CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_BEGIN,
     CIF_STAGE_COMPLETED, CIF_STAGE_INIT
 )
-from app.utils.constant.cif import BUSINESS_TYPE_INIT_CIF
+from app.utils.constant.cif import BUSINESS_TYPE_INIT_CIF, IMAGE_TYPE_FACE
 from app.utils.error_messages import (
-    ERROR_CONTENT_NOT_NULL, ERROR_STAGE_COMPLETED, MESSAGE_STATUS
+    ERROR_APPROVAL_UPLOAD_FACE, ERROR_CONTENT_NOT_NULL, ERROR_STAGE_COMPLETED,
+    MESSAGE_STATUS
 )
 from app.utils.functions import generate_uuid, now, orjson_dumps, orjson_loads
 
@@ -199,13 +203,51 @@ class CtrForm(BaseController):
     async def ctr_approve(
             self,
             cif_id: str,
-            request: CifApproveRequest
+            request: ApprovalRequest
     ):
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
+        ################################################################################################################
+        # THÔNG TIN XÁC THỰC
+        ################################################################################################################
 
-        content = request.content
-        reject_flag = request.reject_flag
+        ################################################################################################################
+        # Khuôn mặt
+        authentications = self.call_repos(await repos_approval_get_face_authentication(
+            cif_id=cif_id,
+            session=self.oracle_session
+        ))
+
+        face_authentications = {}
+        # face_uuid = ""
+        for _, identity_image, compare_image in authentications:
+            if identity_image.image_type_id == IMAGE_TYPE_FACE:
+                face_authentications.update({
+                    identity_image.image_url: None
+                })
+                # face_uuid = compare_image.compare_image_url
+
+        # Kiểm tra xem khuôn mặt đã upload chưa
+        if not face_authentications:
+            return self.response_exception(
+                msg=ERROR_APPROVAL_UPLOAD_FACE,
+                detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_FACE]
+            )
+
+        # # Kiểm tra xem khuôn mặt gửi lên có đúng không
+        # if face_uuid != request.authentication.face_uuid:
+        #     print(face_uuid, request.authentication.face_uuid)
+        #     return self.response_exception(
+        #         msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
+        #         detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FACE],
+        #         loc="authentication -> face_uuid"
+        #     )
+
+        ################################################################################################################
+        # PHÊ DUYỆT
+        ################################################################################################################
+        content = request.approval.content
+        reject_flag = request.approval.reject_flag
         business_type_id = BUSINESS_TYPE_INIT_CIF
         current_user = self.current_user
 
@@ -217,7 +259,6 @@ class CtrForm(BaseController):
 
         ################################################################################################################
         # PREVIOUS STAGE
-        ################################################################################################################
         is_stage_init = True
         previous_stage_code = None
         if previous_transaction_stage:
@@ -232,7 +273,6 @@ class CtrForm(BaseController):
 
         ################################################################################################################
         # CURRENT STAGE
-        ################################################################################################################
         if not is_stage_init:
             current_stage = self.call_repos(await repos_get_next_stage(
                 business_type_id=business_type_id,
@@ -280,7 +320,6 @@ class CtrForm(BaseController):
 
         ################################################################################################################
         # NEXT STAGE
-        ################################################################################################################
         next_stage = self.call_repos(await repos_get_next_stage(
             business_type_id=business_type_id,
             current_stage_code=current_stage_code,
