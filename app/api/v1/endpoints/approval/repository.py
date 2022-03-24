@@ -1,230 +1,106 @@
-from sqlalchemy import and_, desc, select
+from sqlalchemy import desc, select
 from sqlalchemy.orm import Session, aliased
 
-from app.api.base.repository import ReposReturn
+from app.api.base.repository import ReposReturn, auto_commit
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingCustomer, TransactionDaily, TransactionSender
+    Booking, BookingCustomer, TransactionDaily, TransactionReceiver,
+    TransactionSender
 )
 from app.third_parties.oracle.models.master_data.others import (
-    Lane, Phase, Stage, StageLane, StagePhase, StageRole, StageStatus,
-    TransactionStage, TransactionStageStatus
+    TransactionStage, TransactionStageLane, TransactionStagePhase,
+    TransactionStageRole, TransactionStageStatus
 )
-from app.utils.constant.approval import CIF_STAGE_APPROVE_KSS, CIF_STAGE_INIT
-from app.utils.error_messages import (
-    ERROR_BEGIN_STAGE_NOT_EXIST, ERROR_NEXT_RECEIVER_NOT_EXIST,
-    ERROR_NEXT_STAGE_NOT_EXIST
-)
+from app.utils.error_messages import ERROR_CIF_ID_NOT_EXIST
 
 
-async def repos_get_begin_stage(business_type_id: str, session: Session):
-    begin_stage = session.execute(
-        select(
-            StageStatus,
-            Stage
-        )
-        .join(StageStatus, Stage.status_id == StageStatus.id)
-        .filter(and_(
-            Stage.parent_id.is_(None),
-            Stage.business_type_id == business_type_id
-        ))
-    ).first()
+async def repos_get_approval_process(cif_id: str, session: Session) -> ReposReturn:
+    trans_root_daily = aliased(TransactionDaily, name='TransactionDaily')
 
-    if not begin_stage:
-        return ReposReturn(
-            is_error=True,
-            msg=ERROR_BEGIN_STAGE_NOT_EXIST,
-            detail=f"business_type_id: {business_type_id}"
-        )
-
-    return ReposReturn(data=begin_stage)
-
-
-async def repos_get_next_stage(
-        business_type_id: str,
-        current_stage_code: str,
-        session: Session
-):
-    """
-    Trả về thông tin Stage tiếp theo
-    Output: Stage
-    """
-    next_stage_info = session.execute(
-        select(
-            Stage
-        )
-        .filter(and_(
-            Stage.parent_id == current_stage_code,
-            Stage.business_type_id == business_type_id
-        ))
-    ).scalar()
-
-    if not next_stage_info:
-        return ReposReturn(
-            is_error=True,
-            msg=ERROR_NEXT_STAGE_NOT_EXIST,
-            detail=f"business_type_id: {business_type_id}, current_stage: {current_stage_code}"
-        )
-
-    return ReposReturn(data=next_stage_info)
-
-
-async def repos_get_previous_stage(
-        cif_id: str,
-        session: Session
-):
-    """
-    Trả về thông tin Stage đã lưu trong DB trước đó
-    Output: BookingCustomer, Booking, TransactionDaily, TransactionStage, TransactionStageStatus, TransactionSender
-    """
-    previous_stage_info = session.execute(
+    transactions = session.execute(
         select(
             BookingCustomer,
             Booking,
             TransactionDaily,
-            TransactionStage,
-            TransactionStageStatus,
-            TransactionSender
+            TransactionSender,
+            trans_root_daily
         )
         .join(Booking, BookingCustomer.booking_id == Booking.id)
-        .outerjoin(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
-        .outerjoin(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id)
-        .outerjoin(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id)
-        .outerjoin(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
-        .filter(BookingCustomer.customer_id == cif_id)
-        .order_by(desc(TransactionDaily.created_at))
-    ).first()
-
-    return ReposReturn(data=previous_stage_info)
-
-
-async def repos_get_previous_transaction_daily(
-        transaction_daily_id: str,
-        session: Session
-):
-    """
-    Lấy thông tin Transaction Daily trước đó
-    """
-    previous_transaction_daily = aliased(TransactionDaily, name='PreviousTransactionDaily')
-    previous_transaction_daily_info = session.execute(
-        select(
-            previous_transaction_daily,
-            TransactionSender,
-            TransactionStage,
-            TransactionDaily
-        )
-        .join(previous_transaction_daily, TransactionDaily.transaction_parent_id == previous_transaction_daily.transaction_id)
-        .join(TransactionSender, previous_transaction_daily.transaction_id == TransactionSender.transaction_id)
-        .join(TransactionStage, previous_transaction_daily.transaction_stage_id == TransactionStage.id)
-        .filter(TransactionDaily.transaction_id == transaction_daily_id)
-    ).first()
-
-    return ReposReturn(data=previous_transaction_daily_info)
-
-
-async def repos_get_begin_transaction_daily(
-        cif_id: str,
-        session: Session
-):
-    begin_transaction_daily = session.execute(
-        select(
-            TransactionDaily,
-            TransactionStage,
-            Booking,
-            BookingCustomer,
-            TransactionSender
-        )
-        .join(Booking, TransactionDaily.transaction_id == Booking.transaction_id)
-        .join(BookingCustomer, and_(
-            Booking.id == BookingCustomer.booking_id,
-            BookingCustomer.customer_id == cif_id
-        ))
+        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
         .join(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
-        .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id)
-        .filter(TransactionDaily.transaction_parent_id.is_(None))
-    ).first()
-
-    return ReposReturn(data=begin_transaction_daily)
-
-
-async def repos_get_stage_information(
-        business_type_id: str,
-        stage_id: str,
-        session: Session
-):
-    """
-    Lấy thông tin Stage
-    Output: StageStatus, Stage, StageLane, Lane, StagePhase, Phase, StageRole
-    """
-    stage_info = session.execute(
-        select(
-            StageStatus,
-            Stage,
-            StageLane,
-            Lane,
-            StagePhase,
-            Phase,
-            StageRole
+        .join(
+            trans_root_daily,
+            trans_root_daily.transaction_root_id == TransactionDaily.transaction_root_id
         )
-        .join(StageStatus, Stage.status_id == StageStatus.id)
-        .outerjoin(StageLane, Stage.id == StageLane.stage_id)
-        .outerjoin(Lane, StageLane.lane_id == Lane.id)
-        .outerjoin(StagePhase, Stage.id == StagePhase.stage_id)
-        .outerjoin(Phase, StagePhase.phase_id == Phase.id)
-        .outerjoin(StageRole, Stage.id == StageRole.stage_id)
-        .filter(and_(
-            Stage.id == stage_id,
-            Stage.business_type_id == business_type_id
-        ))
-    ).first()
-    if not stage_info:
-        return ReposReturn(is_error=True, msg="Stage is None",
-                           loc=f"stage_id: {stage_id}, business_type_id: {business_type_id}")
+        .filter(BookingCustomer.customer_id == cif_id)
+        .order_by(desc(trans_root_daily.created_at))
+    ).all()
 
-    return ReposReturn(data=stage_info)
+    if not transactions:
+        return ReposReturn(is_error=True, msg=ERROR_CIF_ID_NOT_EXIST, loc='cif_id')
+
+    return ReposReturn(data=transactions)
 
 
-async def repos_get_next_receiver(
-        business_type_id: str,
-        current_stage_id: str,
-        reject_flag: bool,
+@auto_commit
+async def repos_approve(
+        cif_id: str,
+        saving_transaction_stage_status: dict,
+        saving_transaction_stage: dict,
+        saving_transaction_daily: dict,
+        saving_transaction_stage_lane: dict,
+        saving_transaction_stage_phase: dict,
+        saving_transaction_stage_role: dict,
+        saving_transaction_sender: dict,
+        saving_transaction_receiver: dict,
+        is_stage_init: bool,
         session: Session
 ):
-    """
-    Output: StageLane
-    """
-    # Nếu từ chối phê duyệt -> Người nhận là GDV
-    if reject_flag:
-        _, next_receiver = session.execute(
+    saving_transaction_daily_parent_id = None
+    saving_transaction_daily_root_id = saving_transaction_daily['transaction_id']
+
+    if not is_stage_init:
+        # Lấy thông tin Transaction Daily trước đó
+        _, _, previous_transaction_daily = session.execute(
             select(
-                Stage,
-                StageLane
+                BookingCustomer,
+                Booking,
+                TransactionDaily
             )
-            .join(StageLane, Stage.id == StageLane.stage_id)
-            .filter(
-                Stage.parent_id == CIF_STAGE_INIT
-            )
-        ).first()
-    else:
-        next_receiver = session.execute(
-            select(
-                Stage,
-                StageLane
-            )
-            .join(StageLane, Stage.id == StageLane.stage_id)
-            .filter(
-                Stage.parent_id == current_stage_id
-            )
+            .join(Booking, BookingCustomer.booking_id == Booking.id)
+            .outerjoin(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
+            .filter(BookingCustomer.customer_id == cif_id)
         ).first()
 
-        if not next_receiver:
-            if current_stage_id == CIF_STAGE_APPROVE_KSS:
-                return ReposReturn(data=None)
+        saving_transaction_daily_parent_id = previous_transaction_daily.transaction_id
+        saving_transaction_daily_root_id = previous_transaction_daily.transaction_root_id
 
-            return ReposReturn(
-                is_error=True,
-                msg=ERROR_NEXT_RECEIVER_NOT_EXIST,
-                detail=f"business_type_id: {business_type_id}, stage_id: {current_stage_id}"
-            )
-        _, next_receiver = next_receiver
+    saving_transaction_daily.update(dict(
+        transaction_parent_id=saving_transaction_daily_parent_id,
+        transaction_root_id=saving_transaction_daily_root_id,
+    ))
 
-    return ReposReturn(data=next_receiver)
+    session.add_all([
+        TransactionStageStatus(**saving_transaction_stage_status),
+        TransactionStage(**saving_transaction_stage),
+        TransactionDaily(**saving_transaction_daily),
+        TransactionStageLane(**saving_transaction_stage_lane),
+        TransactionStagePhase(**saving_transaction_stage_phase),
+        TransactionStageRole(**saving_transaction_stage_role),
+        TransactionSender(**saving_transaction_sender),
+        TransactionReceiver(**saving_transaction_receiver)
+    ])
+
+    # Cập nhật lại TransactionDaily mới cho Booking
+    booking_customer, booking = session.execute(
+        select(
+            BookingCustomer,
+            Booking
+        )
+        .join(Booking, BookingCustomer.booking_id == Booking.id)
+        .filter(BookingCustomer.customer_id == cif_id)
+    ).first()
+    booking.transaction_id = saving_transaction_daily['transaction_id']
+
+    return ReposReturn(data={
+        "cif_id": cif_id
+    })
