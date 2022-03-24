@@ -1,13 +1,12 @@
 from typing import List
 
-import requests
 from fastapi import UploadFile
 
 from app.api.base.controller import BaseController
 from app.api.base.repository import ReposReturn
 from app.api.v1.endpoints.file.repository import (
-    repos_download_file, repos_download_multi_file, repos_upload_file,
-    repos_upload_file_ekyc, repos_upload_multi_file
+    repos_dowload_ekyc_file, repos_download_file, repos_download_multi_file,
+    repos_upload_file, repos_upload_multi_file
 )
 from app.api.v1.endpoints.file.validator import (
     file_validator, multi_file_validator
@@ -59,17 +58,10 @@ class CtrFile(BaseController):
         info = self.call_repos(await repos_download_multi_file(uuids=uuids))
         return self.response(data=info)
 
-    async def upload_file_ekyc(self, uuid: str):
-        info = self.call_repos(await repos_upload_file_ekyc(uuid=uuid))
-        # TODO : lỗi url ekyc trả về
-        url = "https://scb-ekycapp.minerva.vn/cdn/ekyc-dev/198401/23-03-2022/80dd96880f7c464d94c6" \
-              "febf10462377?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=ekyc-dev%2F20220323%2Fus" \
-              "-east-1%2Fs3%2Faws4_request&X-Amz-Date=20220323T085444Z&X-Amz-Expires=3600&X-Amz-SignedHeader" \
-              "s=host&X-Amz-Signature=f1b50851c5fac7385b4b4d11dc6a3a2e61e56958420d7c8ed26154f7a0fae597"
+    async def upload_ekyc_file(self, uuid_ekyc: str):
+        info = self.call_repos(await repos_dowload_ekyc_file(uuid=uuid_ekyc))
 
-        file = requests.get(url)
-
-        info_file = await service_file.upload_file(file=file.content, name=info["file_name"])
+        info_file = await service_file.upload_file(file=info, name=uuid_ekyc)
         if not info_file:
             return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_FILE)
 

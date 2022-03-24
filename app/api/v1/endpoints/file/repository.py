@@ -59,9 +59,9 @@ async def repos_check_is_exist_multi_file(uuids: List[str]) -> ReposReturn:
     return ReposReturn(data=result)
 
 
-async def repos_upload_file_ekyc(uuid: str) -> ReposReturn:
+async def repos_dowload_ekyc_file(uuid: str) -> ReposReturn:
     is_success, response = await service_ekyc.dowload_file(uuid=uuid)
-    if not response:
+    if not is_success:
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_FILE)
 
     return ReposReturn(data=response)
