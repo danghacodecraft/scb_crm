@@ -8,9 +8,9 @@ from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.approval.controller import CtrForm
 from app.api.v1.endpoints.approval.schema import (
-    CifApprovalProcessResponse, CifApprovalResponse,
-    CifApprovalSuccessResponse, CifApproveRequest
+    CifApprovalProcessResponse, CifApprovalResponse, CifApprovalSuccessResponse
 )
+from app.api.v1.endpoints.cif.form.schema import ApprovalRequest
 
 router = APIRouter()
 
@@ -42,7 +42,7 @@ async def view_approval_process(
 )
 async def view_approve(
         cif_id: str = Path(..., description='Id CIF ảo'),
-        request: CifApproveRequest = Body(...),
+        request: ApprovalRequest = Body(...),
         current_user=Depends(get_current_user_from_header())
 ):
     approve_info = await CtrForm(current_user).ctr_approve(
