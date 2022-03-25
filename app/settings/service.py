@@ -37,5 +37,12 @@ SERVICE = {
         },
         "my_service": "CRM"
 
+    },
+    "tms": {
+        "headers": {
+            'Content-Type': 'application/json',
+            "server-auth": "BCQjyTXFB0TWJiLjKcuzAenpYsbXV5O0",
+            "authorization": "Bearer 1"
+        }
     }
 }

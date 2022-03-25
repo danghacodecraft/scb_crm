@@ -73,3 +73,20 @@ async def view_get_approve(
     )
 
     return ResponseData[CifApprovalSuccessResponse](**approve_info)
+
+
+@router.get(
+    path="/template/",
+    name="Biểu Mẫu",
+    description="Biểu Mẫu",
+    # responses=swagger_response(
+    #     response_model=ResponseData[List[CifApprovalProcessResponse]],
+    #     success_status_code=status.HTTP_200_OK
+    # )
+)
+async def view_form(
+        cif_id: str = Path(..., description='Id CIF ảo'),
+        current_user=Depends(get_current_user_from_header())
+):
+    template = await CtrForm(current_user).ctr_form(cif_id)
+    return ResponseData(**template)
