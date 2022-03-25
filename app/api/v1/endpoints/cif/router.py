@@ -40,5 +40,5 @@ router_module.include_router(router=views_debit_card.router, prefix="/{cif_id}/d
                              tags=['[CIF] V. Thẻ ghi nợ'])
 
 # step VI. Biểu mẫu
-router_module.include_router(router=views_form.router, prefix="/{cif_id}/form",
+router_module.include_router(router=views_form.router, prefix="/{cif_id}/template",
                              tags=['[CIF] VI. Biểu mẫu'])
