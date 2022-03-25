@@ -1,7 +1,9 @@
 from app.api.base.repository import ReposReturn
 
 
-async def repos_get_approval_form():
+async def repos_get_approval_form(
+    cif_id: str
+):
     forms = [
         {
             "id": 1,

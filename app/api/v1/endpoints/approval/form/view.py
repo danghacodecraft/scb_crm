@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Path
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -23,8 +23,9 @@ router = APIRouter()
         success_status_code=status.HTTP_200_OK
     )
 )
-async def view_retrieve_fingers(
+async def view_get_approval_form(
+        cif_id=Path(...),
         current_user=Depends(get_current_user_from_header())
 ):
-    fingers_info = await CtrApprovalFormResponse(current_user).ctr_get_approval_form()
+    fingers_info = await CtrApprovalFormResponse(current_user).ctr_get_approval_form(cif_id=cif_id)
     return ResponseData[List[ApprovalFormResponse]](**fingers_info)
