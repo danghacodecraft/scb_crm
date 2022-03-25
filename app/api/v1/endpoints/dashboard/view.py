@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends
 from starlette import status
@@ -22,8 +22,9 @@ router = APIRouter()
     )
 )
 async def view_transaction_list(
-        current_user=Depends(get_current_user_from_header())  # noqa
+        search_box: Optional[str] = None,
+        current_user=Depends(get_current_user_from_header())
 ):
-    transaction_list_response = await CtrDashboard().ctr_get_transaction_list()
+    transaction_list_response = await CtrDashboard().ctr_get_transaction_list(search_box=search_box)
 
     return ResponseData[List[TransactionListResponse]](**transaction_list_response)
