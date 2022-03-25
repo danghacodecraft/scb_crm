@@ -73,6 +73,7 @@ class CtrForm(BaseController):
 
         previous_stage_code = None
         stage_teller = dict()
+        teller_is_disable = True
         teller_is_completed = False
         teller_content = None
         teller_created_at = None
@@ -105,18 +106,20 @@ class CtrForm(BaseController):
         # KSV nhận hồ sơ từ GDV
         elif previous_stage_code == CIF_STAGE_INIT:
             teller_stage_code = previous_stage_code
-            teller_is_disable = False
             teller_is_completed = True
             teller_content = ast.literal_eval(previous_transaction_daily.data)["content"]
             teller_created_at = previous_transaction_daily.created_at
             teller_created_by = previous_transaction_sender.user_fullname
 
+            supervisor_is_disable = False
+
         # KSS nhận hồ sơ từ KSV
         elif previous_stage_code == CIF_STAGE_APPROVE_KSV:
+            audit_is_disable = False
+
             supervisor_stage_code = previous_stage_code
             supervisor_transaction_daily = previous_transaction_daily
             supervisor_transaction_sender = previous_transaction_sender
-            supervisor_is_disable = False
             supervisor_is_completed = True
             supervisor_content = ast.literal_eval(supervisor_transaction_daily.data)["content"]
             supervisor_created_at = supervisor_transaction_daily.created_at
@@ -128,7 +131,6 @@ class CtrForm(BaseController):
                     session=self.oracle_session
                 ))
             teller_stage_code = teller_transaction_stage.transaction_stage_phase_code
-            teller_is_disable = False
             teller_is_completed = True
             teller_content = ast.literal_eval(teller_transaction_daily.data)["content"]
             teller_created_at = teller_transaction_daily.created_at
@@ -139,7 +141,6 @@ class CtrForm(BaseController):
             audit_stage_code = previous_stage_code
             audit_transaction_daily = previous_transaction_daily
             audit_transaction_sender = previous_transaction_sender
-            audit_is_disable = False
             audit_is_completed = True
             audit_content = ast.literal_eval(audit_transaction_daily.data)["content"]
             audit_created_at = audit_transaction_daily.created_at
@@ -151,7 +152,6 @@ class CtrForm(BaseController):
                     session=self.oracle_session
                 ))
             supervisor_stage_code = supervisor_transaction_stage.transaction_stage_phase_code
-            supervisor_is_disable = False
             supervisor_is_completed = True
             supervisor_content = ast.literal_eval(supervisor_transaction_daily.data)["content"]
             supervisor_created_at = supervisor_transaction_daily.created_at
@@ -163,7 +163,6 @@ class CtrForm(BaseController):
                     session=self.oracle_session
                 ))
             teller_stage_code = teller_transaction_stage.transaction_stage_phase_code
-            teller_is_disable = False
             teller_is_completed = True
             teller_content = ast.literal_eval(teller_transaction_daily.data)["content"]
             teller_created_at = teller_transaction_daily.created_at
