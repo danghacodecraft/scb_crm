@@ -615,7 +615,7 @@ class CtrForm(BaseController):
         data_request.update({
             "S1.A.1.11.10": f'{time.day}',
             "S1.A.1.11.11": f'{time.month}',
-            # "S1.A.1.11.12": f'{time.year}',
+            " S1.A.1.11.12": f'{time.year}',
 
         })
         # data_request.update({
