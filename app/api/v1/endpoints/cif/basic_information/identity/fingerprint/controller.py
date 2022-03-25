@@ -3,7 +3,7 @@ from operator import itemgetter
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.basic_information.identity.fingerprint.repository import (
     repos_add_finger_ekyc, repos_compare_finger_ekyc, repos_get_data_finger,
-    repos_get_id_finger_ekyc, repos_save_fingerprint
+    repos_get_id_finger_ekyc, repos_save_compare_finger, repos_save_fingerprint
 )
 from app.api.v1.endpoints.cif.basic_information.identity.fingerprint.schema import (
     CompareFingerPrintRequest, TwoFingerPrintRequest
@@ -16,7 +16,8 @@ from app.third_parties.oracle.models.master_data.identity import (
 )
 from app.utils.constant.cif import (
     ACTIVE_FLAG_ACTIVED, ACTIVE_FLAG_CREATE_FINGERPRINT,
-    FRONT_FLAG_CREATE_FINGERPRINT, HAND_SIDE_LEFT_CODE, IMAGE_TYPE_FINGERPRINT
+    ACTIVE_FLAG_DISACTIVED, FRONT_FLAG_CREATE_FINGERPRINT, HAND_SIDE_LEFT_CODE,
+    IMAGE_TYPE_FINGERPRINT
 )
 from app.utils.functions import dropdown, generate_uuid, now, parse_file_uuid
 
@@ -141,24 +142,43 @@ class CtrFingerPrint(BaseController):
             id_fingers=id_fingers,
             session=self.oracle_session
         ))
-        finger__response = {}
-
-        for item in compare_finger_response['customers']:
-            for finger in finger_id_ekycs:
-                compare_finger = {
-                    "id": item['id'],
-                    "image_url": finger.image_url,
-                    "similarity_percent": item['accuracy']
-                }
-                compare_finger['image_url'] = uuid__link_downloads[compare_finger['image_url']]
-
-                if compare_finger['id'] not in finger__response:
-                    finger__response[item['id']] = []
-                    finger__response[item['id']].append(compare_finger)
 
         response_data = []
-
-        for key, value in finger__response.items():
-            response_data.extend(value)
-
+        data_compare = []
+        data_compare_trans = []
+        for item in compare_finger_response['customers']:
+            for finger in finger_id_ekycs:
+                if item['id'] == finger.ekyc_id:
+                    compare_finger = {
+                        "id": item['id'],
+                        "image_url": finger.image_url,
+                        "similarity_percent": item['accuracy']
+                    }
+                    compare_finger['image_url'] = uuid__link_downloads[compare_finger['image_url']]
+                    data_compare_image = {
+                        "id": generate_uuid(),
+                        "identity_id": finger.identity_id,
+                        "identity_image_id": finger.id,
+                        "compare_image_url": finger.image_url,
+                        "similar_percent": item['accuracy'],
+                        "maker_id": self.current_user.code,
+                        "maker_at": now()
+                    }
+                    data_compare.append(data_compare_image)
+                    data_compare_image_trans = {
+                        "compare_image_id": data_compare_image['id'],
+                        "identity_image_id": data_compare_image['identity_image_id'],
+                        "is_identity_compare": ACTIVE_FLAG_DISACTIVED,
+                        "compare_image_url": data_compare_image['compare_image_url'],
+                        "similar_percent": data_compare_image['similar_percent'],
+                        "maker_id": data_compare_image['maker_id'],
+                        "maker_at": data_compare_image['maker_at']
+                    }
+                    data_compare_trans.append(data_compare_image_trans)
+                    response_data.append(compare_finger)
+        self.call_repos(await repos_save_compare_finger(
+            compare_images=data_compare,
+            compare_image_transactions=data_compare_trans,
+            session=self.oracle_session
+        ))
         return self.response(data=sorted(response_data, key=itemgetter('similarity_percent'), reverse=True))

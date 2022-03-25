@@ -1,4 +1,5 @@
 import json
+from typing import List
 
 from sqlalchemy import and_, delete, select
 from sqlalchemy.orm import Session
@@ -12,7 +13,8 @@ from app.api.v1.endpoints.repository import (
 )
 from app.settings.event import service_ekyc
 from app.third_parties.oracle.models.cif.basic_information.identity.model import (
-    CustomerIdentity, CustomerIdentityImage, CustomerIdentityImageTransaction
+    CustomerCompareImage, CustomerCompareImageTransaction, CustomerIdentity,
+    CustomerIdentityImage, CustomerIdentityImageTransaction
 )
 from app.third_parties.oracle.models.master_data.identity import (
     FingerType, HandSide
@@ -148,3 +150,21 @@ async def repos_compare_finger_ekyc(
     if not is_success:
         return ReposReturn(is_error=True, msg=response['message'], loc="COMPARE_FINGERPRINT")
     return ReposReturn(data=response)
+
+
+@auto_commit
+async def repos_save_compare_finger(
+        compare_images: List,
+        compare_image_transactions: List,
+        session: Session
+):
+    session.bulk_save_objects([
+        CustomerCompareImage(**customer_compare_image)
+        for customer_compare_image in compare_images
+    ])
+    session.bulk_save_objects([
+        CustomerCompareImageTransaction(**customer_compare_image_transaction)
+        for customer_compare_image_transaction in compare_image_transactions
+    ])
+
+    return ReposReturn(data=None)
