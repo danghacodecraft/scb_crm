@@ -3,7 +3,8 @@ from fastapi import APIRouter
 from app.api.v1.endpoints.approval import view as views_approval_info
 from app.api.v1.endpoints.approval.face import view as views_face_info
 from app.api.v1.endpoints.approval.finger import view as views_finger_info
-from app.api.v1.endpoints.approval.form import view as views_form_info
+from app.api.v1.endpoints.approval.template.folder import \
+    view as views_form_info
 
 router_module = APIRouter()
 
