@@ -6,8 +6,8 @@ from starlette import status
 from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
-from app.api.v1.endpoints.cif.form.controller import CtrForm
-from app.api.v1.endpoints.cif.form.schema import (
+from app.api.v1.endpoints.approval.template.detail.controller import CtrForm
+from app.api.v1.endpoints.approval.template.detail.schema import (
     CifApprovalProcessResponse, CifApprovalResponse,
     CifApprovalSuccessResponse, CifApproveRequest
 )
@@ -73,3 +73,23 @@ async def view_get_approve(
     )
 
     return ResponseData[CifApprovalSuccessResponse](**approve_info)
+
+
+@router.get(
+    path="/{cif_id}/template/detail/{template_id}/",
+    name="Biểu Mẫu",
+    description="Biểu Mẫu",
+    responses=swagger_response(
+        response_model=ResponseData[List[CifApprovalProcessResponse]],
+        success_status_code=status.HTTP_200_OK
+    )
+
+)
+async def view_form(
+        cif_id: str = Path(..., description='Cif_id'),
+        template_id: str = Path(..., description='template_id'),
+        current_user=Depends(get_current_user_from_header())
+):
+    if template_id == "1":
+        template = await CtrForm(current_user).ctr_form(cif_id)
+        return ResponseData(**template)
