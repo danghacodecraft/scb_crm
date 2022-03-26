@@ -8,10 +8,12 @@ from app.api.v1.endpoints.approval.common_repository import (
 from app.api.v1.endpoints.approval.repository import (
     repos_approval_get_face_authentication
 )
-from app.api.v1.endpoints.cif.form.repository import (
+from app.api.v1.endpoints.approval.template.detail.repository import (
     repos_approve, repos_get_approval_process
 )
-from app.api.v1.endpoints.cif.form.schema import ApprovalRequest
+from app.api.v1.endpoints.approval.template.detail.schema import (
+    ApprovalRequest
+)
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.approval import (

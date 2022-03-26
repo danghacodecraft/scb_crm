@@ -39,6 +39,7 @@ SERVICE = {
 
     },
     "tms": {
+        "url": os.getenv("SERVICE_TMS_URL"),
         "headers": {
             'Content-Type': 'application/json',
             "server-auth": "BCQjyTXFB0TWJiLjKcuzAenpYsbXV5O0",

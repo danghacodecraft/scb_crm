@@ -5,12 +5,14 @@ from app.api.v1.endpoints.approval.common_repository import (
     repos_get_next_receiver, repos_get_next_stage, repos_get_previous_stage,
     repos_get_previous_transaction_daily, repos_get_stage_information
 )
-from app.api.v1.endpoints.cif.form.repository import (
+from app.api.v1.endpoints.approval.template.detail.repository import (
     repo_customer_address, repo_customer_info, repo_debit_card, repo_e_banking,
     repo_form, repo_guardians, repo_join_account_holder, repo_sub_identity,
     repos_approve, repos_get_approval_process
 )
-from app.api.v1.endpoints.cif.form.schema import CifApproveRequest
+from app.api.v1.endpoints.approval.template.detail.schema import (
+    CifApproveRequest
+)
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.settings.config import DATE_INPUT_OUTPUT_EKYC_FORMAT
 from app.third_parties.oracle.models.master_data.others import Branch
@@ -543,7 +545,7 @@ class CtrForm(BaseController):
         if guardians:
             guardian = guardians[0]
             data_request.update({
-                "S1.A.1.2.41": guardian.CustomerRelationshipType.name,
+                # "S1.A.1.2.41": guardian.CustomerRelationshipType.name,
                 "S1.A.1.2.44": guardian.Customer.full_name_vn,
                 "S1.A.1.2.42": guardian.Customer.cif_number,
                 "S1.A.1.2.51": guardian.CustomerIdentity.identity_num
@@ -552,7 +554,7 @@ class CtrForm(BaseController):
         if customer_join:
             customer = customer_join[0]
             data_request.update({
-                "S1.A.1.8": "HỎI SAU",
+                # "S1.A.1.8": "",
                 "S1.A.1.8.3": customer.CustomerJoin.full_name_vn,
                 "S1.A.1.8.2": customer.CustomerJoin.cif_number,
                 "S1.A.1.8.4": customer.CustomerIdentity.identity_num

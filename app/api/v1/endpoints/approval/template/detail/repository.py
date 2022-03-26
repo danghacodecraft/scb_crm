@@ -307,14 +307,6 @@ async def repo_e_banking(cif_id: str, session: Session) -> ReposReturn:
     e_bank_info = session.execute(
         select(
             EBankingInfo,
-            # EBankingInfoAuthentication,
-            # MethodAuthentication
-            # ).outerjoin(
-            #     EBankingInfoAuthentication,
-            #     MethodAuthentication.id == EBankingInfoAuthentication.method_authentication_id
-            # ).join(
-            #     EBankingInfo,
-            #     EBankingInfoAuthentication.e_banking_info_id == EBankingInfo.id
         ).filter(
             EBankingInfo.customer_id == cif_id
         )
@@ -323,6 +315,9 @@ async def repo_e_banking(cif_id: str, session: Session) -> ReposReturn:
 
 
 async def repos_fatca_info(cif_id: str, session: Session) -> ReposReturn:
+    """
+    Lấy thông tin Fatca
+    """
     data_fatca = session.execute(
         select(
             CustomerFatca.value,
