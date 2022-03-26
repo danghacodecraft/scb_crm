@@ -5,5 +5,5 @@ from app.api.v1.endpoints.approval.template.folder import \
 
 router_module = APIRouter()
 
-# router của thông tin phê duyệt
+# router của thông tin phê duyệt Danh sách biểu mẫu
 router_module.include_router(router=views_template_folder_info.router)
