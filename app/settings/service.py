@@ -37,5 +37,13 @@ SERVICE = {
         },
         "my_service": "CRM"
 
+    },
+    "tms": {
+        "url": os.getenv("SERVICE_TMS_URL"),
+        "headers": {
+            'Content-Type': 'application/json',
+            "server-auth": "BCQjyTXFB0TWJiLjKcuzAenpYsbXV5O0",
+            "authorization": "Bearer 1"
+        }
     }
 }
