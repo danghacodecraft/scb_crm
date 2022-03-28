@@ -253,7 +253,6 @@ class CtrForm(BaseController):
         content = request.approval.content
         reject_flag = request.approval.reject_flag
         business_type_id = BUSINESS_TYPE_INIT_CIF
-        current_user = self.current_user
 
         _, _, _, previous_transaction_stage, _, _ = self.call_repos(
             await repos_get_previous_stage(
