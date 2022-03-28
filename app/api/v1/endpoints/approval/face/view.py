@@ -14,7 +14,7 @@ router = APIRouter()
 @router.post(
     path="/face/",
     description="[Thông tin xác thực] Upload khuôn mặt",
-    name="Upload khuôn mặt",
+    name="So sánh khuôn mặt",
     responses=swagger_response(
         response_model=ResponseData[ApprovalFaceSuccessResponse],
         success_status_code=status.HTTP_200_OK
