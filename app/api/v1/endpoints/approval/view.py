@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Body, Depends, Path
+from fastapi import APIRouter, Body, Depends, Path, Query
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -55,7 +55,8 @@ async def view_approve(
 
 @router.get(
     path="/",
-    description="Thông tin Phê duyệt biểu mẫu",
+    description="Thông tin chi tiết - Phê duyệt biểu mẫu",
+    name="Chi tiết phê duyệt",
     responses=swagger_response(
         response_model=ResponseData[CifApprovalSuccessResponse],
         success_status_code=status.HTTP_200_OK
@@ -63,10 +64,12 @@ async def view_approve(
 )
 async def view_get_approve(
         cif_id: str = Path(..., description='Id CIF ảo'),
+        amount: int = Query(..., description="Số lượng hình so sánh"),
         current_user=Depends(get_current_user_from_header())
 ):
     approve_info = await CtrForm(current_user).ctr_get_approval(
-        cif_id=cif_id
+        cif_id=cif_id,
+        amount=amount
     )
 
     return ResponseData[CifApprovalSuccessResponse](**approve_info)

@@ -5,22 +5,18 @@ from app.api.v1.endpoints.approval.common_repository import (
     repos_get_next_receiver, repos_get_next_stage, repos_get_previous_stage,
     repos_get_previous_transaction_daily, repos_get_stage_information
 )
-from app.api.v1.endpoints.approval.repository import (
-    repos_approval_get_face_authentication
-)
 from app.api.v1.endpoints.cif.form.repository import (
     repos_approve, repos_get_approval_process
 )
-from app.api.v1.endpoints.cif.form.schema import ApprovalRequest
+from app.api.v1.endpoints.cif.form.schema import CifApproveRequest
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.approval import (
     CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_BEGIN,
     CIF_STAGE_COMPLETED, CIF_STAGE_INIT
 )
-from app.utils.constant.cif import BUSINESS_TYPE_INIT_CIF, IMAGE_TYPE_FACE
+from app.utils.constant.cif import BUSINESS_TYPE_INIT_CIF
 from app.utils.error_messages import (
-    ERROR_APPROVAL_INCORRECT_UPLOAD_FACE, ERROR_APPROVAL_UPLOAD_FACE,
     ERROR_CONTENT_NOT_NULL, ERROR_STAGE_COMPLETED, MESSAGE_STATUS
 )
 from app.utils.functions import generate_uuid, now, orjson_dumps, orjson_loads
@@ -73,7 +69,6 @@ class CtrForm(BaseController):
 
         previous_stage_code = None
         stage_teller = dict()
-        teller_is_disable = True
         teller_is_completed = False
         teller_content = None
         teller_created_at = None
@@ -106,20 +101,18 @@ class CtrForm(BaseController):
         # KSV nhận hồ sơ từ GDV
         elif previous_stage_code == CIF_STAGE_INIT:
             teller_stage_code = previous_stage_code
+            teller_is_disable = False
             teller_is_completed = True
             teller_content = ast.literal_eval(previous_transaction_daily.data)["content"]
             teller_created_at = previous_transaction_daily.created_at
             teller_created_by = previous_transaction_sender.user_fullname
 
-            supervisor_is_disable = False
-
         # KSS nhận hồ sơ từ KSV
         elif previous_stage_code == CIF_STAGE_APPROVE_KSV:
-            audit_is_disable = False
-
             supervisor_stage_code = previous_stage_code
             supervisor_transaction_daily = previous_transaction_daily
             supervisor_transaction_sender = previous_transaction_sender
+            supervisor_is_disable = False
             supervisor_is_completed = True
             supervisor_content = ast.literal_eval(supervisor_transaction_daily.data)["content"]
             supervisor_created_at = supervisor_transaction_daily.created_at
@@ -131,6 +124,7 @@ class CtrForm(BaseController):
                     session=self.oracle_session
                 ))
             teller_stage_code = teller_transaction_stage.transaction_stage_phase_code
+            teller_is_disable = False
             teller_is_completed = True
             teller_content = ast.literal_eval(teller_transaction_daily.data)["content"]
             teller_created_at = teller_transaction_daily.created_at
@@ -141,6 +135,7 @@ class CtrForm(BaseController):
             audit_stage_code = previous_stage_code
             audit_transaction_daily = previous_transaction_daily
             audit_transaction_sender = previous_transaction_sender
+            audit_is_disable = False
             audit_is_completed = True
             audit_content = ast.literal_eval(audit_transaction_daily.data)["content"]
             audit_created_at = audit_transaction_daily.created_at
@@ -152,6 +147,7 @@ class CtrForm(BaseController):
                     session=self.oracle_session
                 ))
             supervisor_stage_code = supervisor_transaction_stage.transaction_stage_phase_code
+            supervisor_is_disable = False
             supervisor_is_completed = True
             supervisor_content = ast.literal_eval(supervisor_transaction_daily.data)["content"]
             supervisor_created_at = supervisor_transaction_daily.created_at
@@ -163,6 +159,7 @@ class CtrForm(BaseController):
                     session=self.oracle_session
                 ))
             teller_stage_code = teller_transaction_stage.transaction_stage_phase_code
+            teller_is_disable = False
             teller_is_completed = True
             teller_content = ast.literal_eval(teller_transaction_daily.data)["content"]
             teller_created_at = teller_transaction_daily.created_at
@@ -202,55 +199,15 @@ class CtrForm(BaseController):
     async def ctr_approve(
             self,
             cif_id: str,
-            request: ApprovalRequest
+            request: CifApproveRequest
     ):
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
-        current_user = self.current_user
 
-        ################################################################################################################
-        # THÔNG TIN XÁC THỰC
-        ################################################################################################################
-
-        ################################################################################################################
-        # Khuôn mặt
-        authentications = self.call_repos(await repos_approval_get_face_authentication(
-            cif_id=cif_id,
-            session=self.oracle_session
-        ))
-
-        face_authentications = {}
-        for _, identity_image, identity_image_transaction, _, compare_image_transaction in authentications:
-            if identity_image.image_type_id == IMAGE_TYPE_FACE:
-                face_authentications.update({
-                    identity_image_transaction.image_url: None
-                })
-
-        # Kiểm tra xem khuôn mặt đã upload chưa
-        if not face_authentications:
-            return self.response_exception(
-                msg=ERROR_APPROVAL_UPLOAD_FACE,
-                detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_FACE]
-            )
-
-        _, _, _, _, new_compare_image_transaction = authentications[0]
-        # Kiểm tra xem khuôn mặt gửi lên có đúng không
-        # Hình ảnh kiểm tra sẽ là hình ảnh của lần Upload mới nhất
-        if new_compare_image_transaction.compare_image_url != request.authentication.compare_face_image_uuid:
-            return self.response_exception(
-                msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
-                detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FACE],
-                loc="authentication -> face_uuid"
-            )
-
-        # TODO: Vân Tay, Chữ Ký
-
-        ################################################################################################################
-        # PHÊ DUYỆT
-        ################################################################################################################
-        content = request.approval.content
-        reject_flag = request.approval.reject_flag
+        content = request.content
+        reject_flag = request.reject_flag
         business_type_id = BUSINESS_TYPE_INIT_CIF
+        current_user = self.current_user
 
         _, _, _, previous_transaction_stage, _, _ = self.call_repos(
             await repos_get_previous_stage(
@@ -260,6 +217,7 @@ class CtrForm(BaseController):
 
         ################################################################################################################
         # PREVIOUS STAGE
+        ################################################################################################################
         is_stage_init = True
         previous_stage_code = None
         if previous_transaction_stage:
@@ -274,21 +232,16 @@ class CtrForm(BaseController):
 
         ################################################################################################################
         # CURRENT STAGE
-        if is_stage_init:
-            # Cập nhật trạng thái đã duyệt hình ảnh này
-            new_compare_image_transaction.approved_id = current_user.code
-            new_compare_image_transaction.approved_at = now()
-            self.oracle_session.flush()
-            self.oracle_session.commit()
-
-            current_stage_code = CIF_STAGE_INIT
-        else:
+        ################################################################################################################
+        if not is_stage_init:
             current_stage = self.call_repos(await repos_get_next_stage(
                 business_type_id=business_type_id,
                 current_stage_code=previous_stage_code,
                 session=self.oracle_session
             ))
             current_stage_code = current_stage.code
+        else:
+            current_stage_code = CIF_STAGE_INIT
 
         if current_stage_code == CIF_STAGE_COMPLETED:
             return self.response_exception(
@@ -327,6 +280,7 @@ class CtrForm(BaseController):
 
         ################################################################################################################
         # NEXT STAGE
+        ################################################################################################################
         next_stage = self.call_repos(await repos_get_next_stage(
             business_type_id=business_type_id,
             current_stage_code=current_stage_code,
