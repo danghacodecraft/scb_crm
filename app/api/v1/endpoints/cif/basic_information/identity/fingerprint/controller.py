@@ -4,7 +4,7 @@ from fastapi import UploadFile
 
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.basic_information.identity.fingerprint.repository import (
-    repos_add_finger_ekyc, repos_get_data_finger, repos_save_fingerprint
+    repos_get_data_finger, repos_get_identity_image, repos_save_fingerprint
 )
 from app.api.v1.endpoints.cif.basic_information.identity.fingerprint.schema import (
     TwoFingerPrintRequest
@@ -12,13 +12,14 @@ from app.api.v1.endpoints.cif.basic_information.identity.fingerprint.schema impo
 from app.api.v1.endpoints.cif.repository import (
     repos_get_customer_identity, repos_get_initializing_customer
 )
-from app.settings.event import service_ekyc
+from app.settings.event import service_ekyc, service_file
 from app.third_parties.oracle.models.master_data.identity import (
     FingerType, HandSide
 )
 from app.utils.constant.cif import (
     ACTIVE_FLAG_ACTIVED, ACTIVE_FLAG_CREATE_FINGERPRINT,
-    FRONT_FLAG_CREATE_FINGERPRINT, HAND_SIDE_LEFT_CODE, IMAGE_TYPE_FINGERPRINT
+    ACTIVE_FLAG_DISACTIVED, FRONT_FLAG_CREATE_FINGERPRINT, HAND_SIDE_LEFT_CODE,
+    IMAGE_TYPE_FINGERPRINT
 )
 from app.utils.functions import dropdown, generate_uuid, now, parse_file_uuid
 
@@ -27,6 +28,7 @@ class CtrFingerPrint(BaseController):
     async def ctr_save_fingerprint(self, cif_id: str, finger_request: TwoFingerPrintRequest):
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
+        is_create = True
 
         fingerprints = []
         fingerprints.extend(finger_request.fingerprint_1)
@@ -38,15 +40,39 @@ class CtrFingerPrint(BaseController):
         save_identity_image_transaction = []
 
         identity = self.call_repos(await repos_get_customer_identity(cif_id=cif_id, session=self.oracle_session))
-
+        # lấy danh sách chữ ký theo identity
+        identity_image = self.call_repos(await repos_get_identity_image(
+            identity_id=identity.id,
+            session=self.oracle_session
+        ))
+        # update active_flag tại identity_image
+        update_identity_image = []
+        if identity_image:
+            is_create = False
+            for item in identity_image:
+                item.active_flag = 0
+                update_identity_image.append({
+                    "id": item.id,
+                    'identity_id': item.identity_id,
+                    'image_type_id': item.image_type_id,
+                    'image_url': item.image_url,
+                    'hand_side_id': item.hand_side_id,
+                    'finger_type_id': item.finger_type_id,
+                    'vector_data': None,
+                    'active_flag': ACTIVE_FLAG_DISACTIVED,
+                    'maker_id': item.maker_id,
+                    'maker_at': now(),
+                    'identity_image_front_flag': item.identity_image_front_flag,
+                    "ekyc_uuid": item.ekyc_uuid,
+                    "ekyc_id": item.ekyc_id
+                })
+        # tạo dữ liệu gửi lên từ request
         for fingerprint in fingerprints:
             identity_image_id = generate_uuid()
             uuid = parse_file_uuid(fingerprint.image_url)
 
             fingerprint.image_url = uuid
             image_uuids.append(uuid)
-
-            id_ekyc = self.call_repos(await repos_add_finger_ekyc(cif_id=cif_id, uuid=fingerprint.uuid_ekyc))
 
             save_identity_image.append({
                 "id": identity_image_id,
@@ -61,7 +87,7 @@ class CtrFingerPrint(BaseController):
                 'maker_at': now(),
                 'identity_image_front_flag': FRONT_FLAG_CREATE_FINGERPRINT,
                 "ekyc_uuid": fingerprint.uuid_ekyc,
-                "ekyc_id": id_ekyc
+                "ekyc_id": fingerprint.id_ekyc
             })
 
             save_identity_image_transaction.append({
@@ -89,11 +115,12 @@ class CtrFingerPrint(BaseController):
         data = self.call_repos(
             await repos_save_fingerprint(
                 cif_id=cif_id,
-                identity_id=identity.id,
+                is_create=is_create,
                 log_data=finger_request.json(),
                 session=self.oracle_session,
                 save_identity_image=save_identity_image,
                 save_identity_image_transaction=save_identity_image_transaction,
+                update_identity_image=update_identity_image,
                 created_by=self.current_user.username
             )
         )
@@ -128,12 +155,15 @@ class CtrFingerPrint(BaseController):
     async def ctr_add_fingerprint(self, cif_id: str, file: UploadFile, ids_finger: List):
 
         response_data = {}
-        file_upload = await file.read()
 
+        file_upload = await file.read()
+        # upload service file
+        response = await service_file.upload_file(file=file_upload, name=file.filename)
+
+        # upload file ekyc
         is_success, uuid_ekyc = await service_ekyc.upload_file(file=file_upload, name=file.filename)
-        response_data.update({
-            "uuid": uuid_ekyc['uuid']
-        })
+
+        # body add finger call ekyc
         json_body_add_finger = {
             "uuid": uuid_ekyc['uuid']
         }
@@ -144,7 +174,9 @@ class CtrFingerPrint(BaseController):
             return self.response_exception(msg='CALL_EKYC_ERROR', loc="ADD_FINGERPRINT")
 
         response_data.update({
-            "id": id_finger['id']
+            "image_url": response['file_url'],
+            "uuid_ekyc": uuid_ekyc['uuid'],
+            "id_ekyc": id_finger['id']
         })
 
         if ids_finger:
