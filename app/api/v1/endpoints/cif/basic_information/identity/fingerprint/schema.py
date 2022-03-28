@@ -22,3 +22,14 @@ class FingerPrintRequest(BaseSchema):
 class TwoFingerPrintRequest(BaseSchema):
     fingerprint_1: List[FingerPrintRequest] = Field(..., description='Mẫu vân tay 1')
     fingerprint_2: List[FingerPrintRequest] = Field(..., description='Mẫu vân tay 2')
+
+
+class CompareFingerResponse(BaseSchema):
+    id: int = Field(..., description='id image')
+    accuracy: int = Field(..., description="Tỷ lệ phần trăm giống nhau")
+
+
+class AddCompareFingerResponse(BaseSchema):
+    id: int = Field(..., description="ID ekyc")
+    uuid: str = Field(..., description="UUID ekyc")
+    compare: List[CompareFingerResponse] = Field(None, description='Danh sách so sánh vân tay')

@@ -132,6 +132,10 @@ class BaseController:
 
         # FIXME: service file không cho download các uuid trùng nhau, dữ liệu đang test nên có thể trùng uuid
         uuids = list(set(uuids))
+
+        if not uuids:
+            return {}
+
         return {
             info['uuid']: info['file_url']
             for info in self.call_repos(await repos_download_multi_file(uuids=uuids))

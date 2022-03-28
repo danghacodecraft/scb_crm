@@ -123,7 +123,7 @@ class CtrForm(BaseController):
             supervisor_transaction_daily = previous_transaction_daily
             supervisor_transaction_sender = previous_transaction_sender
             supervisor_is_completed = True
-            supervisor_content = ast.literal_eval(supervisor_transaction_daily.data)["content"]
+            supervisor_content = orjson_loads(supervisor_transaction_daily.data)["content"]
             supervisor_created_at = supervisor_transaction_daily.created_at
             supervisor_created_by = supervisor_transaction_sender.user_fullname
 
@@ -134,7 +134,7 @@ class CtrForm(BaseController):
                 ))
             teller_stage_code = teller_transaction_stage.transaction_stage_phase_code
             teller_is_completed = True
-            teller_content = ast.literal_eval(teller_transaction_daily.data)["content"]
+            teller_content = orjson_loads(teller_transaction_daily.data)["content"]
             teller_created_at = teller_transaction_daily.created_at
             teller_created_by = teller_transaction_sender.user_fullname
 
@@ -144,7 +144,7 @@ class CtrForm(BaseController):
             audit_transaction_daily = previous_transaction_daily
             audit_transaction_sender = previous_transaction_sender
             audit_is_completed = True
-            audit_content = ast.literal_eval(audit_transaction_daily.data)["content"]
+            audit_content = orjson_loads(audit_transaction_daily.data)["content"]
             audit_created_at = audit_transaction_daily.created_at
             audit_created_by = audit_transaction_sender.user_fullname
 
@@ -155,7 +155,7 @@ class CtrForm(BaseController):
                 ))
             supervisor_stage_code = supervisor_transaction_stage.transaction_stage_phase_code
             supervisor_is_completed = True
-            supervisor_content = ast.literal_eval(supervisor_transaction_daily.data)["content"]
+            supervisor_content = orjson_loads(supervisor_transaction_daily.data)["content"]
             supervisor_created_at = supervisor_transaction_daily.created_at
             supervisor_created_by = supervisor_transaction_sender.user_fullname
 
@@ -166,7 +166,7 @@ class CtrForm(BaseController):
                 ))
             teller_stage_code = teller_transaction_stage.transaction_stage_phase_code
             teller_is_completed = True
-            teller_content = ast.literal_eval(teller_transaction_daily.data)["content"]
+            teller_content = orjson_loads(teller_transaction_daily.data)["content"]
             teller_created_at = teller_transaction_daily.created_at
             teller_created_by = teller_transaction_sender.user_fullname
 
@@ -262,6 +262,7 @@ class CtrForm(BaseController):
 
         ################################################################################################################
         # PREVIOUS STAGE
+        ################################################################################################################
         is_stage_init = True
         previous_stage_code = None
         if previous_transaction_stage:
@@ -329,6 +330,7 @@ class CtrForm(BaseController):
 
         ################################################################################################################
         # NEXT STAGE
+        ################################################################################################################
         next_stage = self.call_repos(await repos_get_next_stage(
             business_type_id=business_type_id,
             current_stage_code=current_stage_code,
