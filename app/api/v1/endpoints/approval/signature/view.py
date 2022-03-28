@@ -16,7 +16,7 @@ router = APIRouter()
 
 @router.post(
     path="/signature/",
-    name="1. GTĐD - D. Chữ ký - So Sánh",
+    name="So sánh chữ ký",
     description="Compare signature",
     responses=swagger_response(
         response_model=ResponseData[List[CompareSignatureResponse]],

@@ -33,8 +33,8 @@ async def view_retrieve_fingers(
 
 @router.post(
     path="/finger/",
-    name="1. GTĐD - C. Vân tay - So Sánh",
-    description="Tìm kiếm vân tay có trong hệ thống",
+    name="So sánh vân tay",
+    description="Compare finger",
     responses=swagger_response(
         response_model=ResponseData[List[CompareFingerPrintResponse]],
         success_status_code=status.HTTP_200_OK
