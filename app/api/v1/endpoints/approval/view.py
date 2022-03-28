@@ -10,7 +10,9 @@ from app.api.v1.endpoints.approval.controller import CtrForm
 from app.api.v1.endpoints.approval.schema import (
     CifApprovalProcessResponse, CifApprovalResponse, CifApprovalSuccessResponse
 )
-from app.api.v1.endpoints.cif.form.schema import ApprovalRequest
+from app.api.v1.endpoints.approval.template.detail.schema import (
+    ApprovalRequest
+)
 
 router = APIRouter()
 

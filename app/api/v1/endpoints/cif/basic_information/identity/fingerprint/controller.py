@@ -1,12 +1,9 @@
-from operator import itemgetter
-
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.basic_information.identity.fingerprint.repository import (
-    repos_add_finger_ekyc, repos_compare_finger_ekyc, repos_get_data_finger,
-    repos_get_id_finger_ekyc, repos_save_fingerprint
+    repos_add_finger_ekyc, repos_get_data_finger, repos_save_fingerprint
 )
 from app.api.v1.endpoints.cif.basic_information.identity.fingerprint.schema import (
-    CompareFingerPrintRequest, TwoFingerPrintRequest
+    TwoFingerPrintRequest
 )
 from app.api.v1.endpoints.cif.repository import (
     repos_get_customer_identity, repos_get_initializing_customer
@@ -122,43 +119,3 @@ class CtrFingerPrint(BaseController):
             'fingerprint_1': fingerprint_1,
             'fingerprint_2': fingerprint_2
         })
-
-    async def ctr_compare_fingerprint(self, cif_id: str, uuid: CompareFingerPrintRequest):
-        finger_id_ekycs = self.call_repos(await repos_get_id_finger_ekyc(cif_id=cif_id, session=self.oracle_session))
-
-        id_fingers = []
-        image_uuids = []
-
-        for finger_print in finger_id_ekycs:
-            id_fingers.append(finger_print.ekyc_id)
-            image_uuids.append(finger_print.image_url)
-
-        uuid__link_downloads = await self.get_link_download_multi_file(uuids=image_uuids)
-
-        compare_finger_response = self.call_repos(await repos_compare_finger_ekyc(
-            cif_id=cif_id,
-            uuid=uuid,
-            id_fingers=id_fingers,
-            session=self.oracle_session
-        ))
-        finger__response = {}
-
-        for item in compare_finger_response['customers']:
-            for finger in finger_id_ekycs:
-                compare_finger = {
-                    "id": item['id'],
-                    "image_url": finger.image_url,
-                    "similarity_percent": item['accuracy']
-                }
-                compare_finger['image_url'] = uuid__link_downloads[compare_finger['image_url']]
-
-                if compare_finger['id'] not in finger__response:
-                    finger__response[item['id']] = []
-                    finger__response[item['id']].append(compare_finger)
-
-        response_data = []
-
-        for key, value in finger__response.items():
-            response_data.extend(value)
-
-        return self.response(data=sorted(response_data, key=itemgetter('similarity_percent'), reverse=True))
