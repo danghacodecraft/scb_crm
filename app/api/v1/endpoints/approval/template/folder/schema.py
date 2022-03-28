@@ -11,7 +11,7 @@ class ApprovalTemplateInfoResponse(BaseSchema):
     is_related_flag: bool = Field(..., description="Biểu mẫu có liên quan tới chương trình không")
 
 
-class ApprovalFormResponse(BaseSchema):
+class ApprovalTemplateFolderResponse(BaseSchema):
     id: str = Field(..., description="ID thư mục")
     name: str = Field(..., description="Tên thư mục")
     templates: List[ApprovalTemplateInfoResponse] = Field(..., description="Danh sách biểu mẫu đi kèm thư mục")
