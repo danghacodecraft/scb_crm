@@ -283,8 +283,7 @@ async def repos_get_list_debit_card(
 async def get_data_debit_card_by_cif_num(session: Session, cif_id: str) -> ReposReturn:
     parent_id = session.execute(select(DebitCard.id).filter(DebitCard.customer_id == cif_id)).scalar()
     if not parent_id:
-        return ReposReturn(is_error=True, msg=ERROR_CIF_ID_NOT_EXIST,
-                           loc="cif_id")
+        return ReposReturn(data=[])
     obj = session.execute(
         select(DebitCard).filter(
             and_(
