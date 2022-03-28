@@ -141,14 +141,14 @@ async def repos_approve(
     })
 
 
-async def repo_form(data_request: dict, session: Session) -> ReposReturn:
+async def repo_form(data_request: dict, path: str) -> ReposReturn:
     body = {
         "parameter_values": {},
         "data_fill": data_request
     }
 
     service_tms = ServiceTMS()
-    is_success, response = await service_tms.fill_form(body=body)
+    is_success, response = await service_tms.fill_form(body=body, path=path)
     return ReposReturn(data=response)
 
 
