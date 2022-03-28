@@ -15,7 +15,7 @@ router = APIRouter()
 
 
 @router.get(
-    path="/",
+    path="/{template_id}/",
     name="Thông tin Biểu Mẫu",
     description="Thông tin Biểu Mẫu",
     responses=swagger_response(
