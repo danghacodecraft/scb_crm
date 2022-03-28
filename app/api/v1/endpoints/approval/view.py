@@ -19,7 +19,7 @@ router = APIRouter()
 
 @router.get(
     path="/process/",
-    name="Approval process",
+    name="Quá trình xử lý hồ sơ",
     description="Lấy dữ liệu tab `VI. PHÊ DUYỆT - QUÁ TRÌNH XỬ LÝ HỒ SƠ` ",
     responses=swagger_response(
         response_model=ResponseData[List[CifApprovalProcessResponse]],
@@ -37,6 +37,7 @@ async def view_approval_process(
 @router.post(
     path="/",
     description="Phê duyệt - Phê duyệt biểu mẫu",
+    name="Phê duyệt biểu mẫu",
     responses=swagger_response(
         response_model=ResponseData[CifApprovalResponse],
         success_status_code=status.HTTP_200_OK
@@ -58,7 +59,7 @@ async def view_approve(
 @router.get(
     path="/",
     description="Thông tin chi tiết - Phê duyệt biểu mẫu",
-    name="Chi tiết phê duyệt",
+    name="Chi tiết Phê duyệt biểu mẫu",
     responses=swagger_response(
         response_model=ResponseData[CifApprovalSuccessResponse],
         success_status_code=status.HTTP_200_OK
