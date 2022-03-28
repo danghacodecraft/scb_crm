@@ -6,7 +6,7 @@ from starlette import status
 from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
-from app.api.v1.endpoints.approval.template.detail.controller import CtrForm
+from app.api.v1.endpoints.approval.template.detail.controller import CtrTemplateDetail
 from app.api.v1.endpoints.approval.template.detail.schema import (
     CifApprovalProcessResponse
 )
@@ -30,13 +30,13 @@ async def view_form(
         current_user=Depends(get_current_user_from_header())
 ):
     if template_id == "1":
-        template = await CtrForm(current_user).ctr_form_1(cif_id)
+        template = await CtrTemplateDetail(current_user).ctr_form_1(cif_id)
         return ResponseData(**template)
     if template_id == "2":
-        template = await CtrForm(current_user).ctr_form_2(cif_id)
+        template = await CtrTemplateDetail(current_user).ctr_form_2(cif_id)
         return ResponseData(**template)
     if template_id == "3":
-        template = await CtrForm(current_user).ctr_form_3(cif_id)
+        template = await CtrTemplateDetail(current_user).ctr_form_3(cif_id)
         return ResponseData(**template)
 
     if template_id == "4":

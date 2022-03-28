@@ -1,5 +1,3 @@
-import ast
-
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.common_repository import (
     repos_get_next_receiver, repos_get_next_stage, repos_get_previous_stage,
@@ -8,10 +6,10 @@ from app.api.v1.endpoints.approval.common_repository import (
 from app.api.v1.endpoints.approval.repository import (
     repos_approval_get_face_authentication
 )
-from app.api.v1.endpoints.approval.template.detail.repository import (
+from app.api.v1.endpoints.approval.repository import (
     repos_approve, repos_get_approval_process
 )
-from app.api.v1.endpoints.approval.template.detail.schema import (
+from app.api.v1.endpoints.approval.schema import (
     ApprovalRequest
 )
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
@@ -28,7 +26,7 @@ from app.utils.error_messages import (
 from app.utils.functions import generate_uuid, now, orjson_dumps, orjson_loads
 
 
-class CtrForm(BaseController):
+class CtrApproval(BaseController):
     async def ctr_approval_process(self, cif_id: str):
         transactions = self.call_repos((await repos_get_approval_process(cif_id=cif_id, session=self.oracle_session)))
         response_data = []
@@ -109,7 +107,7 @@ class CtrForm(BaseController):
         elif previous_stage_code == CIF_STAGE_INIT:
             teller_stage_code = previous_stage_code
             teller_is_completed = True
-            teller_content = ast.literal_eval(previous_transaction_daily.data)["content"]
+            teller_content = orjson_loads(previous_transaction_daily.data)["content"]
             teller_created_at = previous_transaction_daily.created_at
             teller_created_by = previous_transaction_sender.user_fullname
 

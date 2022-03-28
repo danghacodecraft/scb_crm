@@ -1,10 +1,10 @@
 from app.api.base.repository import ReposReturn
 
 
-async def repos_get_approval_template_info(
+async def repos_get_approval_template_folder_info(
     cif_id: str
 ):
-    forms = [
+    template_folders = [
         {
             "id": 1,
             "name": "01 BM MO CIF V1",
@@ -68,4 +68,4 @@ async def repos_get_approval_template_info(
             ]
         }
     ]
-    return ReposReturn(data=forms)
+    return ReposReturn(data=template_folders)
