@@ -1,5 +1,3 @@
-import ast
-
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.common_repository import (
     repos_get_next_receiver, repos_get_next_stage, repos_get_previous_stage,
@@ -109,7 +107,7 @@ class CtrApproval(BaseController):
         elif previous_stage_code == CIF_STAGE_INIT:
             teller_stage_code = previous_stage_code
             teller_is_completed = True
-            teller_content = ast.literal_eval(previous_transaction_daily.data)["content"]
+            teller_content = orjson_loads(previous_transaction_daily.data)["content"]
             teller_created_at = previous_transaction_daily.created_at
             teller_created_by = previous_transaction_sender.user_fullname
 
