@@ -10,7 +10,7 @@ from app.api.v1.endpoints.approval.controller import CtrApproval
 from app.api.v1.endpoints.approval.schema import (
     CifApprovalProcessResponse, CifApprovalResponse, CifApprovalSuccessResponse
 )
-from app.api.v1.endpoints.approval.template.detail.schema import (
+from app.api.v1.endpoints.approval.schema import (
     ApprovalRequest
 )
 
