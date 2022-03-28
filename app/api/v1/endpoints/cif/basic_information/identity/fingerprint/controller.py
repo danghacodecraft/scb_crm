@@ -1,3 +1,7 @@
+from typing import List
+
+from fastapi import UploadFile
+
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.basic_information.identity.fingerprint.repository import (
     repos_add_finger_ekyc, repos_get_data_finger, repos_save_fingerprint
@@ -8,6 +12,7 @@ from app.api.v1.endpoints.cif.basic_information.identity.fingerprint.schema impo
 from app.api.v1.endpoints.cif.repository import (
     repos_get_customer_identity, repos_get_initializing_customer
 )
+from app.settings.event import service_ekyc
 from app.third_parties.oracle.models.master_data.identity import (
     FingerType, HandSide
 )
@@ -119,3 +124,43 @@ class CtrFingerPrint(BaseController):
             'fingerprint_1': fingerprint_1,
             'fingerprint_2': fingerprint_2
         })
+
+    async def ctr_add_fingerprint(self, cif_id: str, file: UploadFile, ids_finger: List):
+
+        response_data = {}
+        file_upload = await file.read()
+
+        is_success, uuid_ekyc = await service_ekyc.upload_file(file=file_upload, name=file.filename)
+        response_data.update({
+            "uuid": uuid_ekyc['uuid']
+        })
+        json_body_add_finger = {
+            "uuid": uuid_ekyc['uuid']
+        }
+
+        is_success_add_finger, id_finger = await service_ekyc.add_finger_ekyc(cif_id=cif_id,
+                                                                              json_body=json_body_add_finger)
+        if not is_success_add_finger:
+            return self.response_exception(msg='CALL_EKYC_ERROR', loc="ADD_FINGERPRINT")
+
+        response_data.update({
+            "id": id_finger['id']
+        })
+
+        if ids_finger:
+            json_compare = {
+                "uuid": uuid_ekyc['uuid'],
+                "id_fingers": ids_finger,
+                "limit": len(ids_finger)
+            }
+
+            is_success_compare, compare = await service_ekyc.compare_finger_ekyc(cif_id=cif_id, json_body=json_compare)
+
+            if not is_success_compare:
+                return self.response_exception(msg='CALL_EKYC_ERROR', loc="ADD_FINGERPRINT")
+
+            response_data.update({
+                "compare": compare['customers']
+            })
+
+        return self.response(data=response_data)

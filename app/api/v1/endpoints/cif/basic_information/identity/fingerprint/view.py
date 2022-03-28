@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, Path
+from typing import List
+
+from fastapi import APIRouter, Depends, File, Form, Path, UploadFile
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -8,7 +10,7 @@ from app.api.v1.endpoints.cif.basic_information.identity.fingerprint.controller 
     CtrFingerPrint
 )
 from app.api.v1.endpoints.cif.basic_information.identity.fingerprint.schema import (
-    TwoFingerPrintRequest, TwoFingerPrintResponse
+    AddCompareFingerResponse, TwoFingerPrintRequest, TwoFingerPrintResponse
 )
 from app.api.v1.schemas.utils import SaveSuccessResponse
 
@@ -49,3 +51,22 @@ async def view_retrieve_fingerprint(
 ):
     fingerprint_info = await CtrFingerPrint(current_user).ctr_get_fingerprint(cif_id)
     return ResponseData[TwoFingerPrintResponse](**fingerprint_info)
+
+
+@router.post(
+    path="/add_compare/",
+    name="1. GTĐD - C. Vân tay - so sánh vân tay",
+    description="So sánh vân tay",
+    responses=swagger_response(
+        response_model=ResponseData[AddCompareFingerResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_add_fingerprint(
+        file: UploadFile = File(..., description='file'),
+        ids_finger: List[int] = Form(None, description="Truyền id_ekyc để so sánh với file upload"),
+        cif_id: str = Path(...),
+        current_user=Depends(get_current_user_from_header())
+):
+    add_finger = await CtrFingerPrint(current_user).ctr_add_fingerprint(cif_id=cif_id, file=file, ids_finger=ids_finger)
+    return ResponseData[AddCompareFingerResponse](**add_finger)
