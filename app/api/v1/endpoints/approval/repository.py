@@ -6,6 +6,7 @@ from app.third_parties.oracle.models.cif.basic_information.identity.model import
     CustomerCompareImage, CustomerCompareImageTransaction, CustomerIdentity,
     CustomerIdentityImage, CustomerIdentityImageTransaction
 )
+from app.third_parties.oracle.models.cif.basic_information.model import Customer
 from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingCustomer, TransactionDaily, TransactionReceiver,
     TransactionSender
@@ -142,3 +143,42 @@ async def repos_approval_get_face_authentication(
     ).all()
 
     return ReposReturn(data=face_authentication)
+
+
+async def repos_get_approval_identity_faces(
+    cif_id: str,
+    session: Session
+):
+    """
+    Lấy tất cả hình ảnh ở bước GTDD
+    Output: CustomerIdentity, CustomerIdentityImage
+    """
+    customer_identities = session.execute(
+        select(
+            CustomerIdentity,
+            CustomerIdentityImage
+        )
+        .join(CustomerIdentityImage, and_(
+            CustomerIdentity.id == CustomerIdentityImage.identity_id,
+            CustomerIdentityImage.image_type_id == IMAGE_TYPE_FACE
+        ))
+        .filter(CustomerIdentity.customer_id == cif_id)
+        .order_by(desc(CustomerIdentity.updater_at))
+    ).all()
+    if not customer_identities:
+        return ReposReturn(is_error=True, detail="No Face in Identity Step")
+
+    return ReposReturn(data=customer_identities)
+
+
+async def repos_get_approval_identity_faces_by_url(
+    url: str,
+    session: Session
+):
+    data = session.execute(
+        select(
+            CustomerIdentityImage
+        )
+        .filter(CustomerIdentityImage.image_url == url)
+    ).scalars().all()
+    return ReposReturn(data=data)

@@ -4,7 +4,7 @@ from app.api.v1.endpoints.approval.common_repository import (
     repos_get_previous_transaction_daily, repos_get_stage_information
 )
 from app.api.v1.endpoints.approval.repository import (
-    repos_approval_get_face_authentication
+    repos_approval_get_face_authentication, repos_get_approval_identity_faces, repos_get_approval_identity_faces_by_url
 )
 from app.api.v1.endpoints.approval.repository import (
     repos_approve, repos_get_approval_process
@@ -60,9 +60,84 @@ class CtrApproval(BaseController):
 
         return self.response(data=response_data)
 
-    async def ctr_get_approval(self, cif_id: str):
+    async def ctr_get_approval(self, cif_id: str, amount: int):
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
+
+        ################################################################################################################
+        # THÔNG TIN XÁC THỰC
+        ################################################################################################################
+        # Khuôn mặt
+        created_at = None
+        identity_face_images = []
+        identity_face_image_uuids = []
+        image_uuids = []
+
+        compare_face_uuid = None
+
+        # Lấy hình ảnh upload lên
+        face_authentications = self.call_repos(await repos_approval_get_face_authentication(
+            cif_id=cif_id,
+            session=self.oracle_session
+        ))
+        if face_authentications:
+            _, _, _, _, compare_image_transaction = face_authentications[0]
+            compare_face_uuid = compare_image_transaction.compare_image_url
+            image_uuids.append(compare_face_uuid)
+
+            for _, _, identity_image_transaction, _, compare_image_transaction in face_authentications:
+                identity_face_uuid = identity_image_transaction.image_url
+                identity_face_images.append(dict(
+                    uuid=identity_face_uuid,
+                    similar_percent=compare_image_transaction.similar_percent
+                ))
+
+        # Lấy tất cả hình ảnh ở bước GTDD và CompareImage
+        face_transactions = self.call_repos(await repos_get_approval_identity_faces(
+            cif_id=cif_id,
+            session=self.oracle_session
+        ))
+
+        # for identity_image, identity_image_transaction in face_transactions:
+        #     identity_face_uuid = identity_image_transaction.image_url
+        #     identity_face_image_uuids.append(identity_face_uuid)
+        #     created_at = identity_image_transaction.maker_at
+        #     identity_face_images.append(dict(
+        #         uuid=identity_face_uuid
+        #     ))
+        #     image_uuids.append(identity_face_uuid)
+
+        image_uuids.extend(identity_face_image_uuids)
+
+        # gọi đến service file để lấy link download
+        uuid__link_downloads = await self.get_link_download_multi_file(uuids=image_uuids)
+
+        for identity_image in identity_face_images:
+            for identity_face_image_uuid in identity_face_image_uuids:
+                if identity_image['uuid'] == identity_face_image_uuid:
+                    identity_image.update(dict(
+                        url=uuid__link_downloads[identity_image['uuid']]
+                    ))
+
+
+
+        face_authentication = dict(
+            compare_face_url=uuid__link_downloads[compare_face_uuid] if compare_face_uuid else None,
+            # compare_face_url=compare_face_url,
+            compare_face_uuid=compare_face_uuid,
+            created_at=created_at,
+            identity_face_images=identity_face_images,
+        )
+
+        authentication = dict(
+            face=face_authentication
+        )
+
+        ################################################################################################################
+
+        ################################################################################################################
+        # PHÊ DUYỆT
+        ################################################################################################################
 
         # Kiểm tra xem đang ở bước nào của giao dịch
         _, _, previous_transaction_daily, previous_transaction_stage, _, previous_transaction_sender = self.call_repos(
@@ -194,9 +269,12 @@ class CtrApproval(BaseController):
         ))
 
         stages.extend([stage_teller, stage_supervisor, stage_audit])
+        ################################################################################################################
+
         return self.response(data=dict(
             cif_id=cif_id,
-            stages=stages
+            stages=stages,
+            authentication=authentication
         ))
 
     async def ctr_approve(

@@ -67,7 +67,7 @@ async def view_approve(
 )
 async def view_get_approve(
         cif_id: str = Path(..., description='Id CIF ảo'),
-        amount: int = Query(..., description="Số lượng hình so sánh"),
+        amount: int = Query(2, description="Số lượng hình so sánh"),
         current_user=Depends(get_current_user_from_header())
 ):
     approve_info = await CtrApproval(current_user).ctr_get_approval(
