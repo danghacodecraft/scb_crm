@@ -37,7 +37,7 @@ async def view_approval_process(
 @router.post(
     path="/",
     description="Phê duyệt - Phê duyệt biểu mẫu",
-    name="Phê duyệt biểu mẫu",
+    name="Phê duyệt",
     responses=swagger_response(
         response_model=ResponseData[CifApprovalResponse],
         success_status_code=status.HTTP_200_OK
@@ -59,7 +59,7 @@ async def view_approve(
 @router.get(
     path="/",
     description="Thông tin chi tiết - Phê duyệt biểu mẫu",
-    name="Chi tiết Phê duyệt biểu mẫu",
+    name="Phê duyệt",
     responses=swagger_response(
         response_model=ResponseData[CifApprovalSuccessResponse],
         success_status_code=status.HTTP_200_OK
