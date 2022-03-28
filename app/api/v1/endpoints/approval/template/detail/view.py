@@ -49,4 +49,5 @@ async def view_form(
         return ResponseData(**template)
 
     if template_id == "6":
-        pass
+        template = await CtrForm(current_user).ctr_form_6(cif_id)
+        return ResponseData(**template)

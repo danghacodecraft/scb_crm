@@ -24,7 +24,7 @@ from app.utils.constant.cif import (
     BUSINESS_TYPE_INIT_CIF, CONTACT_ADDRESS_CODE, RESIDENT_ADDRESS_CODE
 )
 from app.utils.constant.tms_dms import (
-    PATH_FORM_1, PATH_FORM_2, PATH_FORM_3, PATH_FORM_5
+    PATH_FORM_1, PATH_FORM_2, PATH_FORM_3, PATH_FORM_5, PATH_FORM_6
 )
 from app.utils.error_messages import (
     ERROR_CONTENT_NOT_NULL, ERROR_STAGE_COMPLETED, MESSAGE_STATUS
@@ -946,4 +946,64 @@ class CtrForm(BaseController):
 
         data_tms = self.call_repos(
             await repo_form(data_request=data_request, path=PATH_FORM_5))
+        return self.response(data_tms)
+
+    async def ctr_form_6(self, cif_id: str):
+        """
+            Biểu mẫu 6
+        """
+
+        data_request = {}
+        customer_db = self.call_repos(await repo_customer_info(cif_id=cif_id, session=self.oracle_session))
+        customer_address = self.call_repos(await repo_customer_address(cif_id=cif_id, session=self.oracle_session))
+        cust = customer_db[0]
+        # Tách địa chỉ tạm trú và địa chỉ thường trú
+        staying_address, resident_address = None, None
+
+        for address in customer_address:
+            if address.CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE:
+                staying_address = address
+            if address.CustomerAddress.address_type_id == RESIDENT_ADDRESS_CODE:
+                resident_address = address
+        data_request.update({
+            "S1.A.1.1.3": cust.Customer.full_name_vn,
+            "S1.A.1.2.4": ["Nam/Male"] if cust.CustomerGender.name == "Nam" else ["Nữ/Female"],
+            "S1.A.1.2.8": datetime_to_string(cust.CustomerIndividualInfo.date_of_birth, DATE_INPUT_OUTPUT_EKYC_FORMAT),
+            "S1.A.1.2.6": cust.AddressProvince.name,
+            "S1.A.1.2.20": cust.AddressCountry.name,
+            "S1.A.1.3.2": cust.CustomerIdentity.identity_num,
+            "S1.A.1.3.3": datetime_to_string(cust.CustomerIdentity.issued_date, DATE_INPUT_OUTPUT_EKYC_FORMAT),
+            "S1.A.1.3.4": cust.PlaceOfIssue.name,
+            "S1.A.1.2.15": staying_address.CustomerAddress.address,
+            "S1.A.1.2.16": staying_address.AddressWard.name,
+            "S1.A.1.2.17": staying_address.AddressDistrict.name,
+            "S1.A.1.2.18": staying_address.AddressProvince.name,
+            "S1.A.1.2.19": staying_address.AddressCountry.name,
+            "S1.A.1.2.25": resident_address.CustomerAddress.address,
+            "S1.A.1.2.26": resident_address.AddressWard.name,
+            "S1.A.1.2.27": resident_address.AddressDistrict.name,
+            "S1.A.1.2.28": resident_address.AddressProvince.name,
+            "S1.A.1.2.29": resident_address.AddressCountry.name,
+            "S1.A.1.2.1": cust.Customer.mobile_number,
+            "S1.A.1.5.4": cust.Career.name,
+
+        })
+
+        # Cam kết
+        time = today()
+        data_request.update({
+            "S1.A.1.11.10": f'{time.day}',
+            "S1.A.1.11.11": f'{time.month}',
+            "S1.A.1.11.12": f'{time.year}',
+
+        })
+
+        # Những field option
+        if cust.Customer.telephone_number:
+            data_request.update({"S1.A.1.2.2": cust.Customer.telephone_number})
+        if cust.Customer.email:
+            data_request.update({"S1.A.1.2.3": cust.Customer.email})
+
+        data_tms = self.call_repos(
+            await repo_form(data_request=data_request, path=PATH_FORM_6))
         return self.response(data_tms)
