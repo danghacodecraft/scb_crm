@@ -15,6 +15,7 @@ class TwoFingerPrintResponse(BaseSchema):
 class FingerPrintRequest(BaseSchema):
     image_url: str = Field(..., description='Ảnh bàn tay')
     uuid_ekyc: str = Field(..., description='uuid call ekyc')
+    id_ekyc: int = Field(..., description='id ekyc')
     hand_side: DropdownRequest = Field(..., description='Loại bàn tay')
     finger_type: DropdownRequest = Field(..., description='Loại ngón tay')
 
@@ -30,6 +31,7 @@ class CompareFingerResponse(BaseSchema):
 
 
 class AddCompareFingerResponse(BaseSchema):
-    id: int = Field(..., description="ID ekyc")
-    uuid: str = Field(..., description="UUID ekyc")
+    image_url: str = Field(..., description='UUID serivce_file')
+    id_ekyc: int = Field(..., description="ID ekyc")
+    uuid_ekyc: str = Field(..., description="UUID ekyc")
     compare: List[CompareFingerResponse] = Field(None, description='Danh sách so sánh vân tay')

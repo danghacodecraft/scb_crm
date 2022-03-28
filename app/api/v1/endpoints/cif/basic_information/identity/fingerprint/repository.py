@@ -1,6 +1,6 @@
 import json
 
-from sqlalchemy import and_, delete, select
+from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -15,26 +15,20 @@ from app.third_parties.oracle.models.master_data.identity import (
     FingerType, HandSide
 )
 from app.utils.constant.cif import (
-    BUSINESS_FORM_TTCN_GTDD_VT, IMAGE_TYPE_FINGERPRINT
+    ACTIVE_FLAG_CREATE_FINGERPRINT, BUSINESS_FORM_TTCN_GTDD_VT,
+    IMAGE_TYPE_FINGERPRINT
 )
 from app.utils.error_messages import ERROR_NO_DATA
 from app.utils.functions import now
 
 
-@auto_commit
-async def repos_save_fingerprint(
-        cif_id: str,
+async def repos_get_identity_image(
         identity_id: str,
-        log_data: json,
         session: Session,
-        save_identity_image: list,
-        save_identity_image_transaction: list,
-        created_by: str
-) -> ReposReturn:
-    # lấy list customer_identity_image theo vân tay
+):
     customer_identity_image = session.execute(
         select(
-            CustomerIdentityImage.id
+            CustomerIdentityImage
         ).filter(
             and_(
                 CustomerIdentityImage.identity_id == identity_id,
@@ -42,16 +36,31 @@ async def repos_save_fingerprint(
             )
         )
     ).scalars().all()
-    # xóa list id vân tay
-    if customer_identity_image:
-        session.execute(
-            delete(
-                CustomerIdentityImage
-            ).filter(CustomerIdentityImage.id.in_(customer_identity_image))
-        )
 
+    return ReposReturn(data=customer_identity_image)
+
+
+@auto_commit
+async def repos_save_fingerprint(
+        cif_id: str,
+        is_create: bool,
+        log_data: json,
+        session: Session,
+        save_identity_image: list,
+        save_identity_image_transaction: list,
+        update_identity_image: list,
+        created_by: str
+) -> ReposReturn:
+    # update active_flag identity_image
+    if not is_create:
+        session.bulk_update_mappings(CustomerIdentityImage, update_identity_image)
+
+    # tạo identity_image từ request
     session.bulk_save_objects([CustomerIdentityImage(**identity_image) for identity_image in save_identity_image])
-    session.bulk_save_objects([CustomerIdentityImageTransaction(**identity_image_transaction) for identity_image_transaction in save_identity_image_transaction])
+    # tạo identity_image_transaction từ request
+    session.bulk_save_objects(
+        [CustomerIdentityImageTransaction(**identity_image_transaction) for identity_image_transaction in
+         save_identity_image_transaction])
 
     is_success, booking_response = await write_transaction_log_and_update_booking(
         log_data=log_data,
@@ -83,7 +92,13 @@ async def repos_get_data_finger(cif_id: str, session: Session) -> ReposReturn:
                 CustomerIdentity.customer_id == cif_id
             )
         )
-        .join(CustomerIdentityImageTransaction, CustomerIdentityImage.id == CustomerIdentityImageTransaction.identity_image_id)
+        .join(
+            CustomerIdentityImageTransaction, and_(
+                CustomerIdentityImage.id == CustomerIdentityImageTransaction.identity_image_id,
+                # query lấy vân tay từ transaction_image với identity_image active_flag = 1
+                CustomerIdentityImage.active_flag == ACTIVE_FLAG_CREATE_FINGERPRINT
+            )
+        )
         .join(HandSide, CustomerIdentityImage.hand_side_id == HandSide.id)
         .join(FingerType, CustomerIdentityImage.finger_type_id == FingerType.id)
         .filter(
