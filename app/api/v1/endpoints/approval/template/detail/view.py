@@ -91,5 +91,17 @@ async def view_form(
         current_user=Depends(get_current_user_from_header())
 ):
     if template_id == "1":
-        template = await CtrForm(current_user).ctr_form(cif_id)
+        template = await CtrForm(current_user).ctr_form_1(cif_id)
         return ResponseData(**template)
+    if template_id == "2":
+        pass
+    if template_id == "3":
+        template = await CtrForm(current_user).ctr_form_3(cif_id)
+        return ResponseData(**template)
+
+    if template_id == "4":
+        pass
+    if template_id == "5":
+        pass
+    if template_id == "6":
+        pass
