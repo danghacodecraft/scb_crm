@@ -847,7 +847,7 @@ class CtrForm(BaseController):
                 resident_address = address
         data_request.update({
             "S1.A.1.1.3": cust.Customer.full_name_vn,
-            "S1.A.1.2.4": [cust.CustomerGender.name],
+            "S1.A.1.2.4": ["Nam/Male"] if cust.CustomerGender.name == "Name" else ["Nữ/Female"],
             "S1.A.1.2.8": datetime_to_string(cust.CustomerIndividualInfo.date_of_birth, DATE_INPUT_OUTPUT_EKYC_FORMAT),
             "S1.A.1.2.6": cust.AddressProvince.name,
             "S1.A.1.2.20": cust.AddressCountry.name,
@@ -881,18 +881,8 @@ class CtrForm(BaseController):
         # Những field option
         if cust.Customer.telephone_number:
             data_request.update({"S1.A.1.2.2": cust.Customer.telephone_number})
-        if cust.Customer.tax_number:
-            data_request.update({"S1.A.1.3.6": cust.Customer.tax_number})
         if cust.Customer.email:
             data_request.update({"S1.A.1.2.3": cust.Customer.email})
-        if cust.CustomerProfessional.company_name:
-            data_request.update({"S1.A.1.2.10": cust.CustomerProfessional.company_name})
-        if cust.CustomerProfessional.company_address:
-            data_request.update({"S1.A.1.2.11": cust.CustomerProfessional.company_address})
-        if cust.CustomerProfessional.company_phone:
-            data_request.update({"S1.A.1.2.12": cust.CustomerProfessional.company_phone})
-        if cust.Position:
-            data_request.update({"S1.A.1.2.13": cust.Position.name})
 
         data_tms = self.call_repos(
             await repo_form(data_request=data_request, path=PATH_FORM_3))
@@ -951,18 +941,8 @@ class CtrForm(BaseController):
         # Những field option
         if cust.Customer.telephone_number:
             data_request.update({"S1.A.1.2.2": cust.Customer.telephone_number})
-        if cust.Customer.tax_number:
-            data_request.update({"S1.A.1.3.6": cust.Customer.tax_number})
         if cust.Customer.email:
             data_request.update({"S1.A.1.2.3": cust.Customer.email})
-        if cust.CustomerProfessional.company_name:
-            data_request.update({"S1.A.1.2.10": cust.CustomerProfessional.company_name})
-        if cust.CustomerProfessional.company_address:
-            data_request.update({"S1.A.1.2.11": cust.CustomerProfessional.company_address})
-        if cust.CustomerProfessional.company_phone:
-            data_request.update({"S1.A.1.2.12": cust.CustomerProfessional.company_phone})
-        if cust.Position:
-            data_request.update({"S1.A.1.2.13": cust.Position.name})
 
         data_tms = self.call_repos(
             await repo_form(data_request=data_request, path=PATH_FORM_5))
