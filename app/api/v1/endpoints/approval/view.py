@@ -10,7 +10,7 @@ from app.api.v1.endpoints.approval.controller import CtrApproval
 from app.api.v1.endpoints.approval.schema import (
     CifApprovalProcessResponse, CifApprovalResponse, CifApprovalSuccessResponse
 )
-from app.api.v1.endpoints.approval.template.detail.schema import (
+from app.api.v1.endpoints.approval.schema import (
     ApprovalRequest
 )
 
@@ -67,7 +67,7 @@ async def view_approve(
 )
 async def view_get_approve(
         cif_id: str = Path(..., description='Id CIF ảo'),
-        amount: int = Query(..., description="Số lượng hình so sánh"),
+        amount: int = Query(2, description="Số lượng hình so sánh"),
         current_user=Depends(get_current_user_from_header())
 ):
     approve_info = await CtrApproval(current_user).ctr_get_approval(

@@ -1,7 +1,7 @@
-from sqlalchemy import and_, desc, or_, select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session, aliased
 
-from app.api.base.repository import ReposReturn, auto_commit
+from app.api.base.repository import ReposReturn
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
     CustomerAddress, CustomerProfessional
 )
@@ -22,10 +22,6 @@ from app.third_parties.oracle.models.cif.basic_information.personal.model import
 )
 from app.third_parties.oracle.models.cif.debit_card.model import DebitCard
 from app.third_parties.oracle.models.cif.e_banking.model import EBankingInfo
-from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingCustomer, TransactionDaily, TransactionReceiver,
-    TransactionSender
-)
 from app.third_parties.oracle.models.cif.payment_account.model import (
     CasaAccount, JointAccountHolder
 )
@@ -41,11 +37,9 @@ from app.third_parties.oracle.models.master_data.customer import (
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import (
     AverageIncomeAmount, Career, FatcaCategory, MaritalStatus, Position,
-    ResidentStatus, TransactionStage, TransactionStageLane,
-    TransactionStagePhase, TransactionStageRole, TransactionStageStatus
+    ResidentStatus
 )
 from app.third_parties.services.tms import ServiceTMS
-from app.utils.error_messages import ERROR_CIF_ID_NOT_EXIST
 
 
 async def repo_form(data_request: dict, path: str) -> ReposReturn:

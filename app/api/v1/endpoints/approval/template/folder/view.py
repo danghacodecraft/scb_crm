@@ -17,7 +17,7 @@ router = APIRouter()
 
 
 @router.get(
-    path="/folders/",
+    path="/",
     name="Danh sách Biểu Mẫu",
     description="Lấy danh sách các biểu mẫu",
     responses=swagger_response(

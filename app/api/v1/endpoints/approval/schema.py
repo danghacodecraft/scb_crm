@@ -44,16 +44,16 @@ class CIFStageResponse(BaseSchema):
     created_by: Optional[str] = Field(..., description="Cập nhật bởi")
 
 
-class CompareFaceImage(BaseSchema):
+class IdentityFaceImage(BaseSchema):
     url: str = Field(..., description="Link hình ảnh")
-    similar_percent: int = Field(..., description="Tỉ lệ chính xác của hình hiện tại so với `face_url`")
+    similar_percent: Optional[int] = Field(..., description="Tỉ lệ chính xác của hình hiện tại so với `face_url`")
 
 
 class FaceAuthenticationResponse(BaseSchema):
-    url: Optional[str] = Field(..., description='URL khuôn mặt upload')
-    uuid: Optional[str] = Field(..., description='UUID khuôn mặt upload')
+    compare_face_url: Optional[str] = Field(..., description='URL khuôn mặt upload')
+    compare_face_uuid: Optional[str] = Field(..., description='UUID khuôn mặt upload')
     created_at: Optional[datetime] = Field(..., description='Thời gian tạo')
-    compare_face_images: List[CompareFaceImage] = Field(..., description='Danh sách hình ảnh so sánh')
+    identity_face_images: List[IdentityFaceImage] = Field(..., description='Danh sách hình ảnh')
 
 
 class AuthenticationResponse(BaseSchema):
