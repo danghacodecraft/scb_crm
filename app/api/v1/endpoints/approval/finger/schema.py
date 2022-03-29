@@ -18,3 +18,12 @@ class FingerBase(BaseSchema):
 class FingersResponse(BaseSchema):
     left_hand: List[FingerBase] = Field(..., description='Mẫu vân tay trái')
     right_hand: List[FingerBase] = Field(..., description='Mẫu vân tay phải')
+
+
+class CompareFingerPrintRequest(BaseSchema):
+    uuid: str = Field(..., description='uuid_ekyc upload file')
+
+
+class CompareFingerPrintResponse(BaseSchema):
+    image_url: str = Field(..., description='image url')
+    similarity_percent: int = Field(..., description="Tỷ lệ phần trăm giống nhau")

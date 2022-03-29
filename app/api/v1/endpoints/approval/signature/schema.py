@@ -29,3 +29,12 @@ class CompareSignaturesResponse(BaseSchema):
 class SignaturesSuccessResponse(BaseSchema):
     created_date: date = Field(..., description='Ngày tạo')
     signature: List[SignaturesResponse] = Field(..., description='Danh sách ảnh khuôn mặt')
+
+
+class CompareSignatureRequest(BaseSchema):
+    uuid_ekyc: str = Field(...)
+
+
+class CompareSignatureResponse(BaseSchema):
+    image_url: str = Field(..., description='url image')
+    similarity_percent: int = Field(..., description='Tỷ lệ phần trăm giống nhau giữa hai hình ảnh')

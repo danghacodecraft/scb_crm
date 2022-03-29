@@ -1,9 +1,9 @@
 from app.api.base.controller import BaseController
-from app.api.v1.endpoints.cif.basic_information.identity.signature.repository import (
-    repos_get_signature_data, repos_save_signature
+from app.api.v1.endpoints.approval.signature.repository import (
+    repos_compare_signature, repos_get_signature_data, repos_save_signature
 )
-from app.api.v1.endpoints.cif.basic_information.identity.signature.schema import (
-    SignaturesRequest
+from app.api.v1.endpoints.approval.signature.schema import (
+    CompareSignatureRequest, SignaturesRequest
 )
 from app.api.v1.endpoints.cif.repository import (
     repos_get_customer_identity, repos_get_initializing_customer
@@ -107,3 +107,27 @@ class CtrSignature(BaseController):
             'created_date': data_str,
             'signature': signature
         } for data_str, signature in date__signatures.items()])
+
+    async def ctr_compare_signature(self, cif_id: str, uuid_ekyc: CompareSignatureRequest):
+        uuid_compare_ekyc = uuid_ekyc.uuid_ekyc
+
+        compare_signatures = self.call_repos(await repos_compare_signature(
+            cif_id=cif_id,
+            uuid_ekyc=uuid_compare_ekyc,
+            session=self.oracle_session,
+            user_id=self.current_user.code
+        ))
+        image_uuids = [signature['image_url'] for signature in compare_signatures]
+        # gọi đến service file để lấy link download
+        uuid__link_downloads = await self.get_link_download_multi_file(uuids=image_uuids)
+        date__signatures = []
+
+        for signature in compare_signatures:
+            compare_signature = {
+                "image_url": signature['image_url'],
+                "similarity_percent": signature['similarity_percent']
+            }
+            compare_signature['image_url'] = uuid__link_downloads[compare_signature['image_url']]
+            date__signatures.append(compare_signature)
+
+        return self.response(data=date__signatures)

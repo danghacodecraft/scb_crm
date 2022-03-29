@@ -29,6 +29,9 @@ from app.utils.functions import dropdown, now
 
 async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
     parent_id = session.execute(select(DebitCard.id).filter(DebitCard.customer_id == cif_id)).scalar()
+    if not parent_id:
+        return ReposReturn(is_error=True, msg=ERROR_CIF_ID_NOT_EXIST,
+                           loc="cif_id")
     list_debit_card_info_engine = session.execute(
         select(
             DebitCard.customer_id,
@@ -215,6 +218,7 @@ async def repos_add_debit_card(
 
     # Xóa dữ liệu cũ
     if main_card_id:
+
         session.execute(delete(DebitCardType).filter(DebitCardType.card_id.in_(list_card_type)))
         if len(list_sub_card_ids) > 0:
             session.execute(delete(DebitCard).filter(DebitCard.id.in_(list_sub_card_ids)))
@@ -278,7 +282,8 @@ async def repos_get_list_debit_card(
 
 async def get_data_debit_card_by_cif_num(session: Session, cif_id: str) -> ReposReturn:
     parent_id = session.execute(select(DebitCard.id).filter(DebitCard.customer_id == cif_id)).scalar()
-
+    if not parent_id:
+        return ReposReturn(data=[])
     obj = session.execute(
         select(DebitCard).filter(
             and_(
