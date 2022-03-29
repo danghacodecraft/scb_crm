@@ -355,6 +355,9 @@ class CtrApproval(BaseController):
                 identity_image_ids=identity_image_ids,
                 session=self.oracle_session
             ))
+            if not compare_image_transactions:
+                return self.response_exception(msg="No Compare Image")
+
             for compare_image, compare_image_transaction in compare_image_transactions:
                 compare_image_transaction.approved_at = now()
                 compare_image_transaction.approved_id = current_user.code

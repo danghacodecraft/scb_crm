@@ -197,6 +197,4 @@ async def repos_get_compare_image_transactions(
         .join(CustomerCompareImageTransaction, CustomerCompareImage.id == CustomerCompareImageTransaction.compare_image_id)
         .filter(CustomerCompareImage.identity_image_id.in_(identity_image_ids))
     ).all()
-    if not compare_image_transactions:
-        return ReposReturn(is_error=True, msg="No Compare Image")
     return ReposReturn(data=compare_image_transactions)
