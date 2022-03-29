@@ -4,14 +4,11 @@ from app.api.v1.endpoints.approval.common_repository import (
     repos_get_previous_transaction_daily, repos_get_stage_information
 )
 from app.api.v1.endpoints.approval.repository import (
-    repos_approval_get_face_authentication, repos_get_approval_identity_faces, repos_get_approval_identity_faces_by_url
+    repos_approval_get_face_authentication, repos_approve,
+    repos_get_approval_identity_faces, repos_get_approval_process,
+    repos_get_compare_image_transactions
 )
-from app.api.v1.endpoints.approval.repository import (
-    repos_approve, repos_get_approval_process
-)
-from app.api.v1.endpoints.approval.schema import (
-    ApprovalRequest
-)
+from app.api.v1.endpoints.approval.schema import ApprovalRequest
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.approval import (
@@ -92,11 +89,11 @@ class CtrApproval(BaseController):
                     similar_percent=compare_image_transaction.similar_percent
                 ))
 
-        # Lấy tất cả hình ảnh ở bước GTDD và CompareImage
-        face_transactions = self.call_repos(await repos_get_approval_identity_faces(
-            cif_id=cif_id,
-            session=self.oracle_session
-        ))
+        # # Lấy tất cả hình ảnh ở bước GTDD và CompareImage
+        # face_transactions = self.call_repos(await repos_get_approval_identity_faces(
+        #     cif_id=cif_id,
+        #     session=self.oracle_session
+        # ))
 
         # for identity_image, identity_image_transaction in face_transactions:
         #     identity_face_uuid = identity_image_transaction.image_url
@@ -118,8 +115,6 @@ class CtrApproval(BaseController):
                     identity_image.update(dict(
                         url=uuid__link_downloads[identity_image['uuid']]
                     ))
-
-
 
         face_authentication = dict(
             compare_face_url=uuid__link_downloads[compare_face_uuid] if compare_face_uuid else None,
@@ -318,7 +313,7 @@ class CtrApproval(BaseController):
             return self.response_exception(
                 msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
                 detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FACE],
-                loc="authentication -> face_uuid"
+                loc="authentication -> compare_face_image_uuid"
             )
 
         # TODO: Vân Tay, Chữ Ký
@@ -355,10 +350,22 @@ class CtrApproval(BaseController):
         # CURRENT STAGE
         if is_stage_init:
             # Cập nhật trạng thái đã duyệt hình ảnh này
-            new_compare_image_transaction.approved_id = current_user.code
-            new_compare_image_transaction.approved_at = now()
-            self.oracle_session.flush()
-            self.oracle_session.commit()
+            face_transactions = self.call_repos(await repos_get_approval_identity_faces(
+                cif_id=cif_id,
+                session=self.oracle_session
+            ))
+            identity_image_ids = []
+            for identity, identity_image in face_transactions:
+                identity_image_ids.append(identity_image.id)
+
+            # Lấy hình ảnh so sánh, số nhiều nhưng cùng chung uuid
+            compare_image_transactions = self.call_repos(await repos_get_compare_image_transactions(
+                identity_image_ids=identity_image_ids,
+                session=self.oracle_session
+            ))
+            for compare_image, compare_image_transaction in compare_image_transactions:
+                compare_image_transaction.approved_at = now()
+                compare_image_transaction.approved_id = current_user.code
 
             current_stage_code = CIF_STAGE_INIT
         else:

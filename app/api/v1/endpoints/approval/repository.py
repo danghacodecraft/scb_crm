@@ -1,3 +1,5 @@
+from typing import List
+
 from sqlalchemy import and_, desc, select
 from sqlalchemy.orm import Session, aliased
 
@@ -6,7 +8,6 @@ from app.third_parties.oracle.models.cif.basic_information.identity.model import
     CustomerCompareImage, CustomerCompareImageTransaction, CustomerIdentity,
     CustomerIdentityImage, CustomerIdentityImageTransaction
 )
-from app.third_parties.oracle.models.cif.basic_information.model import Customer
 from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingCustomer, TransactionDaily, TransactionReceiver,
     TransactionSender
@@ -182,3 +183,20 @@ async def repos_get_approval_identity_faces_by_url(
         .filter(CustomerIdentityImage.image_url == url)
     ).scalars().all()
     return ReposReturn(data=data)
+
+
+async def repos_get_compare_image_transactions(
+    identity_image_ids: List,
+    session: Session
+):
+    compare_image_transactions = session.execute(
+        select(
+            CustomerCompareImage,
+            CustomerCompareImageTransaction
+        )
+        .join(CustomerCompareImageTransaction, CustomerCompareImage.id == CustomerCompareImageTransaction.compare_image_id)
+        .filter(CustomerCompareImage.identity_image_id.in_(identity_image_ids))
+    ).all()
+    if not compare_image_transactions:
+        return ReposReturn(is_error=True, msg="No Compare Image")
+    return ReposReturn(data=compare_image_transactions)
