@@ -381,7 +381,7 @@ class CtrTemplateDetail(BaseController):
                 resident_address = address
         data_request.update({
             "S1.A.1.1.3": cust.Customer.full_name_vn,
-            "S1.A.1.2.4": ["Nam/Male"] if cust.CustomerGender.name == "Name" else ["Nữ/Female"],
+            "S1.A.1.2.4": ["Nam/Male"] if cust.CustomerGender.name == "Nam" else ["Nữ/Female"],
             "S1.A.1.2.8": datetime_to_string(cust.CustomerIndividualInfo.date_of_birth, DATE_INPUT_OUTPUT_EKYC_FORMAT),
             "S1.A.1.2.6": cust.AddressProvince.name,
             "S1.A.1.2.20": cust.AddressCountry.name,
