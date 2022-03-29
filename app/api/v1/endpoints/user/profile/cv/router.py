@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints.user.profile.curriculum_vitae.contact_info import \
+from app.api.v1.endpoints.user.profile.cv.contact_info import \
     view as views_contact_info
-from app.api.v1.endpoints.user.profile.curriculum_vitae.personal_info import \
+from app.api.v1.endpoints.user.profile.cv.personal_info import \
     view as views_personal_info
 
 router_module = APIRouter()

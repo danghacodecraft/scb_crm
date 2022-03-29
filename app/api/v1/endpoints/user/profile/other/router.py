@@ -1,12 +1,12 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints.user.profile.others.discipline import \
+from app.api.v1.endpoints.user.profile.other.discipline import \
     view as views_discipline
-from app.api.v1.endpoints.user.profile.others.felicitation import \
+from app.api.v1.endpoints.user.profile.other.felicitation import \
     view as views_felicitation
-from app.api.v1.endpoints.user.profile.others.sub_info import \
+from app.api.v1.endpoints.user.profile.other.sub_info import \
     view as views_sub_info
-from app.api.v1.endpoints.user.profile.others.training_in_scb import \
+from app.api.v1.endpoints.user.profile.other.training_in_scb import \
     view as views_training_in_scb
 
 router_module = APIRouter()

@@ -1,14 +1,11 @@
 from fastapi import APIRouter
 
 from app.api.v1.endpoints.user.profile import view as views_user_profile
-from app.api.v1.endpoints.user.profile.curriculum_vitae import \
-    router as routers_curriculum_vitae
-from app.api.v1.endpoints.user.profile.kpis import view as views_kpis
-from app.api.v1.endpoints.user.profile.others import router as routers_others
-from app.api.v1.endpoints.user.profile.qualification import \
-    router as routers_qualification
-from app.api.v1.endpoints.user.profile.work_profile import \
-    router as routers_work_profile
+from app.api.v1.endpoints.user.profile.cv import router as routers_cv
+from app.api.v1.endpoints.user.profile.kpi import view as views_kpi
+from app.api.v1.endpoints.user.profile.level import router as routers_level
+from app.api.v1.endpoints.user.profile.other import router as routers_other
+from app.api.v1.endpoints.user.profile.work import router as routers_work
 
 router_module = APIRouter()
 
@@ -16,16 +13,16 @@ router_module = APIRouter()
 router_module.include_router(router=views_user_profile.router)
 
 # router [HỒ SƠ CÔNG TÁC]
-router_module.include_router(router=routers_work_profile.router_module, prefix="/work-profile")
+router_module.include_router(router=routers_work.router_module, prefix="/work")
 
 # router [SƠ YẾU LÍ LỊCH]
-router_module.include_router(router=routers_curriculum_vitae.router_module, prefix="/curriculum-vitae")
+router_module.include_router(router=routers_cv.router_module, prefix="/cv")
 
 # router [THÔNG TIN TRÌNH ĐỘ]
-router_module.include_router(router=routers_qualification.router_module, prefix="/qualification")
+router_module.include_router(router=routers_level.router_module, prefix="/level")
 
 # router [THÔNG TIN KPIS]
-router_module.include_router(router=views_kpis.router, prefix="/kpis")
+router_module.include_router(router=views_kpi.router, prefix="/kpi")
 
 # router [THÔNG TIN KHÁC]
-router_module.include_router(router=routers_others.router_module, prefix="/others")
+router_module.include_router(router=routers_other.router_module, prefix="/other")
