@@ -72,49 +72,41 @@ class CtrApproval(BaseController):
 
         compare_face_uuid = None
 
-        # Lấy hình ảnh upload lên
-        face_authentications = self.call_repos(await repos_approval_get_face_authentication(
+        # Lấy tất cả hình ảnh ở bước GTDD
+        face_transactions = self.call_repos(await repos_get_approval_identity_faces(
             cif_id=cif_id,
             session=self.oracle_session
         ))
-        if face_authentications:
-            _, _, _, _, compare_image_transaction = face_authentications[0]
-            compare_face_uuid = compare_image_transaction.compare_image_url
+        identity_image_ids = []
+        for identity, identity_image in face_transactions:
+            compare_face_uuid = identity_image.image_url
             image_uuids.append(compare_face_uuid)
+            identity_image_ids.append(identity_image.id)
 
-            for _, _, identity_image_transaction, _, compare_image_transaction in face_authentications:
-                identity_face_uuid = identity_image_transaction.image_url
-                identity_face_images.append(dict(
-                    uuid=identity_face_uuid,
-                    similar_percent=compare_image_transaction.similar_percent
-                ))
+        # Lấy hình ảnh so sánh, số nhiều nhưng cùng chung uuid
+        compare_image_transactions = self.call_repos(await repos_get_compare_image_transactions(
+            identity_image_ids=identity_image_ids,
+            session=self.oracle_session
+        ))
 
-        # # Lấy tất cả hình ảnh ở bước GTDD và CompareImage
-        # face_transactions = self.call_repos(await repos_get_approval_identity_faces(
-        #     cif_id=cif_id,
-        #     session=self.oracle_session
-        # ))
-
-        # for identity_image, identity_image_transaction in face_transactions:
-        #     identity_face_uuid = identity_image_transaction.image_url
-        #     identity_face_image_uuids.append(identity_face_uuid)
-        #     created_at = identity_image_transaction.maker_at
-        #     identity_face_images.append(dict(
-        #         uuid=identity_face_uuid
-        #     ))
-        #     image_uuids.append(identity_face_uuid)
+        for compare_image, compare_image_transaction in compare_image_transactions:
+            for identity, identity_image in face_transactions:
+                if compare_image_transaction.identity_image_id == identity_image.id:
+                    identity_face_images.append(dict(
+                        uuid=compare_image_transaction.compare_image_url,
+                        similar_percent=compare_image_transaction.similar_percent
+                    ))
+                    identity_face_image_uuids.append(compare_image_transaction.compare_image_url)
 
         image_uuids.extend(identity_face_image_uuids)
 
         # gọi đến service file để lấy link download
         uuid__link_downloads = await self.get_link_download_multi_file(uuids=image_uuids)
 
-        for identity_image in identity_face_images:
-            for identity_face_image_uuid in identity_face_image_uuids:
-                if identity_image['uuid'] == identity_face_image_uuid:
-                    identity_image.update(dict(
-                        url=uuid__link_downloads[identity_image['uuid']]
-                    ))
+        for identity_face_image in identity_face_images:
+            identity_face_image.update(
+                url=uuid__link_downloads[identity_face_image['uuid']]
+            )
 
         face_authentication = dict(
             compare_face_url=uuid__link_downloads[compare_face_uuid] if compare_face_uuid else None,
