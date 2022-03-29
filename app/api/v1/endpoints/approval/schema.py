@@ -46,7 +46,7 @@ class CIFStageResponse(BaseSchema):
 
 class IdentityFaceImage(BaseSchema):
     url: str = Field(..., description="Link hình ảnh")
-    similar_percent: int = Field(..., description="Tỉ lệ chính xác của hình hiện tại so với `face_url`")
+    similar_percent: Optional[int] = Field(..., description="Tỉ lệ chính xác của hình hiện tại so với `face_url`")
 
 
 class FaceAuthenticationResponse(BaseSchema):

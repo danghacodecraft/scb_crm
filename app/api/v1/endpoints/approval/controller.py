@@ -66,6 +66,7 @@ class CtrApproval(BaseController):
         ################################################################################################################
         # Khuôn mặt
         created_at = None
+        init_identity_face_images = []
         identity_face_images = []
         identity_face_image_uuids = []
         image_uuids = []
@@ -80,7 +81,6 @@ class CtrApproval(BaseController):
         identity_image_ids = []
         for identity, identity_image in face_transactions:
             identity_face_uuid = identity_image.image_url
-            created_at = identity_image.maker_at
             image_uuids.append(identity_face_uuid)
             identity_image_ids.append(identity_image.id)
 
@@ -93,6 +93,7 @@ class CtrApproval(BaseController):
         distinct_identity_images = {}
         for compare_image, compare_image_transaction in compare_image_transactions:
             compare_face_uuid = compare_image_transaction.compare_image_url
+            created_at = compare_image_transaction.maker_at
             image_uuids.append(compare_image_transaction.compare_image_url)
             for identity, identity_image in face_transactions:
                 if compare_image_transaction.identity_image_id == identity_image.id:
@@ -110,6 +111,15 @@ class CtrApproval(BaseController):
                 url=uuid__link_downloads[distinct_identity_image],
                 similar_percent=distinct_identity_images[distinct_identity_image]
             ))
+
+        # RULE: Nếu chưa upload -> Lấy 2 hình mới nhất
+        if not identity_face_images and not compare_face_uuid:
+            for identity, identity_image in face_transactions:
+                init_identity_face_images.append(dict(
+                    url=uuid__link_downloads[identity_image.image_url],
+                    similar_percent=None
+                ))
+            identity_face_images = init_identity_face_images
 
         face_authentication = dict(
             compare_face_url=uuid__link_downloads[compare_face_uuid] if compare_face_uuid else None,
