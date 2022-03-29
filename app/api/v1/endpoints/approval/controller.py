@@ -79,8 +79,9 @@ class CtrApproval(BaseController):
         ))
         identity_image_ids = []
         for identity, identity_image in face_transactions:
-            compare_face_uuid = identity_image.image_url
-            image_uuids.append(compare_face_uuid)
+            identity_face_uuid = identity_image.image_url
+            created_at = identity_image.maker_at
+            image_uuids.append(identity_face_uuid)
             identity_image_ids.append(identity_image.id)
 
         # Lấy hình ảnh so sánh, số nhiều nhưng cùng chung uuid
@@ -89,24 +90,26 @@ class CtrApproval(BaseController):
             session=self.oracle_session
         ))
 
+        distinct_identity_images = {}
         for compare_image, compare_image_transaction in compare_image_transactions:
+            compare_face_uuid = compare_image_transaction.compare_image_url
+            image_uuids.append(compare_image_transaction.compare_image_url)
             for identity, identity_image in face_transactions:
                 if compare_image_transaction.identity_image_id == identity_image.id:
-                    identity_face_images.append(dict(
-                        uuid=compare_image_transaction.compare_image_url,
-                        similar_percent=compare_image_transaction.similar_percent
-                    ))
+                    distinct_identity_images.update({
+                        identity_image.image_url: compare_image_transaction.similar_percent
+                    })
                     identity_face_image_uuids.append(compare_image_transaction.compare_image_url)
-
         image_uuids.extend(identity_face_image_uuids)
 
         # gọi đến service file để lấy link download
         uuid__link_downloads = await self.get_link_download_multi_file(uuids=image_uuids)
 
-        for identity_face_image in identity_face_images:
-            identity_face_image.update(
-                url=uuid__link_downloads[identity_face_image['uuid']]
-            )
+        for distinct_identity_image in distinct_identity_images:
+            identity_face_images.append(dict(
+                url=uuid__link_downloads[distinct_identity_image],
+                similar_percent=distinct_identity_images[distinct_identity_image]
+            ))
 
         face_authentication = dict(
             compare_face_url=uuid__link_downloads[compare_face_uuid] if compare_face_uuid else None,
