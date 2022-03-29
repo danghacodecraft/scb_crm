@@ -39,3 +39,17 @@ async def repos_get_transaction_list(search_box: str, session: Session):
         ).all()
 
     return ReposReturn(data=transaction_list)
+
+
+async def repos_get_customer(
+        cif_number: str,
+        limit: int,
+        session: Session
+):
+    customers = session.execute(
+        select(
+            Customer
+        )
+    )
+
+    return ReposReturn(data=customers.offset(limit))
