@@ -15,7 +15,6 @@ class News(Base):
     thumbnail_url = Column('thumbnail_url', VARCHAR(200), comment='Banner tin tức')
     category_id = Column(ForeignKey('category_id'), VARCHAR(36), nullable=False, comment='Chuyên mục')
     user_id = Column('user_id', VARCHAR(36), comment='Mã user tạo tin')
-    user_code = Column('user_code', VARCHAR(50), comment='Mã user tạo tin')
     user_name = Column('user_name', VARCHAR(255), comment='Tên user tạo tin')
     content = Column('content', VARCHAR(1000), comment='Nội dung tin tức')
     summary = Column('summary', VARCHAR(200), comment='Tóm tắt nội dung tin tức')
