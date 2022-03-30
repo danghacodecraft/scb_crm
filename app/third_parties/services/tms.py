@@ -17,9 +17,7 @@ class ServiceTMS:
         await self.session.close()
         self.session = None  # noqa
 
-    async def fill_form(self, body: dict):
-
-        path = "/api/v2/van-hanh/mau-chung-1/ciffff/thu-muc-cif-1/crm-bm001/fill_data/"
+    async def fill_form(self, body: dict, path: str):
         method = "POST"
         url = f"{self.__host}{path}"
         try:

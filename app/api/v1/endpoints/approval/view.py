@@ -6,7 +6,7 @@ from starlette import status
 from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
-from app.api.v1.endpoints.approval.controller import CtrForm
+from app.api.v1.endpoints.approval.controller import CtrApproval
 from app.api.v1.endpoints.approval.schema import (
     CifApprovalProcessResponse, CifApprovalResponse, CifApprovalSuccessResponse
 )
@@ -30,7 +30,7 @@ async def view_approval_process(
         cif_id: str = Path(..., description='Id CIF ảo'),
         current_user=Depends(get_current_user_from_header())
 ):
-    approval_process = await CtrForm(current_user).ctr_approval_process(cif_id)
+    approval_process = await CtrApproval(current_user).ctr_approval_process(cif_id)
     return ResponseData[List[CifApprovalProcessResponse]](**approval_process)
 
 
@@ -48,7 +48,7 @@ async def view_approve(
         request: ApprovalRequest = Body(...),
         current_user=Depends(get_current_user_from_header())
 ):
-    approve_info = await CtrForm(current_user).ctr_approve(
+    approve_info = await CtrApproval(current_user).ctr_approve(
         cif_id=cif_id,
         request=request
     )
@@ -70,7 +70,7 @@ async def view_get_approve(
         amount: int = Query(..., description="Số lượng hình so sánh"),
         current_user=Depends(get_current_user_from_header())
 ):
-    approve_info = await CtrForm(current_user).ctr_get_approval(
+    approve_info = await CtrApproval(current_user).ctr_get_approval(
         cif_id=cif_id,
         amount=amount
     )
