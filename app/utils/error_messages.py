@@ -72,6 +72,8 @@ ERROR_E_BANKING = "ERROR_E-BANKING"
 ERROR_APPROVAL_UPLOAD_FACE = "ERROR_APPROVAL_UPLOAD_FACE"
 ERROR_APPROVAL_INCORRECT_UPLOAD_FACE = "ERROR_APPROVAL_INCORRECT_UPLOAD_FACE"
 
+ERROR_VALIDATE = "ERROR_VALIDATE"
+
 MESSAGE_STATUS = {
     # general error
     PAGING_ERROR: "Can not found page!",
@@ -139,5 +141,6 @@ MESSAGE_STATUS = {
     ERROR_NOT_REGISTER: "No debit card registration",
 
     ERROR_APPROVAL_UPLOAD_FACE: "Face is not upload, please upload face before submit",
-    ERROR_APPROVAL_INCORRECT_UPLOAD_FACE: "Upload face is incorrect"
+    ERROR_APPROVAL_INCORRECT_UPLOAD_FACE: "Upload face is incorrect",
+    ERROR_VALIDATE: "Validate error"
 }
