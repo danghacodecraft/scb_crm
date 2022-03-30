@@ -93,7 +93,7 @@ class CtrCustomerRelationship(BaseController):
                 created_by=self.current_user.username,
                 session=self.oracle_session,
                 relationship_type=CUSTOMER_RELATIONSHIP_TYPE_CUSTOMER_RELATIONSHIP,
-                log_data=log_data,
+                log_data=orjson_dumps(log_data),
                 business_form_id=BUSINESS_FORM_TTCN_MQHKH
             ))
 
