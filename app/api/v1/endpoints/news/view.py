@@ -4,7 +4,6 @@ from starlette import status
 
 from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
-from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.news.controller import CtrNews
 from app.api.v1.endpoints.news.schema import (
     NewsImageRequest, NewsRequest, NewsResponse
@@ -41,14 +40,27 @@ security = HTTPBasic()
     )
 )
 async def view_upload_face(
-        request_data: NewsRequest,
-        request_img: NewsImageRequest = Depends(NewsImageRequest.get_upload_request),
-        current_user=Depends(get_current_user_from_header())
+        request_img: NewsImageRequest = Depends(NewsImageRequest.get_upload_request)
 ):
+    (
+        avatar_image, thumbnail_image, current_user, tilte, news_category_id, content, summary, start_date,
+        expired_date, active_flag
+    ) = request_img
+    data = {
+        "tilte": tilte,
+        "news_category_id": news_category_id,
+        "content": content,
+        "summary": summary,
+        "start_date": start_date,
+        "expired_date": expired_date,
+        "active_flag": active_flag
+    }
+    data = NewsRequest(**data)
     news_data = await CtrNews(current_user).ctr_save_news(
-        request_data=request_data,
-        request_img=request_img,
+        request_data=data,
+        avatar_image=avatar_image,
+        thumbnail_image=thumbnail_image,
         current_user=current_user
     )
 
-    return ResponseData[NewsResponse](**news_data)
+    return ResponseData(**news_data)
