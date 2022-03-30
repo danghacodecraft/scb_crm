@@ -2,8 +2,9 @@ from fastapi import UploadFile
 
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.face.repository import (
-    repos_get_approval_compare_faces, repos_save_approval_compare_face
+    repos_save_approval_compare_face
 )
+from app.api.v1.endpoints.approval.repository import repos_get_approval_identity_faces
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.api.v1.endpoints.file.repository import repos_upload_file
 from app.api.v1.endpoints.file.validator import file_validator
@@ -38,12 +39,12 @@ class CtrApproveFace(BaseController):
         compare_face_uuid = face_info['uuid']
 
         # Lấy tất cả hình ảnh mới nhất ở bước GTDD
-        face_transactions = self.call_repos(await repos_get_approval_compare_faces(
+        face_transactions = self.call_repos(await repos_get_approval_identity_faces(
             cif_id=cif_id,
             session=self.oracle_session
         ))
 
-        first_customer, first_customer_identity, first_customer_identity_image = face_transactions[0]
+        first_customer_identity, first_customer_identity_image = face_transactions[0]
         identity_image_id = first_customer_identity_image.id
         customer_identity_id = first_customer_identity.id
 
@@ -52,7 +53,7 @@ class CtrApproveFace(BaseController):
         if amount != 2:
             amount = amount
 
-        for index, (customer, customer_identity, customer_identity_image) in enumerate(face_transactions, 1):
+        for index, (customer_identity, customer_identity_image) in enumerate(face_transactions, 1):
             # uuid của service file
             # {
             #     uuid_ekyc: {

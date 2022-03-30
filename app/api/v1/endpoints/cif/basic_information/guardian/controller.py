@@ -115,7 +115,7 @@ class CtrGuardian(BaseController):
                 list_data_insert=list_data_insert,
                 created_by=self.current_user.username,
                 session=self.oracle_session,
-                log_data=log_data,
+                log_data=orjson_dumps(log_data),
                 business_form_id=BUSINESS_FORM_TTCN_NGH
             ))
 
