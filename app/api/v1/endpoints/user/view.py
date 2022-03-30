@@ -25,7 +25,8 @@ security = HTTPBasic()
     responses=swagger_response(
         response_model=PagingResponse[UserInfoResponse],
         success_status_code=status.HTTP_200_OK
-    )
+    ),
+    deprecated=True
 )
 async def view_list_user(
         current_user=Depends(get_current_user_from_header()),  # noqa
@@ -60,7 +61,8 @@ async def view_login(credentials: HTTPBasicCredentials = Depends(security)) -> R
         response_model=ResponseData[UserInfoResponse],
         success_status_code=status.HTTP_200_OK,
         success_examples=EXAMPLE_RES_SUCCESS_DETAIL_USER
-    )
+    ),
+    deprecated=True
 )
 async def view_retrieve_current_user(
         current_user=Depends(get_current_user_from_header())
@@ -77,7 +79,8 @@ async def view_retrieve_current_user(
         response_model=ResponseData[UserInfoResponse],
         success_status_code=status.HTTP_200_OK,
         success_examples=EXAMPLE_RES_SUCCESS_DETAIL_USER
-    )
+    ),
+    deprecated=True
 )
 async def view_retrieve_user(
         user_id: str,

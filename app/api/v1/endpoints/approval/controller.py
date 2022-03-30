@@ -18,7 +18,8 @@ from app.utils.constant.approval import (
 from app.utils.constant.cif import BUSINESS_TYPE_INIT_CIF, IMAGE_TYPE_FACE
 from app.utils.error_messages import (
     ERROR_APPROVAL_INCORRECT_UPLOAD_FACE, ERROR_APPROVAL_UPLOAD_FACE,
-    ERROR_CONTENT_NOT_NULL, ERROR_STAGE_COMPLETED, MESSAGE_STATUS
+    ERROR_CONTENT_NOT_NULL, ERROR_STAGE_COMPLETED, ERROR_VALIDATE,
+    MESSAGE_STATUS
 )
 from app.utils.functions import generate_uuid, now, orjson_dumps, orjson_loads
 
@@ -311,16 +312,6 @@ class CtrApproval(BaseController):
                 detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_FACE]
             )
 
-        _, _, _, _, new_compare_image_transaction = authentications[0]
-        # Kiểm tra xem khuôn mặt gửi lên có đúng không
-        # Hình ảnh kiểm tra sẽ là hình ảnh của lần Upload mới nhất
-        if new_compare_image_transaction.compare_image_url != request.authentication.compare_face_image_uuid:
-            return self.response_exception(
-                msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
-                detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FACE],
-                loc="authentication -> compare_face_image_uuid"
-            )
-
         # TODO: Vân Tay, Chữ Ký
 
         ################################################################################################################
@@ -377,6 +368,25 @@ class CtrApproval(BaseController):
 
             current_stage_code = CIF_STAGE_INIT
         else:
+            ############################################################################################################
+            # [Thông tin xác thực] Khuôn mặt
+            if not request.authentication.face:
+                return self.response_exception(
+                    msg=ERROR_VALIDATE,
+                    detail="Field required",
+                    loc="authentication -> face"
+                )
+            _, _, _, _, new_compare_image_transaction = authentications[0]
+            # Kiểm tra xem khuôn mặt gửi lên có đúng không
+            # Hình ảnh kiểm tra sẽ là hình ảnh của lần Upload mới nhất
+            if new_compare_image_transaction.compare_image_url != request.authentication.face.compare_face_image_uuid:
+                return self.response_exception(
+                    msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
+                    detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FACE],
+                    loc="authentication -> compare_face_image_uuid"
+                )
+            ############################################################################################################
+
             current_stage = self.call_repos(await repos_get_next_stage(
                 business_type_id=business_type_id,
                 current_stage_code=previous_stage_code,
