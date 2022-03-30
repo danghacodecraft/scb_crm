@@ -5,7 +5,7 @@ from app.third_parties.oracle.base import Base
 
 
 class NewsCategory(Base):
-    __tablename__ = 'crm_news'
+    __tablename__ = 'crm_news_category'
 
     id = Column('news_category_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "),
                 comment='ID Mã chuyên mục')
