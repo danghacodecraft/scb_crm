@@ -41,7 +41,10 @@ async def view_transaction_list(
     )
 )
 async def view_customers(
-        cif_number: str = Query(...),
+        cif_number: str = Query(None, description='Số cif'),
+        identity_number: str = Query(None, description='Số giấy tờ định danh'),
+        phone_number: str = Query(None, description='Số điện thoại'),
+        full_name: str = Query(None, description='Họ và tên'),
         current_user=Depends(get_current_user_from_header()),
         pagination_params: PaginationParams = Depends()
 
@@ -49,6 +52,11 @@ async def view_customers(
     customers = await CtrDashboard(
         current_user,
         pagination_params=pagination_params
-    ).ctr_get_customer_list(cif_number=cif_number)
+    ).ctr_get_customer_list(
+        cif_number=cif_number,
+        identity_number=identity_number,
+        phone_number=phone_number,
+        full_name=full_name
+    )
 
     return PagingResponse(**customers)
