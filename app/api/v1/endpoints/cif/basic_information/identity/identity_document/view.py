@@ -169,7 +169,10 @@ async def view_upload_identity_document_image(
     elif identity_type == EKYC_IDENTITY_TYPE_FRONT_SIDE_CITIZEN_CARD:
         return ResponseData[OCRFrontSideCitizenCardResponse](**upload_info)
     elif identity_type == EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD:
-        return ResponseData[OCRBackSideCitizenCardResponse](**upload_info)
+        try:
+            return ResponseData[OCRBackSideCitizenCardResponse](**upload_info)
+        except Exception:
+            return upload_info
     else:
         return ResponseData[OCRPassportResponse](**upload_info)
 
