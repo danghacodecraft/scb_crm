@@ -161,20 +161,19 @@ async def view_upload_identity_document_image(
         image_file=image_file,
         identity_type=identity_type
     )
-
-    if identity_type == EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD:
-        return ResponseData[OCRFrontSideIdentityCardResponse](**upload_info)
-    elif identity_type == EKYC_IDENTITY_TYPE_BACK_SIDE_IDENTITY_CARD:
-        return ResponseData[OCRBackSideIdentityCardResponse](**upload_info)
-    elif identity_type == EKYC_IDENTITY_TYPE_FRONT_SIDE_CITIZEN_CARD:
-        return ResponseData[OCRFrontSideCitizenCardResponse](**upload_info)
-    elif identity_type == EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD:
-        try:
+    try:
+        if identity_type == EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD:
+            return ResponseData[OCRFrontSideIdentityCardResponse](**upload_info)
+        elif identity_type == EKYC_IDENTITY_TYPE_BACK_SIDE_IDENTITY_CARD:
+            return ResponseData[OCRBackSideIdentityCardResponse](**upload_info)
+        elif identity_type == EKYC_IDENTITY_TYPE_FRONT_SIDE_CITIZEN_CARD:
+            return ResponseData[OCRFrontSideCitizenCardResponse](**upload_info)
+        elif identity_type == EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD:
             return ResponseData[OCRBackSideCitizenCardResponse](**upload_info)
-        except Exception:
-            return upload_info
-    else:
-        return ResponseData[OCRPassportResponse](**upload_info)
+        else:
+            return ResponseData[OCRPassportResponse](**upload_info)
+    except Exception:
+        return upload_info
 
 
 @router_special.post(
