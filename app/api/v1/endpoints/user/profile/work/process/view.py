@@ -1,25 +1,30 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from starlette import status
 
-from app.api.base.schema import ResponseData
+from app.api.base.schema import PagingResponse
 from app.api.base.swagger import swagger_response
-from app.api.v1.dependencies.authenticate import get_current_user_from_header
-from app.api.v1.endpoints.user.schema import UserInfoResponse
+from app.api.v1.endpoints.user.profile.work.process.controller import (
+    CtrProcess
+)
+from app.api.v1.endpoints.user.profile.work.process.schema import (
+    WorkProcessResponse
+)
 
 router = APIRouter()
 
 
 @router.get(
     path="/",
-    name="[HỒ SƠ CÔNG TÁC] - C. QUÁ TRÌNH CÔNG TÁC",
-    description="[HỒ SƠ CÔNG TÁC] - C. QUÁ TRÌNH CÔNG TÁC",
+    name="[Quá trình công tác] - C. Quá trình công tác",
+    description="[Quá trình công tác] - C. Quá trình công tác",
     responses=swagger_response(
-        response_model=ResponseData[UserInfoResponse],
+        response_model=PagingResponse[WorkProcessResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
-async def view_retrieve_current_user(
-        current_user=Depends(get_current_user_from_header())
+async def view_work_process(
+        # current_user=Depends(get_current_user_from_header()) # noqa
 ):
-    # user_info = await CtrUser(is_init_oracle_session=False, current_user=current_user).ctr_get_current_user_info()
-    return ResponseData[UserInfoResponse]({})
+    user_info = await CtrProcess().ctr_process()
+
+    return PagingResponse[WorkProcessResponse](**user_info)
