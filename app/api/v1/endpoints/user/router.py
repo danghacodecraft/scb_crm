@@ -9,4 +9,4 @@ router_module = APIRouter()
 router_module.include_router(router=views_user.router)
 
 # Thông tin Nhân viên
-router_module.include_router(router=router_profile.router_module)
+router_module.include_router(router=router_profile.router_module, prefix="/profiles")
