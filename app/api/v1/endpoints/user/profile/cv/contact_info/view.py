@@ -1,10 +1,14 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from starlette import status
 
 from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
-from app.api.v1.dependencies.authenticate import get_current_user_from_header
-from app.api.v1.endpoints.user.schema import UserInfoResponse
+from app.api.v1.endpoints.user.profile.cv.contact_info.controller import (
+    CtrContact_Info
+)
+from app.api.v1.endpoints.user.profile.cv.contact_info.schema import (
+    EmployeeInfoResponse
+)
 
 router = APIRouter()
 
@@ -14,12 +18,12 @@ router = APIRouter()
     name="[SƠ YẾU LÍ LỊCH] - B. THÔNG TIN LIÊN HỆ",
     description="[SƠ YẾU LÍ LỊCH] - B. THÔNG TIN LIÊN HỆ",
     responses=swagger_response(
-        response_model=ResponseData[UserInfoResponse],
+        response_model=ResponseData[EmployeeInfoResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
 async def view_retrieve_current_user(
-        current_user=Depends(get_current_user_from_header())
+        # current_user=Depends(get_current_user_from_header())
 ):
-    # user_info = await CtrUser(is_init_oracle_session=False, current_user=current_user).ctr_get_current_user_info()
-    return ResponseData[UserInfoResponse]({})
+    user_info = await CtrContact_Info().ctr_contact_info()
+    return ResponseData[EmployeeInfoResponse](**user_info)
