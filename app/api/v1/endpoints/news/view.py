@@ -1,33 +1,18 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Path
 from fastapi.security import HTTPBasic
 from starlette import status
 
-from app.api.base.schema import ResponseData
+from app.api.base.schema import PagingResponse, ResponseData
 from app.api.base.swagger import swagger_response
+from app.api.v1.dependencies.authenticate import get_current_user_from_header
+from app.api.v1.dependencies.paging import PaginationParams
 from app.api.v1.endpoints.news.controller import CtrNews
 from app.api.v1.endpoints.news.schema import (
-    NewsImageRequest, NewsRequest, NewsResponse
+    ListNewsResponse, NewsDetailResponse, NewsImageRequest, NewsResponse
 )
 
 router = APIRouter()
 security = HTTPBasic()
-
-
-# @router.get(
-#     path="/",
-#     name="News",
-#     description="Danh sách tin tức scb",
-#     responses=swagger_response(
-#         response_model=PagingResponse[NewsResponse],
-#         success_status_code=status.HTTP_200_OK
-#     )
-# )
-# async def view_list_user(
-#         current_user=Depends(get_current_user_from_header()),  # noqa
-#         pagination_params: PaginationParams = Depends()
-# ):
-#     # paging_users = await CtrNews(is_init_oracle_session=False, pagination_params=pagination_params).ctr_get_list_user()
-#     return None
 
 
 @router.post(
@@ -39,15 +24,15 @@ security = HTTPBasic()
         success_status_code=status.HTTP_200_OK
     )
 )
-async def view_upload_face(
-        request_img: NewsImageRequest = Depends(NewsImageRequest.get_upload_request)
+async def view_upload_scb_news(
+        request: NewsImageRequest = Depends(NewsImageRequest.get_upload_request),
 ):
     (
-        avatar_image, thumbnail_image, current_user, tilte, news_category_id, content, summary, start_date,
+        avatar_image, thumbnail_image, current_user, title, news_category_id, content, summary, start_date,
         expired_date, active_flag
-    ) = request_img
+    ) = request
     data = {
-        "tilte": tilte,
+        "title": title,
         "news_category_id": news_category_id,
         "content": content,
         "summary": summary,
@@ -55,7 +40,6 @@ async def view_upload_face(
         "expired_date": expired_date,
         "active_flag": active_flag
     }
-    data = NewsRequest(**data)
     news_data = await CtrNews(current_user).ctr_save_news(
         request_data=data,
         avatar_image=avatar_image,
@@ -63,4 +47,75 @@ async def view_upload_face(
         current_user=current_user
     )
 
-    return ResponseData(**news_data)
+    return ResponseData[NewsResponse](**news_data)
+
+
+@router.post(
+    path="/{news_id}",
+    description="Update SCB News",
+    name="Tin tức SCB",
+    responses=swagger_response(
+        response_model=ResponseData[NewsResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_update_scb_news(
+        request: NewsImageRequest = Depends(NewsImageRequest.get_upload_request),
+        news_id: str = Path(..., description='News ID')
+):
+    (
+        avatar_image, thumbnail_image, current_user, title, news_category_id, content, summary, start_date,
+        expired_date, active_flag
+    ) = request
+    data = {
+        "tilte": title,
+        "news_category_id": news_category_id,
+        "content": content,
+        "summary": summary,
+        "start_date": start_date,
+        "expired_date": expired_date,
+        "active_flag": active_flag
+    }
+    news_data = await CtrNews(current_user).ctr_update_nesws(
+        news_id=news_id,
+        request_data=data,
+        avatar_image=avatar_image,
+        thumbnail_image=thumbnail_image,
+        current_user=current_user
+    )
+
+    return ResponseData[NewsResponse](**news_data)
+
+
+@router.get(
+    path="/{news_id}",
+    name="Detail Debit Card",
+    description='Chi tiết tin tức',
+    responses=swagger_response(
+        response_model=ResponseData[NewsDetailResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_detail_scb_news(
+        news_id: str = Path(..., description='News ID'),
+        current_user=Depends(get_current_user_from_header())
+):
+    scb_news = await CtrNews(current_user).ctr_get_detail_news(news_id=news_id)
+    return ResponseData[NewsDetailResponse](**scb_news)
+
+
+@router.get(
+    path="/",
+    name="Danh sách tin tức",
+    description='Danh sách tin tức',
+    responses=swagger_response(
+        response_model=PagingResponse[ListNewsResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_scb_news(
+        current_user=Depends(get_current_user_from_header()),
+        pagination_params: PaginationParams = Depends()
+):
+    scb_news = await CtrNews(current_user, pagination_params=pagination_params).ctr_get_list_scb_news()
+    return ResponseData[ListNewsResponse](**scb_news)
