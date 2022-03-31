@@ -4,7 +4,8 @@ from typing import Optional
 from pydantic import Field
 
 from app.api.base.schema import BaseSchema
-from app.api.v1.schemas.utils import DropdownResponse
+from app.api.v1.schemas.utils import DropdownResponse, OptionalDropdownResponse
+
 
 # Thông tin dùng chung
 ########################################################################################################################
@@ -19,9 +20,9 @@ class FrontSideIdentityCitizenCardResponse(BaseSchema):
 
 
 class AddressResponse(BaseSchema):
-    province: Optional[DropdownResponse] = Field(..., description="Tỉnh/Thành phố", nullable=True)
-    district: Optional[DropdownResponse] = Field(..., description="Quận/Huyện", nullable=True)
-    ward: Optional[DropdownResponse] = Field(..., description="Phường/Xã", nullable=True)
+    province: OptionalDropdownResponse = Field(..., description="Tỉnh/Thành phố", nullable=True)
+    district: OptionalDropdownResponse = Field(..., description="Quận/Huyện", nullable=True)
+    ward: OptionalDropdownResponse = Field(..., description="Phường/Xã", nullable=True)
     number_and_street: Optional[str] = Field(..., description="Số nhà, tên đường", nullable=True)
 
 
@@ -45,7 +46,7 @@ class OCRFrontSideBasicInfoIdentityCardResponse(BaseSchema):
     full_name_vn: Optional[str] = Field(..., description="Họ và tên", nullable=True)
     date_of_birth: Optional[date] = Field(..., description="Ngày sinh", nullable=True)
     nationality: DropdownResponse = Field(..., description="Quốc tịch")
-    province: Optional[DropdownResponse] = Field(..., description="Quê quán", nullable=True)
+    province: OptionalDropdownResponse = Field(..., description="Quê quán", nullable=True)
 
 
 # III. Phân tích OCR (CMND)
@@ -68,12 +69,12 @@ class BackSideIdentityCardResponse(BaseSchema):
 
 class OCRBackSideIdentityDocumentIdentityCardResponse(BaseSchema):
     issued_date: Optional[date] = Field(..., description="Ngày cấp", nullable=True)
-    place_of_issue: Optional[DropdownResponse] = Field(..., description="Nơi cấp", nullable=True)
+    place_of_issue: OptionalDropdownResponse = Field(..., description="Nơi cấp", nullable=True)
 
 
 class OCRBackSideBasicInformationIdentityCardResponse(BaseSchema):
-    ethnic: Optional[DropdownResponse] = Field(..., description="Dân tộc", nullable=True)
-    religion: Optional[DropdownResponse] = Field(..., description="Tôn giáo", nullable=True)
+    ethnic: OptionalDropdownResponse = Field(..., description="Dân tộc", nullable=True)
+    religion: OptionalDropdownResponse = Field(..., description="Tôn giáo", nullable=True)
     identity_characteristic: Optional[str] = Field(..., description="Đặc điểm nhận dạng", nullable=True)
 
 
@@ -103,19 +104,19 @@ class InformationPassportResponse(BaseSchema):
 class OCRDocumentPassportResponse(BaseSchema):
     identity_number: Optional[str] = Field(..., description="Số GTĐD", nullable=True)
     issued_date: Optional[date] = Field(..., description="Ngày cấp", nullable=True)
-    place_of_issue: Optional[DropdownResponse] = Field(..., description="Nơi cấp", nullable=True)
+    place_of_issue: OptionalDropdownResponse = Field(..., description="Nơi cấp", nullable=True)
     expired_date: Optional[date] = Field(..., description="Có giá trị đến", nullable=True)
-    passport_type: Optional[DropdownResponse] = Field(..., description="Loại", nullable=True)
-    passport_code: Optional[DropdownResponse] = Field(..., description="Mã số", nullable=True)
+    passport_type: OptionalDropdownResponse = Field(..., description="Loại", nullable=True)
+    passport_code: OptionalDropdownResponse = Field(..., description="Mã số", nullable=True)
 
 
 # II. Phân tích OCR -> 2. Thông tin cơ bản (Hộ Chiếu)
 class OCRBasicInfoPassportResponse(BaseSchema):
     full_name_vn: Optional[str] = Field(..., description="Họ và tên", nullable=True)
-    gender: Optional[DropdownResponse] = Field(..., description="Giới tính", nullable=True)
+    gender: OptionalDropdownResponse = Field(..., description="Giới tính", nullable=True)
     date_of_birth: Optional[date] = Field(..., description="Ngày sinh", nullable=True)
-    nationality: Optional[DropdownResponse] = Field(..., description="Quốc tịch", nullable=True)
-    place_of_birth: Optional[DropdownResponse] = Field(..., description="Nơi sinh", nullable=True)
+    nationality: OptionalDropdownResponse = Field(..., description="Quốc tịch", nullable=True)
+    place_of_birth: OptionalDropdownResponse = Field(..., description="Nơi sinh", nullable=True)
     identity_card_number: Optional[str] = Field(..., description="Số CMND", nullable=True)
     mrz_content: Optional[str] = Field(None, description="Mã MRZ", nullable=True)
 
@@ -145,7 +146,7 @@ class OCRFrontSideDocumentCitizenCardResponse(OCRFrontSideDocumentIdentityCardRe
 
 # III. Phân tích OCR (CCCD) -> Thông tin cơ bản
 class OCRFrontSideBasicInfoCitizenCardResponse(OCRFrontSideBasicInfoIdentityCardResponse):
-    gender: Optional[DropdownResponse] = Field(..., description="Giới tính", nullable=True)
+    gender: OptionalDropdownResponse = Field(..., description="Giới tính", nullable=True)
 
 
 # III. Phân tích OCR (CCCD)
@@ -167,7 +168,7 @@ class BackSideCitizenCardResponse(BaseSchema):
 
 class OCRBackSideIdentityDocumentCitizenCardResponse(BaseSchema):
     issued_date: Optional[date] = Field(..., description="Ngày cấp", nullable=True)
-    place_of_issue: Optional[DropdownResponse] = Field(..., description="Nơi cấp", nullable=True)
+    place_of_issue: OptionalDropdownResponse = Field(..., description="Nơi cấp", nullable=True)
     mrz_content: Optional[str] = Field(..., description="Mã MRZ", nullable=True)
     signer: Optional[str] = Field(..., description="Người ký", nullable=True)
 
