@@ -7,17 +7,13 @@ async def repos_decisive_contract(
         session: Session
 ) -> ReposReturn:
     data_response = {
-        "type": {
-            "id": "1",
-            "code": "Code",
-            "name": "Không xác định thời hạn"
-        },
+        "type": "Không xác định thời hạn",
         "number": "158/HĐLĐ-SCB-2014",
-        "start_day": "2021-09-06",
+        "start_date": "2021-09-06",
         "end_date": None,
-        "contract_addendum": {
+        "addendum": {
             "number": None,
-            "start_day": None,
+            "start_date": None,
             "end_date": None,
         },
         "date_resign": None
