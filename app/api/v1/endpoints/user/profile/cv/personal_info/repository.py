@@ -18,17 +18,29 @@ async def repos_personal_info(
             "code": "Code",
             "name": "Nữ"
         },
-        "ethnic": "Kinh",
-        "religion": "Thiên chúa giáo",
+        "ethnic": {
+            "id": "1",
+            "code": "Code",
+            "name": "Kinh"
+        },
+        "religion": {
+            "id": "1",
+            "code": "Code",
+            "name": "Thiên chúa giáo"
+        },
         "nationality": {
             "id": "1",
             "code": "Code",
             "name": "Việt Nam"
         },
-        "marital_status": True,
-        "identity_num": "0123456789",
+        "marital_status": {
+            "id": "1",
+            "code": "Code",
+            "name": "Đã kết hôn"
+        },
+        "identity_number": "0123456789",
         "issued_date": "2003-10-01",
-        "expiration_date": None,
+        "expired_date": None,
         "place_of_issue": {
             "id": "1",
             "code": "Code",
