@@ -2,6 +2,7 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.dashboard.repository import (
     repos_get_customer, repos_get_transaction_list
 )
+from app.utils.functions import dropdown
 
 
 class CtrDashboard(BaseController):
@@ -53,15 +54,14 @@ class CtrDashboard(BaseController):
 
         response_data = [{
             "cif_number": item.Customer.cif_number,
-            "full_name": item.Customer.full_name,
+            "full_name": item.Customer.full_name_vn,
             "identity_number": item.CustomerIdentity.identity_num,
             "phone_number": item.Customer.mobile_number,
             "street": item.CustomerAddress.address,
-            "ward": item.AddressWard.name,
-            "district": item.AddressDistrict.name,
-            "province": item.AddressProvince.name,
-            "branch_code": item.Branch.code,
-            "branch_name": item.Branch.name
+            "ward": {**dropdown(item.AddressWard)},
+            "district": {**dropdown(item.AddressDistrict)},
+            "province": {**dropdown(item.AddressProvince)},
+            "branch": {**dropdown(item.Branch)}
         } for item in customers]
 
         return self.response_paging(

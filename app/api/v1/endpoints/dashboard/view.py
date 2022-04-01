@@ -8,7 +8,9 @@ from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.dependencies.paging import PaginationParams
 from app.api.v1.endpoints.dashboard.controller import CtrDashboard
-from app.api.v1.endpoints.dashboard.schema import TransactionListResponse
+from app.api.v1.endpoints.dashboard.schema import (
+    CustomerInfoResponse, TransactionListResponse
+)
 
 router = APIRouter()
 
@@ -36,7 +38,7 @@ async def view_transaction_list(
     name="Danh sách khách hàng",
     description="Danh sách khách hàng",
     responses=swagger_response(
-        response_model=ResponseData[TransactionListResponse],
+        response_model=ResponseData[CustomerInfoResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -59,4 +61,4 @@ async def view_customers(
         full_name=full_name
     )
 
-    return PagingResponse(**customers)
+    return PagingResponse[CustomerInfoResponse](**customers)
