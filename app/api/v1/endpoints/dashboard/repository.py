@@ -1,8 +1,10 @@
-from sqlalchemy import desc, or_, select
+from sqlalchemy import and_, desc, or_, select
 from sqlalchemy.orm import Session
-from sqlalchemy.sql.functions import count
 
 from app.api.base.repository import ReposReturn
+from app.third_parties.oracle.models.cif.basic_information.contact.model import (
+    CustomerAddress
+)
 from app.third_parties.oracle.models.cif.basic_information.identity.model import (
     CustomerIdentity
 )
@@ -54,8 +56,14 @@ async def repos_get_customer(
     customers = select(
         Customer,
         CustomerIdentity,
-        count(Customer.id).over().label("total"),
-    ).join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id)
+        # count(Customer.id).over().label("total"),
+    )\
+        .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
+        .join(CustomerAddress, and_(
+            Customer.id == CustomerAddress.customer_id,
+            CustomerAddress.address_type_id == "TAM_TRU"
+        )
+    )
 
     if cif_number:
         customers = customers.filter(Customer.cif_number.ilike(f'%{cif_number}%'))

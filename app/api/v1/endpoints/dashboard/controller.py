@@ -48,18 +48,29 @@ class CtrDashboard(BaseController):
             limit=limit,
             page=page,
             session=self.oracle_session))
-        total = 0
+        # total = 0
+        # cif_id = []
+        # for item in customer:
+        #     cif_id.append(item.Customer.id)
+        # address = self.call_repos(await repos_get_address(
+        #     cif_id=cif_id,
+        #     session=self.oracle_session
+        # ))
+        # if customer:
+        #     total = customer[0][2]
 
-        if customer:
-            total = customer[0][2]
-
-        total_page = total / limit
-        if total_page % limit != 0:
-            total_page += 1
-
+        # total_page = total / limit
+        # if total_page % limit != 0:
+        #     total_page += 1
+        # for item in customer:
+        #     response_data.append({
+        #         "cif_number": item.Customer.cif_number,
+        #         "full_name": item.Customer.full_name,
+        #         "identity_number": item.CustomerIdentity.identity_num,
+        #         "phone_number": item.Customer.mobile_number,
+        #         "branch": item.Customer.open_branch_id
+        #     })
         return self.response_paging(
             data=customer,
-            total_item=total,
             current_page=page,
-            total_page=total_page
         )
