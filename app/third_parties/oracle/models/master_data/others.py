@@ -484,7 +484,11 @@ class StageLane(Base):
 
 class StageAction(Base):
     __tablename__ = 'crm_stage_action'
-    id = Column('stage_action_id', VARCHAR(36), primary_key=True, comment='Mã gen tự động hành động', server_default=text("sys_guid() "))
+    id = Column(
+        'stage_action_id', VARCHAR(36),
+        primary_key=True, comment='Mã gen tự động hành động',
+        server_default=text("sys_guid() ")
+    )
     code = Column('stage_action_code', VARCHAR(50), nullable=False, comment='Mã hành động')
     name = Column('stage_action_name', VARCHAR(250), nullable=False, comment='Tên hành động')
     group_id = Column('stage_action_group_id', VARCHAR(36), comment='Nhóm hành động')
@@ -502,8 +506,11 @@ class StageAction(Base):
 class TransactionStageAction(Base):
     __tablename__ = 'crm_transaction_stage_action'
 
-    id = Column('transaction_stage_action_id', VARCHAR(36), primary_key=True, comment='Mã gen tự động hành động', server_default=text("sys_guid() ")
-                )
+    id = Column(
+        'transaction_stage_action_id', VARCHAR(36),
+        primary_key=True, comment='Mã gen tự động hành động',
+        server_default=text("sys_guid() ")
+    )
     code = Column('transaction_stage_action_code', VARCHAR(50), nullable=False, comment='Mã hành động')
     name = Column('transaction_stage_action_name', VARCHAR(250), nullable=False, comment='Tên hành động')
     group_id = Column('transaction_stage_action_group_id', VARCHAR(36), comment='Nhóm hành động')
