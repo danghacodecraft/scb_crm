@@ -7,7 +7,7 @@ from app.api.v1.endpoints.user.profile.cv.contact_info.controller import (
     CtrContact_Info
 )
 from app.api.v1.endpoints.user.profile.cv.contact_info.schema import (
-    EmployeeInfoResponse
+    EmployeeContactInfoResponse
 )
 
 router = APIRouter()
@@ -18,7 +18,7 @@ router = APIRouter()
     name="[SƠ YẾU LÍ LỊCH] - B. THÔNG TIN LIÊN HỆ",
     description="[SƠ YẾU LÍ LỊCH] - B. THÔNG TIN LIÊN HỆ",
     responses=swagger_response(
-        response_model=ResponseData[EmployeeInfoResponse],
+        response_model=ResponseData[EmployeeContactInfoResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -26,4 +26,4 @@ async def view_retrieve_current_user(
         # current_user=Depends(get_current_user_from_header())
 ):
     user_info = await CtrContact_Info().ctr_contact_info()
-    return ResponseData[EmployeeInfoResponse](**user_info)
+    return ResponseData[EmployeeContactInfoResponse](**user_info)
