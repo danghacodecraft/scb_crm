@@ -736,10 +736,8 @@ async def repos_upload_identity_document_and_ocr(
     file_response = await service_file.upload_file(file=image_file, name=image_file_name)
     
     if not file_response:
-        return {
-            'file_res': file_response
-        }
-
+        return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_FILE)
+    
     if identity_type == EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD:
         response_data = await mapping_ekyc_front_side_identity_card_ocr_data(
             image_url=file_response['file_url'],
