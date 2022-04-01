@@ -7,7 +7,7 @@ from app.api.v1.endpoints.user.profile.level.education.controller import (
     CtrEducation
 )
 from app.api.v1.endpoints.user.profile.level.education.schema import (
-    CulturalLevelInfoResponse
+    EducationLevelInfoResponse
 )
 
 router = APIRouter()
@@ -18,7 +18,7 @@ router = APIRouter()
     name="[THÔNG TIN TRÌNH ĐỘ] - A. TRÌNH ĐỘ VĂN HÓA",
     description="[THÔNG TIN TRÌNH ĐỘ] - A. TRÌNH ĐỘ VĂN HÓA",
     responses=swagger_response(
-        response_model=ResponseData[CulturalLevelInfoResponse],
+        response_model=ResponseData[EducationLevelInfoResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -26,4 +26,4 @@ async def view_retrieve_current_user(
         # current_user=Depends(get_current_user_from_header())
 ):
     user_info = await CtrEducation().ctr_education()
-    return ResponseData[CulturalLevelInfoResponse](**user_info)
+    return ResponseData[EducationLevelInfoResponse](**user_info)
