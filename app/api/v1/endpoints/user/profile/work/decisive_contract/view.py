@@ -8,7 +8,7 @@ from app.api.v1.endpoints.user.profile.work.decisive_contract.controller import 
     CtrDecisiveContract
 )
 from app.api.v1.endpoints.user.profile.work.decisive_contract.schema import (
-    DecisionContractInfoResponse
+    ContractInfoResponse
 )
 
 router = APIRouter()
@@ -19,7 +19,7 @@ router = APIRouter()
     name="[HỒ SƠ CÔNG TÁC] - B. QUYẾT ĐỊNH HỢP ĐỒNG",
     description="[HỒ SƠ CÔNG TÁC] - B. QUYẾT ĐỊNH HỢP ĐỒNG",
     responses=swagger_response(
-        response_model=ResponseData[DecisionContractInfoResponse],
+        response_model=ResponseData[ContractInfoResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -27,4 +27,4 @@ async def view_retrieve_current_user(
         current_user=Depends(get_current_user_from_header()) # noqa
 ):
     user_info = await CtrDecisiveContract().ctr_decisive_contract()
-    return ResponseData[DecisionContractInfoResponse](**user_info)
+    return ResponseData[ContractInfoResponse](**user_info)
