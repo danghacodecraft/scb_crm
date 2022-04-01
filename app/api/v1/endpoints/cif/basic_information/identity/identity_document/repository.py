@@ -43,14 +43,14 @@ from app.third_parties.oracle.models.master_data.others import (
 from app.utils.constant.cif import (
     ACTIVE_FLAG_ACTIVED, ADDRESS_COUNTRY_CODE_VN, BUSINESS_FORM_TTCN_GTDD_GTDD,
     BUSINESS_FORM_TTCN_GTDD_KM, CONTACT_ADDRESS_CODE, CRM_GENDER_TYPE_FEMALE,
-    CRM_GENDER_TYPE_MALE, EKYC_GENDER_TYPE_FEMALE,
+    CRM_GENDER_TYPE_MALE, DROPDOWN_NONE_DICT, EKYC_GENDER_TYPE_FEMALE,
     EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_BACK_SIDE_IDENTITY_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD,
     IDENTITY_DOCUMENT_TYPE_CITIZEN_CARD, IDENTITY_DOCUMENT_TYPE_IDENTITY_CARD,
     IDENTITY_DOCUMENT_TYPE_PASSPORT, IMAGE_TYPE_CODE_IDENTITY, IMAGE_TYPE_FACE,
-    RESIDENT_ADDRESS_CODE, DROPDOWN_NONE_DICT
+    RESIDENT_ADDRESS_CODE
 )
 from app.utils.constant.ekyc import EKYC_DATE_FORMAT
 from app.utils.error_messages import (
@@ -735,7 +735,7 @@ async def repos_upload_identity_document_and_ocr(
 
     file_response = await service_file.upload_file(file=image_file, name=image_file_name)
     if not file_response:
-        return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_FILE)
+        return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_FILE, detail=file_response)
 
     if identity_type == EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD:
         response_data = await mapping_ekyc_front_side_identity_card_ocr_data(
@@ -819,7 +819,7 @@ async def mapping_ekyc_front_side_identity_card_ocr_data(image_url: str, ocr_dat
         "ward": dropdown(optional_ward) if optional_ward else DROPDOWN_NONE_DICT,
         "number_and_street": number_and_street if number_and_street else None
     }
-    
+
     optional_identity_number = ocr_data.get('document_id')
     optional_expired_date = ocr_data.get('date_of_expiry')
     optional_date_of_birth = ocr_data.get('date_of_birth')
@@ -892,7 +892,7 @@ async def mapping_ekyc_passport_ocr_data(image_url: str, ocr_data: dict, session
         optional_date_of_birth = date_string_to_other_date_string_format(ocr_data.get('date_of_birth'), from_format=EKYC_DATE_FORMAT)
     else:
         optional_date_of_birth = None
-        
+
     optional_identity_number = ocr_data.get('document_id')
     optional_issued_date = ocr_data.get('date_of_issue')
     optional_expired_date = ocr_data.get('date_of_expiry')
