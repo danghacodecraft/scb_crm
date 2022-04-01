@@ -1,10 +1,12 @@
+from typing import Optional
+
 from pydantic import Field
 
 from app.api.base.schema import BaseSchema
 
 
 # Thông tin trình độ tin học
-class LevelInformaticsInfoResponse(BaseSchema):
-    certificate: str = Field(..., description="Chứng chỉ"),
-    level: str = Field(..., description="Trình độ")
-    point: str = Field(None, description="Điểm số/Xếp loại")
+class ITLevelInfoResponse(BaseSchema):
+    certification: Optional[str] = Field(..., description="Chứng chỉ"),
+    level: Optional[str] = Field(..., description="Trình độ")
+    gpa: Optional[str] = Field(None, description="Điểm số/Xếp loại")
