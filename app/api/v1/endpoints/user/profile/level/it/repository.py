@@ -8,19 +8,9 @@ async def repos_it(
 ) -> ReposReturn:
     data_response = [
         {
-            "certificate": "Tin học văn phòng A",
+            "certification": "Tin học văn phòng A",
             "level": "Kỹ thuật viên",
-            "point": "7.5"
-        },
-        {
-            "certificate": "Tin học văn phòng B",
-            "level": "Kỹ thuật viên",
-            "point": None
-        },
-        {
-            "certificate": "Tin học ứng dụng",
-            "level": "Kỹ thuật viên",
-            "point": None
+            "gpa": "7.5"
         }
     ]
     return ReposReturn(data=data_response)

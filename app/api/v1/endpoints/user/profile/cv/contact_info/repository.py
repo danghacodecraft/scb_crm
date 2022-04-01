@@ -9,7 +9,7 @@ async def repos_contact_info(
     data_response = {
         "contact_info": {
             "domicile": {
-                "domicile": "210/58/56 Cách mạng tháng tám",
+                "number_and_street": "210/58/56 Cách mạng tháng tám",
                 "nationality": {
                     "id": "id",
                     "code": "Code",
@@ -32,7 +32,7 @@ async def repos_contact_info(
                 }
             },
             "resident": {
-                "resident_address": "210/56/56 Cách mạng tháng 8",
+                "number_and_street": "210/56/56 Cách mạng tháng 8",
                 "nationality": {
                     "id": "id",
                     "code": "Code",
@@ -54,8 +54,8 @@ async def repos_contact_info(
                     "name": "Phường 16"
                 }
             },
-            "temporary_residence": {
-                "temporary_residence_address": "210/56/56 Cách mạng tháng 8",
+            "temporary": {
+                "number_and_street": "210/56/56 Cách mạng tháng 8",
                 "nationality": {
                     "id": "id",
                     "code": "Code",
@@ -78,7 +78,7 @@ async def repos_contact_info(
                 }
             },
             "contact": {
-                "resident_address": "210/56/56 Cách mạng tháng 8",
+                "number_and_street": "210/56/56 Cách mạng tháng 8",
                 "nationality": {
                     "id": "id",
                     "code": "Code",
@@ -103,13 +103,13 @@ async def repos_contact_info(
         },
         "other_info": {
             "contact": {
-                "contact": "Trần Văn Sơn Vũ",
+                "contactor": "Trần Văn Sơn Vũ",
                 "relationship": {
                     "id": "1",
                     "code": "Code",
                     "name": "Chồng"
                 },
-                "mobile_num": "0909125649"
+                "mobile_number": "0909125649"
             },
             "guardian": {
                 "guardian": "Nguyễn Xuân An",
@@ -118,7 +118,7 @@ async def repos_contact_info(
                     "code": "Code",
                     "name": "Bạn bè"
                 },
-                "mobile_num": "0909125649"
+                "mobile_number": "0909125649"
             },
             "expiration_date": "2021-10-01"
         }
