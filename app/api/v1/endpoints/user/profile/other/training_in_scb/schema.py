@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Optional
 
 from pydantic import Field
 
@@ -7,9 +8,9 @@ from app.api.base.schema import BaseSchema
 
 # Quá trình đào tạo trong ngân hàng
 class TrainingInSCBResponse(BaseSchema):
-    topic: str = Field(..., description="Chủ đề")
-    course_code: str = Field(None, description="Mã khóa học")
-    course_name: str = Field(None, description="Tên khóa học")
-    from_date: date = Field(..., description="Từ ngày")
-    to_date: date = Field(..., description="Đến ngày")
-    result: str = Field(..., description="Kết quả")
+    topic: Optional[str] = Field(..., description="Chủ đề")
+    code: Optional[str] = Field(None, description="Mã khóa học")
+    name: Optional[str] = Field(None, description="Tên khóa học")
+    from_date: Optional[date] = Field(..., description="Từ ngày")
+    to_date: Optional[date] = Field(..., description="Đến ngày")
+    result: Optional[str] = Field(..., description="Kết quả")
