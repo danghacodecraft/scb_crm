@@ -3,6 +3,9 @@ from sqlalchemy.dialects.oracle import NUMBER
 from sqlalchemy.orm import relationship
 
 from app.third_parties.oracle.base import Base
+from app.third_parties.oracle.models.approval.stage.action.model import (  # noqa
+    StageAction, TransactionStageAction
+)
 from app.third_parties.oracle.models.master_data.address import (  # noqa
     AddressCountry
 )
@@ -306,10 +309,14 @@ class Stage(Base):
     created_at = Column(DateTime, comment='Ngày tạo bước thực hiện')
     updated_at = Column(DateTime, comment='Ngày cập nhật bước thực hiện')
 
+    action_id = Column('stage_action_id', ForeignKey('crm_stage_action.stage_action_id'),
+                       comment='Mã hành động')
+
     business_type = relationship('BusinessType')
     sla = relationship('Sla')
     parent = relationship('Stage', remote_side=[id])
     status = relationship('StageStatus')
+    action = relationship('StageAction')
 
 
 class StageStatus(Base):
@@ -436,11 +443,16 @@ class TransactionStage(Base):
     transaction_stage_phase_code = Column(VARCHAR(50), comment='Mã bước thực hiện kiểu chữ(vd: IN, DUYET)')
     transaction_stage_phase_name = Column(VARCHAR(250), comment='Tên bước hiện')
     responsible_flag = Column(NUMBER(1, 0, False), comment='Cờ người chịu trách nhiệm của bước thực hiện')
+    action_id = Column(
+        'crm_transaction_stage_action.transaction_stage_action_id', VARCHAR(36),
+        comment='Mã hành động'
+    )
 
     business_type = relationship('BusinessType')
     lane = relationship('TransactionStageLane')
     phase = relationship('TransactionStagePhase')
     status = relationship('TransactionStageStatus')
+    action = relationship('TransactionStageAction')
 
 
 class StagePhase(Base):
