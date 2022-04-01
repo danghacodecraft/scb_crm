@@ -6,7 +6,6 @@ from aiohttp.web_exceptions import HTTPException
 from loguru import logger
 from starlette import status
 
-from app.settings.config import APPLICATION
 from app.settings.service import SERVICE
 from app.utils.error_messages import ERROR_CALL_SERVICE_EKYC
 from app.utils.functions import convert_string_to_uuidv4
@@ -179,7 +178,7 @@ class ServiceEKYC:
         try:
             async with self.session.get(url=api_url, headers=headers, params=query_data,
                                         ssl=False) as response:
-                logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
+                logger.log("SERVICE", f"[EKYC LIST KSS] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
                 elif response.status == status.HTTP_400_BAD_REQUEST:
@@ -204,7 +203,7 @@ class ServiceEKYC:
         try:
             async with self.session.get(url=api_url, headers=headers, params=query_param,
                                         ssl=False) as response:
-                logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
+                logger.log("SERVICE", f"[EKYC LIST BRACNH] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
                 elif response.status == status.HTTP_400_BAD_REQUEST:
@@ -227,7 +226,7 @@ class ServiceEKYC:
 
         try:
             async with self.session.get(url=api_url, headers=headers, ssl=False) as response:
-                logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
+                logger.log("SERVICE", f"[EKYC LIST ZONE] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
                 elif response.status == status.HTTP_400_BAD_REQUEST:
@@ -258,7 +257,7 @@ class ServiceEKYC:
 
         try:
             async with self.session.get(url=api_url, headers=headers, ssl=False) as response:
-                logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
+                logger.log("SERVICE", f"[EKYC PROFILESTATISTICS] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
                 elif response.status == status.HTTP_400_BAD_REQUEST:
@@ -285,7 +284,7 @@ class ServiceEKYC:
         }
         try:
             async with self.session.get(url=api_url, headers=headers, params=query, ssl=False) as response:
-                logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
+                logger.log("SERVICE", f"[EKYC STATISTICS] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
                 elif response.status == status.HTTP_400_BAD_REQUEST:
@@ -312,7 +311,7 @@ class ServiceEKYC:
         }
         try:
             async with self.session.get(url=api_url, headers=headers, params=query, ssl=False) as response:
-                logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
+                logger.log("SERVICE", f"[EKYC HISTORY] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
                 elif response.status == status.HTTP_400_BAD_REQUEST:
@@ -336,7 +335,7 @@ class ServiceEKYC:
 
         try:
             async with self.session.put(url=api_url, json=request_data, headers=headers, ssl=False) as response:
-                logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
+                logger.log("SERVICE", f"[EKYC UPDATE POST CHECK] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
                 elif response.status == status.HTTP_400_BAD_REQUEST:
@@ -362,7 +361,7 @@ class ServiceEKYC:
 
         try:
             async with self.session.get(url=api_url, headers=headers, params=query_param, ssl=False) as response:
-                logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
+                logger.log("SERVICE", f"[EKYC STATISTICS] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
                 elif response.status == status.HTTP_400_BAD_REQUEST:
@@ -386,7 +385,7 @@ class ServiceEKYC:
 
         try:
             async with self.session.get(url=api_url, headers=headers, ssl=False) as response:
-                logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
+                logger.log("SERVICE", f"[EKYC CUSTOMER DETAIL] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
                 elif response.status == status.HTTP_400_BAD_REQUEST:
@@ -412,7 +411,7 @@ class ServiceEKYC:
 
         try:
             async with self.session.post(url=api_url, headers=headers, json=payload_data, ssl=False) as response:
-                logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
+                logger.log("SERVICE", f"[EKYC POST CONTROL] {response.status} : {api_url}")
                 if response.status == status.HTTP_201_CREATED:
                     return True, await response.json()
                 elif response.status == status.HTTP_400_BAD_REQUEST:
@@ -438,7 +437,7 @@ class ServiceEKYC:
 
         try:
             async with self.session.get(url=api_url, params=query_params, headers=headers, ssl=False) as response:
-                logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
+                logger.log("SERVICE", f"[EKYC GET CONTROL] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
                 elif response.status == status.HTTP_400_BAD_REQUEST:
@@ -467,7 +466,7 @@ class ServiceEKYC:
         form_data.add_field('file', value=file, filename=name)
         try:
             async with self.session.post(url=api_url, data=form_data, headers=headers, ssl=False) as response:
-                logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
+                logger.log("SERVICE", f"[EKYC UPLOAD FILE] {response.status} : {api_url}")
 
                 if response.status == status.HTTP_201_CREATED:
                     return True, await response.json()
@@ -497,7 +496,7 @@ class ServiceEKYC:
         }
         try:
             async with self.session.post(url=api_url, json=json_body, headers=headers, ssl=False) as response:
-                logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
+                logger.log("SERVICE", f"[EKYC COMPARE SIGNATURE] {response.status} : {api_url}")
 
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
@@ -523,7 +522,7 @@ class ServiceEKYC:
 
         try:
             async with self.session.post(url=api_url, json=json_body, headers=headers, ssl=False) as response:
-                logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
+                logger.log("SERVICE", f"[EKYC ADD FINGER] {response.status} : {api_url}")
 
                 if response.status == status.HTTP_201_CREATED:
                     return True, await response.json()
@@ -550,7 +549,7 @@ class ServiceEKYC:
 
         try:
             async with self.session.post(url=api_url, json=json_body, headers=headers, ssl=False) as response:
-                logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
+                logger.log("SERVICE", f"[EKYC COMPARE FINGER] {response.status} : {api_url}")
 
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
@@ -574,7 +573,7 @@ class ServiceEKYC:
 
         try:
             async with self.session.get(url=api_url, headers=headers, ssl=False) as response:
-                logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
+                logger.log("SERVICE", f"[EKYC DOWNLOAD FILE] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
                 elif response.status == status.HTTP_400_BAD_REQUEST:
