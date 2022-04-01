@@ -8,9 +8,9 @@ async def repos_sub_info(
 ) -> ReposReturn:
     data_response = {
         "recruit_info": {
-            "recruitment_request_code": "TD-12345",
-            "recruitment_reason": "Bổ sung nhân sự đầu năm",
-            "people_introduce": "Trần Thanh Sang",
+            "code": "TD-12345",
+            "reason": "Bổ sung nhân sự đầu năm",
+            "introducer": "Trần Thanh Sang",
             "replacement_staff": "Võ Ngọc Yến",
             "note": None
         },

@@ -20,7 +20,7 @@ router = APIRouter()
         success_status_code=status.HTTP_200_OK
     )
 )
-async def view_retrieve_current_user(
+async def view_kpi(
         # current_user=Depends(get_current_user_from_header())
 ):
     user_info = await CtrKpi().ctr_kpi()
