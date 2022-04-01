@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import APIRouter
 from starlette import status
 
@@ -14,7 +16,7 @@ router = APIRouter()
     name="[THÔNG TIN KPIS]",
     description="[THÔNG TIN KPIS]",
     responses=swagger_response(
-        response_model=ResponseData[KpiResponse],
+        response_model=ResponseData[List[KpiResponse]],
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -22,4 +24,4 @@ async def view_retrieve_current_user(
         # current_user=Depends(get_current_user_from_header())
 ):
     user_info = await CtrKpi().ctr_kpi()
-    return ResponseData[KpiResponse](**user_info)
+    return ResponseData[List[KpiResponse]](**user_info)
