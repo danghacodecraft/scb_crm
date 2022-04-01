@@ -1,8 +1,10 @@
-from fastapi import APIRouter, Depends, Path
+from datetime import date
+
+from fastapi import APIRouter, Depends, Path, Query
 from fastapi.security import HTTPBasic
 from starlette import status
 
-from app.api.base.schema import PagingResponse, ResponseData
+from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.dependencies.paging import PaginationParams
@@ -18,7 +20,7 @@ security = HTTPBasic()
 @router.post(
     path="/",
     description="Create SCB News",
-    name="Tin tức SCB",
+    name="Tạo mới Tin tức SCB",
     responses=swagger_response(
         response_model=ResponseData[NewsResponse],
         success_status_code=status.HTTP_200_OK
@@ -53,7 +55,7 @@ async def view_upload_scb_news(
 @router.post(
     path="/{news_id}",
     description="Update SCB News",
-    name="Tin tức SCB",
+    name="Cập nhật Tin tức SCB",
     responses=swagger_response(
         response_model=ResponseData[NewsResponse],
         success_status_code=status.HTTP_200_OK
@@ -109,13 +111,23 @@ async def view_detail_scb_news(
     name="Danh sách tin tức",
     description='Danh sách tin tức',
     responses=swagger_response(
-        response_model=PagingResponse[ListNewsResponse],
+        response_model=ResponseData[ListNewsResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
 async def view_scb_news(
         current_user=Depends(get_current_user_from_header()),
-        pagination_params: PaginationParams = Depends()
+        pagination_params: PaginationParams = Depends(),
+        title: str = Query(None, description='Tiêu đề'),
+        category_news: str = Query(None, description='Danh mục'),
+        start_date: date = Query(None, description='Ngày bắt đầu'),
+        expired_date: date = Query(None, description='Ngày kết thúc'),
+        active_flag: int = Query(None, description='Trạng thái')
 ):
-    scb_news = await CtrNews(current_user, pagination_params=pagination_params).ctr_get_list_scb_news()
+    scb_news = await CtrNews(current_user, pagination_params=pagination_params
+                             ).ctr_get_list_scb_news(title=title,
+                                                     category_news=category_news,
+                                                     start_date=start_date,
+                                                     expired_date=expired_date,
+                                                     active_flag=active_flag)
     return ResponseData[ListNewsResponse](**scb_news)

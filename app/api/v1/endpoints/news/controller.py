@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.news.repository import (
     get_data_by_id, get_list_scb_news, repos_add_scb_news,
@@ -26,7 +28,6 @@ class CtrNews(BaseController):
                 detail="active_flag invalid data",
                 loc="active_flag"
             )
-
         uuid = generate_uuid()
         data_scb_news = {
             "id": uuid,
@@ -42,6 +43,12 @@ class CtrNews(BaseController):
         }
 
         if request_data["expired_date"] is not None:
+            if request_data["expired_date"] < request_data["start_date"]:
+                return self.response_exception(
+                    msg=VALIDATE_ERROR,
+                    detail="expired_date cannot be greater than start_date",
+                    loc="expired_date"
+                )
             data_scb_news.update({
                 "expired_date": request_data["expired_date"]
             })
@@ -86,6 +93,7 @@ class CtrNews(BaseController):
                 detail="active_flag invalid data",
                 loc="active_flag"
             )
+
         data_update = {
             "id": news_id,
             "title": request_data["tilte"],
@@ -100,6 +108,12 @@ class CtrNews(BaseController):
             "updated_at": now()
         }
         if request_data["expired_date"] is not None:
+            if request_data["expired_date"] < request_data["start_date"]:
+                return self.response_exception(
+                    msg=VALIDATE_ERROR,
+                    detail="expired_date cannot be greater than start_date",
+                    loc="expired_date"
+                )
             data_update.update({
                 "expired_date": request_data["expired_date"]
             })
@@ -158,10 +172,24 @@ class CtrNews(BaseController):
 
         return self.response(data)
 
-    async def ctr_get_list_scb_news(self):
-        list_news = self.call_repos(await get_list_scb_news(session=self.oracle_session))
+    async def ctr_get_list_scb_news(self, title, category_news, start_date, expired_date, active_flag):
+
+        limit = self.pagination_params.limit
+        page = 1
+        if self.pagination_params.page:
+            page = self.pagination_params.page
+        start_date = datetime(start_date.year, start_date.month, start_date.day) if start_date else None
+        expired_date = datetime(expired_date.year, expired_date.month, expired_date.day) if expired_date else None
+        list_news = self.call_repos(await get_list_scb_news(session=self.oracle_session,
+                                                            title=title,
+                                                            category_news=category_news,
+                                                            start_date=start_date,
+                                                            expired_date=expired_date,
+                                                            active_flag=active_flag,
+                                                            limit=limit,
+                                                            page=page))
         res_data = []
-        for news_data in list_news:
+        for news_data in list_news["query_data"]:
             data = {
                 "id": news_data.News.id,
                 "title": news_data.News.title,
@@ -187,7 +215,6 @@ class CtrNews(BaseController):
             res_data.append(data)
 
         return self.response_paging(data={
-            "num_news": len(res_data),
-            "list_news": res_data},
-            total_item=len(res_data)
+            "num_news": len(list_news["total_row"]),
+            "list_news": res_data}
         )

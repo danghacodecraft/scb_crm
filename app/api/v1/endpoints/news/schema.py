@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date
 from typing import List
 
 from fastapi import Depends, File, Form, UploadFile
@@ -20,11 +20,11 @@ class NewsDetailResponse(BaseSchema):
     thumbnail_url: str = Field(..., description='thumbnail_url')
     news_category_id: DropdownResponse = Field(..., description='Loại tin')
     user_name: str = Field(..., description='Tên người tạo')
-    content: str = Field(None, description="Nội dung")
-    summary: str = Field(None, description="Tóm tắt nội dung")
-    start_date: datetime = Field(..., description="Ngày bắt đầu")
-    expired_date: datetime = Field(None, description="Ngày kết thúc")
-    created_at: datetime = Field(None, description="Ngày tạo tin")
+    content: str = Field(..., description="Nội dung")
+    summary: str = Field(..., description="Tóm tắt nội dung")
+    start_date: date = Field(..., description="Ngày bắt đầu")
+    expired_date: date = Field(None, description="Ngày kết thúc")
+    created_at: date = Field(None, description="Ngày tạo tin")
     active_flag: int = Field(..., description="Trạng thái kích hoạt")
 
 
@@ -43,8 +43,8 @@ class NewsImageRequest(BaseSchema):
             news_category_id: str = Form(..., description='Loại tin'),
             content: str = Form(..., description="Nội dung"),
             summary: str = Form(..., description="Tóm tắt nội dung"),
-            start_date: str = Form(..., description="Ngày bắt đầu"),
-            expired_date: str = Form(None, description="Ngày kết thúc"),
+            start_date: date = Form(..., description="Ngày bắt đầu"),
+            expired_date: date = Form(None, description="Ngày kết thúc"),
             active_flag: int = Form(..., description="Trạng thái kích hoạt")
     ):
         return (avatar_image, thumbnail_image, current_user, title, news_category_id, content,
