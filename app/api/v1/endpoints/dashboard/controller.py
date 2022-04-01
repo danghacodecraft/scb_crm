@@ -27,50 +27,46 @@ class CtrDashboard(BaseController):
             total_item=len(transactions)
         )
 
-    async def ctr_get_customer_list(
-            self,
-            cif_number: str,
-            identity_number: str,
-            phone_number: str,
-            full_name: str
-    ):
+    async def ctr_get_customer_list(self, cif_number: str, identity_number: str, phone_number: str, full_name: str):
+
         limit = self.pagination_params.limit
-
-        page = 1
+        current_page = 1
         if self.pagination_params.page:
-            page = self.pagination_params.page
+            current_page = self.pagination_params.page
 
-        customer = self.call_repos(await repos_get_customer(
+        customers = self.call_repos(await repos_get_customer(
             cif_number=cif_number,
             identity_number=identity_number,
             phone_number=phone_number,
             full_name=full_name,
             limit=limit,
-            page=page,
+            page=current_page,
             session=self.oracle_session))
-        # total = 0
-        # cif_id = []
-        # for item in customer:
-        #     cif_id.append(item.Customer.id)
-        # address = self.call_repos(await repos_get_address(
-        #     cif_id=cif_id,
-        #     session=self.oracle_session
-        # ))
-        # if customer:
-        #     total = customer[0][2]
 
-        # total_page = total / limit
-        # if total_page % limit != 0:
-        #     total_page += 1
-        # for item in customer:
-        #     response_data.append({
-        #         "cif_number": item.Customer.cif_number,
-        #         "full_name": item.Customer.full_name,
-        #         "identity_number": item.CustomerIdentity.identity_num,
-        #         "phone_number": item.Customer.mobile_number,
-        #         "branch": item.Customer.open_branch_id
-        #     })
+        total_item = 0
+        if customers:
+            total_item = customers[0][2]
+
+        total_page = total_item / limit
+        if total_page % limit != 0:
+            total_page += 1
+
+        response_data = [{
+            "cif_number": item.Customer.cif_number,
+            "full_name": item.Customer.full_name,
+            "identity_number": item.CustomerIdentity.identity_num,
+            "phone_number": item.Customer.mobile_number,
+            "street": item.CustomerAddress.address,
+            "ward": item.AddressWard.name,
+            "district": item.AddressDistrict.name,
+            "province": item.AddressProvince.name,
+            "branch_code": item.Branch.code,
+            "branch_name": item.Branch.name
+        } for item in customers]
+
         return self.response_paging(
-            data=customer,
-            current_page=page,
+            data=response_data,
+            current_page=current_page,
+            total_item=total_item,
+            total_page=total_page
         )
