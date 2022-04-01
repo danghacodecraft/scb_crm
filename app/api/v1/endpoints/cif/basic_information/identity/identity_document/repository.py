@@ -43,7 +43,7 @@ from app.third_parties.oracle.models.master_data.others import (
 from app.utils.constant.cif import (
     ACTIVE_FLAG_ACTIVED, ADDRESS_COUNTRY_CODE_VN, BUSINESS_FORM_TTCN_GTDD_GTDD,
     BUSINESS_FORM_TTCN_GTDD_KM, CONTACT_ADDRESS_CODE, CRM_GENDER_TYPE_FEMALE,
-    CRM_GENDER_TYPE_MALE, EKYC_GENDER_TYPE_FEMALE,
+    CRM_GENDER_TYPE_MALE, DROPDOWN_NONE_DICT, EKYC_GENDER_TYPE_FEMALE,
     EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_BACK_SIDE_IDENTITY_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_CITIZEN_CARD,
@@ -52,6 +52,7 @@ from app.utils.constant.cif import (
     IDENTITY_DOCUMENT_TYPE_PASSPORT, IMAGE_TYPE_CODE_IDENTITY, IMAGE_TYPE_FACE,
     RESIDENT_ADDRESS_CODE
 )
+from app.utils.constant.ekyc import EKYC_DATE_FORMAT
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_EKYC, ERROR_CALL_SERVICE_FILE, ERROR_CIF_ID_NOT_EXIST,
     ERROR_COMPARE_IMAGE_IS_EXISTED
@@ -734,7 +735,7 @@ async def repos_upload_identity_document_and_ocr(
 
     file_response = await service_file.upload_file(file=image_file, name=image_file_name)
     if not file_response:
-        return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_FILE)
+        return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_FILE, detail=file_response)
 
     if identity_type == EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD:
         response_data = await mapping_ekyc_front_side_identity_card_ocr_data(
@@ -813,11 +814,15 @@ async def mapping_ekyc_front_side_identity_card_ocr_data(image_url: str, ocr_dat
     )
 
     resident_address = {
-        "province": dropdown(optional_province) if optional_province else None,
-        "district": dropdown(optional_district) if optional_district else None,
-        "ward": dropdown(optional_ward) if optional_ward else None,
-        "number_and_street": number_and_street
+        "province": dropdown(optional_province) if optional_province else DROPDOWN_NONE_DICT,
+        "district": dropdown(optional_district) if optional_district else DROPDOWN_NONE_DICT,
+        "ward": dropdown(optional_ward) if optional_ward else DROPDOWN_NONE_DICT,
+        "number_and_street": number_and_street if number_and_street else None
     }
+
+    optional_identity_number = ocr_data.get('document_id')
+    optional_expired_date = ocr_data.get('date_of_expiry')
+    optional_date_of_birth = ocr_data.get('date_of_birth')
 
     front_side_identity_card_info = {
         "front_side_information": {
@@ -826,19 +831,21 @@ async def mapping_ekyc_front_side_identity_card_ocr_data(image_url: str, ocr_dat
         },
         "ocr_result": {
             "identity_document": {
-                "identity_number": ocr_data.get('document_id'),
+                "identity_number": optional_identity_number if optional_identity_number else None,
                 "expired_date": date_string_to_other_date_string_format(
-                    ocr_data.get('date_of_expiry'),
-                    from_format='%d/%m/%Y'
-                ) if ocr_data.get('date_of_expiry') else None
+                    optional_expired_date,
+                    from_format=EKYC_DATE_FORMAT
+                ) if optional_expired_date else None
             },
             "basic_information": {
                 "full_name_vn": ocr_data.get('full_name'),
-                "date_of_birth": date_string_to_other_date_string_format(ocr_data.get('date_of_birth'),
-                                                                         from_format='%d/%m/%Y'),
+                "date_of_birth": date_string_to_other_date_string_format(
+                    ocr_data.get('date_of_birth'),
+                    from_format=EKYC_DATE_FORMAT
+                ) if optional_date_of_birth else None,
                 "nationality": dropdown(repos_return_vietnamese_nationality.data)
-                if not repos_return_vietnamese_nationality.is_error else None,
-                "province": dropdown(optional_place_of_origin) if optional_place_of_origin else None,
+                if not repos_return_vietnamese_nationality.is_error else DROPDOWN_NONE_DICT,
+                "province": dropdown(optional_place_of_origin) if optional_place_of_origin else DROPDOWN_NONE_DICT,
             },
             "address_information": {
                 "resident_address": resident_address,
@@ -882,9 +889,14 @@ async def mapping_ekyc_passport_ocr_data(image_url: str, ocr_data: dict, session
     )
     # ocr trả date_of_birth là 00/00/00
     if ocr_data.get('date_of_birth') and ocr_data.get('date_of_birth') != '00/00/00':
-        optional_date_of_birth = date_string_to_other_date_string_format(ocr_data.get('date_of_birth'), from_format='%d/%m/%Y')
+        optional_date_of_birth = date_string_to_other_date_string_format(ocr_data.get('date_of_birth'), from_format=EKYC_DATE_FORMAT)
     else:
         optional_date_of_birth = None
+
+    optional_identity_number = ocr_data.get('document_id')
+    optional_issued_date = ocr_data.get('date_of_issue')
+    optional_expired_date = ocr_data.get('date_of_expiry')
+    optional_identity_card_number = ocr_data.get('id_card_number')
 
     passport_info = {
         "passport_information": {
@@ -894,27 +906,31 @@ async def mapping_ekyc_passport_ocr_data(image_url: str, ocr_data: dict, session
         "ocr_result": {
             "identity_document":
                 {
-                    "identity_number": ocr_data.get('document_id'),
-                    "issued_date": date_string_to_other_date_string_format(ocr_data.get('date_of_issue'),
-                                                                           from_format='%d/%m/%Y'),
-                    "place_of_issue": dropdown(optional_place_of_issue) if optional_place_of_issue else None,
-                    "expired_date": date_string_to_other_date_string_format(ocr_data.get('date_of_expiry'),
-                                                                            from_format='%d/%m/%Y'),
+                    "identity_number": optional_identity_number if optional_identity_number else None,
+                    "issued_date": date_string_to_other_date_string_format(
+                        optional_issued_date,
+                        from_format=EKYC_DATE_FORMAT
+                    ) if optional_issued_date else None,
+                    "place_of_issue": dropdown(optional_place_of_issue) if optional_place_of_issue else DROPDOWN_NONE_DICT,
+                    "expired_date": date_string_to_other_date_string_format(
+                        optional_expired_date,
+                        from_format=EKYC_DATE_FORMAT
+                    ) if optional_expired_date else None,
                     "passport_type": {  # TODO: chỗ này bên Ekyc chưa thấy trả vể
                         "id": "string",
                         "code": "string",
                         "name": "string"
                     },
-                    "passport_code": dropdown(optional_passport_code) if optional_passport_code else None,
+                    "passport_code": dropdown(optional_passport_code) if optional_passport_code else DROPDOWN_NONE_DICT,
                 },
             "basic_information":
                 {
                     "full_name_vn": ocr_data.get('full_name'),
-                    "gender": dropdown(optional_gender) if optional_gender else None,
+                    "gender": dropdown(optional_gender) if optional_gender else DROPDOWN_NONE_DICT,
                     "date_of_birth": optional_date_of_birth,
-                    "nationality": dropdown(optional_nationality) if optional_nationality else None,
-                    "place_of_birth": dropdown(optional_place_of_birth) if optional_place_of_birth else None,
-                    "identity_card_number": ocr_data.get('id_card_number'),
+                    "nationality": dropdown(optional_nationality) if optional_nationality else DROPDOWN_NONE_DICT,
+                    "place_of_birth": dropdown(optional_place_of_birth) if optional_place_of_birth else DROPDOWN_NONE_DICT,
+                    "identity_card_number": optional_identity_card_number if optional_identity_card_number else None,
                     "mrz_content": f"{ocr_data.get('mrz_1', '')}{ocr_data.get('mrz_2', '')}"
                 }
         }
@@ -942,19 +958,23 @@ async def mapping_ekyc_back_side_identity_card_ocr_data(image_url: str, ocr_data
         session=session
     )
 
+    optional_date_of_issue = ocr_data.get('date_of_issue')
+
     back_side_identity_card_info = {
         "back_side_information": {
             "identity_image_url": image_url,
         },
         "ocr_result": {
             "identity_document": {
-                "issued_date": date_string_to_other_date_string_format(ocr_data.get('date_of_issue'),
-                                                                       from_format='%d/%m/%Y'),
-                "place_of_issue": dropdown(optional_place_of_issue) if optional_place_of_issue else None,
+                "issued_date": date_string_to_other_date_string_format(
+                    optional_date_of_issue,
+                    from_format=EKYC_DATE_FORMAT
+                ) if optional_date_of_issue else None,
+                "place_of_issue": dropdown(optional_place_of_issue) if optional_place_of_issue else DROPDOWN_NONE_DICT,
             },
             "basic_information": {
-                "ethnic": dropdown(optional_ethnic) if optional_ethnic else None,
-                "religion": dropdown(optional_religion) if optional_ethnic else None,
+                "ethnic": dropdown(optional_ethnic) if optional_ethnic else DROPDOWN_NONE_DICT,
+                "religion": dropdown(optional_religion) if optional_ethnic else DROPDOWN_NONE_DICT,
                 "identity_characteristic": ocr_data.get('personal_identification'),
             }
         }
@@ -1008,32 +1028,45 @@ async def mapping_ekyc_front_side_citizen_card_ocr_data(image_url: str, ocr_data
     optional_number_and_street = ocr_data.get('address_info', {}).get('street_name')
 
     resident_address = {
-        "province": dropdown(optional_province) if optional_province else None,
-        "district": dropdown(optional_district) if optional_district else None,
-        "ward": dropdown(optional_ward) if optional_ward else None,
+        "province": dropdown(optional_province) if optional_province else DROPDOWN_NONE_DICT,
+        "district": dropdown(optional_district) if optional_district else DROPDOWN_NONE_DICT,
+        "ward": dropdown(optional_ward) if optional_ward else DROPDOWN_NONE_DICT,
         "number_and_street": optional_number_and_street if optional_number_and_street else None
     }
+
+    optional_identity_avatar_image_uuid = ocr_data.get('avatar_image')
+    optional_identity_number = ocr_data.get('document_id')
+    optional_issued_date = ocr_data.get('date_of_issue')
+    optional_expired_date = ocr_data.get('date_of_expiry')
+    optional_full_name_vn = ocr_data.get('full_name')
+    optional_date_of_birth = ocr_data.get('date_of_birth')
 
     front_side_citizen_card_info = {
         "front_side_information": {
             "identity_image_url": image_url,
-            "identity_avatar_image_uuid": ocr_data.get('avatar_image') if ocr_data.get('avatar_image') else None
+            "identity_avatar_image_uuid": optional_identity_avatar_image_uuid if optional_identity_avatar_image_uuid else None
         },
         "ocr_result": {
             "identity_document": {
-                "identity_number": ocr_data.get('document_id') if ocr_data.get('document_id') else None,
-                "issued_date": date_string_to_other_date_string_format(ocr_data.get('date_of_issue'),
-                                                                       from_format='%d/%m/%Y'),
-                "expired_date": date_string_to_other_date_string_format(ocr_data.get('date_of_expiry'),
-                                                                        from_format='%d/%m/%Y')
+                "identity_number": optional_identity_number if optional_identity_number else None,
+                "issued_date": date_string_to_other_date_string_format(
+                    optional_issued_date,
+                    from_format=EKYC_DATE_FORMAT
+                ) if optional_issued_date else None,
+                "expired_date": date_string_to_other_date_string_format(
+                    optional_expired_date,
+                    from_format=EKYC_DATE_FORMAT
+                ) if optional_expired_date else None
             },
             "basic_information": {
-                "full_name_vn": ocr_data.get('full_name') if ocr_data.get('full_name') else None,
-                "gender": dropdown(optional_gender) if optional_gender else None,
-                "date_of_birth": date_string_to_other_date_string_format(ocr_data.get('date_of_birth'),
-                                                                         from_format='%d/%m/%Y'),
-                "nationality": dropdown(optional_nationality) if optional_nationality else None,
-                "province": dropdown(optional_place_of_origin) if optional_place_of_origin else None,
+                "full_name_vn": optional_full_name_vn if optional_full_name_vn else None,
+                "gender": dropdown(optional_gender) if optional_gender else DROPDOWN_NONE_DICT,
+                "date_of_birth": date_string_to_other_date_string_format(
+                    optional_date_of_birth,
+                    from_format=EKYC_DATE_FORMAT
+                ) if optional_date_of_birth else None,
+                "nationality": dropdown(optional_nationality) if optional_nationality else DROPDOWN_NONE_DICT,
+                "province": dropdown(optional_place_of_origin) if optional_place_of_origin else DROPDOWN_NONE_DICT,
             },
             "address_information": {
                 "resident_address": resident_address,
@@ -1058,20 +1091,25 @@ async def mapping_ekyc_back_side_citizen_card_ocr_data(image_url: str, ocr_data:
         session=session
     )
 
+    optional_issued_date = ocr_data.get('date_of_issue')
+    optional_identity_characteristic = ocr_data.get('personal_identification')
+
     back_side_identity_card_info = {
         "back_side_information": {
             "identity_image_url": image_url,
         },
         "ocr_result": {
             "identity_document": {
-                "issued_date": date_string_to_other_date_string_format(ocr_data.get('date_of_issue'),
-                                                                       from_format='%d/%m/%Y'),
-                "place_of_issue": dropdown(optional_place_of_issue) if optional_place_of_issue else None,
+                "issued_date": date_string_to_other_date_string_format(
+                    optional_issued_date,
+                    from_format=EKYC_DATE_FORMAT
+                ) if optional_issued_date else None,
+                "place_of_issue": dropdown(optional_place_of_issue) if optional_place_of_issue else DROPDOWN_NONE_DICT,
                 "mrz_content": optional_mrz_content if optional_mrz_content else None,
                 "signer": signer
             },
             "basic_information": {
-                "identity_characteristic": ocr_data.get('personal_identification'),
+                "identity_characteristic": optional_identity_characteristic if optional_identity_characteristic else None,
             }
         }
     }

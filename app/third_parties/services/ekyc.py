@@ -16,7 +16,7 @@ class ServiceEKYC:
     session: Optional[aiohttp.ClientSession] = None
 
     url = SERVICE["ekyc"]['url']
-    proxy: Optional[StrOrURL] = APPLICATION["ekyc_proxy"] if APPLICATION["ekyc_proxy"] != "" else None
+    proxy: Optional[StrOrURL] = None
     headers = {
         "X-TRANSACTION-ID": SERVICE["ekyc"]['x-transaction-id'],
         "AUTHORIZATION": SERVICE["ekyc"]['authorization'],
@@ -44,7 +44,7 @@ class ServiceEKYC:
 
         try:
             async with self.session.post(url=api_url, data=form_data, headers=headers,
-                                         proxy=self.proxy) as response:
+                                         ssl=False) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
@@ -74,7 +74,7 @@ class ServiceEKYC:
 
         try:
             async with self.session.post(url=api_url, data=form_data, headers=headers,
-                                         proxy=self.proxy) as response:
+                                         ssl=False) as response:
                 logger.log("SERVICE", f"[ADD FACE] {response.status} : {api_url}")
                 if response.status == status.HTTP_201_CREATED:
                     return True, await response.json()
@@ -113,7 +113,7 @@ class ServiceEKYC:
         }
 
         try:
-            async with self.session.post(url=api_url, json=data, headers=headers, proxy=self.proxy) as response:
+            async with self.session.post(url=api_url, json=data, headers=headers, ssl=False) as response:
                 logger.log("SERVICE", f"[COMPARE FACE] {response.status} : {api_url}")
 
                 if response.status == status.HTTP_200_OK:
@@ -151,7 +151,7 @@ class ServiceEKYC:
 
         try:
             async with self.session.post(url=api_url, json=request_body, headers=headers,
-                                         proxy=self.proxy) as response:
+                                         ssl=False) as response:
                 logger.log("SERVICE", f"[VALIDATE] {response.status} : {api_url}")
                 if response.status != status.HTTP_200_OK:
                     return False, {
@@ -178,7 +178,7 @@ class ServiceEKYC:
 
         try:
             async with self.session.get(url=api_url, headers=headers, params=query_data,
-                                        proxy=self.proxy) as response:
+                                        ssl=False) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
@@ -203,7 +203,7 @@ class ServiceEKYC:
 
         try:
             async with self.session.get(url=api_url, headers=headers, params=query_param,
-                                        proxy=self.proxy) as response:
+                                        ssl=False) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
@@ -226,7 +226,7 @@ class ServiceEKYC:
         headers['X-TRANSACTION-ID'] = "CRM_"
 
         try:
-            async with self.session.get(url=api_url, headers=headers, proxy=self.proxy) as response:
+            async with self.session.get(url=api_url, headers=headers, ssl=False) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
@@ -257,7 +257,7 @@ class ServiceEKYC:
         headers['X-TRANSACTION-ID'] = "CRM_"
 
         try:
-            async with self.session.get(url=api_url, headers=headers, proxy=self.proxy) as response:
+            async with self.session.get(url=api_url, headers=headers, ssl=False) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
@@ -284,7 +284,7 @@ class ServiceEKYC:
             'month': months
         }
         try:
-            async with self.session.get(url=api_url, headers=headers, params=query, proxy=self.proxy) as response:
+            async with self.session.get(url=api_url, headers=headers, params=query, ssl=False) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
@@ -311,7 +311,7 @@ class ServiceEKYC:
             'customer_id': postcheck_uuid
         }
         try:
-            async with self.session.get(url=api_url, headers=headers, params=query, proxy=self.proxy) as response:
+            async with self.session.get(url=api_url, headers=headers, params=query, ssl=False) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
@@ -335,8 +335,7 @@ class ServiceEKYC:
         headers['X-TRANSACTION-ID'] = "CRM_"
 
         try:
-            async with self.session.put(url=api_url, json=request_data, headers=headers,
-                                        proxy=self.proxy) as response:
+            async with self.session.put(url=api_url, json=request_data, headers=headers, ssl=False) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
@@ -362,8 +361,7 @@ class ServiceEKYC:
         headers['X-TRANSACTION-ID'] = "CRM_"
 
         try:
-            async with self.session.get(url=api_url, headers=headers, params=query_param,
-                                        proxy=self.proxy) as response:
+            async with self.session.get(url=api_url, headers=headers, params=query_param, ssl=False) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
@@ -387,7 +385,7 @@ class ServiceEKYC:
         headers['X-TRANSACTION-ID'] = "CRM_"
 
         try:
-            async with self.session.get(url=api_url, headers=headers, proxy=self.proxy) as response:
+            async with self.session.get(url=api_url, headers=headers, ssl=False) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
@@ -413,8 +411,7 @@ class ServiceEKYC:
         headers['X-TRANSACTION-ID'] = "CRM_"
 
         try:
-            async with self.session.post(url=api_url, headers=headers, json=payload_data,
-                                         proxy=self.proxy) as response:
+            async with self.session.post(url=api_url, headers=headers, json=payload_data, ssl=False) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
                 if response.status == status.HTTP_201_CREATED:
                     return True, await response.json()
@@ -426,7 +423,6 @@ class ServiceEKYC:
                     return False, {
                         "message": ERROR_CALL_SERVICE_EKYC,
                         "detail": "STATUS " + str(response.status)
-
                     }
 
         except Exception as ex:
@@ -441,8 +437,7 @@ class ServiceEKYC:
         headers['X-TRANSACTION-ID'] = "CRM_"
 
         try:
-            async with self.session.get(url=api_url, params=query_params, headers=headers,
-                                        proxy=self.proxy) as response:
+            async with self.session.get(url=api_url, params=query_params, headers=headers, ssl=False) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
@@ -471,8 +466,7 @@ class ServiceEKYC:
         form_data = aiohttp.FormData()
         form_data.add_field('file', value=file, filename=name)
         try:
-            async with self.session.post(url=api_url, data=form_data, headers=headers,
-                                         proxy=self.proxy) as response:
+            async with self.session.post(url=api_url, data=form_data, headers=headers, ssl=False) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
 
                 if response.status == status.HTTP_201_CREATED:
@@ -502,8 +496,7 @@ class ServiceEKYC:
             "image_sign_2_uuid": sign_uuid
         }
         try:
-            async with self.session.post(url=api_url, json=json_body, headers=headers,
-                                         proxy=self.proxy) as response:
+            async with self.session.post(url=api_url, json=json_body, headers=headers, ssl=False) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
 
                 if response.status == status.HTTP_200_OK:
@@ -529,8 +522,7 @@ class ServiceEKYC:
         headers['X-TRANSACTION-ID'] = f"CRM_{UUIDV4}"
 
         try:
-            async with self.session.post(url=api_url, json=json_body, headers=headers,
-                                         proxy=self.proxy) as response:
+            async with self.session.post(url=api_url, json=json_body, headers=headers, ssl=False) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
 
                 if response.status == status.HTTP_201_CREATED:
@@ -557,8 +549,7 @@ class ServiceEKYC:
         headers['X-TRANSACTION-ID'] = f"CRM_{UUIDV4}"
 
         try:
-            async with self.session.post(url=api_url, json=json_body, headers=headers,
-                                         proxy=self.proxy) as response:
+            async with self.session.post(url=api_url, json=json_body, headers=headers, ssl=False) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
 
                 if response.status == status.HTTP_200_OK:
@@ -575,14 +566,14 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def dowload_file(self, uuid: str,):
+    async def dowload_file(self, uuid: str, ):
         api_url = f"{self.url}/api/v1/file-service/{uuid}/"
         headers = self.headers
         # thay đổi giá trị x-transaction-id+
         headers['X-TRANSACTION-ID'] = "CRM_"
 
         try:
-            async with self.session.get(url=api_url, headers=headers, proxy=self.proxy) as response:
+            async with self.session.get(url=api_url, headers=headers, ssl=False) as response:
                 logger.log("SERVICE", f"[CARD] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()

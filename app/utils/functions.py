@@ -2,7 +2,7 @@ import json
 import re
 import uuid
 from datetime import date, datetime
-from typing import Callable, Dict, Union
+from typing import Callable, Dict, Union, Optional
 
 import orjson
 
@@ -103,8 +103,8 @@ def date_string_to_other_date_string_format(
         date_input: str,
         from_format: str,
         to_format: str = DATE_INPUT_OUTPUT_FORMAT,
-        default=''
-):
+        default=None
+) -> Optional[str]:
     _date = string_to_date(date_input, _format=from_format)
     if not _date:
         return default

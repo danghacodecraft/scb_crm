@@ -66,8 +66,12 @@ class CifApprovalSuccessResponse(BaseSchema):
     stages: List[CIFStageResponse] = Field(..., description="Thông tin các bước phê duyệt")
 
 
-class AuthenticationRequest(BaseSchema):
+class FaceAuthenticationRequest(BaseSchema):
     compare_face_image_uuid: str = Field(..., description="UUID hình ảnh upload")
+
+
+class AuthenticationRequest(BaseSchema):
+    face: FaceAuthenticationRequest = Field(None, description="[Thông tin xác thực] Khuôn mặt")
 
 
 class ApprovalRequest(BaseSchema):
