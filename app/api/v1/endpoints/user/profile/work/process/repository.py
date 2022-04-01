@@ -11,7 +11,11 @@ async def repos_process(
             "from_date": "2019-12-4",
             "to_date": "2021-12-23",
             "company": "Ngân hàng SCB",
-            "position": "Chuyên viên"
+            "position": {
+                "id": "1",
+                "code": "Code",
+                "name": "Chuyên viên"
+            }
         }
     ]
     return ReposReturn(data=data_response)
