@@ -7,14 +7,14 @@ async def repos_foreign(
         session: Session
 ) -> ReposReturn:
     data_response = {
-        "foreign_language": "Anh",
+        "language_type": "Anh",
         "level": {
             "id": 1,
             "code": "Code",
             "name": "B"
         },
-        "point": None,
-        "certificate_date": None
+        "gpa": None,
+        "certification_date": None
     }
 
     return ReposReturn(data=data_response)
