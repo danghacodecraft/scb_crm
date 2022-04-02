@@ -51,7 +51,7 @@ SERVICE = {
         "headers": {
             'Content-Type': 'application/json',
             "server-auth": "BCQjyTXFB0TWJiLjKcuzAenpYsbXV5O0",
-            "authorization": "Bearer 1"
+            "authorization": f"Bearer {os.getenv('SERVICE_DWH_BEARER_TOKEN')}"
         }
     }
 }
