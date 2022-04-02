@@ -15,7 +15,7 @@ class CtrPersonalInfo(BaseController):
             )
         )
         if not is_success:
-            self.response_exception(msg=str(personal_info))
+            return self.response_exception(msg=str(personal_info))
         date_of_birth = personal_info['curriculum_vitae']['individual']['birth_date']
         date_of_birth = datetime_to_date(string_to_datetime(date_of_birth, _format=DATE_TYPE_DMY_WITH_SLASH)) if date_of_birth else None
 
