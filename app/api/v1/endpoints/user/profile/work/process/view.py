@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -25,8 +25,8 @@ router = APIRouter()
     )
 )
 async def view_work_process(
-        # current_user=Depends(get_current_user_from_header()) # noqa
+        employee_id: str = Query(..., description="employee_id")
 ):
-    user_info = await CtrProcess().ctr_process()
+    user_info = await CtrProcess().ctr_process(employee_id=employee_id)
 
     return ResponseData[List[WorkProcessResponse]](**user_info)
