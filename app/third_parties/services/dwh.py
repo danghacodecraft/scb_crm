@@ -44,3 +44,53 @@ class ServiceDWH:
         except Exception as ex:  # noqa
             logger.error(str(ex))
             return False, ERROR_CALL_SERVICE_DWH
+
+    async def kpi(self, employee_id: str):
+        method = "GET"
+        path = f"/api/v1/employee/emp_detail_kpi/?emp={employee_id}"
+        url = f"{self.url}{path}"
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.request(
+                        method=method,
+                        url=url
+                ) as res:
+                    # handle response
+                    if res.status != status.HTTP_200_OK:
+                        return False, {
+                            "url": url,
+                            "message": await res.json(),
+                        }
+
+                    data = await res.json()
+
+                    return True, data
+
+        except Exception as ex:  # noqa
+            logger.error(str(ex))
+            return False, ERROR_CALL_SERVICE_DWH
+
+    async def other(self, employee_id: str):
+        method = "GET"
+        path = f"/api/v1/employee/emp_detail_other/?emp={employee_id}"
+        url = f"{self.url}{path}"
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.request(
+                        method=method,
+                        url=url
+                ) as res:
+                    # handle response
+                    if res.status != status.HTTP_200_OK:
+                        return False, {
+                            "url": url,
+                            "message": await res.json(),
+                        }
+
+                    data = await res.json()
+
+                    return True, data
+
+        except Exception as ex:  # noqa
+            logger.error(str(ex))
+            return False, ERROR_CALL_SERVICE_DWH

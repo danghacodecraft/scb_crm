@@ -4,6 +4,7 @@ from app.api.base.repository import ReposReturn
 
 
 async def repos_felicitation(
+        employee_id: str,
         session: Session
 ) -> ReposReturn:
     data_response = [

@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -21,7 +21,8 @@ router = APIRouter()
     )
 )
 async def view_kpi(
+        employee_id: str = Query(..., description="employee_id")
         # current_user=Depends(get_current_user_from_header())
 ):
-    user_info = await CtrKpi().ctr_kpi()
+    user_info = await CtrKpi().ctr_kpi(employee_id=employee_id)
     return ResponseData[List[KpiResponse]](**user_info)
