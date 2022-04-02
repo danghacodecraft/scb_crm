@@ -1,9 +1,8 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Query
 from starlette import status
 
 from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
-from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.user.profile.work.work_profile.controller import (
     CtrWorkProfile
 )
@@ -24,7 +23,7 @@ router = APIRouter()
     )
 )
 async def view_work_profile(
-        current_user=Depends(get_current_user_from_header()) # noqa
+        employee_id: str = Query(..., description="employee_id")
 ):
-    user_info = await CtrWorkProfile().ctr_work_profile()
+    user_info = await CtrWorkProfile().ctr_work_profile(employee_id=employee_id)
     return ResponseData[WorkProfileInfoResponse](**user_info)
