@@ -9,4 +9,4 @@ from app.api.base.schema import BaseSchema
 class ITLevelInfoResponse(BaseSchema):
     certification: Optional[str] = Field(..., description="Chứng chỉ")
     level: Optional[str] = Field(..., description="Trình độ")
-    gpa: Optional[str] = Field(None, description="Điểm số/Xếp loại")
+    gpa: Optional[int] = Field(None, description="Điểm số/Xếp loại")
