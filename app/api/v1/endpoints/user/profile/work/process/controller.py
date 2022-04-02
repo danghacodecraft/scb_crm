@@ -1,14 +1,14 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.user.profile.work.process.repository import (
-    repos_process
+    repos_process_info
 )
 from app.utils.functions import datetime_to_date, string_to_datetime
 
 
 class CtrProcess(BaseController):
-    async def ctr_process(self, employee_id: str):
+    async def ctr_process_info(self, employee_id: str):
         is_success, processes = self.call_repos(
-            await repos_process(
+            await repos_process_info(
                 employee_id=employee_id,
                 session=self.oracle_session
             )

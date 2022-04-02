@@ -24,9 +24,9 @@ router = APIRouter()
         success_status_code=status.HTTP_200_OK
     )
 )
-async def view_work_process(
+async def view_work_process_info(
         employee_id: str = Query(..., description="employee_id")
 ):
-    user_info = await CtrProcess().ctr_process(employee_id=employee_id)
+    process_info = await CtrProcess().ctr_process_info(employee_id=employee_id)
 
-    return ResponseData[List[WorkProcessResponse]](**user_info)
+    return ResponseData[List[WorkProcessResponse]](**process_info)
