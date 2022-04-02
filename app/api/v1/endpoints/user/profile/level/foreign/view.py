@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -23,7 +23,7 @@ router = APIRouter()
     )
 )
 async def view_foreign(
-        # current_user=Depends(get_current_user_from_header())
+        employee_id: str = Query(..., description="employee_id")
 ):
-    user_info = await CtrForeign().ctr_foreign()
-    return ResponseData[ForeignLanguageLevelInfoResponse](**user_info)
+    foreign = await CtrForeign().ctr_foreign(employee_id=employee_id)
+    return ResponseData[ForeignLanguageLevelInfoResponse](**foreign)
