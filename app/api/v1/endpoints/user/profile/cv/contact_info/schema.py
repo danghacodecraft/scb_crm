@@ -4,7 +4,6 @@ from typing import Optional
 from pydantic import Field
 
 from app.api.base.schema import BaseSchema
-from app.api.v1.schemas.utils import OptionalDropdownResponse
 
 
 # Nguyên quán
@@ -13,10 +12,10 @@ from app.api.v1.schemas.utils import OptionalDropdownResponse
 # Liên lạc
 class ContactResponse(BaseSchema):
     number_and_street: Optional[str] = Field(..., description="Nguyên quán")
-    nationality: OptionalDropdownResponse = Field(..., description="Quốc gia")
-    province: OptionalDropdownResponse = Field(..., description="Tỉnh/TP")
-    district: OptionalDropdownResponse = Field(..., description="Quận/huyên")
-    ward: OptionalDropdownResponse = Field(..., description="Phường/xã")
+    nationality: Optional[str] = Field(..., description="Quốc gia")
+    province: Optional[str] = Field(..., description="Tỉnh/TP")
+    district: Optional[str] = Field(..., description="Quận/huyên")
+    ward: Optional[str] = Field(..., description="Phường/xã")
 
 
 # Thông tin liên hệ
@@ -28,7 +27,7 @@ class ContactInfoResponse(BaseSchema):
 
 
 class CommonContactor(BaseSchema):
-    relationship: OptionalDropdownResponse = Field(..., description="Quan hệ")
+    relationship: Optional[str] = Field(..., description="Quan hệ")
     mobile_number: Optional[str] = Field(..., description="Số điện thoại")
 
 

@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -23,7 +23,7 @@ router = APIRouter()
     )
 )
 async def view_it(
-        # current_user=Depends(get_current_user_from_header())
+        employee_id: str = Query(..., description="employee_id")
 ):
-    user_info = await CtrIt().ctr_it()
-    return ResponseData[List[ITLevelInfoResponse]](**user_info)
+    it = await CtrIt().ctr_it(employee_id=employee_id)
+    return ResponseData[ITLevelInfoResponse](**it)

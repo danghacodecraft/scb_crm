@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -23,7 +23,7 @@ router = APIRouter()
     )
 )
 async def view_contact_info(
-        # current_user=Depends(get_current_user_from_header())
+        employee_id: str = Query(..., description="employee_id")
 ):
-    user_info = await CtrContact_Info().ctr_contact_info()
-    return ResponseData[EmployeeContactInfoResponse](**user_info)
+    contact_info = await CtrContact_Info().ctr_contact_info(employee_id=employee_id)
+    return ResponseData[EmployeeContactInfoResponse](**contact_info)
