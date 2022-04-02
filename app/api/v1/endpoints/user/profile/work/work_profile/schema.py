@@ -4,15 +4,14 @@ from typing import Optional
 from pydantic import Field
 
 from app.api.base.schema import BaseSchema
-from app.api.v1.schemas.utils import OptionalDropdownResponse
 
 
 # Đơn vị công tác hiện tại
 # Đơn vị gốc
 # Đơn vị tạm thời
 class WorkingProfileResponse(BaseSchema):
-    branch: OptionalDropdownResponse = Field(..., description="Đơn vị tạm thời")
-    position: OptionalDropdownResponse = Field(..., description="Chức danh")
+    branch: Optional[str] = Field(..., description="Đơn vị tạm thời")
+    position: Optional[str] = Field(..., description="Chức danh")
 
 
 # Thông tin hồ sơ công tác

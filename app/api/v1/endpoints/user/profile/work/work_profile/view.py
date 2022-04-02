@@ -22,8 +22,8 @@ router = APIRouter()
         success_status_code=status.HTTP_200_OK
     )
 )
-async def view_work_profile(
+async def view_work_profile_info(
         employee_id: str = Query(..., description="employee_id")
 ):
-    user_info = await CtrWorkProfile().ctr_work_profile(employee_id=employee_id)
-    return ResponseData[WorkProfileInfoResponse](**user_info)
+    work_profile_info = await CtrWorkProfile().ctr_work_profile_info(employee_id=employee_id)
+    return ResponseData[WorkProfileInfoResponse](**work_profile_info)
