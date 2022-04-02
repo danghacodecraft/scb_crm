@@ -21,5 +21,5 @@ router = APIRouter()
 async def view_profile(
         employee_id: str = Query(..., description="employee_id")
 ):
-    user_info = await CtrProfile().ctr_profile(employee_id=employee_id)
-    return ResponseData[ProfileResponse](**user_info)
+    profile_info = await CtrProfile().ctr_profile(employee_id=employee_id)
+    return ResponseData[ProfileResponse](**profile_info)
