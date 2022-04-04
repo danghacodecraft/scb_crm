@@ -17,25 +17,40 @@ class CtrContract(BaseController):
         if not is_success:
             return self.response_exception(msg=str(contract_info))
 
-        contract_info = contract_info['profile']['contract']
+        response_contract = dict(
+            type=None,
+            number=None,
+            start_date=None,
+            end_date=None,
+            addendum=None,
+            resign_date=None
+        )
+        response_contract["addendum"] = dict(
+            number=None,
+            start_date=None,
+            end_date=None
+        )
 
-        start_date = contract_info['start_date']
-        start_date = datetime_to_date(string_to_datetime(start_date)) if start_date else None
+        if contract_info:
+            contract_info = contract_info['profile']['contract']
 
-        end_date = contract_info['start_date']
-        end_date = datetime_to_date(string_to_datetime(end_date)) if end_date else None
+            start_date = contract_info['start_date']
+            start_date = datetime_to_date(string_to_datetime(start_date)) if start_date else None
 
-        contract = {
-            "type": contract_info['type'],
-            "number": contract_info['name'],
-            "start_date": start_date,
-            "end_date": end_date,
-            "addendum": {
-                "number": None,  # TODO: Số phụ lục hợp đồng không thấy
-                "start_date": None,   # TODO: ngày bắt đầu không thấy
-                "end_date": None,  # TODO: Ngày kết thúc không thấy
-            },
-            "resign_date": end_date
-        }
+            end_date = contract_info['start_date']
+            end_date = datetime_to_date(string_to_datetime(end_date)) if end_date else None
 
-        return self.response(data=contract)
+            response_contract = {
+                "type": contract_info['type'],
+                "number": contract_info['name'],
+                "start_date": start_date,
+                "end_date": end_date,
+                "addendum": {
+                    "number": None,  # TODO: Số phụ lục hợp đồng không thấy
+                    "start_date": None,  # TODO: ngày bắt đầu không thấy
+                    "end_date": None,  # TODO: Ngày kết thúc không thấy
+                },
+                "resign_date": end_date
+            }
+
+        return self.response(data=response_contract)
