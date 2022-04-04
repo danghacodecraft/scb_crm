@@ -28,9 +28,10 @@ async def repos_update_scb_news(
 
 
 async def get_data_by_id(session: Session, news_id: str) -> ReposReturn:
-    obj = session.execute(select(News, NewsCategory)
-                          .join(NewsCategory, NewsCategory.id == News.category_id).filter(News.id == news_id)).one()
-    if not obj:
+    try:
+        obj = session.execute(select(News, NewsCategory)
+                              .join(NewsCategory, NewsCategory.id == News.category_id).filter(News.id == news_id)).one()
+    except Exception:
         return ReposReturn(is_error=True, msg=ERROR_ID_NOT_EXIST, loc="news_id")
 
     return ReposReturn(data=obj)
@@ -55,7 +56,6 @@ async def get_list_scb_news(
     if category_news:
         query_data = query_data.filter(News.category_id == category_news)
     if start_date:
-        print(start_date)
         query_data = query_data.filter(News.start_date == start_date)
     if expired_date:
         query_data = query_data.filter(News.expired_date == expired_date)
@@ -66,7 +66,7 @@ async def get_list_scb_news(
     query_data = query_data.offset(limit * (page - 1))
 
     query_data = session.execute(
-        query_data.order_by(desc(News.created_at))).all()
+        query_data.order_by(desc(News.created_at)))
 
     return ReposReturn(data={
         "query_data": query_data,
