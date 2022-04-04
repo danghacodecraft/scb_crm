@@ -31,20 +31,21 @@ class CtrTemplateDetail(BaseController):
 
         # Tách địa chỉ tạm trú và địa chỉ thường trú
         staying_address, resident_address = None, None
-        if debit_cards:
-            for address in customer_address:
-                if address.CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE:
-                    staying_address = address
-                if address.CustomerAddress.address_type_id == RESIDENT_ADDRESS_CODE:
-                    resident_address = address
+
+        for address in customer_address:
+            if address.CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE:
+                staying_address = address
+            if address.CustomerAddress.address_type_id == RESIDENT_ADDRESS_CODE:
+                resident_address = address
 
         # Tách thẻ chính và thẻ phụ
         main_cards, sup_cards = [], []
-        for item in debit_cards:
-            if item.DebitCard.parent_card_id:
-                sup_cards.append(item)
-            else:
-                main_cards.append(item)
+        if debit_cards:
+            for item in debit_cards:
+                if item.DebitCard.parent_card_id:
+                    sup_cards.append(item)
+                else:
+                    main_cards.append(item)
 
         data_request.update({
             "S1.A.1.1.3": cust.Customer.full_name_vn,
@@ -56,9 +57,6 @@ class CtrTemplateDetail(BaseController):
             "S1.A.1.3.2": cust.CustomerIdentity.identity_num,
             "S1.A.1.3.3": datetime_to_string(cust.CustomerIdentity.issued_date, DATE_INPUT_OUTPUT_EKYC_FORMAT),
             "S1.A.1.3.4": cust.PlaceOfIssue.name,
-            "S1.A.1.2.36": subs_identity[0].name,
-            "S1.A.1.2.38": datetime_to_string(subs_identity[0].sub_identity_expired_date,
-                                              DATE_INPUT_OUTPUT_EKYC_FORMAT),
             "S1.A.1.2.15": staying_address.CustomerAddress.address,
             "S1.A.1.2.16": staying_address.AddressWard.name,
             "S1.A.1.2.17": staying_address.AddressDistrict.name,
@@ -181,6 +179,12 @@ class CtrTemplateDetail(BaseController):
             data_request.update({"S1.A.1.2.12": cust.CustomerProfessional.company_phone})
         if cust.Position:
             data_request.update({"S1.A.1.2.13": cust.Position.name})
+        if subs_identity:
+            data_request.update({
+                "S1.A.1.2.36": subs_identity[0].name,
+                "S1.A.1.2.38": datetime_to_string(subs_identity[0].sub_identity_expired_date,
+                                                  DATE_INPUT_OUTPUT_EKYC_FORMAT),
+            })
 
         data_tms = self.call_repos(
             await repo_form(data_request=data_request, path=PATH_FORM_1))
@@ -204,20 +208,21 @@ class CtrTemplateDetail(BaseController):
 
         # Tách địa chỉ tạm trú và địa chỉ thường trú
         staying_address, resident_address = None, None
-        if debit_cards:
-            for address in customer_address:
-                if address.CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE:
-                    staying_address = address
-                if address.CustomerAddress.address_type_id == RESIDENT_ADDRESS_CODE:
-                    resident_address = address
+
+        for address in customer_address:
+            if address.CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE:
+                staying_address = address
+            if address.CustomerAddress.address_type_id == RESIDENT_ADDRESS_CODE:
+                resident_address = address
 
         # Tách thẻ chính và thẻ phụ
         main_cards, sup_cards = [], []
-        for item in debit_cards:
-            if item.DebitCard.parent_card_id:
-                sup_cards.append(item)
-            else:
-                main_cards.append(item)
+        if debit_cards:
+            for item in debit_cards:
+                if item.DebitCard.parent_card_id:
+                    sup_cards.append(item)
+                else:
+                    main_cards.append(item)
 
         data_request.update({
             "S1.A.1.1.3": cust.Customer.full_name_vn,
@@ -230,9 +235,6 @@ class CtrTemplateDetail(BaseController):
             "S1.A.1.3.2": cust.CustomerIdentity.identity_num,
             "S1.A.1.3.3": datetime_to_string(cust.CustomerIdentity.issued_date, DATE_INPUT_OUTPUT_EKYC_FORMAT),
             "S1.A.1.3.4": cust.PlaceOfIssue.name,
-            "S1.A.1.2.36": subs_identity[0].name,
-            "S1.A.1.2.38": datetime_to_string(subs_identity[0].sub_identity_expired_date,
-                                              DATE_INPUT_OUTPUT_EKYC_FORMAT),
             "S1.A.1.2.15": staying_address.CustomerAddress.address,
             "S1.A.1.2.16": staying_address.AddressWard.name,
             "S1.A.1.2.17": staying_address.AddressDistrict.name,
@@ -357,6 +359,12 @@ class CtrTemplateDetail(BaseController):
             data_request.update({"S1.A.1.2.12": cust.CustomerProfessional.company_phone})
         if cust.Position:
             data_request.update({"S1.A.1.2.13": cust.Position.name})
+        if subs_identity:
+            data_request.update({
+                "S1.A.1.2.36": subs_identity[0].name,
+                "S1.A.1.2.38": datetime_to_string(subs_identity[0].sub_identity_expired_date,
+                                                  DATE_INPUT_OUTPUT_EKYC_FORMAT),
+            })
 
         data_tms = self.call_repos(
             await repo_form(data_request=data_request, path=PATH_FORM_2))
