@@ -11,7 +11,7 @@ class CtrProfile(BaseController):
             )
         )
         if not is_success:
-            self.response_exception(msg=str(profile))
+            return self.response_exception(msg=str(profile))
 
         profile = {
             "full_name_vn": profile['emp_name'],

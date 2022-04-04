@@ -15,7 +15,7 @@ class CtrWorkProfile(BaseController):
             )
         )
         if not is_success:
-            self.response_exception(msg=str(work_profile_info))
+            return self.response_exception(msg=str(work_profile_info))
 
         work_profile_info = work_profile_info['profile']['work']
 

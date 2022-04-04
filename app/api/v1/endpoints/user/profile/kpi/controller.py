@@ -11,7 +11,7 @@ class CtrKpi(BaseController):
             )
         )
         if not is_success:
-            self.response_exception(msg=str(kpis))
+            return self.response_exception(msg=str(kpis))
 
         return self.response_paging(data=[
             {

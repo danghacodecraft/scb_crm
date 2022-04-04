@@ -15,7 +15,7 @@ class CtrContract(BaseController):
             )
         )
         if not is_success:
-            self.response_exception(msg=str(contract_info))
+            return self.response_exception(msg=str(contract_info))
 
         contract_info = contract_info['profile']['contract']
 

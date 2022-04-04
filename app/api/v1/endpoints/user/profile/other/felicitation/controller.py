@@ -14,7 +14,7 @@ class CtrFelicitation(BaseController):
         )
 
         if not is_success:
-            self.response_exception(msg=str(felicitations))
+            return self.response_exception(msg=str(felicitations))
 
         return self.response_paging(data=[{
             "effective_date": datetime_to_date(string_to_datetime(felicitation["NGAY_HIEU_LUC"]))

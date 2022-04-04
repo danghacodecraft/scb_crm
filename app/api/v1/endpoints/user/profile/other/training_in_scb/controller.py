@@ -13,7 +13,7 @@ class CtrTrainingInSCB(BaseController):
             )
         )
         if not is_success:
-            self.response_exception(msg=str(training_in_scbs))
+            return self.response_exception(msg=str(training_in_scbs))
 
         return self.response_paging(data=[{
             "topic": training_in_scb["CHU_DE"],

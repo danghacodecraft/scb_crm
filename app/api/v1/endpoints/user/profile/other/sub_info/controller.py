@@ -12,7 +12,7 @@ class CtrSubInfo(BaseController):
             )
         )
         if not is_success:
-            self.response_exception(msg=str(sub_infos))
+            return self.response_exception(msg=str(sub_infos))
 
         return self.response_paging(data={
             "recruit_info": {
