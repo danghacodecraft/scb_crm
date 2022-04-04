@@ -25,5 +25,5 @@ router = APIRouter()
 async def view_education(
         employee_id: str = Query(..., description="employee_id")
 ):
-    user_info = await CtrEducation().ctr_education(employee_id=employee_id)
-    return ResponseData[EducationLevelInfoResponse](**user_info)
+    education = await CtrEducation().ctr_education(employee_id=employee_id)
+    return ResponseData[EducationLevelInfoResponse](**education)
