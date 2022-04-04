@@ -28,4 +28,3 @@ async def view_sub_info(
 ):
     sub_info = await CtrSubInfo().ctr_sub_info(employee_id=employee_id)
     return ResponseData(**sub_info)
-    # return ResponseData[SubInfoResponse](**user_info)
