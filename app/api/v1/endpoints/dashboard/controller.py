@@ -7,25 +7,41 @@ from app.utils.functions import dropdown
 
 class CtrDashboard(BaseController):
     async def ctr_get_transaction_list(self, search_box: str):
+        limit = self.pagination_params.limit
+        current_page = 1
+        if self.pagination_params.page:
+            current_page = self.pagination_params.page
+
         transaction_list = self.call_repos(await repos_get_transaction_list(
             search_box=search_box,
+            limit=limit,
+            page=current_page,
             session=self.oracle_session
         ))
+
+        total_item = 0
+        if transaction_list:
+            total_item = transaction_list[0]["total"]
+        total_page = total_item / limit
+        if total_page % limit != 0:
+            total_page += 1
+
         if search_box:
             transactions = [{
                 "cif_id": transaction.id,
                 "full_name_vn": transaction.full_name_vn
-            } for _, transaction in transaction_list]
+            } for _, transaction, _ in transaction_list]
         else:
             transactions = [{
-                "cif_id": transaction.id,
-                "full_name_vn": transaction.full_name_vn
+                "cif_id": transaction[0].id,
+                "full_name_vn": transaction[0].full_name_vn
             } for transaction in transaction_list]
 
-        transactions = transactions[:10]
         return self.response_paging(
             data=transactions,
-            total_item=len(transactions)
+            current_page=current_page,
+            total_item=total_item,
+            total_page=total_page
         )
 
     async def ctr_get_customer_list(self, cif_number: str, identity_number: str, phone_number: str, full_name: str):
