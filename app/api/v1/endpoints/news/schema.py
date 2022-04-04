@@ -25,7 +25,7 @@ class NewsDetailResponse(BaseSchema):
     start_date: date = Field(..., description="Ngày bắt đầu")
     expired_date: date = Field(None, description="Ngày kết thúc")
     created_at: date = Field(None, description="Ngày tạo tin")
-    active_flag: int = Field(..., description="Trạng thái kích hoạt")
+    active_flag: bool = Field(..., description="Trạng thái kích hoạt")
 
 
 class ListNewsResponse(BaseSchema):
@@ -45,7 +45,7 @@ class NewsImageRequest(BaseSchema):
             summary: str = Form(..., description="Tóm tắt nội dung"),
             start_date: date = Form(..., description="Ngày bắt đầu"),
             expired_date: date = Form(None, description="Ngày kết thúc"),
-            active_flag: int = Form(..., description="Trạng thái kích hoạt")
+            active_flag: bool = Form(..., description="Trạng thái kích hoạt")
     ):
         return (avatar_image, thumbnail_image, current_user, title, news_category_id, content,
                 summary, start_date, expired_date, active_flag)
