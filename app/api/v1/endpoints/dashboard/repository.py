@@ -28,6 +28,7 @@ async def repos_get_transaction_list(search_box: str, session: Session):
             .order_by(desc(Customer.open_cif_at))
         ).scalars().all()
     else:
+        search_box = f'%{search_box}%'
         transaction_list = session.execute(
             select(
                 CustomerIdentity,
@@ -36,12 +37,12 @@ async def repos_get_transaction_list(search_box: str, session: Session):
             .join(Customer, CustomerIdentity.customer_id == Customer.id)
             .filter(
                 or_(
-                    CustomerIdentity.identity_num.like('%' + search_box + '%'),
+                    CustomerIdentity.identity_num.ilike(search_box),
                     or_(
-                        Customer.full_name.like('%' + search_box.upper() + '%')
+                        Customer.full_name_vn.ilike(search_box)
                     ),
                     or_(
-                        Customer.cif_number.like('%' + search_box + '%')
+                        Customer.cif_number.ilike(search_box)
                     )
                 ))
             .order_by(desc(Customer.open_cif_at))
