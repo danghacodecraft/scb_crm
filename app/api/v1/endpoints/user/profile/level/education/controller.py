@@ -18,12 +18,12 @@ class CtrEducation(BaseController):
         education = {
             "education_information": education_cultural['academy'],
             "education_level": education_cultural['education_level'],
-            "professional": education_cultural['major'],
-            "major": education_cultural['major'],
+            "professional": education_cultural['major'],  # TODO
+            "major": education_cultural['major'],  # TODO
             "school": education_cultural['school'],
             "training_method": education_cultural['training'],
             "ranking": education_cultural['degree'],
-            "gpa": "8.0"  # Todo Điểm tốt nghiệp không tìm thấy
+            "gpa": None  # TODO Điểm tốt nghiệp không tìm thấy
         }
 
         return self.response(data=education)
