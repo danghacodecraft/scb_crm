@@ -1,25 +1,29 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Query
 from starlette import status
 
 from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
-from app.api.v1.dependencies.authenticate import get_current_user_from_header
-from app.api.v1.endpoints.user.schema import UserInfoResponse
+from app.api.v1.endpoints.user.profile.work.work_profile.controller import (
+    CtrWorkProfile
+)
+from app.api.v1.endpoints.user.profile.work.work_profile.schema import (
+    WorkProfileInfoResponse
+)
 
 router = APIRouter()
 
 
 @router.get(
     path="/",
-    name="[Hồ sơ công tác] - A. Hồ sơ công tác",
-    description="[Hồ sơ công tác] - A. Hồ sơ công tác",
+    name="[Thông tin hồ sơ công tác] - A. Thông tin hồ sơ công tác",
+    description="[Thông tin hồ sơ công tác] - A. Thông tin hồ sơ công tác",
     responses=swagger_response(
-        response_model=ResponseData[UserInfoResponse],
+        response_model=ResponseData[WorkProfileInfoResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
-async def view_retrieve_current_user(
-        current_user=Depends(get_current_user_from_header())
+async def view_work_profile_info(
+        employee_id: str = Query(..., description="employee_id")
 ):
-    # user_info = await CtrUser(is_init_oracle_session=False, current_user=current_user).ctr_get_current_user_info()
-    return ResponseData[UserInfoResponse]({})
+    work_profile_info = await CtrWorkProfile().ctr_work_profile_info(employee_id=employee_id)
+    return ResponseData[WorkProfileInfoResponse](**work_profile_info)

@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends
+from typing import List
+
+from fastapi import APIRouter, Query
 from starlette import status
 
 from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
-from app.api.v1.dependencies.authenticate import get_current_user_from_header
-from app.api.v1.endpoints.user.schema import UserInfoResponse
+from app.api.v1.endpoints.user.profile.kpi.controller import CtrKpi
+from app.api.v1.endpoints.user.profile.kpi.schema import KpiResponse
 
 router = APIRouter()
 
@@ -14,12 +16,13 @@ router = APIRouter()
     name="[THÔNG TIN KPIS]",
     description="[THÔNG TIN KPIS]",
     responses=swagger_response(
-        response_model=ResponseData[UserInfoResponse],
+        response_model=ResponseData[List[KpiResponse]],
         success_status_code=status.HTTP_200_OK
     )
 )
-async def view_retrieve_current_user(
-        current_user=Depends(get_current_user_from_header())
+async def view_kpi(
+        employee_id: str = Query(..., description="employee_id")
+        # current_user=Depends(get_current_user_from_header())
 ):
-    # user_info = await CtrUser(is_init_oracle_session=False, current_user=current_user).ctr_get_current_user_info()
-    return ResponseData[UserInfoResponse]({})
+    user_info = await CtrKpi().ctr_kpi(employee_id=employee_id)
+    return ResponseData[List[KpiResponse]](**user_info)
