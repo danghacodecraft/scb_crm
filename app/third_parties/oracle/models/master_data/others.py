@@ -449,8 +449,9 @@ class TransactionStage(Base):
     transaction_stage_phase_code = Column(VARCHAR(50), comment='Mã bước thực hiện kiểu chữ(vd: IN, DUYET)')
     transaction_stage_phase_name = Column(VARCHAR(250), comment='Tên bước hiện')
     responsible_flag = Column(NUMBER(1, 0, False), comment='Cờ người chịu trách nhiệm của bước thực hiện')
-    action_id = Column(ForeignKey(
-        'crm_transaction_stage_action.transaction_stage_action_id'),
+    action_id = Column(
+        'transaction_stage_action_id',
+        ForeignKey('crm_transaction_stage_action.transaction_stage_action_id'),
         comment='Mã hành động'
     )
 
@@ -528,7 +529,7 @@ class TransactionStageAction(Base):
     name = Column('transaction_stage_action_name', VARCHAR(250), nullable=False, comment='Tên hành động')
     group_id = Column('transaction_stage_action_group_id', VARCHAR(36), comment='Nhóm hành động')
     status_id = Column(
-        'stage_status_id', VARCHAR(36),
+        'transaction_stage_status_id', VARCHAR(36),
         ForeignKey('crm_transaction_stage_status.transaction_stage_status_id'),
         comment='Trạng thái hành động', nullable=False
     )
