@@ -15,8 +15,6 @@ class CtrKpi(BaseController):
 
         return self.response_paging(data=[
             {
-                # "id": kpi["ID"],
-                # "fullname_vn": kpi["FULLNAME"],
                 "assessment_period": kpi["DATE"],
                 "total_score": kpi["KPI"],
                 "completion_rate": kpi["PER"],

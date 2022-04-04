@@ -22,7 +22,6 @@ router = APIRouter()
 )
 async def view_kpi(
         employee_id: str = Query(..., description="employee_id")
-        # current_user=Depends(get_current_user_from_header())
 ):
-    user_info = await CtrKpi().ctr_kpi(employee_id=employee_id)
-    return ResponseData[List[KpiResponse]](**user_info)
+    kpi = await CtrKpi().ctr_kpi(employee_id=employee_id)
+    return ResponseData[List[KpiResponse]](**kpi)
