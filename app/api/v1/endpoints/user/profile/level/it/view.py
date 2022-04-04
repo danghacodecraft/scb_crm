@@ -26,4 +26,4 @@ async def view_it(
         employee_id: str = Query(..., description="employee_id")
 ):
     it = await CtrIt().ctr_it(employee_id=employee_id)
-    return ResponseData[ITLevelInfoResponse](**it)
+    return ResponseData[List[ITLevelInfoResponse]](**it)

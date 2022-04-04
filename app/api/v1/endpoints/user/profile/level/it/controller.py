@@ -12,12 +12,13 @@ class CtrIt(BaseController):
         )
         if not is_success:
             return self.response_exception(msg=str(it))
-
+        response_data = []
         it = it['level']['information_technology']
-        response_data = {
+
+        response_data.append({
             "certification": it['certificate'],
             "level": it['level'],
             "gpa": it['mark']
-        }
+        })
 
-        return self.response_paging(data=response_data)
+        return self.response(data=response_data)
