@@ -1,26 +1,10 @@
-from sqlalchemy.orm import Session
-
 from app.api.base.repository import ReposReturn
+from app.settings.event import service_dwh
 
 
 async def repos_felicitation(
         employee_id: str,
-        session: Session
 ) -> ReposReturn:
-    data_response = [
-        {
-            "effective_date": None,
-            "decision_number": None,
-            "titles": None,
-            "rank_commend": None,
-            "job_title_name": None,
-            "dep_name": None,
-            "reason_commend": None,
-            "form_commend": None,
-            "bonus_amount": None,
-            "sign_day": None,
-            "signer": None
-        }
-    ]
+    felicitations = await service_dwh.felicitation(employee_id=employee_id)
 
-    return ReposReturn(data=data_response)
+    return ReposReturn(data=felicitations)
