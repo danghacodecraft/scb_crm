@@ -19,7 +19,7 @@ security = HTTPBasic()
 
 @router.post(
     path="/",
-    description="Create SCB News",
+    description="Tạo mới Tin tức SCB",
     name="Tạo mới Tin tức SCB",
     responses=swagger_response(
         response_model=ResponseData[NewsResponse],
@@ -54,7 +54,7 @@ async def view_upload_scb_news(
 
 @router.post(
     path="/{news_id}",
-    description="Update SCB News",
+    description="Cập nhật Tin tức SCB",
     name="Cập nhật Tin tức SCB",
     responses=swagger_response(
         response_model=ResponseData[NewsResponse],
@@ -91,7 +91,7 @@ async def view_update_scb_news(
 
 @router.get(
     path="/{news_id}",
-    name="Detail Debit Card",
+    name="Chi tiết tin tức",
     description='Chi tiết tin tức',
     responses=swagger_response(
         response_model=ResponseData[NewsDetailResponse],
