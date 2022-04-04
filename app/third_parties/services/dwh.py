@@ -12,6 +12,10 @@ class ServiceDWH:
     session: Optional[aiohttp.ClientSession] = None
 
     url = SERVICE["dwh"]['url']
+    header = SERVICE["dwh"]['url']
+    headers = {
+        "AUTHORIZATION": SERVICE["dwh"]['headers']['authorization'],
+    }
 
     def start(self):
         self.session = aiohttp.ClientSession()
@@ -53,7 +57,8 @@ class ServiceDWH:
             async with aiohttp.ClientSession() as session:
                 async with session.request(
                         method=method,
-                        url=url
+                        url=url,
+                        headers=self.headers
                 ) as res:
                     # handle response
                     if res.status != status.HTTP_200_OK:
@@ -78,7 +83,8 @@ class ServiceDWH:
             async with aiohttp.ClientSession() as session:
                 async with session.request(
                         method=method,
-                        url=url
+                        url=url,
+                        headers=self.headers
                 ) as res:
                     # handle response
                     if res.status != status.HTTP_200_OK:
@@ -95,7 +101,59 @@ class ServiceDWH:
             logger.error(str(ex))
             return False, ERROR_CALL_SERVICE_DWH
 
-    async def other(self, employee_id: str):
+    async def discipline(self, employee_id: str):
+        method = "GET"
+        path = f"/api/v1/employee/emp_detail_discipline/?emp={employee_id}"
+        url = f"{self.url}{path}"
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.request(
+                        method=method,
+                        url=url,
+                        headers=self.headers
+                ) as res:
+                    # handle response
+                    if res.status != status.HTTP_200_OK:
+                        return False, {
+                            "url": url,
+                            "message": await res.json(),
+                        }
+
+                    data = await res.json()
+
+                    return True, data
+
+        except Exception as ex:  # noqa
+            logger.error(str(ex))
+            return False, ERROR_CALL_SERVICE_DWH
+
+    async def felicitation(self, employee_id: str):
+        method = "GET"
+        path = f"/api/v1/employee/emp_detail_bonus/?emp={employee_id}"
+        url = f"{self.url}{path}"
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.request(
+                        method=method,
+                        url=url,
+                        headers=self.headers
+                ) as res:
+                    # handle response
+                    if res.status != status.HTTP_200_OK:
+                        return False, {
+                            "url": url,
+                            "message": await res.json(),
+                        }
+
+                    data = await res.json()
+
+                    return True, data
+
+        except Exception as ex:  # noqa
+            logger.error(str(ex))
+            return False, ERROR_CALL_SERVICE_DWH
+
+    async def sub_info(self, employee_id: str):
         method = "GET"
         path = f"/api/v1/employee/emp_detail_other/?emp={employee_id}"
         url = f"{self.url}{path}"
@@ -103,7 +161,34 @@ class ServiceDWH:
             async with aiohttp.ClientSession() as session:
                 async with session.request(
                         method=method,
-                        url=url
+                        url=url,
+                        headers=self.headers
+                ) as res:
+                    # handle response
+                    if res.status != status.HTTP_200_OK:
+                        return False, {
+                            "url": url,
+                            "message": await res.json(),
+                        }
+
+                    data = await res.json()
+
+                    return True, data
+
+        except Exception as ex:  # noqa
+            logger.error(str(ex))
+            return False, ERROR_CALL_SERVICE_DWH
+
+    async def training_in_scb(self, employee_id: str):
+        method = "GET"
+        path = f"/api/v1/employee/emp_detail_training/?emp={employee_id}"
+        url = f"{self.url}{path}"
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.request(
+                        method=method,
+                        url=url,
+                        headers=self.headers
                 ) as res:
                     # handle response
                     if res.status != status.HTTP_200_OK:

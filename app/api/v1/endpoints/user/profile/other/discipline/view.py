@@ -28,5 +28,5 @@ async def view_discipline(
         employee_id=Query(..., description="employee_id")
         # current_user=Depends(get_current_user_from_header())
 ):
-    user_info = await CtrDiscipline().ctr_discipline(employee_id=employee_id)
-    return ResponseData[List[DisciplineResponse]](**user_info)
+    discipline_info = await CtrDiscipline().ctr_discipline(employee_id=employee_id)
+    return ResponseData[List[DisciplineResponse]](**discipline_info)

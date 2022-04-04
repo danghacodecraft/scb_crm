@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -26,6 +26,7 @@ router = APIRouter()
 )
 async def view_training_in_scb(
         # current_user=Depends(get_current_user_from_header())
+        employee_id=Query(..., description="employee_id")
 ):
-    user_info = await CtrTrainingInSCB().ctr_training_in_scb()
-    return ResponseData[List[TrainingInSCBResponse]](**user_info)
+    training_in_scb_info = await CtrTrainingInSCB().ctr_training_in_scb(employee_id=employee_id)
+    return ResponseData[List[TrainingInSCBResponse]](**training_in_scb_info)

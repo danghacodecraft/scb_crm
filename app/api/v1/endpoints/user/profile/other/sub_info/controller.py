@@ -4,12 +4,40 @@ from app.api.v1.endpoints.user.profile.other.sub_info.repository import (
 )
 
 
-class Ctr_Sub_Info(BaseController):
-    async def ctr_sub_info(self):
-        sub_info = self.call_repos(
+class CtrSubInfo(BaseController):
+    async def ctr_sub_info(self, employee_id: str):
+        is_success, sub_infos = self.call_repos(
             await repos_sub_info(
-                session=self.oracle_session
+                employee_id=employee_id
             )
         )
+        if not is_success:
+            self.response_exception(msg=str(sub_infos))
 
-        return self.response(data=sub_info)
+        return self.response_paging(data={
+            "recruit_info": {
+                "code": sub_infos[0]["MA_TUYEN_DUNG"],
+                "reason": sub_infos[0]["LY_DO_TUYEN_DUNG"],
+                "introducer": sub_infos[0]["NGUOI_GIOI_THIEU"],
+                "replacement_staff": sub_infos[0]["NV_THAY_THE"],
+                "note": sub_infos[0]["NOTE"]
+            },
+            "other_info": {
+                "other_info": sub_infos[0]["THONG_TIN_KHAC"],
+                "dateoff": sub_infos[0]["THAM_NIEN_THEM"],
+                "annual_leave": sub_infos[0]["PHEP_NAM_UU_DAI"]
+            }
+        } if len(sub_infos) > 0 else {
+            "recruit_info": {
+                "code": None,
+                "reason": None,
+                "introducer": None,
+                "replacement_staff": None,
+                "note": None
+            },
+            "other_info": {
+                "other_info": None,
+                "dateoff": None,
+                "annual_leave": None
+            }
+        })
