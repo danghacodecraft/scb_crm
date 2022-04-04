@@ -14,16 +14,27 @@ class CtrEducation(BaseController):
         )
         if not is_success:
             return self.response_exception(msg=str(education))
-        education_cultural = education['level']['cultural']
-        education = {
-            "education_information": education_cultural['academy'],
-            "education_level": education_cultural['education_level'],
-            "professional": education_cultural['major'],  # TODO
-            "major": education_cultural['major'],  # TODO
-            "school": education_cultural['school'],
-            "training_method": education_cultural['training'],
-            "ranking": education_cultural['degree'],
-            "gpa": None  # TODO Điểm tốt nghiệp không tìm thấy
-        }
+        response_education = dict(
+            education_information=None,
+            education_level=None,
+            professional=None,
+            major=None,
+            school=None,
+            training_method=None,
+            ranking=None,
+            gpa=None
+        )
+        if education:
+            education_cultural = education['level']['cultural']
+            response_education = {
+                "education_information": education_cultural['academy'],
+                "education_level": education_cultural['education_level'],
+                "professional": education_cultural['major'],  # TODO
+                "major": education_cultural['major'],  # TODO
+                "school": education_cultural['school'],
+                "training_method": education_cultural['training'],
+                "ranking": education_cultural['degree'],
+                "gpa": None  # TODO Điểm tốt nghiệp không tìm thấy
+            }
 
-        return self.response(data=education)
+        return self.response(data=response_education)
