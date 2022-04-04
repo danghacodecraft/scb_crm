@@ -16,18 +16,34 @@ class CtrFelicitation(BaseController):
         if not is_success:
             return self.response_exception(msg=str(felicitations))
 
-        return self.response_paging(data=[{
-            "effective_date": datetime_to_date(string_to_datetime(felicitation["NGAY_HIEU_LUC"]))
-            if felicitation["NGAY_HIEU_LUC"] else None,
-            "decision_number": felicitation["SO_QUYET_DINH"],
-            "titles": felicitation["DANH_HIEU"],
-            "commend_level": felicitation["CAP_KHEN_THUONG"],
-            "title": felicitation["CHUC_DANH"],
-            "department": felicitation["DON_VI_PHONG_BAN"],
-            "reason": felicitation["LY_DO_KHEN_TUONG"],
-            "formality": felicitation["HINH_THUC_KHEN_THUONG"],
-            "amount": felicitation["SO_TIEN_THUONG"],
-            "sign_date": datetime_to_date(string_to_datetime(felicitation["NGAY_KY"]))
-            if felicitation["NGAY_KY"] else None,
-            "signer": felicitation["NGUOI_KY"]
-        } for felicitation in felicitations])
+        response_felicitations = []
+        for felicitation in felicitations:
+            effective_date = felicitation["NGAY_HIEU_LUC"]
+            effective_date = datetime_to_date(string_to_datetime(effective_date)) if effective_date else None
+            decision_number = felicitation["SO_QUYET_DINH"]
+            titles = felicitation["DANH_HIEU"]
+            commend_level = felicitation["CAP_KHEN_THUONG"]
+            title = felicitation["CHUC_DANH"]
+            department = felicitation["DON_VI_PHONG_BAN"]
+            reason = felicitation["LY_DO_KHEN_TUONG"]
+            formality = felicitation["HINH_THUC_KHEN_THUONG"]
+            amount = felicitation["SO_TIEN_THUONG"]
+            sign_date = felicitation["NGAY_KY"]
+            sign_date = datetime_to_date(string_to_datetime(sign_date)) if sign_date else None
+            signer = felicitation["NGUOI_KY"]
+
+            response_felicitations.append(dict(
+                effective_date=effective_date,
+                decision_number=decision_number,
+                titles=titles,
+                commend_level=commend_level,
+                title=title,
+                department=department,
+                reason=reason,
+                formality=formality,
+                amount=amount,
+                sign_date=sign_date,
+                signer=signer
+            ))
+
+        return self.response(data=response_felicitations)
