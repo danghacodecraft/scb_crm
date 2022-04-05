@@ -2,6 +2,7 @@ import aiohttp
 from starlette import status
 
 from app.settings.service import SERVICE
+from app.third_parties.services.file import ServiceFile
 from app.utils.error_messages import ERROR_CALL_SERVICE_TEMPLATE
 
 
@@ -31,7 +32,7 @@ class ServiceTMS:
                     # handle response
                     if res.status != status.HTTP_200_OK:
                         return False, {
-                            "url": url,
+                            "url": ServiceFile().replace_with_cdn(url),
                             "headers": self.__header,
                             "message": await res.json(),
                         }
