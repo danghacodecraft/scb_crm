@@ -127,11 +127,6 @@ async def repos_get_customer(
     if full_name:
         customers = customers.filter(Customer.full_name.ilike(f'%{full_name}%'))
 
-    # lấy tổng số item khi query
-    # total_item = session.execute(
-    #     customers
-    # ).all()
-
     customers = customers.limit(limit)
     customers = customers.offset(limit * (page - 1))
 
