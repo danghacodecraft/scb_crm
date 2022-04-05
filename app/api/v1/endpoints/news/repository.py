@@ -66,7 +66,7 @@ async def get_list_scb_news(
     query_data = query_data.offset(limit * (page - 1))
 
     query_data = session.execute(
-        query_data.order_by(desc(News.created_at)))
+        query_data.order_by(desc(News.created_at))).all()
 
     return ReposReturn(data={
         "query_data": query_data,
