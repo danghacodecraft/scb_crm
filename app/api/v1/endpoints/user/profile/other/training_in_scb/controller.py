@@ -15,27 +15,38 @@ class CtrTrainingInSCB(BaseController):
         if not is_success:
             return self.response_exception(msg=str(training_in_scbs))
 
-        response_training_in_scb = []
-        for training_in_scb in training_in_scbs:
-            topic = training_in_scb["CHU_DE"]
-            course_code = training_in_scb["MA_KHOA_HOC"]
-            course_name = training_in_scb["TEN_KHOA_HOC"]
+        response_training_in_scbs = [dict(
+            topic=None,
+            code=None,
+            name=None,
+            from_date=None,
+            to_date=None,
+            result=None
+        )]
 
-            from_date = training_in_scb["TU_NGAY"]
-            from_date = datetime_to_date(string_to_datetime(from_date)) if from_date else None
+        if training_in_scbs:
 
-            to_date = training_in_scb["DEN_NGAY"]
-            to_date = datetime_to_date(string_to_datetime(to_date)) if to_date else None
+            response_training_in_scbs = []
+            for training_in_scb in training_in_scbs:
+                topic = training_in_scb["CHU_DE"]
+                course_code = training_in_scb["MA_KHOA_HOC"]
+                course_name = training_in_scb["TEN_KHOA_HOC"]
 
-            result = training_in_scb["KET_QUA"]
+                from_date = training_in_scb["TU_NGAY"]
+                from_date = datetime_to_date(string_to_datetime(from_date)) if from_date else None
 
-            response_training_in_scb.append(dict(
-                topic=topic,
-                course_code=course_code,
-                course_name=course_name,
-                from_date=from_date,
-                to_date=to_date,
-                result=result
-            ))
+                to_date = training_in_scb["DEN_NGAY"]
+                to_date = datetime_to_date(string_to_datetime(to_date)) if to_date else None
 
-        return self.response(data=response_training_in_scb)
+                result = training_in_scb["KET_QUA"]
+
+                response_training_in_scbs.append(dict(
+                    topic=topic,
+                    course_code=course_code,
+                    course_name=course_name,
+                    from_date=from_date,
+                    to_date=to_date,
+                    result=result
+                ))
+
+        return self.response(data=response_training_in_scbs)
