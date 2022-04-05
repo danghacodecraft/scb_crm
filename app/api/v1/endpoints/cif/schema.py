@@ -29,21 +29,21 @@ class CheckExistCIFRequest(BaseSchema):
 
 # ################################### lịch sử hồ sơ (log)####################################3
 class ProfileHistoryOfDayResponse(BaseSchema):
-    code: str = Field(..., description="Mã hồ sơ")
-    name: str = Field(..., description="Tên hồ sơ")
+    record_code: str = Field(..., description="Mã hồ sơ")
+    record_name: str = Field(..., description="Tên hồ sơ")
     status: DropdownResponse = Field(..., description="Trạng thái hồ sơ")
-    bank: DropdownResponse = Field(..., description="Tên ngân hàng")
-    maker: str = Field(..., description="Người tạo hồ sơ")
+    branch: DropdownResponse = Field(..., description="Tên chi nhánh")
+    created_by: str = Field(..., description="Người tạo hồ sơ")
     position: DropdownResponse = Field(..., description="Vị trí")
-    from_datetime: datetime = Field(..., description='Tạo mới vào lúc, format dạng: `YYYY-mm-dd HH:MM:SS`',
-                                    example='2021-15-12 06:07:08')
-    to_datetime: datetime = Field(..., description='Tạo mới vào lúc, format dạng: `YYYY-mm-dd HH:MM:SS`',
-                                  example='2021-15-12 06:07:08')
+    created_at: datetime = Field(..., description='Tạo mới vào lúc, format dạng: `YYYY-mm-dd HH:MM:SS`',
+                                 example='2021-15-12 06:07:08')
+    completed_at: datetime = Field(..., description='Hoàn thành vào lúc, format dạng: `YYYY-mm-dd HH:MM:SS`',
+                                   example='2021-15-12 06:07:08')
 
 
 class CifProfileHistoryResponse(BaseSchema):
-    created_date: date = Field(..., description="Ngày tạo hồ sơ")
-    logs: List[ProfileHistoryOfDayResponse] = Field(..., description="Danh sách log trong 1 ngày")
+    log_date: date = Field(..., description="Ngày tạo hồ sơ")
+    log_detail: List[ProfileHistoryOfDayResponse] = Field(..., description="Danh sách log trong 1 ngày")
 
 
 ################################################################

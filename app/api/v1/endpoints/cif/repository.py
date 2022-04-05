@@ -97,81 +97,78 @@ async def repos_profile_history(cif_id: str, session: Session) -> ReposReturn:
 
     return ReposReturn(data=[
         {
-            "created_date": "2021-12-15",
-            "logs": [
+            "log_date": "2021-12-15",
+            "log_detail": [
                 {
-                    "id": "[#CRM_1234567890123456]",
-                    "code": "[#CRM_1234567890123456]",
-                    "name": "Tu chỉnh CIF",
+                    "record_code": "[#CRM_1234567890123456]",
+                    "record_name": "Tu chỉnh CIF",
                     "status": {
                         "id": "02",
                         "code": "02",
                         "name": "Đã duyệt"
                     },
-                    "bank": {
+                    "branch": {
                         "id": "079",
                         "code": "079",
                         "name": "SCB Sài Gòn"
                     },
-                    "maker": "Nguyễn Văn B",
+                    "created_by": "Nguyễn Văn B",
                     "position": {
                         "id": "01",
                         "code": "01",
                         "name": "Kiểm soát viên"
                     },
-                    "from_datetime": "2021-12-15T14:15:22Z",
-                    "to_datetime": "2021-12-15T15:05:22Z"
+                    "created_at": "2021-12-15T14:15:22Z",
+                    "completed_at": "2021-12-15T15:05:22Z"
                 },
                 {
-                    "id": "[#CRM_1234567890123452]",
-                    "code": "[#CRM_1234567890123452]",
-                    "name": "Mở tài khoản thanh toán",
+                    "record_code": "[#CRM_1234567890123452]",
+                    "record_name": "Mở tài khoản thanh toán",
                     "status": {
                         "id": "01",
                         "code": "01",
                         "name": "Hủy"
                     },
-                    "bank": {
+                    "branch": {
                         "id": "079",
                         "code": "079",
                         "name": "SCB Sài Gòn"
                     },
-                    "maker": "Nguyễn Văn B",
+                    "created_by": "Nguyễn Văn B",
                     "position": {
                         "id": "01",
                         "code": "01",
                         "name": "Kiểm soát viên"
                     },
-                    "from_datetime": "2021-12-15T14:15:22Z",
-                    "to_datetime": "2021-12-15T14:45:22Z"
+                    "created_at": "2021-12-15T14:15:22Z",
+                    "completed_at": "2021-12-15T14:45:22Z"
                 },
             ]
         },
         {
-            "created_date": "2021-12-16",
-            "logs": [
+            "log_date": "2021-12-16",
+            "log_detail": [
                 {
-                    "id": "[#CRM_1234567890123452]",
-                    "code": "[#CRM_1234567890123452]",
-                    "name": "Mở tài khoản thanh toán",
+                    "record_code": "[#CRM_1234567890123452]",
+                    "record_name": "Mở tài khoản thanh toán",
                     "status": {
                         "id": "01",
                         "code": "01",
                         "name": "Hủy"
                     },
-                    "bank": {
+                    "branch": {
                         "id": "079",
                         "code": "079",
                         "name": "SCB Sài Gòn"
                     },
-                    "maker": "Nguyễn Văn B",
+                    "created_by": "Nguyễn Văn B",
                     "position": {
                         "id": "01",
                         "code": "01",
                         "name": "Kiểm soát viên"
                     },
-                    "from_datetime": "2021-12-15T14:15:22Z",
-                    "to_datetime": "2021-12-15T14:45:22Z"
+                    "created_at": "2021-12-15T14:15:22Z",
+                    "completed_at": "2021-12-15T14:45:22Z"
                 },
             ],
         }
