@@ -2,11 +2,20 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.user.profile.work.contract.repository import (
     repos_contract
 )
+from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
 from app.utils.functions import datetime_to_date, string_to_datetime
 
 
 class CtrContract(BaseController):
-    async def ctr_contract_info(self, employee_id: str):
+    async def ctr_contract_info(self):
+        if not self.current_user:
+            return self.response_exception(
+                msg=USER_NOT_EXIST,
+                detail=MESSAGE_STATUS[USER_NOT_EXIST],
+                loc="current_user"
+            )
+
+        employee_id = self.current_user.code
 
         is_success, contract_info = self.call_repos(
             await repos_contract(

@@ -2,10 +2,20 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.user.profile.other.sub_info.repository import (
     repos_sub_info
 )
+from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
 
 
 class CtrSubInfo(BaseController):
-    async def ctr_sub_info(self, employee_id: str):
+    async def ctr_sub_info(self):
+        if not self.current_user:
+            return self.response_exception(
+                msg=USER_NOT_EXIST,
+                detail=MESSAGE_STATUS[USER_NOT_EXIST],
+                loc="current_user"
+            )
+
+        employee_id = self.current_user.code
+
         is_success, sub_infos = self.call_repos(
             await repos_sub_info(
                 employee_id=employee_id

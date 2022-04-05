@@ -3,11 +3,21 @@ from app.api.v1.endpoints.user.profile.cv.personal_info.repository import (
     repos_personal_info
 )
 from app.utils.constant.date_datetime import DATE_TYPE_DMY_WITH_SLASH
+from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
 from app.utils.functions import datetime_to_date, string_to_datetime
 
 
 class CtrPersonalInfo(BaseController):
-    async def ctr_personal_info(self, employee_id: str):
+    async def ctr_personal_info(self):
+        if not self.current_user:
+            return self.response_exception(
+                msg=USER_NOT_EXIST,
+                detail=MESSAGE_STATUS[USER_NOT_EXIST],
+                loc="current_user"
+            )
+
+        employee_id = self.current_user.code
+
         is_success, personal_info = self.call_repos(
             await repos_personal_info(
                 employee_id=employee_id,

@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends
 from starlette import status
 
 from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
+from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.user.profile.level.foreign.controller import (
     CtrForeign
 )
@@ -23,7 +24,7 @@ router = APIRouter()
     )
 )
 async def view_foreign(
-        employee_id: str = Query(..., description="employee_id")
+        current_user=Depends(get_current_user_from_header())
 ):
-    foreign = await CtrForeign().ctr_foreign(employee_id=employee_id)
+    foreign = await CtrForeign(current_user).ctr_foreign()
     return ResponseData[ForeignLanguageLevelInfoResponse](**foreign)

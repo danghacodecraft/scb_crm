@@ -2,11 +2,21 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.user.profile.other.discipline.repository import (
     repos_discipline
 )
+from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
 from app.utils.functions import datetime_to_date, string_to_datetime
 
 
 class CtrDiscipline(BaseController):
-    async def ctr_discipline(self, employee_id: str):
+    async def ctr_discipline(self):
+        if not self.current_user:
+            return self.response_exception(
+                msg=USER_NOT_EXIST,
+                detail=MESSAGE_STATUS[USER_NOT_EXIST],
+                loc="current_user"
+            )
+
+        employee_id = self.current_user.code
+
         is_success, disciplines = self.call_repos(
             await repos_discipline(
                 employee_id=employee_id
