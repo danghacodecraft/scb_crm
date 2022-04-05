@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends
 from starlette import status
 
 from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
+from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.user.profile.cv.personal_info.controller import (
     CtrPersonalInfo
 )
@@ -23,7 +24,7 @@ router = APIRouter()
     )
 )
 async def view_personal_info(
-        employee_id: str = Query(..., description="employee_id")
+        current_user=Depends(get_current_user_from_header())
 ):
-    user_info = await CtrPersonalInfo().ctr_personal_info(employee_id=employee_id)
+    user_info = await CtrPersonalInfo(current_user).ctr_personal_info()
     return ResponseData[PersonalInfoResponse](**user_info)

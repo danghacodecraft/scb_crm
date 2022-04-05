@@ -1,10 +1,11 @@
 from typing import List
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends
 from starlette import status
 
 from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
+from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.user.profile.other.discipline.controller import (
     CtrDiscipline
 )
@@ -25,8 +26,7 @@ router = APIRouter()
     )
 )
 async def view_discipline(
-        employee_id=Query(..., description="employee_id")
-        # current_user=Depends(get_current_user_from_header())
+        current_user=Depends(get_current_user_from_header())
 ):
-    discipline_info = await CtrDiscipline().ctr_discipline(employee_id=employee_id)
+    discipline_info = await CtrDiscipline(current_user).ctr_discipline()
     return ResponseData[List[DisciplineResponse]](**discipline_info)

@@ -1,10 +1,11 @@
 from typing import List
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends
 from starlette import status
 
 from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
+from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.user.profile.level.it.controller import CtrIt
 from app.api.v1.endpoints.user.profile.level.it.schema import (
     ITLevelInfoResponse
@@ -23,7 +24,7 @@ router = APIRouter()
     )
 )
 async def view_it(
-        employee_id: str = Query(..., description="employee_id")
+        current_user=Depends(get_current_user_from_header())
 ):
-    it = await CtrIt().ctr_it(employee_id=employee_id)
+    it = await CtrIt(current_user).ctr_it()
     return ResponseData[List[ITLevelInfoResponse]](**it)

@@ -1,10 +1,11 @@
 from typing import List
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends
 from starlette import status
 
 from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
+from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.user.profile.work.process.controller import (
     CtrProcess
 )
@@ -25,8 +26,8 @@ router = APIRouter()
     )
 )
 async def view_work_process_info(
-        employee_id: str = Query(..., description="employee_id")
+        current_user=Depends(get_current_user_from_header())
 ):
-    process_info = await CtrProcess().ctr_process_info(employee_id=employee_id)
+    process_info = await CtrProcess(current_user).ctr_process_info()
 
     return ResponseData[List[WorkProcessResponse]](**process_info)
