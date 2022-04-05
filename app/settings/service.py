@@ -45,5 +45,13 @@ SERVICE = {
             "server-auth": "BCQjyTXFB0TWJiLjKcuzAenpYsbXV5O0",
             "authorization": "Bearer 1"
         }
+    },
+    "dwh": {
+        "url": os.getenv("SERVICE_DWH_URL"),
+        "headers": {
+            'Content-Type': 'application/json',
+            "server-auth": "BCQjyTXFB0TWJiLjKcuzAenpYsbXV5O0",
+            "authorization": f"Bearer {os.getenv('SERVICE_DWH_BEARER_TOKEN')}"
+        }
     }
 }
