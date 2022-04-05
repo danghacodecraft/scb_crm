@@ -1,6 +1,5 @@
 from sqlalchemy import and_, desc, or_, select
 from sqlalchemy.orm import Session
-from sqlalchemy.sql.functions import count
 
 from app.api.base.repository import ReposReturn
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
@@ -57,11 +56,11 @@ async def repos_get_customer(
         full_name: str,
         limit: int,
         page: int,
-        session: Session):
+        session: Session
+):
     customers = select(
         Customer,
         CustomerIdentity,
-        count(Customer.id).over().label("total"),
         CustomerAddress,
         AddressWard,
         AddressDistrict,
@@ -90,6 +89,11 @@ async def repos_get_customer(
     if full_name:
         customers = customers.filter(Customer.full_name.ilike(f'%{full_name}%'))
 
+    # lấy tổng số item khi query
+    total_item = session.execute(
+        customers
+    ).all()
+
     customers = customers.limit(limit)
     customers = customers.offset(limit * (page - 1))
 
@@ -97,4 +101,4 @@ async def repos_get_customer(
         customers.order_by(desc('open_cif_at')),
     ).all()
 
-    return ReposReturn(data=customers)
+    return ReposReturn(data=(len(total_item), customers))

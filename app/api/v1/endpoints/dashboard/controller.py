@@ -35,7 +35,7 @@ class CtrDashboard(BaseController):
         if self.pagination_params.page:
             current_page = self.pagination_params.page
 
-        customers = self.call_repos(await repos_get_customer(
+        total_item, customers = self.call_repos(await repos_get_customer(
             cif_number=cif_number,
             identity_number=identity_number,
             phone_number=phone_number,
@@ -44,11 +44,10 @@ class CtrDashboard(BaseController):
             page=current_page,
             session=self.oracle_session))
 
-        total_item = 0
-        if customers:
-            total_item = customers[0][2]
+        total_page = 0
+        if total_item != 0:
+            total_page = total_item / limit
 
-        total_page = total_item / limit
         if total_page % limit != 0:
             total_page += 1
 
@@ -58,10 +57,10 @@ class CtrDashboard(BaseController):
             "identity_number": item.CustomerIdentity.identity_num,
             "phone_number": item.Customer.mobile_number,
             "street": item.CustomerAddress.address,
-            "ward": {**dropdown(item.AddressWard)},
-            "district": {**dropdown(item.AddressDistrict)},
-            "province": {**dropdown(item.AddressProvince)},
-            "branch": {**dropdown(item.Branch)}
+            "ward": dropdown(item.AddressWard),
+            "district": dropdown(item.AddressDistrict),
+            "province": dropdown(item.AddressProvince),
+            "branch": dropdown(item.Branch)
         } for item in customers]
 
         return self.response_paging(
