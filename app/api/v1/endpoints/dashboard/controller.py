@@ -1,6 +1,6 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.dashboard.repository import (
-    repos_get_customer, repos_get_transaction_list
+    repos_get_customer, repos_get_total_item, repos_get_transaction_list
 )
 from app.utils.functions import dropdown
 
@@ -35,7 +35,7 @@ class CtrDashboard(BaseController):
         if self.pagination_params.page:
             current_page = self.pagination_params.page
 
-        total_item, customers = self.call_repos(await repos_get_customer(
+        customers = self.call_repos(await repos_get_customer(
             cif_number=cif_number,
             identity_number=identity_number,
             phone_number=phone_number,
@@ -43,6 +43,16 @@ class CtrDashboard(BaseController):
             limit=limit,
             page=current_page,
             session=self.oracle_session))
+
+        total_item = self.call_repos(
+            await repos_get_total_item(
+                cif_number=cif_number,
+                identity_number=identity_number,
+                phone_number=phone_number,
+                full_name=full_name,
+                session=self.oracle_session
+            )
+        )
 
         total_page = 0
         if total_item != 0:

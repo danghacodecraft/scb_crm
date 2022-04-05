@@ -1,4 +1,4 @@
-from sqlalchemy import and_, desc, or_, select
+from sqlalchemy import and_, desc, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn
@@ -49,6 +49,44 @@ async def repos_get_transaction_list(search_box: str, session: Session):
     return ReposReturn(data=transaction_list)
 
 
+async def repos_get_total_item(
+        cif_number: str,
+        identity_number: str,
+        phone_number: str,
+        full_name: str,
+        session: Session
+):
+    customers = select(
+        func.count(Customer.id)
+    ) \
+        .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
+        .join(CustomerAddress,
+              and_(
+                  Customer.id == CustomerAddress.customer_id,
+                  CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE
+              )) \
+        .join(AddressWard, CustomerAddress.address_ward_id == AddressWard.id) \
+        .join(AddressDistrict, CustomerAddress.address_district_id == AddressDistrict.id) \
+        .join(AddressProvince, CustomerAddress.address_province_id == AddressProvince.id) \
+        .join(AddressCountry, CustomerAddress.address_country_id == AddressCountry.id) \
+        .join(Branch, Customer.open_branch_id == Branch.id)
+
+    if cif_number:
+        customers = customers.filter(Customer.cif_number.ilike(f'%{cif_number}%'))
+    if identity_number:
+        customers = customers.filter(CustomerIdentity.identity_num.ilike(f'%{identity_number}%'))
+    if phone_number:
+        customers = customers.filter(Customer.mobile_number.ilike(f'%{phone_number}%'))
+    if full_name:
+        customers = customers.filter(Customer.full_name.ilike(f'%{full_name}%'))
+
+    total_item = session.execute(
+        customers
+    ).scalar()
+
+    return ReposReturn(data=total_item)
+
+
 async def repos_get_customer(
         cif_number: str,
         identity_number: str,
@@ -90,9 +128,9 @@ async def repos_get_customer(
         customers = customers.filter(Customer.full_name.ilike(f'%{full_name}%'))
 
     # lấy tổng số item khi query
-    total_item = session.execute(
-        customers
-    ).all()
+    # total_item = session.execute(
+    #     customers
+    # ).all()
 
     customers = customers.limit(limit)
     customers = customers.offset(limit * (page - 1))
@@ -101,4 +139,4 @@ async def repos_get_customer(
         customers.order_by(desc('open_cif_at')),
     ).all()
 
-    return ReposReturn(data=(len(total_item), customers))
+    return ReposReturn(data=customers)
