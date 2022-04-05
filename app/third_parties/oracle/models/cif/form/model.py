@@ -149,5 +149,6 @@ class BookingBusinessForm(Base):
     created_at = Column(DateTime, nullable=False)
     updated_at = Column(DateTime)
     form_data = Column(NCLOB, comment='Dữ liệu template nhập')
+    log_data = Column(NCLOB, comment='Data lưu Lịch sử hồ sơ')
     booking = relationship('Booking')
     business_form = relationship('BusinessForm')
