@@ -29,18 +29,21 @@ class CheckExistCIFRequest(BaseSchema):
 
 # ################################### lịch sử hồ sơ (log)####################################3
 class ProfileHistoryOfDayResponse(BaseSchema):
-    user_id: str = Field(..., description="Id người dùng")
-    full_name: str = Field(..., description="Tên đầy đủ của người dùng ")
-    user_avatar_url: str = Field(..., description="Url ảnh đại diện của người dùng")
-    id: str = Field(..., description="Id log")
+    record_code: str = Field(..., description="Mã hồ sơ")
+    record_name: str = Field(..., description="Tên hồ sơ")
+    status: DropdownResponse = Field(..., description="Trạng thái hồ sơ")
+    branch: DropdownResponse = Field(..., description="Tên chi nhánh")
+    created_by: str = Field(..., description="Người tạo hồ sơ")
+    position: DropdownResponse = Field(..., description="Vị trí")
     created_at: datetime = Field(..., description='Tạo mới vào lúc, format dạng: `YYYY-mm-dd HH:MM:SS`',
                                  example='2021-15-12 06:07:08')
-    content: str = Field(..., description="Nội dung log ")
+    completed_at: datetime = Field(..., description='Hoàn thành vào lúc, format dạng: `YYYY-mm-dd HH:MM:SS`',
+                                   example='2021-15-12 06:07:08')
 
 
 class CifProfileHistoryResponse(BaseSchema):
-    created_date: str = Field(..., description="Ngày tạo")
-    logs: List[ProfileHistoryOfDayResponse] = Field(..., description="Danh sách log trong 1 ngày ")
+    log_date: date = Field(..., description="Ngày tạo hồ sơ")
+    log_detail: List[ProfileHistoryOfDayResponse] = Field(..., description="Danh sách log trong 1 ngày")
 
 
 ################################################################

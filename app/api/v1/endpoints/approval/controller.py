@@ -118,14 +118,15 @@ class CtrApproval(BaseController):
                 similar_percent=distinct_identity_images[distinct_identity_image]
             ))
 
-        # RULE: Nếu chưa upload -> Lấy 2 hình mới nhất
+        # RULE: Nếu chưa upload -> Trả null hết (Lấy 2 hình mới nhất)
         if not identity_face_images and not compare_face_uuid:
-            for identity, identity_image in face_transactions:
-                init_identity_face_images.append(dict(
-                    url=uuid__link_downloads[identity_image.image_url],
-                    similar_percent=None
-                ))
+            # for identity, identity_image in face_transactions:
+            #     init_identity_face_images.append(dict(
+            #         url=uuid__link_downloads[identity_image.image_url],
+            #         similar_percent=None
+            #     ))
             identity_face_images = init_identity_face_images
+            created_at = None
 
         face_authentication = dict(
             compare_url=uuid__link_downloads[compare_face_uuid] if compare_face_uuid else None,

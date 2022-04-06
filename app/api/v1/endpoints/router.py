@@ -8,11 +8,11 @@ from app.api.v1.endpoints.customer_service import view as view_customer_service
 from app.api.v1.endpoints.dashboard import router as routers_dashboard
 from app.api.v1.endpoints.file import view as views_file
 from app.api.v1.endpoints.news import view as view_scb_news
-from app.api.v1.endpoints.user import view as views_user
+from app.api.v1.endpoints.user import router as routers_user
 
 router = APIRouter()
 
-router.include_router(router=views_user.router, prefix="/users", tags=["User"])
+router.include_router(router=routers_user.router_module, prefix="/users", tags=["User"])
 
 router.include_router(router=views_file.router, prefix="/files", tags=["File"])
 
