@@ -12,7 +12,7 @@ from app.utils.functions import dropdown, generate_uuid, now
 
 
 class CtrNews(BaseController):
-    async def ctr_save_news(self, request_data, avatar_image, thumbnail_image, current_user):
+    async def ctr_save_news(self, request_data, avatar_uuid, thumbnail_uuid, current_user):
 
         """ Validate """
         # check category_id
@@ -21,6 +21,14 @@ class CtrNews(BaseController):
             model_id=request_data["news_category_id"],
             loc="news_category_id",
         )
+
+        thumbnail_image = await service_file.download_file(thumbnail_uuid)
+        if not thumbnail_image:
+            return self.response_exception(
+                msg=VALIDATE_ERROR,
+                detail="thumbnail_uuid invalid value",
+                loc="thumbnail_uuid"
+            )
 
         uuid = generate_uuid()
         data_scb_news = {
@@ -32,7 +40,7 @@ class CtrNews(BaseController):
             "content": request_data["content"],
             "summary": request_data["summary"],
             "start_date": request_data["start_date"],
-            "thumbnail_url": thumbnail_image,
+            "thumbnail_uuid": thumbnail_uuid,
             "created_at": now(),
             "active_flag": request_data["active_flag"]
         }
@@ -48,9 +56,16 @@ class CtrNews(BaseController):
                 "expired_date": request_data["expired_date"]
             })
 
-        if avatar_image is not None:
+        if avatar_uuid is not None:
+            avatar = await service_file.download_file(avatar_uuid)
+            if not avatar:
+                return self.response_exception(
+                    msg=VALIDATE_ERROR,
+                    detail="avatar_uuid invalid value",
+                    loc="avatar_uuid"
+                )
             data_scb_news.update({
-                "avatar_url": avatar_image
+                "avatar_uuid": avatar_uuid
             })
 
         self.call_repos(
@@ -61,7 +76,7 @@ class CtrNews(BaseController):
         )
         return self.response(data={"news_id": uuid})
 
-    async def ctr_update_nesws(self, news_id, request_data, avatar_image, thumbnail_image, current_user):
+    async def ctr_update_nesws(self, news_id, request_data, avatar_uuid, thumbnail_uuid, current_user):
 
         """ Validate """
         news_obj = self.call_repos(await get_data_by_id(self.oracle_session, news_id))
@@ -71,7 +86,13 @@ class CtrNews(BaseController):
             model_id=request_data["news_category_id"],
             loc="news_category_id",
         )
-
+        thumbnail_image = await service_file.download_file(thumbnail_uuid)
+        if not thumbnail_image:
+            return self.response_exception(
+                msg=VALIDATE_ERROR,
+                detail="thumbnail_uuid invalid value",
+                loc="thumbnail_uuid"
+            )
         data_update = {
             "id": news_id,
             "title": request_data["tilte"],
@@ -80,6 +101,7 @@ class CtrNews(BaseController):
             "user_name": current_user.name,
             "content": request_data["content"],
             "summary": request_data["summary"],
+            "thumbnail_uuid": thumbnail_uuid,
             "start_date": request_data["start_date"],
             "active_flag": request_data["active_flag"],
             "created_at": news_obj.News.created_at,
@@ -97,17 +119,17 @@ class CtrNews(BaseController):
             })
 
         # Upload avatar và banner
-        if avatar_image is not None:
-            avatar_upload = await avatar_image.read()
-            avatar = await service_file.upload_file(file=avatar_upload, name=news_id)
+        if avatar_uuid is not None:
+            avatar = await service_file.download_file(avatar_uuid)
+            if not avatar:
+                return self.response_exception(
+                    msg=VALIDATE_ERROR,
+                    detail="avatar_uuid invalid value",
+                    loc="avatar_uuid"
+                )
             data_update.update({
-                "avatar_url": avatar["uuid"]
+                "avatar_uuid": avatar_uuid
             })
-        thumbnail_upload = await thumbnail_image.read()
-        thumbnail = await service_file.upload_file(file=thumbnail_upload, name=news_id)
-        data_update.update({
-            "thumbnail_url": thumbnail["uuid"]
-        })
 
         self.call_repos(
             await repos_update_scb_news(
@@ -124,6 +146,8 @@ class CtrNews(BaseController):
         data = {
             "id": news_data.News.id,
             "title": news_data.News.title,
+            "avatar_uuid": news_data.News.avatar_uuid,
+            "thumbnail_uuid": news_data.News.thumbnail_uuid,
             "news_category_id": dropdown(news_data.NewsCategory),
             "user_name": news_data.News.user_name,
             "content": news_data.News.content,
@@ -133,16 +157,6 @@ class CtrNews(BaseController):
             "created_at": news_data.News.created_at,
             "active_flag": news_data.News.active_flag
         }
-
-        if news_data.News.avatar_url:
-            avatar = await service_file.download_file(news_data.News.avatar_url)
-            data.update({
-                "avatar_url": avatar["file_url"]
-            })
-        thumbnail = await service_file.download_file(news_data.News.thumbnail_url)
-        data.update({
-            "thumbnail_url": thumbnail["file_url"]
-        })
 
         return self.response(data)
 
@@ -163,10 +177,6 @@ class CtrNews(BaseController):
                                                             limit=limit,
                                                             page=page))
         res_data = []
-        url_avatars = []
-        url_thumbnails = []
-        url_thumbnail_dict = {}
-        url_avatar_dict = {}
 
         if len(list_news["query_data"]) == 0:
             return self.response_paging(data={
@@ -177,6 +187,8 @@ class CtrNews(BaseController):
             data = {
                 "id": news_data.News.id,
                 "title": news_data.News.title,
+                "avatar_uuid": news_data.News.avatar_uuid,
+                "thumbnail_uuid": news_data.News.thumbnail_uuid,
                 "news_category_id": dropdown(news_data.NewsCategory),
                 "user_name": news_data.News.user_name,
                 "content": news_data.News.content,
@@ -184,34 +196,9 @@ class CtrNews(BaseController):
                 "start_date": news_data.News.start_date,
                 "expired_date": news_data.News.expired_date,
                 "created_at": news_data.News.created_at,
-                "avatar_url": news_data.News.avatar_url,
-                "thumbnail_url": news_data.News.thumbnail_url,
                 "active_flag": news_data.News.active_flag
             }
-            url_thumbnails.append(news_data.News.thumbnail_url)
-            if news_data.News.avatar_url:
-                url_avatars.append(news_data.News.avatar_url)
             res_data.append(data)
-
-        url_thumbnails = await service_file.download_multi_file(url_thumbnails)
-        url_avatars = await service_file.download_multi_file(url_avatars)
-
-        for thumbnail_item in url_thumbnails:
-            url_thumbnail_dict.update({
-                thumbnail_item["uuid"]: thumbnail_item["file_url"]
-            })
-        for avatar_item in url_avatars:
-            url_avatar_dict.update({
-                avatar_item["uuid"]: avatar_item["file_url"]
-            })
-        for i in res_data:
-            if i["avatar_url"] is not None:
-                i.update({
-                    "avatar_url": url_avatar_dict[f'{i["avatar_url"]}']
-                })
-            i.update({
-                "thumbnail_url": url_thumbnail_dict[f'{i["thumbnail_url"]}']
-            })
 
         return self.response_paging(data={
             "num_news": len(list_news["total_row"]),
