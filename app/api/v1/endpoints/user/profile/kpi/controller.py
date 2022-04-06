@@ -23,13 +23,7 @@ class CtrKpi(BaseController):
         if not is_success:
             return self.response_exception(msg=str(kpis))
 
-        response_kpis = [dict(
-            assessment_period=None,
-            total_score=None,
-            completion_rate=None,
-            result=None,
-            note=None
-        )]
+        response_kpis = []
         if kpis:
             response_kpis = [
                 {
