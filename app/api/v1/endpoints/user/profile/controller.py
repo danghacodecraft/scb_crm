@@ -22,9 +22,11 @@ class CtrProfile(BaseController):
         )
         if not is_success:
             return self.response_exception(msg=str(profile))
+        print(profile)
 
         profile = {
             "avatar": profile['avatar'],
+            "gender": profile['curriculum_vitae']['individual']['gender'],
             "full_name_vn": profile['emp_name'],
             "email": profile['email'],
             "mobile_number": profile['mobile'],
