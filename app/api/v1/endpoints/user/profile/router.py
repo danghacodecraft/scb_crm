@@ -10,7 +10,7 @@ from app.api.v1.endpoints.user.profile.work import router as routers_work
 router_module = APIRouter()
 
 # router [THÔNG TIN CHI TIẾT NHÂN VIÊN]
-router_module.include_router(router=views_user_profile.router, prefix="/profiles")
+router_module.include_router(router=views_user_profile.router)
 
 # router [HỒ SƠ CÔNG TÁC]
 router_module.include_router(router=routers_work.router_module, prefix="/work")
