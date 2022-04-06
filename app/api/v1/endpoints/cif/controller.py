@@ -33,7 +33,7 @@ class CtrCustomer(BaseController):
         return self.response(cif_info)
 
     async def ctr_profile_history(self, cif_id: str):
-        profile_history = self.call_repos((await repos_profile_history(cif_id)))
+        profile_history = self.call_repos((await repos_profile_history(cif_id=cif_id, session=self.oracle_session)))
         return self.response(profile_history)
 
     async def ctr_customer_information(self, cif_id: str):

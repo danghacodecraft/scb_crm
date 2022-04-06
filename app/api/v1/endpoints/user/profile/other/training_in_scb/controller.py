@@ -2,11 +2,21 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.user.profile.other.training_in_scb.repository import (
     repos_training_in_scb
 )
+from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
 from app.utils.functions import datetime_to_date, string_to_datetime
 
 
 class CtrTrainingInSCB(BaseController):
-    async def ctr_training_in_scb(self, employee_id: str):
+    async def ctr_training_in_scb(self):
+        if not self.current_user:
+            return self.response_exception(
+                msg=USER_NOT_EXIST,
+                detail=MESSAGE_STATUS[USER_NOT_EXIST],
+                loc="current_user"
+            )
+
+        employee_id = self.current_user.code
+
         is_success, training_in_scbs = self.call_repos(
             await repos_training_in_scb(
                 employee_id=employee_id

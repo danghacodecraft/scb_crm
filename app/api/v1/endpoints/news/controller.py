@@ -174,6 +174,11 @@ class CtrNews(BaseController):
         url_thumbnail_dict = {}
         url_avatar_dict = {}
 
+        if len(list_news["query_data"]) == 0:
+            return self.response_paging(data={
+                "num_news": 0,
+                "list_news": []}
+            )
         for news_data in list_news["query_data"]:
             data = {
                 "id": news_data.News.id,

@@ -27,7 +27,6 @@ from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import (
     KYCLevel, MaritalStatus
 )
-from app.utils.constant.cif import CIF_ID_TEST
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_SOA, ERROR_CIF_ID_NOT_EXIST, ERROR_CIF_NUMBER_EXIST,
     ERROR_CIF_NUMBER_INVALID, ERROR_CIF_NUMBER_NOT_EXIST, MESSAGE_STATUS
@@ -83,64 +82,97 @@ async def repos_get_cif_info(cif_id: str, session: Session) -> ReposReturn:
     })
 
 
-async def repos_profile_history(cif_id: str) -> ReposReturn:
-    if cif_id == CIF_ID_TEST:
-        return ReposReturn(data=[
-            {
-
-                "created_date": "string",
-                "logs":
-
-                    [
-
-                        {
-                            "user_id": "string",
-                            "full_name": "string",
-                            "user_avatar_url": "string",
-                            "id": "string",
-                            "created_at": "2019-08-24T14:15:22Z",
-                            "content": "string"
-                        },
-                        {
-                            "user_id": "string",
-                            "full_name": "string",
-                            "user_avatar_url": "string",
-                            "id": "string",
-                            "created_at": "2019-08-24T14:15:22Z",
-                            "content": "string"
-                        }
-                    ]
-
-            },
-            {
-
-                "created_date": "string",
-                "logs":
-
-                    [
-
-                        {
-                            "user_id": "string",
-                            "full_name": "string",
-                            "user_avatar_url": "string",
-                            "id": "string",
-                            "created_at": "2019-08-24T14:15:22Z",
-                            "content": "string"
-                        },
-                        {
-                            "user_id": "string",
-                            "full_name": "string",
-                            "user_avatar_url": "string",
-                            "id": "string",
-                            "created_at": "2019-08-24T14:15:22Z",
-                            "content": "string"
-                        }
-                    ]
-            }
-        ]
+async def repos_profile_history(cif_id: str, session: Session) -> ReposReturn:
+    customer_info = session.execute(
+        select(
+            Customer
+        ).filter(
+            Customer.id == cif_id,
+            Customer.active_flag == 1
         )
-    else:
+    ).first()
+
+    if not customer_info:
         return ReposReturn(is_error=True, msg=ERROR_CIF_ID_NOT_EXIST, loc='cif_id')
+
+    return ReposReturn(data=[
+        {
+            "log_date": "2021-12-15",
+            "log_detail": [
+                {
+                    "record_code": "[#CRM_1234567890123456]",
+                    "record_name": "Tu chỉnh CIF",
+                    "status": {
+                        "id": "02",
+                        "code": "02",
+                        "name": "Đã duyệt"
+                    },
+                    "branch": {
+                        "id": "079",
+                        "code": "079",
+                        "name": "SCB Sài Gòn"
+                    },
+                    "created_by": "Nguyễn Văn B",
+                    "position": {
+                        "id": "01",
+                        "code": "01",
+                        "name": "Kiểm soát viên"
+                    },
+                    "created_at": "2021-12-15T14:15:22Z",
+                    "completed_at": "2021-12-15T15:05:22Z"
+                },
+                {
+                    "record_code": "[#CRM_1234567890123452]",
+                    "record_name": "Mở tài khoản thanh toán",
+                    "status": {
+                        "id": "01",
+                        "code": "01",
+                        "name": "Hủy"
+                    },
+                    "branch": {
+                        "id": "079",
+                        "code": "079",
+                        "name": "SCB Sài Gòn"
+                    },
+                    "created_by": "Nguyễn Văn B",
+                    "position": {
+                        "id": "01",
+                        "code": "01",
+                        "name": "Kiểm soát viên"
+                    },
+                    "created_at": "2021-12-15T14:15:22Z",
+                    "completed_at": "2021-12-15T14:45:22Z"
+                },
+            ]
+        },
+        {
+            "log_date": "2021-12-16",
+            "log_detail": [
+                {
+                    "record_code": "[#CRM_1234567890123452]",
+                    "record_name": "Mở tài khoản thanh toán",
+                    "status": {
+                        "id": "01",
+                        "code": "01",
+                        "name": "Hủy"
+                    },
+                    "branch": {
+                        "id": "079",
+                        "code": "079",
+                        "name": "SCB Sài Gòn"
+                    },
+                    "created_by": "Nguyễn Văn B",
+                    "position": {
+                        "id": "01",
+                        "code": "01",
+                        "name": "Kiểm soát viên"
+                    },
+                    "created_at": "2021-12-15T14:15:22Z",
+                    "completed_at": "2021-12-15T14:45:22Z"
+                },
+            ],
+        }
+    ])
 
 
 async def repos_customer_information(cif_id: str, session: Session) -> ReposReturn:
