@@ -75,7 +75,7 @@ class CtrFingers(BaseController):
                         "id": generate_uuid(),
                         "identity_id": finger.identity_id,
                         "identity_image_id": finger.id,
-                        "compare_image_url": finger.image_url,
+                        "compare_image_url": uuid.uuid,
                         "similar_percent": item['accuracy'],
                         "maker_id": self.current_user.code,
                         "maker_at": now()

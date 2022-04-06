@@ -196,5 +196,35 @@ async def repos_get_compare_image_transactions(
         )
         .join(CustomerCompareImageTransaction, CustomerCompareImage.id == CustomerCompareImageTransaction.compare_image_id)
         .filter(CustomerCompareImage.identity_image_id.in_(identity_image_ids))
+        .order_by(desc(CustomerCompareImage.maker_at))
     ).all()
+
     return ReposReturn(data=compare_image_transactions)
+
+
+async def repos_get_approval_identity_image(
+    cif_id: str,
+    image_type_id: str,
+    identity_type: str,
+    session: Session
+):
+    """
+    Lấy tất cả hình ảnh ở bước GTDD
+    Output: CustomerIdentity, CustomerIdentityImage
+    """
+    customer_identities = session.execute(
+        select(
+            CustomerIdentity,
+            CustomerIdentityImage
+        )
+        .join(CustomerIdentityImage, and_(
+            CustomerIdentity.id == CustomerIdentityImage.identity_id,
+            CustomerIdentityImage.image_type_id == image_type_id
+        ))
+        .filter(CustomerIdentity.customer_id == cif_id)
+        .order_by(desc(CustomerIdentity.updater_at))
+    ).all()
+    if not customer_identities:
+        return ReposReturn(is_error=True, detail=f"No {identity_type} in Identity Step")
+
+    return ReposReturn(data=customer_identities)

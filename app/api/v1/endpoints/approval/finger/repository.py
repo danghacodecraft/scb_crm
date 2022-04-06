@@ -53,7 +53,7 @@ async def repos_compare_finger_ekyc(
         id_fingers: list
 ):
     json_body = {
-        "uuid": uuid.uuid,
+        "uuid": uuid.uuid_ekyc,
         "id_fingers": id_fingers,
         "limit": len(id_fingers)
     }
