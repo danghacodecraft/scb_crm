@@ -51,7 +51,8 @@ async def repo_form(data_request: dict, path: str) -> ReposReturn:
 
     service_tms = ServiceTMS()
     is_success, response = await service_tms.fill_form(body=body, path=path)
-    response['file_url'] = ServiceFile().replace_with_cdn(response['file_url'])
+    if response.get('file_url'):
+        response['file_url'] = ServiceFile().replace_with_cdn(response['file_url'])
     return ReposReturn(data=response)
 
 
