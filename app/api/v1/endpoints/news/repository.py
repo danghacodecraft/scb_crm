@@ -59,7 +59,7 @@ async def get_list_scb_news(
         query_data = query_data.filter(News.start_date == start_date)
     if expired_date:
         query_data = query_data.filter(News.expired_date == expired_date)
-    if active_flag:
+    if active_flag is not None:
         query_data = query_data.filter(News.active_flag == active_flag)
     total_row = session.execute(query_data).all()
     query_data = query_data.limit(limit)

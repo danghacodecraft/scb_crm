@@ -30,7 +30,7 @@ async def view_upload_scb_news(
         request: NewsImageRequest = Depends(NewsImageRequest.get_upload_request),
 ):
     (
-        avatar_image, thumbnail_image, current_user, title, news_category_id, content, summary, start_date,
+        avatar_uuid, thumbnail_uuid, current_user, title, news_category_id, content, summary, start_date,
         expired_date, active_flag
     ) = request
     data = {
@@ -44,8 +44,8 @@ async def view_upload_scb_news(
     }
     news_data = await CtrNews(current_user).ctr_save_news(
         request_data=data,
-        avatar_image=avatar_image,
-        thumbnail_image=thumbnail_image,
+        avatar_uuid=avatar_uuid,
+        thumbnail_uuid=thumbnail_uuid,
         current_user=current_user
     )
 
@@ -66,7 +66,7 @@ async def view_update_scb_news(
         news_id: str = Path(..., description='News ID')
 ):
     (
-        avatar_image, thumbnail_image, current_user, title, news_category_id, content, summary, start_date,
+        avatar_uuid, thumbnail_uuid, current_user, title, news_category_id, content, summary, start_date,
         expired_date, active_flag
     ) = request
     data = {
@@ -81,8 +81,8 @@ async def view_update_scb_news(
     news_data = await CtrNews(current_user).ctr_update_nesws(
         news_id=news_id,
         request_data=data,
-        avatar_image=avatar_image,
-        thumbnail_image=thumbnail_image,
+        avatar_uuid=avatar_uuid,
+        thumbnail_uuid=thumbnail_uuid,
         current_user=current_user
     )
 
@@ -122,7 +122,7 @@ async def view_scb_news(
         category_news: str = Query(None, description='Danh mục'),
         start_date: date = Query(None, description='Ngày bắt đầu'),
         expired_date: date = Query(None, description='Ngày kết thúc'),
-        active_flag: int = Query(None, description='Trạng thái')
+        active_flag: bool = Query(None, description='Trạng thái')
 ):
     scb_news = await CtrNews(current_user, pagination_params=pagination_params
                              ).ctr_get_list_scb_news(title=title,
