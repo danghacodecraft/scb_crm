@@ -21,7 +21,8 @@ class FingersResponse(BaseSchema):
 
 
 class CompareFingerPrintRequest(BaseSchema):
-    uuid: str = Field(..., description='uuid_ekyc upload file')
+    uuid: str = Field(..., description='uuid upload file')
+    uuid_ekyc: str = Field(..., description='uuid_ekyc upload file')
 
 
 class CompareFingerPrintResponse(BaseSchema):

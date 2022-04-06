@@ -167,10 +167,10 @@ class CtrApproval(BaseController):
         ))
 
         distinct_signature_identity_images = {}
-        for compare_image, compare_image_transaction in compare_signature_image_transactions:
+        for compare_image, compare_image_transaction in compare_signature_image_transactions[:2]:
             compare_signature_uuid = compare_image_transaction.compare_image_url
             created_at = compare_image_transaction.maker_at
-            image_signature_uuids.append(compare_image_transaction.compare_image_url)
+            image_signature_uuids.append(compare_signature_uuid)
             for identity, identity_image in signature_transactions:
                 if compare_image_transaction.identity_image_id == identity_image.id:
                     distinct_signature_identity_images.update({
@@ -203,7 +203,6 @@ class CtrApproval(BaseController):
             created_at=created_at,
             identity_images=identity_signature_images,
         )
-
         ################################################################################################################
         # Vân tay - fingerprint
         created_at = None
@@ -223,7 +222,7 @@ class CtrApproval(BaseController):
         ))
 
         identity_fingerprint_image_ids = []
-        for identity, identity_image in fingerprint_transactions:
+        for _, identity_image in fingerprint_transactions:
             identity_fingerprint_uuid = identity_image.image_url
             image_fingerprint_uuids.append(identity_fingerprint_uuid)
             identity_fingerprint_image_ids.append(identity_image.id)
@@ -235,16 +234,19 @@ class CtrApproval(BaseController):
         ))
 
         distinct_fingerprint_identity_images = {}
-        for compare_image, compare_image_transaction in compare_fingerprint_image_transactions:
+        # lấy 2 trong số các chữ ký query
+        for compare_image, compare_image_transaction in compare_fingerprint_image_transactions[:2]:
             compare_fingerprint_uuid = compare_image_transaction.compare_image_url
             created_at = compare_image_transaction.maker_at
-            image_fingerprint_uuids.append(compare_image_transaction.compare_image_url)
+            image_fingerprint_uuids.append(compare_fingerprint_uuid)
+
             for identity, identity_image in fingerprint_transactions:
                 if compare_image_transaction.identity_image_id == identity_image.id:
                     distinct_fingerprint_identity_images.update({
                         identity_image.image_url: compare_image_transaction.similar_percent
                     })
                     identity_fingerprint_image_uuids.append(compare_image_transaction.compare_image_url)
+
         image_fingerprint_uuids.extend(identity_fingerprint_image_uuids)
 
         # gọi đến service file để lấy link download
@@ -253,7 +255,7 @@ class CtrApproval(BaseController):
         for distinct_identity_image in distinct_fingerprint_identity_images:
             identity_fingerprint_images.append(dict(
                 url=uuid_fingerprint_link_downloads[distinct_identity_image],
-                similar_percent=distinct_signature_identity_images[distinct_identity_image]
+                similar_percent=distinct_fingerprint_identity_images[distinct_identity_image]
             ))
 
         # RULE: Nếu chưa upload -> Lấy 2 hình mới nhất

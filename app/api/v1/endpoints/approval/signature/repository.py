@@ -73,7 +73,13 @@ async def repos_get_signature_data(cif_id: str, session: Session) -> ReposReturn
 
 
 @auto_commit
-async def repos_compare_signature(cif_id: str, uuid_ekyc: str, session: Session, user_id: str) -> ReposReturn:
+async def repos_compare_signature(
+        cif_id: str,
+        uuid_ekyc: str,
+        uuid: str,
+        session: Session,
+        user_id: str
+) -> ReposReturn:
     signature_query = session.execute(
         select(
             CustomerIdentityImage
@@ -110,7 +116,7 @@ async def repos_compare_signature(cif_id: str, uuid_ekyc: str, session: Session,
                 "id": generate_uuid(),
                 "identity_id": signature.identity_id,
                 "identity_image_id": signature.id,
-                "compare_image_url": uuid_ekyc,
+                "compare_image_url": uuid,
                 "similar_percent": response['similarity_percent'],
                 "maker_id": user_id,
                 "maker_at": now()

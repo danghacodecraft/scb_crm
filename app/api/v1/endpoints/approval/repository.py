@@ -196,7 +196,9 @@ async def repos_get_compare_image_transactions(
         )
         .join(CustomerCompareImageTransaction, CustomerCompareImage.id == CustomerCompareImageTransaction.compare_image_id)
         .filter(CustomerCompareImage.identity_image_id.in_(identity_image_ids))
+        .order_by(desc(CustomerCompareImage.maker_at))
     ).all()
+
     return ReposReturn(data=compare_image_transactions)
 
 
