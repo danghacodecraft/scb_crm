@@ -16,33 +16,66 @@ from app.third_parties.oracle.models.master_data.address import (
 )
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.cif import CONTACT_ADDRESS_CODE
+from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese
 
 
-async def repos_get_transaction_list(search_box: str, session: Session):
+async def repos_count_total_item(search_box: str, session: Session) -> ReposReturn:
+    if not search_box:
+        transaction_list = select(
+            func.count(Customer.id)
+        )
+    else:
+        search_box = f'%{search_box}%'
+        transaction_list = select(
+            func.count(Customer.id)
+        ).join(
+            CustomerIdentity, Customer.id == CustomerIdentity.customer_id
+        ).filter(
+            or_(
+                CustomerIdentity.identity_num.ilike(search_box),
+                or_(
+                    Customer.full_name.ilike(convert_to_unsigned_vietnamese(search_box))
+                ),
+                or_(
+                    Customer.cif_number.ilike(search_box)
+                )
+            )
+        )
+
+    total_item = session.execute(transaction_list).scalar()
+    return ReposReturn(data=total_item)
+
+
+async def repos_get_transaction_list(search_box: str, limit: int, page: int, session: Session):
     if not search_box:
         transaction_list = session.execute(
             select(
-                Customer
+                Customer,
             )
+            .limit(limit)
+            .offset(limit * (page - 1))
             .order_by(desc(Customer.open_cif_at))
-        ).scalars().all()
+        ).all()
     else:
+        search_box = f'%{search_box}%'
         transaction_list = session.execute(
             select(
                 CustomerIdentity,
-                Customer
+                Customer,
             )
             .join(Customer, CustomerIdentity.customer_id == Customer.id)
             .filter(
                 or_(
-                    CustomerIdentity.identity_num.like('%' + search_box + '%'),
+                    CustomerIdentity.identity_num.ilike(search_box),
                     or_(
-                        Customer.full_name.like('%' + search_box.upper() + '%')
+                        Customer.full_name.ilike(convert_to_unsigned_vietnamese(search_box))
                     ),
                     or_(
-                        Customer.cif_number.like('%' + search_box + '%')
+                        Customer.cif_number.ilike(search_box)
                     )
                 ))
+            .limit(limit)
+            .offset(limit * (page - 1))
             .order_by(desc(Customer.open_cif_at))
         ).all()
 

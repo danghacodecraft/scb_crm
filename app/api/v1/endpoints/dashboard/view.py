@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
 from starlette import status
@@ -26,11 +26,15 @@ router = APIRouter()
 )
 async def view_transaction_list(
         search_box: Optional[str] = None,
-        current_user=Depends(get_current_user_from_header())
+        current_user=Depends(get_current_user_from_header()),
+        pagination_params: PaginationParams = Depends()
 ):
-    transaction_list_response = await CtrDashboard().ctr_get_transaction_list(search_box=search_box)
+    transaction_list_response = await CtrDashboard(
+        current_user=current_user,
+        pagination_params=pagination_params
+    ).ctr_get_transaction_list(search_box=search_box)
 
-    return ResponseData[List[TransactionListResponse]](**transaction_list_response)
+    return PagingResponse[TransactionListResponse](**transaction_list_response)
 
 
 @router.get(

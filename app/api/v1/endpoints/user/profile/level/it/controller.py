@@ -23,19 +23,13 @@ class CtrIt(BaseController):
         if not is_success:
             return self.response_exception(msg=str(it))
 
-        response_it = [dict(
-            certification=None,
-            level=None,
-            gpa=None
-        )]
-        if it:
-            response_it = []
-            if it:
-                it = it['level']['information_technology']
-                response_it.append({
-                    "certification": it['certificate'],
-                    "level": it['level'],
-                    "gpa": it['mark']
-                })
+        response_it = []
+        it = it['level']['information_technology']
+        if it['certificate'] and it['level'] and it['mark']:
+            response_it.append({
+                "certification": it['certificate'],
+                "level": it['level'],
+                "gpa": it['mark']
+            })
 
         return self.response(data=response_it)
