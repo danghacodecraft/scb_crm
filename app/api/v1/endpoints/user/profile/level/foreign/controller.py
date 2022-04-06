@@ -25,19 +25,15 @@ class CtrForeign(BaseController):
 
         if not is_success:
             return self.response_exception(msg=str(foreign))
-        response_foreign = dict(
-            language_type=None,
-            level=None,
-            gpa=None,
-            certification_date=None
-        )
-        if foreign:
-            foreign_language = foreign['level']['foreign_language']
-            response_foreign = {
-                "language_type": foreign_language['certificate'],
-                "level": foreign_language['level'],
-                "gpa": foreign_language['mark'],
-                "certification_date": None   # Todo Ngày nhận chứng chỉ không tìm thấy
-            }
+
+        response_foreign = []
+        foreign_language = foreign['level']['foreign_language']
+        if foreign_language['certificate'] and foreign_language['level'] and foreign_language['mark'] and foreign_language['mark']:
+            response_foreign = [dict(
+                language_type=foreign_language['certificate'],
+                level=foreign_language['level'],
+                gpa=foreign_language['mark'],
+                certification_date=foreign_language['mark']
+            )]
 
         return self.response(data=response_foreign)

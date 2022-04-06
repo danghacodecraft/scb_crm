@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import APIRouter, Depends
 from starlette import status
 
@@ -19,7 +21,7 @@ router = APIRouter()
     name="[THÔNG TIN TRÌNH ĐỘ] - B. TRÌNH ĐỘ NGOẠI NGỮ",
     description="[THÔNG TIN TRÌNH ĐỘ] - B. TRÌNH ĐỘ NGOẠI NGỮ",
     responses=swagger_response(
-        response_model=ResponseData[ForeignLanguageLevelInfoResponse],
+        response_model=ResponseData[List[ForeignLanguageLevelInfoResponse]],
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -27,4 +29,4 @@ async def view_foreign(
         current_user=Depends(get_current_user_from_header())
 ):
     foreign = await CtrForeign(current_user).ctr_foreign()
-    return ResponseData[ForeignLanguageLevelInfoResponse](**foreign)
+    return ResponseData[List[ForeignLanguageLevelInfoResponse]](**foreign)
