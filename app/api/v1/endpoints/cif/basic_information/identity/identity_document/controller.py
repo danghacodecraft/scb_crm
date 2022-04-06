@@ -16,6 +16,7 @@ from app.api.v1.endpoints.cif.repository import (
 )
 from app.api.v1.endpoints.file.controller import CtrFile
 from app.api.v1.endpoints.file.validator import file_validator
+from app.api.v1.validator import validate_history_data
 from app.settings.config import DATE_INPUT_OUTPUT_EKYC_FORMAT
 from app.settings.event import service_ekyc
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
@@ -50,8 +51,9 @@ from app.utils.constant.cif import (
     IDENTITY_DOCUMENT_TYPE_CITIZEN_CARD, IDENTITY_DOCUMENT_TYPE_IDENTITY_CARD,
     IDENTITY_DOCUMENT_TYPE_PASSPORT, IDENTITY_DOCUMENT_TYPE_TYPE,
     IDENTITY_IMAGE_FLAG_BACKSIDE, IDENTITY_IMAGE_FLAG_FRONT_SIDE,
-    IMAGE_TYPE_CODE_FACE, IMAGE_TYPE_CODE_IDENTITY, RESIDENT_ADDRESS_CODE, PROFILE_HISTORY_DESCRIPTIONS_INIT_CIF,
-    PROFILE_HISTORY_STATUS_INIT
+    IMAGE_TYPE_CODE_FACE, IMAGE_TYPE_CODE_IDENTITY,
+    PROFILE_HISTORY_DESCRIPTIONS_INIT_CIF, PROFILE_HISTORY_STATUS_INIT,
+    RESIDENT_ADDRESS_CODE
 )
 from app.utils.error_messages import (  # noqa
     ERROR_CALL_SERVICE_EKYC, ERROR_IDENTITY_DOCUMENT_NOT_EXIST,
@@ -721,18 +723,19 @@ class CtrIdentityDocument(BaseController):
             )
         await self.check_exist_multi_file(uuids=[identity_image_uuid, face_compare_image_url])
 
-        is_success, compare_response = await service_ekyc.compare_face(
-            face_uuid=compare_face_uuid_ekyc,
-            avatar_image_uuid=identity_avatar_image_uuid
-        )
-
-        if not is_success:
-            return self.response_exception(
-                loc="face_uuid_ekyc",
-                msg=ERROR_CALL_SERVICE_EKYC,
-                detail=compare_response['message']
-            )
-        similar_percent = compare_response['data']['similarity_percent']
+        # is_success, compare_response = await service_ekyc.compare_face(
+        #     face_uuid=compare_face_uuid_ekyc,
+        #     avatar_image_uuid=identity_avatar_image_uuid
+        # )
+        #
+        # if not is_success:
+        #     return self.response_exception(
+        #         loc="face_uuid_ekyc",
+        #         msg=ERROR_CALL_SERVICE_EKYC,
+        #         detail=compare_response['message']
+        #     )
+        # similar_percent = compare_response['data']['similarity_percent']
+        similar_percent = 0
 
         # dict dùng để tạo mới hoặc lưu lại CustomerCompareImage
         saving_customer_compare_image = {
@@ -755,6 +758,29 @@ class CtrIdentityDocument(BaseController):
             request=identity_document_request,
             identity_document_type_id=identity_document_type_id
         )
+
+        history_datas = [dict(
+            description=PROFILE_HISTORY_DESCRIPTIONS_INIT_CIF,
+            completed_at=now(),
+            status=PROFILE_HISTORY_STATUS_INIT,
+            branch_id=current_user.hrm_branch_id,
+            branch_code=current_user.hrm_branch_code,
+            branch_name=current_user.hrm_branch_name,
+            user_id=current_user.code,
+            user_name=current_user.name,
+            position_id=current_user.hrm_position_id,
+            position_code=current_user.hrm_position_code,
+            position_name=current_user.hrm_position_name
+        )]
+        # Validate history data
+        is_success, history_response = validate_history_data(history_datas)
+        if not is_success:
+            return self.response_exception(
+                msg=history_response['msg'],
+                loc=history_response['loc'],
+                detail=history_response['detail']
+            )
+
         info_save_document = self.call_repos(
             await repos_save_identity(
                 identity_document_type_id=identity_document_type_id,
@@ -773,6 +799,7 @@ class CtrIdentityDocument(BaseController):
                 saving_transaction_sender=saving_transaction_sender,
                 saving_transaction_receiver=saving_transaction_receiver,
                 request_data=request_data,
+                history_datas=history_datas,
                 current_user=current_user,
                 session=self.oracle_session
             )
