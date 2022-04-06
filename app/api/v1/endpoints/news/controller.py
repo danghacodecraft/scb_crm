@@ -177,6 +177,10 @@ class CtrNews(BaseController):
                                                             limit=limit,
                                                             page=page))
         res_data = []
+        url_avatars = []
+        url_thumbnails = []
+        url_thumbnail_dict = {}
+        url_avatar_dict = {}
 
         if len(list_news["query_data"]) == 0:
             return self.response_paging(data={
@@ -198,8 +202,30 @@ class CtrNews(BaseController):
                 "created_at": news_data.News.created_at,
                 "active_flag": news_data.News.active_flag
             }
+            url_thumbnails.append(news_data.News.thumbnail_uuid)
+            if news_data.News.avatar_uuid:
+                url_avatars.append(news_data.News.avatar_uuid)
             res_data.append(data)
 
+        url_thumbnails = await service_file.download_multi_file(url_thumbnails)
+        url_avatars = await service_file.download_multi_file(url_avatars)
+
+        for thumbnail_item in url_thumbnails:
+            url_thumbnail_dict.update({
+                thumbnail_item["uuid"]: thumbnail_item["file_url"]
+            })
+        for avatar_item in url_avatars:
+            url_avatar_dict.update({
+                avatar_item["uuid"]: avatar_item["file_url"]
+            })
+        for i in res_data:
+            if i["avatar_uuid"] is not None:
+                i.update({
+                    "avatar_uuid": url_avatar_dict[f'{i["avatar_uuid"]}']
+                })
+            i.update({
+                "thumbnail_uuid": url_thumbnail_dict[f'{i["thumbnail_uuid"]}']
+            })
         return self.response_paging(data={
             "num_news": len(list_news["total_row"]),
             "list_news": res_data}
