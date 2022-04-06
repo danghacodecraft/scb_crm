@@ -39,7 +39,6 @@ from app.third_parties.oracle.models.master_data.others import (
     AverageIncomeAmount, Career, FatcaCategory, MaritalStatus, Position,
     ResidentStatus
 )
-from app.third_parties.services.file import ServiceFile
 from app.third_parties.services.tms import ServiceTMS
 
 
@@ -51,7 +50,6 @@ async def repo_form(data_request: dict, path: str) -> ReposReturn:
 
     service_tms = ServiceTMS()
     is_success, response = await service_tms.fill_form(body=body, path=path)
-    response['file_url'] = ServiceFile().replace_with_cdn(response['file_url'])
     return ReposReturn(data=response)
 
 
