@@ -30,8 +30,10 @@ async def view_transaction_list(
         pagination_params: PaginationParams = Depends()
 ):
     transaction_list_response = await CtrDashboard(
+        current_user=current_user,
         pagination_params=pagination_params
     ).ctr_get_transaction_list(search_box=search_box)
+
     return PagingResponse[TransactionListResponse](**transaction_list_response)
 
 

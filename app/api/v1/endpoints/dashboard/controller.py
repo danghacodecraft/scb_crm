@@ -1,6 +1,7 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.dashboard.repository import (
-    repos_get_customer, repos_get_total_item, repos_get_transaction_list
+    repos_count_total_item, repos_get_customer, repos_get_total_item,
+    repos_get_transaction_list
 )
 from app.utils.functions import dropdown
 
@@ -19,23 +20,25 @@ class CtrDashboard(BaseController):
             session=self.oracle_session
         ))
 
-        total_item = 0
-        if transaction_list:
-            total_item = transaction_list[0]["total"]
-        total_page = total_item / limit
-        if total_page % limit != 0:
-            total_page += 1
-
         if search_box:
             transactions = [{
                 "cif_id": transaction.id,
                 "full_name_vn": transaction.full_name_vn
-            } for _, transaction, _ in transaction_list]
+            } for _, transaction in transaction_list]
         else:
             transactions = [{
                 "cif_id": transaction[0].id,
                 "full_name_vn": transaction[0].full_name_vn
             } for transaction in transaction_list]
+
+        total_item = self.call_repos(await repos_count_total_item(search_box=search_box, session=self.oracle_session))
+
+        total_page = 0
+        if total_item != 0:
+            total_page = total_item / limit
+
+        if total_page % limit != 0:
+            total_page += 1
 
         return self.response_paging(
             data=transactions,

@@ -19,12 +19,38 @@ from app.utils.constant.cif import CONTACT_ADDRESS_CODE
 from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese
 
 
+async def repos_count_total_item(search_box: str, session: Session) -> ReposReturn:
+    if not search_box:
+        transaction_list = select(
+            func.count(Customer.id)
+        )
+    else:
+        search_box = f'%{search_box}%'
+        transaction_list = select(
+            func.count(Customer.id)
+        ).join(
+            CustomerIdentity, Customer.id == CustomerIdentity.customer_id
+        ).filter(
+            or_(
+                CustomerIdentity.identity_num.ilike(search_box),
+                or_(
+                    Customer.full_name.ilike(convert_to_unsigned_vietnamese(search_box))
+                ),
+                or_(
+                    Customer.cif_number.ilike(search_box)
+                )
+            )
+        )
+
+    total_item = session.execute(transaction_list).scalar()
+    return ReposReturn(data=total_item)
+
+
 async def repos_get_transaction_list(search_box: str, limit: int, page: int, session: Session):
     if not search_box:
         transaction_list = session.execute(
             select(
                 Customer,
-                count(Customer.id).over().label("total"),
             )
             .limit(limit)
             .offset(limit * (page - 1))
@@ -36,7 +62,6 @@ async def repos_get_transaction_list(search_box: str, limit: int, page: int, ses
             select(
                 CustomerIdentity,
                 Customer,
-                count(Customer.id).over().label("total"),
             )
             .join(Customer, CustomerIdentity.customer_id == Customer.id)
             .filter(
