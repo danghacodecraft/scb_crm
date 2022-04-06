@@ -37,7 +37,7 @@ class CtrDashboard(BaseController):
         if total_item != 0:
             total_page = total_item / limit
 
-        if total_page % limit != 0:
+        if total_item % limit != 0:
             total_page += 1
 
         return self.response_paging(
