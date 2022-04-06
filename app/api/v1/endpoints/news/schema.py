@@ -1,7 +1,7 @@
 from datetime import date
 from typing import List
 
-from fastapi import Depends, File, Form, UploadFile
+from fastapi import Depends, Form
 from pydantic import Field
 
 from app.api.base.schema import BaseSchema
@@ -36,8 +36,8 @@ class ListNewsResponse(BaseSchema):
 class NewsImageRequest(BaseSchema):
     @staticmethod
     def get_upload_request(
-            avatar_image: UploadFile = File(None),
-            thumbnail_image: UploadFile = File(...),
+            avatar_image: str = Form(None),
+            thumbnail_image: str = Form(...),
             current_user=Depends(get_current_user_from_header()),
             title: str = Form(..., description='Tiêu đề'),
             news_category_id: str = Form(..., description='Loại tin'),

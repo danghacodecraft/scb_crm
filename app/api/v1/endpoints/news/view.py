@@ -122,7 +122,7 @@ async def view_scb_news(
         category_news: str = Query(None, description='Danh mục'),
         start_date: date = Query(None, description='Ngày bắt đầu'),
         expired_date: date = Query(None, description='Ngày kết thúc'),
-        active_flag: int = Query(None, description='Trạng thái')
+        active_flag: bool = Query(None, description='Trạng thái')
 ):
     scb_news = await CtrNews(current_user, pagination_params=pagination_params
                              ).ctr_get_list_scb_news(title=title,

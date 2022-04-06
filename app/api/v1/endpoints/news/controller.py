@@ -32,6 +32,7 @@ class CtrNews(BaseController):
             "content": request_data["content"],
             "summary": request_data["summary"],
             "start_date": request_data["start_date"],
+            "thumbnail_url": thumbnail_image,
             "created_at": now(),
             "active_flag": request_data["active_flag"]
         }
@@ -46,18 +47,11 @@ class CtrNews(BaseController):
             data_scb_news.update({
                 "expired_date": request_data["expired_date"]
             })
-        # Upload avatar và banner
+
         if avatar_image is not None:
-            avatar_upload = await avatar_image.read()
-            avatar = await service_file.upload_file(file=avatar_upload, name=uuid)
             data_scb_news.update({
-                "avatar_url": avatar["uuid"]
+                "avatar_url": avatar_image
             })
-        thumbnail_upload = await thumbnail_image.read()
-        thumbnail = await service_file.upload_file(file=thumbnail_upload, name=uuid)
-        data_scb_news.update({
-            "thumbnail_url": thumbnail["uuid"]
-        })
 
         self.call_repos(
             await repos_add_scb_news(
