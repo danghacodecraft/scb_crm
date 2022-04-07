@@ -7,6 +7,7 @@ from app.api.base.repository import ReposReturn, auto_commit
 from app.third_parties.oracle.models.master_data.news import NewsCategory
 from app.third_parties.oracle.models.news.model import News
 from app.utils.error_messages import ERROR_ID_NOT_EXIST
+from app.utils.functions import now
 
 
 @auto_commit
@@ -55,12 +56,15 @@ async def get_list_scb_news(
         query_data = query_data.filter(News.title.ilike(f'%{title}%'))
     if category_news:
         query_data = query_data.filter(News.category_id == category_news)
-    if start_date:
-        query_data = query_data.filter(News.start_date == start_date)
-    if expired_date:
-        query_data = query_data.filter(News.expired_date == expired_date)
     if active_flag is not None:
         query_data = query_data.filter(News.active_flag == active_flag)
+    if start_date and expired_date:
+        query_data = query_data.filter(News.created_at.between(start_date, expired_date))
+    if not start_date and expired_date:
+        query_data = query_data.filter(News.created_at <= expired_date)
+    if start_date and not expired_date:
+        query_data = query_data.filter(News.created_at.between(start_date, now()))
+
     total_row = session.execute(query_data).all()
     query_data = query_data.limit(limit)
     query_data = query_data.offset(limit * (page - 1))
