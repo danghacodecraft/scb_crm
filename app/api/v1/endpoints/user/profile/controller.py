@@ -22,7 +22,6 @@ class CtrProfile(BaseController):
         )
         if not is_success:
             return self.response_exception(msg=str(profile))
-        print(profile)
 
         profile = {
             "avatar": profile['avatar'],
