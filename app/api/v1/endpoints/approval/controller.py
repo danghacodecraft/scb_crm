@@ -192,7 +192,8 @@ class CtrApproval(BaseController):
         if not identity_signature_images and not compare_signature_uuid:
             for identity, identity_image in signature_transactions:
                 init_identity_signature_images.append(dict(
-                    url=uuid_signature_link_downloads[identity_image.image_url],
+                    # url=uuid_signature_link_downloads[identity_image.image_url],
+                    url=None,
                     similar_percent=None
                 ))
             identity_signature_images = init_identity_signature_images
@@ -262,7 +263,8 @@ class CtrApproval(BaseController):
         if not identity_fingerprint_images and not compare_fingerprint_uuid:
             for identity, identity_image in fingerprint_transactions:
                 init_identity_fingerprint_images.append(dict(
-                    url=uuid_fingerprint_link_downloads[identity_image.image_url],
+                    # url=uuid_fingerprint_link_downloads[identity_image.image_url],
+                    url=None,
                     similar_percent=None
                 ))
             identity_fingerprint_images = init_identity_fingerprint_images
