@@ -4,7 +4,9 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.face.repository import (
     repos_save_approval_compare_face
 )
-from app.api.v1.endpoints.approval.repository import repos_get_approval_identity_faces
+from app.api.v1.endpoints.approval.repository import (
+    repos_get_approval_identity_faces
+)
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.api.v1.endpoints.file.repository import repos_upload_file
 from app.api.v1.endpoints.file.validator import file_validator
@@ -20,7 +22,8 @@ class CtrApproveFace(BaseController):
             amount: int,  # Số lượng hình ảnh so sánh
             image_file: UploadFile
     ):
-        current_user = self.current_user
+        current_user = self.current_user.user_info
+
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
 
