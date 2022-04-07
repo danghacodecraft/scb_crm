@@ -214,6 +214,7 @@ async def repos_add_debit_card(
         list_sub_debit_card,
         list_sub_debit_card_type,
         log_data: json,
+        history_datas: json,
         session: Session) -> ReposReturn:
 
     # Xóa dữ liệu cũ
@@ -239,6 +240,7 @@ async def repos_add_debit_card(
 
     is_success, booking_responses = await write_transaction_log_and_update_booking(
         log_data=log_data,
+        history_datas=history_datas,
         session=session,
         customer_id=cif_id,
         business_form_id=BUSINESS_FORM_TGN
