@@ -61,7 +61,8 @@ from app.utils.error_messages import (  # noqa
     ERROR_NO_DATA, ERROR_NOT_NULL, ERROR_WRONG_TYPE_IDENTITY, MESSAGE_STATUS
 )
 from app.utils.functions import (  # noqa
-    calculate_age, date_to_string, dropdown, now, parse_file_uuid
+    calculate_age, date_to_string, datetime_to_string, dropdown, now,
+    parse_file_uuid
 )
 from app.utils.vietnamese_converter import (
     convert_to_unsigned_vietnamese, make_short_name, split_name
@@ -723,19 +724,18 @@ class CtrIdentityDocument(BaseController):
             )
         await self.check_exist_multi_file(uuids=[identity_image_uuid, face_compare_image_url])
 
-        # is_success, compare_response = await service_ekyc.compare_face(
-        #     face_uuid=compare_face_uuid_ekyc,
-        #     avatar_image_uuid=identity_avatar_image_uuid
-        # )
-        #
-        # if not is_success:
-        #     return self.response_exception(
-        #         loc="face_uuid_ekyc",
-        #         msg=ERROR_CALL_SERVICE_EKYC,
-        #         detail=compare_response['message']
-        #     )
-        # similar_percent = compare_response['data']['similarity_percent']
-        similar_percent = 0
+        is_success, compare_response = await service_ekyc.compare_face(
+            face_uuid=compare_face_uuid_ekyc,
+            avatar_image_uuid=identity_avatar_image_uuid
+        )
+
+        if not is_success:
+            return self.response_exception(
+                loc="face_uuid_ekyc",
+                msg=ERROR_CALL_SERVICE_EKYC,
+                detail=compare_response['message']
+            )
+        similar_percent = compare_response['data']['similarity_percent']
 
         # dict dùng để tạo mới hoặc lưu lại CustomerCompareImage
         saving_customer_compare_image = {
@@ -761,7 +761,8 @@ class CtrIdentityDocument(BaseController):
 
         history_datas = [dict(
             description=PROFILE_HISTORY_DESCRIPTIONS_INIT_CIF,
-            completed_at=now(),
+            completed_at=datetime_to_string(now()),
+            created_at=datetime_to_string(now()),
             status=PROFILE_HISTORY_STATUS_INIT,
             branch_id=current_user.hrm_branch_id,
             branch_code=current_user.hrm_branch_code,
