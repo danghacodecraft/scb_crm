@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.news.repository import (
     get_data_by_id, get_list_scb_news, repos_add_scb_news,
@@ -8,7 +6,9 @@ from app.api.v1.endpoints.news.repository import (
 from app.settings.event import service_file
 from app.third_parties.oracle.models.master_data.news import NewsCategory
 from app.utils.error_messages import VALIDATE_ERROR
-from app.utils.functions import dropdown, generate_uuid, now
+from app.utils.functions import (
+    date_to_datetime, dropdown, end_time_of_day, generate_uuid, now
+)
 
 
 class CtrNews(BaseController):
@@ -146,8 +146,8 @@ class CtrNews(BaseController):
         if self.pagination_params.page:
             page = self.pagination_params.page
 
-        start_date = datetime(start_date.year, start_date.month, start_date.day) if start_date else None
-        expired_date = datetime(expired_date.year, expired_date.month, expired_date.day, hour=23, minute=59, second=59) if expired_date else None
+        start_date = date_to_datetime(start_date) if start_date else None
+        expired_date = end_time_of_day(date_to_datetime(expired_date)) if expired_date else None
 
         list_news = self.call_repos(await get_list_scb_news(session=self.oracle_session,
                                                             title=title,
