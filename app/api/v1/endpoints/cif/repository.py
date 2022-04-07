@@ -18,6 +18,9 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
 from app.third_parties.oracle.models.cif.basic_information.personal.model import (
     CustomerIndividualInfo
 )
+from app.third_parties.oracle.models.cif.form.model import (
+    Booking, BookingBusinessForm, BookingCustomer
+)
 from app.third_parties.oracle.models.master_data.address import AddressCountry
 from app.third_parties.oracle.models.master_data.customer import (
     CustomerClassification, CustomerEconomicProfession, CustomerGender,
@@ -27,7 +30,6 @@ from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import (
     KYCLevel, MaritalStatus
 )
-from app.utils.constant.cif import CIF_ID_TEST
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_SOA, ERROR_CIF_ID_NOT_EXIST, ERROR_CIF_NUMBER_EXIST,
     ERROR_CIF_NUMBER_INVALID, ERROR_CIF_NUMBER_NOT_EXIST, MESSAGE_STATUS
@@ -83,64 +85,24 @@ async def repos_get_cif_info(cif_id: str, session: Session) -> ReposReturn:
     })
 
 
-async def repos_profile_history(cif_id: str) -> ReposReturn:
-    if cif_id == CIF_ID_TEST:
-        return ReposReturn(data=[
-            {
-
-                "created_date": "string",
-                "logs":
-
-                    [
-
-                        {
-                            "user_id": "string",
-                            "full_name": "string",
-                            "user_avatar_url": "string",
-                            "id": "string",
-                            "created_at": "2019-08-24T14:15:22Z",
-                            "content": "string"
-                        },
-                        {
-                            "user_id": "string",
-                            "full_name": "string",
-                            "user_avatar_url": "string",
-                            "id": "string",
-                            "created_at": "2019-08-24T14:15:22Z",
-                            "content": "string"
-                        }
-                    ]
-
-            },
-            {
-
-                "created_date": "string",
-                "logs":
-
-                    [
-
-                        {
-                            "user_id": "string",
-                            "full_name": "string",
-                            "user_avatar_url": "string",
-                            "id": "string",
-                            "created_at": "2019-08-24T14:15:22Z",
-                            "content": "string"
-                        },
-                        {
-                            "user_id": "string",
-                            "full_name": "string",
-                            "user_avatar_url": "string",
-                            "id": "string",
-                            "created_at": "2019-08-24T14:15:22Z",
-                            "content": "string"
-                        }
-                    ]
-            }
-        ]
+async def repos_profile_history(cif_id: str, session: Session) -> ReposReturn:
+    histories = session.execute(
+        select(
+            BookingCustomer,
+            Booking,
+            BookingBusinessForm
         )
-    else:
-        return ReposReturn(is_error=True, msg=ERROR_CIF_ID_NOT_EXIST, loc='cif_id')
+        .join(Booking, BookingCustomer.booking_id == Booking.id)
+        .join(BookingBusinessForm, Booking.id == BookingBusinessForm.booking_id)
+        .filter(
+            BookingCustomer.customer_id == cif_id
+        )
+    ).all()
+
+    # if not histories:
+    #     return ReposReturn(is_error=True, msg=ERROR_CIF_ID_NOT_EXIST, loc='cif_id')
+
+    return ReposReturn(data=histories)
 
 
 async def repos_customer_information(cif_id: str, session: Session) -> ReposReturn:

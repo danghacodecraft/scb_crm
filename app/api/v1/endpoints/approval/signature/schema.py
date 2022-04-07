@@ -32,7 +32,8 @@ class SignaturesSuccessResponse(BaseSchema):
 
 
 class CompareSignatureRequest(BaseSchema):
-    uuid_ekyc: str = Field(...)
+    uuid_ekyc: str = Field(..., description='uuid_ekyc call upload file')
+    uuid: str = Field(..., description='uuid call upload file')
 
 
 class CompareSignatureResponse(BaseSchema):

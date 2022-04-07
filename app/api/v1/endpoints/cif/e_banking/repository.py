@@ -45,7 +45,9 @@ async def repos_save_e_banking_data(
         balance_noti,
         account_info,
         auth_method,
-        created_by: str) -> ReposReturn:
+        created_by: str,
+        history_datas: json
+) -> ReposReturn:
     """
     1. Customer đã có E-banking => xóa dữ liệu cũ => Tạo dữ liệu mới
     2. Tạo E-banking
@@ -92,6 +94,7 @@ async def repos_save_e_banking_data(
 
     is_success, booking_response = await write_transaction_log_and_update_booking(
         log_data=log_data,
+        history_datas=history_datas,
         session=session,
         customer_id=cif_id,
         business_form_id=BUSINESS_FORM_EB

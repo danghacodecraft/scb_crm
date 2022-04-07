@@ -42,7 +42,7 @@ class ServiceFile:
                 logger.log("SERVICE", f"[FILE] {response.status} : {api_url}")
 
                 if response.status != status.HTTP_201_CREATED:
-                    return None
+                    return await response.json()
 
                 upload_file_response_body = await response.json()
                 if upload_file_response_body['file_url']:
@@ -51,7 +51,7 @@ class ServiceFile:
                 return upload_file_response_body
         except Exception as ex:
             logger.error(str(ex))
-            return None
+            return await response.json()
 
     async def upload_file(self, file: bytes, name: str, return_download_file_url_flag: bool = True) -> Optional[dict]:
         return await self.__call_upload_file(

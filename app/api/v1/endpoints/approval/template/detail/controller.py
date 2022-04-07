@@ -19,8 +19,6 @@ class CtrTemplateDetail(BaseController):
         """
         data_request = {}
         customer_db = self.call_repos(await repo_customer_info(cif_id=cif_id, session=self.oracle_session))
-        cust = customer_db[0]
-
         customer_address = self.call_repos(await repo_customer_address(cif_id=cif_id, session=self.oracle_session))
         subs_identity = self.call_repos(await repo_sub_identity(cif_id=cif_id, session=self.oracle_session))
         guardians = self.call_repos(await repo_guardians(cif_id=cif_id, session=self.oracle_session))
@@ -31,58 +29,75 @@ class CtrTemplateDetail(BaseController):
 
         # Tách địa chỉ tạm trú và địa chỉ thường trú
         staying_address, resident_address = None, None
-        if debit_cards:
-            for address in customer_address:
-                if address.CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE:
-                    staying_address = address
-                if address.CustomerAddress.address_type_id == RESIDENT_ADDRESS_CODE:
-                    resident_address = address
+
+        for address in customer_address:
+            if address.CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE:
+                staying_address = address
+            if address.CustomerAddress.address_type_id == RESIDENT_ADDRESS_CODE:
+                resident_address = address
 
         # Tách thẻ chính và thẻ phụ
         main_cards, sup_cards = [], []
-        for item in debit_cards:
-            if item.DebitCard.parent_card_id:
-                sup_cards.append(item)
-            else:
-                main_cards.append(item)
+        if debit_cards:
+            for item in debit_cards:
+                if item.DebitCard.parent_card_id:
+                    sup_cards.append(item)
+                else:
+                    main_cards.append(item)
 
-        data_request.update({
-            "S1.A.1.1.3": cust.Customer.full_name_vn,
-            "S1.A.1.2.4": [cust.CustomerGender.name],
-            "S1.A.1.2.8": datetime_to_string(cust.CustomerIndividualInfo.date_of_birth, DATE_INPUT_OUTPUT_EKYC_FORMAT),
-            "S1.A.1.2.6": cust.AddressProvince.name,
-            "S1.A.1.2.20": cust.AddressCountry.name,
-            "S1.A.1.2.23": [cust.ResidentStatus.name],
-            "S1.A.1.3.2": cust.CustomerIdentity.identity_num,
-            "S1.A.1.3.3": datetime_to_string(cust.CustomerIdentity.issued_date, DATE_INPUT_OUTPUT_EKYC_FORMAT),
-            "S1.A.1.3.4": cust.PlaceOfIssue.name,
-            "S1.A.1.2.36": subs_identity[0].name,
-            "S1.A.1.2.38": datetime_to_string(subs_identity[0].sub_identity_expired_date,
-                                              DATE_INPUT_OUTPUT_EKYC_FORMAT),
-            "S1.A.1.2.15": staying_address.CustomerAddress.address,
-            "S1.A.1.2.16": staying_address.AddressWard.name,
-            "S1.A.1.2.17": staying_address.AddressDistrict.name,
-            "S1.A.1.2.18": staying_address.AddressProvince.name,
-            "S1.A.1.2.19": staying_address.AddressCountry.name,
-            "S1.A.1.2.25": resident_address.CustomerAddress.address,
-            "S1.A.1.2.26": resident_address.AddressWard.name,
-            "S1.A.1.2.27": resident_address.AddressDistrict.name,
-            "S1.A.1.2.28": resident_address.AddressProvince.name,
-            "S1.A.1.2.29": resident_address.AddressCountry.name,
-            # TODO: Địa chỉ cư trú tại nước ngoài (chưa có)
-            # "S1.A.1.2.30"
-            # "S1.A.1.2.31"
-            # "S1.A.1.2.32"
-            # "S1.A.1.2.33"
+        # Thông tin khách hàng
+        if customer_db:
+            cust = customer_db[0]
+            data_request.update({
+                "S1.A.1.1.3": cust.Customer.full_name_vn,
+                "S1.A.1.2.4": [cust.CustomerGender.name],
+                "S1.A.1.2.8": datetime_to_string(cust.CustomerIndividualInfo.date_of_birth,
+                                                 DATE_INPUT_OUTPUT_EKYC_FORMAT),
+                "S1.A.1.2.6": cust.AddressProvince.name,
+                "S1.A.1.2.20": cust.AddressCountry.name,
+                "S1.A.1.2.23": [cust.ResidentStatus.name],
+                "S1.A.1.3.2": cust.CustomerIdentity.identity_num,
+                "S1.A.1.3.3": datetime_to_string(cust.CustomerIdentity.issued_date, DATE_INPUT_OUTPUT_EKYC_FORMAT),
+                "S1.A.1.3.4": cust.PlaceOfIssue.name,
+                "S1.A.1.2.15": staying_address.CustomerAddress.address,
+                "S1.A.1.2.16": staying_address.AddressWard.name,
+                "S1.A.1.2.17": staying_address.AddressDistrict.name,
+                "S1.A.1.2.18": staying_address.AddressProvince.name,
+                "S1.A.1.2.19": staying_address.AddressCountry.name,
+                "S1.A.1.2.25": resident_address.CustomerAddress.address,
+                "S1.A.1.2.26": resident_address.AddressWard.name,
+                "S1.A.1.2.27": resident_address.AddressDistrict.name,
+                "S1.A.1.2.28": resident_address.AddressProvince.name,
+                "S1.A.1.2.29": resident_address.AddressCountry.name,
+                #     # TODO: Địa chỉ cư trú tại nước ngoài (chưa có)
+                #     # "S1.A.1.2.30"
+                #     # "S1.A.1.2.31"
+                #     # "S1.A.1.2.32"
+                #     # "S1.A.1.2.33"
+                #
+                "S1.A.1.2.1": cust.Customer.mobile_number,
+                "S1.A.1.5.6": ["Đồng ý"] if cust.Customer.advertising_marketing_flag else ["Không đồng ý"],
 
-            "S1.A.1.2.1": cust.Customer.mobile_number,
-            "S1.A.1.5.6": ["Đồng ý"] if cust.Customer.advertising_marketing_flag else ["Không đồng ý"],
+                "S1.A.1.5.4": [cust.Career.name],
+                "S1.A.1.5.3": [cust.AverageIncomeAmount.name],
+                "S1.A.1.2.9": [cust.MaritalStatus.name],
 
-            "S1.A.1.5.4": [cust.Career.name],
-            "S1.A.1.5.3": [cust.AverageIncomeAmount.name],
-            "S1.A.1.2.9": [cust.MaritalStatus.name],
+            })
+            if cust.Customer.telephone_number:
+                data_request.update({"S1.A.1.2.2": cust.Customer.telephone_number})
+            if cust.Customer.tax_number:
+                data_request.update({"S1.A.1.3.6": cust.Customer.tax_number})
+            if cust.Customer.email:
+                data_request.update({"S1.A.1.2.3": cust.Customer.email})
+            if cust.CustomerProfessional.company_name:
+                data_request.update({"S1.A.1.2.10": cust.CustomerProfessional.company_name})
+            if cust.CustomerProfessional.company_address:
+                data_request.update({"S1.A.1.2.11": cust.CustomerProfessional.company_address})
+            if cust.CustomerProfessional.company_phone:
+                data_request.update({"S1.A.1.2.12": cust.CustomerProfessional.company_phone})
+            if cust.Position:
+                data_request.update({"S1.A.1.2.13": cust.Position.name})
 
-        })
         # Người giám hộ
         if guardians:
             guardian = guardians[0]
@@ -92,6 +107,7 @@ class CtrTemplateDetail(BaseController):
                 "S1.A.1.2.42": guardian.Customer.cif_number,
                 "S1.A.1.2.51": guardian.CustomerIdentity.identity_num
             })
+
         # Người đồng sở hữu
         if customer_join:
             customer = customer_join[0]
@@ -101,6 +117,7 @@ class CtrTemplateDetail(BaseController):
                 "S1.A.1.8.2": customer.CustomerJoin.cif_number,
                 "S1.A.1.8.4": customer.CustomerIdentity.identity_num
             })
+
         # Thẻ ghi nợ (Thẻ chính - Thẻ phụ)
         if main_cards:
             data_request.update({
@@ -128,6 +145,7 @@ class CtrTemplateDetail(BaseController):
                 data_request.update({"S1.A.1.10.18": ["Địa chỉ liên lạc"]})
             else:
                 data_request.update({"S1.A.1.10.18.1": ["SCB"]})
+
         # E-banking
         if e_banking:
             e_banking = e_banking[0]
@@ -167,20 +185,12 @@ class CtrTemplateDetail(BaseController):
         # })
 
         # Những field option
-        if cust.Customer.telephone_number:
-            data_request.update({"S1.A.1.2.2": cust.Customer.telephone_number})
-        if cust.Customer.tax_number:
-            data_request.update({"S1.A.1.3.6": cust.Customer.tax_number})
-        if cust.Customer.email:
-            data_request.update({"S1.A.1.2.3": cust.Customer.email})
-        if cust.CustomerProfessional.company_name:
-            data_request.update({"S1.A.1.2.10": cust.CustomerProfessional.company_name})
-        if cust.CustomerProfessional.company_address:
-            data_request.update({"S1.A.1.2.11": cust.CustomerProfessional.company_address})
-        if cust.CustomerProfessional.company_phone:
-            data_request.update({"S1.A.1.2.12": cust.CustomerProfessional.company_phone})
-        if cust.Position:
-            data_request.update({"S1.A.1.2.13": cust.Position.name})
+        if subs_identity:
+            data_request.update({
+                "S1.A.1.2.36": subs_identity[0].name,
+                "S1.A.1.2.38": datetime_to_string(subs_identity[0].sub_identity_expired_date,
+                                                  DATE_INPUT_OUTPUT_EKYC_FORMAT),
+            })
 
         data_tms = self.call_repos(
             await repo_form(data_request=data_request, path=PATH_FORM_1))
@@ -192,8 +202,6 @@ class CtrTemplateDetail(BaseController):
         """
         data_request = {}
         customer_db = self.call_repos(await repo_customer_info(cif_id=cif_id, session=self.oracle_session))
-        cust = customer_db[0]
-
         customer_address = self.call_repos(await repo_customer_address(cif_id=cif_id, session=self.oracle_session))
         subs_identity = self.call_repos(await repo_sub_identity(cif_id=cif_id, session=self.oracle_session))
         guardians = self.call_repos(await repo_guardians(cif_id=cif_id, session=self.oracle_session))
@@ -204,60 +212,78 @@ class CtrTemplateDetail(BaseController):
 
         # Tách địa chỉ tạm trú và địa chỉ thường trú
         staying_address, resident_address = None, None
-        if debit_cards:
-            for address in customer_address:
-                if address.CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE:
-                    staying_address = address
-                if address.CustomerAddress.address_type_id == RESIDENT_ADDRESS_CODE:
-                    resident_address = address
+
+        for address in customer_address:
+            if address.CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE:
+                staying_address = address
+            if address.CustomerAddress.address_type_id == RESIDENT_ADDRESS_CODE:
+                resident_address = address
 
         # Tách thẻ chính và thẻ phụ
         main_cards, sup_cards = [], []
-        for item in debit_cards:
-            if item.DebitCard.parent_card_id:
-                sup_cards.append(item)
-            else:
-                main_cards.append(item)
+        if debit_cards:
+            for item in debit_cards:
+                if item.DebitCard.parent_card_id:
+                    sup_cards.append(item)
+                else:
+                    main_cards.append(item)
 
-        data_request.update({
-            "S1.A.1.1.3": cust.Customer.full_name_vn,
-            "S1.A.1.2.4": ["Nam/Male"] if cust.CustomerGender.name == "Nam" else ["Nữ/Female"],
-            "S1.A.1.2.8": datetime_to_string(cust.CustomerIndividualInfo.date_of_birth, DATE_INPUT_OUTPUT_EKYC_FORMAT),
-            "S1.A.1.2.6": cust.AddressProvince.name,
-            "S1.A.1.2.20": cust.AddressCountry.name,
-            "S1.A.1.2.23": ["Không cư trú/Non-resident"] if cust.ResidentStatus.name == "Không cư trú" else [
-                "Cư trú/Resident"],
-            "S1.A.1.3.2": cust.CustomerIdentity.identity_num,
-            "S1.A.1.3.3": datetime_to_string(cust.CustomerIdentity.issued_date, DATE_INPUT_OUTPUT_EKYC_FORMAT),
-            "S1.A.1.3.4": cust.PlaceOfIssue.name,
-            "S1.A.1.2.36": subs_identity[0].name,
-            "S1.A.1.2.38": datetime_to_string(subs_identity[0].sub_identity_expired_date,
-                                              DATE_INPUT_OUTPUT_EKYC_FORMAT),
-            "S1.A.1.2.15": staying_address.CustomerAddress.address,
-            "S1.A.1.2.16": staying_address.AddressWard.name,
-            "S1.A.1.2.17": staying_address.AddressDistrict.name,
-            "S1.A.1.2.18": staying_address.AddressProvince.name,
-            "S1.A.1.2.19": staying_address.AddressCountry.name,
-            "S1.A.1.2.25": resident_address.CustomerAddress.address,
-            "S1.A.1.2.26": resident_address.AddressWard.name,
-            "S1.A.1.2.27": resident_address.AddressDistrict.name,
-            "S1.A.1.2.28": resident_address.AddressProvince.name,
-            "S1.A.1.2.29": resident_address.AddressCountry.name,
-            # TODO: Địa chỉ cư trú tại nước ngoài (chưa có)
-            # "S1.A.1.2.30"
-            # "S1.A.1.2.31"
-            # "S1.A.1.2.32"
-            # "S1.A.1.2.33"
+        # Thông tin khách hàng
+        if customer_db:
+            cust = customer_db[0]
+            data_request.update({
+                "S1.A.1.1.3": cust.Customer.full_name_vn,
+                "S1.A.1.2.4": ["Nam/Male"] if cust.CustomerGender.name == "Nam" else ["Nữ/Female"],
+                "S1.A.1.2.8": datetime_to_string(cust.CustomerIndividualInfo.date_of_birth,
+                                                 DATE_INPUT_OUTPUT_EKYC_FORMAT),
+                "S1.A.1.2.6": cust.AddressProvince.name,
+                "S1.A.1.2.20": cust.AddressCountry.name,
+                "S1.A.1.2.23": ["Không cư trú/Non-resident"] if cust.ResidentStatus.name == "Không cư trú" else [
+                    "Cư trú/Resident"],
+                "S1.A.1.3.2": cust.CustomerIdentity.identity_num,
+                "S1.A.1.3.3": datetime_to_string(cust.CustomerIdentity.issued_date, DATE_INPUT_OUTPUT_EKYC_FORMAT),
+                "S1.A.1.3.4": cust.PlaceOfIssue.name,
+                "S1.A.1.2.15": staying_address.CustomerAddress.address,
+                "S1.A.1.2.16": staying_address.AddressWard.name,
+                "S1.A.1.2.17": staying_address.AddressDistrict.name,
+                "S1.A.1.2.18": staying_address.AddressProvince.name,
+                "S1.A.1.2.19": staying_address.AddressCountry.name,
+                "S1.A.1.2.25": resident_address.CustomerAddress.address,
+                "S1.A.1.2.26": resident_address.AddressWard.name,
+                "S1.A.1.2.27": resident_address.AddressDistrict.name,
+                "S1.A.1.2.28": resident_address.AddressProvince.name,
+                "S1.A.1.2.29": resident_address.AddressCountry.name,
+                # TODO: Địa chỉ cư trú tại nước ngoài (chưa có)
+                # "S1.A.1.2.30"
+                # "S1.A.1.2.31"
+                # "S1.A.1.2.32"
+                # "S1.A.1.2.33"
 
-            "S1.A.1.2.1": cust.Customer.mobile_number,
-            "S1.A.1.5.6": ["Đồng ý/Agree"] if cust.Customer.advertising_marketing_flag else [
-                "Không đồng ý/Do not agree"],
+                "S1.A.1.2.1": cust.Customer.mobile_number,
+                "S1.A.1.5.6": ["Đồng ý/Agree"] if cust.Customer.advertising_marketing_flag else [
+                    "Không đồng ý/Do not agree"],
 
-            "S1.A.1.5.4": [cust.Career.name],
-            "S1.A.1.5.3": [cust.AverageIncomeAmount.name],
-            "S1.A.1.2.9": ["Độc thân/Single"] if cust.MaritalStatus.name == "Độc thân" else ["Đã có gia đình/Married"],
+                "S1.A.1.5.4": [cust.Career.name],
+                "S1.A.1.5.3": [cust.AverageIncomeAmount.name],
+                "S1.A.1.2.9": ["Độc thân/Single"] if cust.MaritalStatus.name == "Độc thân" else [
+                    "Đã có gia đình/Married"],
 
-        })
+            })
+            if cust.Customer.telephone_number:
+                data_request.update({"S1.A.1.2.2": cust.Customer.telephone_number})
+            if cust.Customer.tax_number:
+                data_request.update({"S1.A.1.3.6": cust.Customer.tax_number})
+            if cust.Customer.email:
+                data_request.update({"S1.A.1.2.3": cust.Customer.email})
+            if cust.CustomerProfessional.company_name:
+                data_request.update({"S1.A.1.2.10": cust.CustomerProfessional.company_name})
+            if cust.CustomerProfessional.company_address:
+                data_request.update({"S1.A.1.2.11": cust.CustomerProfessional.company_address})
+            if cust.CustomerProfessional.company_phone:
+                data_request.update({"S1.A.1.2.12": cust.CustomerProfessional.company_phone})
+            if cust.Position:
+                data_request.update({"S1.A.1.2.13": cust.Position.name})
+
         # Người giám hộ
         if guardians:
             guardian = guardians[0]
@@ -267,6 +293,7 @@ class CtrTemplateDetail(BaseController):
                 "S1.A.1.2.42": guardian.Customer.cif_number,
                 "S1.A.1.2.51": guardian.CustomerIdentity.identity_num
             })
+
         # Người đồng sở hữu
         if customer_join:
             customer = customer_join[0]
@@ -276,6 +303,7 @@ class CtrTemplateDetail(BaseController):
                 "S1.A.1.8.2": customer.CustomerJoin.cif_number,
                 "S1.A.1.8.4": customer.CustomerIdentity.identity_num
             })
+
         # Thẻ ghi nợ (Thẻ chính - Thẻ phụ)
         if main_cards:
             data_request.update({
@@ -343,20 +371,12 @@ class CtrTemplateDetail(BaseController):
         # })
 
         # Những field option
-        if cust.Customer.telephone_number:
-            data_request.update({"S1.A.1.2.2": cust.Customer.telephone_number})
-        if cust.Customer.tax_number:
-            data_request.update({"S1.A.1.3.6": cust.Customer.tax_number})
-        if cust.Customer.email:
-            data_request.update({"S1.A.1.2.3": cust.Customer.email})
-        if cust.CustomerProfessional.company_name:
-            data_request.update({"S1.A.1.2.10": cust.CustomerProfessional.company_name})
-        if cust.CustomerProfessional.company_address:
-            data_request.update({"S1.A.1.2.11": cust.CustomerProfessional.company_address})
-        if cust.CustomerProfessional.company_phone:
-            data_request.update({"S1.A.1.2.12": cust.CustomerProfessional.company_phone})
-        if cust.Position:
-            data_request.update({"S1.A.1.2.13": cust.Position.name})
+        if subs_identity:
+            data_request.update({
+                "S1.A.1.2.36": subs_identity[0].name,
+                "S1.A.1.2.38": datetime_to_string(subs_identity[0].sub_identity_expired_date,
+                                                  DATE_INPUT_OUTPUT_EKYC_FORMAT),
+            })
 
         data_tms = self.call_repos(
             await repo_form(data_request=data_request, path=PATH_FORM_2))
@@ -370,7 +390,7 @@ class CtrTemplateDetail(BaseController):
         data_request = {}
         customer_db = self.call_repos(await repo_customer_info(cif_id=cif_id, session=self.oracle_session))
         customer_address = self.call_repos(await repo_customer_address(cif_id=cif_id, session=self.oracle_session))
-        cust = customer_db[0]
+
         # Tách địa chỉ tạm trú và địa chỉ thường trú
         staying_address, resident_address = None, None
 
@@ -379,29 +399,38 @@ class CtrTemplateDetail(BaseController):
                 staying_address = address
             if address.CustomerAddress.address_type_id == RESIDENT_ADDRESS_CODE:
                 resident_address = address
-        data_request.update({
-            "S1.A.1.1.3": cust.Customer.full_name_vn,
-            "S1.A.1.2.4": ["Nam/Male"] if cust.CustomerGender.name == "Nam" else ["Nữ/Female"],
-            "S1.A.1.2.8": datetime_to_string(cust.CustomerIndividualInfo.date_of_birth, DATE_INPUT_OUTPUT_EKYC_FORMAT),
-            "S1.A.1.2.6": cust.AddressProvince.name,
-            "S1.A.1.2.20": cust.AddressCountry.name,
-            "S1.A.1.3.2": cust.CustomerIdentity.identity_num,
-            "S1.A.1.3.3": datetime_to_string(cust.CustomerIdentity.issued_date, DATE_INPUT_OUTPUT_EKYC_FORMAT),
-            "S1.A.1.3.4": cust.PlaceOfIssue.name,
-            "S1.A.1.2.15": staying_address.CustomerAddress.address,
-            "S1.A.1.2.16": staying_address.AddressWard.name,
-            "S1.A.1.2.17": staying_address.AddressDistrict.name,
-            "S1.A.1.2.18": staying_address.AddressProvince.name,
-            "S1.A.1.2.19": staying_address.AddressCountry.name,
-            "S1.A.1.2.25": resident_address.CustomerAddress.address,
-            "S1.A.1.2.26": resident_address.AddressWard.name,
-            "S1.A.1.2.27": resident_address.AddressDistrict.name,
-            "S1.A.1.2.28": resident_address.AddressProvince.name,
-            "S1.A.1.2.29": resident_address.AddressCountry.name,
-            "S1.A.1.2.1": cust.Customer.mobile_number,
-            "S1.A.1.5.4": cust.Career.name,
 
-        })
+        if customer_db:
+            cust = customer_db[0]
+            data_request.update({
+                "S1.A.1.1.3": cust.Customer.full_name_vn,
+                "S1.A.1.2.4": ["Nam/Male"] if cust.CustomerGender.name == "Nam" else ["Nữ/Female"],
+                "S1.A.1.2.8": datetime_to_string(cust.CustomerIndividualInfo.date_of_birth,
+                                                 DATE_INPUT_OUTPUT_EKYC_FORMAT),
+                "S1.A.1.2.6": cust.AddressProvince.name,
+                "S1.A.1.2.20": cust.AddressCountry.name,
+                "S1.A.1.3.2": cust.CustomerIdentity.identity_num,
+                "S1.A.1.3.3": datetime_to_string(cust.CustomerIdentity.issued_date, DATE_INPUT_OUTPUT_EKYC_FORMAT),
+                "S1.A.1.3.4": cust.PlaceOfIssue.name,
+                "S1.A.1.2.15": staying_address.CustomerAddress.address,
+                "S1.A.1.2.16": staying_address.AddressWard.name,
+                "S1.A.1.2.17": staying_address.AddressDistrict.name,
+                "S1.A.1.2.18": staying_address.AddressProvince.name,
+                "S1.A.1.2.19": staying_address.AddressCountry.name,
+                "S1.A.1.2.25": resident_address.CustomerAddress.address,
+                "S1.A.1.2.26": resident_address.AddressWard.name,
+                "S1.A.1.2.27": resident_address.AddressDistrict.name,
+                "S1.A.1.2.28": resident_address.AddressProvince.name,
+                "S1.A.1.2.29": resident_address.AddressCountry.name,
+                "S1.A.1.2.1": cust.Customer.mobile_number,
+                "S1.A.1.5.4": cust.Career.name,
+
+            })
+            # Những field option
+            if cust.Customer.telephone_number:
+                data_request.update({"S1.A.1.2.2": cust.Customer.telephone_number})
+            if cust.Customer.email:
+                data_request.update({"S1.A.1.2.3": cust.Customer.email})
 
         # Cam kết
         time = today()
@@ -411,12 +440,6 @@ class CtrTemplateDetail(BaseController):
             "S1.A.1.16.12": f'{time.year}',
 
         })
-
-        # Những field option
-        if cust.Customer.telephone_number:
-            data_request.update({"S1.A.1.2.2": cust.Customer.telephone_number})
-        if cust.Customer.email:
-            data_request.update({"S1.A.1.2.3": cust.Customer.email})
 
         data_tms = self.call_repos(
             await repo_form(data_request=data_request, path=PATH_FORM_3))
@@ -430,7 +453,6 @@ class CtrTemplateDetail(BaseController):
         data_request = {}
         customer_db = self.call_repos(await repo_customer_info(cif_id=cif_id, session=self.oracle_session))
         customer_address = self.call_repos(await repo_customer_address(cif_id=cif_id, session=self.oracle_session))
-        cust = customer_db[0]
         # Tách địa chỉ tạm trú và địa chỉ thường trú
         staying_address, resident_address = None, None
 
@@ -439,29 +461,36 @@ class CtrTemplateDetail(BaseController):
                 staying_address = address
             if address.CustomerAddress.address_type_id == RESIDENT_ADDRESS_CODE:
                 resident_address = address
-        data_request.update({
-            "S1.A.1.1.3": cust.Customer.full_name_vn,
-            "S1.A.1.2.4": ["Nam/Male"] if cust.CustomerGender.name == "Nam" else ["Nữ/Female"],
-            "S1.A.1.2.8": datetime_to_string(cust.CustomerIndividualInfo.date_of_birth, DATE_INPUT_OUTPUT_EKYC_FORMAT),
-            "S1.A.1.2.6": cust.AddressProvince.name,
-            "S1.A.1.2.20": cust.AddressCountry.name,
-            "S1.A.1.3.2": cust.CustomerIdentity.identity_num,
-            "S1.A.1.3.3": datetime_to_string(cust.CustomerIdentity.issued_date, DATE_INPUT_OUTPUT_EKYC_FORMAT),
-            "S1.A.1.3.4": cust.PlaceOfIssue.name,
-            "S1.A.1.2.15": staying_address.CustomerAddress.address,
-            "S1.A.1.2.16": staying_address.AddressWard.name,
-            "S1.A.1.2.17": staying_address.AddressDistrict.name,
-            "S1.A.1.2.18": staying_address.AddressProvince.name,
-            "S1.A.1.2.19": staying_address.AddressCountry.name,
-            "S1.A.1.2.25": resident_address.CustomerAddress.address,
-            "S1.A.1.2.26": resident_address.AddressWard.name,
-            "S1.A.1.2.27": resident_address.AddressDistrict.name,
-            "S1.A.1.2.28": resident_address.AddressProvince.name,
-            "S1.A.1.2.29": resident_address.AddressCountry.name,
-            "S1.A.1.2.1": cust.Customer.mobile_number,
-            "S1.A.1.5.4": cust.Career.name,
-
-        })
+        if customer_db:
+            cust = customer_db[0]
+            data_request.update({
+                "S1.A.1.1.3": cust.Customer.full_name_vn,
+                "S1.A.1.2.4": ["Nam/Male"] if cust.CustomerGender.name == "Nam" else ["Nữ/Female"],
+                "S1.A.1.2.8": datetime_to_string(cust.CustomerIndividualInfo.date_of_birth,
+                                                 DATE_INPUT_OUTPUT_EKYC_FORMAT),
+                "S1.A.1.2.6": cust.AddressProvince.name,
+                "S1.A.1.2.20": cust.AddressCountry.name,
+                "S1.A.1.3.2": cust.CustomerIdentity.identity_num,
+                "S1.A.1.3.3": datetime_to_string(cust.CustomerIdentity.issued_date, DATE_INPUT_OUTPUT_EKYC_FORMAT),
+                "S1.A.1.3.4": cust.PlaceOfIssue.name,
+                "S1.A.1.2.15": staying_address.CustomerAddress.address,
+                "S1.A.1.2.16": staying_address.AddressWard.name,
+                "S1.A.1.2.17": staying_address.AddressDistrict.name,
+                "S1.A.1.2.18": staying_address.AddressProvince.name,
+                "S1.A.1.2.19": staying_address.AddressCountry.name,
+                "S1.A.1.2.25": resident_address.CustomerAddress.address,
+                "S1.A.1.2.26": resident_address.AddressWard.name,
+                "S1.A.1.2.27": resident_address.AddressDistrict.name,
+                "S1.A.1.2.28": resident_address.AddressProvince.name,
+                "S1.A.1.2.29": resident_address.AddressCountry.name,
+                "S1.A.1.2.1": cust.Customer.mobile_number,
+                "S1.A.1.5.4": cust.Career.name,
+            })
+            # Những field option
+            if cust.Customer.telephone_number:
+                data_request.update({"S1.A.1.2.2": cust.Customer.telephone_number})
+            if cust.Customer.email:
+                data_request.update({"S1.A.1.2.3": cust.Customer.email})
 
         # Cam kết
         time = today()
@@ -471,12 +500,6 @@ class CtrTemplateDetail(BaseController):
             "S1.A.1.11.12": f'{time.year}',
 
         })
-
-        # Những field option
-        if cust.Customer.telephone_number:
-            data_request.update({"S1.A.1.2.2": cust.Customer.telephone_number})
-        if cust.Customer.email:
-            data_request.update({"S1.A.1.2.3": cust.Customer.email})
 
         data_tms = self.call_repos(
             await repo_form(data_request=data_request, path=PATH_FORM_4))
@@ -490,7 +513,7 @@ class CtrTemplateDetail(BaseController):
         data_request = {}
         customer_db = self.call_repos(await repo_customer_info(cif_id=cif_id, session=self.oracle_session))
         customer_address = self.call_repos(await repo_customer_address(cif_id=cif_id, session=self.oracle_session))
-        cust = customer_db[0]
+
         # Tách địa chỉ tạm trú và địa chỉ thường trú
         staying_address, resident_address = None, None
 
@@ -499,29 +522,37 @@ class CtrTemplateDetail(BaseController):
                 staying_address = address
             if address.CustomerAddress.address_type_id == RESIDENT_ADDRESS_CODE:
                 resident_address = address
-        data_request.update({
-            "S1.A.1.1.3": cust.Customer.full_name_vn,
-            "S1.A.1.2.4": ["Nam/Male"] if cust.CustomerGender.name == "Nam" else ["Nữ/Female"],
-            "S1.A.1.2.8": datetime_to_string(cust.CustomerIndividualInfo.date_of_birth, DATE_INPUT_OUTPUT_EKYC_FORMAT),
-            "S1.A.1.2.6": cust.AddressProvince.name,
-            "S1.A.1.2.20": cust.AddressCountry.name,
-            "S1.A.1.3.2": cust.CustomerIdentity.identity_num,
-            "S1.A.1.3.3": datetime_to_string(cust.CustomerIdentity.issued_date, DATE_INPUT_OUTPUT_EKYC_FORMAT),
-            "S1.A.1.3.4": cust.PlaceOfIssue.name,
-            "S1.A.1.2.15": staying_address.CustomerAddress.address,
-            "S1.A.1.2.16": staying_address.AddressWard.name,
-            "S1.A.1.2.17": staying_address.AddressDistrict.name,
-            "S1.A.1.2.18": staying_address.AddressProvince.name,
-            "S1.A.1.2.19": staying_address.AddressCountry.name,
-            "S1.A.1.2.25": resident_address.CustomerAddress.address,
-            "S1.A.1.2.26": resident_address.AddressWard.name,
-            "S1.A.1.2.27": resident_address.AddressDistrict.name,
-            "S1.A.1.2.28": resident_address.AddressProvince.name,
-            "S1.A.1.2.29": resident_address.AddressCountry.name,
-            "S1.A.1.2.1": cust.Customer.mobile_number,
-            "S1.A.1.5.4": cust.Career.name,
 
-        })
+        if customer_db:
+            cust = customer_db[0]
+            data_request.update({
+                "S1.A.1.1.3": cust.Customer.full_name_vn,
+                "S1.A.1.2.4": ["Nam/Male"] if cust.CustomerGender.name == "Nam" else ["Nữ/Female"],
+                "S1.A.1.2.8": datetime_to_string(cust.CustomerIndividualInfo.date_of_birth,
+                                                 DATE_INPUT_OUTPUT_EKYC_FORMAT),
+                "S1.A.1.2.6": cust.AddressProvince.name,
+                "S1.A.1.2.20": cust.AddressCountry.name,
+                "S1.A.1.3.2": cust.CustomerIdentity.identity_num,
+                "S1.A.1.3.3": datetime_to_string(cust.CustomerIdentity.issued_date, DATE_INPUT_OUTPUT_EKYC_FORMAT),
+                "S1.A.1.3.4": cust.PlaceOfIssue.name,
+                "S1.A.1.2.15": staying_address.CustomerAddress.address,
+                "S1.A.1.2.16": staying_address.AddressWard.name,
+                "S1.A.1.2.17": staying_address.AddressDistrict.name,
+                "S1.A.1.2.18": staying_address.AddressProvince.name,
+                "S1.A.1.2.19": staying_address.AddressCountry.name,
+                "S1.A.1.2.25": resident_address.CustomerAddress.address,
+                "S1.A.1.2.26": resident_address.AddressWard.name,
+                "S1.A.1.2.27": resident_address.AddressDistrict.name,
+                "S1.A.1.2.28": resident_address.AddressProvince.name,
+                "S1.A.1.2.29": resident_address.AddressCountry.name,
+                "S1.A.1.2.1": cust.Customer.mobile_number,
+                "S1.A.1.5.4": cust.Career.name,
+            })
+            # Những field option
+            if cust.Customer.telephone_number:
+                data_request.update({"S1.A.1.2.2": cust.Customer.telephone_number})
+            if cust.Customer.email:
+                data_request.update({"S1.A.1.2.3": cust.Customer.email})
 
         # Cam kết
         time = today()
@@ -531,12 +562,6 @@ class CtrTemplateDetail(BaseController):
             "S1.A.1.11.12": f'{time.year}',
 
         })
-
-        # Những field option
-        if cust.Customer.telephone_number:
-            data_request.update({"S1.A.1.2.2": cust.Customer.telephone_number})
-        if cust.Customer.email:
-            data_request.update({"S1.A.1.2.3": cust.Customer.email})
 
         data_tms = self.call_repos(
             await repo_form(data_request=data_request, path=PATH_FORM_5))
@@ -550,7 +575,7 @@ class CtrTemplateDetail(BaseController):
         data_request = {}
         customer_db = self.call_repos(await repo_customer_info(cif_id=cif_id, session=self.oracle_session))
         customer_address = self.call_repos(await repo_customer_address(cif_id=cif_id, session=self.oracle_session))
-        cust = customer_db[0]
+
         # Tách địa chỉ tạm trú và địa chỉ thường trú
         staying_address, resident_address = None, None
 
@@ -559,29 +584,36 @@ class CtrTemplateDetail(BaseController):
                 staying_address = address
             if address.CustomerAddress.address_type_id == RESIDENT_ADDRESS_CODE:
                 resident_address = address
-        data_request.update({
-            "S1.A.1.1.3": cust.Customer.full_name_vn,
-            "S1.A.1.2.4": ["Nam/Male"] if cust.CustomerGender.name == "Nam" else ["Nữ/Female"],
-            "S1.A.1.2.8": datetime_to_string(cust.CustomerIndividualInfo.date_of_birth, DATE_INPUT_OUTPUT_EKYC_FORMAT),
-            "S1.A.1.2.6": cust.AddressProvince.name,
-            "S1.A.1.2.20": cust.AddressCountry.name,
-            "S1.A.1.3.2": cust.CustomerIdentity.identity_num,
-            "S1.A.1.3.3": datetime_to_string(cust.CustomerIdentity.issued_date, DATE_INPUT_OUTPUT_EKYC_FORMAT),
-            "S1.A.1.3.4": cust.PlaceOfIssue.name,
-            "S1.A.1.2.15": staying_address.CustomerAddress.address,
-            "S1.A.1.2.16": staying_address.AddressWard.name,
-            "S1.A.1.2.17": staying_address.AddressDistrict.name,
-            "S1.A.1.2.18": staying_address.AddressProvince.name,
-            "S1.A.1.2.19": staying_address.AddressCountry.name,
-            "S1.A.1.2.25": resident_address.CustomerAddress.address,
-            "S1.A.1.2.26": resident_address.AddressWard.name,
-            "S1.A.1.2.27": resident_address.AddressDistrict.name,
-            "S1.A.1.2.28": resident_address.AddressProvince.name,
-            "S1.A.1.2.29": resident_address.AddressCountry.name,
-            "S1.A.1.2.1": cust.Customer.mobile_number,
-            "S1.A.1.5.4": cust.Career.name,
-
-        })
+        if customer_db:
+            cust = customer_db[0]
+            data_request.update({
+                "S1.A.1.1.3": cust.Customer.full_name_vn,
+                "S1.A.1.2.4": ["Nam/Male"] if cust.CustomerGender.name == "Nam" else ["Nữ/Female"],
+                "S1.A.1.2.8": datetime_to_string(cust.CustomerIndividualInfo.date_of_birth,
+                                                 DATE_INPUT_OUTPUT_EKYC_FORMAT),
+                "S1.A.1.2.6": cust.AddressProvince.name,
+                "S1.A.1.2.20": cust.AddressCountry.name,
+                "S1.A.1.3.2": cust.CustomerIdentity.identity_num,
+                "S1.A.1.3.3": datetime_to_string(cust.CustomerIdentity.issued_date, DATE_INPUT_OUTPUT_EKYC_FORMAT),
+                "S1.A.1.3.4": cust.PlaceOfIssue.name,
+                "S1.A.1.2.15": staying_address.CustomerAddress.address,
+                "S1.A.1.2.16": staying_address.AddressWard.name,
+                "S1.A.1.2.17": staying_address.AddressDistrict.name,
+                "S1.A.1.2.18": staying_address.AddressProvince.name,
+                "S1.A.1.2.19": staying_address.AddressCountry.name,
+                "S1.A.1.2.25": resident_address.CustomerAddress.address,
+                "S1.A.1.2.26": resident_address.AddressWard.name,
+                "S1.A.1.2.27": resident_address.AddressDistrict.name,
+                "S1.A.1.2.28": resident_address.AddressProvince.name,
+                "S1.A.1.2.29": resident_address.AddressCountry.name,
+                "S1.A.1.2.1": cust.Customer.mobile_number,
+                "S1.A.1.5.4": cust.Career.name,
+            })
+            # Những field option
+            if cust.Customer.telephone_number:
+                data_request.update({"S1.A.1.2.2": cust.Customer.telephone_number})
+            if cust.Customer.email:
+                data_request.update({"S1.A.1.2.3": cust.Customer.email})
 
         # Cam kết
         time = today()
@@ -591,12 +623,6 @@ class CtrTemplateDetail(BaseController):
             "S1.A.1.11.12": f'{time.year}',
 
         })
-
-        # Những field option
-        if cust.Customer.telephone_number:
-            data_request.update({"S1.A.1.2.2": cust.Customer.telephone_number})
-        if cust.Customer.email:
-            data_request.update({"S1.A.1.2.3": cust.Customer.email})
 
         data_tms = self.call_repos(
             await repo_form(data_request=data_request, path=PATH_FORM_6))

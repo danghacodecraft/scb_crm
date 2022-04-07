@@ -7,7 +7,7 @@ from fastapi.security import (
 
 from app.api.base.except_custom import ExceptionHandle
 from app.api.v1.endpoints.user.repository import repos_check_token
-from app.api.v1.endpoints.user.schema import UserInfoResponse
+from app.api.v1.endpoints.user.schema import AuthResponse, UserInfoResponse
 from app.utils.error_messages import ERROR_INVALID_TOKEN
 
 bearer_token = HTTPBearer()
@@ -28,7 +28,7 @@ async def _get_authorization_header(
             errors=[{'loc': None, 'msg': ERROR_INVALID_TOKEN}],
             status_code=status.HTTP_400_BAD_REQUEST
         )
-    return UserInfoResponse(**result_check_token.data)
+    return AuthResponse(**result_check_token.data)
 
 
 async def _get_authorization_header_optional(

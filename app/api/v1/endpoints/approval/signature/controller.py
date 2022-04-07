@@ -110,10 +110,11 @@ class CtrSignature(BaseController):
 
     async def ctr_compare_signature(self, cif_id: str, uuid_ekyc: CompareSignatureRequest):
         uuid_compare_ekyc = uuid_ekyc.uuid_ekyc
-
+        uuid = uuid_ekyc.uuid
         compare_signatures = self.call_repos(await repos_compare_signature(
             cif_id=cif_id,
             uuid_ekyc=uuid_compare_ekyc,
+            uuid=uuid,
             session=self.oracle_session,
             user_id=self.current_user.code
         ))

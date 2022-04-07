@@ -164,7 +164,13 @@ class FatcaCategory(Base):
 class MethodAuthentication(Base):
     __tablename__ = 'crm_method_authen'
     __table_args__ = {
-        'comment': 'Danh mục Hình thức xác thực\n\n  1. Vân tay\n  2. Khuôn mặt\n  3. SMS\n  4. SOFT TOKEN\n  5. HARD TOKEN'}
+        'comment': 'Danh mục Hình thức xác thực\n\n  '
+                   '1. Vân tay\n  '
+                   '2. Khuôn mặt\n  '
+                   '3. SMS\n  '
+                   '4. SOFT TOKEN\n  '
+                   '5. HARD TOKEN'
+    }
 
     id = Column('method_authen_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "),
                 comment='ID chính')
@@ -231,7 +237,10 @@ class HrmEmployee(Base):
 class StaffType(Base):
     __tablename__ = 'crm_staff_type'
     __table_args__ = {
-        'comment': 'Danh mục Loại nhân viên giới thiệu:\n\n  1. Nhân viên kinh doanh\n  2. Nhân viên giới thiệu gian tiếp'}
+        'comment': 'Danh mục Loại nhân viên giới thiệu:\n\n  '
+                   '1. Nhân viên kinh doanh\n  '
+                   '2. Nhân viên giới thiệu gian tiếp'
+    }
 
     id = Column('staff_type_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "), comment='ID chính')
     code = Column('staff_type_code', VARCHAR(50), nullable=False, comment='Mã code')
@@ -306,10 +315,14 @@ class Stage(Base):
     created_at = Column(DateTime, comment='Ngày tạo bước thực hiện')
     updated_at = Column(DateTime, comment='Ngày cập nhật bước thực hiện')
 
+    action_id = Column('stage_action_id', ForeignKey('crm_stage_action.stage_action_id'),
+                       comment='Mã hành động')
+
     business_type = relationship('BusinessType')
     sla = relationship('Sla')
     parent = relationship('Stage', remote_side=[id])
     status = relationship('StageStatus')
+    action = relationship('StageAction')
 
 
 class StageStatus(Base):
@@ -436,11 +449,17 @@ class TransactionStage(Base):
     transaction_stage_phase_code = Column(VARCHAR(50), comment='Mã bước thực hiện kiểu chữ(vd: IN, DUYET)')
     transaction_stage_phase_name = Column(VARCHAR(250), comment='Tên bước hiện')
     responsible_flag = Column(NUMBER(1, 0, False), comment='Cờ người chịu trách nhiệm của bước thực hiện')
+    action_id = Column(
+        'transaction_stage_action_id',
+        ForeignKey('crm_transaction_stage_action.transaction_stage_action_id'),
+        comment='Mã hành động'
+    )
 
     business_type = relationship('BusinessType')
     lane = relationship('TransactionStageLane')
     phase = relationship('TransactionStagePhase')
     status = relationship('TransactionStageStatus')
+    action = relationship('TransactionStageAction')
 
 
 class StagePhase(Base):
@@ -463,11 +482,58 @@ class StageLane(Base):
                         2. Phòng B
                         3. Khối A'''}
 
-    lane_id = Column('lane_id', ForeignKey('crm_lane.lane_id'), comment='Mã luồng xử lý của bước thực hiện', primary_key=True)
+    lane_id = Column(
+        'lane_id', ForeignKey('crm_lane.lane_id'), comment='Mã luồng xử lý của bước thực hiện', primary_key=True
+    )
     stage_id = Column('stage_id', ForeignKey('crm_stage.stage_id'), comment='Mã bước  thực hiện', primary_key=True)
-    branch_id = Column('branch_id', VARCHAR(36), ForeignKey('crm_branch.branch_id'), comment='ID Chi nhánh', primary_key=True)
+    branch_id = Column(
+        'branch_id', VARCHAR(36), ForeignKey('crm_branch.branch_id'), comment='ID Chi nhánh', primary_key=True
+    )
     department_id = Column('department_id', VARCHAR(36), nullable=False, comment='ID Phòng ban')
 
     lane = relationship('Lane')
     stage = relationship('Stage')
     branch = relationship('Branch')
+
+
+class StageAction(Base):
+    __tablename__ = 'crm_stage_action'
+    id = Column(
+        'stage_action_id', VARCHAR(36),
+        primary_key=True, comment='Mã gen tự động hành động',
+        server_default=text("sys_guid() ")
+    )
+    code = Column('stage_action_code', VARCHAR(50), nullable=False, comment='Mã hành động')
+    name = Column('stage_action_name', VARCHAR(250), nullable=False, comment='Tên hành động')
+    group_id = Column('stage_action_group_id', VARCHAR(36), comment='Nhóm hành động')
+    status_id = Column(
+        'stage_status_id', VARCHAR(36),
+        ForeignKey('crm_stage_status.stage_status_id'),
+        nullable=False, comment='Trạng thái hành động'
+    )
+    created_at = Column('created_at', DateTime, nullable=False, comment='Ngày tạo')
+    updated_at = Column('updated_at', DateTime, comment='Ngày cập nhật')
+
+    status = relationship('StageStatus')
+
+
+class TransactionStageAction(Base):
+    __tablename__ = 'crm_transaction_stage_action'
+
+    id = Column(
+        'transaction_stage_action_id', VARCHAR(36),
+        primary_key=True, comment='Mã gen tự động hành động',
+        server_default=text("sys_guid() ")
+    )
+    code = Column('transaction_stage_action_code', VARCHAR(50), nullable=False, comment='Mã hành động')
+    name = Column('transaction_stage_action_name', VARCHAR(250), nullable=False, comment='Tên hành động')
+    group_id = Column('transaction_stage_action_group_id', VARCHAR(36), comment='Nhóm hành động')
+    status_id = Column(
+        'transaction_stage_status_id', VARCHAR(36),
+        ForeignKey('crm_transaction_stage_status.transaction_stage_status_id'),
+        comment='Trạng thái hành động', nullable=False
+    )
+    created_at = Column('created_at', DateTime, nullable=False, comment='Ngày tạo')
+    updated_at = Column('updated_at', DateTime, comment='Ngày cập nhật')
+
+    status = relationship('TransactionStageStatus')
