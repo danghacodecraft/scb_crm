@@ -32,7 +32,8 @@ class ServiceDWH:
             async with aiohttp.ClientSession() as session:
                 async with session.request(
                         method=method,
-                        url=url
+                        url=url,
+                        headers=self.headers
                 ) as res:
                     # handle response
                     if res.status != status.HTTP_200_OK:
