@@ -147,12 +147,14 @@ async def repos_get_data_model_config(session: Session, model: Base, country_id:
     ])
 
 
-async def write_transaction_log_and_update_booking(log_data: json,
-                                                   session: Session,
-                                                   business_form_id: str,
-                                                   customer_id: Optional[str] = None,
-                                                   account_id: Optional[str] = None,
-                                                   ) -> Tuple[bool, Optional[dict]]:
+async def write_transaction_log_and_update_booking(
+        log_data: json,
+        session: Session,
+        history_datas: List,
+        business_form_id: str,
+        customer_id: Optional[str] = None,
+        account_id: Optional[str] = None
+) -> Tuple[bool, Optional[dict]]:
     if customer_id:
         booking = session.execute(
             select(
@@ -198,7 +200,8 @@ async def write_transaction_log_and_update_booking(log_data: json,
             save_flag=True,
             created_at=now(),
             updated_at=now(),
-            form_data=log_data
+            form_data=log_data,
+            log_data=history_datas
         )))
         response = dict(
             created_at=now(),
@@ -215,7 +218,7 @@ async def write_transaction_log_and_update_booking(log_data: json,
                 BookingBusinessForm.booking_id == booking.id
             ))
         ).scalar()
-        # Cập nhật đã hoàn thành Tab này]
+        # Cập nhật đã hoàn thành Tab này
         booking_business_form.form_data = log_data
         booking_business_form.update_at = now()
         response = dict(
