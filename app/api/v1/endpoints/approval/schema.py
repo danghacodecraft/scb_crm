@@ -50,14 +50,16 @@ class IdentityFaceImage(BaseSchema):
 
 
 class FaceAuthenticationResponse(BaseSchema):
-    compare_face_url: Optional[str] = Field(..., description='URL khuôn mặt upload')
-    compare_face_uuid: Optional[str] = Field(..., description='UUID khuôn mặt upload')
+    compare_url: Optional[str] = Field(..., description='URL khuôn mặt upload')
+    compare_uuid: Optional[str] = Field(..., description='UUID khuôn mặt upload')
     created_at: Optional[datetime] = Field(..., description='Thời gian tạo')
-    identity_face_images: List[IdentityFaceImage] = Field(..., description='Danh sách hình ảnh')
+    identity_images: List[IdentityFaceImage] = Field(..., description='Danh sách hình ảnh')
 
 
 class AuthenticationResponse(BaseSchema):
     face: FaceAuthenticationResponse
+    finger: FaceAuthenticationResponse
+    signature: FaceAuthenticationResponse
 
 
 class CifApprovalSuccessResponse(BaseSchema):
