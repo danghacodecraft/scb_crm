@@ -17,13 +17,18 @@ class CtrKSS(BaseController):
 
     async def ctr_get_list_kss(self, query_params: QueryParamsKSSRequest):
         current_user = self.current_user
-        permission_ekyc = []
-        for item in current_user.menu_list:
-            if item.menu_name == "EKYC":
-                permission_ekyc.extend(item.group_role_list)
-        for permission in permission_ekyc:
-            if permission.group_role_code == "EKYC_VIEW" and not permission.is_permission:
-                self.response_exception(msg="hmmmmmmmmmmmmm", error_status_code=status.HTTP_404_NOT_FOUND)
+
+        is_success, response = self.check_permission(
+            current_user=current_user,
+            menu_code='EKYC',
+            group_role_code="EKYC_IN")
+
+        if not is_success:
+            return self.response_exception(
+                msg='Permission Denied',
+                loc='LIST KSS',
+                detail=response['msg'],
+                error_status_code=status.HTTP_404_NOT_FOUND)
 
         query_data = {}
 
