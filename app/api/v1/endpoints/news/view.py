@@ -30,7 +30,7 @@ async def view_upload_scb_news(
         request: NewsImageRequest = Depends(NewsImageRequest.get_upload_request),
 ):
     (
-        avatar_uuid, thumbnail_uuid, current_user, title, news_category_id, content, summary, start_date,
+        avatar_uuid, current_user, title, news_category_id, content, summary, start_date,
         expired_date, active_flag
     ) = request
     data = {
@@ -45,7 +45,6 @@ async def view_upload_scb_news(
     news_data = await CtrNews(current_user).ctr_save_news(
         request_data=data,
         avatar_uuid=avatar_uuid,
-        thumbnail_uuid=thumbnail_uuid,
         current_user=current_user
     )
 
@@ -66,7 +65,7 @@ async def view_update_scb_news(
         news_id: str = Path(..., description='News ID')
 ):
     (
-        avatar_uuid, thumbnail_uuid, current_user, title, news_category_id, content, summary, start_date,
+        avatar_uuid, current_user, title, news_category_id, content, summary, start_date,
         expired_date, active_flag
     ) = request
     data = {
@@ -82,7 +81,6 @@ async def view_update_scb_news(
         news_id=news_id,
         request_data=data,
         avatar_uuid=avatar_uuid,
-        thumbnail_uuid=thumbnail_uuid,
         current_user=current_user
     )
 
