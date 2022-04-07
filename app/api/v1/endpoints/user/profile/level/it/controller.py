@@ -12,7 +12,7 @@ class CtrIt(BaseController):
                 loc="current_user"
             )
 
-        employee_id = self.current_user.code
+        employee_id = self.current_user.user_info.code
 
         is_success, it = self.call_repos(
             await repos_it(
