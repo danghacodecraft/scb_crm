@@ -75,13 +75,13 @@ class CtrNews(BaseController):
             model_id=request_data["news_category_id"],
             loc="news_category_id",
         )
-
+        print(current_user)
         data_update = {
             "id": news_id,
             "title": request_data["tilte"],
             "category_id": request_data["news_category_id"],
-            "user_id": current_user.code,
-            "user_name": current_user.name,
+            "user_id": current_user.user_info.code,
+            "user_name": current_user.user_info.name,
             "content": request_data["content"],
             "summary": request_data["summary"],
             "start_date": request_data["start_date"],
