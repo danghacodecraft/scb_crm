@@ -12,7 +12,7 @@ class CtrProfile(BaseController):
                 loc="current_user"
             )
 
-        employee_id = self.current_user.code
+        employee_id = self.current_user.user_info.code
 
         is_success, profile = self.call_repos(
             await repos_profile(

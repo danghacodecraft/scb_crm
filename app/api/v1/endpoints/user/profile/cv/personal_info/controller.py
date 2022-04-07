@@ -16,7 +16,7 @@ class CtrPersonalInfo(BaseController):
                 loc="current_user"
             )
 
-        employee_id = self.current_user.code
+        employee_id = self.current_user.user_info.code
 
         is_success, personal_info = self.call_repos(
             await repos_personal_info(
