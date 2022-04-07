@@ -15,7 +15,7 @@ class CtrTrainingInSCB(BaseController):
                 loc="current_user"
             )
 
-        employee_id = self.current_user.code
+        employee_id = self.current_user.user_info.code
 
         is_success, training_in_scbs = self.call_repos(
             await repos_training_in_scb(
