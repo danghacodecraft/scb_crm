@@ -280,7 +280,7 @@ class CtrApproval(BaseController):
         authentication = dict(
             face=face_authentication,
             signature=signature_authentication,
-            finger=fingerprint_authentication
+            fingerprint=fingerprint_authentication
         )
 
         ################################################################################################################
