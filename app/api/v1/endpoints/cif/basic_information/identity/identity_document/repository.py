@@ -386,7 +386,7 @@ async def repos_save_identity(
         saving_transaction_sender: dict,
         saving_transaction_receiver: dict,
         request_data: dict,
-        history_datas,
+        history_datas: List,
         current_user: UserInfoResponse,
         session: Session
 ) -> ReposReturn:
