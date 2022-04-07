@@ -18,6 +18,9 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
 from app.third_parties.oracle.models.cif.basic_information.personal.model import (
     CustomerIndividualInfo
 )
+from app.third_parties.oracle.models.cif.form.model import (
+    Booking, BookingBusinessForm, BookingCustomer
+)
 from app.third_parties.oracle.models.master_data.address import AddressCountry
 from app.third_parties.oracle.models.master_data.customer import (
     CustomerClassification, CustomerEconomicProfession, CustomerGender,
@@ -83,96 +86,23 @@ async def repos_get_cif_info(cif_id: str, session: Session) -> ReposReturn:
 
 
 async def repos_profile_history(cif_id: str, session: Session) -> ReposReturn:
-    customer_info = session.execute(
+    histories = session.execute(
         select(
-            Customer
-        ).filter(
-            Customer.id == cif_id,
-            Customer.active_flag == 1
+            BookingCustomer,
+            Booking,
+            BookingBusinessForm
         )
-    ).first()
+        .join(Booking, BookingCustomer.booking_id == Booking.id)
+        .join(BookingBusinessForm, Booking.id == BookingBusinessForm.booking_id)
+        .filter(
+            BookingCustomer.customer_id == cif_id
+        )
+    ).all()
 
-    if not customer_info:
-        return ReposReturn(is_error=True, msg=ERROR_CIF_ID_NOT_EXIST, loc='cif_id')
+    # if not histories:
+    #     return ReposReturn(is_error=True, msg=ERROR_CIF_ID_NOT_EXIST, loc='cif_id')
 
-    return ReposReturn(data=[
-        {
-            "log_date": "2021-12-15",
-            "log_detail": [
-                {
-                    "record_code": "[#CRM_1234567890123456]",
-                    "record_name": "Tu chỉnh CIF",
-                    "status": {
-                        "id": "02",
-                        "code": "02",
-                        "name": "Đã duyệt"
-                    },
-                    "branch": {
-                        "id": "079",
-                        "code": "079",
-                        "name": "SCB Sài Gòn"
-                    },
-                    "created_by": "Nguyễn Văn B",
-                    "position": {
-                        "id": "01",
-                        "code": "01",
-                        "name": "Kiểm soát viên"
-                    },
-                    "created_at": "2021-12-15T14:15:22Z",
-                    "completed_at": "2021-12-15T15:05:22Z"
-                },
-                {
-                    "record_code": "[#CRM_1234567890123452]",
-                    "record_name": "Mở tài khoản thanh toán",
-                    "status": {
-                        "id": "01",
-                        "code": "01",
-                        "name": "Hủy"
-                    },
-                    "branch": {
-                        "id": "079",
-                        "code": "079",
-                        "name": "SCB Sài Gòn"
-                    },
-                    "created_by": "Nguyễn Văn B",
-                    "position": {
-                        "id": "01",
-                        "code": "01",
-                        "name": "Kiểm soát viên"
-                    },
-                    "created_at": "2021-12-15T14:15:22Z",
-                    "completed_at": "2021-12-15T14:45:22Z"
-                },
-            ]
-        },
-        {
-            "log_date": "2021-12-16",
-            "log_detail": [
-                {
-                    "record_code": "[#CRM_1234567890123452]",
-                    "record_name": "Mở tài khoản thanh toán",
-                    "status": {
-                        "id": "01",
-                        "code": "01",
-                        "name": "Hủy"
-                    },
-                    "branch": {
-                        "id": "079",
-                        "code": "079",
-                        "name": "SCB Sài Gòn"
-                    },
-                    "created_by": "Nguyễn Văn B",
-                    "position": {
-                        "id": "01",
-                        "code": "01",
-                        "name": "Kiểm soát viên"
-                    },
-                    "created_at": "2021-12-15T14:15:22Z",
-                    "completed_at": "2021-12-15T14:45:22Z"
-                },
-            ],
-        }
-    ])
+    return ReposReturn(data=histories)
 
 
 async def repos_customer_information(cif_id: str, session: Session) -> ReposReturn:

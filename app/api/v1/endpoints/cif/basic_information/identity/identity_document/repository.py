@@ -386,6 +386,7 @@ async def repos_save_identity(
         saving_transaction_sender: dict,
         saving_transaction_receiver: dict,
         request_data: dict,
+        history_datas: List,
         current_user: UserInfoResponse,
         session: Session
 ) -> ReposReturn:
@@ -456,6 +457,7 @@ async def repos_save_identity(
             )
 
         new_booking_id = generate_uuid()
+        print(type(orjson_dumps(history_datas)))
 
         # create booking & log
         session.add_all([
@@ -480,6 +482,7 @@ async def repos_save_identity(
                 business_form_id=BUSINESS_FORM_TTCN_GTDD_GTDD,
                 save_flag=True,  # Save_flag đổi lại thành True do Business Form giờ là những Tab nhỏ nhiều cấp
                 form_data=orjson_dumps(request_data),
+                log_data=orjson_dumps(history_datas),
                 created_at=now(),
                 updated_at=now()
             ),
@@ -734,10 +737,10 @@ async def repos_upload_identity_document_and_ocr(
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_EKYC, detail=ocr_response.get('message', ''))
 
     file_response = await service_file.upload_file(file=image_file, name=image_file_name)
-    
+
     if not file_response:
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_FILE)
-    
+
     if identity_type == EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD:
         response_data = await mapping_ekyc_front_side_identity_card_ocr_data(
             image_url=file_response['file_url'],

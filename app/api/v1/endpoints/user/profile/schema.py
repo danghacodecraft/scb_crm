@@ -6,7 +6,8 @@ from app.api.base.schema import BaseSchema
 
 
 class ProfileResponse(BaseSchema):
-    avatar: str = Field(None, description='Avatar')
+    avatar: Optional[str] = Field(None, description='Avatar')
+    gender: Optional[str] = Field(..., description="Giới tính")
     full_name_vn: Optional[str] = Field(..., description="Họ tên")
     email: Optional[str] = Field(..., description="Email")
     mobile_number: Optional[str] = Field(..., description="Điện thoại")

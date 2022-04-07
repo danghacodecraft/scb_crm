@@ -1,11 +1,12 @@
 from sqlalchemy import VARCHAR, Column, DateTime, ForeignKey, text
-from sqlalchemy.dialects.oracle import NCLOB, NUMBER
+from sqlalchemy.dialects.oracle import BLOB, NCLOB, NUMBER
 from sqlalchemy.orm import relationship
 
 from app.third_parties.oracle.base import Base
 from app.third_parties.oracle.models.master_data.others import (  # noqa
     BusinessForm, BusinessType
 )
+from app.utils.functions import orjson_dumps
 
 
 class TransactionDaily(Base):
@@ -148,7 +149,7 @@ class BookingBusinessForm(Base):
     save_flag = Column(NUMBER(1, 0, False), nullable=False)
     created_at = Column(DateTime, nullable=False)
     updated_at = Column(DateTime)
-    form_data = Column(NCLOB, comment='Dữ liệu template nhập')
-    log_data = Column(NCLOB, comment='Data lưu Lịch sử hồ sơ')
+    form_data = Column(BLOB, comment='Dữ liệu template nhập')
+    log_data = Column(BLOB, comment='Data lưu Lịch sử hồ sơ', default=orjson_dumps([]))
     booking = relationship('Booking')
     business_form = relationship('BusinessForm')

@@ -25,6 +25,7 @@ class CtrProfile(BaseController):
 
         profile = {
             "avatar": profile['avatar'],
+            "gender": profile['curriculum_vitae']['individual']['gender'],
             "full_name_vn": profile['emp_name'],
             "email": profile['email'],
             "mobile_number": profile['mobile'],
