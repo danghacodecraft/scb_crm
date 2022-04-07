@@ -18,6 +18,9 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
 from app.third_parties.oracle.models.cif.basic_information.personal.model import (
     CustomerIndividualInfo
 )
+from app.third_parties.oracle.models.cif.form.model import (
+    Booking, BookingBusinessForm, BookingCustomer
+)
 from app.third_parties.oracle.models.master_data.address import AddressCountry
 from app.third_parties.oracle.models.master_data.customer import (
     CustomerClassification, CustomerEconomicProfession, CustomerGender,
@@ -27,11 +30,14 @@ from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import (
     KYCLevel, MaritalStatus
 )
+from app.utils.constant.cif import PROFILE_HISTORY_STATUS
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_SOA, ERROR_CIF_ID_NOT_EXIST, ERROR_CIF_NUMBER_EXIST,
     ERROR_CIF_NUMBER_INVALID, ERROR_CIF_NUMBER_NOT_EXIST, MESSAGE_STATUS
 )
-from app.utils.functions import dropdown
+from app.utils.functions import (
+    datetime_to_string, dropdown, orjson_loads, string_to_datetime
+)
 
 
 async def repos_get_initializing_customer(cif_id: str, session: Session) -> ReposReturn:
@@ -83,96 +89,52 @@ async def repos_get_cif_info(cif_id: str, session: Session) -> ReposReturn:
 
 
 async def repos_profile_history(cif_id: str, session: Session) -> ReposReturn:
-    customer_info = session.execute(
+    histories = session.execute(
         select(
-            Customer
-        ).filter(
-            Customer.id == cif_id,
-            Customer.active_flag == 1
+            BookingCustomer,
+            Booking,
+            BookingBusinessForm
         )
-    ).first()
+        .join(Booking, BookingCustomer.booking_id == Booking.id)
+        .join(BookingBusinessForm, Booking.id == BookingBusinessForm.booking_id)
+        .filter(
+            BookingCustomer.customer_id == cif_id
+        )
+    ).all()
 
-    if not customer_info:
+    if not histories:
         return ReposReturn(is_error=True, msg=ERROR_CIF_ID_NOT_EXIST, loc='cif_id')
+    full_logs = []
+    for booking_customer, booking, booking_business_form in histories:
+        full_logs.append({
+            datetime_to_string(booking_business_form.created_at): orjson_loads(booking_business_form.log_data)
+        })
 
-    return ReposReturn(data=[
-        {
-            "log_date": "2021-12-15",
-            "log_detail": [
-                {
-                    "record_code": "[#CRM_1234567890123456]",
-                    "record_name": "Tu chỉnh CIF",
-                    "status": {
-                        "id": "02",
-                        "code": "02",
-                        "name": "Đã duyệt"
-                    },
-                    "branch": {
-                        "id": "079",
-                        "code": "079",
-                        "name": "SCB Sài Gòn"
-                    },
-                    "created_by": "Nguyễn Văn B",
-                    "position": {
-                        "id": "01",
-                        "code": "01",
-                        "name": "Kiểm soát viên"
-                    },
-                    "created_at": "2021-12-15T14:15:22Z",
-                    "completed_at": "2021-12-15T15:05:22Z"
-                },
-                {
-                    "record_code": "[#CRM_1234567890123452]",
-                    "record_name": "Mở tài khoản thanh toán",
-                    "status": {
-                        "id": "01",
-                        "code": "01",
-                        "name": "Hủy"
-                    },
-                    "branch": {
-                        "id": "079",
-                        "code": "079",
-                        "name": "SCB Sài Gòn"
-                    },
-                    "created_by": "Nguyễn Văn B",
-                    "position": {
-                        "id": "01",
-                        "code": "01",
-                        "name": "Kiểm soát viên"
-                    },
-                    "created_at": "2021-12-15T14:15:22Z",
-                    "completed_at": "2021-12-15T14:45:22Z"
-                },
-            ]
-        },
-        {
-            "log_date": "2021-12-16",
-            "log_detail": [
-                {
-                    "record_code": "[#CRM_1234567890123452]",
-                    "record_name": "Mở tài khoản thanh toán",
-                    "status": {
-                        "id": "01",
-                        "code": "01",
-                        "name": "Hủy"
-                    },
-                    "branch": {
-                        "id": "079",
-                        "code": "079",
-                        "name": "SCB Sài Gòn"
-                    },
-                    "created_by": "Nguyễn Văn B",
-                    "position": {
-                        "id": "01",
-                        "code": "01",
-                        "name": "Kiểm soát viên"
-                    },
-                    "created_at": "2021-12-15T14:15:22Z",
-                    "completed_at": "2021-12-15T14:45:22Z"
-                },
-            ],
-        }
-    ])
+    datas = []
+    for full_log in full_logs:
+        for created_at, value in full_log.items():
+            log_details = []
+            for log in value:
+                log_details.append(dict(
+                    description=log['description'],
+                    completed_at=log['completed_at'],
+                    started_at=created_at,
+                    status=PROFILE_HISTORY_STATUS[log['status']],
+                    branch_id=log['branch_id'],
+                    branch_code=log['branch_code'],
+                    branch_name=log['branch_name'],
+                    user_id=log['user_id'],
+                    user_name=log['user_name'],
+                    position_id=log['position_id'],
+                    position_code=log['position_code'],
+                    position_name=log['position_name']
+                ))
+            datas.append(dict(
+                created_at=string_to_datetime(created_at),
+                log_detail=log_details
+            ))
+
+    return ReposReturn(data=datas)
 
 
 async def repos_customer_information(cif_id: str, session: Session) -> ReposReturn:
