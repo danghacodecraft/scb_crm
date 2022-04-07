@@ -30,14 +30,11 @@ from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import (
     KYCLevel, MaritalStatus
 )
-from app.utils.constant.cif import PROFILE_HISTORY_STATUS
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_SOA, ERROR_CIF_ID_NOT_EXIST, ERROR_CIF_NUMBER_EXIST,
     ERROR_CIF_NUMBER_INVALID, ERROR_CIF_NUMBER_NOT_EXIST, MESSAGE_STATUS
 )
-from app.utils.functions import (
-    datetime_to_string, dropdown, orjson_loads, string_to_datetime
-)
+from app.utils.functions import dropdown
 
 
 async def repos_get_initializing_customer(cif_id: str, session: Session) -> ReposReturn:
@@ -102,39 +99,10 @@ async def repos_profile_history(cif_id: str, session: Session) -> ReposReturn:
         )
     ).all()
 
-    if not histories:
-        return ReposReturn(is_error=True, msg=ERROR_CIF_ID_NOT_EXIST, loc='cif_id')
-    full_logs = []
-    for booking_customer, booking, booking_business_form in histories:
-        full_logs.append({
-            datetime_to_string(booking_business_form.created_at): orjson_loads(booking_business_form.log_data)
-        })
+    # if not histories:
+    #     return ReposReturn(is_error=True, msg=ERROR_CIF_ID_NOT_EXIST, loc='cif_id')
 
-    datas = []
-    for full_log in full_logs:
-        for created_at, value in full_log.items():
-            log_details = []
-            for log in value:
-                log_details.append(dict(
-                    description=log['description'],
-                    completed_at=log['completed_at'],
-                    started_at=created_at,
-                    status=PROFILE_HISTORY_STATUS[log['status']],
-                    branch_id=log['branch_id'],
-                    branch_code=log['branch_code'],
-                    branch_name=log['branch_name'],
-                    user_id=log['user_id'],
-                    user_name=log['user_name'],
-                    position_id=log['position_id'],
-                    position_code=log['position_code'],
-                    position_name=log['position_name']
-                ))
-            datas.append(dict(
-                created_at=string_to_datetime(created_at),
-                log_detail=log_details
-            ))
-
-    return ReposReturn(data=datas)
+    return ReposReturn(data=histories)
 
 
 async def repos_customer_information(cif_id: str, session: Session) -> ReposReturn:
