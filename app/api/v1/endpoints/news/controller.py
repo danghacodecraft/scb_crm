@@ -184,17 +184,18 @@ class CtrNews(BaseController):
                 url_avatars.append(news_data.News.avatar_uuid)
             res_data.append(data)
 
-        url_avatars = await service_file.download_multi_file(url_avatars)
+        if len(url_avatars):
+            url_avatars = await service_file.download_multi_file(url_avatars)
 
-        for avatar_item in url_avatars:
-            url_avatar_dict.update({
-                avatar_item["uuid"]: avatar_item["file_url"]
-            })
-        for i in res_data:
-            if i["avatar_uuid"] is not None:
-                i.update({
-                    "avatar_uuid": url_avatar_dict[f'{i["avatar_uuid"]}']
+            for avatar_item in url_avatars:
+                url_avatar_dict.update({
+                    avatar_item["uuid"]: avatar_item["file_url"]
                 })
+            for i in res_data:
+                if i["avatar_uuid"] is not None:
+                    i.update({
+                        "avatar_uuid": url_avatar_dict[f'{i["avatar_uuid"]}']
+                    })
 
         return self.response_paging(data={
             "num_news": len(list_news["total_row"]),
