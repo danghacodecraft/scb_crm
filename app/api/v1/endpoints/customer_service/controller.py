@@ -1,3 +1,5 @@
+from starlette import status
+
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.customer_service.repository import (
     repos_create_post_check, repos_get_customer_detail,
@@ -14,6 +16,15 @@ from app.api.v1.endpoints.customer_service.schema import (
 class CtrKSS(BaseController):
 
     async def ctr_get_list_kss(self, query_params: QueryParamsKSSRequest):
+        current_user = self.current_user
+        permission_ekyc = []
+        for item in current_user.menu_list:
+            if item.menu_name == "EKYC":
+                permission_ekyc.extend(item.group_role_list)
+        for permission in permission_ekyc:
+            if permission.group_role_code == "EKYC_VIEW" and not permission.is_permission:
+                self.response_exception(msg="hmmmmmmmmmmmmm", error_status_code=status.HTTP_404_NOT_FOUND)
+
         query_data = {}
 
         query_data.update({'transaction_id': query_params.transaction_id}) if query_params.transaction_id else None

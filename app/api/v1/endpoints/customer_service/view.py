@@ -30,7 +30,7 @@ async def view_list_kss(
         query_params: QueryParamsKSSRequest = Depends(),
         current_user=Depends(get_current_user_from_header())  # noqa
 ):
-    kss_response = await CtrKSS().ctr_get_list_kss(
+    kss_response = await CtrKSS(current_user).ctr_get_list_kss(
         query_params=query_params
     )
 
