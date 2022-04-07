@@ -53,22 +53,22 @@ async def view_login(credentials: HTTPBasicCredentials = Depends(security)) -> R
     return ResponseData[AuthResponse](**data)
 
 
-@router.get(
-    path="/me/",
-    name="Detail current user",
-    description="Lấy thông tin user hiện tại",
-    responses=swagger_response(
-        response_model=ResponseData[UserInfoResponse],
-        success_status_code=status.HTTP_200_OK,
-        success_examples=EXAMPLE_RES_SUCCESS_DETAIL_USER
-    ),
-    deprecated=True
-)
-async def view_retrieve_current_user(
-        current_user=Depends(get_current_user_from_header())
-):
-    user_info = await CtrUser(is_init_oracle_session=False, current_user=current_user).ctr_get_current_user_info()
-    return ResponseData[UserInfoResponse](**user_info)
+# @router.get(
+#     path="/me/",
+#     name="Detail current user",
+#     description="Lấy thông tin user hiện tại",
+#     responses=swagger_response(
+#         response_model=ResponseData[UserInfoResponse],
+#         success_status_code=status.HTTP_200_OK,
+#         success_examples=EXAMPLE_RES_SUCCESS_DETAIL_USER
+#     ),
+#     deprecated=True
+# )
+# async def view_retrieve_current_user(
+#         current_user=Depends(get_current_user_from_header())
+# ):
+#     user_info = await CtrUser(is_init_oracle_session=False, current_user=current_user).ctr_get_current_user_info()
+#     return ResponseData[UserInfoResponse](**user_info)
 
 
 @router.get(
