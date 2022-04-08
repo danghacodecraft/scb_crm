@@ -42,6 +42,7 @@ class CtrFingers(BaseController):
         })
 
     async def ctr_compare_fingerprint(self, cif_id: str, uuid: CompareFingerPrintRequest):
+        current_user = self.current_user.user_info
         finger_id_ekycs = self.call_repos(await repos_get_id_finger_ekyc(cif_id=cif_id, session=self.oracle_session))
 
         id_fingers = []
@@ -77,7 +78,7 @@ class CtrFingers(BaseController):
                         "identity_image_id": finger.id,
                         "compare_image_url": uuid.uuid,
                         "similar_percent": item['accuracy'],
-                        "maker_id": self.current_user.code,
+                        "maker_id": current_user.code,
                         "maker_at": now()
                     }
                     data_compare.append(data_compare_image)

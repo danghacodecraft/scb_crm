@@ -26,6 +26,7 @@ from app.utils.functions import dropdown, generate_uuid, now, parse_file_uuid
 
 class CtrFingerPrint(BaseController):
     async def ctr_save_fingerprint(self, cif_id: str, finger_request: TwoFingerPrintRequest):
+        current_user = self.current_user.user_info
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
         is_create = True
@@ -83,7 +84,7 @@ class CtrFingerPrint(BaseController):
                 'finger_type_id': fingerprint.finger_type.id,
                 'vector_data': None,
                 'active_flag': ACTIVE_FLAG_CREATE_FINGERPRINT,
-                'maker_id': self.current_user.code,
+                'maker_id': current_user.code,
                 'maker_at': now(),
                 'identity_image_front_flag': FRONT_FLAG_CREATE_FINGERPRINT,
                 "ekyc_uuid": fingerprint.uuid_ekyc,
@@ -94,7 +95,7 @@ class CtrFingerPrint(BaseController):
                 "identity_image_id": identity_image_id,
                 "image_url": fingerprint.image_url,
                 "active_flag": ACTIVE_FLAG_ACTIVED,
-                'maker_id': self.current_user.code,
+                'maker_id': current_user.code,
                 "maker_at": now()
             })
 
@@ -121,7 +122,7 @@ class CtrFingerPrint(BaseController):
                 save_identity_image=save_identity_image,
                 save_identity_image_transaction=save_identity_image_transaction,
                 update_identity_image=update_identity_image,
-                created_by=self.current_user.username
+                created_by=current_user.username
             )
         )
         return self.response(data=data)

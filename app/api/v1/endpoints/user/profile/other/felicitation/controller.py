@@ -8,6 +8,7 @@ from app.utils.functions import datetime_to_date, string_to_datetime
 
 class CtrFelicitation(BaseController):
     async def ctr_felicitation(self):
+        current_user = self.current_user.user_info
         if not self.current_user:
             return self.response_exception(
                 msg=USER_NOT_EXIST,
@@ -15,7 +16,7 @@ class CtrFelicitation(BaseController):
                 loc="current_user"
             )
 
-        employee_id = self.current_user.user_info.code
+        employee_id = current_user.code
 
         is_success, felicitations = self.call_repos(
             await repos_felicitation(
