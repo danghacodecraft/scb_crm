@@ -224,7 +224,7 @@ def combine_full_address(number_and_street: str = None, ward: str = None, distri
     else:
         return number_and_street if number_and_street else ""
     if district or province:
-        if ward and ward != "":
+        if ward:
             address = address + f"{ward}, "
         if province:
             if district:
