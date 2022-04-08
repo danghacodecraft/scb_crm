@@ -45,7 +45,7 @@ class CIFStageResponse(BaseSchema):
 
 
 class IdentityFaceImage(BaseSchema):
-    url: str = Field(..., description="Link hình ảnh")
+    url: Optional[str] = Field(..., description="Link hình ảnh")
     similar_percent: Optional[int] = Field(..., description="Tỉ lệ chính xác của hình hiện tại so với `face_url`")
 
 
@@ -58,7 +58,7 @@ class FaceAuthenticationResponse(BaseSchema):
 
 class AuthenticationResponse(BaseSchema):
     face: FaceAuthenticationResponse
-    finger: FaceAuthenticationResponse
+    fingerprint: FaceAuthenticationResponse
     signature: FaceAuthenticationResponse
 
 
@@ -74,6 +74,8 @@ class FaceAuthenticationRequest(BaseSchema):
 
 class AuthenticationRequest(BaseSchema):
     face: FaceAuthenticationRequest = Field(None, description="[Thông tin xác thực] Khuôn mặt")
+    signature: FaceAuthenticationRequest = Field(None, description="[Thông tin xác thực] Chữ ký")
+    fingerprint: FaceAuthenticationRequest = Field(None, description="[Thông tin xác thực] Vân tay")
 
 
 class ApprovalRequest(BaseSchema):
