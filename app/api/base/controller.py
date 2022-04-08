@@ -17,8 +17,13 @@ from app.api.v1.endpoints.file.repository import (
 from app.api.v1.endpoints.repository import (
     repos_get_model_object_by_id_or_code, repos_get_model_objects_by_ids
 )
+from app.api.v1.endpoints.user.schema import AuthResponse
 from app.third_parties.oracle.base import Base, SessionLocal
 from app.third_parties.oracle.models.master_data.others import Branch
+from app.utils.constant.ekyc import is_success
+from app.utils.error_messages import (
+    ERROR_GROUP_ROLE_CODE, ERROR_MENU_CODE, MESSAGE_STATUS
+)
 from app.utils.functions import generate_uuid, now, orjson_dumps
 
 
@@ -381,7 +386,7 @@ class BaseController:
         """
         Tạo data TransactionDaily và các TransactionStage khác cho bước mở CIF khi tạo giấy tờ định danh
         """
-        current_user = self.current_user
+        current_user = self.current_user.user_info
 
         saving_transaction_stage_status_id = generate_uuid()
         saving_transaction_stage_id = generate_uuid()
@@ -491,3 +496,25 @@ class BaseController:
 
         return (saving_transaction_stage_status, saving_transaction_stage, saving_transaction_daily,
                 saving_transaction_sender, saving_transaction_receiver)
+
+    @staticmethod
+    def check_permission(current_user: AuthResponse, menu_code: str, group_role_code: str):
+        permissions = []
+        list_role_code = []
+        for item in current_user.menu_list:
+            if item.menu_name == menu_code:
+                permissions.extend(item.group_role_list)
+
+        if not permissions:
+            return False, {'msg': MESSAGE_STATUS[ERROR_MENU_CODE]}
+
+        for permission in permissions:
+            # kiểm tra group_role_code có tồn tại không, kiểm tra permision có được kích hoạt
+            if permission.group_role_code == group_role_code and not permission.is_permission:
+                return False, {"msg": MESSAGE_STATUS[ERROR_GROUP_ROLE_CODE]}
+            list_role_code.append(permission.group_role_code)
+        # check group_role_code k tồn tại
+        if group_role_code not in list_role_code:
+            return False, {'msg': MESSAGE_STATUS[ERROR_GROUP_ROLE_CODE]}
+
+        return True, {"msg": is_success}

@@ -36,7 +36,7 @@ class CtrEBanking(BaseController):
         """
         func dùng để tạo mới E-banking phần (I, III.A)
         """
-        current_user = self.current_user
+        current_user = self.current_user.user_info
 
         data_reg_balance_option = []  # OTT/SMS
         data_eb_reg_balance = []  # dữ liệu thông tin người nhận thông báo (primary)

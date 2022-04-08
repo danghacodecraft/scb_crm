@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Depends, File, Path, UploadFile
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -8,7 +8,7 @@ from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.approval.finger.controller import CtrFingers
 from app.api.v1.endpoints.approval.finger.schema import (
-    CompareFingerPrintRequest, CompareFingerPrintResponse, FingersResponse
+    CompareFingerPrintResponse, FingersResponse
 )
 
 router = APIRouter()
@@ -41,9 +41,9 @@ async def view_retrieve_fingers(
     )
 )
 async def view_compare_fingerprint(
-        uuid: CompareFingerPrintRequest,
-        cif_id: str = Path(...),
+        finger_img: UploadFile = File(..., description="Hình ảnh vân tay"),
+        cif_id: str = Path(..., description="cif_id"),
         current_user=Depends(get_current_user_from_header())
 ):
-    compare_fingerprint = await CtrFingers(current_user).ctr_compare_fingerprint(cif_id=cif_id, uuid=uuid)
-    return ResponseData[List[CompareFingerPrintResponse]](**compare_fingerprint)
+    finger = await CtrFingers(current_user).ctr_compare_fingerprint(cif_id=cif_id, finger_img=finger_img)
+    return ResponseData[List[CompareFingerPrintResponse]](**finger)

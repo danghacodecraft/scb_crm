@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Body, Depends, Path, Query
 from starlette import status
@@ -8,10 +8,8 @@ from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.approval.controller import CtrApproval
 from app.api.v1.endpoints.approval.schema import (
-    CifApprovalProcessResponse, CifApprovalResponse, CifApprovalSuccessResponse
-)
-from app.api.v1.endpoints.approval.schema import (
-    ApprovalRequest
+    ApprovalRequest, CifApprovalProcessResponse, CifApprovalResponse,
+    CifApprovalSuccessResponse
 )
 
 router = APIRouter()
@@ -53,7 +51,7 @@ async def view_approve(
         request=request
     )
 
-    return ResponseData[CifApprovalResponse](**approve_info)
+    return ResponseData[Optional[CifApprovalResponse]](**approve_info)
 
 
 @router.get(

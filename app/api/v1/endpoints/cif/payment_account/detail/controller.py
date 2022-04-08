@@ -47,7 +47,7 @@ class CtrPaymentAccount(BaseController):
                    cif_id: str,
                    payment_account_save_request: SavePaymentAccountRequest):
 
-        current_user = self.current_user
+        current_user = self.current_user.user_info
 
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
@@ -152,7 +152,7 @@ class CtrPaymentAccount(BaseController):
             "staff_type_id": STAFF_TYPE_BUSINESS_CODE,
             "acc_salary_org_name": account_salary_organization_account_name,
             "acc_salary_org_acc": account_salary_organization_account_number,
-            "maker_id": self.current_user.code,
+            "maker_id": current_user.code,
             "maker_at": now(),
             "checker_id": 1,
             "checker_at": None,
