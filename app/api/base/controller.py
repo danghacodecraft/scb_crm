@@ -20,6 +20,10 @@ from app.api.v1.endpoints.repository import (
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.third_parties.oracle.base import Base, SessionLocal
 from app.third_parties.oracle.models.master_data.others import Branch
+from app.utils.constant.ekyc import is_success
+from app.utils.error_messages import (
+    ERROR_GROUP_ROLE_CODE, ERROR_MENU_CODE, MESSAGE_STATUS
+)
 from app.utils.functions import generate_uuid, now, orjson_dumps
 
 
@@ -502,15 +506,15 @@ class BaseController:
                 permissions.extend(item.group_role_list)
 
         if not permissions:
-            return False, {'msg': "menu_code not exist"}
+            return False, {'msg': MESSAGE_STATUS[ERROR_MENU_CODE]}
 
         for permission in permissions:
             # kiểm tra group_role_code có tồn tại không, kiểm tra permision có được kích hoạt
             if permission.group_role_code == group_role_code and not permission.is_permission:
-                return False, {"msg": "group_role_code not exist"}
+                return False, {"msg": MESSAGE_STATUS[ERROR_GROUP_ROLE_CODE]}
             list_role_code.append(permission.group_role_code)
         # check group_role_code k tồn tại
         if group_role_code not in list_role_code:
-            return False, {'msg': "group_role_code not exist"}
+            return False, {'msg': MESSAGE_STATUS[ERROR_GROUP_ROLE_CODE]}
 
-        return True, {"msg": "success"}
+        return True, {"msg": is_success}

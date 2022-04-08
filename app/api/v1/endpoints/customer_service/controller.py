@@ -11,24 +11,43 @@ from app.api.v1.endpoints.customer_service.repository import (
 from app.api.v1.endpoints.customer_service.schema import (
     CreatePostCheckRequest, QueryParamsKSSRequest, UpdatePostCheckRequest
 )
+from app.utils.constant.ekyc import (
+    GROUP_ROLE_CODE_AP, GROUP_ROLE_CODE_IN, GROUP_ROLE_CODE_VIEW, MENU_CODE
+)
+from app.utils.error_messages import ERROR_PERMISSION, MESSAGE_STATUS
 
 
 class CtrKSS(BaseController):
 
     async def ctr_get_list_kss(self, query_params: QueryParamsKSSRequest):
         current_user = self.current_user
-
         is_success, response = self.check_permission(
             current_user=current_user,
-            menu_code='EKYC',
-            group_role_code="EKYC_IN")
-
+            menu_code=MENU_CODE,
+            group_role_code=GROUP_ROLE_CODE_VIEW)
         if not is_success:
             return self.response_exception(
-                msg='Permission Denied',
+                msg=MESSAGE_STATUS[ERROR_PERMISSION],
                 loc='LIST KSS',
-                detail=response['msg'],
+                detail=MESSAGE_STATUS[ERROR_PERMISSION],
                 error_status_code=status.HTTP_404_NOT_FOUND)
+
+        # is_success_ap, response_ap = self.check_permission(
+        #     current_user=current_user,
+        #     menu_code=MENU_CODE,
+        #     group_role_code=GROUP_ROLE_CODE_IN)
+        #
+        # is_success_view, response_view = self.check_permission(
+        #     current_user=current_user,
+        #     menu_code=MENU_CODE,
+        #     group_role_code=GROUP_ROLE_CODE_AP)
+        #
+        # if not is_success_ap and not is_success_view:
+        #     return self.response_exception(
+        #         msg=ERROR_PERMISSION,
+        #         loc='LIST KSS',
+        #         detail=ERROR_PERMISSION,
+        #         error_status_code=status.HTTP_404_NOT_FOUND)
 
         query_data = {}
 
@@ -48,6 +67,20 @@ class CtrKSS(BaseController):
         return self.response(data=list_kss)
 
     async def ctr_get_list_branch(self, zone_id: int):
+        current_user = self.current_user
+
+        is_success, response = self.check_permission(
+            current_user=current_user,
+            menu_code=MENU_CODE,
+            group_role_code=GROUP_ROLE_CODE_VIEW)
+
+        if not is_success:
+            return self.response_exception(
+                msg=MESSAGE_STATUS[ERROR_PERMISSION],
+                loc='LIST BRANCH',
+                detail=MESSAGE_STATUS[ERROR_PERMISSION],
+                error_status_code=status.HTTP_404_NOT_FOUND)
+
         query_param = {
             'zone_id': zone_id
         } if zone_id else None
@@ -63,11 +96,40 @@ class CtrKSS(BaseController):
         return self.response(data=branchs)
 
     async def ctr_get_list_zone(self):
+        current_user = self.current_user
+
+        is_success, response = self.check_permission(
+            current_user=current_user,
+            menu_code=MENU_CODE,
+            group_role_code=GROUP_ROLE_CODE_VIEW)
+
+        if not is_success:
+            return self.response_exception(
+                msg=MESSAGE_STATUS[ERROR_PERMISSION],
+                loc='LIST ZONE',
+                detail=MESSAGE_STATUS[ERROR_PERMISSION],
+                error_status_code=status.HTTP_404_NOT_FOUND)
+
         list_zone = self.call_repos(await repos_get_list_zone())
 
         return self.response(data=list_zone)
 
     async def ctr_get_post_control(self, postcheck_uuid: str, post_control_his_id: int):
+        current_user = self.current_user
+
+        is_success, response = self.check_permission(
+            current_user=current_user,
+            menu_code=MENU_CODE,
+            group_role_code=GROUP_ROLE_CODE_VIEW)
+
+        if not is_success:
+            return self.response_exception(
+                msg=MESSAGE_STATUS[ERROR_PERMISSION],
+                loc='LIST GET POST CONTROL',
+                detail=MESSAGE_STATUS[ERROR_PERMISSION],
+                error_status_code=status.HTTP_404_NOT_FOUND
+            )
+
         query_params = {
             'customer_id': postcheck_uuid
         }
@@ -77,21 +139,81 @@ class CtrKSS(BaseController):
         return self.response(data=post_control_response)
 
     async def ctr_history_post_check(self, postcheck_uuid: str):
+        current_user = self.current_user
+
+        is_success, response = self.check_permission(
+            current_user=current_user,
+            menu_code=MENU_CODE,
+            group_role_code=GROUP_ROLE_CODE_VIEW)
+
+        if not is_success:
+            return self.response_exception(
+                msg=MESSAGE_STATUS[ERROR_PERMISSION],
+                loc='LIST GET POST CONTROL',
+                detail=MESSAGE_STATUS[ERROR_PERMISSION],
+                error_status_code=status.HTTP_404_NOT_FOUND
+            )
+
         history_post_check = self.call_repos(await repos_get_history_post_post_check(postcheck_uuid=postcheck_uuid))
 
         return self.response(data=history_post_check)
 
     async def ctr_statistics_month(self, months: int):
+        current_user = self.current_user
+
+        is_success, response = self.check_permission(
+            current_user=current_user,
+            menu_code=MENU_CODE,
+            group_role_code=GROUP_ROLE_CODE_VIEW)
+
+        if not is_success:
+            return self.response_exception(
+                msg=MESSAGE_STATUS[ERROR_PERMISSION],
+                loc='LIST GET POST CONTROL',
+                detail=MESSAGE_STATUS[ERROR_PERMISSION],
+                error_status_code=status.HTTP_404_NOT_FOUND
+            )
+
         statistics_months = self.call_repos(await repos_get_statistics_month(months=months))
 
         return self.response(statistics_months)
 
     async def ctr_get_statistics_profiles(self):
+        current_user = self.current_user
+
+        is_success, response = self.check_permission(
+            current_user=current_user,
+            menu_code=MENU_CODE,
+            group_role_code=GROUP_ROLE_CODE_VIEW)
+
+        if not is_success:
+            return self.response_exception(
+                msg=MESSAGE_STATUS[ERROR_PERMISSION],
+                loc='LIST GET POST CONTROL',
+                detail=MESSAGE_STATUS[ERROR_PERMISSION],
+                error_status_code=status.HTTP_404_NOT_FOUND
+            )
+
         statistics_profiles = self.call_repos(await repos_get_statistics_profiles())
 
         return self.response(data=statistics_profiles)
 
     async def ctr_get_statistics(self, search_type: int, selected_date: str):
+        current_user = self.current_user
+
+        is_success, response = self.check_permission(
+            current_user=current_user,
+            menu_code=MENU_CODE,
+            group_role_code=GROUP_ROLE_CODE_VIEW)
+
+        if not is_success:
+            return self.response_exception(
+                msg=MESSAGE_STATUS[ERROR_PERMISSION],
+                loc='LIST GET POST CONTROL',
+                detail=MESSAGE_STATUS[ERROR_PERMISSION],
+                error_status_code=status.HTTP_404_NOT_FOUND
+            )
+
         query_param = {}
 
         query_param.update({'search_type': search_type}) if search_type else None
@@ -102,6 +224,21 @@ class CtrKSS(BaseController):
         return self.response(data=statistics)
 
     async def ctr_create_post_check(self, post_check_request: CreatePostCheckRequest):
+        current_user = self.current_user
+        # role nhập
+        is_success, response = self.check_permission(
+            current_user=current_user,
+            menu_code=MENU_CODE,
+            group_role_code=GROUP_ROLE_CODE_IN)
+
+        if not is_success:
+            return self.response_exception(
+                msg=MESSAGE_STATUS[ERROR_PERMISSION],
+                loc='LIST KSS',
+                detail=MESSAGE_STATUS[ERROR_PERMISSION],
+                error_status_code=status.HTTP_404_NOT_FOUND
+            )
+
         post_control_request = [{
             "check_list_id": post_control.check_list_id,
             "check_list_desc": post_control.check_list_desc,
@@ -121,6 +258,22 @@ class CtrKSS(BaseController):
         return self.response(data=post_check_response)
 
     async def ctr_update_post_check(self, postcheck_update_request: UpdatePostCheckRequest):
+
+        current_user = self.current_user
+        # role duyệt
+        is_success, response = self.check_permission(
+            current_user=current_user,
+            menu_code=MENU_CODE,
+            group_role_code=GROUP_ROLE_CODE_AP)
+
+        if not is_success:
+            return self.response_exception(
+                msg=MESSAGE_STATUS[ERROR_PERMISSION],
+                loc='UPDATE POST CHECK',
+                detail=MESSAGE_STATUS[ERROR_PERMISSION],
+                error_status_code=status.HTTP_404_NOT_FOUND
+            )
+
         request_data = {
             "customer_id": postcheck_update_request.customer_id,
             "history_post_control_id": postcheck_update_request.history_post_control_id,
@@ -132,6 +285,21 @@ class CtrKSS(BaseController):
         return self.response(data=update_post_check)
 
     async def ctr_get_customer_detail(self, postcheck_uuid: str):
+        current_user = self.current_user
+
+        is_success, response = self.check_permission(
+            current_user=current_user,
+            menu_code=MENU_CODE,
+            group_role_code=GROUP_ROLE_CODE_AP)
+
+        if not is_success:
+            return self.response_exception(
+                msg=MESSAGE_STATUS[ERROR_PERMISSION],
+                loc='CUSTOMER_DETAIL',
+                detail=MESSAGE_STATUS[ERROR_PERMISSION],
+                error_status_code=status.HTTP_404_NOT_FOUND
+            )
+
         customer_detail = self.call_repos(await repos_get_customer_detail(postcheck_uuid=postcheck_uuid))
 
         return self.response(data=customer_detail)

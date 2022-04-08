@@ -75,7 +75,9 @@ ERROR_APPROVAL_UPLOAD_FACE = "ERROR_APPROVAL_UPLOAD_FACE"
 ERROR_APPROVAL_INCORRECT_UPLOAD_FACE = "ERROR_APPROVAL_INCORRECT_UPLOAD_FACE"
 
 ERROR_VALIDATE = "ERROR_VALIDATE"
-
+ERROR_GROUP_ROLE_CODE = "GROUP_ROLE_CODE"
+ERROR_MENU_CODE = "ERROR_MENU_CODE"
+ERROR_PERMISSION = 'ERROR_PERMISSION'
 MESSAGE_STATUS = {
     # general error
     PAGING_ERROR: "Can not found page!",
@@ -146,5 +148,8 @@ MESSAGE_STATUS = {
 
     ERROR_APPROVAL_UPLOAD_FACE: "Face is not upload, please upload face before submit",
     ERROR_APPROVAL_INCORRECT_UPLOAD_FACE: "Upload face is incorrect",
-    ERROR_VALIDATE: "Validate error"
+    ERROR_VALIDATE: "Validate error",
+    ERROR_GROUP_ROLE_CODE: "Group_role_code is not exist",
+    ERROR_MENU_CODE: "Menu_code is not exist",
+    ERROR_PERMISSION: "Permission Denied"
 }
