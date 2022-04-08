@@ -5,14 +5,15 @@ from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
 
 class CtrIt(BaseController):
     async def ctr_it(self):
-        if not self.current_user:
+        current_user = self.current_user.user_info
+        if not current_user:
             return self.response_exception(
                 msg=USER_NOT_EXIST,
                 detail=MESSAGE_STATUS[USER_NOT_EXIST],
                 loc="current_user"
             )
 
-        employee_id = self.current_user.user_info.code
+        employee_id = current_user.code
 
         is_success, it = self.call_repos(
             await repos_it(

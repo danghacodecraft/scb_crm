@@ -386,7 +386,7 @@ class BaseController:
         """
         Tạo data TransactionDaily và các TransactionStage khác cho bước mở CIF khi tạo giấy tờ định danh
         """
-        current_user = self.current_user
+        current_user = self.current_user.user_info
 
         saving_transaction_stage_status_id = generate_uuid()
         saving_transaction_stage_id = generate_uuid()

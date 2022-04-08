@@ -5,14 +5,15 @@ from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
 
 class CtrProfile(BaseController):
     async def ctr_profile(self):
-        if not self.current_user:
+        current_user = self.current_user.user_info
+        if not current_user:
             return self.response_exception(
                 msg=USER_NOT_EXIST,
                 detail=MESSAGE_STATUS[USER_NOT_EXIST],
                 loc="current_user"
             )
 
-        employee_id = self.current_user.user_info.code
+        employee_id = current_user.code
 
         is_success, profile = self.call_repos(
             await repos_profile(
@@ -23,10 +24,17 @@ class CtrProfile(BaseController):
         if not is_success:
             return self.response_exception(msg=str(profile))
 
+        number_and_street = profile['curriculum_vitae']['contact']['contact']['address']
+        ward = profile['curriculum_vitae']['contact']['contact']['ward']
+        district = profile['curriculum_vitae']['contact']['contact']['district']
+        province = profile['curriculum_vitae']['contact']['contact']['province']
+
         profile = {
             "avatar": profile['avatar'],
             "gender": profile['curriculum_vitae']['individual']['gender'],
             "full_name_vn": profile['emp_name'],
+            "address": f"{number_and_street}, {ward}, {district}, {province}",
+            "user_name": profile['email'].split("@SCB.COM.VN")[0],
             "email": profile['email'],
             "mobile_number": profile['mobile'],
             "code": profile['emp_id'],

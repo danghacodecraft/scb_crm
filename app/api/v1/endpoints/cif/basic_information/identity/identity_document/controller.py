@@ -155,7 +155,7 @@ class CtrIdentityDocument(BaseController):
     async def save_identity(self, identity_document_request: Union[IdentityCardSaveRequest,
                                                                    CitizenCardSaveRequest,
                                                                    PassportSaveRequest]):
-        current_user = self.current_user
+        current_user = self.current_user.user_info
         current_user_code = current_user.code
         # Dữ liệu validate chung
         validate_religion_name = None

@@ -76,6 +76,7 @@ class CtrSubIdentityDocument(BaseController):
         return self.response(data=sub_identity_log_infos)
 
     async def save_sub_identity(self, cif_id: str, sub_identity_request: List[SubIdentityDocumentRequest]):
+        current_user = self.current_user.user_info
         # check cif đang tạo
         customer = self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
 
@@ -115,7 +116,7 @@ class CtrSubIdentityDocument(BaseController):
         for _, old_sub_identity_image in old_sub_identities_and_sub_identity_images:
             old_sub_identity_id__image_ids[old_sub_identity_image.identity_id] = old_sub_identity_image.id
 
-        saved_by = self.current_user.username
+        saved_by = current_user.username
 
         # Giấy tờ định danh phụ:
         # + Nếu có gửi lên id là chỉnh sửa

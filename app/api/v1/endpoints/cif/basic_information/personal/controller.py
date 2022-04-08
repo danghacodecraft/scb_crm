@@ -28,6 +28,7 @@ from app.utils.vietnamese_converter import (
 
 class CtrPersonal(BaseController):
     async def ctr_save_personal(self, cif_id: str, personal_request: PersonalRequest):
+        current_user = self.current_user.user_info
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
 
@@ -135,7 +136,7 @@ class CtrPersonal(BaseController):
                 list_contact_type_data=list_contact_type_data,
                 log_data=personal_request.json(),
                 session=self.oracle_session,
-                created_by=self.current_user.username
+                created_by=current_user.username
             )
         )
 
