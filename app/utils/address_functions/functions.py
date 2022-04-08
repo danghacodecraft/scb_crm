@@ -216,3 +216,23 @@ def matching_place_residence(key):
         "street_name": street_name
     }
     return address, address_info
+
+
+def combine_full_address(number_and_street: str = None, ward: str = None, district: str = None, province: str = None):
+    if ward or district or province:
+        address = f"{number_and_street}, " if number_and_street else ""
+    else:
+        return number_and_street if number_and_street else ""
+    if district or province:
+        if ward and ward != "":
+            address = address + f"{ward}, "
+        if province:
+            if district:
+                address = address + f"{district}, "
+            address = address + f"{province}"
+        else:
+            address += district
+    else:
+        address += ward
+
+    return address
