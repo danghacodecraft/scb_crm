@@ -8,14 +8,15 @@ from app.utils.functions import datetime_to_date, string_to_datetime
 
 class CtrWorkProfile(BaseController):
     async def ctr_work_profile_info(self):
-        if not self.current_user:
+        current_user = self.current_user.user_info
+        if not current_user:
             return self.response_exception(
                 msg=USER_NOT_EXIST,
                 detail=MESSAGE_STATUS[USER_NOT_EXIST],
                 loc="current_user"
             )
 
-        employee_id = self.current_user.user_info.code
+        employee_id = current_user.code
 
         is_success, work_profile_info = self.call_repos(
             await repos_work_profile_info(
