@@ -172,7 +172,7 @@ class CtrFingerPrint(BaseController):
         is_success_add_finger, id_finger = await service_ekyc.add_finger_ekyc(cif_id=cif_id,
                                                                               json_body=json_body_add_finger)
         if not is_success_add_finger:
-            return self.response_exception(msg='CALL_EKYC_ERROR', loc="ADD_FINGERPRINT")
+            return self.response_exception(msg=str(id_finger), loc="ADD_FINGERPRINT")
 
         response_data.update({
             "image_url": response['file_url'],
@@ -190,7 +190,7 @@ class CtrFingerPrint(BaseController):
             is_success_compare, compare = await service_ekyc.compare_finger_ekyc(cif_id=cif_id, json_body=json_compare)
 
             if not is_success_compare:
-                return self.response_exception(msg='CALL_EKYC_ERROR', loc="ADD_FINGERPRINT")
+                return self.response_exception(msg=str(compare), loc="ADD_FINGERPRINT")
 
             response_data.update({
                 "compare": compare['customers']
