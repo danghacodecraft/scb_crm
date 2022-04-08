@@ -181,7 +181,7 @@ class CtrTemplateDetail(BaseController):
 
         })
         # data_request.update({
-        #     "S1.A.1.11.5": self.current_user.
+        #     "S1.A.1.11.5": self.current_user.user_info
         # })
 
         # Những field option
