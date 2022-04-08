@@ -21,9 +21,11 @@ from app.utils.constant.cif import (
 )
 from app.utils.error_messages import (
     ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
+    ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT,
     ERROR_APPROVAL_INCORRECT_UPLOAD_SIGNATURE, ERROR_APPROVAL_UPLOAD_FACE,
-    ERROR_APPROVAL_UPLOAD_SIGNATURE, ERROR_CONTENT_NOT_NULL,
-    ERROR_STAGE_COMPLETED, ERROR_VALIDATE, MESSAGE_STATUS
+    ERROR_APPROVAL_UPLOAD_FINGERPRINT, ERROR_APPROVAL_UPLOAD_SIGNATURE,
+    ERROR_CONTENT_NOT_NULL, ERROR_STAGE_COMPLETED, ERROR_VALIDATE,
+    MESSAGE_STATUS
 )
 from app.utils.functions import generate_uuid, now, orjson_dumps, orjson_loads
 
@@ -448,17 +450,17 @@ class CtrApproval(BaseController):
         ))
 
         face_authentications = []
-        # fingerprint_authentications = []
+        fingerprint_authentications = []
         signature_authentications = []
         for _, identity_image, identity_image_transaction, _, compare_image_transaction in authentications:
             if identity_image.image_type_id == IMAGE_TYPE_FACE:
                 face_authentications.append({
                     identity_image_transaction.image_url: compare_image_transaction.compare_image_url
                 })
-            # if identity_image.image_type_id == IMAGE_TYPE_FINGERPRINT:
-            #     fingerprint_authentications.append({
-            #         identity_image_transaction.image_url: compare_image_transaction.compare_image_url
-            #     })ư
+            if identity_image.image_type_id == IMAGE_TYPE_FINGERPRINT:
+                fingerprint_authentications.append({
+                    identity_image_transaction.image_url: compare_image_transaction.compare_image_url
+                })
             if identity_image.image_type_id == IMAGE_TYPE_SIGNATURE:
                 signature_authentications.append({
                     identity_image_transaction.image_url: compare_image_transaction.compare_image_url
@@ -472,15 +474,15 @@ class CtrApproval(BaseController):
             )
         ################################################################################################################
 
-        # ################################################################################################################
-        # # Vân tay
-        # # Kiểm tra xem VÂN TAY đã upload chưa
-        # if not fingerprint_authentications:
-        #     return self.response_exception(
-        #         msg=ERROR_APPROVAL_UPLOAD_FINGERPRINT,
-        #         detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_FINGERPRINT]
-        #     )
-        # ################################################################################################################
+        ################################################################################################################
+        # Vân tay
+        # Kiểm tra xem VÂN TAY đã upload chưa
+        if not fingerprint_authentications:
+            return self.response_exception(
+                msg=ERROR_APPROVAL_UPLOAD_FINGERPRINT,
+                detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_FINGERPRINT]
+            )
+        ################################################################################################################
 
         ################################################################################################################
         # Chữ ký
@@ -567,24 +569,24 @@ class CtrApproval(BaseController):
                 )
             ############################################################################################################
 
-            # ############################################################################################################
-            # # [Thông tin xác thực] Vân tay
-            # if not request.authentication.fingerprint:
-            #     return self.response_exception(
-            #         msg=ERROR_VALIDATE,
-            #         detail="Field required",
-            #         loc="authentication -> fingerprint"
-            #     )
-            # _, _, _, _, new_compare_image_transaction = authentications[0]
-            # # Kiểm tra xem khuôn mặt gửi lên có đúng không
-            # # Hình ảnh kiểm tra sẽ là hình ảnh của lần Upload mới nhất
-            # if new_compare_image_transaction.compare_image_url != request.authentication.fingerprint.compare_face_image_uuid:
-            #     return self.response_exception(
-            #         msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT,
-            #         detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT],
-            #         loc="authentication -> compare_face_image_uuid"
-            #     )
-            # ############################################################################################################
+            ############################################################################################################
+            # [Thông tin xác thực] Vân tay
+            if not request.authentication.fingerprint:
+                return self.response_exception(
+                    msg=ERROR_VALIDATE,
+                    detail="Field required",
+                    loc="authentication -> fingerprint"
+                )
+            new_fingerprint_compare_image_transaction_uuid = list(fingerprint_authentications[0].values())[0]
+            # Kiểm tra xem vân tay gửi lên có đúng không
+            # Hình ảnh kiểm tra sẽ là hình ảnh của lần Upload mới nhất
+            if new_fingerprint_compare_image_transaction_uuid != request.authentication.fingerprint.compare_face_image_uuid:
+                return self.response_exception(
+                    msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT,
+                    detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT],
+                    loc="authentication -> compare_face_image_uuid"
+                )
+            ############################################################################################################
 
             ############################################################################################################
             # [Thông tin xác thực] Chữ ký
@@ -595,7 +597,7 @@ class CtrApproval(BaseController):
                     loc="authentication -> signature"
                 )
             new_signature_compare_image_transaction_uuid = list(signature_authentications[0].values())[0]
-            # Kiểm tra xem khuôn mặt gửi lên có đúng không
+            # Kiểm tra xem chữ ký gửi lên có đúng không
             # Hình ảnh kiểm tra sẽ là hình ảnh của lần Upload mới nhất
             if new_signature_compare_image_transaction_uuid != request.authentication.signature.compare_face_image_uuid:
                 return self.response_exception(

@@ -75,7 +75,7 @@ class FaceAuthenticationRequest(BaseSchema):
 class AuthenticationRequest(BaseSchema):
     face: FaceAuthenticationRequest = Field(None, description="[Thông tin xác thực] Khuôn mặt")
     signature: FaceAuthenticationRequest = Field(None, description="[Thông tin xác thực] Chữ ký")
-    # face: FaceAuthenticationRequest = Field(None, description="[Thông tin xác thực] Khuôn mặt")
+    fingerprint: FaceAuthenticationRequest = Field(None, description="[Thông tin xác thực] Vân tay")
 
 
 class ApprovalRequest(BaseSchema):
