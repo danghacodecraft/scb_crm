@@ -35,7 +35,7 @@ class CtrDebitCard(BaseController):
             cif_id: str,
             debt_card_req: DebitCardRequest
     ):
-        current_user = self.current_user
+        current_user = self.current_user.user_info
         # check register_flag == False thì ko insert data
         if not debt_card_req.issue_debit_card.register_flag:
             return self.response_exception(msg=ERROR_NOT_REGISTER,
