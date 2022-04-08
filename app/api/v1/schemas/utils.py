@@ -18,6 +18,12 @@ class OptionalDropdownResponse(BaseSchema):
     name: Optional[str] = Field(None, min_length=1, description='`Tên`', nullable=True)
 
 
+class DropdownStageActionResponse(BaseSchema):
+    id: Optional[str] = Field(None, min_length=1, description='`Mã gen tự động hành động`', nullable=True)
+    code: Optional[str] = Field(None, min_length=1, description='`Mã hành động`', nullable=True)
+    name: Optional[str] = Field(None, min_length=1, description='`Tên hành động`', nullable=True)
+
+
 class DropdownRequest(BaseSchema):
     id: str = Field(..., min_length=1, description='`Chuỗi định danh`')
 
