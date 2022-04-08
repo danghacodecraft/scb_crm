@@ -613,10 +613,13 @@ class CtrApproval(BaseController):
             current_stage_code = current_stage.code
 
         if current_stage_code == CIF_STAGE_COMPLETED:
-            return self.response_exception(
-                msg=ERROR_STAGE_COMPLETED,
-                loc=f"current_stage: {current_stage_code}",
-                detail=MESSAGE_STATUS[ERROR_STAGE_COMPLETED]
+            return self.response(
+                data=dict(
+                    cif_id=cif_id,
+                    previous_stage=previous_stage_code,
+                    current_stage=current_stage_code,
+                    next_stage=None
+                )
             )
 
         current_stage_status, current_stage, _, current_lane, _, current_phase, current_stage_role = self.call_repos(
