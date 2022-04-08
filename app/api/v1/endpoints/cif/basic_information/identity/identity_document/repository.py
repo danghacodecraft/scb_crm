@@ -457,7 +457,6 @@ async def repos_save_identity(
             )
 
         new_booking_id = generate_uuid()
-        print(type(orjson_dumps(history_datas)))
 
         # create booking & log
         session.add_all([

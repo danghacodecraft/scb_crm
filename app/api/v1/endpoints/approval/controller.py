@@ -561,7 +561,6 @@ class CtrApproval(BaseController):
             # Kiểm tra xem khuôn mặt gửi lên có đúng không
             # Hình ảnh kiểm tra sẽ là hình ảnh của lần Upload mới nhất
             if new_face_compare_image_transaction_uuid != request.authentication.face.compare_face_image_uuid:
-                print(new_face_compare_image_transaction_uuid, request.authentication.face.compare_face_image_uuid)
                 return self.response_exception(
                     msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
                     detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FACE],
