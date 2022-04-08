@@ -127,8 +127,7 @@ async def repos_approval_get_face_authentication(
             CustomerCompareImageTransaction
         )
         .join(CustomerIdentityImage, and_(
-            CustomerIdentity.id == CustomerIdentityImage.identity_id,
-            CustomerIdentityImage.image_type_id == IMAGE_TYPE_FACE
+            CustomerIdentity.id == CustomerIdentityImage.identity_id
         ))
         .join(
             CustomerIdentityImageTransaction,

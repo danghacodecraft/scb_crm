@@ -24,10 +24,17 @@ class CtrProfile(BaseController):
         if not is_success:
             return self.response_exception(msg=str(profile))
 
+        number_and_street = profile['curriculum_vitae']['contact']['contact']['address']
+        ward = profile['curriculum_vitae']['contact']['contact']['ward']
+        district = profile['curriculum_vitae']['contact']['contact']['district']
+        province = profile['curriculum_vitae']['contact']['contact']['province']
+
         profile = {
             "avatar": profile['avatar'],
             "gender": profile['curriculum_vitae']['individual']['gender'],
             "full_name_vn": profile['emp_name'],
+            "address": f"{number_and_street}, {ward}, {district}, {province}",
+            "user_name": profile['email'].split("@SCB.COM.VN")[0],
             "email": profile['email'],
             "mobile_number": profile['mobile'],
             "code": profile['emp_id'],
