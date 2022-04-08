@@ -18,7 +18,7 @@ class CtrUser(BaseController):
         return self.response(data=auth_res)
 
     async def ctr_get_current_user_info(self):
-        return self.response(data=self.current_user.user_infor)
+        return self.response(data=self.current_user.user_info)
 
     async def ctr_get_user_info(self, user_id: str):
         info_user_data = self.call_repos(await repos_get_user_info(user_id))
