@@ -55,9 +55,7 @@ async def repos_compare_finger_ekyc(
         "id_fingers": id_fingers,
         "limit": len(id_fingers)
     }
-    print('json_body', json_body)
     is_success, response = await service_ekyc.compare_finger_ekyc(cif_id=cif_id, json_body=json_body)
-    print('is_success', is_success, response)
     if not is_success:
         return ReposReturn(is_error=True, msg=response['message'], loc="COMPARE_FINGERPRINT")
     return ReposReturn(data=response)
