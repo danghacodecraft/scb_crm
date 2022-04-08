@@ -467,7 +467,6 @@ class ServiceEKYC:
         try:
             async with self.session.post(url=api_url, data=form_data, headers=headers, ssl=False) as response:
                 logger.log("SERVICE", f"[EKYC UPLOAD FILE] {response.status} : {api_url}")
-
                 if response.status == status.HTTP_201_CREATED:
                     return True, await response.json()
                 else:
@@ -523,7 +522,6 @@ class ServiceEKYC:
         try:
             async with self.session.post(url=api_url, json=json_body, headers=headers, ssl=False) as response:
                 logger.log("SERVICE", f"[EKYC ADD FINGER] {response.status} : {api_url}")
-
                 if response.status == status.HTTP_201_CREATED:
                     return True, await response.json()
                 else:
@@ -531,8 +529,7 @@ class ServiceEKYC:
                         "message": ERROR_CALL_SERVICE_EKYC,
                         "detail": "STATUS " + str(response.status),
                         "api_url": api_url,
-                        "response": await response.json(),
-                        "headers": self.headers
+                        "response": {}
                     }
 
         except Exception as ex:
@@ -558,7 +555,7 @@ class ServiceEKYC:
                         "message": ERROR_CALL_SERVICE_EKYC,
                         "detail": "STATUS " + str(response.status),
                         "api_url": api_url,
-                        "response": await response.json(),
+                        "response": {},
                     }
 
         except Exception as ex:

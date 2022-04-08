@@ -1,5 +1,6 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.user.profile.repository import repos_profile
+from app.utils.address_functions.functions import combine_full_address
 from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
 
 
@@ -33,7 +34,12 @@ class CtrProfile(BaseController):
             "avatar": profile['avatar'],
             "gender": profile['curriculum_vitae']['individual']['gender'],
             "full_name_vn": profile['emp_name'],
-            "address": f"{number_and_street}, {ward}, {district}, {province}",
+            "address": combine_full_address(
+                number_and_street=number_and_street,
+                ward=ward,
+                district=district,
+                province=province
+            ),
             "user_name": profile['email'].split("@SCB.COM.VN")[0],
             "email": profile['email'],
             "mobile_number": profile['mobile'],

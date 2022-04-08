@@ -21,6 +21,7 @@ from app.utils.constant.cif import (
     ACTIVE_FLAG_DISACTIVED, FRONT_FLAG_CREATE_FINGERPRINT, HAND_SIDE_LEFT_CODE,
     IMAGE_TYPE_FINGERPRINT
 )
+from app.utils.error_messages import ERROR_CALL_SERVICE_EKYC
 from app.utils.functions import dropdown, generate_uuid, now, parse_file_uuid
 
 
@@ -172,7 +173,7 @@ class CtrFingerPrint(BaseController):
         is_success_add_finger, id_finger = await service_ekyc.add_finger_ekyc(cif_id=cif_id,
                                                                               json_body=json_body_add_finger)
         if not is_success_add_finger:
-            return self.response_exception(msg='CALL_EKYC_ERROR', loc="ADD_FINGERPRINT")
+            return self.response_exception(msg=ERROR_CALL_SERVICE_EKYC, loc="ADD_FINGERPRINT", detail=str(id_finger))
 
         response_data.update({
             "image_url": response['file_url'],
@@ -190,7 +191,7 @@ class CtrFingerPrint(BaseController):
             is_success_compare, compare = await service_ekyc.compare_finger_ekyc(cif_id=cif_id, json_body=json_compare)
 
             if not is_success_compare:
-                return self.response_exception(msg='CALL_EKYC_ERROR', loc="ADD_FINGERPRINT")
+                return self.response_exception(msg=ERROR_CALL_SERVICE_EKYC, loc="ADD_FINGERPRINT", detail=str(compare))
 
             response_data.update({
                 "compare": compare['customers']
