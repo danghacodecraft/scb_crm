@@ -33,7 +33,7 @@ class CtrProfile(BaseController):
             "gender": profile['curriculum_vitae']['individual']['gender'],
             "full_name_vn": profile['emp_name'],
             "address": f"{number_and_street}, {ward}, {district}, {province}",
-            "user_name": profile['email'],
+            "user_name": profile['email'].split("@SCB.COM.VN")[0],
             "email": profile['email'],
             "mobile_number": profile['mobile'],
             "code": profile['emp_id'],
