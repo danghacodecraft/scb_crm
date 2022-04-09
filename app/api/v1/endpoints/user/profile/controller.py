@@ -1,7 +1,9 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.user.profile.repository import repos_profile
 from app.utils.address_functions.functions import combine_full_address
-from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
+from app.utils.error_messages import (
+    ERROR_CALL_SERVICE_DWH, MESSAGE_STATUS, USER_NOT_EXIST
+)
 
 
 class CtrProfile(BaseController):
@@ -23,7 +25,7 @@ class CtrProfile(BaseController):
             )
         )
         if not is_success:
-            return self.response_exception(msg=str(profile))
+            return self.response_exception(msg=ERROR_CALL_SERVICE_DWH, loc="EMP_DETAIL", detail=str(profile))
 
         number_and_street = profile['curriculum_vitae']['contact']['contact']['address']
         ward = profile['curriculum_vitae']['contact']['contact']['ward']
