@@ -47,8 +47,8 @@ async def repos_login(username: str, password: str) -> ReposReturn:
 
     try:
         # Check has permission in IDM
-        filter_code = list(filter(lambda x: x.get('menu_code') == "CRM", data_idm['menu_list']))[0]
-        filter_group_code = list(filter(lambda x: x.get('group_role_code') == "QUANLY", filter_code['group_role_list']))[0]
+        filter_code = list(filter(lambda x: x.get('menu_code') == "HOME", data_idm['menu_list']))[0]
+        filter_group_code = list(filter(lambda x: x.get('group_role_code') == "ACCESS", filter_code['group_role_list']))[0]
     except IndexError:
         return ReposReturn(
             is_error=True,
