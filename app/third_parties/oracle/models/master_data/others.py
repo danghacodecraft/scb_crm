@@ -471,8 +471,6 @@ class StagePhase(Base):
 
     phase_id = Column('phase_id', ForeignKey('crm_phase.phase_id'), comment='Mã Giai đoạn xử lý', primary_key=True)
     stage_id = Column('stage_id', ForeignKey('crm_stage.stage_id'), comment='Mã bước thực hiện', primary_key=True)
-    phase = relationship('Phase')
-    stage = relationship('Stage')
 
 
 class StageLane(Base):
