@@ -89,7 +89,8 @@ class CtrSubIdentityDocument(BaseController):
             image_uuids.append(uuid)
 
         # gọi qua service file để check exist list uuid
-        await self.check_exist_multi_file(uuids=image_uuids)
+        if image_uuids:
+            await self.check_exist_multi_file(uuids=image_uuids)
 
         sub_identity_type_ids = []
         place_of_issue_ids = []
@@ -242,7 +243,7 @@ class CtrSubIdentityDocument(BaseController):
                 update_sub_identity_images=update_sub_identity_images,
                 update_customer_sub_identity_image_transactions=update_customer_sub_identity_image_transactions,
                 session=self.oracle_session,
-                log_data=log_data
+                log_data=orjson_dumps(log_data)
             )
         )
         return self.response(data=info_save_document)
