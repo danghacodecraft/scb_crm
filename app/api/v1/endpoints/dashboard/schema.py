@@ -10,7 +10,8 @@ class TransactionListResponse(BaseSchema):
 
 
 class CustomerInfoResponse(BaseSchema):
-    cif_number: str = Field(None, description="CIF ID")
+    cif_id: str = Field(None, description="CIF id")
+    cif_number: str = Field(None, description="CIF number")
     full_name: str = Field(None, description="Tên khách hàng")
     identity_number: str = Field(None, description="Giấy tờ định danh")
     phone_number: str = Field(None, description="Số điện thoại")
