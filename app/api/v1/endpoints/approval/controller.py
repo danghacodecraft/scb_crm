@@ -1,3 +1,5 @@
+from starlette import status
+
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.common_repository import (
     repos_get_next_receiver, repos_get_next_stage, repos_get_previous_stage,
@@ -18,6 +20,9 @@ from app.utils.constant.approval import (
 from app.utils.constant.cif import (
     BUSINESS_TYPE_INIT_CIF, IMAGE_TYPE_FACE, IMAGE_TYPE_FINGERPRINT,
     IMAGE_TYPE_SIGNATURE
+)
+from app.utils.constant.idm import (
+    IDM_GROUP_ROLE_CODE_APPROVAL, IDM_MENU_CODE_CIF, IDM_PERMISSION_CODE_KSV
 )
 from app.utils.error_messages import (
     ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
@@ -621,6 +626,26 @@ class CtrApproval(BaseController):
                     next_stage=None
                 )
             )
+
+        ################################################################################################################
+        # check quyền user
+        menu_list = self.current_user.menu_list
+        is_permission_supervisor = False
+        for menu in menu_list:
+            if menu.menu_code == IDM_MENU_CODE_CIF:
+                for group_role in menu.group_role_list:
+                    if group_role.group_role_code == IDM_GROUP_ROLE_CODE_APPROVAL:
+                        for permission in group_role.permission_list:
+                            if permission == IDM_PERMISSION_CODE_KSV:
+                                is_permission_supervisor = True
+
+        if not is_permission_supervisor or current_stage_code != CIF_STAGE_APPROVE_KSV:
+            return self.response_exception(
+                msg="No role",
+                detail=f"Stage: {CIF_STAGE_APPROVE_KSV}, User: {current_user.code}",
+                error_status_code=status.HTTP_403_FORBIDDEN
+            )
+        ################################################################################################################
 
         current_stage_status, current_stage, _, current_lane, _, current_phase, current_stage_role = self.call_repos(
             await repos_get_stage_information(
