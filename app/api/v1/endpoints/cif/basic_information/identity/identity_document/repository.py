@@ -42,15 +42,15 @@ from app.third_parties.oracle.models.master_data.others import (
 )
 from app.utils.constant.cif import (
     ACTIVE_FLAG_ACTIVED, ADDRESS_COUNTRY_CODE_VN, BUSINESS_FORM_TTCN_GTDD_GTDD,
-    BUSINESS_FORM_TTCN_GTDD_KM, CONTACT_ADDRESS_CODE, CRM_GENDER_TYPE_FEMALE,
-    CRM_GENDER_TYPE_MALE, DROPDOWN_NONE_DICT, EKYC_GENDER_TYPE_FEMALE,
-    EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
+    BUSINESS_FORM_TTCN_GTDD_KM, BUSINESS_TYPE_INIT_CIF, CONTACT_ADDRESS_CODE,
+    CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE, DROPDOWN_NONE_DICT,
+    EKYC_GENDER_TYPE_FEMALE, EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_BACK_SIDE_IDENTITY_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD,
     IDENTITY_DOCUMENT_TYPE_CITIZEN_CARD, IDENTITY_DOCUMENT_TYPE_IDENTITY_CARD,
-    IDENTITY_DOCUMENT_TYPE_PASSPORT, IMAGE_TYPE_CODE_IDENTITY, IMAGE_TYPE_FACE,
-    RESIDENT_ADDRESS_CODE
+    IDENTITY_DOCUMENT_TYPE_PASSPORT, IMAGE_TYPE_CODE_FACE,
+    IMAGE_TYPE_CODE_IDENTITY, IMAGE_TYPE_FACE, RESIDENT_ADDRESS_CODE
 )
 from app.utils.constant.ekyc import EKYC_DATE_FORMAT
 from app.utils.error_messages import (
@@ -62,57 +62,6 @@ from app.utils.functions import (
     orjson_dumps
 )
 from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese
-
-IDENTITY_LOGS_INFO = [
-    {
-        "reference_flag": True,
-        "created_date": "2021-02-18",
-        "identity_document_type": {
-            "id": "1",
-            "code": "CMND",
-            "name": "Chứng minh nhân dân"
-        },
-        "identity_images": [
-            {
-                "image_url": "https://example.com/example.jpg"
-            },
-            {
-                "image_url": "https://example.com/example.jpg"
-            }
-        ]
-    },
-    {
-        "reference_flag": False,
-        "created_date": "2021-02-18",
-        "identity_document_type": {
-            "id": "2",
-            "code": "CCCD",
-            "name": "Căn cước công dân"
-        },
-        "identity_images": [
-            {
-                "image_url": "https://example.com/example.jpg"
-            },
-            {
-                "image_url": "https://example.com/example.jpg"
-            }
-        ]
-    },
-    {
-        "reference_flag": False,
-        "created_date": "2021-02-18",
-        "identity_document_type": {
-            "id": "3",
-            "code": "HC",
-            "name": "Hộ chiếu"
-        },
-        "identity_images": [
-            {
-                "image_url": "https://example.com/example.jpg"
-            }
-        ]
-    }
-]
 
 
 ########################################################################################################################
@@ -385,11 +334,15 @@ async def repos_save_identity(
         saving_transaction_daily: dict,
         saving_transaction_sender: dict,
         saving_transaction_receiver: dict,
+        avatar_image_uuid_service,
+        identity_avatar_image_uuid_ekyc: str,
         request_data: dict,
         history_datas: List,
         current_user: UserInfoResponse,
         session: Session
 ) -> ReposReturn:
+    current_user_code = current_user.code
+    current_user_branch_id = current_user.hrm_branch_id
     new_first_identity_image_id = generate_uuid()  # ID ảnh mặt trước hoặc ảnh hộ chiếu
     new_second_identity_image_id = generate_uuid()  # ID ảnh mặt sau
 
@@ -469,6 +422,8 @@ async def repos_save_identity(
             Booking(
                 id=new_booking_id,
                 transaction_id=saving_transaction_daily['transaction_id'],
+                business_type_id=BUSINESS_TYPE_INIT_CIF,
+                branch_id=current_user_branch_id,
                 created_at=now(),
                 updated_at=now()
             ),
@@ -577,7 +532,8 @@ async def repos_save_identity(
         compare_transaction_parent_id = compare_image_transaction.id
 
     identity_image_uuid = generate_uuid()
-
+    identity_avatar_image_uuid = generate_uuid()
+    identity_id = saving_customer_identity['id']
     session.add_all([
         CustomerCompareImage(**saving_customer_compare_image),
         CustomerCompareImageTransaction(**{
@@ -593,17 +549,40 @@ async def repos_save_identity(
         # Tạo Khuôn mặt từ CompareImage, khuôn mặt này sẽ sử dụng để so sánh phê duyệt
         CustomerIdentityImage(**dict(
             id=identity_image_uuid,
-            identity_id=saving_customer_identity['id'],
+            identity_id=identity_id,
             image_type_id=IMAGE_TYPE_FACE,
             image_url=saving_customer_compare_image['compare_image_url'],
             active_flag=True,
-            maker_id=current_user.code,
+            maker_id=current_user_code,
             maker_at=now(),
             ekyc_uuid=saving_customer_compare_image['id']
         )),
         CustomerIdentityImageTransaction(**dict(
             identity_image_id=identity_image_uuid,
             image_url=saving_customer_compare_image['compare_image_url'],
+            active_flag=True,
+            maker_id=current_user_code,
+            maker_at=now()
+        )),
+        # Tạo avatar
+        CustomerIdentityImage(**dict(
+            id=identity_avatar_image_uuid,
+            identity_id=identity_id,
+            image_type_id=IMAGE_TYPE_CODE_FACE,
+            image_url=avatar_image_uuid_service['data']['uuid'],
+            avatar_image_uuid=None,
+            hand_side_id=None,
+            finger_type_id=None,
+            vector_data=None,
+            active_flag=True,
+            maker_id=current_user_code,
+            maker_at=now(),
+            identity_image_front_flag=None,
+            ekyc_uuid=identity_avatar_image_uuid_ekyc
+        )),
+        CustomerIdentityImageTransaction(**dict(
+            identity_image_id=identity_avatar_image_uuid,
+            image_url=avatar_image_uuid_service['data']['uuid'],
             active_flag=True,
             maker_id=current_user.code,
             maker_at=now()
