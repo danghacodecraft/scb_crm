@@ -5,12 +5,13 @@ from app.api.v1.endpoints.approval.face.repository import (
     repos_save_approval_compare_face
 )
 from app.api.v1.endpoints.approval.repository import (
-    repos_get_approval_identity_faces
+    repos_get_approval_identity_image
 )
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.api.v1.endpoints.file.repository import repos_upload_file
 from app.api.v1.endpoints.file.validator import file_validator
 from app.settings.event import service_ekyc
+from app.utils.constant.cif import IMAGE_TYPE_FACE
 from app.utils.error_messages import ERROR_CALL_SERVICE_EKYC
 from app.utils.functions import now
 
@@ -41,13 +42,14 @@ class CtrApproveFace(BaseController):
         compare_face_uuid = face_info['uuid']
 
         # Lấy tất cả hình ảnh mới nhất ở bước GTDD
-        face_transactions = self.call_repos(await repos_get_approval_identity_faces(
+        face_transactions = self.call_repos(await repos_get_approval_identity_image(
+            image_type_id=IMAGE_TYPE_FACE,
+            identity_type="FACE",
             cif_id=cif_id,
             session=self.oracle_session
         ))
 
         first_customer_identity, first_customer_identity_image = face_transactions[0]
-        identity_image_id = first_customer_identity_image.id
         customer_identity_id = first_customer_identity.id
 
         face_images = {}
@@ -60,11 +62,13 @@ class CtrApproveFace(BaseController):
             # {
             #     uuid_ekyc: {
             #         "uuid": uuid/image_url
+            #         "identity_image_id": id
             #     }
             # }
             face_images.update({
                 customer_identity_image.ekyc_uuid: {
-                    "uuid": customer_identity_image.image_url
+                    "uuid": customer_identity_image.image_url,
+                    "identity_image_id": customer_identity_image.id
                 }
             })
             face_image_uuids.append(customer_identity_image.image_url)
@@ -82,6 +86,8 @@ class CtrApproveFace(BaseController):
         saving_customer_compare_image_transactions = []
         # so sánh ảnh được thêm vào với 2 ảnh khuôn mặt so sánh ở bước GTDD
         for index, (face_uuid_ekyc, compare_face_image) in enumerate(face_images.items()):
+            compare_face_image_uuid = compare_face_image['uuid']
+            identity_image_id = compare_face_image['identity_image_id']
             is_success, compare_face_info = await service_ekyc.compare_face(compare_face_uuid_ekyc, face_uuid_ekyc)
             if not is_success:
                 return self.response_exception(
@@ -89,7 +95,7 @@ class CtrApproveFace(BaseController):
                     detail=compare_face_info['message'],
                     loc=f"index {index}, face_uuid: {face_uuid_ekyc}, compare_face_image_uuid: {compare_face_uuid_ekyc}"
                 )
-            compare_face_image_url = uuid__link_downloads[compare_face_image['uuid']]
+            compare_face_image_url = uuid__link_downloads[compare_face_image_uuid]
             similar_percent = compare_face_info['data']['similarity_percent']
             compare_face_image.update(dict(
                 url=compare_face_image_url,
