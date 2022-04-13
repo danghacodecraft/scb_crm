@@ -81,6 +81,7 @@ class CtrDashboard(BaseController):
             total_page += 1
 
         response_data = [{
+            "cif_id": item.Customer.id,
             "cif_number": item.Customer.cif_number,
             "full_name": item.Customer.full_name_vn,
             "identity_number": item.CustomerIdentity.identity_num,
