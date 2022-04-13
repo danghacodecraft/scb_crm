@@ -51,9 +51,8 @@ from app.utils.constant.cif import (
     IDENTITY_DOCUMENT_TYPE_CITIZEN_CARD, IDENTITY_DOCUMENT_TYPE_IDENTITY_CARD,
     IDENTITY_DOCUMENT_TYPE_PASSPORT, IDENTITY_DOCUMENT_TYPE_TYPE,
     IDENTITY_IMAGE_FLAG_BACKSIDE, IDENTITY_IMAGE_FLAG_FRONT_SIDE,
-    IMAGE_TYPE_CODE_FACE, IMAGE_TYPE_CODE_IDENTITY,
-    PROFILE_HISTORY_DESCRIPTIONS_INIT_CIF, PROFILE_HISTORY_STATUS_INIT,
-    RESIDENT_ADDRESS_CODE
+    IMAGE_TYPE_CODE_IDENTITY, PROFILE_HISTORY_DESCRIPTIONS_INIT_CIF,
+    PROFILE_HISTORY_STATUS_INIT, RESIDENT_ADDRESS_CODE
 )
 from app.utils.error_messages import (  # noqa
     ERROR_CALL_SERVICE_EKYC, ERROR_IDENTITY_DOCUMENT_NOT_EXIST,
@@ -500,7 +499,8 @@ class CtrIdentityDocument(BaseController):
             identity_image_uuid = front_side_information_identity_image_uuid
 
             identity_avatar_image_uuid = identity_document_request.front_side_information.identity_avatar_image_uuid
-            avatar_image_uuid_service = await CtrFile().upload_ekyc_file(uuid_ekyc=identity_avatar_image_uuid)
+            # Thêm avatar với Image Type là khuôn mặt vào DB
+
             back_side_information_identity_image_uuid = parse_file_uuid(
                 identity_document_request.back_side_information.identity_image_url)
             if not front_side_information_identity_image_uuid:
@@ -539,21 +539,6 @@ class CtrIdentityDocument(BaseController):
                     "updater_id": current_user_code,
                     "updater_at": now(),
                     "identity_image_front_flag": IDENTITY_IMAGE_FLAG_BACKSIDE
-                },
-                {
-                    "image_type_id": IMAGE_TYPE_CODE_FACE,
-                    "image_url": avatar_image_uuid_service['data']['uuid'],
-                    "avatar_image_uuid": None,
-                    "hand_side_id": None,
-                    "finger_type_id": None,
-                    "vector_data": None,
-                    "active_flag": True,
-                    "maker_id": current_user_code,
-                    "maker_at": now(),
-                    "updater_id": current_user_code,
-                    "updater_at": now(),
-                    "identity_image_front_flag": None,
-                    "ekyc_uuid": identity_avatar_image_uuid
                 }
             ]
 
@@ -651,7 +636,6 @@ class CtrIdentityDocument(BaseController):
                     loc="passport_information -> identity_image_url"
                 )
             identity_avatar_image_uuid = identity_document_request.passport_information.identity_avatar_image_uuid
-            avatar_image_uuid_service = await CtrFile().upload_ekyc_file(uuid_ekyc=identity_avatar_image_uuid)
             saving_customer_identity_images = [
                 {
                     "image_type_id": IMAGE_TYPE_CODE_IDENTITY,
@@ -666,21 +650,6 @@ class CtrIdentityDocument(BaseController):
                     "updater_id": current_user_code,
                     "updater_at": now(),
                     "identity_image_front_flag": None
-                },
-                {
-                    "image_type_id": IMAGE_TYPE_CODE_FACE,
-                    "image_url": avatar_image_uuid_service['data']['uuid'],
-                    "avatar_image_uuid": None,
-                    "hand_side_id": None,
-                    "finger_type_id": None,
-                    "vector_data": None,
-                    "active_flag": True,
-                    "maker_id": current_user_code,
-                    "maker_at": now(),
-                    "updater_id": current_user_code,
-                    "updater_at": now(),
-                    "identity_image_front_flag": None,
-                    "ekyc_uuid": identity_avatar_image_uuid
                 }
             ]
 
@@ -746,6 +715,12 @@ class CtrIdentityDocument(BaseController):
             "maker_at": now()
         }
         ############################################################################################################
+
+        ################################################################################################################
+        # Thêm avatar thành Hình ảnh định danh Khuôn mặt
+        ################################################################################################################
+        avatar_image_uuid_service = await CtrFile().upload_ekyc_file(uuid_ekyc=identity_avatar_image_uuid)
+        ################################################################################################################
         # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CIF
         transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
             business_type_id=BUSINESS_TYPE_INIT_CIF
@@ -799,6 +774,8 @@ class CtrIdentityDocument(BaseController):
                 saving_transaction_daily=saving_transaction_daily,
                 saving_transaction_sender=saving_transaction_sender,
                 saving_transaction_receiver=saving_transaction_receiver,
+                avatar_image_uuid_service=avatar_image_uuid_service,
+                identity_avatar_image_uuid_ekyc=identity_avatar_image_uuid,
                 request_data=request_data,
                 history_datas=history_datas,
                 current_user=current_user,
