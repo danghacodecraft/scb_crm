@@ -112,6 +112,8 @@ class Booking(Base):
     transaction_id = Column(ForeignKey('crm_transaction_daily.transaction_id'), comment='ID Transaction')
     business_type_id = Column('business_type_id', ForeignKey('crm_business_type.business_type_id'),
                               comment='ID type')
+
+    branch_id = Column(VARCHAR(50), comment='Mã đơn vị')
     created_at = Column(DateTime, comment='Ngày tạo')
     updated_at = Column(DateTime, comment='Ngày chỉnh sửa')
 
