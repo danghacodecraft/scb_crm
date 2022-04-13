@@ -1,11 +1,8 @@
 from typing import List
 
-import aiohttp
 from fastapi import UploadFile
-from starlette import status
 
 from app.api.base.controller import BaseController
-from app.api.base.repository import ReposReturn
 from app.api.v1.endpoints.file.repository import (
     repos_dowload_ekyc_file, repos_download_file, repos_download_multi_file,
     repos_upload_file, repos_upload_multi_file
@@ -13,10 +10,8 @@ from app.api.v1.endpoints.file.repository import (
 from app.api.v1.endpoints.file.validator import (
     file_validator, multi_file_validator
 )
-from app.settings.event import service_file
 from app.third_parties.services.ekyc import ServiceEKYC
-from app.utils.error_messages import ERROR_CALL_SERVICE_FILE, ERROR_INVALID_URL
-from app.utils.functions import now, replace_with_cdn
+from app.utils.functions import now
 
 
 class CtrFile(BaseController):
@@ -63,23 +58,8 @@ class CtrFile(BaseController):
 
     async def upload_ekyc_file(self, uuid_ekyc: str):
         info = self.call_repos(await repos_dowload_ekyc_file(uuid=uuid_ekyc))
-        async with aiohttp.ClientSession() as session:
-            url = ServiceEKYC().url
-            uri = info["uri"]
-            url = replace_with_cdn(
-                cdn=uri if uri.startswith('/') else url + '/cdn/' + uri,
-                file_url=url
-            )
-            async with session.get(url, ssl=False) as resp:
-                if resp.status == status.HTTP_200_OK:
-                    file = resp.content
-                    info_file = await service_file.upload_file(file=file, name=info["file_name"])
-                    if not info_file:
-                        return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_FILE)
 
-                    return self.response(data=info_file)
-                else:
-                    return self.response(data={
-                        "message": ERROR_INVALID_URL,
-                        "detail": f"Invalid: {url}"
-                    })
+        service = ServiceEKYC()
+        info_file = await service.upload_file_ekyc(info)
+
+        return self.response(data=info_file)

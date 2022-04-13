@@ -6,9 +6,13 @@ from aiohttp.web_exceptions import HTTPException
 from loguru import logger
 from starlette import status
 
+from app.api.base.repository import ReposReturn
+from app.settings import event
 from app.settings.service import SERVICE
-from app.utils.error_messages import ERROR_CALL_SERVICE_EKYC
-from app.utils.functions import convert_string_to_uuidv4
+from app.utils.error_messages import (
+    ERROR_CALL_SERVICE_EKYC, ERROR_CALL_SERVICE_FILE, ERROR_INVALID_URL
+)
+from app.utils.functions import convert_string_to_uuidv4, replace_with_cdn
 
 
 class ServiceEKYC:
@@ -592,3 +596,25 @@ class ServiceEKYC:
         except Exception as ex:
             logger.error(str(ex))
             return False, {"message": str(ex)}
+
+    async def upload_file_ekyc(self, info: dict):
+        async with aiohttp.ClientSession() as session:
+            uri = info["uri"]
+            url = replace_with_cdn(
+                cdn=uri if uri.startswith('/') else self.url + '/cdn/' + uri,
+                file_url=self.url
+            )
+
+            async with session.get(url, ssl=False) as resp:
+                if resp.status == status.HTTP_200_OK:
+                    file = resp.content
+                    info_file = await event.service_file.upload_file(file=file, name=info["file_name"])
+                    if not info_file:
+                        return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_FILE)
+
+                    return info_file
+                else:
+                    return {
+                        "message": ERROR_INVALID_URL,
+                        "detail": f"Invalid: {url}"
+                    }
