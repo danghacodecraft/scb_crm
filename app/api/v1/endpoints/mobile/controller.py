@@ -4,17 +4,22 @@ from fastapi import UploadFile
 
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.basic_information.identity.identity_document.repository import (
-    repos_upload_identity_document_and_ocr
+    repos_save_identity, repos_upload_identity_document_and_ocr
 )
+from app.api.v1.endpoints.file.controller import CtrFile
 from app.api.v1.endpoints.file.repository import repos_upload_file
+from app.settings.event import service_ekyc
 from app.utils.constant.cif import (
-    ADDRESS_COUNTRY_CODE_VN, CHANNEL_AT_THE_MOBILE, CONTACT_ADDRESS_CODE,
-    CUSTOMER_UNCOMPLETED_FLAG, EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
+    ADDRESS_COUNTRY_CODE_VN, BUSINESS_TYPE_INIT_CIF, CHANNEL_AT_THE_MOBILE,
+    CONTACT_ADDRESS_CODE, CUSTOMER_UNCOMPLETED_FLAG,
+    EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_BACK_SIDE_IDENTITY_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD, EKYC_IDENTITY_TYPE_PASSPORT,
     IDENTITY_DOCUMENT_TYPE_CITIZEN_CARD, IDENTITY_DOCUMENT_TYPE_IDENTITY_CARD,
-    IDENTITY_DOCUMENT_TYPE_PASSPORT, RESIDENT_ADDRESS_CODE
+    IDENTITY_DOCUMENT_TYPE_PASSPORT, IDENTITY_IMAGE_FLAG_BACKSIDE,
+    IDENTITY_IMAGE_FLAG_FRONT_SIDE, IMAGE_TYPE_CODE_IDENTITY,
+    RESIDENT_ADDRESS_CODE
 )
 from app.utils.constant.ekyc import EKYC_FLAG
 from app.utils.functions import calculate_age, now
@@ -42,6 +47,8 @@ class CtrIdentityMobile(BaseController):
             signature_image: UploadFile,
     ):
 
+        if not front_side_image or not avatar_image:
+            return self.response_exception(msg='MISSING IMAGE')
         current_user = self.current_user
         # check back_side khi truyền identity_type không phải hộ chiếu
         if identity_type != IDENTITY_DOCUMENT_TYPE_PASSPORT and not back_side_image:
@@ -114,7 +121,7 @@ class CtrIdentityMobile(BaseController):
         first_name, middle_name, last_name = split_name(full_name)
 
         # data sử dụng lưu customer
-        saving_customer = { # noqa
+        saving_customer = {  # noqa
             "cif_number": None,
             "self_selected_cif_flag": False,
             "full_name": full_name,
@@ -138,7 +145,7 @@ class CtrIdentityMobile(BaseController):
         }
 
         # tạo customer_identity
-        saving_customer_identity = { # noqa
+        saving_customer_identity = {  # noqa
             "identity_type_id": identity_type,
             "identity_num": orc_data_front_side['ocr_result']['identity_document']['identity_number'],
             "issued_date": issued_date,
@@ -190,7 +197,7 @@ class CtrIdentityMobile(BaseController):
 
         # dict dùng để tạo mới hoặc lưu lại customer_individual_info
 
-        saving_customer_individual_info = { # noqa
+        saving_customer_individual_info = {  # noqa
             "gender_id": gender_id,
             "place_of_birth_id": province_id,
             "country_of_birth_id": nationality_id,
@@ -204,7 +211,7 @@ class CtrIdentityMobile(BaseController):
         }
         # dict dùng để lưu lại customer_resident_address
 
-        saving_customer_resident_address = { # noqa
+        saving_customer_resident_address = {  # noqa
             "address_type_id": RESIDENT_ADDRESS_CODE,
             "address_country_id": nationality_id,
             "address_province_id": address_province_id,
@@ -214,7 +221,7 @@ class CtrIdentityMobile(BaseController):
             "address_domestic_flag": True if nationality_id == ADDRESS_COUNTRY_CODE_VN else False
         }
 
-        saving_customer_contact_address = { # noqa
+        saving_customer_contact_address = {  # noqa
             "address_type_id": CONTACT_ADDRESS_CODE,
             "address_country_id": nationality_id,
             "address_province_id": contact_province_id,
@@ -223,81 +230,114 @@ class CtrIdentityMobile(BaseController):
             "address": contact_number_and_street,
             "address_domestic_flag": True,  # Địa chỉ liên lạc đối với CMND/CCCD là địa chỉ trong nước
         }
+        # compare avatar
         if identity_type == IDENTITY_DOCUMENT_TYPE_PASSPORT:
-            pass
+            saving_customer_identity_images = [
+                {
+                    "image_type_id": IMAGE_TYPE_CODE_IDENTITY,
+                    "image_url": upload_front_side['uuid'],
+                    "avatar_image_uuid": orc_data_front_side['passport_information']['identity_avatar_image_uuid'],
+                    "hand_side_id": None,
+                    "finger_type_id": None,
+                    "vector_data": None,
+                    "active_flag": True,
+                    "maker_id": current_user.user_info.code,
+                    "maker_at": now(),
+                    "updater_id": current_user.user_info.code,
+                    "updater_at": now(),
+                    "identity_image_front_flag": None
+                }
+            ]
         else:
-            if not upload_back_side:
-                pass
-                # saving_customer_identity_images = [
-                #     {
-                #         "image_type_id": IMAGE_TYPE_CODE_IDENTITY,
-                #         "image_url": upload_front_side['uuid'],
-                #         "avatar_image_uuid": identity_avatar_image_uuid,
-                #         "hand_side_id": None,
-                #         "finger_type_id": None,
-                #         "vector_data": None,
-                #         "active_flag": True,
-                #         "maker_id": current_user.code,
-                #         "maker_at": now(),
-                #         "updater_id": current_user.code,
-                #         "updater_at": now(),
-                #         "identity_image_front_flag": IDENTITY_IMAGE_FLAG_FRONT_SIDE
-                #     },
-                #     {
-                #         "image_type_id": IMAGE_TYPE_CODE_IDENTITY,
-                #         "image_url": upload_back_side['uuid'],
-                #         # lưu CMND, CCCD mặt sau k có avatar
-                #         "avatar_image_uuid": None,
-                #         "hand_side_id": None,
-                #         "finger_type_id": None,
-                #         "vector_data": None,
-                #         "active_flag": True,
-                #         "maker_id": current_user.code,
-                #         "maker_at": now(),
-                #         "updater_id": current_user.code,
-                #         "updater_at": now(),
-                #         "identity_image_front_flag": IDENTITY_IMAGE_FLAG_BACKSIDE
-                #     },
-                #     {
-                #         "image_type_id": IMAGE_TYPE_CODE_FACE,
-                #         "image_url": avatar_image_uuid_service['data']['uuid'],
-                #         "avatar_image_uuid": None,
-                #         "hand_side_id": None,
-                #         "finger_type_id": None,
-                #         "vector_data": None,
-                #         "active_flag": True,
-                #         "maker_id": current_user_code,
-                #         "maker_at": now(),
-                #         "updater_id": current_user_code,
-                #         "updater_at": now(),
-                #         "identity_image_front_flag": None,
-                #         "ekyc_uuid": identity_avatar_image_uuid
-                #     }
-                # ]
-        # info_save_document = self.call_repos(
-        #     await repos_save_identity(
-        #         identity_document_type_id=identity_type,
-        #         customer_id=None,
-        #         identity_id=None,
-        #         saving_customer=saving_customer,
-        #         saving_customer_identity=saving_customer_identity,
-        #         saving_customer_individual_info=saving_customer_individual_info,
-        #
-        #         saving_customer_resident_address=saving_customer_resident_address,
-        #         saving_customer_contact_address=saving_customer_contact_address,
-        #
-        #
-        #         saving_customer_compare_image=saving_customer_compare_image,
-        #         saving_customer_identity_images=saving_customer_identity_images,
-        #         saving_transaction_stage_status=saving_transaction_stage_status,
-        #         saving_transaction_stage=saving_transaction_stage,
-        #         saving_transaction_daily=saving_transaction_daily,
-        #         saving_transaction_sender=saving_transaction_sender,
-        #         saving_transaction_receiver=saving_transaction_receiver,
-        #         request_data=request_data,
-        #         history_datas=history_datas,
-        #         current_user=current_user,
-        #         session=self.oracle_session
-        #     )
-        # )
-        return self.response(data=upload_front_side)
+            saving_customer_identity_images = [
+                {
+                    "image_type_id": IMAGE_TYPE_CODE_IDENTITY,
+                    "image_url": upload_front_side['uuid'],
+                    "avatar_image_uuid": orc_data_front_side['front_side_information']['identity_avatar_image_uuid'],
+                    "hand_side_id": None,
+                    "finger_type_id": None,
+                    "vector_data": None,
+                    "active_flag": True,
+                    "maker_id": current_user.user_info.code,
+                    "maker_at": now(),
+                    "updater_id": current_user.user_info.code,
+                    "updater_at": now(),
+                    "identity_image_front_flag": IDENTITY_IMAGE_FLAG_FRONT_SIDE
+                },
+                {
+                    "image_type_id": IMAGE_TYPE_CODE_IDENTITY,
+                    "image_url": upload_back_side['uuid'],
+                    # lưu CMND, CCCD mặt sau k có avatar
+                    "avatar_image_uuid": None,
+                    "hand_side_id": None,
+                    "finger_type_id": None,
+                    "vector_data": None,
+                    "active_flag": True,
+                    "maker_id": current_user.user_info.code,
+                    "maker_at": now(),
+                    "updater_id": current_user.user_info.code,
+                    "updater_at": now(),
+                    "identity_image_front_flag": IDENTITY_IMAGE_FLAG_BACKSIDE
+                }
+            ]
+        # upload avatar with ekyc = true
+        avatar_image_name = avatar_image.filename
+        avatar_image = await avatar_image.read()
+        upload_avatar = self.call_repos(await repos_upload_file(
+            file=avatar_image,
+            name=avatar_image_name,
+            ekyc_flag=EKYC_FLAG
+        ))
+        # compare avatar_image with identity_avatar_image_uuid từ orc front_side
+        is_success, compare_response = await service_ekyc.compare_face(
+            face_uuid=upload_avatar['uuid_ekyc'],
+            avatar_image_uuid=orc_data_front_side['front_side_information']['identity_avatar_image_uuid']
+        )
+        # lưu CustomerCompareImage
+
+        saving_customer_compare_image = {
+            "id": upload_avatar['uuid_ekyc'],
+            "compare_image_url": upload_avatar['uuid'],
+            "similar_percent": compare_response['data']['similarity_percent'],  # gọi qua eKYC để check
+            "maker_id": current_user.user_info.code,
+            "maker_at": now()
+        }
+        ################################################################################################################
+        # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CIF
+        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
+            business_type_id=BUSINESS_TYPE_INIT_CIF
+        )
+        (saving_transaction_stage_status, saving_transaction_stage, saving_transaction_daily, saving_transaction_sender,
+         saving_transaction_receiver) = transaction_datas
+
+        identity_avatar_image_uuid = orc_data_front_side['front_side_information']['identity_avatar_image_uuid']
+        # Thêm avatar thành Hình ảnh định danh Khuôn mặt
+        ################################################################################################################
+        avatar_image_uuid_service = await CtrFile().upload_ekyc_file(uuid_ekyc=orc_data_front_side['front_side_information']['identity_avatar_image_uuid'])
+
+        info_save_document = self.call_repos(
+            await repos_save_identity(
+                identity_document_type_id=identity_type,
+                customer_id=None,
+                identity_id=None,
+                saving_customer=saving_customer,
+                saving_customer_identity=saving_customer_identity,
+                saving_customer_individual_info=saving_customer_individual_info,
+                saving_customer_resident_address=saving_customer_resident_address,
+                saving_customer_contact_address=saving_customer_contact_address,
+                saving_customer_compare_image=saving_customer_compare_image,
+                saving_customer_identity_images=saving_customer_identity_images,
+                saving_transaction_stage_status=saving_transaction_stage_status,
+                saving_transaction_stage=saving_transaction_stage,
+                saving_transaction_daily=saving_transaction_daily,
+                saving_transaction_sender=saving_transaction_sender,
+                saving_transaction_receiver=saving_transaction_receiver,
+                avatar_image_uuid_service=avatar_image_uuid_service,
+                identity_avatar_image_uuid_ekyc=identity_avatar_image_uuid,
+                # request_data=request_data,
+                # history_datas=history_datas,
+                current_user=current_user,
+                session=self.oracle_session
+            )
+        )
+        return self.response(data=info_save_document)
