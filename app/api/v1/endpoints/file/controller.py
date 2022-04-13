@@ -14,8 +14,9 @@ from app.api.v1.endpoints.file.validator import (
     file_validator, multi_file_validator
 )
 from app.settings.event import service_file
+from app.third_parties.services.ekyc import ServiceEKYC
 from app.utils.error_messages import ERROR_CALL_SERVICE_FILE, ERROR_INVALID_URL
-from app.utils.functions import now
+from app.utils.functions import now, replace_with_cdn
 
 
 class CtrFile(BaseController):
@@ -63,8 +64,13 @@ class CtrFile(BaseController):
     async def upload_ekyc_file(self, uuid_ekyc: str):
         info = self.call_repos(await repos_dowload_ekyc_file(uuid=uuid_ekyc))
         async with aiohttp.ClientSession() as session:
-            url = info["file_url"]
-            async with session.get(url) as resp:
+            url = ServiceEKYC().url
+            uri = info["uri"]
+            url = replace_with_cdn(
+                cdn=uri if uri.startswith('/') else url + '/cdn/' + uri,
+                file_url=url
+            )
+            async with session.get(url, ssl=False) as resp:
                 if resp.status == status.HTTP_200_OK:
                     file = resp.content
                     info_file = await service_file.upload_file(file=file, name=info["file_name"])

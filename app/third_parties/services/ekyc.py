@@ -469,6 +469,13 @@ class ServiceEKYC:
                 logger.log("SERVICE", f"[EKYC UPLOAD FILE] {response.status} : {api_url}")
                 if response.status == status.HTTP_201_CREATED:
                     return True, await response.json()
+                elif response.status >= status.HTTP_500_INTERNAL_SERVER_ERROR:
+                    return False, {
+                        "message": ERROR_CALL_SERVICE_EKYC,
+                        "detail": "STATUS " + str(response.status),
+                        "api_url": api_url,
+                        "response": None
+                    }
                 else:
                     return False, {
                         "message": ERROR_CALL_SERVICE_EKYC,
