@@ -42,9 +42,9 @@ from app.third_parties.oracle.models.master_data.others import (
 )
 from app.utils.constant.cif import (
     ACTIVE_FLAG_ACTIVED, ADDRESS_COUNTRY_CODE_VN, BUSINESS_FORM_TTCN_GTDD_GTDD,
-    BUSINESS_FORM_TTCN_GTDD_KM, CONTACT_ADDRESS_CODE, CRM_GENDER_TYPE_FEMALE,
-    CRM_GENDER_TYPE_MALE, DROPDOWN_NONE_DICT, EKYC_GENDER_TYPE_FEMALE,
-    EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
+    BUSINESS_FORM_TTCN_GTDD_KM, BUSINESS_TYPE_INIT_CIF, CONTACT_ADDRESS_CODE,
+    CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE, DROPDOWN_NONE_DICT,
+    EKYC_GENDER_TYPE_FEMALE, EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_BACK_SIDE_IDENTITY_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD,
@@ -342,6 +342,7 @@ async def repos_save_identity(
         session: Session
 ) -> ReposReturn:
     current_user_code = current_user.code
+    current_user_branch_id = current_user.hrm_branch_id
     new_first_identity_image_id = generate_uuid()  # ID ảnh mặt trước hoặc ảnh hộ chiếu
     new_second_identity_image_id = generate_uuid()  # ID ảnh mặt sau
 
@@ -421,6 +422,8 @@ async def repos_save_identity(
             Booking(
                 id=new_booking_id,
                 transaction_id=saving_transaction_daily['transaction_id'],
+                business_type_id=BUSINESS_TYPE_INIT_CIF,
+                branch_id=current_user_branch_id,
                 created_at=now(),
                 updated_at=now()
             ),
