@@ -92,7 +92,7 @@ class TransactionSender(Base):
     user_email = Column(VARCHAR(100), comment='Email user')
     branch_id = Column(VARCHAR(36), comment='Mã đơn vị')
     branch_code = Column(VARCHAR(10), comment='Mã code đơn vị')
-    branch_name = Column(VARCHAR(10), comment='Tên đơn vị')
+    branch_name = Column(VARCHAR(100), comment='Tên đơn vị')
     department_id = Column(VARCHAR(36), comment='Mã phòng ban thực hiện')
     department_code = Column(VARCHAR(100), comment='Mã code phòng')
     department_name = Column(VARCHAR(100), comment='Tên phòng')
