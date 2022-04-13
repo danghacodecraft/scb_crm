@@ -1,3 +1,5 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, File, UploadFile
 from starlette import status
 
@@ -20,14 +22,14 @@ router = APIRouter()
     )
 )
 async def save_identity_mobile(
-        full_name: str = File(..., description='ten'),
-        date_of_birth: str = File(..., description='ngay sinh'),
-        gender: str = File(..., description='gioi tinh'),
-        nationality: str = File(..., description='quoc tich'),
+        full_name_vn: str = File(..., description='Họ và tên'),
+        date_of_birth: date = File(..., description='ngày sinh'),
+        gender_id: str = File(..., description='gioi tinh'),
+        nationality_id: str = File(..., description='quoc tich'),
         identity_number: str = File(..., description='so GTDD'),
-        issued_date: str = File(..., description='ngày cấp'),
-        expired_date: str = File(..., description='ngày hết hạn'),
-        place_of_issued: str = File(..., description='nơi cấp'),
+        issued_date: date = File(..., description='ngày cấp'),
+        expired_date: date = File(..., description='ngày hết hạn'),
+        place_of_issue_id: str = File(..., description='nơi cấp'),
         identity_type: str = File(..., description='loại giấy tờ dịnh danh'),
         front_side_image: UploadFile = File(..., description='hộ chiếu hoặc mặt trước DTDD'),
         back_side_image: UploadFile = File(None, description='Mặt sau DTDD'),
@@ -36,14 +38,14 @@ async def save_identity_mobile(
         current_user=Depends(get_current_user_from_header()),
 ):
     response_data = await CtrIdentityMobile(current_user).save_identity_mobile(
-        full_name=full_name,
+        full_name_vn=full_name_vn,
         date_of_birth=date_of_birth,
-        gender=gender,
-        nationality=nationality,
+        gender_id=gender_id,
+        nationality_id=nationality_id,
         identity_number=identity_number,
         issued_date=issued_date,
         expired_date=expired_date,
-        place_of_issued=place_of_issued,
+        place_of_issue_id=place_of_issue_id,
         identity_type=identity_type,
         front_side_image=front_side_image,
         back_side_image=back_side_image,
