@@ -8,10 +8,13 @@ from app.api.v1.endpoints.cif.basic_information.identity.identity_document.repos
 )
 from app.api.v1.endpoints.file.controller import CtrFile
 from app.api.v1.endpoints.file.repository import repos_upload_file
+from app.api.v1.validator import validate_history_data
 from app.settings.event import service_ekyc
+from app.third_parties.oracle.models.master_data.address import AddressCountry
+from app.third_parties.oracle.models.master_data.customer import CustomerGender
 from app.utils.constant.cif import (
     ADDRESS_COUNTRY_CODE_VN, BUSINESS_TYPE_INIT_CIF, CHANNEL_AT_THE_MOBILE,
-    CONTACT_ADDRESS_CODE, CUSTOMER_UNCOMPLETED_FLAG,
+    CLASSIFICATION_PERSONAL, CONTACT_ADDRESS_CODE, CUSTOMER_UNCOMPLETED_FLAG,
     EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_BACK_SIDE_IDENTITY_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_CITIZEN_CARD,
@@ -19,10 +22,11 @@ from app.utils.constant.cif import (
     IDENTITY_DOCUMENT_TYPE_CITIZEN_CARD, IDENTITY_DOCUMENT_TYPE_IDENTITY_CARD,
     IDENTITY_DOCUMENT_TYPE_PASSPORT, IDENTITY_IMAGE_FLAG_BACKSIDE,
     IDENTITY_IMAGE_FLAG_FRONT_SIDE, IMAGE_TYPE_CODE_IDENTITY,
+    PROFILE_HISTORY_DESCRIPTIONS_INIT_CIF, PROFILE_HISTORY_STATUS_INIT,
     RESIDENT_ADDRESS_CODE
 )
 from app.utils.constant.ekyc import EKYC_FLAG
-from app.utils.functions import calculate_age, now
+from app.utils.functions import calculate_age, datetime_to_string, now
 from app.utils.vietnamese_converter import (
     convert_to_unsigned_vietnamese, make_short_name, split_name
 )
@@ -54,6 +58,9 @@ class CtrIdentityMobile(BaseController):
         if identity_type != IDENTITY_DOCUMENT_TYPE_PASSPORT and not back_side_image:
             return self.response_exception(msg='MISSING BACK_SIDE')
 
+        # check validate field
+        await self.get_model_object_by_id(model_id=gender_id, model=CustomerGender, loc='identity_mobile -> gender_id')
+        await self.get_model_object_by_id(model_id=nationality_id, model=AddressCountry, loc='nationality_id')
         front_side_image_name = front_side_image.filename
         front_side_image = await front_side_image.read()
 
@@ -137,13 +144,15 @@ class CtrIdentityMobile(BaseController):
             "customer_category_id": "D0682B44BEB3830EE0530100007F1DDC",  # TODO
             "customer_economic_profession_id": None,
             "nationality_id": nationality_id,
-            "customer_classification_id": None,
+            "customer_classification_id": CLASSIFICATION_PERSONAL,  # TODO hash core loại khách hàng
             "customer_status_id": "1",  # TODO
             "channel_id": CHANNEL_AT_THE_MOBILE,  # TODO
             "avatar_url": None,
             "complete_flag": CUSTOMER_UNCOMPLETED_FLAG
         }
-
+        print(orc_data_front_side['ocr_result']['identity_document']['identity_number'])
+        if orc_data_front_side['ocr_result']['identity_document']['identity_number'] != identity_number:
+            return self.response_exception(msg='identity_number not same')
         # tạo customer_identity
         saving_customer_identity = {  # noqa
             "identity_type_id": identity_type,
@@ -209,6 +218,9 @@ class CtrIdentityMobile(BaseController):
             "father_full_name": None,
             "mother_full_name": None
         }
+        print('orc_data_front_side', orc_data_front_side)
+
+        print('saving_customer_individual_info', saving_customer_individual_info)
         # dict dùng để lưu lại customer_resident_address
 
         saving_customer_resident_address = {  # noqa
@@ -220,7 +232,7 @@ class CtrIdentityMobile(BaseController):
             "address": resident_address_number_and_street,
             "address_domestic_flag": True if nationality_id == ADDRESS_COUNTRY_CODE_VN else False
         }
-
+        print('saving_customer_resident_address', saving_customer_resident_address)
         saving_customer_contact_address = {  # noqa
             "address_type_id": CONTACT_ADDRESS_CODE,
             "address_country_id": nationality_id,
@@ -289,12 +301,31 @@ class CtrIdentityMobile(BaseController):
             ekyc_flag=EKYC_FLAG
         ))
         # compare avatar_image with identity_avatar_image_uuid từ orc front_side
-        is_success, compare_response = await service_ekyc.compare_face(
-            face_uuid=upload_avatar['uuid_ekyc'],
-            avatar_image_uuid=orc_data_front_side['front_side_information']['identity_avatar_image_uuid']
-        )
-        # lưu CustomerCompareImage
+        if identity_type != 'HO_CHIEU':
+            is_success, compare_response = await service_ekyc.compare_face(
+                face_uuid=upload_avatar['uuid_ekyc'],
+                avatar_image_uuid=orc_data_front_side['front_side_information']['identity_avatar_image_uuid']
+            )
+            identity_avatar_image_uuid = orc_data_front_side['front_side_information']['identity_avatar_image_uuid']
+            # Thêm avatar thành Hình ảnh định danh Khuôn mặt
+            ################################################################################################################
+            avatar_image_uuid_service = await CtrFile().upload_ekyc_file(
+                uuid_ekyc=orc_data_front_side['front_side_information']['identity_avatar_image_uuid'])
+        ################################################################################################################
 
+        else:
+            is_success, compare_response = await service_ekyc.compare_face(
+                face_uuid=upload_avatar['uuid_ekyc'],
+                avatar_image_uuid=orc_data_front_side['passport_information']['identity_avatar_image_uuid']
+            )
+            identity_avatar_image_uuid = orc_data_front_side['passport_information']['identity_avatar_image_uuid']
+
+            avatar_image_uuid_service = await CtrFile().upload_ekyc_file(
+                uuid_ekyc=orc_data_front_side['passport_information']['identity_avatar_image_uuid'])
+
+        # lưu CustomerCompareImage
+        if not is_success:
+            return self.response_exception(msg='COMPARE_FACE_MOBILE')
         saving_customer_compare_image = {
             "id": upload_avatar['uuid_ekyc'],
             "compare_image_url": upload_avatar['uuid'],
@@ -310,11 +341,28 @@ class CtrIdentityMobile(BaseController):
         (saving_transaction_stage_status, saving_transaction_stage, saving_transaction_daily, saving_transaction_sender,
          saving_transaction_receiver) = transaction_datas
 
-        identity_avatar_image_uuid = orc_data_front_side['front_side_information']['identity_avatar_image_uuid']
-        # Thêm avatar thành Hình ảnh định danh Khuôn mặt
-        ################################################################################################################
-        avatar_image_uuid_service = await CtrFile().upload_ekyc_file(uuid_ekyc=orc_data_front_side['front_side_information']['identity_avatar_image_uuid'])
-
+        history_datas = [dict(
+            description=PROFILE_HISTORY_DESCRIPTIONS_INIT_CIF,
+            completed_at=datetime_to_string(now()),
+            created_at=datetime_to_string(now()),
+            status=PROFILE_HISTORY_STATUS_INIT,
+            branch_id=current_user.user_info.hrm_branch_id,
+            branch_code=current_user.user_info.hrm_branch_code,
+            branch_name=current_user.user_info.hrm_branch_name,
+            user_id=current_user.user_info.code,
+            user_name=current_user.user_info.name,
+            position_id=current_user.user_info.hrm_position_id,
+            position_code=current_user.user_info.hrm_position_code,
+            position_name=current_user.user_info.hrm_position_name
+        )]
+        # Validate history data
+        is_success, history_response = validate_history_data(history_datas)
+        if not is_success:
+            return self.response_exception(
+                msg=history_response['msg'],
+                loc=history_response['loc'],
+                detail=history_response['detail']
+            )
         info_save_document = self.call_repos(
             await repos_save_identity(
                 identity_document_type_id=identity_type,
@@ -334,9 +382,9 @@ class CtrIdentityMobile(BaseController):
                 saving_transaction_receiver=saving_transaction_receiver,
                 avatar_image_uuid_service=avatar_image_uuid_service,
                 identity_avatar_image_uuid_ekyc=identity_avatar_image_uuid,
-                # request_data=request_data,
-                # history_datas=history_datas,
-                current_user=current_user,
+                request_data={"mytest": "hmmm"},
+                history_datas=history_datas,
+                current_user=current_user.user_info,
                 session=self.oracle_session
             )
         )
