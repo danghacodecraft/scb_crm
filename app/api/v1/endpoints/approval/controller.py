@@ -29,8 +29,8 @@ from app.utils.error_messages import (
     ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT,
     ERROR_APPROVAL_INCORRECT_UPLOAD_SIGNATURE, ERROR_APPROVAL_UPLOAD_FACE,
     ERROR_APPROVAL_UPLOAD_FINGERPRINT, ERROR_APPROVAL_UPLOAD_SIGNATURE,
-    ERROR_CONTENT_NOT_NULL, ERROR_STAGE_COMPLETED, ERROR_VALIDATE,
-    MESSAGE_STATUS
+    ERROR_CONTENT_NOT_NULL, ERROR_PERMISSION, ERROR_STAGE_COMPLETED,
+    ERROR_VALIDATE, MESSAGE_STATUS
 )
 from app.utils.functions import generate_uuid, now, orjson_dumps, orjson_loads
 
@@ -641,8 +641,9 @@ class CtrApproval(BaseController):
 
         if not is_permission_supervisor or current_stage_code != CIF_STAGE_APPROVE_KSV:
             return self.response_exception(
-                msg="No role",
-                detail=f"Stage: {CIF_STAGE_APPROVE_KSV}, User: {current_user.code}",
+                msg=ERROR_PERMISSION,
+                loc=f"Stage: {CIF_STAGE_APPROVE_KSV}, User: {current_user.code}",
+                detail=MESSAGE_STATUS[ERROR_PERMISSION],
                 error_status_code=status.HTTP_403_FORBIDDEN
             )
         ################################################################################################################
