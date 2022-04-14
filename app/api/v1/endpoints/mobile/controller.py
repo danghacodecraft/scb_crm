@@ -21,9 +21,9 @@ from app.utils.constant.cif import (
     EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD, EKYC_IDENTITY_TYPE_PASSPORT,
     IDENTITY_DOCUMENT_TYPE_CITIZEN_CARD, IDENTITY_DOCUMENT_TYPE_IDENTITY_CARD,
     IDENTITY_DOCUMENT_TYPE_PASSPORT, IDENTITY_IMAGE_FLAG_BACKSIDE,
-    IDENTITY_IMAGE_FLAG_FRONT_SIDE, IMAGE_TYPE_CODE_IDENTITY,
-    PROFILE_HISTORY_DESCRIPTIONS_INIT_CIF, PROFILE_HISTORY_STATUS_INIT,
-    RESIDENT_ADDRESS_CODE
+    IDENTITY_IMAGE_FLAG_FRONT_SIDE, IDENTITY_PASSPORT_TYPE_ID_DEFAULT,
+    IMAGE_TYPE_CODE_IDENTITY, PROFILE_HISTORY_DESCRIPTIONS_INIT_CIF,
+    PROFILE_HISTORY_STATUS_INIT, RESIDENT_ADDRESS_CODE
 )
 from app.utils.constant.ekyc import EKYC_FLAG
 from app.utils.functions import calculate_age, datetime_to_string, now
@@ -150,10 +150,13 @@ class CtrIdentityMobile(BaseController):
             "avatar_url": None,
             "complete_flag": CUSTOMER_UNCOMPLETED_FLAG
         }
+        print('orc_data_front_side', orc_data_front_side)
+        print('orc_data_back_side', orc_data_back_side)
         print(orc_data_front_side['ocr_result']['identity_document']['identity_number'])
         if orc_data_front_side['ocr_result']['identity_document']['identity_number'] != identity_number:
             return self.response_exception(msg='identity_number not same')
         # tạo customer_identity
+
         saving_customer_identity = {  # noqa
             "identity_type_id": identity_type,
             "identity_num": orc_data_front_side['ocr_result']['identity_document']['identity_number'],
@@ -165,7 +168,19 @@ class CtrIdentityMobile(BaseController):
             "updater_at": now(),
             "updater_id": current_user.user_info.code
         }
-
+        if identity_type == "HO_CHIEU":
+            saving_customer_identity.update({
+                "mrz_content": orc_data_front_side['ocr_result']['basic_information']['mrz_content'],
+                "passport_type_id": IDENTITY_PASSPORT_TYPE_ID_DEFAULT,
+                "passport_code_id": orc_data_front_side['ocr_result']['identity_document']['passport_code']['id'],
+                "identity_number_in_passport": orc_data_front_side['ocr_result']['basic_information']['identity_card_number']
+            })
+        if identity_type == "CCCD":
+            saving_customer_identity.update({
+                "qrcode_content": None,
+                "mrz_content": orc_data_back_side['ocr_result']['identity_document']['mrz_content']
+            })
+        print('saving_customer_identity', saving_customer_identity)
         religion_id = None
         ethnic_id = None
         identity_characteristic = None
@@ -178,11 +193,12 @@ class CtrIdentityMobile(BaseController):
         contact_district_id = None
         contact_ward_id = None
         contact_number_and_street = None
-
+        orc_gender_id = None
         if identity_type == IDENTITY_DOCUMENT_TYPE_PASSPORT:
             province_id = orc_data_front_side['ocr_result']['basic_information']['place_of_birth']['id']
-
+            orc_gender_id = orc_data_front_side['ocr_result']['basic_information']['gender']['id']
         else:
+            # CCCD
             province_id = orc_data_front_side['ocr_result']['basic_information']['province']['id']
             identity_characteristic = orc_data_back_side['ocr_result']['basic_information']['identity_characteristic']
 
@@ -199,12 +215,20 @@ class CtrIdentityMobile(BaseController):
             contact_district_id = contact_address['district']['id']
             contact_ward_id = contact_address['ward']['id']
             contact_number_and_street = contact_address['number_and_street']
-
+            # CMND
             if identity_type == IDENTITY_DOCUMENT_TYPE_IDENTITY_CARD:
+                # dân tộc
                 ethnic_id = orc_data_back_side['ocr_result']['basic_information']['ethnic']['id']
+                # tôn giáo
                 religion_id = orc_data_back_side['ocr_result']['basic_information']['religion']['id']
+            else:
+                # trường hợp cccd có giới tính
+                orc_gender_id = orc_data_front_side['ocr_result']['basic_information']['gender']['id']
 
+        print('orc_data_front_side', orc_data_front_side)
         # dict dùng để tạo mới hoặc lưu lại customer_individual_info
+        if orc_gender_id and orc_gender_id != gender_id:
+            return self.response_exception(msg='gender_id is not same')
 
         saving_customer_individual_info = {  # noqa
             "gender_id": gender_id,
@@ -218,7 +242,6 @@ class CtrIdentityMobile(BaseController):
             "father_full_name": None,
             "mother_full_name": None
         }
-        print('orc_data_front_side', orc_data_front_side)
 
         print('saving_customer_individual_info', saving_customer_individual_info)
         # dict dùng để lưu lại customer_resident_address
