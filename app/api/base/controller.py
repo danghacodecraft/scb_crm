@@ -18,7 +18,7 @@ from app.api.v1.endpoints.repository import (
     repos_get_model_object_by_id_or_code, repos_get_model_objects_by_ids
 )
 from app.api.v1.endpoints.user.schema import AuthResponse
-from app.third_parties.oracle.base import Base, SessionLocal
+from app.third_parties.oracle.base import Base, SessionLocal, SessionLocal_Task
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.ekyc import is_success
 from app.utils.error_messages import (
@@ -41,6 +41,11 @@ class BaseController:
         if is_init_oracle_session:
             logger.debug("Started session Oracle")
             self.oracle_session = SessionLocal()
+
+        self.oracle_session_task: Optional[Session] = None
+        if is_init_oracle_session:
+            logger.debug("Started session Oracle")
+            self.oracle_session_task = SessionLocal_Task()
 
     def _close_oracle_session(self):
         if self.oracle_session:
