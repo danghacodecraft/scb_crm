@@ -3,6 +3,7 @@ from typing import List, Optional, Tuple
 
 from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.functions import count
 
 from app.api.base.repository import ReposReturn
 from app.third_parties.oracle.base import Base
@@ -15,7 +16,8 @@ from app.third_parties.oracle.models.master_data.account import (
 from app.utils.constant.cif import ACTIVE_FLAG_ACTIVED
 from app.utils.error_messages import ERROR_ID_NOT_EXIST, ERROR_INVALID_NUMBER
 from app.utils.functions import (
-    dropdown, is_valid_number, now, special_dropdown
+    date_to_datetime, datetime_to_string, dropdown, end_time_of_day,
+    is_valid_number, now, special_dropdown, today
 )
 
 
@@ -252,3 +254,26 @@ async def repos_is_valid_number(string: str, loc: str):
         return ReposReturn(data=None)
 
     return ReposReturn(is_error=True, msg=ERROR_INVALID_NUMBER, loc=loc)
+
+
+async def generate_booking_code(
+    branch_code: str,
+    business_type_code: str,
+    session: Session
+):
+    datetime_today = date_to_datetime(today())
+    sequence = session.execute(
+        select(
+            count(Booking.id)
+        )
+        .filter(and_(
+            Booking.created_at >= datetime_today,
+            Booking.created_at < end_time_of_day(datetime_today)
+        ))
+    ).scalar()
+
+    date_code = datetime_to_string(datetime_today, _format='%Y%m%d')
+    sequence_code = '{:07d}'.format(sequence + 1)
+    booking_code = f'{branch_code}.CRM.{business_type_code}.{date_code}.{sequence_code}'
+
+    return booking_code
