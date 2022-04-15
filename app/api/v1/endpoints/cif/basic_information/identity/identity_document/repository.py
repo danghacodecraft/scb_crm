@@ -54,8 +54,9 @@ from app.utils.constant.cif import (
 )
 from app.utils.constant.ekyc import EKYC_DATE_FORMAT
 from app.utils.error_messages import (
-    ERROR_CALL_SERVICE_EKYC, ERROR_CALL_SERVICE_FILE, ERROR_CIF_ID_NOT_EXIST,
-    ERROR_COMPARE_IMAGE_IS_EXISTED
+    ERROR_BOOKING_CODE_EXISTED, ERROR_CALL_SERVICE_EKYC,
+    ERROR_CALL_SERVICE_FILE, ERROR_CIF_ID_NOT_EXIST,
+    ERROR_COMPARE_IMAGE_IS_EXISTED, MESSAGE_STATUS
 )
 from app.utils.functions import (
     date_string_to_other_date_string_format, dropdown, generate_uuid, now,
@@ -410,11 +411,18 @@ async def repos_save_identity(
             )
 
         new_booking_id = generate_uuid()
-        booking_code = await generate_booking_code(
+        is_existed, booking_code = await generate_booking_code(
             branch_code=current_user_branch_id,
             business_type_code=BUSINESS_TYPE_INIT_CIF,
             session=session
         )
+
+        if is_existed:
+            return ReposReturn(
+                is_error=True,
+                msg=ERROR_BOOKING_CODE_EXISTED,
+                detail=MESSAGE_STATUS[ERROR_BOOKING_CODE_EXISTED]
+            )
 
         # create booking & log
         session.add_all([
