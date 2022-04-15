@@ -1,4 +1,5 @@
 from app.api.base.controller import BaseController
+from app.api.v1.controller import PermissionController
 from app.api.v1.endpoints.approval.common_repository import (
     repos_get_next_receiver, repos_get_next_stage, repos_get_previous_stage,
     repos_get_previous_transaction_daily, repos_get_stage_information
@@ -18,6 +19,9 @@ from app.utils.constant.approval import (
 from app.utils.constant.cif import (
     BUSINESS_TYPE_INIT_CIF, IMAGE_TYPE_FACE, IMAGE_TYPE_FINGERPRINT,
     IMAGE_TYPE_SIGNATURE
+)
+from app.utils.constant.idm import (
+    IDM_GROUP_ROLE_CODE_APPROVAL, IDM_MENU_CODE_CIF, IDM_PERMISSION_CODE_KSV
 )
 from app.utils.error_messages import (
     ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
@@ -621,6 +625,17 @@ class CtrApproval(BaseController):
                     next_stage=None
                 )
             )
+
+        ################################################################################################################
+        # check quyền user
+        self.call_repos(await PermissionController.ctr_approval_check_permission(
+            auth_response=self.current_user,
+            menu_code=IDM_MENU_CODE_CIF,
+            group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
+            permission_code=IDM_PERMISSION_CODE_KSV,
+            stage_code=CIF_STAGE_APPROVE_KSV
+        ))
+        ################################################################################################################
 
         current_stage_status, current_stage, _, current_lane, _, current_phase, current_stage_role = self.call_repos(
             await repos_get_stage_information(
