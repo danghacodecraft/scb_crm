@@ -15,4 +15,4 @@ class ContactResponse(BaseSchema):
     title_name: str = Field(None, description="Nhân Viên PTUDNB")
     unit: str = Field(None,
                       description="Ngân hàng TMCP Sài Gòn;Ban Điều hành;Khối Vận hành và Công nghệ;Trung tâm Vận hành và Phát triển Giải pháp;Phòng Phát triển Giải pháp;Mảng Phát triển Hệ thống [Back-end]")
-    avatar_link: str = Field(None, description="/cdn-profile/00965.jpeg")
+    avatar_link: str = Field(None, description="/cdn/user-profile/00965.jpeg")

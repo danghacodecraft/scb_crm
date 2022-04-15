@@ -12,7 +12,7 @@ SUCCESS_EXAMPLE = {
                 "emp_id": "6036",
                 "title_name": "Nhân viên cao cấp P.PTUDNB",
                 "unit": "Ngân hàng TMCP Sài Gòn;Ban Điều hành;Khối Vận hành và Công nghệ;Trung tâm Vận hành và Phát triển Giải pháp;Phòng Phát triển Giải pháp;Mảng Phát triển Hệ thống [Back-end]",
-                "avatar_link": "/cdn-profile/00965.jpeg"
+                "avatar_link": "/cdn/user-profile/00965.jpeg"
             },
             "errors": []
         }
