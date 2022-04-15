@@ -95,7 +95,7 @@ def datetime_to_date(datetime_input: datetime, default=None) -> date:
 
 def end_time_of_day(datetime_input: datetime, default=None) -> datetime:
     try:
-        return datetime_input.replace(hour=23, minute=59, second=59)
+        return datetime_input.replace(hour=23, minute=59, second=59, microsecond=999999)
     except (ValueError, TypeError):
         return default
 
