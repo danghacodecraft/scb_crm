@@ -71,11 +71,11 @@ class CtrIdentityMobile(BaseController):
             ekyc_flag=EKYC_FLAG
         ))
 
-        orc_data_front_side = None
-        orc_data_back_side = None
+        ocr_data_front_side = None
+        ocr_data_back_side = None
         upload_back_side = None
         if identity_type == IDENTITY_DOCUMENT_TYPE_PASSPORT:
-            orc_data_front_side = self.call_repos(await repos_upload_identity_document_and_ocr(
+            ocr_data_front_side = self.call_repos(await repos_upload_identity_document_and_ocr(
                 image_file=front_side_image,
                 image_file_name=front_side_image_name,
                 identity_type=EKYC_IDENTITY_TYPE_PASSPORT,
@@ -93,16 +93,16 @@ class CtrIdentityMobile(BaseController):
                 ekyc_flag=EKYC_FLAG
             ))
 
-            # orc giấy tờ định danh
+            # ocr giấy tờ định danh
             if identity_type == IDENTITY_DOCUMENT_TYPE_IDENTITY_CARD:
-                orc_data_front_side = self.call_repos(await repos_upload_identity_document_and_ocr(
+                ocr_data_front_side = self.call_repos(await repos_upload_identity_document_and_ocr(
                     image_file=front_side_image,
                     image_file_name=front_side_image_name,
                     identity_type=EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD,
                     session=self.oracle_session
                 ))
 
-                orc_data_back_side = self.call_repos(await(repos_upload_identity_document_and_ocr(
+                ocr_data_back_side = self.call_repos(await(repos_upload_identity_document_and_ocr(
                     image_file=back_side_image,
                     image_file_name=back_side_image_name,
                     identity_type=EKYC_IDENTITY_TYPE_BACK_SIDE_IDENTITY_CARD,
@@ -110,14 +110,14 @@ class CtrIdentityMobile(BaseController):
                 )))
 
             if identity_type == IDENTITY_DOCUMENT_TYPE_CITIZEN_CARD:
-                orc_data_front_side = self.call_repos(await repos_upload_identity_document_and_ocr(
+                ocr_data_front_side = self.call_repos(await repos_upload_identity_document_and_ocr(
                     image_file=front_side_image,
                     image_file_name=front_side_image_name,
                     identity_type=EKYC_IDENTITY_TYPE_FRONT_SIDE_CITIZEN_CARD,
                     session=self.oracle_session
                 ))
 
-                orc_data_back_side = self.call_repos(await(repos_upload_identity_document_and_ocr(
+                ocr_data_back_side = self.call_repos(await(repos_upload_identity_document_and_ocr(
                     image_file=back_side_image,
                     image_file_name=back_side_image_name,
                     identity_type=EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
@@ -150,37 +150,10 @@ class CtrIdentityMobile(BaseController):
             "avatar_url": None,
             "complete_flag": CUSTOMER_UNCOMPLETED_FLAG
         }
-        print('orc_data_front_side', orc_data_front_side)
-        print('orc_data_back_side', orc_data_back_side)
-        print(orc_data_front_side['ocr_result']['identity_document']['identity_number'])
-        if orc_data_front_side['ocr_result']['identity_document']['identity_number'] != identity_number:
-            return self.response_exception(msg='identity_number not same')
-        # tạo customer_identity
+        print('ocr_data_front_side', ocr_data_front_side)
+        print('ocr_data_back_side', ocr_data_back_side)
+        print(ocr_data_front_side['ocr_result']['identity_document']['identity_number'])
 
-        saving_customer_identity = {  # noqa
-            "identity_type_id": identity_type,
-            "identity_num": orc_data_front_side['ocr_result']['identity_document']['identity_number'],
-            "issued_date": issued_date,
-            "expired_date": expired_date,
-            "place_of_issue_id": place_of_issue_id,
-            "maker_at": now(),
-            "maker_id": current_user.user_info.code,
-            "updater_at": now(),
-            "updater_id": current_user.user_info.code
-        }
-        if identity_type == "HO_CHIEU":
-            saving_customer_identity.update({
-                "mrz_content": orc_data_front_side['ocr_result']['basic_information']['mrz_content'],
-                "passport_type_id": IDENTITY_PASSPORT_TYPE_ID_DEFAULT,
-                "passport_code_id": orc_data_front_side['ocr_result']['identity_document']['passport_code']['id'],
-                "identity_number_in_passport": orc_data_front_side['ocr_result']['basic_information']['identity_card_number']
-            })
-        if identity_type == "CCCD":
-            saving_customer_identity.update({
-                "qrcode_content": None,
-                "mrz_content": orc_data_back_side['ocr_result']['identity_document']['mrz_content']
-            })
-        print('saving_customer_identity', saving_customer_identity)
         religion_id = None
         ethnic_id = None
         identity_characteristic = None
@@ -193,41 +166,80 @@ class CtrIdentityMobile(BaseController):
         contact_district_id = None
         contact_ward_id = None
         contact_number_and_street = None
-        orc_gender_id = None
+        ocr_gender_id = None
         if identity_type == IDENTITY_DOCUMENT_TYPE_PASSPORT:
-            province_id = orc_data_front_side['ocr_result']['basic_information']['place_of_birth']['id']
-            orc_gender_id = orc_data_front_side['ocr_result']['basic_information']['gender']['id']
+            province_id = ocr_data_front_side['ocr_result']['basic_information']['place_of_birth']['id']
+            ocr_gender_id = ocr_data_front_side['ocr_result']['basic_information']['gender']['id']
+            ocr_place_of_issue_id = ocr_data_front_side['ocr_result']['identity_document']['place_of_issue']['id']
         else:
             # CCCD
-            province_id = orc_data_front_side['ocr_result']['basic_information']['province']['id']
-            identity_characteristic = orc_data_back_side['ocr_result']['basic_information']['identity_characteristic']
+            province_id = ocr_data_front_side['ocr_result']['basic_information']['province']['id']
+            identity_characteristic = ocr_data_back_side['ocr_result']['basic_information']['identity_characteristic']
 
             # địa chỉ thường trú
-            resident_address = orc_data_front_side['ocr_result']['address_information']['resident_address']
+            resident_address = ocr_data_front_side['ocr_result']['address_information']['resident_address']
             address_province_id = resident_address['province']['id']
             address_district_id = resident_address['district']['id']
             address_ward_id = resident_address['ward']['id']
             resident_address_number_and_street = resident_address['number_and_street']
 
             # địa chỉ tạm trú
-            contact_address = orc_data_front_side['ocr_result']['address_information']['contact_address']
+            contact_address = ocr_data_front_side['ocr_result']['address_information']['contact_address']
             contact_province_id = contact_address['province']['id']
             contact_district_id = contact_address['district']['id']
             contact_ward_id = contact_address['ward']['id']
             contact_number_and_street = contact_address['number_and_street']
+
+            # lấy place_of_issue
+            ocr_place_of_issue_id = ocr_data_back_side['ocr_result']['identity_document']['place_of_issue']['id']
             # CMND
             if identity_type == IDENTITY_DOCUMENT_TYPE_IDENTITY_CARD:
                 # dân tộc
-                ethnic_id = orc_data_back_side['ocr_result']['basic_information']['ethnic']['id']
+                ethnic_id = ocr_data_back_side['ocr_result']['basic_information']['ethnic']['id']
                 # tôn giáo
-                religion_id = orc_data_back_side['ocr_result']['basic_information']['religion']['id']
+                religion_id = ocr_data_back_side['ocr_result']['basic_information']['religion']['id']
             else:
                 # trường hợp cccd có giới tính
-                orc_gender_id = orc_data_front_side['ocr_result']['basic_information']['gender']['id']
+                ocr_gender_id = ocr_data_front_side['ocr_result']['basic_information']['gender']['id']
 
-        print('orc_data_front_side', orc_data_front_side)
+        print('ocr_data_front_side', ocr_data_front_side)
+        if ocr_data_front_side['ocr_result']['identity_document']['identity_number'] != identity_number:
+            return self.response_exception(msg='identity_number not same')
+
+        print('ocr_place_of_issue_id', ocr_place_of_issue_id)
+
+        # tạo customer_identity
+        if ocr_place_of_issue_id != place_of_issue_id:
+            return self.response_exception(msg='place_of_issue_id not same')
+
+        saving_customer_identity = {  # noqa
+            "identity_type_id": identity_type,
+            "identity_num": ocr_data_front_side['ocr_result']['identity_document']['identity_number'],
+            "issued_date": issued_date,
+            "expired_date": expired_date,
+            "place_of_issue_id": ocr_place_of_issue_id,
+            "maker_at": now(),
+            "maker_id": current_user.user_info.code,
+            "updater_at": now(),
+            "updater_id": current_user.user_info.code
+        }
+        if identity_type == IDENTITY_DOCUMENT_TYPE_PASSPORT:
+            saving_customer_identity.update({
+                "mrz_content": ocr_data_front_side['ocr_result']['basic_information']['mrz_content'],
+                "passport_type_id": IDENTITY_PASSPORT_TYPE_ID_DEFAULT,
+                "passport_code_id": ocr_data_front_side['ocr_result']['identity_document']['passport_code']['id'],
+                "identity_number_in_passport": ocr_data_front_side['ocr_result']['basic_information'][
+                    'identity_card_number']
+            })
+        if identity_type == IDENTITY_DOCUMENT_TYPE_CITIZEN_CARD:
+            saving_customer_identity.update({
+                "qrcode_content": None,
+                "mrz_content": ocr_data_back_side['ocr_result']['identity_document']['mrz_content']
+            })
+        print('saving_customer_identity', saving_customer_identity)
+
         # dict dùng để tạo mới hoặc lưu lại customer_individual_info
-        if orc_gender_id and orc_gender_id != gender_id:
+        if ocr_gender_id and ocr_gender_id != gender_id:
             return self.response_exception(msg='gender_id is not same')
 
         saving_customer_individual_info = {  # noqa
@@ -271,7 +283,7 @@ class CtrIdentityMobile(BaseController):
                 {
                     "image_type_id": IMAGE_TYPE_CODE_IDENTITY,
                     "image_url": upload_front_side['uuid'],
-                    "avatar_image_uuid": orc_data_front_side['passport_information']['identity_avatar_image_uuid'],
+                    "avatar_image_uuid": ocr_data_front_side['passport_information']['identity_avatar_image_uuid'],
                     "hand_side_id": None,
                     "finger_type_id": None,
                     "vector_data": None,
@@ -288,7 +300,7 @@ class CtrIdentityMobile(BaseController):
                 {
                     "image_type_id": IMAGE_TYPE_CODE_IDENTITY,
                     "image_url": upload_front_side['uuid'],
-                    "avatar_image_uuid": orc_data_front_side['front_side_information']['identity_avatar_image_uuid'],
+                    "avatar_image_uuid": ocr_data_front_side['front_side_information']['identity_avatar_image_uuid'],
                     "hand_side_id": None,
                     "finger_type_id": None,
                     "vector_data": None,
@@ -323,28 +335,28 @@ class CtrIdentityMobile(BaseController):
             name=avatar_image_name,
             ekyc_flag=EKYC_FLAG
         ))
-        # compare avatar_image with identity_avatar_image_uuid từ orc front_side
+        # compare avatar_image with identity_avatar_image_uuid từ ocr front_side
         if identity_type != 'HO_CHIEU':
             is_success, compare_response = await service_ekyc.compare_face(
                 face_uuid=upload_avatar['uuid_ekyc'],
-                avatar_image_uuid=orc_data_front_side['front_side_information']['identity_avatar_image_uuid']
+                avatar_image_uuid=ocr_data_front_side['front_side_information']['identity_avatar_image_uuid']
             )
-            identity_avatar_image_uuid = orc_data_front_side['front_side_information']['identity_avatar_image_uuid']
+            identity_avatar_image_uuid = ocr_data_front_side['front_side_information']['identity_avatar_image_uuid']
             # Thêm avatar thành Hình ảnh định danh Khuôn mặt
             ################################################################################################################
             avatar_image_uuid_service = await CtrFile().upload_ekyc_file(
-                uuid_ekyc=orc_data_front_side['front_side_information']['identity_avatar_image_uuid'])
+                uuid_ekyc=ocr_data_front_side['front_side_information']['identity_avatar_image_uuid'])
         ################################################################################################################
 
         else:
             is_success, compare_response = await service_ekyc.compare_face(
                 face_uuid=upload_avatar['uuid_ekyc'],
-                avatar_image_uuid=orc_data_front_side['passport_information']['identity_avatar_image_uuid']
+                avatar_image_uuid=ocr_data_front_side['passport_information']['identity_avatar_image_uuid']
             )
-            identity_avatar_image_uuid = orc_data_front_side['passport_information']['identity_avatar_image_uuid']
+            identity_avatar_image_uuid = ocr_data_front_side['passport_information']['identity_avatar_image_uuid']
 
             avatar_image_uuid_service = await CtrFile().upload_ekyc_file(
-                uuid_ekyc=orc_data_front_side['passport_information']['identity_avatar_image_uuid'])
+                uuid_ekyc=ocr_data_front_side['passport_information']['identity_avatar_image_uuid'])
 
         # lưu CustomerCompareImage
         if not is_success:
@@ -356,11 +368,12 @@ class CtrIdentityMobile(BaseController):
             "maker_id": current_user.user_info.code,
             "maker_at": now()
         }
-        ################################################################################################################
+        ###############################################################################################################
         # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CIF
         transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
             business_type_id=BUSINESS_TYPE_INIT_CIF
         )
+        print('transaction_datas', transaction_datas)
         (saving_transaction_stage_status, saving_transaction_stage, saving_transaction_daily, saving_transaction_sender,
          saving_transaction_receiver) = transaction_datas
 
