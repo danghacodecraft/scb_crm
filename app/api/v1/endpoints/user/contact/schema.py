@@ -6,7 +6,7 @@ from app.api.base.schema import BaseSchema
 class ContactResponse(BaseSchema):
     emp_name: str = Field(None, description="Dương Đỗ Nguyên")
     emp_code: str = Field(None, description="17487")
-    username: str = Field(None, description="NGUYENDD!")
+    username: str = Field(None, description="NGUYENDD1")
     working_location: str = Field(None, description="Số 927 Trần Hưng Đạo, Phường 12, Quận 5, TP.Hồ Chí Minh")
     email_scb: str = Field(None, description="nguyendd1@scb.com.vn")
     contact_mobile: str = Field(None, description="mb_00965")
