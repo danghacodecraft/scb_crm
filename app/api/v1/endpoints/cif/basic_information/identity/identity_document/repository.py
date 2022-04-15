@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn, auto_commit
 from app.api.v1.endpoints.repository import (
-    get_optional_model_object_by_code_or_name,
+    generate_booking_code, get_optional_model_object_by_code_or_name,
     repos_get_model_object_by_id_or_code,
     write_transaction_log_and_update_booking
 )
@@ -410,6 +410,11 @@ async def repos_save_identity(
             )
 
         new_booking_id = generate_uuid()
+        booking_code = await generate_booking_code(
+            branch_code=current_user_branch_id,
+            business_type_code=BUSINESS_TYPE_INIT_CIF,
+            session=session
+        )
 
         # create booking & log
         session.add_all([
@@ -421,6 +426,7 @@ async def repos_save_identity(
             TransactionReceiver(**saving_transaction_receiver),
             Booking(
                 id=new_booking_id,
+                code=booking_code,
                 transaction_id=saving_transaction_daily['transaction_id'],
                 business_type_id=BUSINESS_TYPE_INIT_CIF,
                 branch_id=current_user_branch_id,
