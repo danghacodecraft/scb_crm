@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import MetaData, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -26,6 +26,6 @@ DATABASE_URL_TASK = "oracle+cx_oracle://{username}:{password}@{host}:{port}/?ser
 
 engine_task = create_engine(DATABASE_URL_TASK)
 SessionLocal_Task = sessionmaker(autocommit=False, autoflush=False, bind=engine_task)
-
-Base = declarative_base()
-metadata = Base.metadata
+metadata = MetaData(schema=ORACLE_CONFIG['service_name'])
+Base = declarative_base(metadata=metadata)
+# metadata = Base.metadata
