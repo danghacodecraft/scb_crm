@@ -5,6 +5,7 @@ from app.api.v1.endpoints.cif.debit_card.repository import (
 )
 from app.api.v1.endpoints.cif.debit_card.schema import DebitCardRequest
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
+from app.api.v1.validator import validate_history_data
 from app.third_parties.oracle.models.master_data.address import (
     AddressDistrict, AddressProvince, AddressWard
 )
@@ -13,8 +14,13 @@ from app.third_parties.oracle.models.master_data.card import (
 )
 from app.third_parties.oracle.models.master_data.customer import CustomerType
 from app.third_parties.oracle.models.master_data.others import Branch
+from app.utils.constant.cif import (
+    PROFILE_HISTORY_DESCRIPTIONS_INIT_DEBIT_CARD, PROFILE_HISTORY_STATUS_INIT
+)
 from app.utils.error_messages import ERROR_NOT_REGISTER, VALIDATE_ERROR
-from app.utils.functions import generate_uuid, now
+from app.utils.functions import (
+    datetime_to_string, generate_uuid, now, orjson_dumps
+)
 from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese
 
 
@@ -29,13 +35,14 @@ class CtrDebitCard(BaseController):
             cif_id: str,
             debt_card_req: DebitCardRequest
     ):
+        current_user = self.current_user.user_info
         # check register_flag == False thì ko insert data
         if not debt_card_req.issue_debit_card.register_flag:
             return self.response_exception(msg=ERROR_NOT_REGISTER,
                                            loc="debt_card_req -> issue_debit_card -> register_flag")
 
-        # check, get current user
-        current_user = self.call_repos(
+        # check, get current customer
+        current_customer = self.call_repos(
             await repos_get_initializing_customer(
                 cif_id=cif_id,
                 session=self.oracle_session
@@ -43,10 +50,10 @@ class CtrDebitCard(BaseController):
 
         # convert last name, first name to unsigned vietnamese
         last_name = convert_to_unsigned_vietnamese(
-            current_user.last_name
+            current_customer.last_name
         )
         first_name = convert_to_unsigned_vietnamese(
-            current_user.first_name
+            current_customer.first_name
         )
 
         # Nếu cif_id tồn tại thi cập nhật lại data
@@ -393,6 +400,29 @@ class CtrDebitCard(BaseController):
             }
             list_debit_card_type.append(debit_card_type)
 
+        history_datas = [dict(
+            description=PROFILE_HISTORY_DESCRIPTIONS_INIT_DEBIT_CARD,
+            completed_at=datetime_to_string(now()),
+            created_at=datetime_to_string(now()),
+            status=PROFILE_HISTORY_STATUS_INIT,
+            branch_id=current_user.hrm_branch_id,
+            branch_code=current_user.hrm_branch_code,
+            branch_name=current_user.hrm_branch_name,
+            user_id=current_user.code,
+            user_name=current_user.name,
+            position_id=current_user.hrm_position_id,
+            position_code=current_user.hrm_position_code,
+            position_name=current_user.hrm_position_name
+        )]
+        # Validate history data
+        is_success, history_response = validate_history_data(history_datas)
+        if not is_success:
+            return self.response_exception(
+                msg=history_response['msg'],
+                loc=history_response['loc'],
+                detail=history_response['detail']
+            )
+
         add_debit_card = self.call_repos(
             await repos_add_debit_card(
                 cif_id,
@@ -407,6 +437,7 @@ class CtrDebitCard(BaseController):
                 list_sub_debit_card=list_sub_debit_card,
                 list_sub_debit_card_type=list_sub_debit_card_type,
                 log_data=debt_card_req.json(),
+                history_datas=orjson_dumps(history_datas),
                 session=self.oracle_session,
             )
         )

@@ -13,12 +13,13 @@ from app.third_parties.oracle.models.master_data.customer import CustomerGender
 from app.utils.address_functions.functions import matching_place_residence
 from app.utils.constant.cif import (
     CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE, DROPDOWN_NONE_DICT,
-    SOA_GENDER_TYPE_MALE
+    PROFILE_HISTORY_STATUS, SOA_GENDER_TYPE_MALE
 )
 from app.utils.constant.soa import SOA_DATETIME_FORMAT
 from app.utils.error_messages import ERROR_CIF_ID_NOT_EXIST
 from app.utils.functions import (
-    date_string_to_other_date_string_format, dropdown, dropdownflag
+    date_string_to_other_date_string_format, datetime_to_string, dropdown,
+    dropdownflag, orjson_loads, string_to_datetime
 )
 from app.utils.vietnamese_converter import split_name
 
@@ -33,8 +34,43 @@ class CtrCustomer(BaseController):
         return self.response(cif_info)
 
     async def ctr_profile_history(self, cif_id: str):
-        profile_history = self.call_repos((await repos_profile_history(cif_id)))
-        return self.response(profile_history)
+        profile_histories = self.call_repos((await repos_profile_history(cif_id=cif_id, session=self.oracle_session)))
+        full_logs = []
+        for booking_customer, booking, booking_business_form in profile_histories:
+            full_logs.append({
+                datetime_to_string(booking_business_form.created_at): orjson_loads(booking_business_form.log_data)
+            })
+
+        datas = []
+        for full_log in full_logs:
+            for created_at, logs in full_log.items():
+                log_details = []
+                for log in logs:
+                    log_details.append(dict(
+                        description=log['description'],
+                        completed_at=log['completed_at'],
+                        started_at=created_at,
+                        status=PROFILE_HISTORY_STATUS[log['status']],
+                        branch_id=log['branch_id'],
+                        branch_code=log['branch_code'],
+                        branch_name=log['branch_name'],
+                        user_id=log['user_id'],
+                        user_name=log['user_name'],
+                        position_id=log['position_id'],
+                        position_code=log['position_code'],
+                        position_name=log['position_name']
+                    ))
+                if not log_details:
+                    continue
+
+                datas.append(dict(
+                    created_at=string_to_datetime(created_at),
+                    log_detail=log_details
+                ))
+
+        response_data = sorted(datas, key=lambda d: d['created_at'], reverse=True)
+
+        return self.response(data=response_data)
 
     async def ctr_customer_information(self, cif_id: str):
         customer_information = self.call_repos(

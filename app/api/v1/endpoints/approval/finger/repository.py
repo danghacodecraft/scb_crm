@@ -4,9 +4,6 @@ from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
-from app.api.v1.endpoints.approval.finger.schema import (
-    CompareFingerPrintRequest
-)
 from app.settings.event import service_ekyc
 from app.third_parties.oracle.models.cif.basic_information.identity.model import (
     CustomerCompareImage, CustomerCompareImageTransaction, CustomerIdentity,
@@ -33,7 +30,8 @@ async def repos_get_data_finger(cif_id: str, session: Session) -> ReposReturn:
                 CustomerIdentity.customer_id == cif_id
             )
         )
-        .join(CustomerIdentityImageTransaction, CustomerIdentityImage.id == CustomerIdentityImageTransaction.identity_image_id)
+        .join(CustomerIdentityImageTransaction,
+              CustomerIdentityImage.id == CustomerIdentityImageTransaction.identity_image_id)
         .join(HandSide, CustomerIdentityImage.hand_side_id == HandSide.id)
         .join(FingerType, CustomerIdentityImage.finger_type_id == FingerType.id)
         .filter(
@@ -49,17 +47,17 @@ async def repos_get_data_finger(cif_id: str, session: Session) -> ReposReturn:
 
 async def repos_compare_finger_ekyc(
         cif_id: str,
-        uuid: CompareFingerPrintRequest,
+        uuid_ekyc: str,
         id_fingers: list
 ):
     json_body = {
-        "uuid": uuid.uuid,
+        "uuid": uuid_ekyc,
         "id_fingers": id_fingers,
         "limit": len(id_fingers)
     }
-
+    print('json_body', json_body)
     is_success, response = await service_ekyc.compare_finger_ekyc(cif_id=cif_id, json_body=json_body)
-
+    print('is_success', is_success, response)
     if not is_success:
         return ReposReturn(is_error=True, msg=response['message'], loc="COMPARE_FINGERPRINT")
     return ReposReturn(data=response)

@@ -31,7 +31,7 @@ class CtrOtherInfo(BaseController):
             await repos_update_other_info(
                 cif_id=cif_id,
                 update_other_info_req=update_other_info_req,
-                current_user=self.current_user,
+                current_user=self.current_user.user_info,
                 session=self.oracle_session
             )
         )

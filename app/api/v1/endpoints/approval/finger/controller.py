@@ -5,9 +5,7 @@ from app.api.v1.endpoints.approval.finger.repository import (
     repos_compare_finger_ekyc, repos_get_data_finger, repos_get_id_finger_ekyc,
     repos_save_compare_finger
 )
-from app.api.v1.endpoints.approval.finger.schema import (
-    CompareFingerPrintRequest
-)
+from app.api.v1.endpoints.file.repository import repos_upload_file
 from app.utils.constant.cif import ACTIVE_FLAG_DISACTIVED, HAND_SIDE_LEFT_CODE
 from app.utils.functions import dropdown, generate_uuid, now
 
@@ -23,7 +21,8 @@ class CtrFingers(BaseController):
         uuid__link_downloads = await self.get_link_download_multi_file(uuids=image_uuids)
 
         for row in fingerprint_data:
-            row.CustomerIdentityImageTransaction.image_url = uuid__link_downloads[row.CustomerIdentityImageTransaction.image_url]
+            row.CustomerIdentityImageTransaction.image_url = uuid__link_downloads[
+                row.CustomerIdentityImageTransaction.image_url]
 
             fingerprint = {
                 'image_id': row.CustomerIdentityImage.id,
@@ -41,8 +40,15 @@ class CtrFingers(BaseController):
             'right_hand': right_hand
         })
 
-    async def ctr_compare_fingerprint(self, cif_id: str, uuid: CompareFingerPrintRequest):
+    async def ctr_compare_fingerprint(self, cif_id: str, finger_img):
+        current_user = self.current_user.user_info
         finger_id_ekycs = self.call_repos(await repos_get_id_finger_ekyc(cif_id=cif_id, session=self.oracle_session))
+
+        data_finger_img = await finger_img.read()
+        info_finger_img = self.call_repos(await repos_upload_file(
+            file=data_finger_img,
+            name=finger_img.filename,
+            ekyc_flag=True))
 
         id_fingers = []
         image_uuids = []
@@ -55,7 +61,7 @@ class CtrFingers(BaseController):
 
         compare_finger_response = self.call_repos(await repos_compare_finger_ekyc(
             cif_id=cif_id,
-            uuid=uuid,
+            uuid_ekyc=info_finger_img['uuid_ekyc'],
             id_fingers=id_fingers
         ))
 
@@ -75,9 +81,9 @@ class CtrFingers(BaseController):
                         "id": generate_uuid(),
                         "identity_id": finger.identity_id,
                         "identity_image_id": finger.id,
-                        "compare_image_url": finger.image_url,
+                        "compare_image_url": info_finger_img['uuid'],
                         "similar_percent": item['accuracy'],
-                        "maker_id": self.current_user.code,
+                        "maker_id": current_user.code,
                         "maker_at": now()
                     }
                     data_compare.append(data_compare_image)

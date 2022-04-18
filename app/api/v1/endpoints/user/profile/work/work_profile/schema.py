@@ -23,4 +23,4 @@ class WorkProfileInfoResponse(BaseSchema):
     root: WorkingProfileResponse = Field(..., description="Đơn vị công gốc")
     temporary: WorkingProfileResponse = Field(..., description="Đơn vị tạm thời")
     seniority_date: Optional[date] = Field(..., description="Ngày tính thâm niên")
-    is_resident: bool = Field(..., description="Đối tượng cư trú")
+    is_resident: Optional[bool] = Field(..., description="Đối tượng cư trú")

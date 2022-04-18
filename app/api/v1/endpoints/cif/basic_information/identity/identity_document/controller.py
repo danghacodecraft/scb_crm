@@ -16,6 +16,7 @@ from app.api.v1.endpoints.cif.repository import (
 )
 from app.api.v1.endpoints.file.controller import CtrFile
 from app.api.v1.endpoints.file.validator import file_validator
+from app.api.v1.validator import validate_history_data
 from app.settings.config import DATE_INPUT_OUTPUT_EKYC_FORMAT
 from app.settings.event import service_ekyc
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
@@ -50,7 +51,9 @@ from app.utils.constant.cif import (
     IDENTITY_DOCUMENT_TYPE_CITIZEN_CARD, IDENTITY_DOCUMENT_TYPE_IDENTITY_CARD,
     IDENTITY_DOCUMENT_TYPE_PASSPORT, IDENTITY_DOCUMENT_TYPE_TYPE,
     IDENTITY_IMAGE_FLAG_BACKSIDE, IDENTITY_IMAGE_FLAG_FRONT_SIDE,
-    IMAGE_TYPE_CODE_FACE, IMAGE_TYPE_CODE_IDENTITY, RESIDENT_ADDRESS_CODE
+    IMAGE_TYPE_CODE_FACE, IMAGE_TYPE_CODE_IDENTITY,
+    PROFILE_HISTORY_DESCRIPTIONS_INIT_CIF, PROFILE_HISTORY_STATUS_INIT,
+    RESIDENT_ADDRESS_CODE
 )
 from app.utils.error_messages import (  # noqa
     ERROR_CALL_SERVICE_EKYC, ERROR_IDENTITY_DOCUMENT_NOT_EXIST,
@@ -58,7 +61,8 @@ from app.utils.error_messages import (  # noqa
     ERROR_NO_DATA, ERROR_NOT_NULL, ERROR_WRONG_TYPE_IDENTITY, MESSAGE_STATUS
 )
 from app.utils.functions import (  # noqa
-    calculate_age, date_to_string, dropdown, now, parse_file_uuid
+    calculate_age, date_to_string, datetime_to_string, dropdown, now,
+    parse_file_uuid
 )
 from app.utils.vietnamese_converter import (
     convert_to_unsigned_vietnamese, make_short_name, split_name
@@ -151,6 +155,8 @@ class CtrIdentityDocument(BaseController):
     async def save_identity(self, identity_document_request: Union[IdentityCardSaveRequest,
                                                                    CitizenCardSaveRequest,
                                                                    PassportSaveRequest]):
+        current_user = self.current_user.user_info
+        current_user_code = current_user.code
         # Dữ liệu validate chung
         validate_religion_name = None
         validate_ethnic_name = None
@@ -292,9 +298,9 @@ class CtrIdentityDocument(BaseController):
             "expired_date": identity_document.expired_date,
             "place_of_issue_id": place_of_issue_id,
             "maker_at": now(),
-            "maker_id": self.current_user.code,
+            "maker_id": current_user_code,
             "updater_at": now(),
-            "updater_id": self.current_user.code
+            "updater_id": current_user_code
         }
 
         gender_id = basic_information.gender.id
@@ -513,9 +519,9 @@ class CtrIdentityDocument(BaseController):
                     "finger_type_id": None,
                     "vector_data": None,
                     "active_flag": True,
-                    "maker_id": self.current_user.code,
+                    "maker_id": current_user_code,
                     "maker_at": now(),
-                    "updater_id": self.current_user.code,
+                    "updater_id": current_user_code,
                     "updater_at": now(),
                     "identity_image_front_flag": IDENTITY_IMAGE_FLAG_FRONT_SIDE
                 },
@@ -528,9 +534,9 @@ class CtrIdentityDocument(BaseController):
                     "finger_type_id": None,
                     "vector_data": None,
                     "active_flag": True,
-                    "maker_id": self.current_user.code,
+                    "maker_id": current_user_code,
                     "maker_at": now(),
-                    "updater_id": self.current_user.code,
+                    "updater_id": current_user_code,
                     "updater_at": now(),
                     "identity_image_front_flag": IDENTITY_IMAGE_FLAG_BACKSIDE
                 },
@@ -542,9 +548,9 @@ class CtrIdentityDocument(BaseController):
                     "finger_type_id": None,
                     "vector_data": None,
                     "active_flag": True,
-                    "maker_id": self.current_user.code,
+                    "maker_id": current_user_code,
                     "maker_at": now(),
-                    "updater_id": self.current_user.code,
+                    "updater_id": current_user_code,
                     "updater_at": now(),
                     "identity_image_front_flag": None,
                     "ekyc_uuid": identity_avatar_image_uuid
@@ -655,9 +661,9 @@ class CtrIdentityDocument(BaseController):
                     "finger_type_id": None,
                     "vector_data": None,
                     "active_flag": True,
-                    "maker_id": self.current_user.code,
+                    "maker_id": current_user_code,
                     "maker_at": now(),
-                    "updater_id": self.current_user.code,
+                    "updater_id": current_user_code,
                     "updater_at": now(),
                     "identity_image_front_flag": None
                 },
@@ -669,9 +675,9 @@ class CtrIdentityDocument(BaseController):
                     "finger_type_id": None,
                     "vector_data": None,
                     "active_flag": True,
-                    "maker_id": self.current_user.code,
+                    "maker_id": current_user_code,
                     "maker_at": now(),
-                    "updater_id": self.current_user.code,
+                    "updater_id": current_user_code,
                     "updater_at": now(),
                     "identity_image_front_flag": None,
                     "ekyc_uuid": identity_avatar_image_uuid
@@ -736,7 +742,7 @@ class CtrIdentityDocument(BaseController):
             "id": compare_face_uuid_ekyc,
             "compare_image_url": face_compare_image_url,
             "similar_percent": similar_percent,  # gọi qua eKYC để check
-            "maker_id": self.current_user.code,
+            "maker_id": current_user_code,
             "maker_at": now()
         }
         ############################################################################################################
@@ -752,6 +758,30 @@ class CtrIdentityDocument(BaseController):
             request=identity_document_request,
             identity_document_type_id=identity_document_type_id
         )
+
+        history_datas = [dict(
+            description=PROFILE_HISTORY_DESCRIPTIONS_INIT_CIF,
+            completed_at=datetime_to_string(now()),
+            created_at=datetime_to_string(now()),
+            status=PROFILE_HISTORY_STATUS_INIT,
+            branch_id=current_user.hrm_branch_id,
+            branch_code=current_user.hrm_branch_code,
+            branch_name=current_user.hrm_branch_name,
+            user_id=current_user.code,
+            user_name=current_user.name,
+            position_id=current_user.hrm_position_id,
+            position_code=current_user.hrm_position_code,
+            position_name=current_user.hrm_position_name
+        )]
+        # Validate history data
+        is_success, history_response = validate_history_data(history_datas)
+        if not is_success:
+            return self.response_exception(
+                msg=history_response['msg'],
+                loc=history_response['loc'],
+                detail=history_response['detail']
+            )
+
         info_save_document = self.call_repos(
             await repos_save_identity(
                 identity_document_type_id=identity_document_type_id,
@@ -770,7 +800,8 @@ class CtrIdentityDocument(BaseController):
                 saving_transaction_sender=saving_transaction_sender,
                 saving_transaction_receiver=saving_transaction_receiver,
                 request_data=request_data,
-                current_user=self.current_user,
+                history_datas=history_datas,
+                current_user=current_user,
                 session=self.oracle_session
             )
         )

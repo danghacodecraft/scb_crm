@@ -31,7 +31,7 @@ class CifApprovalResponse(BaseSchema):
     cif_id: str = Field(..., description="Cif ID")
     previous_stage: Optional[str] = Field(..., description="Bước trước đó")
     current_stage: str = Field(..., description="Bước hiện tại")
-    next_stage: str = Field(..., description="Bước tiếp theo")
+    next_stage: Optional[str] = Field(..., description="Bước tiếp theo")
 
 
 class CIFStageResponse(BaseSchema):
@@ -45,19 +45,21 @@ class CIFStageResponse(BaseSchema):
 
 
 class IdentityFaceImage(BaseSchema):
-    url: str = Field(..., description="Link hình ảnh")
+    url: Optional[str] = Field(..., description="Link hình ảnh")
     similar_percent: Optional[int] = Field(..., description="Tỉ lệ chính xác của hình hiện tại so với `face_url`")
 
 
 class FaceAuthenticationResponse(BaseSchema):
-    compare_face_url: Optional[str] = Field(..., description='URL khuôn mặt upload')
-    compare_face_uuid: Optional[str] = Field(..., description='UUID khuôn mặt upload')
+    compare_url: Optional[str] = Field(..., description='URL khuôn mặt upload')
+    compare_uuid: Optional[str] = Field(..., description='UUID khuôn mặt upload')
     created_at: Optional[datetime] = Field(..., description='Thời gian tạo')
-    identity_face_images: List[IdentityFaceImage] = Field(..., description='Danh sách hình ảnh')
+    identity_images: List[IdentityFaceImage] = Field(..., description='Danh sách hình ảnh')
 
 
 class AuthenticationResponse(BaseSchema):
     face: FaceAuthenticationResponse
+    fingerprint: FaceAuthenticationResponse
+    signature: FaceAuthenticationResponse
 
 
 class CifApprovalSuccessResponse(BaseSchema):
@@ -72,6 +74,8 @@ class FaceAuthenticationRequest(BaseSchema):
 
 class AuthenticationRequest(BaseSchema):
     face: FaceAuthenticationRequest = Field(None, description="[Thông tin xác thực] Khuôn mặt")
+    signature: FaceAuthenticationRequest = Field(None, description="[Thông tin xác thực] Chữ ký")
+    fingerprint: FaceAuthenticationRequest = Field(None, description="[Thông tin xác thực] Vân tay")
 
 
 class ApprovalRequest(BaseSchema):

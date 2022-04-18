@@ -42,7 +42,7 @@ async def repos_login(username: str, password: str) -> ReposReturn:
             detail=detail
         )
     data_idm['user_info']['token'] = base64.b64encode(
-        zlib.compress(orjson.dumps(data_idm['user_info']))
+        zlib.compress(orjson.dumps(data_idm))
     ).decode('utf-8')
 
     try:
@@ -71,10 +71,10 @@ async def repos_login(username: str, password: str) -> ReposReturn:
 async def repos_check_token(token: str) -> ReposReturn:
     try:
         auth_parts = orjson.loads(zlib.decompress(base64.b64decode(token)))
-    except (TypeError, UnicodeDecodeError, binascii.Error, IndexError):
+    except (TypeError, UnicodeDecodeError, binascii.Error, IndexError, zlib.error):
         return ReposReturn(is_error=True, msg=ERROR_INVALID_TOKEN, loc='token')
 
-    status, check_token = await service_idm.check_token(username=auth_parts['username'], bearer_token=auth_parts['token'])
+    status, check_token = await service_idm.check_token(username=auth_parts['user_info']['username'], bearer_token=auth_parts['user_info']['token'])
 
     if not status:
         return ReposReturn(

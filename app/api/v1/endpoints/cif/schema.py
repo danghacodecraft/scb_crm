@@ -29,18 +29,23 @@ class CheckExistCIFRequest(BaseSchema):
 
 # ################################### lịch sử hồ sơ (log)####################################3
 class ProfileHistoryOfDayResponse(BaseSchema):
-    user_id: str = Field(..., description="Id người dùng")
-    full_name: str = Field(..., description="Tên đầy đủ của người dùng ")
-    user_avatar_url: str = Field(..., description="Url ảnh đại diện của người dùng")
-    id: str = Field(..., description="Id log")
-    created_at: datetime = Field(..., description='Tạo mới vào lúc, format dạng: `YYYY-mm-dd HH:MM:SS`',
-                                 example='2021-15-12 06:07:08')
-    content: str = Field(..., description="Nội dung log ")
+    description: str = Field(..., description="Mô tả")
+    completed_at: datetime = Field(..., description="Thời gian hoàn thành")
+    started_at: datetime = Field(..., description="Thời gian bắt đầu hoàn thành")
+    status: str = Field(..., description="Trạng thái hồ sơ")
+    branch_id: str = Field(..., description="ID chi nhánh")
+    branch_code: str = Field(..., description="Mã chi nhánh")
+    branch_name: str = Field(..., description="Tên chi nhánh")
+    user_id: str = Field(..., description="ID nhân viên")
+    user_name: str = Field(..., description="Tên nhân viên")
+    position_id: str = Field(..., description="ID Chức vụ")
+    position_code: str = Field(..., description="Mã Chức vụ")
+    position_name: str = Field(..., description="Tên Chức vụ")
 
 
 class CifProfileHistoryResponse(BaseSchema):
-    created_date: str = Field(..., description="Ngày tạo")
-    logs: List[ProfileHistoryOfDayResponse] = Field(..., description="Danh sách log trong 1 ngày ")
+    created_at: date = Field(..., description="Ngày tạo hồ sơ")
+    log_detail: List[ProfileHistoryOfDayResponse] = Field(..., description="Danh sách log trong 1 ngày")
 
 
 ################################################################

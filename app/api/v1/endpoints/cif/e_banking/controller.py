@@ -9,6 +9,7 @@ from app.api.v1.endpoints.cif.e_banking.schema import (
     EBankingRequest, GetInitialPasswordMethod
 )
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
+from app.api.v1.validator import validate_history_data
 from app.third_parties.oracle.models.master_data.customer import (
     CustomerContactType, CustomerRelationshipType
 )
@@ -21,10 +22,13 @@ from app.third_parties.oracle.models.master_data.others import (
 from app.utils.constant.cif import (
     EBANKING_ACCOUNT_TYPE_CHECKING, EBANKING_ACTIVE_PASSWORD_EMAIL,
     EBANKING_ACTIVE_PASSWORD_SMS, EBANKING_NOT_PAYMENT_FEE,
-    EBANKING_PAYMENT_FEE, METHOD_TYPE_HARD_TOKEN
+    EBANKING_PAYMENT_FEE, METHOD_TYPE_HARD_TOKEN,
+    PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING, PROFILE_HISTORY_STATUS_INIT
 )
 from app.utils.error_messages import ERROR_E_BANKING
-from app.utils.functions import dropdown, generate_uuid, now
+from app.utils.functions import (
+    datetime_to_string, dropdown, generate_uuid, now, orjson_dumps
+)
 
 
 class CtrEBanking(BaseController):
@@ -32,6 +36,7 @@ class CtrEBanking(BaseController):
         """
         func dùng để tạo mới E-banking phần (I, III.A)
         """
+        current_user = self.current_user.user_info
 
         data_reg_balance_option = []  # OTT/SMS
         data_eb_reg_balance = []  # dữ liệu thông tin người nhận thông báo (primary)
@@ -187,9 +192,34 @@ class CtrEBanking(BaseController):
                     "e_banking_info_id": e_banking_info_id,
                     "method_authentication_id": auth_method_id
                 })
+
+        history_datas = [dict(
+            description=PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING,
+            completed_at=datetime_to_string(now()),
+            created_at=datetime_to_string(now()),
+            status=PROFILE_HISTORY_STATUS_INIT,
+            branch_id=current_user.hrm_branch_id,
+            branch_code=current_user.hrm_branch_code,
+            branch_name=current_user.hrm_branch_name,
+            user_id=current_user.code,
+            user_name=current_user.name,
+            position_id=current_user.hrm_position_id,
+            position_code=current_user.hrm_position_code,
+            position_name=current_user.hrm_position_name
+        )]
+        # Validate history data
+        is_success, history_response = validate_history_data(history_datas)
+        if not is_success:
+            return self.response_exception(
+                msg=history_response['msg'],
+                loc=history_response['loc'],
+                detail=history_response['detail']
+            )
+
         e_banking_data = self.call_repos(
             await repos_save_e_banking_data(
                 log_data=e_banking.json(),
+                history_datas=orjson_dumps(history_datas),
                 session=self.oracle_session,
                 cif_id=cif_id,
                 balance_option=data_reg_balance_option,
@@ -198,7 +228,7 @@ class CtrEBanking(BaseController):
                 balance_noti=data_eb_reg_balance_noti,
                 account_info=data_account_info,
                 auth_method=auth_method,
-                created_by=self.current_user.username
+                created_by=current_user.username
             )
         )
 

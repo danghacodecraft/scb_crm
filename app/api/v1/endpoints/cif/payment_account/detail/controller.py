@@ -9,18 +9,23 @@ from app.api.v1.endpoints.cif.payment_account.detail.schema import (
 )
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.api.v1.endpoints.repository import repos_get_acc_structure_type
+from app.api.v1.validator import validate_history_data
 from app.third_parties.oracle.models.master_data.account import (
     AccountClass, AccountType
 )
 from app.third_parties.oracle.models.master_data.others import Currency
 from app.utils.constant.cif import (
-    ACC_STRUCTURE_TYPE_LEVEL_3, STAFF_TYPE_BUSINESS_CODE
+    ACC_STRUCTURE_TYPE_LEVEL_3,
+    PROFILE_HISTORY_DESCRIPTIONS_INIT_PAYMENT_ACCOUNT,
+    PROFILE_HISTORY_STATUS_INIT, STAFF_TYPE_BUSINESS_CODE
 )
 from app.utils.error_messages import (
     ERROR_CASA_ACCOUNT_EXIST, ERROR_CASA_ACCOUNT_NOT_EXIST,
     ERROR_INVALID_NUMBER, ERROR_NOT_NULL, MESSAGE_STATUS
 )
-from app.utils.functions import is_valid_number, now
+from app.utils.functions import (
+    datetime_to_string, is_valid_number, now, orjson_dumps
+)
 
 
 class CtrPaymentAccount(BaseController):
@@ -41,6 +46,8 @@ class CtrPaymentAccount(BaseController):
     async def save(self,
                    cif_id: str,
                    payment_account_save_request: SavePaymentAccountRequest):
+
+        current_user = self.current_user.user_info
 
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
@@ -145,7 +152,7 @@ class CtrPaymentAccount(BaseController):
             "staff_type_id": STAFF_TYPE_BUSINESS_CODE,
             "acc_salary_org_name": account_salary_organization_account_name,
             "acc_salary_org_acc": account_salary_organization_account_number,
-            "maker_id": self.current_user.code,
+            "maker_id": current_user.code,
             "maker_at": now(),
             "checker_id": 1,
             "checker_at": None,
@@ -156,12 +163,36 @@ class CtrPaymentAccount(BaseController):
             "updated_at": now(),
         }
 
+        history_datas = [dict(
+            description=PROFILE_HISTORY_DESCRIPTIONS_INIT_PAYMENT_ACCOUNT,
+            completed_at=datetime_to_string(now()),
+            created_at=datetime_to_string(now()),
+            status=PROFILE_HISTORY_STATUS_INIT,
+            branch_id=current_user.hrm_branch_id,
+            branch_code=current_user.hrm_branch_code,
+            branch_name=current_user.hrm_branch_name,
+            user_id=current_user.code,
+            user_name=current_user.name,
+            position_id=current_user.hrm_position_id,
+            position_code=current_user.hrm_position_code,
+            position_name=current_user.hrm_position_name
+        )]
+        # Validate history data
+        is_success, history_response = validate_history_data(history_datas)
+        if not is_success:
+            return self.response_exception(
+                msg=history_response['msg'],
+                loc=history_response['loc'],
+                detail=history_response['detail']
+            )
+
         save_payment_account_info = self.call_repos(
             await repos_save_payment_account(
                 cif_id=cif_id,
                 data_insert=data_insert,
                 log_data=payment_account_save_request.json(),
-                created_by=self.current_user.username,
+                history_datas=orjson_dumps(history_datas),
+                created_by=current_user.username,
                 session=self.oracle_session,
                 is_created=is_created
             ))

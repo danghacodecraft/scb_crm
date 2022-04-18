@@ -1,6 +1,5 @@
-from sqlalchemy import and_, desc, or_, select
+from sqlalchemy import and_, desc, func, or_, select
 from sqlalchemy.orm import Session
-from sqlalchemy.sql.functions import count
 
 from app.api.base.repository import ReposReturn
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
@@ -17,37 +16,108 @@ from app.third_parties.oracle.models.master_data.address import (
 )
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.cif import CONTACT_ADDRESS_CODE
+from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese
 
 
-async def repos_get_transaction_list(search_box: str, session: Session):
+async def repos_count_total_item(search_box: str, session: Session) -> ReposReturn:
+    if not search_box:
+        transaction_list = select(
+            func.count(Customer.id)
+        )
+    else:
+        search_box = f'%{search_box}%'
+        transaction_list = select(
+            func.count(Customer.id)
+        ).join(
+            CustomerIdentity, Customer.id == CustomerIdentity.customer_id
+        ).filter(
+            or_(
+                CustomerIdentity.identity_num.ilike(search_box),
+                or_(
+                    Customer.full_name.ilike(convert_to_unsigned_vietnamese(search_box))
+                ),
+                or_(
+                    Customer.cif_number.ilike(search_box)
+                )
+            )
+        )
+
+    total_item = session.execute(transaction_list).scalar()
+    return ReposReturn(data=total_item)
+
+
+async def repos_get_transaction_list(search_box: str, limit: int, page: int, session: Session):
     if not search_box:
         transaction_list = session.execute(
             select(
-                Customer
+                Customer,
             )
+            .limit(limit)
+            .offset(limit * (page - 1))
             .order_by(desc(Customer.open_cif_at))
-        ).scalars().all()
+        ).all()
     else:
+        search_box = f'%{search_box}%'
         transaction_list = session.execute(
             select(
                 CustomerIdentity,
-                Customer
+                Customer,
             )
             .join(Customer, CustomerIdentity.customer_id == Customer.id)
             .filter(
                 or_(
-                    CustomerIdentity.identity_num.like('%' + search_box + '%'),
+                    CustomerIdentity.identity_num.ilike(search_box),
                     or_(
-                        Customer.full_name.like('%' + search_box.upper() + '%')
+                        Customer.full_name.ilike(convert_to_unsigned_vietnamese(search_box))
                     ),
                     or_(
-                        Customer.cif_number.like('%' + search_box + '%')
+                        Customer.cif_number.ilike(search_box)
                     )
                 ))
+            .limit(limit)
+            .offset(limit * (page - 1))
             .order_by(desc(Customer.open_cif_at))
         ).all()
 
     return ReposReturn(data=transaction_list)
+
+
+async def repos_get_total_item(
+        cif_number: str,
+        identity_number: str,
+        phone_number: str,
+        full_name: str,
+        session: Session
+):
+    customers = select(
+        func.count(Customer.id)
+    ) \
+        .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
+        .join(CustomerAddress,
+              and_(
+                  Customer.id == CustomerAddress.customer_id,
+                  CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE
+              )) \
+        .join(AddressWard, CustomerAddress.address_ward_id == AddressWard.id) \
+        .join(AddressDistrict, CustomerAddress.address_district_id == AddressDistrict.id) \
+        .join(AddressProvince, CustomerAddress.address_province_id == AddressProvince.id) \
+        .join(AddressCountry, CustomerAddress.address_country_id == AddressCountry.id) \
+        .join(Branch, Customer.open_branch_id == Branch.id)
+
+    if cif_number:
+        customers = customers.filter(Customer.cif_number.ilike(f'%{cif_number}%'))
+    if identity_number:
+        customers = customers.filter(CustomerIdentity.identity_num.ilike(f'%{identity_number}%'))
+    if phone_number:
+        customers = customers.filter(Customer.mobile_number.ilike(f'%{phone_number}%'))
+    if full_name:
+        customers = customers.filter(Customer.full_name.ilike(f'%{full_name}%'))
+
+    total_item = session.execute(
+        customers
+    ).scalar()
+
+    return ReposReturn(data=total_item)
 
 
 async def repos_get_customer(
@@ -57,11 +127,11 @@ async def repos_get_customer(
         full_name: str,
         limit: int,
         page: int,
-        session: Session):
+        session: Session
+):
     customers = select(
         Customer,
         CustomerIdentity,
-        count(Customer.id).over().label("total"),
         CustomerAddress,
         AddressWard,
         AddressDistrict,

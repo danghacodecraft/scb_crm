@@ -81,6 +81,7 @@ async def repos_save_payment_account(
         cif_id: str,
         data_insert: dict,
         log_data: json,
+        history_datas: json,
         created_by: str,
         session: Session,
         is_created: bool
@@ -90,6 +91,7 @@ async def repos_save_payment_account(
         session.add(CasaAccount(**data_insert))
         is_success, booking_response = await write_transaction_log_and_update_booking(
             log_data=log_data,
+            history_datas=history_datas,
             session=session,
             customer_id=cif_id,
             business_form_id=BUSINESS_FORM_TKTT_CTTKTT
@@ -105,6 +107,7 @@ async def repos_save_payment_account(
         )
         is_success, booking_response = await write_transaction_log_and_update_booking(
             log_data=log_data,
+            history_datas=history_datas,
             session=session,
             customer_id=cif_id,
             business_form_id=BUSINESS_FORM_TKTT_CTTKTT
