@@ -1,3 +1,5 @@
+from typing import Optional
+
 from sqlalchemy import and_, desc, func, or_, select
 from sqlalchemy.orm import Session
 
@@ -49,48 +51,36 @@ async def repos_count_total_item(search_box: str, session: Session) -> ReposRetu
     return ReposReturn(data=total_item)
 
 
-async def repos_get_transaction_list(search_box: str, limit: int, page: int, session: Session):
-    if not search_box:
-        transaction_list = session.execute(
-            select(
-                Customer,
-                Booking
-            )
-            .join(BookingCustomer, Customer.id == BookingCustomer.customer_id)
-            .join(Booking, BookingCustomer.booking_id == Booking.id)
-            .limit(limit)
-            .offset(limit * (page - 1))
-            .order_by(desc(Customer.open_cif_at))
-        ).all()
-    else:
-        search_box = f'%{search_box}%'
-        transaction_list = session.execute(
-            select(
-                CustomerIdentity,
-                Customer,
-                Booking
-            )
-            .join(Customer, CustomerIdentity.customer_id == Customer.id)
-            .join(BookingCustomer, Customer.id == BookingCustomer.customer_id)
-            .join(Booking, BookingCustomer.booking_id == Booking.id)
-            .filter(
-                or_(
-                    Booking.code.ilike(search_box),
-                    or_(
-                        CustomerIdentity.identity_num.ilike(search_box),
-                    ),
-                    or_(
-                        Customer.full_name.ilike(convert_to_unsigned_vietnamese(search_box))
-                    ),
-                    or_(
-                        Customer.cif_number.ilike(search_box)
-                    )
-                ))
-            .limit(limit)
-            .offset(limit * (page - 1))
-            .order_by(desc(Customer.open_cif_at))
-        ).all()
+async def repos_get_transaction_list(search_box: Optional[str], limit: int, page: int, session: Session):
+    sql = select(
+        Customer.full_name_vn,
+        Customer.id.label('cif_id'),
+        Booking.code
+    ) \
+        .join(BookingCustomer, Customer.id == BookingCustomer.customer_id) \
+        .join(Booking, BookingCustomer.booking_id == Booking.id) \
+        .limit(limit) \
+        .offset(limit * (page - 1)) \
+        .order_by(desc(Customer.open_cif_at))
 
+    if search_box:
+        search_box = f'%{search_box}%'
+        sql = sql.filter(
+            or_(
+                Booking.code.ilike(search_box),
+                or_(
+                    CustomerIdentity.identity_num.ilike(search_box),
+                ),
+                or_(
+                    Customer.full_name.ilike(convert_to_unsigned_vietnamese(search_box))
+                ),
+                or_(
+                    Customer.cif_number.ilike(search_box)
+                )
+            )
+        )
+
+    transaction_list = session.execute(sql).all()
     return ReposReturn(data=transaction_list)
 
 
