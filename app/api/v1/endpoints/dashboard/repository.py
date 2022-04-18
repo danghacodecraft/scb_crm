@@ -11,6 +11,9 @@ from app.third_parties.oracle.models.cif.basic_information.identity.model import
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
 )
+from app.third_parties.oracle.models.cif.form.model import (
+    Booking, BookingCustomer
+)
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
 )
@@ -51,7 +54,10 @@ async def repos_get_transaction_list(search_box: str, limit: int, page: int, ses
         transaction_list = session.execute(
             select(
                 Customer,
+                Booking
             )
+            .join(BookingCustomer, Customer.id == BookingCustomer.customer_id)
+            .join(Booking, BookingCustomer.booking_id == Booking.id)
             .limit(limit)
             .offset(limit * (page - 1))
             .order_by(desc(Customer.open_cif_at))
@@ -62,11 +68,17 @@ async def repos_get_transaction_list(search_box: str, limit: int, page: int, ses
             select(
                 CustomerIdentity,
                 Customer,
+                Booking
             )
             .join(Customer, CustomerIdentity.customer_id == Customer.id)
+            .join(BookingCustomer, Customer.id == BookingCustomer.customer_id)
+            .join(Booking, BookingCustomer.booking_id == Booking.id)
             .filter(
                 or_(
-                    CustomerIdentity.identity_num.ilike(search_box),
+                    Booking.code.ilike(search_box),
+                    or_(
+                        CustomerIdentity.identity_num.ilike(search_box),
+                    ),
                     or_(
                         Customer.full_name.ilike(convert_to_unsigned_vietnamese(search_box))
                     ),
