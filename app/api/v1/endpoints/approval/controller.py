@@ -1,4 +1,5 @@
 from app.api.base.controller import BaseController
+from app.api.v1.controller import PermissionController
 from app.api.v1.endpoints.approval.common_repository import (
     repos_get_next_receiver, repos_get_next_stage, repos_get_previous_stage,
     repos_get_previous_transaction_daily, repos_get_stage_information
@@ -19,8 +20,14 @@ from app.utils.constant.cif import (
     BUSINESS_TYPE_INIT_CIF, IMAGE_TYPE_FACE, IMAGE_TYPE_FINGERPRINT,
     IMAGE_TYPE_SIGNATURE
 )
+from app.utils.constant.idm import (
+    IDM_GROUP_ROLE_CODE_APPROVAL, IDM_MENU_CODE_CIF, IDM_PERMISSION_CODE_KSV
+)
 from app.utils.error_messages import (
-    ERROR_APPROVAL_INCORRECT_UPLOAD_FACE, ERROR_APPROVAL_UPLOAD_FACE,
+    ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
+    ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT,
+    ERROR_APPROVAL_INCORRECT_UPLOAD_SIGNATURE, ERROR_APPROVAL_UPLOAD_FACE,
+    ERROR_APPROVAL_UPLOAD_FINGERPRINT, ERROR_APPROVAL_UPLOAD_SIGNATURE,
     ERROR_CONTENT_NOT_NULL, ERROR_STAGE_COMPLETED, ERROR_VALIDATE,
     MESSAGE_STATUS
 )
@@ -192,7 +199,8 @@ class CtrApproval(BaseController):
         if not identity_signature_images and not compare_signature_uuid:
             for identity, identity_image in signature_transactions:
                 init_identity_signature_images.append(dict(
-                    url=uuid_signature_link_downloads[identity_image.image_url],
+                    # url=uuid_signature_link_downloads[identity_image.image_url],
+                    url=None,
                     similar_percent=None
                 ))
             identity_signature_images = init_identity_signature_images
@@ -262,7 +270,8 @@ class CtrApproval(BaseController):
         if not identity_fingerprint_images and not compare_fingerprint_uuid:
             for identity, identity_image in fingerprint_transactions:
                 init_identity_fingerprint_images.append(dict(
-                    url=uuid_fingerprint_link_downloads[identity_image.image_url],
+                    # url=uuid_fingerprint_link_downloads[identity_image.image_url],
+                    url=None,
                     similar_percent=None
                 ))
             identity_fingerprint_images = init_identity_fingerprint_images
@@ -277,7 +286,7 @@ class CtrApproval(BaseController):
         authentication = dict(
             face=face_authentication,
             signature=signature_authentication,
-            finger=fingerprint_authentication
+            fingerprint=fingerprint_authentication
         )
 
         ################################################################################################################
@@ -431,7 +440,7 @@ class CtrApproval(BaseController):
     ):
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
-        current_user = self.current_user
+        current_user = self.current_user.user_info
 
         ################################################################################################################
         # THÔNG TIN XÁC THỰC
@@ -444,11 +453,21 @@ class CtrApproval(BaseController):
             session=self.oracle_session
         ))
 
-        face_authentications = {}
+        face_authentications = []
+        fingerprint_authentications = []
+        signature_authentications = []
         for _, identity_image, identity_image_transaction, _, compare_image_transaction in authentications:
             if identity_image.image_type_id == IMAGE_TYPE_FACE:
-                face_authentications.update({
-                    identity_image_transaction.image_url: None
+                face_authentications.append({
+                    identity_image_transaction.image_url: compare_image_transaction.compare_image_url
+                })
+            if identity_image.image_type_id == IMAGE_TYPE_FINGERPRINT:
+                fingerprint_authentications.append({
+                    identity_image_transaction.image_url: compare_image_transaction.compare_image_url
+                })
+            if identity_image.image_type_id == IMAGE_TYPE_SIGNATURE:
+                signature_authentications.append({
+                    identity_image_transaction.image_url: compare_image_transaction.compare_image_url
                 })
 
         # Kiểm tra xem khuôn mặt đã upload chưa
@@ -457,8 +476,27 @@ class CtrApproval(BaseController):
                 msg=ERROR_APPROVAL_UPLOAD_FACE,
                 detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_FACE]
             )
+        ################################################################################################################
 
-        # TODO: Vân Tay, Chữ Ký
+        ################################################################################################################
+        # Vân tay
+        # Kiểm tra xem VÂN TAY đã upload chưa
+        if not fingerprint_authentications:
+            return self.response_exception(
+                msg=ERROR_APPROVAL_UPLOAD_FINGERPRINT,
+                detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_FINGERPRINT]
+            )
+        ################################################################################################################
+
+        ################################################################################################################
+        # Chữ ký
+        # Kiểm tra xem chữ ký đã upload chưa
+        if not signature_authentications:
+            return self.response_exception(
+                msg=ERROR_APPROVAL_UPLOAD_SIGNATURE,
+                detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_SIGNATURE]
+            )
+        ################################################################################################################
 
         ################################################################################################################
         # PHÊ DUYỆT
@@ -522,10 +560,11 @@ class CtrApproval(BaseController):
                     detail="Field required",
                     loc="authentication -> face"
                 )
-            _, _, _, _, new_compare_image_transaction = authentications[0]
+            new_face_compare_image_transaction_uuid = list(face_authentications[0].values())[0]
+
             # Kiểm tra xem khuôn mặt gửi lên có đúng không
             # Hình ảnh kiểm tra sẽ là hình ảnh của lần Upload mới nhất
-            if new_compare_image_transaction.compare_image_url != request.authentication.face.compare_face_image_uuid:
+            if new_face_compare_image_transaction_uuid != request.authentication.face.compare_face_image_uuid:
                 return self.response_exception(
                     msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
                     detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FACE],
@@ -533,6 +572,43 @@ class CtrApproval(BaseController):
                 )
             ############################################################################################################
 
+            ############################################################################################################
+            # [Thông tin xác thực] Vân tay
+            if not request.authentication.fingerprint:
+                return self.response_exception(
+                    msg=ERROR_VALIDATE,
+                    detail="Field required",
+                    loc="authentication -> fingerprint"
+                )
+            new_fingerprint_compare_image_transaction_uuid = list(fingerprint_authentications[0].values())[0]
+            # Kiểm tra xem vân tay gửi lên có đúng không
+            # Hình ảnh kiểm tra sẽ là hình ảnh của lần Upload mới nhất
+            if new_fingerprint_compare_image_transaction_uuid != request.authentication.fingerprint.compare_face_image_uuid:
+                return self.response_exception(
+                    msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT,
+                    detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT],
+                    loc="authentication -> compare_face_image_uuid"
+                )
+            ############################################################################################################
+
+            ############################################################################################################
+            # [Thông tin xác thực] Chữ ký
+            if not request.authentication.signature:
+                return self.response_exception(
+                    msg=ERROR_VALIDATE,
+                    detail="Field required",
+                    loc="authentication -> signature"
+                )
+            new_signature_compare_image_transaction_uuid = list(signature_authentications[0].values())[0]
+            # Kiểm tra xem chữ ký gửi lên có đúng không
+            # Hình ảnh kiểm tra sẽ là hình ảnh của lần Upload mới nhất
+            if new_signature_compare_image_transaction_uuid != request.authentication.signature.compare_face_image_uuid:
+                return self.response_exception(
+                    msg=ERROR_APPROVAL_INCORRECT_UPLOAD_SIGNATURE,
+                    detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_SIGNATURE],
+                    loc="authentication -> signature -> compare_face_image_uuid"
+                )
+            ############################################################################################################
             current_stage = self.call_repos(await repos_get_next_stage(
                 business_type_id=business_type_id,
                 current_stage_code=previous_stage_code,
@@ -541,11 +617,25 @@ class CtrApproval(BaseController):
             current_stage_code = current_stage.code
 
         if current_stage_code == CIF_STAGE_COMPLETED:
-            return self.response_exception(
-                msg=ERROR_STAGE_COMPLETED,
-                loc=f"current_stage: {current_stage_code}",
-                detail=MESSAGE_STATUS[ERROR_STAGE_COMPLETED]
+            return self.response(
+                data=dict(
+                    cif_id=cif_id,
+                    previous_stage=previous_stage_code,
+                    current_stage=current_stage_code,
+                    next_stage=None
+                )
             )
+
+        ################################################################################################################
+        # check quyền user
+        self.call_repos(await PermissionController.ctr_approval_check_permission(
+            auth_response=self.current_user,
+            menu_code=IDM_MENU_CODE_CIF,
+            group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
+            permission_code=IDM_PERMISSION_CODE_KSV,
+            stage_code=CIF_STAGE_APPROVE_KSV
+        ))
+        ################################################################################################################
 
         current_stage_status, current_stage, _, current_lane, _, current_phase, current_stage_role = self.call_repos(
             await repos_get_stage_information(

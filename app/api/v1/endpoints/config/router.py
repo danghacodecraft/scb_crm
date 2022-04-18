@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.v1.endpoints.config.account import view as views_account_info
 from app.api.v1.endpoints.config.address import view as views_address_info
+from app.api.v1.endpoints.config.approval import view as view_approval
 from app.api.v1.endpoints.config.branch import view as views_branch_info
 from app.api.v1.endpoints.config.cif_information import view as views_cif_info
 from app.api.v1.endpoints.config.currency import view as views_currency_info
@@ -60,3 +61,5 @@ router.include_router(router=view_payment_detail_info.router)
 router.include_router(router=view_contact_type_info.router)
 
 router.include_router(router=view_post_check.router)
+
+router.include_router(router=view_approval.router, prefix="/approval")

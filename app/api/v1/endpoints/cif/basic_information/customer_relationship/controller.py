@@ -38,6 +38,7 @@ class CtrCustomerRelationship(BaseController):
                    cif_id: str,
                    customer_relationship_save_request: List[SaveCustomerRelationshipRequest]):
         # check and get current customer
+        current_user = self.current_user.user_info
         current_customer = self.call_repos(
             await repos_get_initializing_customer(
                 cif_id=cif_id,
@@ -90,7 +91,7 @@ class CtrCustomerRelationship(BaseController):
             await repos_save_guardians(
                 cif_id=cif_id,
                 list_data_insert=list_data_insert,
-                created_by=self.current_user.username,
+                created_by=current_user.username,
                 session=self.oracle_session,
                 relationship_type=CUSTOMER_RELATIONSHIP_TYPE_CUSTOMER_RELATIONSHIP,
                 log_data=orjson_dumps(log_data),

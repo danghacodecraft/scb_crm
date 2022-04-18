@@ -92,7 +92,7 @@ class TransactionSender(Base):
     user_email = Column(VARCHAR(100), comment='Email user')
     branch_id = Column(VARCHAR(36), comment='Mã đơn vị')
     branch_code = Column(VARCHAR(10), comment='Mã code đơn vị')
-    branch_name = Column(VARCHAR(10), comment='Tên đơn vị')
+    branch_name = Column(VARCHAR(100), comment='Tên đơn vị')
     department_id = Column(VARCHAR(36), comment='Mã phòng ban thực hiện')
     department_code = Column(VARCHAR(100), comment='Mã code phòng')
     department_name = Column(VARCHAR(100), comment='Tên phòng')
@@ -112,6 +112,8 @@ class Booking(Base):
     transaction_id = Column(ForeignKey('crm_transaction_daily.transaction_id'), comment='ID Transaction')
     business_type_id = Column('business_type_id', ForeignKey('crm_business_type.business_type_id'),
                               comment='ID type')
+
+    branch_id = Column(VARCHAR(50), comment='Mã đơn vị')
     created_at = Column(DateTime, comment='Ngày tạo')
     updated_at = Column(DateTime, comment='Ngày chỉnh sửa')
 

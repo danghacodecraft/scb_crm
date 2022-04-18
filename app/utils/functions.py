@@ -2,7 +2,8 @@ import json
 import re
 import uuid
 from datetime import date, datetime
-from typing import Callable, Dict, Union, Optional
+from typing import Callable, Dict, Optional, Union
+from urllib.parse import urlparse
 
 import orjson
 
@@ -94,7 +95,7 @@ def datetime_to_date(datetime_input: datetime, default=None) -> date:
 
 def end_time_of_day(datetime_input: datetime, default=None) -> datetime:
     try:
-        return datetime_input.replace(hour=23, minute=59, second=59)
+        return datetime_input.replace(hour=23, minute=59, second=59, microsecond=999999)
     except (ValueError, TypeError):
         return default
 
@@ -191,3 +192,13 @@ def is_valid_number(casa_account_number: str):
 
 def convert_string_to_uuidv4(customer_uuid: str) -> str:
     return f"{uuid.UUID(customer_uuid)}"
+
+
+def replace_with_cdn(cdn, file_url: str) -> str:
+    if cdn:
+        file_url_parse_result = urlparse(file_url)
+
+        # Thay thế link tải file từ service bằng CDN config theo dự án
+        return file_url.replace(f'{file_url_parse_result.scheme}://{file_url_parse_result.netloc}', cdn)
+    else:
+        return file_url

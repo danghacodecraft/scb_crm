@@ -16,6 +16,7 @@ from app.utils.functions import generate_uuid
 
 class CtrCoOwner(BaseController):
     async def ctr_save_co_owner(self, cif_id: str, co_owner: AccountHolderRequest):
+        current_user = self.current_user.user_info
         # lấy casa_account_id theo số cif_id
         casa_account = self.call_repos(
             await repos_get_casa_account(cif_id=cif_id, session=self.oracle_session)
@@ -73,7 +74,7 @@ class CtrCoOwner(BaseController):
                 save_account_agree=save_account_agree,
                 log_data=co_owner.json(),
                 session=self.oracle_session,
-                created_by=self.current_user.username
+                created_by=current_user.username
             )
         )
 

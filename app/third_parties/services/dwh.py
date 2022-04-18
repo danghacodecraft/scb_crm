@@ -38,8 +38,10 @@ class ServiceDWH:
                     # handle response
                     if res.status != status.HTTP_200_OK:
                         return False, {
-                            "url": url,
-                            "message": await res.json(),
+                            "message": ERROR_CALL_SERVICE_DWH,
+                            "detail": "STATUS " + str(res.status),
+                            "api_url": url,
+                            "response": {},
                         }
 
                     data = await res.json()

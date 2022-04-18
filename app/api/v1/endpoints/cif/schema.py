@@ -45,7 +45,7 @@ class ProfileHistoryOfDayResponse(BaseSchema):
 
 class CifProfileHistoryResponse(BaseSchema):
     created_at: date = Field(..., description="Ngày tạo hồ sơ")
-    log_detail: List[ProfileHistoryOfDayResponse] = Field(..., description="Danh sách log trong 1 ngày")
+    log_details: List[ProfileHistoryOfDayResponse] = Field(..., description="Danh sách log trong 1 ngày")
 
 
 ################################################################

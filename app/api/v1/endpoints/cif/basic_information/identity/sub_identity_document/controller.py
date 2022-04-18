@@ -76,6 +76,7 @@ class CtrSubIdentityDocument(BaseController):
         return self.response(data=sub_identity_log_infos)
 
     async def save_sub_identity(self, cif_id: str, sub_identity_request: List[SubIdentityDocumentRequest]):
+        current_user = self.current_user.user_info
         # check cif đang tạo
         customer = self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
 
@@ -88,7 +89,8 @@ class CtrSubIdentityDocument(BaseController):
             image_uuids.append(uuid)
 
         # gọi qua service file để check exist list uuid
-        await self.check_exist_multi_file(uuids=image_uuids)
+        if image_uuids:
+            await self.check_exist_multi_file(uuids=image_uuids)
 
         sub_identity_type_ids = []
         place_of_issue_ids = []
@@ -115,7 +117,7 @@ class CtrSubIdentityDocument(BaseController):
         for _, old_sub_identity_image in old_sub_identities_and_sub_identity_images:
             old_sub_identity_id__image_ids[old_sub_identity_image.identity_id] = old_sub_identity_image.id
 
-        saved_by = self.current_user.username
+        saved_by = current_user.username
 
         # Giấy tờ định danh phụ:
         # + Nếu có gửi lên id là chỉnh sửa
@@ -241,7 +243,7 @@ class CtrSubIdentityDocument(BaseController):
                 update_sub_identity_images=update_sub_identity_images,
                 update_customer_sub_identity_image_transactions=update_customer_sub_identity_image_transactions,
                 session=self.oracle_session,
-                log_data=log_data
+                log_data=orjson_dumps(log_data)
             )
         )
         return self.response(data=info_save_document)
