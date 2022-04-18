@@ -274,7 +274,7 @@ class Phase(Base):
     name = Column('phase_name', VARCHAR(250), nullable=False, comment='Tên Giai đoạn xử lý')
 
     business_type = relationship('BusinessType')
-    stage = relationship('Stage', secondary='crm_stage_phase')
+    # stage = relationship('Stage', secondary='crm_stage_phase')
 
 
 class Lane(Base):
