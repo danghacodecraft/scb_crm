@@ -4,7 +4,6 @@ from typing import List, Optional, Tuple
 from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.functions import count
-from sqlalchemy.sql.operators import exists
 
 from app.api.base.repository import ReposReturn
 from app.third_parties.oracle.base import Base
@@ -275,8 +274,6 @@ async def generate_booking_code(
 
     date_code = datetime_to_string(datetime_today, _format='%Y%m%d')
     sequence_code = '{:07d}'.format(sequence + 1)
-    booking_code = f'{branch_code}.CRM.{business_type_code}.{date_code}.{sequence_code}'
-
-    is_existed = session.execute(exists().filter(Booking.code)).scalar()
-
+    booking_code = f'{branch_code}_CRM_{business_type_code}_{date_code}_{sequence_code}'
+    is_existed = session.execute(select(Booking).filter(Booking.code == booking_code)).scalar() is not None
     return is_existed, booking_code

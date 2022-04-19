@@ -20,17 +20,6 @@ class CtrDashboard(BaseController):
             session=self.oracle_session
         ))
 
-        if search_box:
-            transactions = [{
-                "cif_id": transaction.id,
-                "full_name_vn": transaction.full_name_vn
-            } for _, transaction in transaction_list]
-        else:
-            transactions = [{
-                "cif_id": transaction[0].id,
-                "full_name_vn": transaction[0].full_name_vn
-            } for transaction in transaction_list]
-
         total_item = self.call_repos(await repos_count_total_item(search_box=search_box, session=self.oracle_session))
 
         total_page = 0
@@ -41,7 +30,7 @@ class CtrDashboard(BaseController):
             total_page += 1
 
         return self.response_paging(
-            data=transactions,
+            data=transaction_list,
             current_page=current_page,
             total_item=total_item,
             total_page=total_page
