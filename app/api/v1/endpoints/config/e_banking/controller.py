@@ -19,7 +19,7 @@ class CtrConfigEBanking(BaseController):
         e_banking_question_infos = self.call_repos(
             await repos_get_data_model_config(
                 session=self.oracle_session, model=EBankingQuestion,
-                is_special_dropdown=True
+                is_special_dropdown=True, type_id=e_banking_question_type
             )
         )
 
@@ -30,22 +30,3 @@ class CtrConfigEBanking(BaseController):
                 questions.append(e_banking_question_info)
 
         return self.response(questions)
-
-    async def ctr_e_banking_question_type_info(self):
-        e_banking_question_type_infos = self.call_repos(
-            await repos_get_data_model_config(
-                session=self.oracle_session, model=EBankingQuestion,
-                is_special_dropdown=True
-            )
-        )
-        data = []
-        previous_type = None
-        for e_banking_question_type_info in e_banking_question_type_infos:
-            if e_banking_question_type_info == e_banking_question_type_infos[0]:
-                previous_type = e_banking_question_type_info['type']
-                data.append(e_banking_question_type_info)
-            if e_banking_question_type_info['type'] != previous_type:
-                data.append(e_banking_question_type_info)
-                previous_type = e_banking_question_type_info['type']
-
-        return self.response(data=data)
