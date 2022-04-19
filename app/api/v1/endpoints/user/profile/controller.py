@@ -7,19 +7,22 @@ from app.utils.error_messages import (
 
 
 class CtrProfile(BaseController):
-    async def ctr_profile(self, user_code):
-        is_success, profile = self.call_repos(
-            await repos_profile(
-                employee_id=user_code,
-                session=self.oracle_session
-            )
-        )
-        if not profile:
+    async def ctr_profile(self):
+        current_user = self.current_user.user_info
+        if not current_user:
             return self.response_exception(
                 msg=USER_NOT_EXIST,
                 detail=MESSAGE_STATUS[USER_NOT_EXIST],
-                loc="user_code"
+                loc="current_user"
             )
+
+        employee_id = current_user.code
+        is_success, profile = self.call_repos(
+            await repos_profile(
+                employee_id=employee_id,
+                session=self.oracle_session
+            )
+        )
 
         if not is_success:
             return self.response_exception(msg=ERROR_CALL_SERVICE_DWH, loc="EMP_DETAIL", detail=str(profile))
