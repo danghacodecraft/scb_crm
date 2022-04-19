@@ -319,14 +319,10 @@ class Stage(Base):
     created_at = Column(DateTime, comment='Ngày tạo bước thực hiện')
     updated_at = Column(DateTime, comment='Ngày cập nhật bước thực hiện')
 
-    action_id = Column('stage_action_id', ForeignKey('crm_stage_action.stage_action_id'),
-                       comment='Mã hành động')
-
     business_type = relationship('BusinessType')
     sla = relationship('Sla')
     parent = relationship('Stage', remote_side=[id])
     status = relationship('StageStatus')
-    action = relationship('StageAction')
     phase = relationship('StagePhase')
 
 

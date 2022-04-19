@@ -1,3 +1,5 @@
+from typing import Optional
+
 from sqlalchemy import and_, desc, func, or_, select
 from sqlalchemy.orm import Session
 
@@ -10,6 +12,9 @@ from app.third_parties.oracle.models.cif.basic_information.identity.model import
 )
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
+)
+from app.third_parties.oracle.models.cif.form.model import (
+    Booking, BookingCustomer
 )
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
@@ -46,39 +51,36 @@ async def repos_count_total_item(search_box: str, session: Session) -> ReposRetu
     return ReposReturn(data=total_item)
 
 
-async def repos_get_transaction_list(search_box: str, limit: int, page: int, session: Session):
-    if not search_box:
-        transaction_list = session.execute(
-            select(
-                Customer,
-            )
-            .limit(limit)
-            .offset(limit * (page - 1))
-            .order_by(desc(Customer.open_cif_at))
-        ).all()
-    else:
+async def repos_get_transaction_list(search_box: Optional[str], limit: int, page: int, session: Session):
+    sql = select(
+        Customer.full_name_vn,
+        Customer.id.label('cif_id'),
+        Booking.code
+    ) \
+        .join(BookingCustomer, Customer.id == BookingCustomer.customer_id) \
+        .join(Booking, BookingCustomer.booking_id == Booking.id) \
+        .limit(limit) \
+        .offset(limit * (page - 1)) \
+        .order_by(desc(Customer.open_cif_at))
+
+    if search_box:
         search_box = f'%{search_box}%'
-        transaction_list = session.execute(
-            select(
-                CustomerIdentity,
-                Customer,
-            )
-            .join(Customer, CustomerIdentity.customer_id == Customer.id)
-            .filter(
+        sql = sql.filter(
+            or_(
+                Booking.code.ilike(search_box),
                 or_(
                     CustomerIdentity.identity_num.ilike(search_box),
-                    or_(
-                        Customer.full_name.ilike(convert_to_unsigned_vietnamese(search_box))
-                    ),
-                    or_(
-                        Customer.cif_number.ilike(search_box)
-                    )
-                ))
-            .limit(limit)
-            .offset(limit * (page - 1))
-            .order_by(desc(Customer.open_cif_at))
-        ).all()
+                ),
+                or_(
+                    Customer.full_name.ilike(convert_to_unsigned_vietnamese(search_box))
+                ),
+                or_(
+                    Customer.cif_number.ilike(search_box)
+                )
+            )
+        )
 
+    transaction_list = session.execute(sql).all()
     return ReposReturn(data=transaction_list)
 
 
