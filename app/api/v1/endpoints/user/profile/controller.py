@@ -1,17 +1,26 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.user.profile.repository import repos_profile
 from app.utils.address_functions.functions import combine_full_address
-from app.utils.error_messages import ERROR_CALL_SERVICE_DWH
+from app.utils.error_messages import (
+    ERROR_CALL_SERVICE_DWH, MESSAGE_STATUS, USER_NOT_EXIST
+)
 
 
 class CtrProfile(BaseController):
-    async def ctr_profile(self, employee_id):
+    async def ctr_profile(self, user_code):
         is_success, profile = self.call_repos(
             await repos_profile(
-                employee_id=employee_id,
+                employee_id=user_code,
                 session=self.oracle_session
             )
         )
+        if not profile:
+            return self.response_exception(
+                msg=USER_NOT_EXIST,
+                detail=MESSAGE_STATUS[USER_NOT_EXIST],
+                loc="user_code"
+            )
+
         if not is_success:
             return self.response_exception(msg=ERROR_CALL_SERVICE_DWH, loc="EMP_DETAIL", detail=str(profile))
 
