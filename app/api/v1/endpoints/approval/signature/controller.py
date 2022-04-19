@@ -133,7 +133,8 @@ class CtrSignature(BaseController):
         for signature in compare_signatures:
             compare_signature = {
                 "image_url": signature['image_url'],
-                "similarity_percent": signature['similarity_percent']
+                "similarity_percent": signature['similarity_percent'],
+                "uuid": info_signature_img['uuid']
             }
             compare_signature['image_url'] = uuid__link_downloads[compare_signature['image_url']]
             date__signatures.append(compare_signature)
