@@ -24,7 +24,7 @@ from app.utils.constant.cif import (
 )
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_APPROVAL, IDM_GROUP_ROLE_CODE_OPEN_CIF,
-    IDM_MENU_CODE_OPEN_CIF, IDM_PERMISSION_CODE_KSV,
+    IDM_MENU_CODE_OPEN_CIF, IDM_PERMISSION_CODE_KSS, IDM_PERMISSION_CODE_KSV,
     IDM_PERMISSION_CODE_OPEN_CIF
 )
 from app.utils.error_messages import (
@@ -366,12 +366,12 @@ class CtrApproval(BaseController):
 
         # KSS nhận hồ sơ từ KSV
         elif previous_stage_code == CIF_STAGE_APPROVE_KSV:
-            is_stage_audit = self.call_repos(await PermissionController.ctr_approval_check_permission(
+            is_stage_audit = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
                 auth_response=self.current_user,
                 menu_code=IDM_MENU_CODE_OPEN_CIF,
                 group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
-                permission_code=IDM_PERMISSION_CODE_KSV,
-                stage_code=CIF_STAGE_APPROVE_KSV
+                permission_code=IDM_PERMISSION_CODE_KSS,
+                stage_code=CIF_STAGE_APPROVE_KSS
             ))
             if is_stage_audit:
                 audit_is_disable = False   # Chưa được mô tả cho KSS tạm thời dùng Role của KSV
@@ -690,13 +690,13 @@ class CtrApproval(BaseController):
                     permission_code=IDM_PERMISSION_CODE_KSV,
                     stage_code=CIF_STAGE_APPROVE_KSV
                 ))
-            elif current_stage_code == CIF_STAGE_APPROVE_KSS:  # TODO: Tạm thời để quyền của KSV
+            elif current_stage_code == CIF_STAGE_APPROVE_KSS:
                 self.call_repos(await PermissionController.ctr_approval_check_permission(
                     auth_response=self.current_user,
                     menu_code=IDM_MENU_CODE_OPEN_CIF,
                     group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
-                    permission_code=IDM_PERMISSION_CODE_KSV,
-                    stage_code=CIF_STAGE_APPROVE_KSV
+                    permission_code=IDM_PERMISSION_CODE_KSS,
+                    stage_code=CIF_STAGE_APPROVE_KSS
                 ))
             # Những user khác chỉ có quyền xem không có quyền thực hiện bất kì hành động nào trong phê duyệt
             else:
