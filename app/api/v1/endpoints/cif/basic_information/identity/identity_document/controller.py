@@ -3,6 +3,7 @@ from typing import Optional, Union
 from fastapi import UploadFile
 
 from app.api.base.controller import BaseController
+from app.api.v1.controller import PermissionController
 from app.api.v1.endpoints.cif.basic_information.identity.identity_document.repository import (
     repos_compare_face, repos_get_detail_identity,
     repos_get_identity_image_transactions, repos_get_identity_information,
@@ -41,6 +42,7 @@ from app.third_parties.oracle.models.master_data.identity import (
     PassportCode, PassportType, PlaceOfIssue
 )
 from app.third_parties.oracle.models.master_data.others import Nation, Religion
+from app.utils.constant.approval import CIF_STAGE_BEGIN
 from app.utils.constant.cif import (
     ADDRESS_COUNTRY_CODE_VN, BUSINESS_TYPE_INIT_CIF, CHANNEL_AT_THE_COUNTER,
     CONTACT_ADDRESS_CODE, CRM_GENDER_TYPE_MALE, CUSTOMER_UNCOMPLETED_FLAG,
@@ -53,6 +55,10 @@ from app.utils.constant.cif import (
     IDENTITY_IMAGE_FLAG_BACKSIDE, IDENTITY_IMAGE_FLAG_FRONT_SIDE,
     IMAGE_TYPE_CODE_IDENTITY, PROFILE_HISTORY_DESCRIPTIONS_INIT_CIF,
     PROFILE_HISTORY_STATUS_INIT, RESIDENT_ADDRESS_CODE
+)
+from app.utils.constant.idm import (
+    IDM_GROUP_ROLE_CODE_OPEN_CIF, IDM_MENU_CODE_OPEN_CIF,
+    IDM_PERMISSION_CODE_OPEN_CIF
 )
 from app.utils.error_messages import (  # noqa
     ERROR_CALL_SERVICE_EKYC, ERROR_IDENTITY_DOCUMENT_NOT_EXIST,
@@ -154,6 +160,15 @@ class CtrIdentityDocument(BaseController):
     async def save_identity(self, identity_document_request: Union[IdentityCardSaveRequest,
                                                                    CitizenCardSaveRequest,
                                                                    PassportSaveRequest]):
+        # check quyền user
+        self.call_repos(await PermissionController.ctr_approval_check_permission(
+            auth_response=self.current_user,
+            menu_code=IDM_MENU_CODE_OPEN_CIF,
+            group_role_code=IDM_GROUP_ROLE_CODE_OPEN_CIF,
+            permission_code=IDM_PERMISSION_CODE_OPEN_CIF,
+            stage_code=CIF_STAGE_BEGIN
+        ))
+
         current_user = self.current_user.user_info
         current_user_code = current_user.code
         # Dữ liệu validate chung

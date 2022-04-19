@@ -263,6 +263,10 @@ class Sla(Base):
     updated_at = Column(DateTime, comment='ngày cập nhật')
 
 
+########################################################################################################################
+#                                 WORKFLOW APPROVAL                                                                    #
+########################################################################################################################
+
 class Phase(Base):
     __tablename__ = 'crm_phase'
 
@@ -274,7 +278,7 @@ class Phase(Base):
     name = Column('phase_name', VARCHAR(250), nullable=False, comment='Tên Giai đoạn xử lý')
 
     business_type = relationship('BusinessType')
-    stage = relationship('Stage', secondary='crm_stage_phase')
+    stage = relationship('StagePhase')
 
 
 class Lane(Base):
@@ -315,14 +319,11 @@ class Stage(Base):
     created_at = Column(DateTime, comment='Ngày tạo bước thực hiện')
     updated_at = Column(DateTime, comment='Ngày cập nhật bước thực hiện')
 
-    action_id = Column('stage_action_id', ForeignKey('crm_stage_action.stage_action_id'),
-                       comment='Mã hành động')
-
     business_type = relationship('BusinessType')
     sla = relationship('Sla')
     parent = relationship('Stage', remote_side=[id])
     status = relationship('StageStatus')
-    action = relationship('StageAction')
+    phase = relationship('StagePhase')
 
 
 class StageStatus(Base):
@@ -471,6 +472,8 @@ class StagePhase(Base):
 
     phase_id = Column('phase_id', ForeignKey('crm_phase.phase_id'), comment='Mã Giai đoạn xử lý', primary_key=True)
     stage_id = Column('stage_id', ForeignKey('crm_stage.stage_id'), comment='Mã bước thực hiện', primary_key=True)
+    phase = relationship("Phase")
+    stage = relationship("Stage")
 
 
 class StageLane(Base):
