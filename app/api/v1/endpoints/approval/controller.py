@@ -24,7 +24,7 @@ from app.utils.constant.cif import (
 )
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_APPROVAL, IDM_GROUP_ROLE_CODE_OPEN_CIF,
-    IDM_MENU_CODE_CIF, IDM_MENU_CODE_OPEN_CIF, IDM_PERMISSION_CODE_KSV,
+    IDM_MENU_CODE_OPEN_CIF, IDM_PERMISSION_CODE_KSV,
     IDM_PERMISSION_CODE_OPEN_CIF
 )
 from app.utils.error_messages import (
@@ -356,7 +356,7 @@ class CtrApproval(BaseController):
 
             is_stage_supervisor = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
                 auth_response=self.current_user,
-                menu_code=IDM_MENU_CODE_CIF,
+                menu_code=IDM_MENU_CODE_OPEN_CIF,
                 group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
                 permission_code=IDM_PERMISSION_CODE_KSV,
                 stage_code=CIF_STAGE_APPROVE_KSV
@@ -368,7 +368,7 @@ class CtrApproval(BaseController):
         elif previous_stage_code == CIF_STAGE_APPROVE_KSV:
             is_stage_audit = self.call_repos(await PermissionController.ctr_approval_check_permission(
                 auth_response=self.current_user,
-                menu_code=IDM_MENU_CODE_CIF,
+                menu_code=IDM_MENU_CODE_OPEN_CIF,
                 group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
                 permission_code=IDM_PERMISSION_CODE_KSV,
                 stage_code=CIF_STAGE_APPROVE_KSV
@@ -685,7 +685,7 @@ class CtrApproval(BaseController):
             elif current_stage_code == CIF_STAGE_APPROVE_KSV:
                 self.call_repos(await PermissionController.ctr_approval_check_permission(
                     auth_response=self.current_user,
-                    menu_code=IDM_MENU_CODE_CIF,
+                    menu_code=IDM_MENU_CODE_OPEN_CIF,
                     group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
                     permission_code=IDM_PERMISSION_CODE_KSV,
                     stage_code=CIF_STAGE_APPROVE_KSV
@@ -693,7 +693,7 @@ class CtrApproval(BaseController):
             elif current_stage_code == CIF_STAGE_APPROVE_KSS:  # TODO: Tạm thời để quyền của KSV
                 self.call_repos(await PermissionController.ctr_approval_check_permission(
                     auth_response=self.current_user,
-                    menu_code=IDM_MENU_CODE_CIF,
+                    menu_code=IDM_MENU_CODE_OPEN_CIF,
                     group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
                     permission_code=IDM_PERMISSION_CODE_KSV,
                     stage_code=CIF_STAGE_APPROVE_KSV
