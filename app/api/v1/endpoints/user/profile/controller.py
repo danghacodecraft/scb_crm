@@ -1,23 +1,11 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.user.profile.repository import repos_profile
 from app.utils.address_functions.functions import combine_full_address
-from app.utils.error_messages import (
-    ERROR_CALL_SERVICE_DWH, MESSAGE_STATUS, USER_NOT_EXIST
-)
+from app.utils.error_messages import ERROR_CALL_SERVICE_DWH
 
 
 class CtrProfile(BaseController):
-    async def ctr_profile(self):
-        current_user = self.current_user.user_info
-        if not current_user:
-            return self.response_exception(
-                msg=USER_NOT_EXIST,
-                detail=MESSAGE_STATUS[USER_NOT_EXIST],
-                loc="current_user"
-            )
-
-        employee_id = current_user.code
-
+    async def ctr_profile(self, employee_id):
         is_success, profile = self.call_repos(
             await repos_profile(
                 employee_id=employee_id,
