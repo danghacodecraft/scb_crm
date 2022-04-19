@@ -18,9 +18,13 @@ class CasaAccountByCIFNumberResponse(BaseSchema):
     account_currency: str = Field(..., description="Loại tiền trong tài khoản")
     account_balance: str = Field(..., description="Số dư tài khoản")
     account_balance_available: str = Field(..., description="Số dư có thể sử dụng")
+    account_balance_lock: str = Field(..., description="Số dư bị phong tỏa")
+    account_over_draft_limit: str = Field(..., description="Hạn mức thấu chi")
+    account_over_draft_expired_date: str = Field(..., description="Ngày hết hạn")
+    account_latest_trans_date: str = Field(..., description="Ngày giao dịch gần nhất")
     account_open_date: str = Field(..., description="Ngày mở tài khoản")
     account_maturity_date: str = Field(..., description="Ngày đến hạn")
-    account_status: str = Field(..., description="Tình trạng tài khoản (đóng, mở)")
+    account_lock_status: str = Field(..., description="Trạng thái tài khoản (phong tỏa hoặc không)")
     account_class_name: str = Field(
         ...,
         description="Tên sản phẩm. Ví dụ: Tiết kiệm thông thường, phát lộc phát tài…"

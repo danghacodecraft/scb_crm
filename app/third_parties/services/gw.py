@@ -32,15 +32,13 @@ class ServiceGW:
                     "server_ref_num": "string",
                     "branch_info": {
                         "branch_name": "SCB Cống Quỳnh",
-                        "branch_code": "001"
+                        "branch_code": "137"
                     }
                 },
                 "data_input": {
                     "transaction_info": {
-                        "transaction_name": "CASAFromCIF"
-                    },
-                    "customer_info": {
-                        "cif_info": {
+                        "transaction_name": "CurrentAccountFromCIF",
+                        "transaction_value": {
                             "cif_num": casa_cif_number
                         }
                     }
