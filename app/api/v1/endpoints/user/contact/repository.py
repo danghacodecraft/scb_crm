@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.exc import NoResultFound
 
 from app.api.base.repository import ReposReturn
+from app.utils.error_messages import USER_CODE_NOT_EXIST
 
 
 async def repo_contact(code: str, session: Session):
@@ -20,6 +22,12 @@ async def repo_contact(code: str, session: Session):
         LEFT OUTER JOIN HRM_ORGANIZATION ON (HRM_EMPLOYEE.ORG_ID = HRM_ORGANIZATION.ID)
         WHERE HRM_EMPLOYEE.EMP_CODE = {code}
         ORDER BY HRM_EMPLOYEE.USERNAME ASC"""
+    try:
+        data_contact = session.execute(sql_contact).one()
+    except NoResultFound:
+        return ReposReturn(is_error=True, loc='user_code', msg=USER_CODE_NOT_EXIST,
+                           detail=f"Contact -> user_code {code}")
+    except Exception as ex:
+        return ReposReturn(is_error=True, msg=str(ex))
 
-    data_contact = session.execute(sql_contact).one()
     return ReposReturn(data=data_contact)
