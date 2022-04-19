@@ -21,7 +21,9 @@ from app.utils.constant.cif import (
     IMAGE_TYPE_SIGNATURE
 )
 from app.utils.constant.idm import (
-    IDM_GROUP_ROLE_CODE_APPROVAL, IDM_MENU_CODE_CIF, IDM_PERMISSION_CODE_KSV
+    IDM_GROUP_ROLE_CODE_APPROVAL, IDM_GROUP_ROLE_CODE_OPEN_CIF,
+    IDM_MENU_CODE_CIF, IDM_MENU_CODE_OPEN_CIF, IDM_PERMISSION_CODE_KSV,
+    IDM_PERMISSION_CODE_OPEN_CIF
 )
 from app.utils.error_messages import (
     ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
@@ -332,7 +334,15 @@ class CtrApproval(BaseController):
         stages = []
         # GDV chưa gửi hồ sơ
         if previous_stage_code == CIF_STAGE_BEGIN:
-            teller_is_disable = False
+            is_stage_teller = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
+                auth_response=self.current_user,
+                menu_code=IDM_MENU_CODE_OPEN_CIF,
+                group_role_code=IDM_GROUP_ROLE_CODE_OPEN_CIF,
+                permission_code=IDM_PERMISSION_CODE_OPEN_CIF,
+                stage_code=CIF_STAGE_INIT
+            ))
+            if is_stage_teller:
+                teller_is_disable = False
             teller_stage_code = None
         # KSV nhận hồ sơ từ GDV
         elif previous_stage_code == CIF_STAGE_INIT:
@@ -342,11 +352,27 @@ class CtrApproval(BaseController):
             teller_created_at = previous_transaction_daily.created_at
             teller_created_by = previous_transaction_sender.user_fullname
 
-            supervisor_is_disable = False
+            is_stage_supervisor = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
+                auth_response=self.current_user,
+                menu_code=IDM_MENU_CODE_CIF,
+                group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
+                permission_code=IDM_PERMISSION_CODE_KSV,
+                stage_code=CIF_STAGE_APPROVE_KSV
+            ))
+            if is_stage_supervisor:
+                supervisor_is_disable = False
 
         # KSS nhận hồ sơ từ KSV
         elif previous_stage_code == CIF_STAGE_APPROVE_KSV:
-            audit_is_disable = False
+            is_stage_audit = self.call_repos(await PermissionController.ctr_approval_check_permission(
+                auth_response=self.current_user,
+                menu_code=IDM_MENU_CODE_CIF,
+                group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
+                permission_code=IDM_PERMISSION_CODE_KSV,
+                stage_code=CIF_STAGE_APPROVE_KSV
+            ))
+            if is_stage_audit:
+                audit_is_disable = False   # Chưa được mô tả cho KSS tạm thời dùng Role của KSV
 
             supervisor_stage_code = previous_stage_code
             supervisor_transaction_daily = previous_transaction_daily
