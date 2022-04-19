@@ -8,6 +8,7 @@ from app.api.v1.endpoints.customer_service import view as view_customer_service
 from app.api.v1.endpoints.dashboard import router as routers_dashboard
 from app.api.v1.endpoints.file import view as views_file
 from app.api.v1.endpoints.news import view as view_scb_news
+from app.api.v1.endpoints.third_parties import view as view_third_party
 from app.api.v1.endpoints.user import router as routers_user
 
 router = APIRouter()
@@ -31,3 +32,5 @@ router.include_router(router=routers_casa.router_module, prefix="/casa", tags=["
 router.include_router(router=routers_approval.router_module, prefix="/approval", tags=["[Approval] Information"])
 
 router.include_router(router=view_scb_news.router, prefix="/news", tags=["[News]"])
+
+router.include_router(router=view_third_party.router, prefix="/third-party", tags=["[Third Party]"])
