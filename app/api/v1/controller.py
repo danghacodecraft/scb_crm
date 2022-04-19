@@ -19,6 +19,7 @@ class PermissionController(BaseController):
     ):
         """
         Check has permission in IDM
+        Return: ReposReturn(None/Error)
         """
         current_user = auth_response.user_info
         menu_list = auth_response.menu_list
@@ -58,6 +59,7 @@ class PermissionController(BaseController):
     ) -> ReposReturn:
         """
         Kiểm tra xem User có được thao tác ở bước đó không
+        Return: ReposReturn(True/False/Error)
         """
         current_user = auth_response.user_info
         menu_list = auth_response.menu_list
