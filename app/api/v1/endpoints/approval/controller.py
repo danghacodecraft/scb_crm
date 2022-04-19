@@ -690,13 +690,13 @@ class CtrApproval(BaseController):
                     permission_code=IDM_PERMISSION_CODE_KSV,
                     stage_code=CIF_STAGE_APPROVE_KSV
                 ))
-            elif current_stage_code == CIF_STAGE_APPROVE_KSS:  # TODO: Tạm thời để quyền của KSV
+            elif current_stage_code == CIF_STAGE_APPROVE_KSS:
                 self.call_repos(await PermissionController.ctr_approval_check_permission(
                     auth_response=self.current_user,
                     menu_code=IDM_MENU_CODE_OPEN_CIF,
                     group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
-                    permission_code=IDM_PERMISSION_CODE_KSV,
-                    stage_code=CIF_STAGE_APPROVE_KSV
+                    permission_code=IDM_PERMISSION_CODE_KSS,
+                    stage_code=CIF_STAGE_APPROVE_KSS
                 ))
             # Những user khác chỉ có quyền xem không có quyền thực hiện bất kì hành động nào trong phê duyệt
             else:
