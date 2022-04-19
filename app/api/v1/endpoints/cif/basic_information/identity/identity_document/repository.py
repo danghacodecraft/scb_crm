@@ -307,7 +307,8 @@ async def repos_get_identity_image_transactions(
         .join(CustomerIdentityImage, CustomerIdentityImageTransaction.identity_image_id == CustomerIdentityImage.id)
         .join(CustomerIdentity, and_(
             CustomerIdentityImage.identity_id == CustomerIdentity.id,
-            CustomerIdentity.customer_id == cif_id
+            CustomerIdentity.customer_id == cif_id,
+            CustomerIdentityImage.image_type_id == IMAGE_TYPE_CODE_IDENTITY
         ))
         .order_by(desc(CustomerIdentityImageTransaction.maker_at))
     ).scalars().all()
