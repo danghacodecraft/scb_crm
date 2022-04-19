@@ -113,7 +113,8 @@ class CtrIdentityMobile(BaseController):
                     identity_type=EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
                     session=self.oracle_session
                 )))
-
+        if full_name_vn != ocr_data_front_side['ocr_result']['basic_information']['full_name_vn']:
+            return self.response_exception(msg='full_name_vn is not same')
         full_name = convert_to_unsigned_vietnamese(full_name_vn)
         first_name, middle_name, last_name = split_name(full_name)
 
@@ -384,6 +385,7 @@ class CtrIdentityMobile(BaseController):
             position_code=current_user.user_info.hrm_position_code,
             position_name=current_user.user_info.hrm_position_name
         )]
+
         # Validate history data
         is_success, history_response = validate_history_data(history_datas)
         if not is_success:
@@ -392,7 +394,7 @@ class CtrIdentityMobile(BaseController):
                 loc=history_response['loc'],
                 detail=history_response['detail']
             )
-        print('compare_response', face_compare_mobile)
+
         request_data = {
             "cif_id": None,
             "cif_information": {
@@ -434,46 +436,88 @@ class CtrIdentityMobile(BaseController):
             request_data.update({
                 "front_side_information": {
                     "identity_image_url": ocr_data_front_side['front_side_information']['identity_image_url'],
-                    "identity_avatar_image_uuid": ocr_data_front_side['front_side_information'][
-                        'identity_avatar_image_uuid'],
+                    "identity_avatar_image_uuid": ocr_data_front_side['front_side_information']['identity_avatar_image_uuid'],
                     "face_compare_image_url": upload_avatar['file_url'],
                     "face_uuid_ekyc": face_compare_mobile['face_uuid_ekyc']
                 },
                 "back_side_information": {
-                    "identity_image_url": ocr_data_back_side['identity_image_url']
+                    "identity_image_url": ocr_data_back_side['back_side_information']['identity_image_url']
                 }
             })
-            # request_data["ocr_result"].update(dict(address_information={
-            #     "resident_address": {
-            #         "province": {
-            #             "id": request_address_information_resident_address.province.id
-            #         },
-            #         "district": {
-            #             "id": request_address_information_resident_address.district.id
-            #         },
-            #         "ward": {
-            #             "id": request_address_information_resident_address.ward.id
-            #         },
-            #         "number_and_street": request_address_information_resident_address.number_and_street
-            #     },
-            #     "contact_address": {
-            #         "province": dict(id=request_address_information_contact_address.province.id),
-            #         "district": {
-            #             "id": request_address_information_contact_address.district.id
-            #         },
-            #         "ward": {
-            #             "id": request_address_information_contact_address.ward.id
-            #         },
-            #         "number_and_street": request_address_information_contact_address.number_and_street
-            #     }
-            # }))
-            # request_data["ocr_result"]['basic_information'].update({
-            #     "province": {
-            #         "id": request_ocr_result_basic_information.province.id
-            #     },
-            #     "identity_characteristic": str(request_ocr_result_basic_information.identity_characteristic),
-            # })
+            request_data["ocr_result"].update(dict(address_information={
+                "resident_address": {
+                    "province": {
+                        "id": ocr_data_front_side['ocr_result']['address_information']['resident_address']['province']['id']
+                    },
+                    "district": {
+                        "id": ocr_data_front_side['ocr_result']['address_information']['resident_address']['district']['id']
+                    },
+                    "ward": {
+                        "id": ocr_data_front_side['ocr_result']['address_information']['resident_address']['ward']['id']
+                    },
+                    "number_and_street": ocr_data_front_side['ocr_result']['address_information']['resident_address']['number_and_street']
+                },
+                "contact_address": {
+                    "province": {
+                        "id": ocr_data_front_side['ocr_result']['address_information']['contact_address']['province']['id']
+                    },
+                    "district": {
+                        "id": ocr_data_front_side['ocr_result']['address_information']['contact_address']['district']['id']
+                    },
+                    "ward": {
+                        "id": ocr_data_front_side['ocr_result']['address_information']['contact_address']['ward']['id']
+                    },
+                    "number_and_street": ocr_data_front_side['ocr_result']['address_information']['contact_address']['number_and_street']
+                }
+            }))
 
+            request_data["ocr_result"]['basic_information'].update(
+                {
+                    "province": {
+                        "id": ocr_data_front_side['ocr_result']['basic_information']['province']['id']
+                    },
+                    "identity_characteristic": ocr_data_back_side['ocr_result']['basic_information']['identity_characteristic']
+                }
+            )
+            if identity_type == IDENTITY_DOCUMENT_TYPE_IDENTITY_CARD:
+                request_data['ocr_result']['basic_information'].update(
+                    {
+                        "ethnic": {
+                            "id": ocr_data_back_side['ocr_result']['basic_information']['ethnic']['id']
+                        },
+                        "religion": {
+                            "id": ocr_data_back_side['ocr_result']['basic_information']['religion']['id']
+                        },
+                        "father_full_name_vn": None,
+                        "mother_full_name_vn": None
+                    }
+                )
+            else:
+                request_data['ocr_result']['identity_document'].update({
+                    "mrz_content": ocr_data_back_side['ocr_result']['identity_document']['mrz_content'],
+                    "qr_code_content": None,
+                    "signer": ocr_data_back_side['ocr_result']['identity_document']['signer']
+                })
+        else:
+            request_data['ocr_result']['identity_document'].update({
+                "passport_type": {
+                    "id": ocr_data_front_side['ocr_result']['identity_document']['passport_type']['id']
+                },
+                "passport_code": {
+                    "id": ocr_data_front_side['ocr_result']['identity_document']['passport_code']['id']
+                },
+                "identity_card_number": ocr_data_front_side['ocr_result']['basic_information']['identity_card_number'],
+                "mrz_content": ocr_data_front_side['ocr_result']['basic_information']['mrz_content']
+            })
+
+            request_data.update({
+                "passport_information": {
+                    "identity_image_url": ocr_data_front_side['passport_information']['identity_image_url'],
+                    "identity_avatar_image_uuid": ocr_data_front_side['passport_information']['identity_avatar_image_uuid'],
+                    "face_compare_image_url": upload_avatar['file_url'],
+                    "face_uuid_ekyc": face_compare_mobile['face_uuid_ekyc']
+                }
+            })
         info_save_document = self.call_repos( # noqa
             await repos_save_identity(
                 identity_document_type_id=identity_type,
@@ -499,4 +543,4 @@ class CtrIdentityMobile(BaseController):
                 session=self.oracle_session
             )
         )
-        return self.response(data=request_data)
+        return self.response(data=info_save_document)
