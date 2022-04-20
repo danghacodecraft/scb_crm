@@ -55,7 +55,7 @@ async def repos_get_transaction_list(search_box: Optional[str], limit: int, page
     sql = select(
         Customer.full_name_vn,
         Customer.id.label('cif_id'),
-        Booking.code
+        Booking.code.label('booking_code')
     ) \
         .join(BookingCustomer, Customer.id == BookingCustomer.customer_id) \
         .join(Booking, BookingCustomer.booking_id == Booking.id) \
