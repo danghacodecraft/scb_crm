@@ -16,13 +16,14 @@ async def repo_contact(code: str, session: Session):
        HRM_EMPLOYEE.ID      AS EMP_ID,\
        HRM_TITLE.TITLE_NAME  AS TITLE_NAME,\
        HRM_ORGANIZATION.DESCRIPTION_PATH     AS UNIT,\
-       CONCAT('/cdn/user-profile/', HRM_EMPLOYEE.AVATAR_URL) AS AVATAR_LINK FROM HRM_EMPLOYEE\
+       CONCAT('/cdn-profile/', HRM_EMPLOYEE.AVATAR_URL) AS AVATAR_LINK FROM HRM_EMPLOYEE\
 
         LEFT OUTER JOIN HRM_TITLE ON (HRM_EMPLOYEE.TITLE_ID = HRM_TITLE.ID)
         LEFT OUTER JOIN HRM_ORGANIZATION ON (HRM_EMPLOYEE.ORG_ID = HRM_ORGANIZATION.ID)
         WHERE HRM_EMPLOYEE.EMP_CODE = {code}
         ORDER BY HRM_EMPLOYEE.USERNAME ASC"""
     try:
+        # NOTE: HRM_EMPLOYEE.AVATAR_URL nhớ select ở vị trí cuối cùng
         data_contact = session.execute(sql_contact).one()
     except NoResultFound:
         return ReposReturn(is_error=True, loc='user_code', msg=USER_CODE_NOT_EXIST,
