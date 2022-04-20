@@ -529,6 +529,8 @@ async def repos_save_identity(
         if not is_success:
             return ReposReturn(is_error=True, msg=booking_response['msg'])
 
+        booking_code = booking_response['booking_code']
+
         # Tìm CustomerCompareImageTransaction trước đó
         previous_compare_image_transaction = session.execute(
             select(
@@ -604,9 +606,10 @@ async def repos_save_identity(
         ))
     ])
 
-    return ReposReturn(data={
-        "cif_id": customer_id
-    })
+    return ReposReturn(data=dict(
+        cif_id=customer_id,
+        booking_code=booking_code
+    ))
 
 
 ########################################################################################################################
