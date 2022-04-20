@@ -50,7 +50,8 @@ SERVICE = {
         "url": os.getenv("SERVICE_DWH_URL"),
         "headers": {
             'Content-Type': 'application/json',
-            "authorization": f"Bearer {os.getenv('SERVICE_DWH_BEARER_TOKEN', 'VEhBTkdIRA==')}"
+            "authorization": f"Bearer {os.getenv('SERVICE_DWH_BEARER_TOKEN', 'VEhBTkdIRA==')}",
+            "server-auth": os.getenv("SERVICE_DWH_SERVER_AUTH")
         }
     },
     "gw": {

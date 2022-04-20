@@ -1,4 +1,3 @@
-import os
 from typing import Optional
 
 import aiohttp as aiohttp
@@ -15,7 +14,7 @@ class ServiceDWH:
     url = SERVICE["dwh"]['url'] + '/sv'
     header = SERVICE["dwh"]['url']
     headers = {
-        "server-auth": os.getenv("SERVICE_AUTH"),
+        "server-auth": SERVICE['dwh']['headers']['server-auth'],
     }
 
     def start(self):
