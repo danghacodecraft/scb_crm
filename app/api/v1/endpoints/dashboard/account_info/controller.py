@@ -51,8 +51,4 @@ class CtrAccountInfo(BaseController):
             }
         )
 
-        response_data.update({
-
-        })
-
         return self.response(data=response_data)
