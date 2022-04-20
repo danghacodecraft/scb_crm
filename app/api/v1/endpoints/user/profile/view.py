@@ -20,7 +20,6 @@ router = APIRouter()
     )
 )
 async def view_profile(
-        # employee_id: str = Query(..., description="employee_id")
         current_user=Depends(get_current_user_from_header())
 ):
     profile_info = await CtrProfile(current_user).ctr_profile()

@@ -17,13 +17,13 @@ class CtrProfile(BaseController):
             )
 
         employee_id = current_user.code
-
         is_success, profile = self.call_repos(
             await repos_profile(
                 employee_id=employee_id,
                 session=self.oracle_session
             )
         )
+
         if not is_success:
             return self.response_exception(msg=ERROR_CALL_SERVICE_DWH, loc="EMP_DETAIL", detail=str(profile))
 

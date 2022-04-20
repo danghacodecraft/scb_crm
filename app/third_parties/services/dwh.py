@@ -11,10 +11,10 @@ from app.utils.error_messages import ERROR_CALL_SERVICE_DWH
 class ServiceDWH:
     session: Optional[aiohttp.ClientSession] = None
 
-    url = SERVICE["dwh"]['url']
+    url = SERVICE["dwh"]['url'] + '/sv'
     header = SERVICE["dwh"]['url']
     headers = {
-        "AUTHORIZATION": SERVICE["dwh"]['headers']['authorization'],
+        "server-auth": SERVICE['dwh']['headers']['server-auth'],
     }
 
     def start(self):
