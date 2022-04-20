@@ -26,7 +26,7 @@ router = APIRouter()
         success_status_code=status.HTTP_200_OK
     )
 )
-async def view_gw_get_casa_account_by_cif_number(
+async def view_account_info(
         request=Body(...),
         current_user=Depends(get_current_user_from_header())
 ):
