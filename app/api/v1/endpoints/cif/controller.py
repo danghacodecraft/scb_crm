@@ -1,11 +1,12 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.repository import (
     repos_check_exist_cif, repos_customer_information, repos_get_cif_info,
-    repos_get_initializing_customer, repos_profile_history,
-    repos_retrieve_customer_information_by_cif_number,
+    repos_get_initializing_customer, repos_get_total_participants,
+    repos_profile_history, repos_retrieve_customer_information_by_cif_number,
     repos_validate_cif_number
 )
 from app.api.v1.endpoints.cif.schema import CustomerByCIFNumberRequest
+from app.api.v1.endpoints.user.contact.repository import repo_contact
 from app.third_parties.oracle.models.master_data.address import (
     AddressDistrict, AddressProvince, AddressWard
 )
@@ -91,6 +92,45 @@ class CtrCustomer(BaseController):
             await repos_customer_information(cif_id=cif_id, session=self.oracle_session))
         first_row = customer_information[0]
 
+        employees = self.call_repos(
+            await repos_get_total_participants(
+                cif_id=cif_id,
+                session=self.oracle_session
+            )
+        )
+        list_distinct_employee = []
+        for (
+                user_id, user_fullname, user_name, user_email, position_id, position_code, position_name, department_id,
+                department_code, department_name, branch_id, branch_code, branch_name, _
+        ) in employees:
+            hrm_user_data = self.call_repos(await repo_contact(
+                code=user_id,
+                session=self.oracle_session_task
+            ))
+
+            list_distinct_employee.append(dict(
+                id=user_id,
+                full_name_vn=user_fullname,
+                avatar_url=hrm_user_data[-1],  # TODO: Tạm thời lấy từ HRM - User Contact
+                user_name=user_name,
+                email=user_email,
+                position=dict(
+                    id=position_id,
+                    code=position_code,
+                    name=position_name
+                ),
+                department=dict(
+                    id=department_id,
+                    code=department_code,
+                    name=department_name
+                ),
+                branch=dict(
+                    id=branch_id,
+                    code=branch_code,
+                    name=branch_name
+                )
+            ))
+
         data_response = {
             "customer_id": first_row.Customer.id,
             "status": dropdownflag(first_row.CustomerStatus),
@@ -110,7 +150,9 @@ class CtrCustomer(BaseController):
             "marital_status": dropdown(first_row.MaritalStatus) if first_row.MaritalStatus else DROPDOWN_NONE_DICT,
             "customer_type": dropdown(first_row.CustomerType) if first_row.CustomerType else DROPDOWN_NONE_DICT,
             "credit_rating": None,
-            "address": first_row.CustomerAddress.address
+            "address": first_row.CustomerAddress.address,
+            "total_employees": len(list_distinct_employee),
+            "employees": list_distinct_employee
         }
 
         return self.response(data=data_response)
@@ -293,14 +335,18 @@ class CtrCustomer(BaseController):
             },
             "address_info": {
                 "resident_address": {
-                    "province": dropdown(resident_provice) if not flat_address and resident_provice else DROPDOWN_NONE_DICT,
-                    "district": dropdown(resident_district) if not flat_address and resident_district else DROPDOWN_NONE_DICT,
+                    "province": dropdown(
+                        resident_provice) if not flat_address and resident_provice else DROPDOWN_NONE_DICT,
+                    "district": dropdown(
+                        resident_district) if not flat_address and resident_district else DROPDOWN_NONE_DICT,
                     "ward": dropdown(resident_ward) if not flat_address and resident_ward else DROPDOWN_NONE_DICT,
                     "name": resident_address_response if flat_address else None
                 },
                 "contact_address": {
-                    "province": dropdown(contact_provice) if not flat_address and contact_provice else DROPDOWN_NONE_DICT,
-                    "district": dropdown(contact_district) if not flat_address and contact_district else DROPDOWN_NONE_DICT,
+                    "province": dropdown(
+                        contact_provice) if not flat_address and contact_provice else DROPDOWN_NONE_DICT,
+                    "district": dropdown(
+                        contact_district) if not flat_address and contact_district else DROPDOWN_NONE_DICT,
                     "ward": dropdown(contact_ward) if not flat_address and contact_ward else DROPDOWN_NONE_DICT,
                     "name": contact_address_response if flat_address else None
                 },

@@ -62,8 +62,9 @@ class EmployeeResponse(BaseSchema):
     avatar_url: Optional[str] = Field(..., description="Đường dẫn hình ảnh")
     user_name: str = Field(..., description="Tên")
     email: Optional[str] = Field(..., description="Địa chỉ email")
-    job_title: str = Field(..., description="Chức danh")
-    department_id: str = Field(..., description="Phòng")
+    position: DropdownResponse = Field(..., description="Chức danh")
+    department: DropdownResponse = Field(..., description="Phòng")
+    branch: DropdownResponse = Field(..., description="Đơn vị")
 
 
 class CifCustomerInformationResponse(BaseSchema):
@@ -88,9 +89,8 @@ class CifCustomerInformationResponse(BaseSchema):
     # TODO: hạng tín dụng chưa có field trong customer
     credit_rating: Optional[str] = Field(..., description="Hạng tín dụng")
     address: str = Field(..., description="Địa chỉ")
-    # TODO: đang nghiên cứu employees
-    # total_number_of_participant: int = Field(..., description="Tổng số người tham gia")
-    # employees: List[EmployeeResponse] = Field(..., description="Danh sách nhân viên")
+    total_employees: int = Field(..., description="Tổng số người tham gia")
+    employees: List[EmployeeResponse] = Field(..., description="Danh sách nhân viên")
 
 
 class SOACIFInformation(BaseSchema):

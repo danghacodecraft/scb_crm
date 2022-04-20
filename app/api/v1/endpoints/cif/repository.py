@@ -19,7 +19,8 @@ from app.third_parties.oracle.models.cif.basic_information.personal.model import
     CustomerIndividualInfo
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingBusinessForm, BookingCustomer
+    Booking, BookingBusinessForm, BookingCustomer, TransactionDaily,
+    TransactionSender
 )
 from app.third_parties.oracle.models.master_data.address import AddressCountry
 from app.third_parties.oracle.models.master_data.customer import (
@@ -223,3 +224,42 @@ async def repos_retrieve_customer_information_by_cif_number(
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_SOA, detail=customer_information["message"])
 
     return ReposReturn(data=customer_information)
+
+
+async def repos_get_total_participants(
+    cif_id: str,
+    session: Session
+):
+    transaction_root_id = session.execute(
+        select(
+            TransactionDaily.transaction_root_id,
+            BookingCustomer,
+            Booking
+        )
+        .join(Booking, BookingCustomer.booking_id == Booking.id)
+        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
+        .filter(BookingCustomer.customer_id == cif_id)
+    ).scalar()
+
+    total_participants = session.execute(
+        select(
+            TransactionSender.user_id,
+            TransactionSender.user_fullname,
+            TransactionSender.user_name,
+            TransactionSender.user_email,
+            TransactionSender.position_id,
+            TransactionSender.position_code,
+            TransactionSender.position_name,
+            TransactionSender.department_id,
+            TransactionSender.department_code,
+            TransactionSender.department_name,
+            TransactionSender.branch_id,
+            TransactionSender.branch_code,
+            TransactionSender.branch_name,
+            TransactionDaily.transaction_root_id
+        )
+        .join(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
+        .filter(TransactionDaily.transaction_root_id == transaction_root_id)
+        .distinct()
+    ).all()
+    return ReposReturn(data=total_participants)
