@@ -130,12 +130,13 @@ class CtrCustomer(BaseController):
                     name=branch_name
                 )
             ))
-
+        # gọi đến service file để lấy link download
+        uuid__link_downloads = await self.get_link_download_multi_file(uuids=[first_row.Customer.avatar_url])
         data_response = {
             "customer_id": first_row.Customer.id,
             "status": dropdownflag(first_row.CustomerStatus),
             "cif_number": first_row.Customer.cif_number if first_row.CustomerType else None,
-            "avatar_url": first_row.Customer.avatar_url,
+            "avatar_url": uuid__link_downloads[first_row.Customer.avatar_url],
             "customer_classification": dropdown(first_row.CustomerClassification),
             "full_name": first_row.Customer.full_name,
             "gender": dropdown(first_row.CustomerGender),
