@@ -11,17 +11,17 @@ from app.api.v1.schemas.utils import (
 
 
 class AddressResponse(BaseSchema):
-    province: DropdownResponse = Field(..., description="Tỉnh/Thành phố")
-    district: DropdownResponse = Field(..., description="Quận/Huyện")
-    ward: DropdownResponse = Field(..., description="Phường/Xã")
-    number_and_street: str = Field(..., description="Số nhà, tên đường")
+    province: OptionalDropdownResponse = Field(..., description="Tỉnh/Thành phố")
+    district: OptionalDropdownResponse = Field(..., description="Quận/Huyện")
+    ward: OptionalDropdownResponse = Field(..., description="Phường/Xã")
+    number_and_street: Optional[str] = Field(..., description="Số nhà, tên đường")
 
 
 class OptionalAddressResponse(BaseSchema):
     province: OptionalDropdownResponse = Field(None, description="Tỉnh/Thành phố")
     district: OptionalDropdownResponse = Field(None, description="Quận/Huyện")
     ward: OptionalDropdownResponse = Field(None, description="Phường/Xã")
-    number_and_street: str = Field(None, description="Số nhà, tên đường")
+    number_and_street: Optional[str] = Field(None, description="Số nhà, tên đường")
 
 
 class AddressRequest(BaseSchema):
