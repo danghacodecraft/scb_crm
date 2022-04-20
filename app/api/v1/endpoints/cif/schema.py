@@ -75,14 +75,14 @@ class CifCustomerInformationResponse(BaseSchema):
     full_name: str = Field(..., description="Họ tên tiếng anh")
     gender: DropdownResponse = Field(..., description="Giới tính")
     email: Optional[str] = Field(..., description="Địa chỉ email")
-    mobile_number: str = Field(..., description="Số điện thoại")
+    mobile_number: Optional[str] = Field(..., description="Số điện thoại")
     identity_number: str = Field(..., description="Số giấy tờ định danh")
     place_of_issue: DropdownResponse = Field(..., description="Nơi cấp")
     issued_date: date = Field(..., description="Ngày cấp")
     expired_date: date = Field(..., description="Ngày hết hạn")
     date_of_birth: date = Field(..., description="Ngày sinh")
     nationality: DropdownResponse = Field(..., description="Quốc tịch")
-    marital_status: DropdownResponse = Field(..., description="Tình trạng hôn nhân")
+    marital_status: OptionalDropdownResponse = Field(..., description="Tình trạng hôn nhân")
     # TODO: thông tin về loại khách hàng khi tạo CIF chưa có
     customer_type: OptionalDropdownResponse = Field(None, description="Loại khách hàng")
     # TODO: hạng tín dụng chưa có field trong customer
