@@ -23,6 +23,7 @@ async def repo_contact(code: str, session: Session):
         WHERE HRM_EMPLOYEE.EMP_CODE = {code}
         ORDER BY HRM_EMPLOYEE.USERNAME ASC"""
     try:
+        # NOTE: HRM_EMPLOYEE.AVATAR_URL nhớ select ở vị trí cuối cùng
         data_contact = session.execute(sql_contact).one()
     except NoResultFound:
         return ReposReturn(is_error=True, loc='user_code', msg=USER_CODE_NOT_EXIST,
