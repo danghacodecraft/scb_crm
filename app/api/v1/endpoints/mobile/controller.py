@@ -113,8 +113,10 @@ class CtrIdentityMobile(BaseController):
                     identity_type=EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
                     session=self.oracle_session
                 )))
+
         if full_name_vn != ocr_data_front_side['ocr_result']['basic_information']['full_name_vn']:
             return self.response_exception(msg='full_name_vn is not same')
+
         full_name = convert_to_unsigned_vietnamese(full_name_vn)
         first_name, middle_name, last_name = split_name(full_name)
 
@@ -141,9 +143,6 @@ class CtrIdentityMobile(BaseController):
             "avatar_url": None,
             "complete_flag": CUSTOMER_UNCOMPLETED_FLAG
         }
-        print('ocr_data_front_side', ocr_data_front_side)
-        print('ocr_data_back_side', ocr_data_back_side)
-        print(ocr_data_front_side['ocr_result']['identity_document']['identity_number'])
 
         religion_id = None
         ethnic_id = None
@@ -193,22 +192,20 @@ class CtrIdentityMobile(BaseController):
                 # trường hợp cccd có giới tính
                 ocr_gender_id = ocr_data_front_side['ocr_result']['basic_information']['gender']['id']
 
-        print('ocr_data_front_side', ocr_data_front_side)
         if ocr_data_front_side['ocr_result']['identity_document']['identity_number'] != identity_number:
             return self.response_exception(msg='identity_number not same')
 
-        print('ocr_place_of_issue_id', ocr_place_of_issue_id)
-
         # tạo customer_identity
-        if ocr_place_of_issue_id != place_of_issue_id:
-            return self.response_exception(msg='place_of_issue_id not same')
+        if ocr_place_of_issue_id:
+            if ocr_place_of_issue_id != place_of_issue_id:
+                return self.response_exception(msg='place_of_issue_id not same')
 
         saving_customer_identity = {  # noqa
             "identity_type_id": identity_type,
             "identity_num": ocr_data_front_side['ocr_result']['identity_document']['identity_number'],
             "issued_date": issued_date,
             "expired_date": expired_date,
-            "place_of_issue_id": ocr_place_of_issue_id,
+            "place_of_issue_id": ocr_place_of_issue_id if ocr_place_of_issue_id else place_of_issue_id,
             "maker_at": now(),
             "maker_id": current_user.user_info.code,
             "updater_at": now(),
@@ -227,7 +224,6 @@ class CtrIdentityMobile(BaseController):
                 "qrcode_content": None,
                 "mrz_content": ocr_data_back_side['ocr_result']['identity_document']['mrz_content']
             })
-        print('saving_customer_identity', saving_customer_identity)
 
         # dict dùng để tạo mới hoặc lưu lại customer_individual_info
         if ocr_gender_id and ocr_gender_id != gender_id:
@@ -246,9 +242,7 @@ class CtrIdentityMobile(BaseController):
             "mother_full_name": None
         }
 
-        print('saving_customer_individual_info', saving_customer_individual_info)
         # dict dùng để lưu lại customer_resident_address
-
         saving_customer_resident_address = {  # noqa
             "address_type_id": RESIDENT_ADDRESS_CODE,
             "address_country_id": nationality_id,
@@ -258,7 +252,7 @@ class CtrIdentityMobile(BaseController):
             "address": resident_address_number_and_street,
             "address_domestic_flag": True if nationality_id == ADDRESS_COUNTRY_CODE_VN else False
         }
-        print('saving_customer_resident_address', saving_customer_resident_address)
+
         saving_customer_contact_address = {  # noqa
             "address_type_id": CONTACT_ADDRESS_CODE,
             "address_country_id": nationality_id,
@@ -268,6 +262,7 @@ class CtrIdentityMobile(BaseController):
             "address": contact_number_and_street,
             "address_domestic_flag": True,  # Địa chỉ liên lạc đối với CMND/CCCD là địa chỉ trong nước
         }
+
         # compare avatar
         if identity_type == IDENTITY_DOCUMENT_TYPE_PASSPORT:
             saving_customer_identity_images = [
@@ -367,7 +362,7 @@ class CtrIdentityMobile(BaseController):
         transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
             business_type_id=BUSINESS_TYPE_INIT_CIF
         )
-        print('transaction_datas', transaction_datas)
+
         (saving_transaction_stage_status, saving_transaction_stage, saving_transaction_daily, saving_transaction_sender,
          saving_transaction_receiver) = transaction_datas
 
@@ -518,7 +513,7 @@ class CtrIdentityMobile(BaseController):
                     "face_uuid_ekyc": face_compare_mobile['face_uuid_ekyc']
                 }
             })
-        info_save_document = self.call_repos( # noqa
+        info_save_document = self.call_repos(
             await repos_save_identity(
                 identity_document_type_id=identity_type,
                 customer_id=None,

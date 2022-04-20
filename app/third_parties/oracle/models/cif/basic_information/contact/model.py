@@ -45,10 +45,10 @@ class CustomerAddress(Base):
                 comment='ID địa chỉ khách hàng')
     customer_id = Column(ForeignKey('crm_customer.customer_id'), nullable=False, comment='Mã khách hàng')
     address_type_id = Column(ForeignKey('crm_address_type.address_type_id'), nullable=False, comment='Loại địa chỉ')
-    address_country_id = Column(ForeignKey('crm_address_country.country_id'), nullable=False, comment='ID quốc gia')
-    address_province_id = Column(ForeignKey('crm_address_province.province_id'), nullable=False,
+    address_country_id = Column(ForeignKey('crm_address_country.country_id'), comment='ID quốc gia')
+    address_province_id = Column(ForeignKey('crm_address_province.province_id'),
                                  comment='ID tỉnh/thành')
-    address_district_id = Column(ForeignKey('crm_address_district.district_id'), nullable=False,
+    address_district_id = Column(ForeignKey('crm_address_district.district_id'),
                                  comment='ID quận/huyện')
     address_ward_id = Column(ForeignKey('crm_address_ward.ward_id'), comment='ID phường/xã')
     address = Column(VARCHAR(255), nullable=False, comment='Địa chỉ đầy đủ khách hàng (Địa chỉ 1)')
