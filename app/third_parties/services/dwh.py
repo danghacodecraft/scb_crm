@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 
 import aiohttp as aiohttp
@@ -11,10 +12,10 @@ from app.utils.error_messages import ERROR_CALL_SERVICE_DWH
 class ServiceDWH:
     session: Optional[aiohttp.ClientSession] = None
 
-    url = SERVICE["dwh"]['url']
+    url = SERVICE["dwh"]['url'] + '/sv'
     header = SERVICE["dwh"]['url']
     headers = {
-        "AUTHORIZATION": SERVICE["dwh"]['headers']['authorization'],
+        "server-auth": os.getenv("SERVICE_AUTH"),
     }
 
     def start(self):
