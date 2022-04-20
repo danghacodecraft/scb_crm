@@ -21,10 +21,11 @@ async def get_casa_account_from_cif(
 
 
 async def get_deposit_account_by_cif_number(
-        cif_number: str
+        cif_number: str,
+        current_user: str
 ):
     is_success, deposit_account = await service_gw.get_deposit_account_from_cif(
-        account_cif_number=cif_number
+        account_cif_number=cif_number, current_user=current_user
     )
     if not is_success:
         return ReposReturn(

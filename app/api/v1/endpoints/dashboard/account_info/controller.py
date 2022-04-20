@@ -12,7 +12,9 @@ class CtrAccountInfo(BaseController):
             self,
             cif_number: str
     ):
-        account_info = self.call_repos(await repos_gw_get_casa_account_by_cif_number(cif_number=cif_number))
+        current_user = self.current_user.user_info
+        account_info = self.call_repos(await repos_gw_get_casa_account_by_cif_number(
+            cif_number=cif_number, current_user=current_user))
         response_data = {}
         total_balances = 0
         account_info_list = account_info['selectCurrentAccountFromCIF_out']['data_output']['customer_info'][
@@ -29,7 +31,8 @@ class CtrAccountInfo(BaseController):
             account_info_list=account_infos)}
         )
 
-        deposit_info = self.call_repos(await get_deposit_account_by_cif_number(cif_number=cif_number))
+        deposit_info = self.call_repos(await get_deposit_account_by_cif_number(
+            cif_number=cif_number, current_user=current_user))
         total_balances = 0
         deposit_info_list = deposit_info['selectDepositAccountFromCIF_out']['data_output']['customer_info'][
             'account_info_list']

@@ -6,6 +6,7 @@ from starlette import status
 
 from app.settings.service import SERVICE
 from app.utils.constant.gw import (
+    CURRENT_ACCOUNT_FROM_CIF, DEPOSIT_ACCOUNT_FROM_CIF,
     GW_ENDPOINT_URL_RETRIEVE_CURRENT_ACCOUNT_CASA_FROM_CIF,
     GW_ENDPOINT_URL_RETRIEVE_DEPOSIT_ACCOUNT_FROM_CIF
 )
@@ -23,7 +24,7 @@ class ServiceGW:
         await self.session.close()
         self.session = None
 
-    async def get_casa_account_from_cif(self, casa_cif_number):
+    async def get_casa_account_from_cif(self, current_user, casa_cif_number):
         request_data = {
             "selectCurrentAccountFromCIF_in": {
                 "transaction_info": {
@@ -32,13 +33,13 @@ class ServiceGW:
                     "client_ip": "10.4.4.x",
                     "server_ref_num": "string",
                     "branch_info": {
-                        "branch_name": "SCB Cống Quỳnh",
-                        "branch_code": "137"
+                        "branch_name": current_user.hrm_branch_name,
+                        "branch_code": current_user.hrm_branch_code
                     }
                 },
                 "data_input": {
                     "transaction_info": {
-                        "transaction_name": "CurrentAccountFromCIF",
+                        "transaction_name": CURRENT_ACCOUNT_FROM_CIF,
                         "transaction_value": {
                             "cif_num": casa_cif_number
                         }
@@ -77,7 +78,7 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
-    async def get_deposit_account_from_cif(self, account_cif_number):
+    async def get_deposit_account_from_cif(self, current_user, account_cif_number):
         request_data = {
             "selectDepositAccountFromCIF_in": {
                 "transaction_info": {
@@ -86,13 +87,13 @@ class ServiceGW:
                     "client_ip": "10.4.4.x",
                     "server_ref_num": "string",
                     "branch_info": {
-                        "branch_name": "SCB Cống Quỳnh",
-                        "branch_code": "137"
+                        "branch_name": current_user.hrm_branch_name,
+                        "branch_code": current_user.hrm_branch_code
                     }
                 },
                 "data_input": {
                     "transaction_info": {
-                        "transaction_name": "DepositAccountFromCIF",
+                        "transaction_name": DEPOSIT_ACCOUNT_FROM_CIF,
                         "transaction_value": {
                             "cif_num": account_cif_number
                         }

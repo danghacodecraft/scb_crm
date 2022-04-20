@@ -18,7 +18,7 @@ router = APIRouter()
 
 
 @router.post(
-    path="/account-info/",
+    path="/",
     name="360 - THÔNG TIN TÀI KHOẢN",
     description="360 - THÔNG TIN TÀI KHOẢN",
     responses=swagger_response(
