@@ -206,6 +206,7 @@ async def write_transaction_log_and_update_booking(
             log_data=history_datas
         )))
         response = dict(
+            booking_code=booking.code,
             created_at=now(),
             updated_at=now()
         )
@@ -225,6 +226,7 @@ async def write_transaction_log_and_update_booking(
         booking_business_form.log_data = history_datas
         booking_business_form.update_at = now()
         response = dict(
+            booking_code=booking.code,
             created_at=booking_business_form.created_at,
             updated_at=now()
         )

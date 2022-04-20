@@ -5,7 +5,7 @@ from pydantic import Field
 
 from app.api.base.schema import BaseSchema
 from app.api.v1.schemas.cif import AddressResponse, FingerPrintResponse
-from app.api.v1.schemas.utils import DropdownResponse
+from app.api.v1.schemas.utils import DropdownResponse, OptionalDropdownResponse
 
 ########################################################################################################################
 # response detail giấy tờ định danh
@@ -87,7 +87,7 @@ class OCRDocumentCitizenCardResponse(BaseSchema):
     identity_number: str = Field(..., min_length=1, description="Số GTĐD")
     issued_date: date = Field(..., description="Ngày cấp")
     expired_date: date = Field(..., description="Có giá trị đến")
-    place_of_issue: DropdownResponse = Field(..., description="Nơi cấp")
+    place_of_issue: OptionalDropdownResponse = Field(..., description="Nơi cấp")
     mrz_content: str = Field(None, description="MRZ")  # CCCD
     qr_code_content: str = Field(None, description="Nội dung QR Code")  # CCCD
 
@@ -95,10 +95,10 @@ class OCRDocumentCitizenCardResponse(BaseSchema):
 # III. Phân tích OCR -> 2. Thông tin cơ bản (CCCD)
 class OCRBasicInfoCitizenCardResponse(BaseSchema):
     full_name_vn: str = Field(..., min_length=1, description="Họ và tên")
-    gender: DropdownResponse = Field(..., description="Giới tính")
+    gender: OptionalDropdownResponse = Field(..., description="Giới tính")
     date_of_birth: date = Field(..., description="Ngày sinh")
-    nationality: DropdownResponse = Field(..., description="Quốc tịch")
-    province: DropdownResponse = Field(..., description="Quê quán")
+    nationality: OptionalDropdownResponse = Field(..., description="Quốc tịch")
+    province: OptionalDropdownResponse = Field(..., description="Quê quán")
     identity_characteristic: str = Field(..., min_length=1, description="Đặc điểm nhận dạng")
 
 
@@ -135,19 +135,19 @@ class InformationPassportResponse(BaseSchema):
 class OCRDocumentPassportResponse(BaseSchema):
     identity_number: str = Field(..., min_length=1, description="Số GTĐD")
     issued_date: date = Field(..., description="Ngày cấp")
-    place_of_issue: DropdownResponse = Field(..., description="Nơi cấp")
+    place_of_issue: OptionalDropdownResponse = Field(..., description="Nơi cấp")
     expired_date: date = Field(..., description="Có giá trị đến")
-    passport_type: DropdownResponse = Field(..., description="Loại")
-    passport_code: DropdownResponse = Field(..., description="Mã số")
+    passport_type: OptionalDropdownResponse = Field(..., description="Loại")
+    passport_code: OptionalDropdownResponse = Field(..., description="Mã số")
 
 
 # II. Phân tích OCR -> 2. Thông tin cơ bản (Hộ Chiếu)
 class BasicInfoPassportResponse(BaseSchema):
     full_name_vn: str = Field(..., min_length=1, description="Họ và tên")
-    gender: DropdownResponse = Field(..., description="Giới tính")
+    gender: OptionalDropdownResponse = Field(..., description="Giới tính")
     date_of_birth: date = Field(..., description="Ngày sinh")
-    nationality: DropdownResponse = Field(..., description="Quốc tịch")
-    place_of_birth: DropdownResponse = Field(..., description="Nơi sinh")
+    nationality: OptionalDropdownResponse = Field(..., description="Quốc tịch")
+    place_of_birth: OptionalDropdownResponse = Field(..., description="Nơi sinh")
     identity_card_number: str = Field(..., min_length=1, description="Số CMND")
     mrz_content: str = Field(None, description="Mã MRZ")
 

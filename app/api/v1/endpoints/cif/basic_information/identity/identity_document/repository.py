@@ -106,7 +106,7 @@ async def repos_get_detail_identity(cif_id: str, session: Session) -> ReposRetur
         .join(PlaceOfIssue, CustomerIdentity.place_of_issue_id == PlaceOfIssue.id)
         .join(CustomerGender, CustomerIndividualInfo.gender_id == CustomerGender.id)
         .join(AddressCountry, CustomerIndividualInfo.country_of_birth_id == AddressCountry.id)
-        .join(place_of_birth, CustomerIndividualInfo.place_of_birth_id == place_of_birth.id)
+        .outerjoin(place_of_birth, CustomerIndividualInfo.place_of_birth_id == place_of_birth.id)
         .outerjoin(AddressProvince, CustomerAddress.address_province_id == AddressProvince.id)
         .outerjoin(AddressDistrict, CustomerAddress.address_district_id == AddressDistrict.id)
         .outerjoin(AddressWard, CustomerAddress.address_ward_id == AddressWard.id)
@@ -177,25 +177,25 @@ async def repos_get_detail_identity(cif_id: str, session: Session) -> ReposRetur
 
         resident_address = None  # noqa
         for row in identities:
-            if row.CustomerIdentity.identity_type_id != "HO_CHIEU":
+            if row.CustomerIdentity.identity_type_id != IDENTITY_DOCUMENT_TYPE_PASSPORT:
 
                 if row.CustomerAddress.address_type_id == RESIDENT_ADDRESS_CODE:
                     resident_address = {
-                        "province": dropdown(row.AddressProvince),
-                        "district": dropdown(row.AddressDistrict),
-                        "ward": dropdown(row.AddressWard),
+                        "province": dropdown(row.AddressProvince) if row.AddressProvince else DROPDOWN_NONE_DICT,
+                        "district": dropdown(row.AddressDistrict)if row.AddressDistrict else DROPDOWN_NONE_DICT,
+                        "ward": dropdown(row.AddressWard) if row.AddressWard else DROPDOWN_NONE_DICT,
                         "number_and_street": row.CustomerAddress.address
                     }
                     break
 
         contact_address = None  # noqa
         for row in identities:
-            if row.CustomerIdentity.identity_type_id != "HO_CHIEU":
+            if row.CustomerIdentity.identity_type_id != IDENTITY_DOCUMENT_TYPE_PASSPORT:
                 if row.CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE:
                     contact_address = {
-                        "province": dropdown(row.AddressProvince),
-                        "district": dropdown(row.AddressDistrict),
-                        "ward": dropdown(row.AddressWard),
+                        "province": dropdown(row.AddressProvince) if row.AddressProvince else DROPDOWN_NONE_DICT,
+                        "district": dropdown(row.AddressDistrict) if row.AddressDistrict else DROPDOWN_NONE_DICT,
+                        "ward": dropdown(row.AddressWard) if row.AddressWard else DROPDOWN_NONE_DICT,
                         "number_and_street": row.CustomerAddress.address
                     }
                     break
@@ -213,17 +213,17 @@ async def repos_get_detail_identity(cif_id: str, session: Session) -> ReposRetur
                 'identity_document': {
                     "identity_number": first_row.CustomerIdentity.identity_num,
                     "issued_date": first_row.CustomerIdentity.issued_date,
-                    "place_of_issue": dropdown(first_row.PlaceOfIssue),
+                    "place_of_issue": dropdown(first_row.PlaceOfIssue) if first_row.PlaceOfIssue else DROPDOWN_NONE_DICT,
                     "expired_date": first_row.CustomerIdentity.expired_date
                 },
                 'basic_information': {
                     "full_name_vn": first_row.Customer.full_name_vn,
-                    "gender": dropdown(first_row.CustomerGender),
+                    "gender": dropdown(first_row.CustomerGender) if first_row.CustomerGender else DROPDOWN_NONE_DICT,
                     "date_of_birth": first_row.CustomerIndividualInfo.date_of_birth,
-                    "nationality": dropdown(first_row.AddressCountry),
-                    "province": dropdown(first_row.PlaceOfBirth),
-                    "ethnic": dropdown(first_row.Nation),
-                    "religion": dropdown(first_row.Religion),
+                    "nationality": dropdown(first_row.AddressCountry) if first_row.AddressCountry else DROPDOWN_NONE_DICT,
+                    "province": dropdown(first_row.PlaceOfBirth) if first_row.PlaceOfBirth else DROPDOWN_NONE_DICT,
+                    "ethnic": dropdown(first_row.Nation) if first_row.Nation else DROPDOWN_NONE_DICT,
+                    "religion": dropdown(first_row.Religion) if first_row.Religion else DROPDOWN_NONE_DICT,
                     "identity_characteristic": first_row.CustomerIndividualInfo.identifying_characteristics,
                     "father_full_name_vn": first_row.CustomerIndividualInfo.father_full_name,
                     "mother_full_name_vn": first_row.CustomerIndividualInfo.mother_full_name
@@ -237,17 +237,17 @@ async def repos_get_detail_identity(cif_id: str, session: Session) -> ReposRetur
                     "identity_number": first_row.CustomerIdentity.identity_num,
                     "issued_date": first_row.CustomerIdentity.issued_date,
                     "expired_date": first_row.CustomerIdentity.expired_date,
-                    "place_of_issue": dropdown(first_row.PlaceOfIssue),
+                    "place_of_issue": dropdown(first_row.PlaceOfIssue) if first_row.PlaceOfIssue else DROPDOWN_NONE_DICT,
                     "mrz_content": first_row.CustomerIdentity.mrz_content,
                     "qr_code_content": first_row.CustomerIdentity.qrcode_content
                 },
 
                 'basic_information': {
                     "full_name_vn": first_row.Customer.full_name_vn,
-                    "gender": dropdown(first_row.CustomerGender),
+                    "gender": dropdown(first_row.CustomerGender) if first_row.CustomerGender else DROPDOWN_NONE_DICT,
                     "date_of_birth": first_row.CustomerIndividualInfo.date_of_birth,
-                    "nationality": dropdown(first_row.AddressCountry),
-                    "province": dropdown(first_row.PlaceOfBirth),
+                    "nationality": dropdown(first_row.AddressCountry) if first_row.AddressCountry else DROPDOWN_NONE_DICT,
+                    "province": dropdown(first_row.PlaceOfBirth) if first_row.PlaceOfBirth else DROPDOWN_NONE_DICT,
                     "identity_characteristic": first_row.CustomerIndividualInfo.identifying_characteristics,
                 }
             })
@@ -272,17 +272,17 @@ async def repos_get_detail_identity(cif_id: str, session: Session) -> ReposRetur
                     'identity_document': {
                         "identity_number": row.CustomerIdentity.identity_num,
                         "issued_date": row.CustomerIdentity.issued_date,
-                        "place_of_issue": dropdown(row.PlaceOfIssue),
+                        "place_of_issue": dropdown(row.PlaceOfIssue) if row.PlaceOfIssue else DROPDOWN_NONE_DICT,
                         "expired_date": row.CustomerIdentity.expired_date,
-                        "passport_type": dropdown(row.PassportType),
-                        "passport_code": dropdown(row.PassportCode)
+                        "passport_type": dropdown(row.PassportType) if row.PassportType else DROPDOWN_NONE_DICT,
+                        "passport_code": dropdown(row.PassportCode) if row.PassportCode else DROPDOWN_NONE_DICT
                     },
                     'basic_information': {
                         "full_name_vn": row.Customer.full_name_vn,
                         "gender": dropdown(row.CustomerGender),
                         "date_of_birth": row.CustomerIndividualInfo.date_of_birth,
-                        "nationality": dropdown(row.AddressCountry),
-                        "place_of_birth": dropdown(row.PlaceOfBirth),
+                        "nationality": dropdown(row.AddressCountry) if row.AddressCountry else DROPDOWN_NONE_DICT,
+                        "place_of_birth": dropdown(row.PlaceOfBirth) if row.PlaceOfBirth else DROPDOWN_NONE_DICT,
                         "identity_card_number": row.CustomerIdentity.identity_number_in_passport,
                         "mrz_content": row.CustomerIdentity.mrz_content
                     }
@@ -529,6 +529,8 @@ async def repos_save_identity(
         if not is_success:
             return ReposReturn(is_error=True, msg=booking_response['msg'])
 
+        booking_code = booking_response['booking_code']
+
         # Tìm CustomerCompareImageTransaction trước đó
         previous_compare_image_transaction = session.execute(
             select(
@@ -604,9 +606,10 @@ async def repos_save_identity(
         ))
     ])
 
-    return ReposReturn(data={
-        "cif_id": customer_id
-    })
+    return ReposReturn(data=dict(
+        cif_id=customer_id,
+        booking_code=booking_code
+    ))
 
 
 ########################################################################################################################

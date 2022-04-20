@@ -729,6 +729,9 @@ class CtrIdentityDocument(BaseController):
             "maker_id": current_user_code,
             "maker_at": now()
         }
+
+        # Lưu hình ảnh Compare thành avatar khách hàng
+        saving_customer.update(avatar_url=face_compare_image_url)
         ############################################################################################################
 
         ################################################################################################################

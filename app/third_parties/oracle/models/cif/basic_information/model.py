@@ -42,7 +42,7 @@ class Customer(Base):
     open_branch_id = Column(VARCHAR(36), nullable=False, comment='Mã Thông tin đơn vị kinh doanh theo FCC')
     kyc_level_id = Column(ForeignKey('crm_kyc_level.kyc_level_id'), nullable=False, comment='Cấp độ KYC')
     customer_type_id = Column('cust_type_id', ForeignKey('crm_cust_type.cust_type_id'), comment='Mã loại khách hàng')
-    customer_category_id = Column('cust_category_id', ForeignKey('crm_cust_category.cust_category_id'), nullable=False,
+    customer_category_id = Column('cust_category_id', ForeignKey('crm_cust_category.cust_category_id'),
                                   comment='Mã đối tượng khách hàng')
     customer_economic_profession_id = Column('economic_profession_id',
                                              ForeignKey('crm_cust_economic_profession.cust_economic_profession_id'),
