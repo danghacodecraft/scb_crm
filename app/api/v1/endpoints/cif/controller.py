@@ -107,7 +107,7 @@ class CtrCustomer(BaseController):
             "expired_date": first_row.CustomerIdentity.expired_date,
             "date_of_birth": first_row.CustomerIndividualInfo.date_of_birth,
             "nationality": dropdown(first_row.AddressCountry),
-            "marital_status": dropdown(first_row.MaritalStatus),
+            "marital_status": dropdown(first_row.MaritalStatus) if first_row.MaritalStatus else DROPDOWN_NONE_DICT,
             "customer_type": dropdown(first_row.CustomerType) if first_row.CustomerType else DROPDOWN_NONE_DICT,
             "credit_rating": None,
             "address": first_row.CustomerAddress.address

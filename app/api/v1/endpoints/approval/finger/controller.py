@@ -74,7 +74,8 @@ class CtrFingers(BaseController):
                     compare_finger = {
                         "id": item['id'],
                         "image_url": finger.image_url,
-                        "similarity_percent": item['accuracy']
+                        "similarity_percent": item['accuracy'],
+                        "uuid": info_finger_img['uuid']
                     }
                     compare_finger['image_url'] = uuid__link_downloads[compare_finger['image_url']]
                     data_compare_image = {

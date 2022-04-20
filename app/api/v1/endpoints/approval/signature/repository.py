@@ -100,7 +100,6 @@ async def repos_compare_signature(
     signature_compares = []
 
     for signature in signature_query:
-
         is_success, response = await service_ekyc.compare_signature(
             cif_id=cif_id,
             uuid_ekyc=uuid_ekyc,

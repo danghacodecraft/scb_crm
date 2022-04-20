@@ -12,7 +12,7 @@ router = APIRouter()
 
 
 @router.get(
-    path="/contact",
+    path="/contact/{user_code}",
     name="Thông tin nhân viên",
     description="Thông tin nhân viên",
     responses=swagger_response(
@@ -22,7 +22,7 @@ router = APIRouter()
 
     )
 )
-async def view_contact_info(current_user=Depends(get_current_user_from_header())):
-    contact = await CtrContact(current_user).ctr_contact()
+async def view_contact_info(user_code: str, current_user=Depends(get_current_user_from_header())):
+    contact = await CtrContact(current_user).ctr_contact(code=user_code)
 
     return ResponseData[ContactResponse](**contact)

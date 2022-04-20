@@ -1,3 +1,5 @@
+from starlette import status
+
 from app.api.base.controller import BaseController
 from app.api.v1.controller import PermissionController
 from app.api.v1.endpoints.approval.common_repository import (
@@ -21,15 +23,17 @@ from app.utils.constant.cif import (
     IMAGE_TYPE_SIGNATURE
 )
 from app.utils.constant.idm import (
-    IDM_GROUP_ROLE_CODE_APPROVAL, IDM_MENU_CODE_CIF, IDM_PERMISSION_CODE_KSV
+    IDM_GROUP_ROLE_CODE_APPROVAL, IDM_GROUP_ROLE_CODE_OPEN_CIF,
+    IDM_MENU_CODE_OPEN_CIF, IDM_PERMISSION_CODE_KSS, IDM_PERMISSION_CODE_KSV,
+    IDM_PERMISSION_CODE_OPEN_CIF
 )
 from app.utils.error_messages import (
     ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
     ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT,
     ERROR_APPROVAL_INCORRECT_UPLOAD_SIGNATURE, ERROR_APPROVAL_UPLOAD_FACE,
     ERROR_APPROVAL_UPLOAD_FINGERPRINT, ERROR_APPROVAL_UPLOAD_SIGNATURE,
-    ERROR_CONTENT_NOT_NULL, ERROR_STAGE_COMPLETED, ERROR_VALIDATE,
-    MESSAGE_STATUS
+    ERROR_CONTENT_NOT_NULL, ERROR_PERMISSION, ERROR_STAGE_COMPLETED,
+    ERROR_VALIDATE, MESSAGE_STATUS
 )
 from app.utils.functions import generate_uuid, now, orjson_dumps, orjson_loads
 
@@ -332,7 +336,15 @@ class CtrApproval(BaseController):
         stages = []
         # GDV chưa gửi hồ sơ
         if previous_stage_code == CIF_STAGE_BEGIN:
-            teller_is_disable = False
+            is_stage_teller = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
+                auth_response=self.current_user,
+                menu_code=IDM_MENU_CODE_OPEN_CIF,
+                group_role_code=IDM_GROUP_ROLE_CODE_OPEN_CIF,
+                permission_code=IDM_PERMISSION_CODE_OPEN_CIF,
+                stage_code=CIF_STAGE_INIT
+            ))
+            if is_stage_teller:
+                teller_is_disable = False
             teller_stage_code = None
         # KSV nhận hồ sơ từ GDV
         elif previous_stage_code == CIF_STAGE_INIT:
@@ -342,11 +354,27 @@ class CtrApproval(BaseController):
             teller_created_at = previous_transaction_daily.created_at
             teller_created_by = previous_transaction_sender.user_fullname
 
-            supervisor_is_disable = False
+            is_stage_supervisor = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
+                auth_response=self.current_user,
+                menu_code=IDM_MENU_CODE_OPEN_CIF,
+                group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
+                permission_code=IDM_PERMISSION_CODE_KSV,
+                stage_code=CIF_STAGE_APPROVE_KSV
+            ))
+            if is_stage_supervisor:
+                supervisor_is_disable = False
 
         # KSS nhận hồ sơ từ KSV
         elif previous_stage_code == CIF_STAGE_APPROVE_KSV:
-            audit_is_disable = False
+            is_stage_audit = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
+                auth_response=self.current_user,
+                menu_code=IDM_MENU_CODE_OPEN_CIF,
+                group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
+                permission_code=IDM_PERMISSION_CODE_KSS,
+                stage_code=CIF_STAGE_APPROVE_KSS
+            ))
+            if is_stage_audit:
+                audit_is_disable = False   # Chưa được mô tả cho KSS tạm thời dùng Role của KSV
 
             supervisor_stage_code = previous_stage_code
             supervisor_transaction_daily = previous_transaction_daily
@@ -626,17 +654,6 @@ class CtrApproval(BaseController):
                 )
             )
 
-        ################################################################################################################
-        # check quyền user
-        self.call_repos(await PermissionController.ctr_approval_check_permission(
-            auth_response=self.current_user,
-            menu_code=IDM_MENU_CODE_CIF,
-            group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
-            permission_code=IDM_PERMISSION_CODE_KSV,
-            stage_code=CIF_STAGE_APPROVE_KSV
-        ))
-        ################################################################################################################
-
         current_stage_status, current_stage, _, current_lane, _, current_phase, current_stage_role = self.call_repos(
             await repos_get_stage_information(
                 business_type_id=business_type_id,
@@ -655,6 +672,41 @@ class CtrApproval(BaseController):
         current_stage_role_name = None
 
         if current_stage:
+            ############################################################################################################
+            # check quyền user
+            if current_stage_code == CIF_STAGE_INIT:
+                self.call_repos(await PermissionController.ctr_approval_check_permission(
+                    auth_response=self.current_user,
+                    menu_code=IDM_MENU_CODE_OPEN_CIF,
+                    group_role_code=IDM_GROUP_ROLE_CODE_OPEN_CIF,
+                    permission_code=IDM_PERMISSION_CODE_OPEN_CIF,
+                    stage_code=CIF_STAGE_APPROVE_KSV
+                ))
+            elif current_stage_code == CIF_STAGE_APPROVE_KSV:
+                self.call_repos(await PermissionController.ctr_approval_check_permission(
+                    auth_response=self.current_user,
+                    menu_code=IDM_MENU_CODE_OPEN_CIF,
+                    group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
+                    permission_code=IDM_PERMISSION_CODE_KSV,
+                    stage_code=CIF_STAGE_APPROVE_KSV
+                ))
+            elif current_stage_code == CIF_STAGE_APPROVE_KSS:
+                self.call_repos(await PermissionController.ctr_approval_check_permission(
+                    auth_response=self.current_user,
+                    menu_code=IDM_MENU_CODE_OPEN_CIF,
+                    group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
+                    permission_code=IDM_PERMISSION_CODE_KSS,
+                    stage_code=CIF_STAGE_APPROVE_KSS
+                ))
+            # Những user khác chỉ có quyền xem không có quyền thực hiện bất kì hành động nào trong phê duyệt
+            else:
+                return self.response_exception(
+                    loc=f"Stage: {current_stage_code}, User: {current_user.code}",
+                    msg=ERROR_PERMISSION,
+                    detail=MESSAGE_STATUS[ERROR_PERMISSION],
+                    error_status_code=status.HTTP_403_FORBIDDEN
+                )
+            ############################################################################################################
             current_stage_status_code = current_stage_status.code
             current_stage_status_name = current_stage_status.name
             current_stage_name = current_stage.name

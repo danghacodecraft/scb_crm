@@ -52,5 +52,8 @@ SERVICE = {
             'Content-Type': 'application/json',
             "authorization": f"Bearer {os.getenv('SERVICE_DWH_BEARER_TOKEN', 'VEhBTkdIRA==')}"
         }
+    },
+    "gw": {
+        "url": os.getenv("SERVICE_GW_URL")
     }
 }

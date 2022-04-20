@@ -39,3 +39,4 @@ class CompareSignatureRequest(BaseSchema):
 class CompareSignatureResponse(BaseSchema):
     image_url: str = Field(..., description='url image')
     similarity_percent: int = Field(..., description='Tỷ lệ phần trăm giống nhau giữa hai hình ảnh')
+    uuid: str = Field(..., description='uuid upload service file')
