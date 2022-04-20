@@ -227,10 +227,10 @@ async def repos_retrieve_customer_information_by_cif_number(
 
 
 async def repos_gw_get_casa_account_by_cif_number(
-    cif_number: str
+    cif_number: str, current_user: str
 ):
     is_success, casa_account = await service_gw.get_casa_account_from_cif(
-        casa_cif_number=cif_number
+        casa_cif_number=cif_number, current_user=current_user
     )
     if not is_success:
         return ReposReturn(
