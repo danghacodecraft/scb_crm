@@ -43,13 +43,21 @@ class GWCasaAccountByCIFNumberRequest(BaseSchema):
     cif_number: str = CustomField().CIFNumberField
 
 
+class GWCustomerInfoResponse(BaseSchema):
+    fullname_vn: str = Field(..., description="Họ và tên")
+    date_of_birth: str = Field(..., description="Ngày sinh")
+    gender: str = Field(..., description="Giới tính")
+    email: str = Field(..., description="Email")
+    mobile_phone: str = Field(..., description="Điện thoại di động")
+    type: str = Field(..., description="Loại khách hàng (cá nhân hoặc doanh nghiệp)")
+
+
 class GWAccountInfoResponse(BaseSchema):
     number: str = Field(..., description="Số tài khoản")
     type: str = Field(..., description="Loại tài khoản")
     type_name: str = Field(..., description="Tên loại tài khoản")
     currency: str = Field(..., description="Loại tiền trong tài khoản")
     balance: str = Field(..., description="Số dư tài khoản")
-    balance_available: str = Field(..., description="Số dư có thể sử dụng")
     balance_lock: str = Field(..., description="Số dư bị phong tỏa")
     over_draft_limit: str = Field(..., description="Hạn mức thấu chi")
     over_draft_expired_date: str = Field(..., description="Ngày hết hạn")
@@ -71,7 +79,14 @@ class GWAccountInfoResponse(BaseSchema):
     branch_info: GWBranchDropdownResponse = Field(..., description="Thông tin đơn vị")
 
 
+class GWCIFInfoResponse(BaseSchema):
+    number: str = Field(..., description="Số CIF")
+    issued_date: str = Field(..., description="Ngày cấp số CIF")
+
+
 class GWCasaAccountResponse(BaseSchema):
+    customer_info: GWCustomerInfoResponse = Field(..., description="Thông tin người sỡ hữu tài khoản")
+    cif_info: GWCIFInfoResponse = Field(..., description="Thông tin CIF")
     account_info: GWAccountInfoResponse = Field(..., description="Thông tin tài khoản")
 
 

@@ -38,8 +38,24 @@ class CtrGWCasaAccount(BaseController):
             account_number=account_number,
             current_user=self.current_user.user_info
         ))
-        account_info = gw_casa_account_info['retrieveCurrentAccountCASA_out']['data_output']['customer_info'][
-            'account_info']
+
+        customer_info = gw_casa_account_info['retrieveCurrentAccountCASA_out']['data_output']['customer_info']
+        gw_casa_customer_info_response = dict(
+            fullname_vn=customer_info['full_name'],
+            date_of_birth=customer_info['birthday'],
+            gender=customer_info['gender'],
+            email=customer_info['email'],
+            mobile_phone=customer_info['mobile_phone'],
+            type=customer_info['customer_type']
+        )
+
+        cif_info = customer_info['cif_info']
+        gw_casa_cif_info_response = dict(
+            number=cif_info['cif_num'],
+            issued_date=cif_info['cif_issued_date']
+        )
+
+        account_info = customer_info['account_info']
         branch_info = account_info['branch_info']
         gw_casa_account_info_response = dict(
             number=account_info['account_num'],
@@ -73,7 +89,9 @@ class CtrGWCasaAccount(BaseController):
         )
 
         return self.response(data=dict(
-            account_info=gw_casa_account_info_response
+            account_info=gw_casa_account_info_response,
+            customer_info=gw_casa_customer_info_response,
+            cif_info=gw_casa_cif_info_response
         ))
 
     async def ctr_gw_check_exist_casa_account_info(
