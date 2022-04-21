@@ -157,7 +157,7 @@ async def view_news_comment(
     name="Danh sách bình luận",
     description="Danh sách bình luận",
     responses=swagger_response(
-        response_model=ResponseData[ListNewsCommentResponse],
+        response_model=ResponseData[list[ListNewsCommentResponse]],
         success_status_code=status.HTTP_200_OK
     )
 )
