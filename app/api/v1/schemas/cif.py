@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 
 from pydantic import Field
@@ -35,6 +35,8 @@ class FingerPrintResponse(BaseSchema):
     image_url: str = Field(..., description='Ảnh bàn tay')
     hand_side: DropdownResponse = Field(..., description='Loại bàn tay')
     finger_type: DropdownResponse = Field(..., description='Loại ngón tay')
+    id_ekyc: str = Field(..., description='ID_EKYC')
+    maker_at: datetime = Field(..., description='Thời gian thực hiện')
 
 
 class FingerPrintRequest(BaseSchema):

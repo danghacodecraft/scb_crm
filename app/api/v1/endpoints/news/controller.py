@@ -1,10 +1,14 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.news.repository import (
-    get_data_by_id, get_list_scb_news, repos_add_scb_news,
-    repos_update_scb_news
+    get_comment_by_id, get_data_by_id, get_like_by_user, get_list_comment,
+    get_list_scb_news, repo_add_comment, repo_add_comment_like,
+    repo_remove_comment_like, repos_add_scb_news, repos_update_scb_news
 )
+from app.api.v1.endpoints.news.schema import NewsCommentRequest
 from app.settings.event import service_file
 from app.third_parties.oracle.models.master_data.news import NewsCategory
+from app.third_parties.oracle.models.news.model import NewsComment
+from app.utils.constant.cif import NEWS_COMMENT_FILTER_PARAMS
 from app.utils.error_messages import VALIDATE_ERROR
 from app.utils.functions import (
     date_to_datetime, dropdown, end_time_of_day, generate_uuid, now
@@ -34,6 +38,7 @@ class CtrNews(BaseController):
             "start_date": request_data["start_date"],
             "expired_date": request_data["expired_date"],
             "created_at": now(),
+            "total_comment": 0,
             "active_flag": request_data["active_flag"]
         }
 
@@ -88,6 +93,7 @@ class CtrNews(BaseController):
             "expired_date": request_data["expired_date"],
             "active_flag": request_data["active_flag"],
             "created_at": news_obj.News.created_at,
+            "total_comment": news_obj.News.total_comment,
             "updated_at": now()
         }
         if request_data["expired_date"] is not None and request_data["start_date"] is not None:
@@ -126,6 +132,7 @@ class CtrNews(BaseController):
         data = {
             "id": news_data.News.id,
             "title": news_data.News.title,
+            "total_comment": news_data.News.total_comment,
             "avatar_uuid": news_data.News.avatar_uuid,
             "news_category_id": dropdown(news_data.NewsCategory),
             "user_name": news_data.News.user_name,
@@ -170,6 +177,7 @@ class CtrNews(BaseController):
             data = {
                 "id": news_data.News.id,
                 "title": news_data.News.title,
+                "total_comment": news_data.News.total_comment,
                 "avatar_uuid": news_data.News.avatar_uuid,
                 "news_category_id": dropdown(news_data.NewsCategory),
                 "user_name": news_data.News.user_name,
@@ -201,3 +209,118 @@ class CtrNews(BaseController):
             "num_news": len(list_news["total_row"]),
             "list_news": res_data}
         )
+
+    async def ctr_news_comment(self, data_comment: NewsCommentRequest, news_id):
+
+        # Validate: check tồn tại news_id
+        self.call_repos(await get_data_by_id(self.oracle_session, news_id))
+
+        uuid = generate_uuid()
+        data_insert = {
+            "id": uuid,
+            "news_id": news_id,
+            "content": data_comment.content,
+            "create_user_id": self.current_user.user_info.code,
+            "create_user_name": self.current_user.user_info.name,
+            "create_user_username": self.current_user.user_info.username,
+            "total_likes": 0,
+            "created_at": now()
+        }
+        if data_comment.parent_id:
+            await self.get_model_object_by_id(
+                model_id=data_comment.parent_id,
+                model=NewsComment,
+                loc="parent_id",
+            )
+            data_insert.update({
+                "parent_id": data_comment.parent_id
+            })
+        self.call_repos(
+            await repo_add_comment(
+                data_comment=data_insert,
+                news_id=news_id,
+                session=self.oracle_session,
+            )
+        )
+        return self.response(data={
+            "comment_id": uuid
+        })
+
+    async def ctr_get_comment_by_news_id(self, news_id, filter_by, page):
+
+        if filter_by not in NEWS_COMMENT_FILTER_PARAMS:
+            return self.response_exception(
+                msg='',
+                loc='filter_by',
+                detail='filter_by invalid value'
+            )
+
+        comments = self.call_repos(await get_list_comment(self.oracle_session, news_id, filter_by, page=page))
+
+        list_comment = comments["list_comment"]
+        list_comment_child = comments["list_child_comment"]
+
+        list_data_res = []
+
+        for cmt_item in list_comment:
+            cmt_data = {
+                "news_id": cmt_item.news_id,
+                "comment_id": cmt_item.id,
+                "create_name": cmt_item.create_user_name,
+                "user_name": cmt_item.create_user_username,
+                "content": cmt_item.content,
+                "total_likes": cmt_item.total_likes,
+                "parent_id": cmt_item.parent_id,
+                "created_at": cmt_item.created_at
+            }
+
+            list_data_res.append(cmt_data)
+
+        for parrent_cmt in list_data_res:
+            comment_child = []
+            for child_cmt in list_comment_child:
+                if child_cmt.parent_id == parrent_cmt["comment_id"]:
+                    cmt_child_data = {
+                        "news_id": child_cmt.news_id,
+                        "comment_id": child_cmt.id,
+                        "create_name": child_cmt.create_user_name,
+                        "user_name": child_cmt.create_user_username,
+                        "content": child_cmt.content,
+                        "total_likes": child_cmt.total_likes,
+                        "parent_id": child_cmt.parent_id,
+                        "created_at": child_cmt.created_at
+                    }
+                    comment_child.append(cmt_child_data)
+            parrent_cmt.update({
+                "comment_child": comment_child
+            })
+        return self.response(data=list_data_res)
+
+    async def ctr_comment_like(self, comment_id):
+        user_id = self.current_user.user_info.code
+        self.call_repos(await get_comment_by_id(session=self.oracle_session, comment_id=comment_id))
+        like_db_obj = self.call_repos(
+            await get_like_by_user(session=self.oracle_session, user_id=user_id, comment_id=comment_id))
+        uuid = generate_uuid()
+
+        if like_db_obj:
+            # nếu đã like -> unlike
+            uuid = like_db_obj.CommentLike.id
+            self.call_repos(
+                await repo_remove_comment_like(comment_id=comment_id, session=self.oracle_session, like_id=uuid))
+        else:
+            like_data_insert = {
+                "id": uuid,
+                "comment_id": comment_id,
+                "create_user_id": user_id,
+                "create_user_name": self.current_user.user_info.name,
+                "create_user_username": self.current_user.user_info.username,
+                "created_at": now()
+            }
+
+            self.call_repos(
+                await repo_add_comment_like(comment_id=comment_id, like_data=like_data_insert,
+                                            session=self.oracle_session))
+        return self.response(data={
+            "like_id": uuid
+        })
