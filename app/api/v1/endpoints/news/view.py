@@ -1,4 +1,5 @@
 from datetime import date
+from typing import List
 
 from fastapi import APIRouter, Depends, Path, Query
 from fastapi.security import HTTPBasic
@@ -10,8 +11,8 @@ from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.dependencies.paging import PaginationParams
 from app.api.v1.endpoints.news.controller import CtrNews
 from app.api.v1.endpoints.news.schema import (
-    CommentLikeResponse, ListNewsCommentResponse, ListNewsResponse,
-    NewsCommentRequest, NewsCommentResponse, NewsDetailResponse,
+    CommentLikeResponse, ListNewsResponse, NewsCommentRequest,
+    NewsCommentResponse, NewsCommentsResponse, NewsDetailResponse,
     NewsImageRequest, NewsResponse
 )
 
@@ -157,7 +158,7 @@ async def view_news_comment(
     name="Danh sách bình luận",
     description="Danh sách bình luận",
     responses=swagger_response(
-        response_model=ResponseData[list[ListNewsCommentResponse]],
+        response_model=ResponseData[List[NewsCommentsResponse]],
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -170,7 +171,7 @@ async def view_comment_by_news(
 ):
     news_comment = await CtrNews(current_user).ctr_get_comment_by_news_id(news_id=news_id, filter_by=filter_by,
                                                                           page=page)
-    return ResponseData[list[ListNewsCommentResponse]](**news_comment)
+    return ResponseData[List[NewsCommentsResponse]](**news_comment)
 
 
 @router.get(
