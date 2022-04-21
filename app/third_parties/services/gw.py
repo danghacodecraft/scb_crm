@@ -4,6 +4,7 @@ import aiohttp
 from loguru import logger
 from starlette import status
 
+from app.api.v1.endpoints.user.schema import UserInfoResponse
 from app.settings.service import SERVICE
 from app.utils.constant.gw import (
     CURRENT_ACCOUNT_FROM_CIF, DEPOSIT_ACCOUNT_FROM_CIF,
@@ -24,7 +25,7 @@ class ServiceGW:
         await self.session.close()
         self.session = None
 
-    async def get_casa_account_from_cif(self, current_user, casa_cif_number):
+    async def get_casa_account_from_cif(self, current_user: UserInfoResponse, casa_cif_number: str):
         request_data = {
             "selectCurrentAccountFromCIF_in": {
                 "transaction_info": {
