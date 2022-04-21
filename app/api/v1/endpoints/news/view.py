@@ -10,7 +10,9 @@ from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.dependencies.paging import PaginationParams
 from app.api.v1.endpoints.news.controller import CtrNews
 from app.api.v1.endpoints.news.schema import (
-    ListNewsResponse, NewsDetailResponse, NewsImageRequest, NewsResponse
+    CommentLikeResponse, ListNewsCommentResponse, ListNewsResponse,
+    NewsCommentRequest, NewsCommentResponse, NewsDetailResponse,
+    NewsImageRequest, NewsResponse
 )
 
 router = APIRouter()
@@ -129,3 +131,61 @@ async def view_scb_news(
                                                      expired_date=expired_date,
                                                      active_flag=active_flag)
     return ResponseData[ListNewsResponse](**scb_news)
+
+
+@router.post(
+    path="/{news_id}/comment/",
+    name="Tạo bình luận",
+    description="Tạo bình luận",
+    responses=swagger_response(
+        response_model=ResponseData[NewsCommentResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_news_comment(
+        data_request: NewsCommentRequest,
+        news_id: str = Path(..., description='News ID'),
+        current_user=Depends(get_current_user_from_header()),
+
+):
+    news_comment = await CtrNews(current_user).ctr_news_comment(data_comment=data_request, news_id=news_id)
+    return ResponseData(**news_comment)
+
+
+@router.get(
+    path="/{news_id}/comment/",
+    name="Danh sách bình luận",
+    description="Danh sách bình luận",
+    responses=swagger_response(
+        response_model=ResponseData[ListNewsCommentResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_comment_by_news(
+        news_id: str = Path(..., description='News ID'),
+        filter_by: str = Query(..., description="Quan tâm / mới nhất"),
+        page: int = Query(default=1, ge=1, description="Số trang của comment"),
+        current_user=Depends(get_current_user_from_header()),
+
+):
+    news_comment = await CtrNews(current_user).ctr_get_comment_by_news_id(news_id=news_id, filter_by=filter_by,
+                                                                          page=page)
+    return ResponseData[list[ListNewsCommentResponse]](**news_comment)
+
+
+@router.get(
+    path="/comment/{comment_id}/like/",
+    name="Like",
+    description=" Like bình luận",
+    responses=swagger_response(
+        response_model=ResponseData[CommentLikeResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_comment_like(
+        comment_id: str = Path(..., description="ID bình luận"),
+
+        current_user=Depends(get_current_user_from_header())
+):
+    like_data = await CtrNews(current_user).ctr_comment_like(comment_id=comment_id)
+    return ResponseData[CommentLikeResponse](**like_data)

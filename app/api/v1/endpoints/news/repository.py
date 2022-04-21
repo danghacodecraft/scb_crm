@@ -1,11 +1,14 @@
 from datetime import datetime
 
-from sqlalchemy import delete, desc, select
+from sqlalchemy import and_, delete, desc, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
 from app.third_parties.oracle.models.master_data.news import NewsCategory
-from app.third_parties.oracle.models.news.model import News
+from app.third_parties.oracle.models.news.model import (
+    CommentLike, News, NewsComment
+)
+from app.utils.constant.cif import NEWS_COMMENT_FILTER_BY_INTERESTED
 from app.utils.error_messages import ERROR_ID_NOT_EXIST
 from app.utils.functions import now
 
@@ -23,8 +26,20 @@ async def repos_update_scb_news(
         news_id,
         data_scb_news,
         session: Session) -> ReposReturn:
-    session.execute(delete(News).filter(News.id == news_id))
-    session.add(News(**data_scb_news))
+    obj = session.execute(select(News).filter(News.id == news_id)).one()
+
+    obj.News.title = data_scb_news['title']
+    obj.News.avatar_uuid = data_scb_news['avatar_uuid']
+    obj.News.category_id = data_scb_news['category_id']
+    obj.News.user_id = data_scb_news['user_id']
+    obj.News.user_name = data_scb_news['user_name']
+    obj.News.content = data_scb_news['content']
+    obj.News.summary = data_scb_news['summary']
+    obj.News.start_date = data_scb_news['start_date']
+    obj.News.expired_date = data_scb_news['expired_date']
+    obj.News.active_flag = data_scb_news['active_flag']
+    obj.News.updated_at = data_scb_news['updated_at']
+
     return ReposReturn(data=data_scb_news)
 
 
@@ -76,3 +91,73 @@ async def get_list_scb_news(
         "query_data": query_data,
         "total_row": total_row
     })
+
+
+@auto_commit
+async def repo_add_comment(data_comment,
+                           news_id,
+                           session: Session) -> ReposReturn:
+    obj = session.execute(select(News).filter(News.id == news_id)).first()
+    obj.News.total_comment += 1
+    session.add(NewsComment(**data_comment))
+    return ReposReturn(data=data_comment)
+
+
+async def get_list_comment(session: Session, news_id: str, filter_by: str, page: int) -> ReposReturn:
+    # Querry list comment cha
+    query = select(NewsComment).filter(and_(NewsComment.news_id == news_id, NewsComment.parent_id == None)) # noqa
+    query_cmt_child = select(NewsComment).filter(and_(NewsComment.news_id == news_id, NewsComment.parent_id != None)) # noqa
+    if filter_by == NEWS_COMMENT_FILTER_BY_INTERESTED:
+        query = query.order_by(desc(NewsComment.total_likes))
+        query_cmt_child = query_cmt_child.order_by(desc(NewsComment.total_likes))
+    else:
+        query = query.order_by(desc(NewsComment.created_at))
+        query_cmt_child = query_cmt_child.order_by(desc(NewsComment.created_at))
+
+    query = query.limit(page * 10)
+    query = query.offset(0)
+    objs = session.execute(query).scalars().all()
+
+    # Querry list comment con
+    objs_child = session.execute(query_cmt_child).scalars().all()
+
+    return ReposReturn(data={
+        "list_comment": objs,
+        "list_child_comment": objs_child
+    })
+
+
+async def get_comment_by_id(session: Session, comment_id: str):
+    try:
+        cmt_obj = session.execute(select(NewsComment).filter(NewsComment.id == comment_id)).one()
+    except Exception:
+        return ReposReturn(is_error=True, msg=ERROR_ID_NOT_EXIST, loc="comment_id")
+
+    return ReposReturn(data=cmt_obj)
+
+
+async def get_like_by_user(session: Session, user_id: str, comment_id: str):
+    cmt_obj = session.execute(
+        select(CommentLike).filter(
+            and_(CommentLike.comment_id == comment_id, CommentLike.create_user_id == user_id))).first()
+
+    return ReposReturn(data=cmt_obj)
+
+
+@auto_commit
+async def repo_add_comment_like(comment_id, like_data, session: Session) -> ReposReturn:
+    cmt_obj = session.execute(select(NewsComment).filter(NewsComment.id == comment_id)).first()
+    cmt_obj.NewsComment.total_likes += 1
+
+    session.add(CommentLike(**like_data))
+    return ReposReturn(data=like_data)
+
+
+@auto_commit
+async def repo_remove_comment_like(comment_id, like_id, session: Session) -> ReposReturn:
+    cmt_obj = session.execute(select(NewsComment).filter(NewsComment.id == comment_id)).first()
+    cmt_obj.NewsComment.total_likes -= 1
+
+    session.execute(delete(CommentLike).filter(CommentLike.id == like_id))
+
+    return ReposReturn(data=like_id)
