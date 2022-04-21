@@ -25,8 +25,16 @@ async def repos_gw_get_casa_account_info(
         account_number: str,
         current_user: str
 ):
-    gw_casa_account_info = await service_gw.get_casa_account(
+    is_success, gw_casa_account_info = await service_gw.get_casa_account(
         current_user=current_user,
         account_number=account_number
     )
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="get_casa_account",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(gw_casa_account_info)
+        )
+
     return ReposReturn(data=gw_casa_account_info)
