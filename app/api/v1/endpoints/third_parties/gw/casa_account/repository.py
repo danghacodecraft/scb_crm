@@ -5,7 +5,7 @@ from app.utils.error_messages import ERROR_CALL_SERVICE_GW
 
 
 async def repos_gw_get_casa_account_by_cif_number(
-    cif_number: str, current_user: AuthResponse
+        cif_number: str, current_user: AuthResponse
 ):
     is_success, casa_account = await service_gw.get_casa_account_from_cif(
         casa_cif_number=cif_number, current_user=current_user.user_info
@@ -19,3 +19,14 @@ async def repos_gw_get_casa_account_by_cif_number(
         )
 
     return ReposReturn(data=casa_account)
+
+
+async def repos_gw_get_casa_account_info(
+        account_number: str,
+        current_user: str
+):
+    gw_casa_account_info = await service_gw.get_casa_account(
+        current_user=current_user,
+        account_number=account_number
+    )
+    return ReposReturn(data=gw_casa_account_info)

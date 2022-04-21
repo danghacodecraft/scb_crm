@@ -1,6 +1,6 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
-    repos_gw_get_casa_account_by_cif_number
+    repos_gw_get_casa_account_by_cif_number, repos_gw_get_casa_account_info
 )
 
 
@@ -28,3 +28,14 @@ class CtrGWCasaAccount(BaseController):
             account_info_list=account_infos
         ))
         return self.response(data=response_data)
+
+    async def ctr_gw_get_casa_account_info(
+        self,
+        account_number: str
+    ):
+        gw_casa_account_info = self.call_repos(await repos_gw_get_casa_account_info(
+            account_number=account_number,
+            current_user=self.current_user.user_info
+        ))
+
+        return self.response(data=gw_casa_account_info)
