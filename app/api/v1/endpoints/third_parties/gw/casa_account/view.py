@@ -37,8 +37,8 @@ async def view_gw_get_casa_account_by_cif_number(
 
 @router.post(
     path="/check-exist/",
-    name="[Thông tin tài khoản] Kiểm tra số TK có tồn tại không",
-    description="Kiểm tra số TK thanh toán tự chọn có tồn tại trên CoreFCC",
+    name="[GW] Kiểm tra số TK có tồn tại không",
+    description="[GW] Kiểm tra số TK thanh toán tự chọn có tồn tại trên CoreFCC",
     responses=swagger_response(
         response_model=ResponseData[GWCasaAccountCheckExistResponse],
         success_status_code=status.HTTP_200_OK
@@ -56,8 +56,8 @@ async def view_gw_check_exist_casa_account_info(
 
 @router.post(
     path="/{account_number}/",
-    name="[Thông tin tài khoản] Chi tiết tài khoản thanh toán",
-    description="Lấy chi tiết tài Khoản thanh toán theo số tài khoản",
+    name="[GW] Chi tiết tài khoản thanh toán",
+    description="[GW] Lấy chi tiết tài Khoản thanh toán theo số tài khoản",
     responses=swagger_response(
         response_model=ResponseData[GWCasaAccountResponse],
         success_status_code=status.HTTP_200_OK
