@@ -8,9 +8,10 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
     CtrGWCasaAccount
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
-    GWCasaAccountByCIFNumberRequest, GWCasaAccountByCIFNumberResponse
+    GWCasaAccountByCIFNumberRequest, GWCasaAccountByCIFNumberResponse,
+    GWCasaAccountCheckExistRequest, GWCasaAccountCheckExistResponse,
+    GWCasaAccountResponse
 )
-from app.api.v1.schemas.utils import SaveSuccessResponse
 
 router = APIRouter()
 
@@ -35,11 +36,30 @@ async def view_gw_get_casa_account_by_cif_number(
 
 
 @router.post(
+    path="/check-exist/",
+    name="[Thông tin tài khoản] Kiểm tra số TK có tồn tại không",
+    description="Kiểm tra số TK thanh toán tự chọn có tồn tại trên CoreFCC",
+    responses=swagger_response(
+        response_model=ResponseData[GWCasaAccountCheckExistResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_check_exist_casa_account_info(
+        request: GWCasaAccountCheckExistRequest = Body(...),
+        current_user=Depends(get_current_user_from_header())
+):
+    gw_check_exist_casa_account_info = await CtrGWCasaAccount(current_user).ctr_gw_check_exist_casa_account_info(
+        account_number=request.account_number
+    )
+    return ResponseData[GWCasaAccountCheckExistResponse](**gw_check_exist_casa_account_info)
+
+
+@router.post(
     path="/{account_number}/",
     name="[Thông tin tài khoản] Chi tiết tài khoản thanh toán",
     description="Lấy chi tiết tài Khoản thanh toán theo số tài khoản",
     responses=swagger_response(
-        response_model=ResponseData[SaveSuccessResponse],
+        response_model=ResponseData[GWCasaAccountResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -50,4 +70,4 @@ async def view_gw_get_casa_account_info(
     gw_casa_account_info = await CtrGWCasaAccount(current_user).ctr_gw_get_casa_account_info(
         account_number=account_number
     )
-    return ResponseData(**gw_casa_account_info)
+    return ResponseData[GWCasaAccountResponse](**gw_casa_account_info)
