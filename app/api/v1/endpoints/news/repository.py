@@ -114,6 +114,7 @@ async def get_list_comment(session: Session, news_id: str, filter_by: str, page:
         query = query.order_by(desc(NewsComment.created_at))
         query_cmt_child = query_cmt_child.order_by(desc(NewsComment.created_at))
 
+    total_comment_parent = session.execute(query).all()
     query = query.limit(page * 10)
     query = query.offset(0)
     objs = session.execute(query).scalars().all()
@@ -122,6 +123,7 @@ async def get_list_comment(session: Session, news_id: str, filter_by: str, page:
     objs_child = session.execute(query_cmt_child).scalars().all()
 
     return ReposReturn(data={
+        "total_comment_parent": total_comment_parent,
         "list_comment": objs,
         "list_child_comment": objs_child
     })

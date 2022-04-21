@@ -257,6 +257,9 @@ class CtrNews(BaseController):
 
         comments = self.call_repos(await get_list_comment(self.oracle_session, news_id, filter_by, page=page))
 
+        total_comment_parent = len(comments["total_comment_parent"])
+        total_comment = total_comment_parent + len(comments["list_child_comment"])
+
         list_comment = comments["list_comment"]
         list_comment_child = comments["list_child_comment"]
 
@@ -294,7 +297,11 @@ class CtrNews(BaseController):
             parrent_cmt.update({
                 "comment_child": comment_child
             })
-        return self.response(data=list_data_res)
+        return self.response(data={
+            "total_comment_parent": total_comment_parent,
+            "total_comment": total_comment,
+            "comments": list_data_res
+        })
 
     async def ctr_comment_like(self, comment_id):
         user_id = self.current_user.user_info.code
