@@ -7,7 +7,7 @@ from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
     CtrGWCasaAccount
 )
-from app.api.v1.endpoints.third_parties.schema import (
+from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWCasaAccountByCIFNumberRequest, GWCasaAccountByCIFNumberResponse
 )
 from app.api.v1.schemas.utils import SaveSuccessResponse
