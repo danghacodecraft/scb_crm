@@ -1,5 +1,4 @@
 from datetime import date
-from typing import List
 
 from fastapi import APIRouter, Depends, Path, Query
 from fastapi.security import HTTPBasic
@@ -158,7 +157,7 @@ async def view_news_comment(
     name="Danh sách bình luận",
     description="Danh sách bình luận",
     responses=swagger_response(
-        response_model=ResponseData[List[NewsCommentsResponse]],
+        response_model=ResponseData[NewsCommentsResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -171,7 +170,7 @@ async def view_comment_by_news(
 ):
     news_comment = await CtrNews(current_user).ctr_get_comment_by_news_id(news_id=news_id, filter_by=filter_by,
                                                                           page=page)
-    return ResponseData[List[NewsCommentsResponse]](**news_comment)
+    return ResponseData[NewsCommentsResponse](**news_comment)
 
 
 @router.get(

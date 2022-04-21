@@ -390,21 +390,29 @@ class ServiceEKYC:
         try:
             async with self.session.get(url=api_url, headers=headers, ssl=False) as response:
                 logger.log("SERVICE", f"[EKYC CUSTOMER DETAIL] {response.status} : {api_url}")
-                if response.status == status.HTTP_200_OK:
-                    return True, await response.json()
-                elif response.status == status.HTTP_400_BAD_REQUEST:
-                    return False, await response.json()
-                elif response.status == status.HTTP_404_NOT_FOUND:
-                    return False, await response.json()
-                else:
+                if response.status != status.HTTP_200_OK:
                     return False, {
                         "message": ERROR_CALL_SERVICE_EKYC,
                         "detail": "STATUS " + str(response.status)
                     }
-
+                response_data = await response.json()
         except Exception as ex:
             logger.error(str(ex))
             return False, {"message": str(ex)}
+
+        # thay url bằng uri
+        avatar_uri = response_data['avatar_image_uri']
+        response_data['avatar_image_url'] = replace_with_cdn(
+            cdn=avatar_uri if avatar_uri.startswith('/') else self.url + '/cdn/' + avatar_uri,
+            file_url=self.url
+        )
+
+        for item in response_data['attachment_info']:
+            item['url'] = replace_with_cdn(
+                cdn=item['uri'] if item['uri'].startswith('/') else self.url + '/cdn/' + item['uri'],
+                file_url=self.url
+            )
+        return True, response_data
 
     async def create_post_check(self, payload_data: dict):
         api_url = f"{self.url}/api/v1/customer-service/crm/postcontrol/"
