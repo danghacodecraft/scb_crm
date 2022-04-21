@@ -70,8 +70,14 @@ class NewsCommentBase(BaseSchema):
     created_at: datetime = Field(None, description="Ngày tạo bình luận")
 
 
-class NewsCommentsResponse(NewsCommentBase):
+class NewsCommentsParent(NewsCommentBase):
     comment_child: List[NewsCommentBase] = Field(..., description="Bình luận trả lời")
+
+
+class NewsCommentsResponse(BaseSchema):
+    total_comment_parent: int = Field(..., description="Tổng số bình luận cấp cha")
+    total_comment: int = Field(..., description="Tổng số bình luận")
+    comments: List[NewsCommentsParent] = Field(..., description="Danh sách bình luận của tin tức")
 
 
 class CommentLikeResponse(BaseSchema):
