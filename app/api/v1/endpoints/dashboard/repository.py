@@ -142,11 +142,10 @@ async def repos_get_customer(
         Branch
     ) \
         .outerjoin(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
-        .outerjoin(CustomerAddress,
-                   and_(
-                       Customer.id == CustomerAddress.customer_id,
-                       CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE
-                   )) \
+        .outerjoin(CustomerAddress, and_(
+            Customer.id == CustomerAddress.customer_id,
+            CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE
+        )) \
         .outerjoin(AddressWard, CustomerAddress.address_ward_id == AddressWard.id) \
         .outerjoin(AddressDistrict, CustomerAddress.address_district_id == AddressDistrict.id) \
         .outerjoin(AddressProvince, CustomerAddress.address_province_id == AddressProvince.id) \
