@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import List
 
 from pydantic import Field
@@ -19,6 +19,7 @@ class SignaturesResponse(BaseSchema):
     identity_image_id: str = Field(..., description='Mã hình ảnh chữ ký của khách hàng')
     image_url: str = Field(..., description='Hình ảnh chữ ký của khách hàng')
     active_flag: bool = Field(..., description='Trạng thái hoạt động')
+    maker_at: datetime = Field(..., description='Thời gian')
 
 
 class CompareSignaturesResponse(BaseSchema):
