@@ -120,7 +120,7 @@ class CtrGWDepositAccount(BaseController):
             gender=customer_info["gender"],
             email=customer_info["email"],
             mobile_phone=customer_info["mobile_phone"],
-            customer_type=customer_info["customer_type"]
+            type=customer_info["customer_type"]
         )
 
         response_data.update(

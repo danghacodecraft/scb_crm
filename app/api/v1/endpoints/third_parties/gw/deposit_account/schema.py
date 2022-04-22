@@ -8,13 +8,13 @@ from app.api.v1.endpoints.third_parties.gw.schema import (
 )
 
 
-class GWAccountInfoPayinAccResponse(BaseSchema):
+class GWDepositPayinAccountResponse(BaseSchema):
     number: str = Field(..., description="""Số tài khoản nguồn
                                 + Trường hợp p_payout_type='S' -->Truyền giá trị
                                 + Trường hợp p_payout_type='Y' --> Null""")
 
 
-class GWAccountInfoPayoutAccResponse(BaseSchema):
+class GWDepositPayoutAccountResponse(BaseSchema):
     number: str = Field(..., description="""Số tài khoản chỉ định lúc đáo hạn
                                 + Trường hợp p_payout_type='S' -->Truyền giá trị
                                 + Trường hợp p_payout_type='Y' --> Null""")
@@ -46,8 +46,8 @@ class GWDepositAccountInfoResponse(BaseSchema):
     class_code: str = Field(..., description="Mã sản phẩm")
     interest_rate: str = Field(..., description="Lãi suất")
     branch_info: GWBranchDropdownResponse = Field(..., description="Thông tin chi nhánh")
-    payin_account: GWAccountInfoPayinAccResponse = Field(..., description="Số tài khoản nguồn")
-    payout_account: GWAccountInfoPayoutAccResponse = Field(..., description="Số tài khoản chỉ định lúc đáo hạn")
+    payin_account: GWDepositPayinAccountResponse = Field(..., description="Số tài khoản nguồn")
+    payout_account: GWDepositPayoutAccountResponse = Field(..., description="Số tài khoản chỉ định lúc đáo hạn")
     staff_info_direct: GWAccountStaffInfoDirectResponse = Field(..., description="Thông tin nhân viên trực tiếp")
     staff_info_indirect: GWAccountStaffInfoIndirectResponse = Field(...,
                                                                     description="Thông tin nhân viên không trực tiếp")
@@ -59,7 +59,7 @@ class GWDepositCustomerInfoResponse(BaseSchema):
     gender: str = Field(..., description="Giới tính")
     email: str = Field(..., description="Địa chỉ Email")
     mobile_phone: str = Field(..., description="Điện thoại di động")
-    customer_type: str = Field(..., description="Loại khách hàng (cá nhân hoặc doanh nghiệp)")
+    type: str = Field(..., description="Loại khách hàng (cá nhân hoặc doanh nghiệp)")
 
 
 class GWDepositAccountTDResponse(BaseSchema):
@@ -85,8 +85,8 @@ class GWDepositAccountByCIFNumberInfoResponse(BaseSchema):
     interest_rate: str = Field(..., description="Lãi suất")
     lock_status: str = Field(..., description="Trạng thái tài khoản (phong tỏa hoặc không)")
     branch_info: GWBranchDropdownResponse = Field(..., description="Thông tin chi nhánh")
-    payin_account: GWAccountInfoPayinAccResponse = Field(..., description="Số tài khoản nguồn")
-    payout_account: GWAccountInfoPayoutAccResponse = Field(..., description="Số tài khoản chỉ định lúc đáo hạn")
+    payin_account: GWDepositPayinAccountResponse = Field(..., description="Số tài khoản nguồn")
+    payout_account: GWDepositPayoutAccountResponse = Field(..., description="Số tài khoản chỉ định lúc đáo hạn")
 
 
 class GWDepositAccountByCIFNumberResponse(BaseSchema):

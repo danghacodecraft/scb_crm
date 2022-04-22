@@ -20,8 +20,8 @@ router = APIRouter()
 
 @router.post(
     path="/",
-    name="[GW] Danh sách Tài Khoản thanh toán theo số CIF",
-    description="[GW] Tìm kiếm danh sách Tài Khoản thanh toán theo số CIF",
+    name="[GW] Danh sách Tài khoản tiết kiệm theo số CIF",
+    description="[GW] Tìm kiếm danh sách Tài khoản tiết kiệm theo số CIF",
     responses=swagger_response(
         response_model=ResponseData[GWCasaAccountByCIFNumberResponse],
         success_status_code=status.HTTP_200_OK
@@ -39,8 +39,8 @@ async def view_gw_get_deposit_account_by_cif_number(
 
 @router.post(
     path="/{account_number}/",
-    name="[Thông tin tài khoản] Chi tiết tài khoản thanh toán",
-    description="Lấy chi tiết tài Khoản thanh toán theo số tài khoản",
+    name="[Thông tin tài khoản] Chi tiết tài khoản tiết kiệm",
+    description="Lấy chi tiết tài Khoản tiết kiệm theo số tài khoản",
     responses=swagger_response(
         response_model=ResponseData[SaveSuccessResponse],
         success_status_code=status.HTTP_200_OK
