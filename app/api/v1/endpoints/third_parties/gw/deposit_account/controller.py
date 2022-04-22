@@ -21,47 +21,26 @@ class CtrGWDepositAccount(BaseController):
             account_info_item = account['account_info_item']
             balance = int(account_info_item['account_balance'])
             total_balances += balance
-            account_num = account_info_item["account_num"]
-            account_term = account_info_item["account_term"]
-            account_type = account_info_item["account_type"]
-            account_type_name = account_info_item["account_type_name"]
-            account_currency = account_info_item["account_currency"]
-            account_balance = account_info_item["account_balance"]
-            account_balance_available = account_info_item["account_balance_available"]
-            account_balance_lock = account_info_item["account_balance_lock"]
-            account_open_date = account_info_item["account_open_date"]
-            account_maturity_date = account_info_item["account_maturity_date"]
-            account_saving_serials = account_info_item["account_saving_serials"]
-            account_class_name = account_info_item["account_class_name"]
-            account_class_code = account_info_item["account_class_code"]
-            account_interest_rate = account_info_item["account_interest_rate"]
-            account_lock_status = account_info_item["account_lock_status"]
-            branch_info = account_info_item["branch_info"]
-            payin_account_number = account_info_item['payin_acc']['payin_account']
-            payout_account_number = account_info_item['payout_acc']['payout_account']
 
             account_infos.append(dict(
-                account_num=account_num,
-                account_term=account_term,
-                account_type=account_type,
-                account_type_name=account_type_name,
-                account_currency=account_currency,
-                account_balance=account_balance,
-                account_balance_available=account_balance_available,
-                account_balance_lock=account_balance_lock,
-                account_open_date=account_open_date,
-                account_maturity_date=account_maturity_date,
-                account_saving_serials=account_saving_serials,
-                account_class_name=account_class_name,
-                account_class_code=account_class_code,
-                account_interest_rate=account_interest_rate,
-                account_lock_status=account_lock_status,
-                branch_info=dict(
-                    branch_code=branch_info["branch_code"],
-                    branch_name=branch_info["branch_name"]
-                ),
-                payin_account=dict(number=payin_account_number),
-                payout_account=dict(number=payout_account_number)
+                account_num=account_info_item["account_num"],
+                account_term=account_info_item["account_term"],
+                account_type=account_info_item["account_type"],
+                account_type_name=account_info_item["account_type_name"],
+                account_currency=account_info_item["account_currency"],
+                account_balance=account_info_item["account_balance"],
+                account_balance_available=account_info_item["account_balance_available"],
+                account_balance_lock=account_info_item["account_balance_lock"],
+                account_open_date=account_info_item["account_open_date"],
+                account_maturity_date=account_info_item["account_maturity_date"],
+                account_saving_serials=account_info_item["account_saving_serials"],
+                account_class_name=account_info_item["account_class_name"],
+                account_class_code=account_info_item["account_class_code"],
+                account_interest_rate=account_info_item["account_interest_rate"],
+                account_lock_status=account_info_item["account_lock_status"],
+                branch_info=account_info_item["branch_info"],
+                payin_account=dict(number=account_info_item['payin_acc']['payin_account']),
+                payout_account=dict(number=account_info_item['payout_acc']['payout_account'])
             ))
 
         response_data.update(dict(
