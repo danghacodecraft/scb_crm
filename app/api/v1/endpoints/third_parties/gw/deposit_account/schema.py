@@ -11,25 +11,25 @@ class GWBranchDropdownResponse(BaseSchema):
 
 
 class GWAccountInfoPayinAccResponse(BaseSchema):
-    payin_account: str = Field(..., description="""Số tài khoản nguồn
+    number: str = Field(..., description="""Số tài khoản nguồn
                                 + Trường hợp p_payout_type='S' -->Truyền giá trị
                                 + Trường hợp p_payout_type='Y' --> Null""")
 
 
 class GWAccountInfoPayoutAccResponse(BaseSchema):
-    payout_account: str = Field(..., description="""Số tài khoản chỉ định lúc đáo hạn
+    number: str = Field(..., description="""Số tài khoản chỉ định lúc đáo hạn
                                 + Trường hợp p_payout_type='S' -->Truyền giá trị
                                 + Trường hợp p_payout_type='Y' --> Null""")
 
 
 class GWAccountStaffInfoDirectResponse(BaseSchema):
-    staff_code: str = Field(..., description="Mã nhân viên")
-    staff_name: str = Field(..., description="Tên nhân viên")
+    code: str = Field(..., description="Mã nhân viên")
+    name: str = Field(..., description="Tên nhân viên")
 
 
 class GWAccountStaffInfoIndirectResponse(BaseSchema):
-    staff_code: str = Field(..., description="Mã nhân viên")
-    staff_name: str = Field(..., description="Tên nhân viên")
+    code: str = Field(..., description="Mã nhân viên")
+    name: str = Field(..., description="Tên nhân viên")
 
 
 class GWDepositAccountInfoResponse(BaseSchema):
@@ -40,7 +40,7 @@ class GWDepositAccountInfoResponse(BaseSchema):
     saving_serials: str = Field(..., description="Số Series Sổ tiết kiệm")
     currency: str = Field(..., description="Loại tiền trong tài khoản")
     balance: str = Field(..., description="Số dư tài khoản")
-    available: str = Field(..., description="Số dư có thể sử dụng")
+    balance_available: str = Field(..., description="Số dư có thể sử dụng")
     open_date: str = Field(..., description="Ngày mở tài khoản")
     maturity_date: str = Field(..., description="Ngày đến hạn")
     lock_status: str = Field(..., description="Trạng thái tài khoản (phong tỏa hoặc không)")
@@ -48,8 +48,8 @@ class GWDepositAccountInfoResponse(BaseSchema):
     class_code: str = Field(..., description="Mã sản phẩm")
     interest_rate: str = Field(..., description="Lãi suất")
     branch_info: GWBranchDropdownResponse = Field(..., description="Thông tin chi nhánh")
-    payin_acc: GWAccountInfoPayinAccResponse = Field(..., description="Số tài khoản nguồn")
-    payout_acc: GWAccountInfoPayoutAccResponse = Field(..., description="Số tài khoản chỉ định lúc đáo hạn")
+    payin_account: GWAccountInfoPayinAccResponse = Field(..., description="Số tài khoản nguồn")
+    payout_account: GWAccountInfoPayoutAccResponse = Field(..., description="Số tài khoản chỉ định lúc đáo hạn")
     staff_info_direct: GWAccountStaffInfoDirectResponse = Field(..., description="Thông tin nhân viên trực tiếp")
     staff_info_indirect: GWAccountStaffInfoIndirectResponse = Field(...,
                                                                     description="Thông tin nhân viên không trực tiếp")
@@ -62,7 +62,7 @@ class GWDepositCifInfoResponse(BaseSchema):
 
 class GWDepositCustomerInfoResponse(BaseSchema):
     fullname_vn: str = Field(..., description="Họ và tên")
-    birthday: str = Field(..., description="Ngày sinh")
+    date_of_birth: str = Field(..., description="Ngày sinh")
     gender: str = Field(..., description="Giới tính")
     email: str = Field(..., description="Địa chỉ Email")
     mobile_phone: str = Field(..., description="Điện thoại di động")

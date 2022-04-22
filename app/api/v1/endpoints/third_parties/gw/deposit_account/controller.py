@@ -18,9 +18,51 @@ class CtrGWDepositAccount(BaseController):
             'account_info_list']
         account_infos = []
         for account in account_info_list:
-            balance = int(account['account_info_item']['account_balance'])
+            account_info_item = account['account_info_item']
+            balance = int(account_info_item['account_balance'])
             total_balances += balance
-            account_infos.append(account['account_info_item'])
+            account_num = account_info_item["account_num"]
+            account_term = account_info_item["account_term"]
+            account_type = account_info_item["account_type"]
+            account_type_name = account_info_item["account_type_name"]
+            account_currency = account_info_item["account_currency"]
+            account_balance = account_info_item["account_balance"]
+            account_balance_available = account_info_item["account_balance_available"]
+            account_balance_lock = account_info_item["account_balance_lock"]
+            account_open_date = account_info_item["account_open_date"]
+            account_maturity_date = account_info_item["account_maturity_date"]
+            account_saving_serials = account_info_item["account_saving_serials"]
+            account_class_name = account_info_item["account_class_name"]
+            account_class_code = account_info_item["account_class_code"]
+            account_interest_rate = account_info_item["account_interest_rate"]
+            account_lock_status = account_info_item["account_lock_status"]
+            branch_info = account_info_item["branch_info"]
+            payin_account_number = account_info_item['payin_acc']['payin_account']
+            payout_account_number = account_info_item['payout_acc']['payout_account']
+
+            account_infos.append(dict(
+                account_num=account_num,
+                account_term=account_term,
+                account_type=account_type,
+                account_type_name=account_type_name,
+                account_currency=account_currency,
+                account_balance=account_balance,
+                account_balance_available=account_balance_available,
+                account_balance_lock=account_balance_lock,
+                account_open_date=account_open_date,
+                account_maturity_date=account_maturity_date,
+                account_saving_serials=account_saving_serials,
+                account_class_name=account_class_name,
+                account_class_code=account_class_code,
+                account_interest_rate=account_interest_rate,
+                account_lock_status=account_lock_status,
+                branch_info=dict(
+                    code=branch_info["branch_code"],
+                    name=branch_info["branch_name"]
+                ),
+                payin_account_number=payin_account_number,
+                payout_account_number=payout_account_number
+            ))
 
         response_data.update(dict(
             total_balances=total_balances,
@@ -51,8 +93,8 @@ class CtrGWDepositAccount(BaseController):
         )
 
         branch_info = account_info["branch_info"]
-        payin_acc = account_info["payin_acc"]
-        payout_acc = account_info["payout_acc"]
+        payin_account = account_info["payin_acc"]
+        payout_account = account_info["payout_acc"]
         staff_info_direct = account_info["staff_info_direct"]
         staff_info_indirect = account_info["staff_info_indirect"]
         gw_deposit_account_info_response = ({
@@ -63,7 +105,7 @@ class CtrGWDepositAccount(BaseController):
             "saving_serials": account_info["account_saving_serials"],
             "currency": account_info["account_currency"],
             "balance": account_info["account_balance"],
-            "available": account_info["account_balance_available"],
+            "balance_available": account_info["account_balance_available"],
             "open_date": account_info["account_open_date"],
             "maturity_date": account_info["account_maturity_date"],
             "lock_status": account_info["account_lock_status"],
@@ -74,25 +116,25 @@ class CtrGWDepositAccount(BaseController):
                 branch_code=branch_info["branch_code"],
                 branch_name=branch_info["branch_name"]
             ),
-            "payin_acc": dict(
-                payin_account=payin_acc["payin_account"]
+            "payin_account": dict(
+                number=payin_account["payin_account"]
             ),
-            "payout_acc": dict(
-                payout_account=payout_acc["payout_account"]
+            "payout_account": dict(
+                number=payout_account["payout_account"]
             ),
             "staff_info_direct": dict(
-                staff_code=staff_info_direct["staff_code"],
-                staff_name=staff_info_direct["staff_name"]
+                code=staff_info_direct["staff_code"],
+                name=staff_info_direct["staff_name"]
             ),
             "staff_info_indirect": dict(
-                staff_code=staff_info_indirect["staff_code"],
-                staff_name=staff_info_indirect["staff_name"]
+                code=staff_info_indirect["staff_code"],
+                name=staff_info_indirect["staff_name"]
             )
         })
 
         gw_deposit_customer_info_response = dict(
             fullname_vn=customer_info["full_name"],
-            birthday=customer_info["birthday"],
+            date_of_birth=customer_info["birthday"],
             gender=customer_info["gender"],
             email=customer_info["email"],
             mobile_phone=customer_info["mobile_phone"],
