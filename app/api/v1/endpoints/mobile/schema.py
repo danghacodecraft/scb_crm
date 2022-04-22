@@ -19,8 +19,7 @@ class IdentityMobileRequest(BaseSchema):
             identity_type: str = File(..., description='loại giấy tờ dịnh danh'),
             front_side_image: UploadFile = File(..., description='hộ chiếu hoặc mặt trước DTDD'),
             back_side_image: UploadFile = File(None, description='Mặt sau DTDD'),
-            avatar_image: UploadFile = File(..., description='hình ảnh khuôn mặt'),
-            signature_image: UploadFile = File(None, description='hình ảnh chữ ký'), # noqa
+            avatar_image: UploadFile = File(..., description='hình ảnh khuôn mặt')
 
     ):
         return (full_name_vn, date_of_birth, gender_id, nationality_id, identity_number, issued_date, expired_date,
