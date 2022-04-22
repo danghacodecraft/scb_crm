@@ -82,3 +82,4 @@ class NewsCommentsResponse(BaseSchema):
 
 class CommentLikeResponse(BaseSchema):
     like_id: str = Field(..., description="id like")
+    total_like: int = Field(..., description="Tổng số like của bình luận")

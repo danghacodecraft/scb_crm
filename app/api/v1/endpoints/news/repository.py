@@ -152,7 +152,7 @@ async def repo_add_comment_like(comment_id, like_data, session: Session) -> Repo
     cmt_obj.NewsComment.total_likes += 1
 
     session.add(CommentLike(**like_data))
-    return ReposReturn(data=like_data)
+    return ReposReturn(data=cmt_obj.NewsComment.total_likes)
 
 
 @auto_commit
@@ -162,4 +162,4 @@ async def repo_remove_comment_like(comment_id, like_id, session: Session) -> Rep
 
     session.execute(delete(CommentLike).filter(CommentLike.id == like_id))
 
-    return ReposReturn(data=like_id)
+    return ReposReturn(data=cmt_obj.NewsComment.total_likes)
