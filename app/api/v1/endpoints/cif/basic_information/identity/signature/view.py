@@ -49,4 +49,4 @@ async def view_retrieve_signature(
         current_user=Depends(get_current_user_from_header())
 ):
     signature_data = await CtrSignature(current_user).ctr_get_signature(cif_id)
-    return ResponseData[List[SignaturesSuccessResponse]](**signature_data)
+    return ResponseData(**signature_data)
