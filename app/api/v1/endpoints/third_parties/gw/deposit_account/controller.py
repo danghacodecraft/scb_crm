@@ -23,22 +23,25 @@ class CtrGWDepositAccount(BaseController):
             total_balances += balance
 
             account_infos.append(dict(
-                account_num=account_info_item["account_num"],
-                account_term=account_info_item["account_term"],
-                account_type=account_info_item["account_type"],
-                account_type_name=account_info_item["account_type_name"],
-                account_currency=account_info_item["account_currency"],
-                account_balance=account_info_item["account_balance"],
-                account_balance_available=account_info_item["account_balance_available"],
-                account_balance_lock=account_info_item["account_balance_lock"],
-                account_open_date=account_info_item["account_open_date"],
-                account_maturity_date=account_info_item["account_maturity_date"],
-                account_saving_serials=account_info_item["account_saving_serials"],
-                account_class_name=account_info_item["account_class_name"],
-                account_class_code=account_info_item["account_class_code"],
-                account_interest_rate=account_info_item["account_interest_rate"],
-                account_lock_status=account_info_item["account_lock_status"],
-                branch_info=account_info_item["branch_info"],
+                number=account_info_item["account_num"],
+                term=account_info_item["account_term"],
+                type=account_info_item["account_type"],
+                type_name=account_info_item["account_type_name"],
+                currency=account_info_item["account_currency"],
+                balance=account_info_item["account_balance"],
+                balance_available=account_info_item["account_balance_available"],
+                balance_lock=account_info_item["account_balance_lock"],
+                open_date=account_info_item["account_open_date"],
+                maturity_date=account_info_item["account_maturity_date"],
+                saving_serials=account_info_item["account_saving_serials"],
+                class_name=account_info_item["account_class_name"],
+                class_code=account_info_item["account_class_code"],
+                interest_rate=account_info_item["account_interest_rate"],
+                lock_status=account_info_item["account_lock_status"],
+                branch_info=dict(
+                    code=account_info_item["branch_info"]["branch_code"],
+                    name=account_info_item["branch_info"]["branch_name"]
+                ),
                 payin_account=dict(number=account_info_item['payin_acc']['payin_account']),
                 payout_account=dict(number=account_info_item['payout_acc']['payout_account'])
             ))
@@ -92,8 +95,8 @@ class CtrGWDepositAccount(BaseController):
             "class_code": account_info["account_class_code"],
             "interest_rate": account_info["account_interest_rate"],
             "branch_info": dict(
-                branch_code=branch_info["branch_code"],
-                branch_name=branch_info["branch_name"]
+                code=branch_info["branch_code"],
+                name=branch_info["branch_name"]
             ),
             "payin_account": dict(
                 number=payin_account["payin_account"]
