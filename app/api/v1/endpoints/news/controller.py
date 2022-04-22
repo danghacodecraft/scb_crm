@@ -2,7 +2,8 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.news.repository import (
     get_comment_by_id, get_data_by_id, get_like_by_user, get_list_comment,
     get_list_scb_news, repo_add_comment, repo_add_comment_like,
-    repo_remove_comment_like, repos_add_scb_news, repos_update_scb_news
+    repo_get_users_contact, repo_remove_comment_like, repos_add_scb_news,
+    repos_update_scb_news
 )
 from app.api.v1.endpoints.news.schema import NewsCommentRequest
 from app.settings.event import service_file
@@ -250,9 +251,9 @@ class CtrNews(BaseController):
 
         if filter_by not in NEWS_COMMENT_FILTER_PARAMS:
             return self.response_exception(
-                msg='',
+                msg=VALIDATE_ERROR,
                 loc='filter_by',
-                detail='filter_by invalid value'
+                detail=f'{filter_by} {VALIDATE_ERROR}'
             )
 
         comments = self.call_repos(await get_list_comment(self.oracle_session, news_id, filter_by, page=page))
@@ -265,18 +266,43 @@ class CtrNews(BaseController):
 
         list_data_res = []
 
+        """ Lấy thông tin người dùng đã bình luận"""
+        user_codes = []
+        for cmt_parent_item in list_comment:
+            user_codes.append(cmt_parent_item.create_user_id)
+        for cmt_child_item in list_comment_child:
+            user_codes.append(cmt_child_item.create_user_id)
+
+        user_codes = tuple(set(user_codes))
+        users_comment_info = self.call_repos(
+            await repo_get_users_contact(
+                codes=user_codes,
+                session=self.oracle_session_task
+            )
+        )
+
+        users_info_cmt = {}
+        for user_info in users_comment_info:
+            users_info_cmt.update({
+                user_info.emp_code: {
+                    "title_name": user_info.title_name,
+                    "avatar_link": user_info.avatar_link
+                }
+            })
+
         for cmt_item in list_comment:
             cmt_data = {
                 "news_id": cmt_item.news_id,
                 "comment_id": cmt_item.id,
                 "create_name": cmt_item.create_user_name,
                 "user_name": cmt_item.create_user_username,
+                "user_title_name": users_info_cmt[cmt_item.create_user_id]["title_name"],
+                "avatar_link": users_info_cmt[cmt_item.create_user_id]["avatar_link"],
                 "content": cmt_item.content,
                 "total_likes": cmt_item.total_likes,
                 "parent_id": cmt_item.parent_id,
                 "created_at": cmt_item.created_at
             }
-
             list_data_res.append(cmt_data)
 
         for parrent_cmt in list_data_res:
@@ -288,6 +314,8 @@ class CtrNews(BaseController):
                         "comment_id": child_cmt.id,
                         "create_name": child_cmt.create_user_name,
                         "user_name": child_cmt.create_user_username,
+                        "user_title_name": users_info_cmt[child_cmt.create_user_id]["title_name"],
+                        "avatar_link": users_info_cmt[child_cmt.create_user_id]["avatar_link"],
                         "content": child_cmt.content,
                         "total_likes": child_cmt.total_likes,
                         "parent_id": child_cmt.parent_id,
@@ -297,6 +325,7 @@ class CtrNews(BaseController):
             parrent_cmt.update({
                 "comment_child": comment_child
             })
+
         return self.response(data={
             "total_comment_parent": total_comment_parent,
             "total_comment": total_comment,

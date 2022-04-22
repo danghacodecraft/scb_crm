@@ -64,6 +64,8 @@ class NewsCommentBase(BaseSchema):
     comment_id: str = Field(..., description="id bình luận")
     create_name: str = Field(..., description='Tên người tạo')
     user_name: str = Field(..., description='Nick name người tạo')
+    user_title_name: str = Field(..., description="Chức danh người tạo bình luận")
+    avatar_link: str = Field(..., description="ảnh đại diện")
     content: str = Field(..., description='Nội dung comment')
     total_likes: int = Field(..., description='Số lượt thích')
     parent_id: str = Field(None, description='id comment cha')

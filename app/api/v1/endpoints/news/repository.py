@@ -2,6 +2,7 @@ from datetime import datetime
 
 from sqlalchemy import and_, delete, desc, select
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.exc import NoResultFound
 
 from app.api.base.repository import ReposReturn, auto_commit
 from app.third_parties.oracle.models.master_data.news import NewsCategory
@@ -9,7 +10,7 @@ from app.third_parties.oracle.models.news.model import (
     CommentLike, News, NewsComment
 )
 from app.utils.constant.cif import NEWS_COMMENT_FILTER_BY_INTERESTED
-from app.utils.error_messages import ERROR_ID_NOT_EXIST
+from app.utils.error_messages import ERROR_ID_NOT_EXIST, USER_CODE_NOT_EXIST
 from app.utils.functions import now
 
 
@@ -105,8 +106,9 @@ async def repo_add_comment(data_comment,
 
 async def get_list_comment(session: Session, news_id: str, filter_by: str, page: int) -> ReposReturn:
     # Querry list comment cha
-    query = select(NewsComment).filter(and_(NewsComment.news_id == news_id, NewsComment.parent_id == None)) # noqa
-    query_cmt_child = select(NewsComment).filter(and_(NewsComment.news_id == news_id, NewsComment.parent_id != None)) # noqa
+    query = select(NewsComment).filter(and_(NewsComment.news_id == news_id, NewsComment.parent_id == None))  # noqa
+    query_cmt_child = select(NewsComment).filter(
+        and_(NewsComment.news_id == news_id, NewsComment.parent_id != None))  # noqa
     if filter_by == NEWS_COMMENT_FILTER_BY_INTERESTED:
         query = query.order_by(desc(NewsComment.total_likes))
         query_cmt_child = query_cmt_child.order_by(desc(NewsComment.total_likes))
@@ -163,3 +165,31 @@ async def repo_remove_comment_like(comment_id, like_id, session: Session) -> Rep
     session.execute(delete(CommentLike).filter(CommentLike.id == like_id))
 
     return ReposReturn(data=cmt_obj.NewsComment.total_likes)
+
+
+async def repo_get_users_contact(codes: tuple, session: Session):
+    sql_contact = f"""SELECT HRM_EMPLOYEE.EMP_NAME,\
+       HRM_EMPLOYEE.EMP_CODE,\
+       HRM_EMPLOYEE.USERNAME,\
+       HRM_EMPLOYEE.WORKING_LOCATION,\
+       HRM_EMPLOYEE.EMAIL_SCB,\
+       HRM_EMPLOYEE.CONTACT_MOBILE,\
+       HRM_EMPLOYEE.INTERNAL_MOBILE,\
+       HRM_EMPLOYEE.ID      AS EMP_ID,\
+       HRM_TITLE.TITLE_NAME  AS TITLE_NAME,\
+       HRM_ORGANIZATION.DESCRIPTION_PATH     AS UNIT,\
+       CONCAT('/cdn-profile/', HRM_EMPLOYEE.AVATAR_URL) AS AVATAR_LINK FROM HRM_EMPLOYEE\
+
+        LEFT OUTER JOIN HRM_TITLE ON (HRM_EMPLOYEE.TITLE_ID = HRM_TITLE.ID)
+        LEFT OUTER JOIN HRM_ORGANIZATION ON (HRM_EMPLOYEE.ORG_ID = HRM_ORGANIZATION.ID)
+        WHERE HRM_EMPLOYEE.EMP_CODE IN {codes}
+        ORDER BY HRM_EMPLOYEE.USERNAME ASC"""
+    try:
+        data_contact = session.execute(sql_contact).all()
+    except NoResultFound:
+        return ReposReturn(is_error=True, loc='user_code', msg=USER_CODE_NOT_EXIST,
+                           detail="Contact -> user_code")
+    except Exception as ex:
+        return ReposReturn(is_error=True, msg=str(ex))
+
+    return ReposReturn(data=data_contact)
