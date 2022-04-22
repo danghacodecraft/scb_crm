@@ -313,7 +313,7 @@ class CtrNews(BaseController):
         if like_db_obj:
             # nếu đã like -> unlike
             uuid = like_db_obj.CommentLike.id
-            self.call_repos(
+            total_like = self.call_repos(
                 await repo_remove_comment_like(comment_id=comment_id, session=self.oracle_session, like_id=uuid))
         else:
             like_data_insert = {
@@ -325,9 +325,10 @@ class CtrNews(BaseController):
                 "created_at": now()
             }
 
-            self.call_repos(
+            total_like = self.call_repos(
                 await repo_add_comment_like(comment_id=comment_id, like_data=like_data_insert,
                                             session=self.oracle_session))
         return self.response(data={
-            "like_id": uuid
+            "like_id": uuid,
+            "total_like": total_like
         })
