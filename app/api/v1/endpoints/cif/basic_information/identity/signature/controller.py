@@ -94,7 +94,8 @@ class CtrSignature(BaseController):
             signature = {
                 'identity_image_id': customer_identity_image.id,
                 'image_url': customer_identity_image.image_url,
-                'active_flag': customer_identity_image.active_flag
+                'active_flag': customer_identity_image.active_flag,
+                'maker_at': customer_identity_image.maker_at
             }
             date_str = datetime_to_date(customer_identity_image.maker_at)
 
