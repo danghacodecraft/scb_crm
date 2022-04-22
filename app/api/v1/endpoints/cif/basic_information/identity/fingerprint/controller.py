@@ -145,6 +145,7 @@ class CtrFingerPrint(BaseController):
                 'hand_side': dropdown(row.HandSide),
                 'finger_type': dropdown(row.FingerType),
                 'id_ekyc': row.CustomerIdentityImage.ekyc_id,
+                'uuid_ekyc': row.CustomerIdentityImage.ekyc_uuid,
                 'maker_at': row.CustomerIdentityImageTransaction.maker_at
             }
             if row.HandSide.code == HAND_SIDE_LEFT_CODE:

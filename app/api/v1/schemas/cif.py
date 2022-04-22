@@ -36,6 +36,7 @@ class FingerPrintResponse(BaseSchema):
     hand_side: DropdownResponse = Field(..., description='Loại bàn tay')
     finger_type: DropdownResponse = Field(..., description='Loại ngón tay')
     id_ekyc: str = Field(..., description='ID_EKYC')
+    uuid_ekyc: str = Field(..., description='UUID_EKYC')
     maker_at: datetime = Field(..., description='Thời gian thực hiện')
 
 
