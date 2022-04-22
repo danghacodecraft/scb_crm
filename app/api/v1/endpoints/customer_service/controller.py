@@ -290,7 +290,7 @@ class CtrKSS(BaseController):
         is_success, response = self.check_permission(
             current_user=current_user,
             menu_code=MENU_CODE,
-            group_role_code=GROUP_ROLE_CODE_AP)
+            group_role_code=GROUP_ROLE_CODE_VIEW)
 
         if not is_success:
             return self.response_exception(
