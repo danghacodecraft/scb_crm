@@ -92,8 +92,8 @@ class GWDepositAccountByCIFNumberInfoResponse(BaseSchema):
     account_interest_rate: str = Field(..., description="Lãi suất")
     account_lock_status: str = Field(..., description="Trạng thái tài khoản (phong tỏa hoặc không)")
     branch_info: GWBranchDropdownResponse = Field(..., description="Thông tin chi nhánh")
-    payin_acc: GWAccountInfoPayinAccResponse = Field(..., description="Số tài khoản nguồn")
-    payout_acc: GWAccountInfoPayoutAccResponse = Field(..., description="Số tài khoản chỉ định lúc đáo hạn")
+    payin_account: GWAccountInfoPayinAccResponse = Field(..., description="Số tài khoản nguồn")
+    payout_account: GWAccountInfoPayoutAccResponse = Field(..., description="Số tài khoản chỉ định lúc đáo hạn")
 
 
 class GWDepositAccountByCIFNumberResponse(BaseSchema):

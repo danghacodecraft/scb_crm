@@ -57,11 +57,11 @@ class CtrGWDepositAccount(BaseController):
                 account_interest_rate=account_interest_rate,
                 account_lock_status=account_lock_status,
                 branch_info=dict(
-                    code=branch_info["branch_code"],
-                    name=branch_info["branch_name"]
+                    branch_code=branch_info["branch_code"],
+                    branch_name=branch_info["branch_name"]
                 ),
-                payin_account_number=payin_account_number,
-                payout_account_number=payout_account_number
+                payin_account=dict(number=payin_account_number),
+                payout_account=dict(number=payout_account_number)
             ))
 
         response_data.update(dict(
