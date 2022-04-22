@@ -21,7 +21,28 @@ class CtrGWCasaAccount(BaseController):
         for account in account_info_list:
             balance = int(account['account_info_item']['account_balance'])
             total_balances += balance
-            account_infos.append(account['account_info_item'])
+            branch_info = account['account_info_item']["branch_info"]
+            account_infos.append(dict(
+                number=account['account_info_item']["account_num"],
+                type=account['account_info_item']["account_type"],
+                type_name=account['account_info_item']["account_type_name"],
+                currency=account['account_info_item']["account_currency"],
+                balance=account['account_info_item']["account_balance"],
+                balance_available=account['account_info_item']["account_balance_available"],
+                balance_lock=account['account_info_item']["account_balance_lock"],
+                over_draft_limit=account['account_info_item']["account_over_draft_limit"],
+                over_draft_expired_date=account['account_info_item']["account_over_draft_expired_date"],
+                latest_trans_date=account['account_info_item']["account_latest_trans_date"],
+                open_date=account['account_info_item']["account_open_date"],
+                maturity_date=account['account_info_item']["account_maturity_date"],
+                lock_status=account['account_info_item']["account_lock_status"],
+                class_name=account['account_info_item']["account_class_name"],
+                class_code=account['account_info_item']["account_class_code"],
+                branch_info=dict(
+                    code=branch_info["branch_code"],
+                    name=branch_info["branch_name"]
+                )
+            ))
 
         response_data.update(dict(
             total_balances=total_balances,
@@ -83,8 +104,8 @@ class CtrGWCasaAccount(BaseController):
             service_escrow=account_info['account_service_escrow'],
             service_escrow_ex_date=account_info['account_service_escrow_ex_date'],
             branch_info=dict(
-                branch_code=branch_info['branch_code'],
-                branch_name=branch_info['branch_name']
+                code=branch_info['branch_code'],
+                name=branch_info['branch_name']
             )
         )
 
