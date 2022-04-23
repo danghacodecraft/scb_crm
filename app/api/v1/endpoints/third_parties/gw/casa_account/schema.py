@@ -27,7 +27,7 @@ class CasaAccountByCIFNumberResponse(BaseSchema):
         ...,
         description="Tên sản phẩm. Ví dụ: Tiết kiệm thông thường, phát lộc phát tài…"
     )
-    account_class_code: Optional[str] = Field(..., description="Mã sản phẩm")
+    class_code: Optional[str] = Field(..., description="Mã sản phẩm")
     branch_info: GWBranchDropdownResponse = Field(...)
 
 

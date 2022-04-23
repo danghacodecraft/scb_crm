@@ -72,7 +72,7 @@ class CtrGWCasaAccount(BaseController):
 
         cif_info = customer_info['cif_info']
         gw_casa_cif_info_response = dict(
-            number=cif_info['cif_num'],
+            cif_number=cif_info['cif_num'],
             issued_date=cif_info['cif_issued_date']
         )
 
