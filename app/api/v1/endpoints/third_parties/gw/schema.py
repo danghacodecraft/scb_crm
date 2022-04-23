@@ -9,5 +9,5 @@ class GWBranchDropdownResponse(BaseSchema):
 
 
 class GWCIFInfoResponse(BaseSchema):
-    number: str = Field(..., description="Số CIF")
+    cif_number: str = Field(..., description="Số CIF")
     issued_date: str = Field(..., description="Ngày cấp số CIF")
