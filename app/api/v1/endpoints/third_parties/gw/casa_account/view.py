@@ -8,8 +8,9 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
     CtrGWCasaAccount
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.example import (
-    CASA_ACCOUNT_BY_CIF_NUMBER_SUCCESS_EXAMPLE, CASA_ACCOUNT_CHECK_EXIST_FAIL,
-    CASA_ACCOUNT_CHECK_EXIST_SUCCESS, CASA_ACCOUNT_INFO_SUCCESS_SAMPLE,
+    CASA_ACCOUNT_BY_CIF_NUMBER_SUCCESS_EXAMPLE,
+    CASA_ACCOUNT_CHECK_EXIST_FAIL_EXAMPLE,
+    CASA_ACCOUNT_CHECK_EXIST_SUCCESS_EXAMPLE, CASA_ACCOUNT_INFO_SUCCESS_SAMPLE,
     CASA_ACCOUNT_NUMBER, CASA_ACCOUNT_NUMBER_REQUEST, CASA_CIF_NUMBER_REQUEST
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
@@ -48,8 +49,8 @@ async def view_gw_get_casa_account_by_cif_number(
     description="[GW] Kiểm tra số TK thanh toán tự chọn có tồn tại trên CoreFCC",
     responses=swagger_response(
         response_model=ResponseData[GWCasaAccountCheckExistResponse],
-        success_examples=CASA_ACCOUNT_CHECK_EXIST_SUCCESS,
-        fail_examples=CASA_ACCOUNT_CHECK_EXIST_FAIL,
+        success_examples=CASA_ACCOUNT_CHECK_EXIST_SUCCESS_EXAMPLE,
+        fail_examples=CASA_ACCOUNT_CHECK_EXIST_FAIL_EXAMPLE,
         success_status_code=status.HTTP_200_OK
     )
 )

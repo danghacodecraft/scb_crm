@@ -374,7 +374,7 @@ CASA_ACCOUNT_BY_CIF_NUMBER_SUCCESS_EXAMPLE = {
     }
 }
 
-CASA_ACCOUNT_CHECK_EXIST_SUCCESS = {
+CASA_ACCOUNT_CHECK_EXIST_SUCCESS_EXAMPLE = {
     "example": {
         "value": {
             "data": {
@@ -385,7 +385,7 @@ CASA_ACCOUNT_CHECK_EXIST_SUCCESS = {
     }
 }
 
-CASA_ACCOUNT_CHECK_EXIST_FAIL = {
+CASA_ACCOUNT_CHECK_EXIST_FAIL_EXAMPLE = {
     "example": {
         "value": {
             "data": {
