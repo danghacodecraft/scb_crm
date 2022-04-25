@@ -1,6 +1,7 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_get_casa_account_by_cif_number, repos_gw_get_casa_account_info,
+    repos_gw_get_column_chart_casa_account_info,
     repos_gw_get_pie_chart_casa_account_info
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
@@ -168,3 +169,23 @@ class CtrGWCasaAccount(BaseController):
                     pie.update(transaction_percent=100 - percents)
 
         return self.response(data=pie_chart)
+
+    async def ctr_gw_get_column_chart_casa_account_info(self, request: GWReportPieChartHistoryAccountInfoRequest):
+        gw_report_column_chart_casa_account_info = self.call_repos(await repos_gw_get_column_chart_casa_account_info(
+            account_number=request.account_number,
+            current_user=self.current_user.user_info,
+            # from_date=request.from_date,
+            # to_date=request.to_date,
+        ))
+        report_casa_accounts = \
+            gw_report_column_chart_casa_account_info['selectReportHisCaSaFromAcc_out']['data_output']['report_info'][
+                'report_casa_account']
+        column_chart = []
+        for report_casa_account in report_casa_accounts:
+            column_chart.append(dict(
+                transaction_type=report_casa_account['tran_type'],
+                transaction_date=string_to_date(report_casa_account['tran_date'], _format=DATETIME_INPUT_OUTPUT_FORMAT),
+                transaction_value=report_casa_account['tran_value']
+            ))
+
+        return self.response(data=column_chart)
