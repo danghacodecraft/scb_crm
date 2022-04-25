@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import APIRouter, Body, Depends, Path
 from starlette import status
 
@@ -17,7 +19,8 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.example import (
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWCasaAccountByCIFNumberRequest, GWCasaAccountByCIFNumberResponse,
     GWCasaAccountCheckExistRequest, GWCasaAccountCheckExistResponse,
-    GWCasaAccountResponse
+    GWCasaAccountResponse, GWReportPieChartHistoryAccountInfoRequest,
+    GWReportPieChartHistoryAccountInfoResponse
 )
 
 router = APIRouter()
@@ -63,6 +66,26 @@ async def view_gw_check_exist_casa_account_info(
         account_number=request.account_number
     )
     return ResponseData[GWCasaAccountCheckExistResponse](**gw_check_exist_casa_account_info)
+
+
+@router.post(
+    path="/pie-chart/",
+    name="[GW] Biểu đồ tròn",
+    description="[GW] Thống kê số lần và giá trị giao dịch theo số tài khoản thanh toán (biểu đồ tròn màn hình tktt)",
+    responses=swagger_response(
+        response_model=ResponseData[GWReportPieChartHistoryAccountInfoResponse],
+        success_examples=CASA_ACCOUNT_INFO_SUCCESS_EXAMPLE,
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_get_column_casa_account_info(
+        request: GWReportPieChartHistoryAccountInfoRequest = Body(...),
+        current_user=Depends(get_current_user_from_header())
+):
+    gw_column_casa_account_info = await CtrGWCasaAccount(current_user).ctr_gw_get_column_casa_account_info(
+        request=request
+    )
+    return ResponseData[List[GWReportPieChartHistoryAccountInfoResponse]](**gw_column_casa_account_info)
 
 
 @router.post(

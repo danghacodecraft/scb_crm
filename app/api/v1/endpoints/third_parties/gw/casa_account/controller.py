@@ -1,6 +1,10 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
-    repos_gw_get_casa_account_by_cif_number, repos_gw_get_casa_account_info
+    repos_gw_get_casa_account_by_cif_number, repos_gw_get_casa_account_info,
+    repos_gw_get_column_casa_account_info
+)
+from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
+    GWReportPieChartHistoryAccountInfoRequest
 )
 
 
@@ -129,3 +133,36 @@ class CtrGWCasaAccount(BaseController):
         return self.response(data=dict(
             is_existed=True if account_info['account_num'] else False
         ))
+
+    async def ctr_gw_get_column_casa_account_info(self, request: GWReportPieChartHistoryAccountInfoRequest):
+        gw_report_history_account_info = self.call_repos(await repos_gw_get_column_casa_account_info(
+            account_number=request.account_number,
+            current_user=self.current_user.user_info,
+            # from_date=request.from_date,
+            # to_date=request.to_date,
+        ))
+        report_casa_accounts = \
+            gw_report_history_account_info['selectReportHisCaSaFromAcc_out']['data_output']['report_info'][
+                'report_casa_account']
+
+        pie_chart = []
+        total = 0
+        for report_casa_account in report_casa_accounts:
+            pie_chart.append(dict(
+                transaction_type=report_casa_account['tran_type'],
+                transaction_date=report_casa_account['tran_date'],
+                transaction_value=report_casa_account['tran_value']
+            ))
+            total += int(report_casa_account['tran_value'])
+
+        percents = 0
+        if total > 0:
+            for index, pie in enumerate(pie_chart):
+                if index != -1:
+                    percent = float(int(pie['transaction_value']) * 100 / total)
+                    percents += percent
+                    pie.update(transaction_percent=percent)
+                else:
+                    pie.update(transaction_percent=100 - percents)
+
+        return self.response(data=pie_chart)
