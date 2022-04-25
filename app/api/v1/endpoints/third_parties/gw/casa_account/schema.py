@@ -110,12 +110,12 @@ class GWCasaAccountCheckExistResponse(BaseSchema):
 class GWCasaAccountCheckExistRequest(BaseSchema):
     account_number: str = Field(..., description="Số tài khoản")
 
-#
-# class GWReportColumnChartHistoryAccountInfoResponse(BaseSchema):
-#     transaction_type: str = Field(..., description="Loại giao dịch. VD: Rút, Gửi")
-#     transaction_date: Optional[date] = Field(..., description="Ngày giao dịch")
-#     transaction_value: int = Field(..., description="Giá trị giao dịch")
-#
-#
-# class GWReportColumnChartHistoryAccountInfoRequest(BaseSchema):
-#     account_number: str = Field(..., description="Số tài khoản")
+
+class GWReportColumnChartHistoryAccountInfoResponse(BaseSchema):
+    transaction_type: str = Field(..., description="Loại giao dịch. VD: Rút, Gửi")
+    transaction_date: Optional[date] = Field(..., description="Ngày giao dịch")
+    transaction_value: int = Field(..., description="Giá trị giao dịch")
+
+
+class GWReportColumnChartHistoryAccountInfoRequest(BaseSchema):
+    account_number: str = Field(..., description="Số tài khoản")
