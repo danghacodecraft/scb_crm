@@ -1,6 +1,7 @@
 from datetime import date
 
 from fastapi import File, UploadFile
+from pydantic import Field
 
 from app.api.base.schema import BaseSchema
 
@@ -24,3 +25,9 @@ class IdentityMobileRequest(BaseSchema):
     ):
         return (full_name_vn, date_of_birth, gender_id, nationality_id, identity_number, issued_date, expired_date,
                 place_of_issue_id, identity_type, front_side_image, back_side_image, avatar_image)
+
+
+class CustomerMobileRequest(BaseSchema):
+    code: str = Field(None, description='Mã giao dịch')
+    full_name: str = Field(None, description='Họ và tên')
+    identity_number: str = Field(None, description='Số GTDD')
