@@ -44,7 +44,7 @@ async def repos_gw_get_casa_account_info(
     return ReposReturn(data=gw_casa_account_info)
 
 
-async def repos_gw_get_column_casa_account_info(
+async def repos_gw_get_pie_chart_casa_account_info(
     account_number: str,
     current_user: str,
     # from_date: date,

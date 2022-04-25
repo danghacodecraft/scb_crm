@@ -82,10 +82,10 @@ async def view_gw_get_column_casa_account_info(
         request: GWReportPieChartHistoryAccountInfoRequest = Body(...),
         current_user=Depends(get_current_user_from_header())
 ):
-    gw_column_casa_account_info = await CtrGWCasaAccount(current_user).ctr_gw_get_column_casa_account_info(
+    gw_pie_chart_casa_account_info = await CtrGWCasaAccount(current_user).ctr_gw_get_pie_chart_casa_account_info(
         request=request
     )
-    return ResponseData[List[GWReportPieChartHistoryAccountInfoResponse]](**gw_column_casa_account_info)
+    return ResponseData[List[GWReportPieChartHistoryAccountInfoResponse]](**gw_pie_chart_casa_account_info)
 
 
 @router.post(

@@ -1,7 +1,7 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_get_casa_account_by_cif_number, repos_gw_get_casa_account_info,
-    repos_gw_get_column_casa_account_info
+    repos_gw_get_pie_chart_casa_account_info
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWReportPieChartHistoryAccountInfoRequest
@@ -134,8 +134,8 @@ class CtrGWCasaAccount(BaseController):
             is_existed=True if account_info['account_num'] else False
         ))
 
-    async def ctr_gw_get_column_casa_account_info(self, request: GWReportPieChartHistoryAccountInfoRequest):
-        gw_report_history_account_info = self.call_repos(await repos_gw_get_column_casa_account_info(
+    async def ctr_gw_get_pie_chart_casa_account_info(self, request: GWReportPieChartHistoryAccountInfoRequest):
+        gw_report_history_account_info = self.call_repos(await repos_gw_get_pie_chart_casa_account_info(
             account_number=request.account_number,
             current_user=self.current_user.user_info,
             # from_date=request.from_date,
