@@ -1,6 +1,7 @@
 from app.api.base.repository import ReposReturn
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.settings.event import service_gw
+from app.utils.constant.gw import GW_TRANSACTION_NAME_PIE_CHART
 from app.utils.error_messages import ERROR_CALL_SERVICE_GW
 
 
@@ -53,6 +54,7 @@ async def repos_gw_get_pie_chart_casa_account_info(
     is_success, gw_report_history_account_info = await service_gw.get_report_history_casa_account(
         current_user=current_user,
         account_number=account_number,
+        transaction_name=GW_TRANSACTION_NAME_PIE_CHART
         # from_date=from_date,
         # to_date=to_date
     )

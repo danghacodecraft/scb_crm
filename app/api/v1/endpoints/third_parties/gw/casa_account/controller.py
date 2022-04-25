@@ -6,6 +6,8 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWReportPieChartHistoryAccountInfoRequest
 )
+from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
+from app.utils.functions import string_to_date
 
 
 class CtrGWCasaAccount(BaseController):
@@ -150,7 +152,7 @@ class CtrGWCasaAccount(BaseController):
         for report_casa_account in report_casa_accounts:
             pie_chart.append(dict(
                 transaction_type=report_casa_account['tran_type'],
-                transaction_date=report_casa_account['tran_date'],
+                transaction_date=string_to_date(report_casa_account['tran_date'], _format=DATETIME_INPUT_OUTPUT_FORMAT),
                 transaction_value=report_casa_account['tran_value']
             ))
             total += int(report_casa_account['tran_value'])
