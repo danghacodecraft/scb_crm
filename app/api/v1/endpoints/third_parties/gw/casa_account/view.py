@@ -7,6 +7,11 @@ from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
     CtrGWCasaAccount
 )
+from app.api.v1.endpoints.third_parties.gw.casa_account.example import (
+    CASA_ACCOUNT_BY_CIF_NUMBER_SUCCESS_EXAMPLE, CASA_ACCOUNT_CHECK_EXIST_FAIL,
+    CASA_ACCOUNT_CHECK_EXIST_SUCCESS, CASA_ACCOUNT_INFO_SUCCESS_SAMPLE,
+    CASA_ACCOUNT_NUMBER, CASA_ACCOUNT_NUMBER_REQUEST, CASA_CIF_NUMBER_REQUEST
+)
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWCasaAccountByCIFNumberRequest, GWCasaAccountByCIFNumberResponse,
     GWCasaAccountCheckExistRequest, GWCasaAccountCheckExistResponse,
@@ -22,11 +27,13 @@ router = APIRouter()
     description="[GW] Tìm kiếm danh sách Tài Khoản thanh toán theo số CIF",
     responses=swagger_response(
         response_model=ResponseData[GWCasaAccountByCIFNumberResponse],
+        success_examples=CASA_ACCOUNT_BY_CIF_NUMBER_SUCCESS_EXAMPLE,
         success_status_code=status.HTTP_200_OK
     )
 )
 async def view_gw_get_casa_account_by_cif_number(
-        request: GWCasaAccountByCIFNumberRequest = Body(...),
+        request: GWCasaAccountByCIFNumberRequest = Body(
+            ..., example=CASA_CIF_NUMBER_REQUEST),
         current_user=Depends(get_current_user_from_header())
 ):
     customer_information = await CtrGWCasaAccount(current_user).ctr_gw_get_casa_account_by_cif_number(
@@ -41,11 +48,13 @@ async def view_gw_get_casa_account_by_cif_number(
     description="[GW] Kiểm tra số TK thanh toán tự chọn có tồn tại trên CoreFCC",
     responses=swagger_response(
         response_model=ResponseData[GWCasaAccountCheckExistResponse],
+        success_examples=CASA_ACCOUNT_CHECK_EXIST_SUCCESS,
+        fail_examples=CASA_ACCOUNT_CHECK_EXIST_FAIL,
         success_status_code=status.HTTP_200_OK
     )
 )
 async def view_gw_check_exist_casa_account_info(
-        request: GWCasaAccountCheckExistRequest = Body(...),
+        request: GWCasaAccountCheckExistRequest = Body(..., example=CASA_ACCOUNT_NUMBER_REQUEST),
         current_user=Depends(get_current_user_from_header())
 ):
     gw_check_exist_casa_account_info = await CtrGWCasaAccount(current_user).ctr_gw_check_exist_casa_account_info(
@@ -60,11 +69,12 @@ async def view_gw_check_exist_casa_account_info(
     description="[GW] Lấy chi tiết tài Khoản thanh toán theo số tài khoản",
     responses=swagger_response(
         response_model=ResponseData[GWCasaAccountResponse],
+        success_examples=CASA_ACCOUNT_INFO_SUCCESS_SAMPLE,
         success_status_code=status.HTTP_200_OK
     )
 )
 async def view_gw_get_casa_account_info(
-        account_number: str = Path(..., description="Số tài khoản"),
+        account_number: str = Path(..., description="Số tài khoản", example=CASA_ACCOUNT_NUMBER),
         current_user=Depends(get_current_user_from_header())
 ):
     gw_casa_account_info = await CtrGWCasaAccount(current_user).ctr_gw_get_casa_account_info(
