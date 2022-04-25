@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Optional
 
 import aiohttp
@@ -143,9 +144,9 @@ class ServiceGW:
         self,
         current_user: UserInfoResponse,
         account_number: str,
-        transaction_name: str
-        # from_date: date,
-        # to_date: date
+        transaction_name: str,
+        from_date: date,
+        to_date: date
     ):
         request_data = {
             "selectReportHisCaSaFromAcc_in": {
