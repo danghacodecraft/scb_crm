@@ -8,9 +8,15 @@ from app.api.v1.endpoints.cif.base_field import CustomField
 from app.api.v1.endpoints.third_parties.gw.customer.controller import (
     CtrGWCustomer
 )
+from app.api.v1.endpoints.third_parties.gw.customer.example import (
+    CUSTOMER_CHECK_EXIST_CIF_ID_FAIL_EXAMPLE,
+    CUSTOMER_CHECK_EXIST_CIF_ID_SUCCESS_EXAMPLE, CUSTOMER_CIF_ID,
+    CUSTOMER_INFO_DETAIL_SUCCESS_EXAMPLE, CUSTOMER_INFO_LIST_SUCCESS_EXAMPLE
+)
 from app.api.v1.endpoints.third_parties.gw.customer.schema import (
     CustomerInfoListCIFRequest, GWCustomerCheckExistRequest,
-    GWCustomerCheckExistResponse
+    GWCustomerCheckExistResponse, GWCustomerInfoDetailResponse,
+    GWCustomerInfoListResponse
 )
 
 router = APIRouter()
@@ -21,19 +27,20 @@ router = APIRouter()
     name="[GW] Lấy thông tin khách hàng",
     description="[GW] Lấy thông tin khách hàng CIF/CMND/CCCD/Số điện thoại/Họ tên KH",
     responses=swagger_response(
-        response_model=ResponseData,
+        response_model=ResponseData[GWCustomerInfoListResponse],
+        success_examples=CUSTOMER_INFO_LIST_SUCCESS_EXAMPLE,
         success_status_code=status.HTTP_200_OK
     )
 )
 async def view_gw_get_customer_info_list(
-        request: CustomerInfoListCIFRequest = Body(...),
+        request: CustomerInfoListCIFRequest = Body(..., example=CUSTOMER_CIF_ID),
         current_user=Depends(get_current_user_from_header())
 ):
     gw_customer_info_list = await CtrGWCustomer(current_user).ctr_gw_get_customer_info_list(
         cif_number=request.cif_number
     )
 
-    return ResponseData(**gw_customer_info_list)
+    return ResponseData[GWCustomerInfoListResponse](**gw_customer_info_list)
 
 
 @router.post(
@@ -42,11 +49,13 @@ async def view_gw_get_customer_info_list(
     description="[GW] Kiểm tra số CIF tự chọn có tồn tại trên CoreFCC",
     responses=swagger_response(
         response_model=ResponseData[GWCustomerCheckExistResponse],
+        success_examples=CUSTOMER_CHECK_EXIST_CIF_ID_SUCCESS_EXAMPLE,
+        fail_examples=CUSTOMER_CHECK_EXIST_CIF_ID_FAIL_EXAMPLE,
         success_status_code=status.HTTP_200_OK
     )
 )
 async def view_gw_check_exist_casa_account_info(
-        request: GWCustomerCheckExistRequest = Body(...),
+        request: GWCustomerCheckExistRequest = Body(..., example=CUSTOMER_CIF_ID),
         current_user=Depends(get_current_user_from_header())
 ):
     gw_check_exist_casa_account_info = await CtrGWCustomer(current_user).ctr_gw_check_exist_customer_detail_info(
@@ -60,7 +69,8 @@ async def view_gw_check_exist_casa_account_info(
     name="[GW] Lấy chi tiết thông tin khách hàng",
     description="Lấy chi tiết thông tin khách hàng theo CIF",
     responses=swagger_response(
-        response_model=ResponseData,
+        response_model=ResponseData[GWCustomerInfoDetailResponse],
+        success_examples=CUSTOMER_INFO_DETAIL_SUCCESS_EXAMPLE,
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -71,4 +81,4 @@ async def view_gw_get_customer_info_detail(
     gw_customer_info_detail = await CtrGWCustomer(current_user).ctr_gw_get_customer_info_detail(
         cif_number=cif_number
     )
-    return ResponseData(**gw_customer_info_detail)
+    return ResponseData[GWCustomerInfoDetailResponse](**gw_customer_info_detail)
