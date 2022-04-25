@@ -396,7 +396,7 @@ CASA_ACCOUNT_CHECK_EXIST_FAIL_EXAMPLE = {
     }
 }
 
-CASA_ACCOUNT_INFO_SUCCESS_SAMPLE = {
+CASA_ACCOUNT_INFO_SUCCESS_EXAMPLE = {
     "example": {
         "value": {
             "data": {

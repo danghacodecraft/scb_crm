@@ -10,8 +10,9 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
 from app.api.v1.endpoints.third_parties.gw.casa_account.example import (
     CASA_ACCOUNT_BY_CIF_NUMBER_SUCCESS_EXAMPLE,
     CASA_ACCOUNT_CHECK_EXIST_FAIL_EXAMPLE,
-    CASA_ACCOUNT_CHECK_EXIST_SUCCESS_EXAMPLE, CASA_ACCOUNT_INFO_SUCCESS_SAMPLE,
-    CASA_ACCOUNT_NUMBER, CASA_ACCOUNT_NUMBER_REQUEST, CASA_CIF_NUMBER_REQUEST
+    CASA_ACCOUNT_CHECK_EXIST_SUCCESS_EXAMPLE,
+    CASA_ACCOUNT_INFO_SUCCESS_EXAMPLE, CASA_ACCOUNT_NUMBER,
+    CASA_ACCOUNT_NUMBER_REQUEST, CASA_CIF_NUMBER_REQUEST
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWCasaAccountByCIFNumberRequest, GWCasaAccountByCIFNumberResponse,
@@ -70,7 +71,7 @@ async def view_gw_check_exist_casa_account_info(
     description="[GW] Lấy chi tiết tài Khoản thanh toán theo số tài khoản",
     responses=swagger_response(
         response_model=ResponseData[GWCasaAccountResponse],
-        success_examples=CASA_ACCOUNT_INFO_SUCCESS_SAMPLE,
+        success_examples=CASA_ACCOUNT_INFO_SUCCESS_EXAMPLE,
         success_status_code=status.HTTP_200_OK
     )
 )
