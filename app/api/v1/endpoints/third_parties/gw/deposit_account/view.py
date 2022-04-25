@@ -10,6 +10,10 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
 from app.api.v1.endpoints.third_parties.gw.deposit_account.controller import (
     CtrGWDepositAccount
 )
+from app.api.v1.endpoints.third_parties.gw.deposit_account.example import (
+    DEPOSIT_ACCOUNT_BY_CIF_NUMBER_SUCCESS_EXAMPLE, DEPOSIT_ACCOUNT_NUMBER,
+    DEPOSIT_ACCOUNT_TD_SUCCESS_EXAMPLE, DEPOSIT_CIF_NUMBER_REQUEST
+)
 from app.api.v1.endpoints.third_parties.gw.deposit_account.schema import (
     GWDepositAccountByCIFNumberResponse, GWDepositAccountTDResponse
 )
@@ -24,11 +28,12 @@ router = APIRouter()
     description="[GW] Tìm kiếm danh sách Tài khoản tiết kiệm theo số CIF",
     responses=swagger_response(
         response_model=ResponseData[GWCasaAccountByCIFNumberResponse],
+        success_examples=DEPOSIT_ACCOUNT_BY_CIF_NUMBER_SUCCESS_EXAMPLE,
         success_status_code=status.HTTP_200_OK
     )
 )
 async def view_gw_get_deposit_account_by_cif_number(
-        request: GWCasaAccountByCIFNumberRequest = Body(...),
+        request: GWCasaAccountByCIFNumberRequest = Body(..., example=DEPOSIT_CIF_NUMBER_REQUEST),
         current_user=Depends(get_current_user_from_header())
 ):
     gw_deposit_account = await CtrGWDepositAccount(current_user).ctr_gw_get_deposit_account_by_cif_number(
@@ -43,11 +48,12 @@ async def view_gw_get_deposit_account_by_cif_number(
     description="Lấy chi tiết tài Khoản tiết kiệm theo số tài khoản",
     responses=swagger_response(
         response_model=ResponseData[SaveSuccessResponse],
+        success_examples=DEPOSIT_ACCOUNT_TD_SUCCESS_EXAMPLE,
         success_status_code=status.HTTP_200_OK
     )
 )
 async def view_gw_get_deposit_account_td(
-        account_number: str = Path(..., description="Số tài khoản"),
+        account_number: str = Path(..., description="Số tài khoản", example=DEPOSIT_ACCOUNT_NUMBER),
         current_user=Depends(get_current_user_from_header())
 ):
     gw_deposit_account_td = await CtrGWDepositAccount(current_user).ctr_gw_get_deposit_account_td(
