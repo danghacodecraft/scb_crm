@@ -42,3 +42,26 @@ async def repos_gw_get_casa_account_info(
         )
 
     return ReposReturn(data=gw_casa_account_info)
+
+
+async def repos_gw_get_column_casa_account_info(
+    account_number: str,
+    current_user: str,
+    # from_date: date,
+    # to_date: date
+):
+    is_success, gw_report_history_account_info = await service_gw.get_report_history_casa_account(
+        current_user=current_user,
+        account_number=account_number,
+        # from_date=from_date,
+        # to_date=to_date
+    )
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="get_report_history_casa_account",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(gw_report_history_account_info)
+        )
+
+    return ReposReturn(data=gw_report_history_account_info)

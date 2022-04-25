@@ -1,9 +1,13 @@
-from typing import List, Optional
+from datetime import date
+from typing import List, Optional, Union
 
 from pydantic import Field
 
 from app.api.base.schema import BaseSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
+from app.api.v1.endpoints.third_parties.gw.casa_account.example import (
+    CASA_ACCOUNT_NUMBER
+)
 from app.api.v1.endpoints.third_parties.gw.schema import (
     GWBranchDropdownResponse, GWCIFInfoResponse
 )
@@ -81,6 +85,22 @@ class GWCasaAccountResponse(BaseSchema):
     customer_info: GWCustomerInfoResponse = Field(..., description="Thông tin người sỡ hữu tài khoản")
     cif_info: GWCIFInfoResponse = Field(..., description="Thông tin CIF")
     account_info: GWAccountInfoResponse = Field(..., description="Thông tin tài khoản")
+
+
+class GWReportPieChartHistoryAccountInfoRequest(BaseSchema):
+    account_number: str = Field(..., description="Số tài khoản", example=CASA_ACCOUNT_NUMBER)
+    # from_date: date = Field(date(year=2020, month=4, day=20), description="Từ ngày")
+    # to_date: date = Field(date(year=2025, month=7, day=20), description="Đến ngày")
+
+
+class GWReportPieChartHistoryAccountInfoResponse(BaseSchema):
+    transaction_type: str = Field(
+        ..., description="""Loại giao dịch. VD: Chuyển tiền đi, Chi tiêu thẻ,
+        Chuyển tiền đến, Rút tiền mặt, Nộp tiền mặt, Thanh toán hóa đơn, Khác"""
+    )
+    transaction_date: Union[date, str] = Field(..., description="Ngày giao dịch")
+    transaction_value: int = Field(..., description="Giá trị giao dịch")
+    transaction_percent: float = Field(..., description="Phần trăm giao dịch")
 
 
 class GWCasaAccountCheckExistResponse(BaseSchema):
