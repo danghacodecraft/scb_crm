@@ -44,7 +44,8 @@ from app.utils.constant.cif import (
     ACTIVE_FLAG_ACTIVED, ADDRESS_COUNTRY_CODE_VN, BUSINESS_FORM_TTCN_GTDD_GTDD,
     BUSINESS_FORM_TTCN_GTDD_KM, BUSINESS_TYPE_INIT_CIF, CONTACT_ADDRESS_CODE,
     CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE, DROPDOWN_NONE_DICT,
-    EKYC_GENDER_TYPE_FEMALE, EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
+    EKYC_DOCUMENT_TYPE, EKYC_GENDER_TYPE_FEMALE,
+    EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_BACK_SIDE_IDENTITY_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD,
@@ -737,6 +738,14 @@ async def repos_upload_identity_document_and_ocr(
     if not file_response:
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_FILE)
 
+    ocr_response_data = dict(
+        identity_document_type=dict(
+            id=ocr_response.get('document_type'),
+            code=ocr_response.get('document_type'),
+            name=EKYC_DOCUMENT_TYPE[ocr_response.get('document_type')]
+        )
+    )
+
     if identity_type == EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD:
         response_data = await mapping_ekyc_front_side_identity_card_ocr_data(
             image_url=file_response['file_url'],
@@ -768,7 +777,9 @@ async def repos_upload_identity_document_and_ocr(
             session=session
         )
 
-    return ReposReturn(data=response_data)
+    ocr_response_data.update(response_data)
+
+    return ReposReturn(data=ocr_response_data)
 
 
 async def mapping_ekyc_front_side_identity_card_ocr_data(image_url: str, ocr_data: dict, session: Session):
