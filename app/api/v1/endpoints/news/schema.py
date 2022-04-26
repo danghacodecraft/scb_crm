@@ -69,6 +69,7 @@ class NewsCommentBase(BaseSchema):
     content: str = Field(..., description='Nội dung comment')
     total_likes: int = Field(..., description='Số lượt thích')
     parent_id: str = Field(None, description='id comment cha')
+    is_like: bool = Field(..., description="Trạng thái like")
     created_at: datetime = Field(None, description="Ngày tạo bình luận")
 
 
