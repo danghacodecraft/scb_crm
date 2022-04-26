@@ -107,14 +107,10 @@ async def repo_add_comment(data_comment,
 async def get_list_comment(session: Session, news_id: str, filter_by: str, page: int) -> ReposReturn:
     # Querry list comment cha
     query = select(NewsComment).filter(and_(NewsComment.news_id == news_id, NewsComment.parent_id == None))  # noqa
-    query_cmt_child = select(NewsComment).filter(
-        and_(NewsComment.news_id == news_id, NewsComment.parent_id != None))  # noqa
     if filter_by == NEWS_COMMENT_FILTER_BY_INTERESTED:
         query = query.order_by(desc(NewsComment.total_likes))
-        query_cmt_child = query_cmt_child.order_by(desc(NewsComment.total_likes))
     else:
         query = query.order_by(desc(NewsComment.created_at))
-        query_cmt_child = query_cmt_child.order_by(desc(NewsComment.created_at))
 
     total_comment_parent = session.execute(query).all()
     query = query.limit(page * 10)
@@ -122,6 +118,12 @@ async def get_list_comment(session: Session, news_id: str, filter_by: str, page:
     objs = session.execute(query).scalars().all()
 
     # Querry list comment con
+    cmt_parent_ids = []
+    for item in objs:
+        cmt_parent_ids.append(item.id)
+
+    query_cmt_child = select(NewsComment).filter(
+        and_(NewsComment.news_id == news_id, NewsComment.parent_id.in_(cmt_parent_ids)))
     objs_child = session.execute(query_cmt_child).scalars().all()
 
     return ReposReturn(data={
@@ -193,3 +195,12 @@ async def repo_get_users_contact(codes: tuple, session: Session):
         return ReposReturn(is_error=True, msg=str(ex))
 
     return ReposReturn(data=data_contact)
+
+
+async def get_comment_like_by_user(session: Session, comment_ids: list, user_id: str):
+    query_data = select(CommentLike.comment_id).filter(and_(CommentLike.comment_id.in_(comment_ids),
+                                                 CommentLike.create_user_id == user_id)) # noqa
+
+    cmts_data = session.execute(query_data).scalars().all()
+
+    return ReposReturn(data=cmts_data)

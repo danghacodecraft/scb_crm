@@ -1,9 +1,9 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.news.repository import (
-    get_comment_by_id, get_data_by_id, get_like_by_user, get_list_comment,
-    get_list_scb_news, repo_add_comment, repo_add_comment_like,
-    repo_get_users_contact, repo_remove_comment_like, repos_add_scb_news,
-    repos_update_scb_news
+    get_comment_by_id, get_comment_like_by_user, get_data_by_id,
+    get_like_by_user, get_list_comment, get_list_scb_news, repo_add_comment,
+    repo_add_comment_like, repo_get_users_contact, repo_remove_comment_like,
+    repos_add_scb_news, repos_update_scb_news
 )
 from app.api.v1.endpoints.news.schema import NewsCommentRequest
 from app.settings.event import service_file
@@ -264,22 +264,31 @@ class CtrNews(BaseController):
         list_comment = comments["list_comment"]
         list_comment_child = comments["list_child_comment"]
 
+        list_comment_id = []
         list_data_res = []
 
-        """ Lấy thông tin người dùng đã bình luận"""
+        """ 1. Lấy thông tin user_code người dùng đã bình luận (user_codes)
+            2. Lấy id comment(list_comment_id)
+        """
         user_codes = []
         for cmt_parent_item in list_comment:
             user_codes.append(cmt_parent_item.create_user_id)
+            list_comment_id.append(cmt_parent_item.id)
         for cmt_child_item in list_comment_child:
             user_codes.append(cmt_child_item.create_user_id)
+            list_comment_id.append(cmt_child_item.id)
 
-        user_codes = tuple(set(user_codes))
+        user_codes = tuple(user_codes)
         users_comment_info = self.call_repos(
             await repo_get_users_contact(
                 codes=user_codes,
                 session=self.oracle_session_task
             )
         )
+
+        comments_like_by_user = self.call_repos(await get_comment_like_by_user(session=self.oracle_session,
+                                                                               comment_ids=list_comment_id,
+                                                                               user_id=self.current_user.user_info.code))
 
         users_info_cmt = {}
         for user_info in users_comment_info:
@@ -301,8 +310,13 @@ class CtrNews(BaseController):
                 "content": cmt_item.content,
                 "total_likes": cmt_item.total_likes,
                 "parent_id": cmt_item.parent_id,
-                "created_at": cmt_item.created_at
+                "created_at": cmt_item.created_at,
+                "is_like": False
             }
+            if cmt_item.id in comments_like_by_user:
+                cmt_data.update({
+                    "is_like": True
+                })
             list_data_res.append(cmt_data)
 
         for parrent_cmt in list_data_res:
@@ -319,8 +333,13 @@ class CtrNews(BaseController):
                         "content": child_cmt.content,
                         "total_likes": child_cmt.total_likes,
                         "parent_id": child_cmt.parent_id,
-                        "created_at": child_cmt.created_at
+                        "created_at": child_cmt.created_at,
+                        "is_like": False
                     }
+                    if child_cmt.id in comments_like_by_user:
+                        cmt_child_data.update({
+                            "is_like": True
+                        })
                     comment_child.append(cmt_child_data)
             parrent_cmt.update({
                 "comment_child": comment_child
