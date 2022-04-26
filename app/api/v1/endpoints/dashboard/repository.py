@@ -25,19 +25,21 @@ from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese
 
 
 async def repos_count_total_item(search_box: str, session: Session) -> ReposReturn:
-    if not search_box:
-        transaction_list = select(
-            func.count(Customer.id)
-        )
-    else:
+    transaction_list = select(
+        func.count(Booking.code)
+    ) \
+        .join(BookingCustomer, Booking.id == BookingCustomer.booking_id) \
+        .join(Customer, BookingCustomer.customer_id == Customer.id) \
+        .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id)
+
+    if search_box:
         search_box = f'%{search_box}%'
-        transaction_list = select(
-            func.count(Customer.id)
-        ).join(
-            CustomerIdentity, Customer.id == CustomerIdentity.customer_id
-        ).filter(
+        transaction_list = transaction_list.filter(
             or_(
-                CustomerIdentity.identity_num.ilike(search_box),
+                Booking.code.ilike(search_box),
+                or_(
+                    CustomerIdentity.identity_num.ilike(search_box),
+                ),
                 or_(
                     Customer.full_name.ilike(convert_to_unsigned_vietnamese(search_box))
                 ),
