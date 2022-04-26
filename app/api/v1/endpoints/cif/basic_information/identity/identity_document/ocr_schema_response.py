@@ -6,7 +6,6 @@ from pydantic import Field
 from app.api.base.schema import BaseSchema
 from app.api.v1.schemas.utils import DropdownResponse, OptionalDropdownResponse
 
-
 # Thông tin dùng chung
 ########################################################################################################################
 
@@ -58,6 +57,7 @@ class OCRResultFrontSideIdentityCardResponse(BaseSchema):
 
 # RESPONSE CMND
 class OCRFrontSideIdentityCardResponse(BaseSchema):
+    identity_document_type: DropdownResponse = Field(..., description="Loại giấy tờ định danh")
     front_side_information: FrontSideIdentityCitizenCardResponse = Field(..., description="Thông tin mặt trước")
     ocr_result: OCRResultFrontSideIdentityCardResponse = Field(...,
                                                                description="Phân tích OCR thông tin mặt trước CMND")
@@ -84,6 +84,7 @@ class OCRResultBackSideIdentityCardResponse(BaseSchema):
 
 
 class OCRBackSideIdentityCardResponse(BaseSchema):
+    identity_document_type: DropdownResponse = Field(..., description="Loại giấy tờ định danh")
     back_side_information: BackSideIdentityCardResponse = Field(..., description="Thông tin mặt sau")
     ocr_result: OCRResultBackSideIdentityCardResponse = Field(..., description="Phân tích OCR mặt sau CMND")
 
@@ -129,6 +130,7 @@ class OCRResultPassportResponse(BaseSchema):
 
 # RESPONSE HC
 class OCRPassportResponse(BaseSchema):
+    identity_document_type: DropdownResponse = Field(..., description="Loại giấy tờ định danh")
     passport_information: InformationPassportResponse = Field(..., description="Thông tin hộ chiếu")
     ocr_result: OCRResultPassportResponse = Field(..., description="Phân tích OCR")
 
@@ -157,6 +159,7 @@ class OCRResultFrontSideCitizenCardResponse(BaseSchema):
 
 
 class OCRFrontSideCitizenCardResponse(BaseSchema):
+    identity_document_type: DropdownResponse = Field(..., description="Loại giấy tờ định danh")
     front_side_information: FrontSideIdentityCitizenCardResponse = Field(..., description="Thông tin mặt trước")
     ocr_result: OCRResultFrontSideCitizenCardResponse = Field(...,
                                                               description="Phân tích OCR thông tin mặt trước CCCD")
@@ -183,6 +186,7 @@ class OCRResultBackSideCitizenCardResponse(BaseSchema):
 
 
 class OCRBackSideCitizenCardResponse(BaseSchema):
+    identity_document_type: DropdownResponse = Field(..., description="Loại giấy tờ định danh")
     back_side_information: BackSideCitizenCardResponse = Field(..., description="Thông tin mặt sau")
     ocr_result: OCRResultBackSideCitizenCardResponse = Field(..., description="Phân tích OCR mặt sau CCCD")
 ########################################################################################################################

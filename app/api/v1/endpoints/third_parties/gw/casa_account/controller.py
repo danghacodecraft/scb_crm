@@ -15,7 +15,7 @@ from app.utils.constant.gw import (
     GW_TRANSACTION_TYPE_SEND, GW_TRANSACTION_TYPE_WITHDRAW
 )
 from app.utils.error_messages import ERROR_INVALID_TOTAL
-from app.utils.functions import string_to_date
+from app.utils.functions import orjson_loads, string_to_date
 
 
 class CtrGWCasaAccount(BaseController):
@@ -92,6 +92,14 @@ class CtrGWCasaAccount(BaseController):
 
         account_info = customer_info['account_info']
         branch_info = account_info['branch_info']
+        status_info = []
+        list_account_status = orjson_loads(account_info['account_status'])[0]
+        for key, value in list_account_status.items():
+            status_info.append(dict(
+                id=key,
+                code=key,
+                name=value
+            ))
         gw_casa_account_info_response = dict(
             number=account_info['account_num'],
             type=account_info['account_type'],
@@ -105,7 +113,7 @@ class CtrGWCasaAccount(BaseController):
             latest_transaction_date=account_info['account_latest_trans_date'],
             open_date=account_info['account_open_date'],
             maturity_date=account_info['account_maturity_date'],
-            status=account_info['account_status'],
+            status=status_info,
             lock_status=account_info['account_lock_status'],
             class_name=account_info['account_class_name'],
             class_code=account_info['account_class_code'],

@@ -25,24 +25,23 @@ from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese
 
 
 async def repos_count_total_item(search_box: str, session: Session) -> ReposReturn:
-    if not search_box:
-        transaction_list = select(
-            func.count(Customer.id)
-        )
-    else:
+    transaction_list = select(
+        func.count(Booking.code)
+    ) \
+        .join(BookingCustomer, Booking.id == BookingCustomer.booking_id) \
+        .join(Customer, BookingCustomer.customer_id == Customer.id) \
+        .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id)
+
+    if search_box:
         search_box = f'%{search_box}%'
-        transaction_list = select(
-            func.count(Customer.id)
-        ).join(
-            CustomerIdentity, Customer.id == CustomerIdentity.customer_id
-        ).filter(
+        transaction_list = transaction_list.filter(
             or_(
-                CustomerIdentity.identity_num.ilike(search_box),
+                Booking.code.ilike(search_box),
                 or_(
+                    Customer.cif_number.ilike(search_box),
+                    or_(
+                        CustomerIdentity.identity_num.ilike(search_box)),
                     Customer.full_name.ilike(convert_to_unsigned_vietnamese(search_box))
-                ),
-                or_(
-                    Customer.cif_number.ilike(search_box)
                 )
             )
         )
@@ -59,6 +58,7 @@ async def repos_get_transaction_list(search_box: Optional[str], limit: int, page
     ) \
         .join(BookingCustomer, Customer.id == BookingCustomer.customer_id) \
         .join(Booking, BookingCustomer.booking_id == Booking.id) \
+        .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
         .limit(limit) \
         .offset(limit * (page - 1)) \
         .order_by(desc(Customer.open_cif_at))
@@ -69,13 +69,10 @@ async def repos_get_transaction_list(search_box: Optional[str], limit: int, page
             or_(
                 Booking.code.ilike(search_box),
                 or_(
-                    CustomerIdentity.identity_num.ilike(search_box),
-                ),
-                or_(
+                    Customer.cif_number.ilike(search_box),
+                    or_(
+                        CustomerIdentity.identity_num.ilike(search_box)),
                     Customer.full_name.ilike(convert_to_unsigned_vietnamese(search_box))
-                ),
-                or_(
-                    Customer.cif_number.ilike(search_box)
                 )
             )
         )
@@ -94,18 +91,19 @@ async def repos_get_total_item(
     customers = select(
         func.count(Customer.id)
     ) \
-        .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
-        .join(CustomerAddress,
-              and_(
-                  Customer.id == CustomerAddress.customer_id,
-                  CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE
-              )) \
-        .join(AddressWard, CustomerAddress.address_ward_id == AddressWard.id) \
-        .join(AddressDistrict, CustomerAddress.address_district_id == AddressDistrict.id) \
-        .join(AddressProvince, CustomerAddress.address_province_id == AddressProvince.id) \
-        .join(AddressCountry, CustomerAddress.address_country_id == AddressCountry.id) \
-        .join(Branch, Customer.open_branch_id == Branch.id)
+        .outerjoin(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
+        .outerjoin(CustomerAddress,
+                   and_(
+                       Customer.id == CustomerAddress.customer_id,
+                       CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE
+                   )) \
+        .outerjoin(AddressWard, CustomerAddress.address_ward_id == AddressWard.id) \
+        .outerjoin(AddressDistrict, CustomerAddress.address_district_id == AddressDistrict.id) \
+        .outerjoin(AddressProvince, CustomerAddress.address_province_id == AddressProvince.id) \
+        .outerjoin(AddressCountry, CustomerAddress.address_country_id == AddressCountry.id) \
+        .outerjoin(Branch, Customer.open_branch_id == Branch.id)
 
+    customers = customers.filter(Customer.complete_flag == True)   # noqa
     if cif_number:
         customers = customers.filter(Customer.cif_number.ilike(f'%{cif_number}%'))
     if identity_number:
@@ -150,8 +148,9 @@ async def repos_get_customer(
         .outerjoin(AddressDistrict, CustomerAddress.address_district_id == AddressDistrict.id) \
         .outerjoin(AddressProvince, CustomerAddress.address_province_id == AddressProvince.id) \
         .outerjoin(AddressCountry, CustomerAddress.address_country_id == AddressCountry.id) \
-        .join(Branch, Customer.open_branch_id == Branch.id)
+        .outerjoin(Branch, Customer.open_branch_id == Branch.id)
 
+    customers = customers.filter(Customer.complete_flag == True) # noqa
     if cif_number:
         customers = customers.filter(Customer.cif_number.ilike(f'%{cif_number}%'))
     if identity_number:
