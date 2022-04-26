@@ -9,7 +9,9 @@ from app.api.v1.endpoints.cif.basic_information.identity.sub_identity_document.r
 from app.api.v1.endpoints.cif.basic_information.identity.sub_identity_document.schema import (
     SubIdentityDocumentRequest
 )
-from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
+from app.api.v1.endpoints.cif.repository import (
+    repos_get_booking_code, repos_get_initializing_customer
+)
 from app.third_parties.oracle.models.master_data.identity import (
     CustomerSubIdentityType, PlaceOfIssue
 )
@@ -246,4 +248,11 @@ class CtrSubIdentityDocument(BaseController):
                 log_data=orjson_dumps(log_data)
             )
         )
+
+        # Lấy Booking Code
+        booking_code = self.call_repos(await repos_get_booking_code(
+            cif_id=cif_id, session=self.oracle_session
+        ))
+        info_save_document.update(booking_code=booking_code)
+
         return self.response(data=info_save_document)
