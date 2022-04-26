@@ -22,7 +22,9 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWCasaAccountResponse, GWReportColumnChartHistoryAccountInfoRequest,
     GWReportColumnChartHistoryAccountInfoResponse,
     GWReportPieChartHistoryAccountInfoRequest,
-    GWReportPieChartHistoryAccountInfoResponse
+    GWReportPieChartHistoryAccountInfoResponse,
+    GWReportStatementHistoryAccountInfoRequest,
+    GWReportStatementHistoryAccountInfoResponse
 )
 
 router = APIRouter()
@@ -108,6 +110,26 @@ async def view_gw_get_column_chart_casa_account_info(
         request=request
     )
     return ResponseData[List[GWReportColumnChartHistoryAccountInfoResponse]](**gw_column_chart_casa_account_info)
+
+
+@router.post(
+    path="/statement/",
+    name="[GW] Thông tin giao dịch",
+    description="[GW] Sao kê giao dịch theo số tài khoản thanh toán ( lịch sử giao dịch tài khoản thanh toán)",
+    responses=swagger_response(
+        response_model=ResponseData[GWReportStatementHistoryAccountInfoResponse],
+        success_examples=CASA_ACCOUNT_INFO_SUCCESS_EXAMPLE,
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_get_statement_casa_account_info(
+        request: GWReportStatementHistoryAccountInfoRequest = Body(...),
+        current_user=Depends(get_current_user_from_header())
+):
+    gw_statement_casa_account_info = await CtrGWCasaAccount(current_user).ctr_gw_get_statement_casa_account_info(
+        request=request
+    )
+    return ResponseData[List[GWReportStatementHistoryAccountInfoResponse]](**gw_statement_casa_account_info)
 
 
 @router.post(
