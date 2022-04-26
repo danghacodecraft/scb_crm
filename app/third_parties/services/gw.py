@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Optional
 
 import aiohttp
@@ -17,6 +18,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_RETRIEVE_DEPOSIT_ACCOUNT_TD,
     GW_ENDPOINT_URL_RETRIEVE_REPORT_HIS_CASA_ACCOUNT
 )
+from app.utils.functions import date_to_string
 
 
 class ServiceGW:
@@ -143,7 +145,9 @@ class ServiceGW:
         self,
         current_user: UserInfoResponse,
         account_number: str,
-        transaction_name: str
+        transaction_name: str,
+        from_date: date,
+        to_date: date
     ):
         request_data = {
             "selectReportHisCaSaFromAcc_in": {
@@ -161,7 +165,9 @@ class ServiceGW:
                     "transaction_info": {
                         "transaction_name": transaction_name,
                         "transaction_value": {
-                            "P_ACC": account_number
+                            "P_ACC": account_number,
+                            "P_FDATE": date_to_string(from_date),
+                            "P_TDATE": date_to_string(to_date)
                         }
                     }
                 }
