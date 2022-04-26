@@ -78,7 +78,7 @@ class CtrTemplateDetail(BaseController):
                 "S1.A.1.2.1": cust.Customer.mobile_number,
                 "S1.A.1.5.6": ["Đồng ý"] if cust.Customer.advertising_marketing_flag else ["Không đồng ý"],
 
-                "S1.A.1.5.4": [cust.Career.name],
+                "S1.A.1.5.4": cust.Career.name,
                 "S1.A.1.5.3": [cust.AverageIncomeAmount.name],
                 "S1.A.1.2.9": [cust.MaritalStatus.name],
 
@@ -100,23 +100,24 @@ class CtrTemplateDetail(BaseController):
 
         # Người giám hộ
         if guardians:
-            guardian = guardians[0]
-            data_request.update({
-                # "S1.A.1.2.41": guardian.CustomerRelationshipType.name,
-                "S1.A.1.2.44": guardian.Customer.full_name_vn,
-                "S1.A.1.2.42": guardian.Customer.cif_number,
-                "S1.A.1.2.51": guardian.CustomerIdentity.identity_num
-            })
+            guardians_res = [{
+                "S1.A.1.2.44": item.Customer.full_name_vn,
+                "S1.A.1.2.51": item.CustomerIdentity.identity_num,
+                "S1.A.1.2.42": item.Customer.cif_number
+            } for item in guardians]
+
+            data_request.update({"S1.A.1.2.44": guardians_res})
 
         # Người đồng sở hữu
         if customer_join:
-            customer = customer_join[0]
-            data_request.update({
+            customer_join_res = [{
                 # "S1.A.1.8": "",
-                "S1.A.1.8.3": customer.CustomerJoin.full_name_vn,
-                "S1.A.1.8.2": customer.CustomerJoin.cif_number,
-                "S1.A.1.8.4": customer.CustomerIdentity.identity_num
-            })
+                "S1.A.1.8.3": item.CustomerJoin.full_name_vn,
+                "S1.A.1.8.2": item.CustomerJoin.cif_number,
+                "S1.A.1.8.4": item.CustomerIdentity.identity_num
+            } for item in customer_join]
+
+            data_request.update({"S1.A.1.8.3": customer_join_res})
 
         # Thẻ ghi nợ (Thẻ chính - Thẻ phụ)
         if main_cards:
@@ -127,20 +128,22 @@ class CtrTemplateDetail(BaseController):
                 "S1.A.1.10.14": {
                     "value": main_cards[0].Customer.full_name,
                     "type": "embossed_table"
-
                 }
             })
 
         if sup_cards:
-            data_request.update({
-                "S1.A.1.10.27.1": sup_cards[0].Customer.full_name_vn,
-                "S1.A.1.10.27": sup_cards[0].Customer.cif_number,
-                "S1.A.1.10.27.2": sup_cards[0].CustomerIdentity.identity_num,
+            sup_cards_res = [{
+                "S1.A.1.10.27.1": item.Customer.full_name_vn,
+                "S1.A.1.10.27": item.Customer.cif_number,
+                "S1.A.1.10.27.2": item.CustomerIdentity.identity_num,
                 "S1.A.1.10.28": {
-                    "value": sup_cards[0].Customer.full_name,
+                    "value": item.Customer.full_name,
                     "type": "embossed_table"
                 }
-            })
+            } for item in sup_cards]
+
+            data_request.update({"S1.A.1.10.27.1": sup_cards_res})
+
             if sup_cards[0].DebitCard.card_delivery_address_flag:
                 data_request.update({"S1.A.1.10.18": ["Địa chỉ liên lạc"]})
             else:
@@ -175,10 +178,7 @@ class CtrTemplateDetail(BaseController):
         # Cam kết
         time = today()
         data_request.update({
-            "S1.A.1.11.10": f'{time.day}',
-            "S1.A.1.11.11": f'{time.month}',
-            " S1.A.1.11.12": f'{time.year}',
-
+            "S1.A.1.11.10": f'{time.day}', "S1.A.1.11.11": f'{time.month}', "S1.A.1.11.12": f'{time.year}',
         })
         # data_request.update({
         #     "S1.A.1.11.5": self.current_user.user_info
@@ -263,7 +263,7 @@ class CtrTemplateDetail(BaseController):
                 "S1.A.1.5.6": ["Đồng ý/Agree"] if cust.Customer.advertising_marketing_flag else [
                     "Không đồng ý/Do not agree"],
 
-                "S1.A.1.5.4": [cust.Career.name],
+                "S1.A.1.5.4": cust.Career.name,
                 "S1.A.1.5.3": [cust.AverageIncomeAmount.name],
                 "S1.A.1.2.9": ["Độc thân/Single"] if cust.MaritalStatus.name == "Độc thân" else [
                     "Đã có gia đình/Married"],
@@ -286,23 +286,24 @@ class CtrTemplateDetail(BaseController):
 
         # Người giám hộ
         if guardians:
-            guardian = guardians[0]
-            data_request.update({
-                # "S1.A.1.2.41":,
-                "S1.A.1.2.44": guardian.Customer.full_name_vn,
-                "S1.A.1.2.42": guardian.Customer.cif_number,
-                "S1.A.1.2.51": guardian.CustomerIdentity.identity_num
-            })
+            guardians_res = [{
+                "S1.A.1.2.44": item.Customer.full_name_vn,
+                "S1.A.1.2.51": item.CustomerIdentity.identity_num,
+                "S1.A.1.2.42": item.Customer.cif_number
+            } for item in guardians]
+
+            data_request.update({"S1.A.1.2.44": guardians_res})
 
         # Người đồng sở hữu
         if customer_join:
-            customer = customer_join[0]
-            data_request.update({
+            customer_join_res = [{
                 # "S1.A.1.8": "",
-                "S1.A.1.8.3": customer.CustomerJoin.full_name_vn,
-                "S1.A.1.8.2": customer.CustomerJoin.cif_number,
-                "S1.A.1.8.4": customer.CustomerIdentity.identity_num
-            })
+                "S1.A.1.8.3": item.CustomerJoin.full_name_vn,
+                "S1.A.1.8.2": item.CustomerJoin.cif_number,
+                "S1.A.1.8.4": item.CustomerIdentity.identity_num
+            } for item in customer_join]
+
+            data_request.update({"S1.A.1.8.3": customer_join_res})
 
         # Thẻ ghi nợ (Thẻ chính - Thẻ phụ)
         if main_cards:
@@ -319,19 +320,23 @@ class CtrTemplateDetail(BaseController):
             })
 
         if sup_cards:
-            data_request.update({
-                "S1.A.1.10.27.1 ": sup_cards[0].Customer.full_name_vn,
-                "S1.A.1.10.27": sup_cards[0].Customer.cif_number,
-                "S1.A.1.10.27.2": sup_cards[0].CustomerIdentity.identity_num,
+            sup_cards_res = [{
+                "S1.A.1.10.27.1": item.Customer.full_name_vn,
+                "S1.A.1.10.27": item.Customer.cif_number,
+                "S1.A.1.10.27.2": item.CustomerIdentity.identity_num,
                 "S1.A.1.10.28": {
-                    "value": sup_cards[0].Customer.full_name,
+                    "value": item.Customer.full_name,
                     "type": "embossed_table"
                 }
-            })
+            } for item in sup_cards]
+
+            data_request.update({"S1.A.1.10.27.1": sup_cards_res})
+
             if sup_cards[0].DebitCard.card_delivery_address_flag:
                 data_request.update({"S1.A.1.10.18": ["Địa chỉ liên lạc"]})
             else:
                 data_request.update({"S1.A.1.10.18.1": ["SCB"]})
+
         # E-banking
         if e_banking:
             e_banking = e_banking[0]

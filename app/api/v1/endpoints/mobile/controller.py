@@ -5,6 +5,10 @@ from app.api.v1.endpoints.cif.basic_information.identity.identity_document.repos
 )
 from app.api.v1.endpoints.file.controller import CtrFile
 from app.api.v1.endpoints.file.repository import repos_upload_file
+from app.api.v1.endpoints.mobile.repository import (
+    repos_get_mobile_identity, repos_get_total_item
+)
+from app.api.v1.endpoints.mobile.schema import IdentityMobileRequest
 from app.api.v1.validator import validate_history_data
 from app.third_parties.oracle.models.master_data.address import AddressCountry
 from app.third_parties.oracle.models.master_data.customer import CustomerGender
@@ -34,7 +38,7 @@ class CtrIdentityMobile(BaseController):
 
     async def save_identity_mobile(
             self,
-            request
+            request: IdentityMobileRequest
     ):
         full_name_vn, date_of_birth, gender_id, nationality_id, identity_number, issued_date, \
             expired_date, place_of_issue_id, identity_type, front_side_image, back_side_image, avatar_image = request
@@ -330,8 +334,8 @@ class CtrIdentityMobile(BaseController):
                 session=self.oracle_session
             ))
             identity_avatar_image_uuid = ocr_data_front_side['front_side_information']['identity_avatar_image_uuid']
-            # Thêm avatar thành Hình ảnh định danh Khuôn mặt
-            ################################################################################################################
+        # Thêm avatar thành Hình ảnh định danh Khuôn mặt
+        ################################################################################################################
             avatar_image_uuid_service = await CtrFile().upload_ekyc_file(
                 uuid_ekyc=ocr_data_front_side['front_side_information']['identity_avatar_image_uuid'])
         ################################################################################################################
@@ -539,3 +543,39 @@ class CtrIdentityMobile(BaseController):
             )
         )
         return self.response(data=info_save_document)
+
+    async def search_identity_mobile(self, search_box: str):
+        limit = self.pagination_params.limit
+        page = self.pagination_params.page
+
+        response_datas = self.call_repos(await repos_get_mobile_identity(
+            search_box=search_box,
+            limit=limit,
+            page=page,
+            session=self.oracle_session
+        ))
+
+        total_item = self.call_repos(await repos_get_total_item(
+            search_box=search_box,
+            session=self.oracle_session
+        ))
+
+        total_page = 0
+        if total_item != 0:
+            total_page = total_item / limit
+
+        if total_item % limit != 0:
+            total_page += 1
+
+        response_data = [{
+            "code": item.Booking.code,
+            "full_name": item.Customer.full_name_vn,
+            "identity_number": item.CustomerIdentity.identity_num
+        } for item in response_datas]
+
+        return self.response_paging(
+            data=response_data,
+            total_item=total_item,
+            current_page=page,
+            total_page=total_page
+        )

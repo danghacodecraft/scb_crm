@@ -5,7 +5,7 @@ from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn
-from app.settings.event import service_gw, service_soa
+from app.settings.event import service_soa
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
     CustomerAddress
 )
@@ -31,9 +31,8 @@ from app.third_parties.oracle.models.master_data.others import (
     KYCLevel, MaritalStatus
 )
 from app.utils.error_messages import (
-    ERROR_CALL_SERVICE_GW, ERROR_CALL_SERVICE_SOA, ERROR_CIF_ID_NOT_EXIST,
-    ERROR_CIF_NUMBER_EXIST, ERROR_CIF_NUMBER_INVALID,
-    ERROR_CIF_NUMBER_NOT_EXIST, MESSAGE_STATUS
+    ERROR_CALL_SERVICE_SOA, ERROR_CIF_ID_NOT_EXIST, ERROR_CIF_NUMBER_EXIST,
+    ERROR_CIF_NUMBER_INVALID, ERROR_CIF_NUMBER_NOT_EXIST, MESSAGE_STATUS
 )
 from app.utils.functions import dropdown
 
@@ -224,20 +223,3 @@ async def repos_retrieve_customer_information_by_cif_number(
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_SOA, detail=customer_information["message"])
 
     return ReposReturn(data=customer_information)
-
-
-async def repos_gw_get_casa_account_by_cif_number(
-    cif_number: str, current_user: str
-):
-    is_success, casa_account = await service_gw.get_casa_account_from_cif(
-        casa_cif_number=cif_number, current_user=current_user
-    )
-    if not is_success:
-        return ReposReturn(
-            is_error=True,
-            loc="get_casa_account_from_cif",
-            msg=ERROR_CALL_SERVICE_GW,
-            detail=str(casa_account)
-        )
-
-    return ReposReturn(data=casa_account)

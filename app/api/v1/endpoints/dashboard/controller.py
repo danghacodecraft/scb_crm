@@ -73,13 +73,13 @@ class CtrDashboard(BaseController):
             "cif_id": item.Customer.id,
             "cif_number": item.Customer.cif_number,
             "full_name": item.Customer.full_name_vn,
-            "identity_number": item.CustomerIdentity.identity_num,
+            "identity_number": item.CustomerIdentity.identity_num if item.CustomerIdentity else None,
             "phone_number": item.Customer.mobile_number,
-            "street": item.CustomerAddress.address,
-            "ward": dropdown(item.AddressWard),
-            "district": dropdown(item.AddressDistrict),
-            "province": dropdown(item.AddressProvince),
-            "branch": dropdown(item.Branch)
+            "street": item.CustomerAddress.address if item.CustomerAddress else None,
+            "ward": dropdown(item.AddressWard) if item.AddressWard else None,
+            "district": dropdown(item.AddressDistrict) if item.AddressDistrict else None,
+            "province": dropdown(item.AddressProvince) if item.AddressProvince else None,
+            "branch": dropdown(item.Branch) if item.Branch else None
         } for item in customers]
 
         return self.response_paging(
