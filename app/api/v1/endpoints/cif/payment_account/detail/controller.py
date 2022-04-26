@@ -7,7 +7,9 @@ from app.api.v1.endpoints.cif.payment_account.detail.repository import (
 from app.api.v1.endpoints.cif.payment_account.detail.schema import (
     SavePaymentAccountRequest
 )
-from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
+from app.api.v1.endpoints.cif.repository import (
+    repos_get_booking_code, repos_get_initializing_customer
+)
 from app.api.v1.endpoints.repository import repos_get_acc_structure_type
 from app.api.v1.validator import validate_history_data
 from app.third_parties.oracle.models.master_data.account import (
@@ -196,6 +198,12 @@ class CtrPaymentAccount(BaseController):
                 session=self.oracle_session,
                 is_created=is_created
             ))
+
+        # Lấy Booking Code
+        booking_code = self.call_repos(await repos_get_booking_code(
+            cif_id=cif_id, session=self.oracle_session
+        ))
+        save_payment_account_info.update(booking_code=booking_code)
 
         return self.response(data=save_payment_account_info)
 
