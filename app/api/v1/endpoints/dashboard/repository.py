@@ -38,13 +38,10 @@ async def repos_count_total_item(search_box: str, session: Session) -> ReposRetu
             or_(
                 Booking.code.ilike(search_box),
                 or_(
-                    CustomerIdentity.identity_num.ilike(search_box),
-                ),
-                or_(
+                    Customer.cif_number.ilike(search_box),
+                    or_(
+                        CustomerIdentity.identity_num.ilike(search_box)),
                     Customer.full_name.ilike(convert_to_unsigned_vietnamese(search_box))
-                ),
-                or_(
-                    Customer.cif_number.ilike(search_box)
                 )
             )
         )
@@ -61,6 +58,7 @@ async def repos_get_transaction_list(search_box: Optional[str], limit: int, page
     ) \
         .join(BookingCustomer, Customer.id == BookingCustomer.customer_id) \
         .join(Booking, BookingCustomer.booking_id == Booking.id) \
+        .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
         .limit(limit) \
         .offset(limit * (page - 1)) \
         .order_by(desc(Customer.open_cif_at))
@@ -71,13 +69,10 @@ async def repos_get_transaction_list(search_box: Optional[str], limit: int, page
             or_(
                 Booking.code.ilike(search_box),
                 or_(
-                    CustomerIdentity.identity_num.ilike(search_box),
-                ),
-                or_(
+                    Customer.cif_number.ilike(search_box),
+                    or_(
+                        CustomerIdentity.identity_num.ilike(search_box)),
                     Customer.full_name.ilike(convert_to_unsigned_vietnamese(search_box))
-                ),
-                or_(
-                    Customer.cif_number.ilike(search_box)
                 )
             )
         )

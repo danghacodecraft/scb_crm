@@ -30,7 +30,7 @@ class CtrDashboard(BaseController):
             total_page += 1
 
         return self.response_paging(
-            data=set(transaction_list),
+            data=transaction_list,
             current_page=current_page,
             total_item=total_item,
             total_page=total_page
