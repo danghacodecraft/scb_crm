@@ -10,7 +10,8 @@ from app.api.v1.endpoints.cif.basic_information.identity.fingerprint.schema impo
     TwoFingerPrintRequest
 )
 from app.api.v1.endpoints.cif.repository import (
-    repos_get_customer_identity, repos_get_initializing_customer
+    repos_get_booking_code, repos_get_customer_identity,
+    repos_get_initializing_customer
 )
 from app.settings.event import service_ekyc, service_file
 from app.third_parties.oracle.models.master_data.identity import (
@@ -126,6 +127,13 @@ class CtrFingerPrint(BaseController):
                 created_by=current_user.username
             )
         )
+
+        # Lấy Booking Code
+        booking_code = self.call_repos(await repos_get_booking_code(
+            cif_id=cif_id, session=self.oracle_session
+        ))
+        data.update(booking_code=booking_code)
+
         return self.response(data=data)
 
     async def ctr_get_fingerprint(self, cif_id: str):

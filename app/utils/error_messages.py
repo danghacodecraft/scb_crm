@@ -86,6 +86,7 @@ ERROR_GROUP_ROLE_CODE = "GROUP_ROLE_CODE"
 ERROR_MENU_CODE = "ERROR_MENU_CODE"
 ERROR_PERMISSION = 'ERROR_PERMISSION'
 ERROR_BOOKING_CODE_EXISTED = 'ERROR_BOOKING_CODE_EXISTED'
+ERROR_BOOKING_CODE_NOT_EXIST = 'ERROR_BOOKING_CODE_NOT_EXIST'
 MESSAGE_STATUS = {
     # general error
     PAGING_ERROR: "Can not found page!",
@@ -165,5 +166,6 @@ MESSAGE_STATUS = {
     ERROR_GROUP_ROLE_CODE: "Group_role_code is not exist",
     ERROR_MENU_CODE: "Menu_code is not exist",
     ERROR_PERMISSION: "Permission Denied",
-    ERROR_BOOKING_CODE_EXISTED: "Booking code is existed"
+    ERROR_BOOKING_CODE_EXISTED: "Booking code is existed",
+    ERROR_BOOKING_CODE_NOT_EXIST: "Booking code not exist"
 }
