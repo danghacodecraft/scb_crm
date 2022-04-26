@@ -118,8 +118,8 @@ class GWReportColumnResponse(BaseSchema):
 
 class GWReportColumnChartHistoryAccountInfoResponse(BaseSchema):
     transaction_date: Optional[date] = Field(..., description="Ngày giao dịch")
-    withdraw: GWReportColumnResponse = Field(..., description="Giao dịch rút tiền")
-    send: GWReportColumnResponse = Field(..., description="Giao dịch gửi tiền")
+    withdraw: Optional[GWReportColumnResponse] = Field(description="Giao dịch rút tiền")
+    send: Optional[GWReportColumnResponse] = Field(description="Giao dịch gửi tiền")
 
 
 class GWReportColumnChartHistoryAccountInfoRequest(BaseSchema):
