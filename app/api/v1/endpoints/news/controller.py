@@ -1,14 +1,13 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.news.repository import (
     get_comment_by_id, get_comment_like_by_user, get_data_by_id,
-    get_like_by_user, get_list_comment, get_list_scb_news, repo_add_comment,
-    repo_add_comment_like, repo_get_users_contact, repo_remove_comment_like,
-    repos_add_scb_news, repos_update_scb_news
+    get_like_by_user, get_list_comment, get_list_scb_news, get_parent_comment,
+    repo_add_comment, repo_add_comment_like, repo_get_users_contact,
+    repo_remove_comment_like, repos_add_scb_news, repos_update_scb_news
 )
 from app.api.v1.endpoints.news.schema import NewsCommentRequest
 from app.settings.event import service_file
 from app.third_parties.oracle.models.master_data.news import NewsCategory
-from app.third_parties.oracle.models.news.model import NewsComment
 from app.utils.constant.cif import NEWS_COMMENT_FILTER_PARAMS
 from app.utils.error_messages import VALIDATE_ERROR
 from app.utils.functions import (
@@ -228,11 +227,8 @@ class CtrNews(BaseController):
             "created_at": now()
         }
         if data_comment.parent_id:
-            await self.get_model_object_by_id(
-                model_id=data_comment.parent_id,
-                model=NewsComment,
-                loc="parent_id",
-            )
+            self.call_repos(await get_parent_comment(session=self.oracle_session, news_id=news_id,
+                                                     comment_id=data_comment.parent_id))
             data_insert.update({
                 "parent_id": data_comment.parent_id
             })
@@ -270,80 +266,81 @@ class CtrNews(BaseController):
         """ 1. Lấy thông tin user_code người dùng đã bình luận (user_codes)
             2. Lấy id comment(list_comment_id)
         """
-        user_codes = []
-        for cmt_parent_item in list_comment:
-            user_codes.append(cmt_parent_item.create_user_id)
-            list_comment_id.append(cmt_parent_item.id)
-        for cmt_child_item in list_comment_child:
-            user_codes.append(cmt_child_item.create_user_id)
-            list_comment_id.append(cmt_child_item.id)
+        if len(list_comment):
+            user_codes = []
+            for cmt_parent_item in list_comment:
+                user_codes.append(cmt_parent_item.create_user_id)
+                list_comment_id.append(cmt_parent_item.id)
+            for cmt_child_item in list_comment_child:
+                user_codes.append(cmt_child_item.create_user_id)
+                list_comment_id.append(cmt_child_item.id)
 
-        user_codes = tuple(user_codes)
-        users_comment_info = self.call_repos(
-            await repo_get_users_contact(
-                codes=user_codes,
-                session=self.oracle_session_task
+            user_codes = tuple(user_codes)
+            users_comment_info = self.call_repos(
+                await repo_get_users_contact(
+                    codes=user_codes,
+                    session=self.oracle_session_task
+                )
             )
-        )
 
-        comments_like_by_user = self.call_repos(await get_comment_like_by_user(session=self.oracle_session,
-                                                                               comment_ids=list_comment_id,
-                                                                               user_id=self.current_user.user_info.code))
+            comments_like_by_user = self.call_repos(await get_comment_like_by_user(session=self.oracle_session,
+                                                                                   comment_ids=list_comment_id,
+                                                                                   user_id=self.current_user.user_info.code))
 
-        users_info_cmt = {}
-        for user_info in users_comment_info:
-            users_info_cmt.update({
-                user_info.emp_code: {
-                    "title_name": user_info.title_name,
-                    "avatar_link": user_info.avatar_link
-                }
-            })
-
-        for cmt_item in list_comment:
-            cmt_data = {
-                "news_id": cmt_item.news_id,
-                "comment_id": cmt_item.id,
-                "create_name": cmt_item.create_user_name,
-                "user_name": cmt_item.create_user_username,
-                "user_title_name": users_info_cmt[cmt_item.create_user_id]["title_name"],
-                "avatar_link": users_info_cmt[cmt_item.create_user_id]["avatar_link"],
-                "content": cmt_item.content,
-                "total_likes": cmt_item.total_likes,
-                "parent_id": cmt_item.parent_id,
-                "created_at": cmt_item.created_at,
-                "is_like": False
-            }
-            if cmt_item.id in comments_like_by_user:
-                cmt_data.update({
-                    "is_like": True
-                })
-            list_data_res.append(cmt_data)
-
-        for parrent_cmt in list_data_res:
-            comment_child = []
-            for child_cmt in list_comment_child:
-                if child_cmt.parent_id == parrent_cmt["comment_id"]:
-                    cmt_child_data = {
-                        "news_id": child_cmt.news_id,
-                        "comment_id": child_cmt.id,
-                        "create_name": child_cmt.create_user_name,
-                        "user_name": child_cmt.create_user_username,
-                        "user_title_name": users_info_cmt[child_cmt.create_user_id]["title_name"],
-                        "avatar_link": users_info_cmt[child_cmt.create_user_id]["avatar_link"],
-                        "content": child_cmt.content,
-                        "total_likes": child_cmt.total_likes,
-                        "parent_id": child_cmt.parent_id,
-                        "created_at": child_cmt.created_at,
-                        "is_like": False
+            users_info_cmt = {}
+            for user_info in users_comment_info:
+                users_info_cmt.update({
+                    user_info.emp_code: {
+                        "title_name": user_info.title_name,
+                        "avatar_link": user_info.avatar_link
                     }
-                    if child_cmt.id in comments_like_by_user:
-                        cmt_child_data.update({
-                            "is_like": True
-                        })
-                    comment_child.append(cmt_child_data)
-            parrent_cmt.update({
-                "comment_child": comment_child
-            })
+                })
+
+            for cmt_item in list_comment:
+                cmt_data = {
+                    "news_id": cmt_item.news_id,
+                    "comment_id": cmt_item.id,
+                    "create_name": cmt_item.create_user_name,
+                    "user_name": cmt_item.create_user_username,
+                    "user_title_name": users_info_cmt[cmt_item.create_user_id]["title_name"],
+                    "avatar_link": users_info_cmt[cmt_item.create_user_id]["avatar_link"],
+                    "content": cmt_item.content,
+                    "total_likes": cmt_item.total_likes,
+                    "parent_id": cmt_item.parent_id,
+                    "created_at": cmt_item.created_at,
+                    "is_like": False
+                }
+                if cmt_item.id in comments_like_by_user:
+                    cmt_data.update({
+                        "is_like": True
+                    })
+                list_data_res.append(cmt_data)
+
+            for parrent_cmt in list_data_res:
+                comment_child = []
+                for child_cmt in list_comment_child:
+                    if child_cmt.parent_id == parrent_cmt["comment_id"]:
+                        cmt_child_data = {
+                            "news_id": child_cmt.news_id,
+                            "comment_id": child_cmt.id,
+                            "create_name": child_cmt.create_user_name,
+                            "user_name": child_cmt.create_user_username,
+                            "user_title_name": users_info_cmt[child_cmt.create_user_id]["title_name"],
+                            "avatar_link": users_info_cmt[child_cmt.create_user_id]["avatar_link"],
+                            "content": child_cmt.content,
+                            "total_likes": child_cmt.total_likes,
+                            "parent_id": child_cmt.parent_id,
+                            "created_at": child_cmt.created_at,
+                            "is_like": False
+                        }
+                        if child_cmt.id in comments_like_by_user:
+                            cmt_child_data.update({
+                                "is_like": True
+                            })
+                        comment_child.append(cmt_child_data)
+                parrent_cmt.update({
+                    "comment_child": comment_child
+                })
 
         return self.response(data={
             "total_comment_parent": total_comment_parent,

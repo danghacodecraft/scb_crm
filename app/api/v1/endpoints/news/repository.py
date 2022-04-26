@@ -199,8 +199,20 @@ async def repo_get_users_contact(codes: tuple, session: Session):
 
 async def get_comment_like_by_user(session: Session, comment_ids: list, user_id: str):
     query_data = select(CommentLike.comment_id).filter(and_(CommentLike.comment_id.in_(comment_ids),
-                                                 CommentLike.create_user_id == user_id)) # noqa
+                                                            CommentLike.create_user_id == user_id))  # noqa
 
     cmts_data = session.execute(query_data).scalars().all()
 
     return ReposReturn(data=cmts_data)
+
+
+async def get_parent_comment(session: Session, news_id: str, comment_id: str):
+    try:
+        query_data = select(NewsComment).filter(and_(NewsComment.news_id == news_id,
+                                                     NewsComment.id == comment_id,
+                                                     NewsComment.parent_id == None))  # noqa
+        data = session.execute(query_data).one()
+    except Exception:
+        return ReposReturn(is_error=True, msg=ERROR_ID_NOT_EXIST, loc="parent_id")
+
+    return ReposReturn(data=data)
