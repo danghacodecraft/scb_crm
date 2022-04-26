@@ -4,7 +4,8 @@ from app.api.base.repository import ReposReturn
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.settings.event import service_gw
 from app.utils.constant.gw import (
-    GW_TRANSACTION_NAME_COLUMN_CHART, GW_TRANSACTION_NAME_PIE_CHART
+    GW_TRANSACTION_NAME_COLUMN_CHART, GW_TRANSACTION_NAME_PIE_CHART,
+    GW_TRANSACTION_NAME_STATEMENT
 )
 from app.utils.error_messages import ERROR_CALL_SERVICE_GW
 
@@ -91,3 +92,23 @@ async def repos_gw_get_column_chart_casa_account_info(
         )
 
     return ReposReturn(data=gw_report_column_chart_casa_account_info)
+
+
+async def repos_gw_get_statements_casa_account_info(
+    account_number: str,
+    current_user: str,
+):
+    is_success, gw_report_history_account_info = await service_gw.get_report_statement_casa_account(
+        current_user=current_user,
+        account_number=account_number,
+        transaction_name=GW_TRANSACTION_NAME_STATEMENT
+    )
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="get_report_statement_casa_account",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(gw_report_history_account_info)
+        )
+
+    return ReposReturn(data=gw_report_history_account_info)
