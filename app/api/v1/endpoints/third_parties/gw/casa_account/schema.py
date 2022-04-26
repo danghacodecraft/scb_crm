@@ -1,5 +1,5 @@
 from datetime import date
-from typing import List, Optional, Union
+from typing import List, Optional
 
 from pydantic import Field
 
@@ -89,8 +89,6 @@ class GWCasaAccountResponse(BaseSchema):
 
 class GWReportPieChartHistoryAccountInfoRequest(BaseSchema):
     account_number: str = Field(..., description="Số tài khoản", example=CASA_ACCOUNT_NUMBER)
-    # from_date: date = Field(date(year=2020, month=4, day=20), description="Từ ngày")
-    # to_date: date = Field(date(year=2025, month=7, day=20), description="Đến ngày")
 
 
 class GWReportPieChartHistoryAccountInfoResponse(BaseSchema):
@@ -98,7 +96,7 @@ class GWReportPieChartHistoryAccountInfoResponse(BaseSchema):
         ..., description="""Loại giao dịch. VD: Chuyển tiền đi, Chi tiêu thẻ,
         Chuyển tiền đến, Rút tiền mặt, Nộp tiền mặt, Thanh toán hóa đơn, Khác"""
     )
-    transaction_date: Union[date, str] = Field(..., description="Ngày giao dịch")
+    transaction_date: Optional[date] = Field(..., description="Ngày giao dịch")
     transaction_value: int = Field(..., description="Giá trị giao dịch")
     transaction_percent: float = Field(..., description="Phần trăm giao dịch")
 
@@ -109,3 +107,20 @@ class GWCasaAccountCheckExistResponse(BaseSchema):
 
 class GWCasaAccountCheckExistRequest(BaseSchema):
     account_number: str = Field(..., description="Số tài khoản")
+
+
+class GWReportColumnResponse(BaseSchema):
+    transaction_type: str = Field(..., description="Loại giao dịch. VD: Rút, Gửi")
+    transaction_value: int = Field(..., description="Giá trị giao dịch")
+
+
+class GWReportColumnChartHistoryAccountInfoResponse(BaseSchema):
+    transaction_date: Optional[date] = Field(..., description="Ngày giao dịch")
+    withdraw: GWReportColumnResponse = Field(..., description="Giao dịch rút tiền")
+    send: GWReportColumnResponse = Field(..., description="Giao dịch gửi tiền")
+
+
+class GWReportColumnChartHistoryAccountInfoRequest(BaseSchema):
+    account_number: str = Field(..., description="Số tài khoản")
+    from_date: date = Field(date(year=2020, month=4, day=20), description="Từ ngày")
+    to_date: date = Field(date(year=2025, month=7, day=20), description="Đến ngày")
