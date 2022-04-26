@@ -1,7 +1,18 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
-    repos_gw_get_casa_account_by_cif_number, repos_gw_get_casa_account_info
+    repos_gw_get_casa_account_by_cif_number, repos_gw_get_casa_account_info,
+    repos_gw_get_column_chart_casa_account_info,
+    repos_gw_get_pie_chart_casa_account_info
 )
+from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
+    GWReportColumnChartHistoryAccountInfoRequest,
+    GWReportPieChartHistoryAccountInfoRequest
+)
+from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
+from app.utils.constant.gw import (
+    GW_TRANSACTION_TYPE_SEND, GW_TRANSACTION_TYPE_WITHDRAW
+)
+from app.utils.functions import string_to_date
 
 
 class CtrGWCasaAccount(BaseController):
@@ -129,3 +140,94 @@ class CtrGWCasaAccount(BaseController):
         return self.response(data=dict(
             is_existed=True if account_info['account_num'] else False
         ))
+
+    async def ctr_gw_get_pie_chart_casa_account_info(self, request: GWReportPieChartHistoryAccountInfoRequest):
+        gw_report_history_account_info = self.call_repos(await repos_gw_get_pie_chart_casa_account_info(
+            account_number=request.account_number,
+            current_user=self.current_user.user_info
+        ))
+        report_casa_accounts = \
+            gw_report_history_account_info['selectReportHisCaSaFromAcc_out']['data_output']['report_info'][
+                'report_casa_account']
+
+        pie_chart = []
+        total = 0
+        for report_casa_account in report_casa_accounts:
+            pie_chart.append(dict(
+                transaction_type=report_casa_account['tran_type'],
+                transaction_date=string_to_date(report_casa_account['tran_date'], _format=DATETIME_INPUT_OUTPUT_FORMAT),
+                transaction_value=report_casa_account['tran_value']
+            ))
+            total += int(report_casa_account['tran_value'])
+
+        percents = 0
+        if total > 0:
+            for index, pie in enumerate(pie_chart):
+                if index != -1:
+                    percent = float(int(pie['transaction_value']) * 100 / total)
+                    percents += percent
+                    pie.update(transaction_percent=percent)
+                else:
+                    pie.update(transaction_percent=100 - percents)
+
+        return self.response(data=pie_chart)
+
+    async def ctr_gw_get_column_chart_casa_account_info(self, request: GWReportColumnChartHistoryAccountInfoRequest):
+        gw_report_column_chart_casa_account_info = self.call_repos(await repos_gw_get_column_chart_casa_account_info(
+            account_number=request.account_number,
+            current_user=self.current_user.user_info,
+            from_date=request.from_date,
+            to_date=request.to_date
+        ))
+        report_casa_accounts = \
+            gw_report_column_chart_casa_account_info['selectReportHisCaSaFromAcc_out']['data_output']['report_info'][
+                'report_casa_account']
+        column_chart = []
+        report_casa_accounts = sorted(report_casa_accounts, key=lambda i: i['tran_date'])
+        previous_date = None
+        for report_casa_account in report_casa_accounts:
+            transaction_date = string_to_date(report_casa_account['tran_date'], _format=DATETIME_INPUT_OUTPUT_FORMAT)
+            transaction_type = report_casa_account['tran_type']
+            transaction_value = report_casa_account['tran_value']
+            send_withdraw_response = dict(
+                transaction_type=transaction_type,
+                transaction_value=transaction_value
+            )
+            # TH1: chưa có data
+            if not column_chart:
+                if transaction_type == GW_TRANSACTION_TYPE_SEND:
+                    column_chart.append(dict(
+                        transaction_date=transaction_date,
+                        send=send_withdraw_response
+                    ))
+                if transaction_type == GW_TRANSACTION_TYPE_WITHDRAW:
+                    column_chart.append(dict(
+                        transaction_date=transaction_date,
+                        withdraw=send_withdraw_response
+                    ))
+                previous_date = transaction_date
+            # TH2: data cùng 1 ngày
+            elif transaction_date == previous_date:
+                if transaction_type == GW_TRANSACTION_TYPE_SEND:
+                    column_chart[-1].update(dict(
+                        send=send_withdraw_response
+                    ))
+                if transaction_type == GW_TRANSACTION_TYPE_WITHDRAW:
+                    column_chart[-1].update(dict(
+                        withdraw=send_withdraw_response
+                    ))
+            # TH2: data khác ngày
+            else:
+                if transaction_type == GW_TRANSACTION_TYPE_SEND:
+                    column_chart.append(dict(
+                        transaction_date=transaction_date,
+                        send=send_withdraw_response
+                    ))
+                if transaction_type == GW_TRANSACTION_TYPE_WITHDRAW:
+                    column_chart.append(dict(
+                        transaction_date=transaction_date,
+                        withdraw=send_withdraw_response
+                    ))
+                previous_date = transaction_date
+
+        return self.response(data=column_chart)

@@ -33,7 +33,7 @@ class CtrProfile(BaseController):
         province = profile['curriculum_vitae']['contact']['contact']['province']
 
         profile = {
-            "avatar": profile['avatar'],
+            "avatar": current_user.avatar_url,
             "gender": profile['curriculum_vitae']['individual']['gender'],
             "full_name_vn": profile['emp_name'],
             "address": combine_full_address(

@@ -40,8 +40,8 @@ class CtrTrainingInSCB(BaseController):
             response_training_in_scbs = []
             for training_in_scb in training_in_scbs:
                 topic = training_in_scb["CHU_DE"]
-                course_code = training_in_scb["MA_KHOA_HOC"]
-                course_name = training_in_scb["TEN_KHOA_HOC"]
+                code = training_in_scb["MA_KHOA_HOC"]
+                name = training_in_scb["TEN_KHOA_HOC"]
 
                 from_date = training_in_scb["TU_NGAY"]
                 from_date = datetime_to_date(string_to_datetime(from_date)) if from_date else None
@@ -53,8 +53,8 @@ class CtrTrainingInSCB(BaseController):
 
                 response_training_in_scbs.append(dict(
                     topic=topic,
-                    course_code=course_code,
-                    course_name=course_name,
+                    code=code,
+                    name=name,
                     from_date=from_date,
                     to_date=to_date,
                     result=result
