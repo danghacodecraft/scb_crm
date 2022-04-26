@@ -96,9 +96,10 @@ class GWReportPieChartHistoryAccountInfoResponse(BaseSchema):
         ..., description="""Loại giao dịch. VD: Chuyển tiền đi, Chi tiêu thẻ,
         Chuyển tiền đến, Rút tiền mặt, Nộp tiền mặt, Thanh toán hóa đơn, Khác"""
     )
-    transaction_date: Optional[date] = Field(..., description="Ngày giao dịch")
+    transaction_count: int = Field(..., description="Số lượng giao dịch")
     transaction_value: int = Field(..., description="Giá trị giao dịch")
-    transaction_percent: float = Field(0, description="Phần trăm giao dịch")
+    value_percent: float = Field(0, description="Phần trăm giá trị giao dịch")
+    count_percent: float = Field(0, description="Phần trăm số lượng giao dịch")
 
 
 class GWCasaAccountCheckExistResponse(BaseSchema):
@@ -124,3 +125,18 @@ class GWReportColumnChartHistoryAccountInfoRequest(BaseSchema):
     account_number: str = Field(..., description="Số tài khoản")
     from_date: date = Field(date(year=2020, month=4, day=20), description="Từ ngày")
     to_date: date = Field(date(year=2025, month=7, day=20), description="Đến ngày")
+
+
+class GWReportStatementHistoryAccountInfoRequest(BaseSchema):
+    account_number: str = Field(..., description="Số tài khoản")
+
+
+class GWReportStatementHistoryAccountInfoResponse(BaseSchema):
+    code: Optional[str] = Field(..., description="Mã giao dịch")
+    transaction_date: Optional[date] = Field(..., description="Ngày giao dịch")
+    description: Optional[str] = Field(..., description="Chi tiết giao dịch")
+    channel: Optional[str] = Field(..., description="Kênh giao dịch")
+    transaction_type: Optional[str] = Field(..., description="Hình thức giao dịch")
+    credit: Optional[int] = Field(..., description="Ghi có")
+    debit: Optional[int] = Field(..., description="Ghi nợ")
+    balance: Optional[int] = Field(..., description="Số dư")

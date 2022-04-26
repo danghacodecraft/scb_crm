@@ -2,16 +2,19 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_get_casa_account_by_cif_number, repos_gw_get_casa_account_info,
     repos_gw_get_column_chart_casa_account_info,
-    repos_gw_get_pie_chart_casa_account_info
+    repos_gw_get_pie_chart_casa_account_info,
+    repos_gw_get_statements_casa_account_info
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWReportColumnChartHistoryAccountInfoRequest,
-    GWReportPieChartHistoryAccountInfoRequest
+    GWReportPieChartHistoryAccountInfoRequest,
+    GWReportStatementHistoryAccountInfoRequest
 )
 from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.utils.constant.gw import (
     GW_TRANSACTION_TYPE_SEND, GW_TRANSACTION_TYPE_WITHDRAW
 )
+from app.utils.error_messages import ERROR_INVALID_TOTAL
 from app.utils.functions import string_to_date
 
 
@@ -147,28 +150,46 @@ class CtrGWCasaAccount(BaseController):
             current_user=self.current_user.user_info
         ))
         report_casa_accounts = \
-            gw_report_history_account_info['selectReportHisCaSaFromAcc_out']['data_output']['report_info'][
+            gw_report_history_account_info['selectReportCaSaFromAcc_out']['data_output']['report_info'][
                 'report_casa_account']
 
         pie_chart = []
-        total = 0
+        total_value = 0
+        total_count = 0
         for report_casa_account in report_casa_accounts:
             pie_chart.append(dict(
                 transaction_type=report_casa_account['tran_type'],
-                transaction_date=string_to_date(report_casa_account['tran_date'], _format=DATETIME_INPUT_OUTPUT_FORMAT),
+                transaction_count=report_casa_account['tran_count'],
                 transaction_value=report_casa_account['tran_value']
             ))
-            total += int(report_casa_account['tran_value'])
+            total_value += int(report_casa_account['tran_value'])
+            total_count += int(report_casa_account['tran_count'])
 
-        percents = 0
-        if total > 0:
-            for index, pie in enumerate(pie_chart):
-                if index != -1:
-                    percent = float(int(pie['transaction_value']) * 100 / total)
-                    percents += percent
-                    pie.update(transaction_percent=percent)
-                else:
-                    pie.update(transaction_percent=100 - percents)
+        if total_value == 0 or total_count == 0:
+            return self.response_exception(
+                msg=ERROR_INVALID_TOTAL,
+                loc=f'total_count: {total_count}, total_value: {total_value}'
+            )
+
+        value_percents = 0
+        count_percents = 0
+        for index, pie in enumerate(pie_chart):
+            if index != -1:
+                value_percent = float(int(pie['transaction_value']) * 100 / total_value)
+                value_percents += value_percent
+
+                count_percent = float(int(pie['transaction_count']) * 100 / total_count)
+                count_percents += value_percent
+
+                pie.update(
+                    value_percent=value_percent,
+                    count_percent=count_percent
+                )
+            else:
+                pie.update(
+                    value_percent=100 - value_percents,
+                    count_percent=100 - count_percents
+                )
 
         return self.response(data=pie_chart)
 
@@ -231,3 +252,37 @@ class CtrGWCasaAccount(BaseController):
                 previous_date = transaction_date
 
         return self.response(data=column_chart)
+
+    async def ctr_gw_get_statement_casa_account_info(self, request: GWReportStatementHistoryAccountInfoRequest):
+        gw_report_statements_casa_account_info = self.call_repos(await repos_gw_get_statements_casa_account_info(
+            account_number=request.account_number,
+            current_user=self.current_user.user_info
+        ))
+        report_casa_accounts = \
+            gw_report_statements_casa_account_info['selectReportStatementCaSaFromAcc_out']['data_output']['report_info']['report_casa_account']
+        statements = []
+
+        for report_casa_account in report_casa_accounts:
+            code = report_casa_account['tran_ref_no']
+            transaction_date = report_casa_account['tran_date']
+            description = report_casa_account['tran_description']
+            channel = report_casa_account['tran_channel']
+            transaction_type = report_casa_account['tran_type']
+            credit = report_casa_account['tran_credit']
+            debit = report_casa_account['tran_debit']
+            balance = report_casa_account['tran_balance']
+
+            statements.append(dict(
+                code=code if code else None,
+                transaction_date=string_to_date(
+                    transaction_date, _format=DATETIME_INPUT_OUTPUT_FORMAT
+                ) if transaction_date else None,
+                description=description if description else None,
+                channel=channel if channel else None,
+                transaction_type=transaction_type if transaction_type else None,
+                credit=credit if credit else None,
+                debit=debit if debit else None,
+                balance=balance if balance else None
+            ))
+
+        return self.response(data=statements)
