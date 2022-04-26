@@ -94,18 +94,19 @@ async def repos_get_total_item(
     customers = select(
         func.count(Customer.id)
     ) \
-        .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
-        .join(CustomerAddress,
-              and_(
-                  Customer.id == CustomerAddress.customer_id,
-                  CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE
-              )) \
-        .join(AddressWard, CustomerAddress.address_ward_id == AddressWard.id) \
-        .join(AddressDistrict, CustomerAddress.address_district_id == AddressDistrict.id) \
-        .join(AddressProvince, CustomerAddress.address_province_id == AddressProvince.id) \
-        .join(AddressCountry, CustomerAddress.address_country_id == AddressCountry.id) \
-        .join(Branch, Customer.open_branch_id == Branch.id)
+        .outerjoin(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
+        .outerjoin(CustomerAddress,
+                   and_(
+                       Customer.id == CustomerAddress.customer_id,
+                       CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE
+                   )) \
+        .outerjoin(AddressWard, CustomerAddress.address_ward_id == AddressWard.id) \
+        .outerjoin(AddressDistrict, CustomerAddress.address_district_id == AddressDistrict.id) \
+        .outerjoin(AddressProvince, CustomerAddress.address_province_id == AddressProvince.id) \
+        .outerjoin(AddressCountry, CustomerAddress.address_country_id == AddressCountry.id) \
+        .outerjoin(Branch, Customer.open_branch_id == Branch.id)
 
+    customers = customers.filter(Customer.complete_flag == True)   # noqa
     if cif_number:
         customers = customers.filter(Customer.cif_number.ilike(f'%{cif_number}%'))
     if identity_number:
@@ -150,8 +151,9 @@ async def repos_get_customer(
         .outerjoin(AddressDistrict, CustomerAddress.address_district_id == AddressDistrict.id) \
         .outerjoin(AddressProvince, CustomerAddress.address_province_id == AddressProvince.id) \
         .outerjoin(AddressCountry, CustomerAddress.address_country_id == AddressCountry.id) \
-        .join(Branch, Customer.open_branch_id == Branch.id)
+        .outerjoin(Branch, Customer.open_branch_id == Branch.id)
 
+    customers = customers.filter(Customer.complete_flag == True) # noqa
     if cif_number:
         customers = customers.filter(Customer.cif_number.ilike(f'%{cif_number}%'))
     if identity_number:
