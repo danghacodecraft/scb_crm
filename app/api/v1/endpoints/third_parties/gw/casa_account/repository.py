@@ -53,7 +53,7 @@ async def repos_gw_get_pie_chart_casa_account_info(
     account_number: str,
     current_user: str,
 ):
-    is_success, gw_report_history_account_info = await service_gw.get_report_history_casa_account(
+    is_success, gw_report_history_account_info = await service_gw.get_report_casa_account(
         current_user=current_user,
         account_number=account_number,
         transaction_name=GW_TRANSACTION_NAME_PIE_CHART
@@ -61,7 +61,7 @@ async def repos_gw_get_pie_chart_casa_account_info(
     if not is_success:
         return ReposReturn(
             is_error=True,
-            loc="get_report_history_casa_account",
+            loc="get_report_casa_account",
             msg=ERROR_CALL_SERVICE_GW,
             detail=str(gw_report_history_account_info)
         )
