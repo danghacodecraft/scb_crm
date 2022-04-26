@@ -12,6 +12,7 @@ from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.utils.constant.gw import (
     GW_TRANSACTION_TYPE_SEND, GW_TRANSACTION_TYPE_WITHDRAW
 )
+from app.utils.error_messages import ERROR_INVALID_TOTAL
 from app.utils.functions import string_to_date
 
 
@@ -147,28 +148,46 @@ class CtrGWCasaAccount(BaseController):
             current_user=self.current_user.user_info
         ))
         report_casa_accounts = \
-            gw_report_history_account_info['selectReportHisCaSaFromAcc_out']['data_output']['report_info'][
+            gw_report_history_account_info['selectReportCaSaFromAcc_out']['data_output']['report_info'][
                 'report_casa_account']
 
         pie_chart = []
-        total = 0
+        total_value = 0
+        total_count = 0
         for report_casa_account in report_casa_accounts:
             pie_chart.append(dict(
                 transaction_type=report_casa_account['tran_type'],
-                transaction_date=string_to_date(report_casa_account['tran_date'], _format=DATETIME_INPUT_OUTPUT_FORMAT),
+                transaction_count=report_casa_account['tran_count'],
                 transaction_value=report_casa_account['tran_value']
             ))
-            total += int(report_casa_account['tran_value'])
+            total_value += int(report_casa_account['tran_value'])
+            total_count += int(report_casa_account['tran_count'])
 
-        percents = 0
-        if total > 0:
-            for index, pie in enumerate(pie_chart):
-                if index != -1:
-                    percent = float(int(pie['transaction_value']) * 100 / total)
-                    percents += percent
-                    pie.update(transaction_percent=percent)
-                else:
-                    pie.update(transaction_percent=100 - percents)
+        if total_value == 0 or total_count == 0:
+            return self.response_exception(
+                msg=ERROR_INVALID_TOTAL,
+                loc=f'total_count: {total_count}, total_value: {total_value}'
+            )
+
+        value_percents = 0
+        count_percents = 0
+        for index, pie in enumerate(pie_chart):
+            if index != -1:
+                value_percent = float(int(pie['transaction_value']) * 100 / total_value)
+                value_percents += value_percent
+
+                count_percent = float(int(pie['transaction_count']) * 100 / total_count)
+                count_percents += value_percent
+
+                pie.update(
+                    value_percent=value_percent,
+                    count_percent=count_percent
+                )
+            else:
+                pie.update(
+                    value_percent=100 - value_percents,
+                    count_percent=100 - count_percents
+                )
 
         return self.response(data=pie_chart)
 
