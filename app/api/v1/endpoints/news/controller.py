@@ -275,7 +275,11 @@ class CtrNews(BaseController):
                 user_codes.append(cmt_child_item.create_user_id)
                 list_comment_id.append(cmt_child_item.id)
 
-            user_codes = tuple(user_codes)
+            if len(user_codes) == 1:
+                user_codes = user_codes[0]
+            else:
+                user_codes = tuple(user_codes)
+
             users_comment_info = self.call_repos(
                 await repo_get_users_contact(
                     codes=user_codes,
