@@ -24,9 +24,6 @@ async def repos_gw_get_casa_account_by_cif_number(
             detail=str(casa_accounts)
         )
 
-    for casa_account in casa_accounts:
-        pass
-
     return ReposReturn(data=casa_accounts)
 
 
