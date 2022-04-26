@@ -96,9 +96,10 @@ class GWReportPieChartHistoryAccountInfoResponse(BaseSchema):
         ..., description="""Loại giao dịch. VD: Chuyển tiền đi, Chi tiêu thẻ,
         Chuyển tiền đến, Rút tiền mặt, Nộp tiền mặt, Thanh toán hóa đơn, Khác"""
     )
-    transaction_date: Optional[date] = Field(..., description="Ngày giao dịch")
+    transaction_count: int = Field(..., description="Số lượng giao dịch")
     transaction_value: int = Field(..., description="Giá trị giao dịch")
-    transaction_percent: float = Field(0, description="Phần trăm giao dịch")
+    value_percent: float = Field(0, description="Phần trăm giá trị giao dịch")
+    count_percent: float = Field(0, description="Phần trăm số lượng giao dịch")
 
 
 class GWCasaAccountCheckExistResponse(BaseSchema):
