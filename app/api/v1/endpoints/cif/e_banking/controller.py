@@ -8,7 +8,9 @@ from app.api.v1.endpoints.cif.e_banking.repository import (
 from app.api.v1.endpoints.cif.e_banking.schema import (
     EBankingRequest, GetInitialPasswordMethod
 )
-from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
+from app.api.v1.endpoints.cif.repository import (
+    repos_get_booking_code, repos_get_initializing_customer
+)
 from app.api.v1.validator import validate_history_data
 from app.third_parties.oracle.models.master_data.customer import (
     CustomerContactType, CustomerRelationshipType
@@ -231,6 +233,12 @@ class CtrEBanking(BaseController):
                 created_by=current_user.username
             )
         )
+
+        # Lấy Booking Code
+        booking_code = self.call_repos(await repos_get_booking_code(
+            cif_id=cif_id, session=self.oracle_session
+        ))
+        e_banking_data.update(booking_code=booking_code)
 
         return self.response(data=e_banking_data)
 
