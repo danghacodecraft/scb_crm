@@ -144,9 +144,7 @@ class CtrGWCasaAccount(BaseController):
     async def ctr_gw_get_pie_chart_casa_account_info(self, request: GWReportPieChartHistoryAccountInfoRequest):
         gw_report_history_account_info = self.call_repos(await repos_gw_get_pie_chart_casa_account_info(
             account_number=request.account_number,
-            current_user=self.current_user.user_info,
-            # from_date=request.from_date,
-            # to_date=request.to_date,
+            current_user=self.current_user.user_info
         ))
         report_casa_accounts = \
             gw_report_history_account_info['selectReportHisCaSaFromAcc_out']['data_output']['report_info'][

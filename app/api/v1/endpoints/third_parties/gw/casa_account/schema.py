@@ -98,7 +98,7 @@ class GWReportPieChartHistoryAccountInfoResponse(BaseSchema):
     )
     transaction_date: Optional[date] = Field(..., description="Ngày giao dịch")
     transaction_value: int = Field(..., description="Giá trị giao dịch")
-    transaction_percent: float = Field(..., description="Phần trăm giao dịch")
+    transaction_percent: float = Field(0, description="Phần trăm giao dịch")
 
 
 class GWCasaAccountCheckExistResponse(BaseSchema):
