@@ -16,7 +16,6 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_RETRIEVE_CUS_REF_DATA_MGMT,
     GW_ENDPOINT_URL_RETRIEVE_DEPOSIT_ACCOUNT_FROM_CIF,
     GW_ENDPOINT_URL_RETRIEVE_DEPOSIT_ACCOUNT_TD,
-    GW_ENDPOINT_URL_RETRIEVE_REPORT_CASA_ACCOUNT,
     GW_ENDPOINT_URL_RETRIEVE_REPORT_HIS_CASA_ACCOUNT
 )
 from app.utils.functions import date_to_string
@@ -215,7 +214,7 @@ class ServiceGW:
         Lấy thông tin biểu đồ hình tròn
         """
         request_data = {
-            "selectReportCaSaFromAcc_in": {
+            "selectReportHisCaSaFromAcc_in": {
                 "transaction_info": {
                     "client_code": "CRM",
                     "client_ref_num": "20190702091907_4232781",
@@ -236,7 +235,7 @@ class ServiceGW:
                 }
             }
         }
-        api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_REPORT_CASA_ACCOUNT}"
+        api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_REPORT_HIS_CASA_ACCOUNT}"
 
         return_errors = dict(
             loc="SERVICE GW",

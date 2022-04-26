@@ -5,6 +5,7 @@ GW_ENDPOINT_URL_RETRIEVE_CUS_REF_DATA_MGMT = "/customer/v1.0/rest/retrieveCustom
 GW_ENDPOINT_URL_RETRIEVE_CURRENT_ACCOUNT_CASA = "/currentaccount/v1.0/rest/retrieveCurrentAccountCASA"
 GW_ENDPOINT_URL_RETRIEVE_CURRENT_ACCOUNT_CASA_FROM_CIF = '/currentaccount/v1.0/rest/selectCurrentAccountFromCIF'
 GW_ENDPOINT_URL_RETRIEVE_REPORT_HIS_CASA_ACCOUNT = '/report/v1.0/rest/selectReportHisCaSaFromAcc'
+GW_ENDPOINT_URL_RETRIEVE_REPORT_STATEMENT_CASA_ACCOUNT = '/report/v1.0/rest/selectReportStatementCaSaFromAcc'
 GW_ENDPOINT_URL_RETRIEVE_REPORT_CASA_ACCOUNT = '/report/v1.0/rest/selectReportCaSaFromAcc'
 GW_ENDPOINT_URL_RETRIEVE_DEPOSIT_ACCOUNT_FROM_CIF = '/depositaccount/v1.0/rest/selectDepositAccountFromCIF'
 GW_ENDPOINT_URL_RETRIEVE_DEPOSIT_ACCOUNT_TD = "/depositaccount/v1.0/rest/retrieveDepositAccountTD"
