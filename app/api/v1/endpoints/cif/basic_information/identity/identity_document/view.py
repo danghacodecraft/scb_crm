@@ -29,7 +29,7 @@ from app.api.v1.endpoints.cif.basic_information.identity.identity_document.schem
 )
 from app.api.v1.schemas.utils import SaveSuccessResponse
 from app.utils.constant.cif import (
-    EKYC_DOCUMENT_TYPE_NEW_CITIZEN, EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
+    EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_BACK_SIDE_IDENTITY_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD,
@@ -120,7 +120,7 @@ async def view_save(
     if isinstance(identity_document_request, IdentityCardSaveRequest):
         request_body = await request.json()
         request_body_identity_document_type_id = request_body['identity_document_type']['id']
-        if request_body_identity_document_type_id == IDENTITY_DOCUMENT_TYPE_CITIZEN_CARD and request_body['identity_document_type']['type_id'] == EKYC_DOCUMENT_TYPE_NEW_CITIZEN:
+        if request_body_identity_document_type_id == IDENTITY_DOCUMENT_TYPE_CITIZEN_CARD:
             try:
                 identity_document_request = CitizenCardSaveRequest(**request_body)
             except pydantic.error_wrappers.ValidationError as ex:
