@@ -125,3 +125,18 @@ class GWReportColumnChartHistoryAccountInfoRequest(BaseSchema):
     account_number: str = Field(..., description="Số tài khoản")
     from_date: date = Field(date(year=2020, month=4, day=20), description="Từ ngày")
     to_date: date = Field(date(year=2025, month=7, day=20), description="Đến ngày")
+
+
+class GWReportStatementHistoryAccountInfoRequest(BaseSchema):
+    account_number: str = Field(..., description="Số tài khoản")
+
+
+class GWReportStatementHistoryAccountInfoResponse(BaseSchema):
+    code: Optional[str] = Field(..., description="Mã giao dịch")
+    transaction_date: Optional[date] = Field(..., description="Ngày giao dịch")
+    description: Optional[str] = Field(..., description="Chi tiết giao dịch")
+    channel: Optional[str] = Field(..., description="Kênh giao dịch")
+    transaction_type: Optional[str] = Field(..., description="Hình thức giao dịch")
+    credit: Optional[int] = Field(..., description="Ghi có")
+    debit: Optional[int] = Field(..., description="Ghi nợ")
+    balance: Optional[int] = Field(..., description="Số dư")
