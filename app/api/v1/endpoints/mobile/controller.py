@@ -575,7 +575,7 @@ class CtrIdentityMobile(BaseController):
 
         return self.response_paging(
             data=response_data,
-            total_item=total_item,
+            total_items=total_item,
             current_page=page,
             total_page=total_page
         )

@@ -187,7 +187,7 @@ class BaseController:
     def response_paging(
             self,
             data,
-            total_item: int = 1,
+            total_items: int = 1,
             current_page: int = 1,
             total_page: int = 1,
             error_status_code=status.HTTP_400_BAD_REQUEST
@@ -199,7 +199,7 @@ class BaseController:
         else:
             return {
                 "data": data,
-                "total_item": total_item,
+                "total_items": total_items,
                 "total_page": total_page,
                 "current_page": current_page,
                 "errors": self.errors,
