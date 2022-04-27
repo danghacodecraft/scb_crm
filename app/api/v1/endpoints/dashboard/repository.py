@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Optional
 
 from sqlalchemy import and_, desc, func, or_, select
@@ -21,10 +22,12 @@ from app.third_parties.oracle.models.master_data.address import (
 )
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.cif import CONTACT_ADDRESS_CODE
+from app.utils.functions import date_to_datetime, end_time_of_day
 from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese
 
 
-async def repos_count_total_item(search_box: str, session: Session) -> ReposReturn:
+async def repos_count_total_item(search_box: Optional[str], from_date: Optional[date], to_date: Optional[date],
+                                 session: Session) -> ReposReturn:
     transaction_list = select(
         func.count(Booking.code)
     ) \
@@ -46,11 +49,19 @@ async def repos_count_total_item(search_box: str, session: Session) -> ReposRetu
             )
         )
 
+    if from_date and to_date:
+        transaction_list = transaction_list.filter(
+            and_(
+                Booking.created_at >= date_to_datetime(from_date),
+                Booking.created_at <= end_time_of_day(date_to_datetime(to_date))
+            ))
+
     total_item = session.execute(transaction_list).scalar()
     return ReposReturn(data=total_item)
 
 
-async def repos_get_transaction_list(search_box: Optional[str], limit: int, page: int, session: Session):
+async def repos_get_transaction_list(search_box: Optional[str], from_date: Optional[date], to_date: Optional[date],
+                                     limit: int, page: int, session: Session):
     sql = select(
         Customer.full_name_vn,
         Customer.id.label('cif_id'),
@@ -76,6 +87,13 @@ async def repos_get_transaction_list(search_box: Optional[str], limit: int, page
                 )
             )
         )
+
+    if from_date and to_date:
+        sql = sql.filter(
+            and_(
+                Booking.created_at >= date_to_datetime(from_date),
+                Booking.created_at <= end_time_of_day(date_to_datetime(to_date))
+            ))
 
     transaction_list = session.execute(sql).all()
     return ReposReturn(data=transaction_list)

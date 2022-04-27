@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
@@ -26,13 +27,15 @@ router = APIRouter()
 )
 async def view_transaction_list(
         search_box: Optional[str] = None,
+        from_date: Optional[date] = None,
+        to_date: Optional[date] = None,
         current_user=Depends(get_current_user_from_header()),
         pagination_params: PaginationParams = Depends()
 ):
     transaction_list_response = await CtrDashboard(
         current_user=current_user,
         pagination_params=pagination_params
-    ).ctr_get_transaction_list(search_box=search_box)
+    ).ctr_get_transaction_list(search_box=search_box, from_date=from_date, to_date=to_date)
 
     return PagingResponse[TransactionListResponse](**transaction_list_response)
 

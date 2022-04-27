@@ -1,3 +1,5 @@
+from datetime import date
+
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.dashboard.repository import (
     repos_count_total_item, repos_get_customer, repos_get_total_item,
@@ -7,7 +9,7 @@ from app.utils.functions import dropdown
 
 
 class CtrDashboard(BaseController):
-    async def ctr_get_transaction_list(self, search_box: str):
+    async def ctr_get_transaction_list(self, search_box: str, from_date: date, to_date: date):
         limit = self.pagination_params.limit
         current_page = 1
         if self.pagination_params.page:
@@ -15,12 +17,15 @@ class CtrDashboard(BaseController):
 
         transaction_list = self.call_repos(await repos_get_transaction_list(
             search_box=search_box,
+            from_date=from_date,
+            to_date=to_date,
             limit=limit,
             page=current_page,
             session=self.oracle_session
         ))
 
-        total_item = self.call_repos(await repos_count_total_item(search_box=search_box, session=self.oracle_session))
+        total_item = self.call_repos(await repos_count_total_item(
+            search_box=search_box, from_date=from_date, to_date=to_date, session=self.oracle_session))
 
         total_page = 0
         if total_item != 0:
