@@ -456,7 +456,7 @@ class CtrEBanking(BaseController):
 
         return self.response_paging(
             data=balance_saving_account,
-            total_item=len(balance_saving_account)
+            total_items=len(balance_saving_account)
         )
 
     async def get_detail_reset_password_teller(self, cif_id: str):
