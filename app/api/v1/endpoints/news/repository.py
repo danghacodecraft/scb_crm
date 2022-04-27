@@ -169,7 +169,7 @@ async def repo_remove_comment_like(comment_id, like_id, session: Session) -> Rep
     return ReposReturn(data=cmt_obj.NewsComment.total_likes)
 
 
-async def repo_get_users_contact(codes: tuple, session: Session):
+async def repo_get_users_contact(codes, session: Session):
     sql_contact = f"""SELECT HRM_EMPLOYEE.EMP_NAME,\
        HRM_EMPLOYEE.EMP_CODE,\
        HRM_EMPLOYEE.USERNAME,\

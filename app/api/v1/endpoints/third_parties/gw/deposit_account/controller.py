@@ -2,6 +2,8 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.deposit_account.repository import (
     repos_gw_get_deposit_account_by_cif_number, repos_gw_get_deposit_account_td
 )
+from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
+from app.utils.functions import string_to_date
 
 
 class CtrGWDepositAccount(BaseController):
@@ -30,9 +32,11 @@ class CtrGWDepositAccount(BaseController):
                 currency=account_info_item["account_currency"],
                 balance=account_info_item["account_balance"],
                 balance_available=account_info_item["account_balance_available"],
+                balance_available_vnd=account_info_item["account_balance_available_vnd"],
                 balance_lock=account_info_item["account_balance_lock"],
-                open_date=account_info_item["account_open_date"],
-                maturity_date=account_info_item["account_maturity_date"],
+                open_date=string_to_date(account_info_item["account_open_date"], _format=DATETIME_INPUT_OUTPUT_FORMAT),
+                maturity_date=string_to_date(account_info_item["account_maturity_date"],
+                                             _format=DATETIME_INPUT_OUTPUT_FORMAT),
                 saving_serials=account_info_item["account_saving_serials"],
                 class_name=account_info_item["account_class_name"],
                 class_code=account_info_item["account_class_code"],
@@ -88,8 +92,10 @@ class CtrGWDepositAccount(BaseController):
             "currency": account_info["account_currency"],
             "balance": account_info["account_balance"],
             "balance_available": account_info["account_balance_available"],
-            "open_date": account_info["account_open_date"],
-            "maturity_date": account_info["account_maturity_date"],
+            "balance_available_vnd": account_info["account_balance_available_vnd"],
+            "open_date": string_to_date(account_info["account_open_date"], _format=DATETIME_INPUT_OUTPUT_FORMAT),
+            "maturity_date": string_to_date(account_info["account_maturity_date"],
+                                            _format=DATETIME_INPUT_OUTPUT_FORMAT),
             "lock_status": account_info["account_lock_status"],
             "class_name": account_info["account_class_name"],
             "class_code": account_info["account_class_code"],

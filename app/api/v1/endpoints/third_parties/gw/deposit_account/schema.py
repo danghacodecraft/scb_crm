@@ -1,3 +1,4 @@
+from datetime import date
 from typing import List
 
 from pydantic import Field
@@ -37,10 +38,11 @@ class GWDepositAccountInfoResponse(BaseSchema):
     type_name: str = Field(..., description="Tên loại tài khoản")
     saving_serials: str = Field(..., description="Số Series Sổ tiết kiệm")
     currency: str = Field(..., description="Loại tiền trong tài khoản")
-    balance: str = Field(..., description="Số dư tài khoản")
-    balance_available: str = Field(..., description="Số dư có thể sử dụng")
-    open_date: str = Field(..., description="Ngày mở tài khoản")
-    maturity_date: str = Field(..., description="Ngày đến hạn")
+    balance: int = Field(..., description="Số dư tài khoản")
+    balance_available: float = Field(..., description="Số dư có thể sử dụng")
+    balance_available_vnd: int = Field(..., description="Số dư tài khoản có thể sử dụng vnd")
+    open_date: date = Field(..., description="Ngày mở tài khoản")
+    maturity_date: date = Field(..., description="Ngày đến hạn")
     lock_status: str = Field(..., description="Trạng thái tài khoản (phong tỏa hoặc không)")
     class_name: str = Field(..., description="Tên sản phẩm. Ví dụ: Tiết kiệm thông thường, phát lộc phát tài…")
     class_code: str = Field(..., description="Mã sản phẩm")
@@ -74,11 +76,12 @@ class GWDepositAccountByCIFNumberInfoResponse(BaseSchema):
     type: str = Field(..., description="Loại tài khoản (thanh toán, tiết kiệm…)")
     type_name: str = Field(..., description="Tên loại tài khoản")
     currency: str = Field(..., description="Loại tiền trong tài khoản")
-    balance: str = Field(..., description="Số dư tài khoản")
-    balance_available: str = Field(..., description="Số dư có thể sử dụng")
+    balance: int = Field(..., description="Số dư tài khoản")
+    balance_available: float = Field(..., description="Số dư có thể sử dụng")
+    balance_available_vnd: int = Field(..., description="Số dư tài khoản có thể sử dụng vnd")
     balance_lock: str = Field(..., description="Số dư bị phong tỏa")
-    open_date: str = Field(..., description="Ngày mở tài khoản")
-    maturity_date: str = Field(..., description="Ngày đến hạn")
+    open_date: date = Field(..., description="Ngày mở tài khoản")
+    maturity_date: date = Field(..., description="Ngày đến hạn")
     saving_serials: str = Field(..., description="Số Series Sổ tiết kiệm")
     class_name: str = Field(..., description="Tên sản phẩm. Ví dụ: Tiết kiệm thông thường, phát lộc phát tài…")
     class_code: str = Field(..., description="Mã sản phẩm")
@@ -90,7 +93,7 @@ class GWDepositAccountByCIFNumberInfoResponse(BaseSchema):
 
 
 class GWDepositAccountByCIFNumberResponse(BaseSchema):
-    total_balances: str = Field(..., description="Tổng số dư")
+    total_balances: int = Field(..., description="Tổng số dư")
     total_items: int = Field(..., description="Số lượng tài khoản")
     account_info_list: List[GWDepositAccountByCIFNumberInfoResponse] = Field(
         ..., description="Thông tin danh sách tài khoản")

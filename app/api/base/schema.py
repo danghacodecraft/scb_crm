@@ -54,7 +54,7 @@ class Error(BaseSchema):
 class PagingResponse(BaseSchema, GenericModel, Generic[TypeX]):
     data: List[TypeX] = Field(..., description='Danh sách item')
     errors: List[Error] = []
-    total_item: int = Field(..., description='Tổng số item có trong hệ thống')
+    total_items: int = Field(..., description='Tổng số item có trong hệ thống')
     total_page: int = Field(..., description='Tổng số trang')
     current_page: int = Field(..., description='Số thứ tự trang hiện tại')
 

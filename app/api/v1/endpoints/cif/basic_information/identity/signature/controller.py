@@ -6,7 +6,8 @@ from app.api.v1.endpoints.cif.basic_information.identity.signature.schema import
     SignaturesRequest
 )
 from app.api.v1.endpoints.cif.repository import (
-    repos_get_customer_identity, repos_get_initializing_customer
+    repos_get_booking_code, repos_get_customer_identity,
+    repos_get_initializing_customer
 )
 from app.utils.constant.cif import (
     ACTIVE_FLAG_CREATE_SIGNATURE, IMAGE_TYPE_SIGNATURE
@@ -78,6 +79,12 @@ class CtrSignature(BaseController):
                 created_by=current_user.username
             )
         )
+
+        # Lấy Booking Code
+        booking_code = self.call_repos(await repos_get_booking_code(
+            cif_id=cif_id, session=self.oracle_session
+        ))
+        data.update(booking_code=booking_code)
 
         return self.response(data=data)
 

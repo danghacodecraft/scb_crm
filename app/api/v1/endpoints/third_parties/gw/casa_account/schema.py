@@ -19,14 +19,15 @@ class CasaAccountByCIFNumberResponse(BaseSchema):
     type: str = Field(..., description="Loại tài khoản (thanh toán, tiết kiệm…)")
     type_name: str = Field(..., description="Tên loại tài khoản")
     currency: str = Field(..., description="Loại tiền trong tài khoản")
-    balance: str = Field(..., description="Số dư tài khoản")
-    balance_available: str = Field(..., description="Số dư có thể sử dụng")
-    balance_lock: str = Field(..., description="Số dư bị phong tỏa")
-    over_draft_limit: str = Field(..., description="Hạn mức thấu chi")
-    over_draft_expired_date: str = Field(..., description="Ngày hết hạn")
-    latest_trans_date: str = Field(..., description="Ngày giao dịch gần nhất")
-    open_date: str = Field(..., description="Ngày mở tài khoản")
-    maturity_date: str = Field(..., description="Ngày đến hạn")
+    balance: int = Field(..., description="Số dư tài khoản")
+    balance_available: float = Field(..., description="Số dư có thể sử dụng")
+    balance_available_vnd: int = Field(..., description="Số dư tài khoản có thể sử dụng vnd")
+    balance_lock: float = Field(..., description="Số dư bị phong tỏa")
+    over_draft_limit: Optional[str] = Field(..., description="Hạn mức thấu chi")
+    over_draft_expired_date: Optional[date] = Field(..., description="Ngày hết hạn")
+    latest_trans_date: Optional[date] = Field(..., description="Ngày giao dịch gần nhất")
+    open_date: date = Field(..., description="Ngày mở tài khoản")
+    maturity_date: Optional[date] = Field(..., description="Ngày đến hạn")
     lock_status: str = Field(..., description="Trạng thái tài khoản (phong tỏa hoặc không)")
     class_name: str = Field(
         ...,
@@ -37,9 +38,9 @@ class CasaAccountByCIFNumberResponse(BaseSchema):
 
 
 class GWCasaAccountByCIFNumberResponse(BaseSchema):
-    account_info_list: List[CasaAccountByCIFNumberResponse] = Field(..., description="Chi tiết tài khoản")
-    total_balances: str = Field(..., description="Tổng số dư")
+    total_balances: int = Field(..., description="Tổng số dư")
     total_items: int = Field(..., description="Số lượng tài khoản")
+    account_info_list: List[CasaAccountByCIFNumberResponse] = Field(..., description="Chi tiết tài khoản")
 
 
 class GWCasaAccountByCIFNumberRequest(BaseSchema):
@@ -60,19 +61,21 @@ class GWAccountInfoResponse(BaseSchema):
     type: str = Field(..., description="Loại tài khoản")
     type_name: str = Field(..., description="Tên loại tài khoản")
     currency: str = Field(..., description="Loại tiền trong tài khoản")
-    balance: str = Field(..., description="Số dư tài khoản")
+    balance: int = Field(..., description="Số dư tài khoản")
+    balance_available: float = Field(..., description="Số dư có thể sử dụng")
+    balance_available_vnd: int = Field(..., description="Số dư tài khoản có thể sử dụng vnd")
     balance_lock: str = Field(..., description="Số dư bị phong tỏa")
     over_draft_limit: str = Field(..., description="Hạn mức thấu chi")
-    over_draft_expired_date: str = Field(..., description="Ngày hết hạn")
-    latest_transaction_date: str = Field(..., description="Ngày giao dịch gần nhất")
-    open_date: str = Field(..., description="Ngày mở tài khoản")
-    maturity_date: str = Field(..., description="Ngày đến hạn")
+    over_draft_expired_date: Optional[date] = Field(..., description="Ngày hết hạn")
+    latest_transaction_date: Optional[date] = Field(..., description="Ngày giao dịch gần nhất")
+    open_date: date = Field(..., description="Ngày mở tài khoản")
+    maturity_date: Optional[date] = Field(..., description="Ngày đến hạn")
     status: List[DropdownResponse] = Field(..., description="Trạng thái tài khoản (no debits, no credit..)")
     lock_status: str = Field(..., description="Trạng thái tài khoản (phong tỏa hoặc không)")
     class_name: str = Field(..., description="Tên sản phẩm. Ví dụ: Tiết kiệm thông thường, phát lộc phát tài…")
     class_code: str = Field(..., description="Mã sản phẩm")
     saving_serials: str = Field(..., description="Số Series Sổ tiết kiệm")
-    pre_open_date: str = Field(..., description="Ngày cấp lại sổ")
+    pre_open_date: Optional[date] = Field(..., description="Ngày cấp lại sổ")
     service: str = Field(..., description="Gói dịch vụ")
     service_date: str = Field(..., description="Ngày tham gia gói dịch vụ")
     company_salary: str = Field(..., description="Công ty chi lương")
@@ -118,8 +121,8 @@ class GWReportColumnResponse(BaseSchema):
 
 class GWReportColumnChartHistoryAccountInfoResponse(BaseSchema):
     transaction_date: Optional[date] = Field(..., description="Ngày giao dịch")
-    withdraw: GWReportColumnResponse = Field(..., description="Giao dịch rút tiền")
-    send: GWReportColumnResponse = Field(..., description="Giao dịch gửi tiền")
+    withdraw: Optional[GWReportColumnResponse] = Field(description="Giao dịch rút tiền")
+    send: Optional[GWReportColumnResponse] = Field(description="Giao dịch gửi tiền")
 
 
 class GWReportColumnChartHistoryAccountInfoRequest(BaseSchema):

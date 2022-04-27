@@ -32,8 +32,9 @@ from app.third_parties.oracle.models.master_data.others import (
     KYCLevel, MaritalStatus
 )
 from app.utils.error_messages import (
-    ERROR_CALL_SERVICE_SOA, ERROR_CIF_ID_NOT_EXIST, ERROR_CIF_NUMBER_EXIST,
-    ERROR_CIF_NUMBER_INVALID, ERROR_CIF_NUMBER_NOT_EXIST, MESSAGE_STATUS
+    ERROR_BOOKING_CODE_NOT_EXIST, ERROR_CALL_SERVICE_SOA,
+    ERROR_CIF_ID_NOT_EXIST, ERROR_CIF_NUMBER_EXIST, ERROR_CIF_NUMBER_INVALID,
+    ERROR_CIF_NUMBER_NOT_EXIST, MESSAGE_STATUS
 )
 from app.utils.functions import dropdown
 
@@ -263,3 +264,20 @@ async def repos_get_total_participants(
         .distinct()
     ).all()
     return ReposReturn(data=total_participants)
+
+
+async def repos_get_booking_code(
+    cif_id: str,
+    session: Session
+):
+    booking_code = session.execute(
+        select(
+            Booking.code,
+            BookingCustomer
+        )
+        .join(Booking, BookingCustomer.booking_id == Booking.id)
+        .filter(BookingCustomer.customer_id == cif_id)
+    ).scalar()
+    if not booking_code:
+        return ReposReturn(is_error=True, msg=ERROR_BOOKING_CODE_NOT_EXIST)
+    return ReposReturn(data=booking_code)

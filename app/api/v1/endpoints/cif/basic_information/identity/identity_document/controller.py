@@ -279,7 +279,7 @@ class CtrIdentityDocument(BaseController):
             "short_name": make_short_name(first_name, middle_name, last_name),
             "active_flag": True,
             "open_cif_at": now(),
-            "open_branch_id": "000",  # TODO
+            "open_branch_id": current_user.hrm_branch_code,
             "kyc_level_id": "KYC_1",  # TODO
             "customer_category_id": "D0682B44BEB3830EE0530100007F1DDC",  # TODO
             "customer_economic_profession_id": customer_economic_profession_id,

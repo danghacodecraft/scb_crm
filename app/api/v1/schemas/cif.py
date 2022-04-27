@@ -35,9 +35,9 @@ class FingerPrintResponse(BaseSchema):
     image_url: str = Field(..., description='Ảnh bàn tay')
     hand_side: DropdownResponse = Field(..., description='Loại bàn tay')
     finger_type: DropdownResponse = Field(..., description='Loại ngón tay')
-    id_ekyc: str = Field(..., description='ID_EKYC')
-    uuid_ekyc: str = Field(..., description='UUID_EKYC')
-    maker_at: datetime = Field(..., description='Thời gian thực hiện')
+    id_ekyc: Optional[str] = Field(None, description='ID_EKYC')     # Lúc lưu vân tay đầu tiên không có cái này
+    uuid_ekyc: Optional[str] = Field(None, description='UUID_EKYC')  # Lúc lưu vân tay đầu tiên không có cái này
+    maker_at: Optional[datetime] = Field(None, description='Thời gian thực hiện')  # Lúc lưu vân tay đầu tiên không có cái này
 
 
 class FingerPrintRequest(BaseSchema):
