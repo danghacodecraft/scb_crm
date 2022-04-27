@@ -207,3 +207,107 @@ class ServiceDWH:
         except Exception as ex:  # noqa
             logger.error(str(ex))
             return False, ERROR_CALL_SERVICE_DWH
+
+    async def region(self):
+        method = "GET"
+        path = "/api/v1/gis/region"
+        url = f"{self.url}{path}"
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.request(
+                        method=method,
+                        url=url,
+                        headers=self.headers
+                ) as res:
+                    # handle response
+                    if res.status != status.HTTP_200_OK:
+                        return False, {
+                            "url": url,
+                            "message": await res.json(),
+                        }
+
+                    data = await res.json()
+
+                    return True, data
+
+        except Exception as ex:  # noqa
+            logger.error(str(ex))
+            return False, ERROR_CALL_SERVICE_DWH
+
+    async def area(self):
+        method = "GET"
+        path = "/api/v1/gis/area"
+        url = f"{self.url}{path}"
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.request(
+                        method=method,
+                        url=url,
+                        headers=self.headers
+                ) as res:
+                    # handle response
+                    if res.status != status.HTTP_200_OK:
+                        return False, {
+                            "url": url,
+                            "message": await res.json(),
+                        }
+
+                    data = await res.json()
+
+                    return True, data
+
+        except Exception as ex:  # noqa
+            logger.error(str(ex))
+            return False, ERROR_CALL_SERVICE_DWH
+
+    async def branch(self):
+        method = "GET"
+        path = "/api/v1/gis/branch"
+        url = f"{self.url}{path}"
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.request(
+                        method=method,
+                        url=url,
+                        headers=self.headers
+                ) as res:
+                    # handle response
+                    if res.status != status.HTTP_200_OK:
+                        return False, {
+                            "url": url,
+                            "message": await res.json(),
+                        }
+
+                    data = await res.json()
+
+                    return True, data
+
+        except Exception as ex:  # noqa
+            logger.error(str(ex))
+            return False, ERROR_CALL_SERVICE_DWH
+
+    async def branchgeojson(self):
+        method = "GET"
+        path = "/api/v1/gis/branchgeojson"
+        url = f"{self.url}{path}"
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.request(
+                        method=method,
+                        url=url,
+                        headers=self.headers
+                ) as res:
+                    # handle response
+                    if res.status != status.HTTP_200_OK:
+                        return False, {
+                            "url": url,
+                            "message": await res.json(),
+                        }
+
+                    data = await res.json()
+
+                    return True, data
+
+        except Exception as ex:  # noqa
+            logger.error(str(ex))
+            return False, ERROR_CALL_SERVICE_DWH
