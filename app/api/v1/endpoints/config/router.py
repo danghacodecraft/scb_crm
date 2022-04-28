@@ -12,6 +12,11 @@ from app.api.v1.endpoints.config.customer.contact_type import \
 from app.api.v1.endpoints.config.debit_card import view as view_debit_card_info
 from app.api.v1.endpoints.config.e_banking import view as view_e_banking_info
 from app.api.v1.endpoints.config.fatca import view as view_fatca_info
+from app.api.v1.endpoints.config.gis.area import view as view_area
+from app.api.v1.endpoints.config.gis.branch import view as view_branch
+from app.api.v1.endpoints.config.gis.branchgeojson import \
+    view as view_branchgeojson
+from app.api.v1.endpoints.config.gis.region import view as view_region
 from app.api.v1.endpoints.config.hand import view as views_hand_info
 from app.api.v1.endpoints.config.identity_document import \
     view as views_identity_document_type_info
@@ -63,3 +68,11 @@ router.include_router(router=view_contact_type_info.router)
 router.include_router(router=view_post_check.router)
 
 router.include_router(router=view_approval.router, prefix="/approval")
+
+router.include_router(router=view_region.router)
+
+router.include_router(router=view_area.router)
+
+router.include_router(router=view_branch.router)
+
+router.include_router(router=view_branchgeojson.router)
