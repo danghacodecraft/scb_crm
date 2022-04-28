@@ -32,6 +32,7 @@ class CustomerIdentity(Base):
     updater_at = Column(DateTime, comment='Ngày cập nhật')
     updater_id = Column(VARCHAR(36), comment='Người cập nhật')
     identity_number_in_passport = Column('identity_num_pp', VARCHAR(50), comment='Số CMND trong Hộ chiếu')
+    signer = Column(VARCHAR(100), comment='Người ký GTDD')
 
 
 class CustomerIdentityImage(Base):

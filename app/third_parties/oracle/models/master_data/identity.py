@@ -68,6 +68,24 @@ class CustomerIdentityType(Base):
     updated_at = Column(DateTime, comment='Ngày cập nhập')
 
 
+class CustomerIdentityDocumentType(Base):
+    __tablename__ = 'crm_cust_identity_document_type'
+    __table_args__ = {'comment': """Loại giấy tờ định danh Loại GTDD trả về là loại giấy tờ đã được server phân loại,
+                        và có các giá trị tương ứng như sau:
+                            \n`0` : Hộ chiếu.
+                            \n`1` : Chứng minh nhân dân cũ (9 số).
+                            \n`2` : Chứng minh nhân dân mới (12 số).
+                            \n`3` : Căn cước công dân cũ (không gắn chíp).
+                            \n`4` : Căn cước công dân mới (có gắn chíp)"""}
+
+    identity_type_id = Column('identity_type_id', VARCHAR(36))
+    id = Column('identity_document_type_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "),
+                comment='(PK) Mã loại giấy tờ định danh')
+    code = Column('identity_document_type_code', VARCHAR(50), nullable=False, comment='(UN) Mã code loại giấy tờ định danh')
+    name = Column('identity_document_type_name', VARCHAR(255), nullable=False, comment='Tên loại loại giấy tờ định danh')
+    updated_at = Column(DateTime, comment='Ngày cập nhập')
+
+
 class CustomerSubIdentityType(Base):
     __tablename__ = 'crm_cust_sub_identity_type'
     __table_args__ = {'comment': 'Loại giấy tờ định danh phụ'}
