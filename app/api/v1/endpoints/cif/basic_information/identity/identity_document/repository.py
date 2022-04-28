@@ -240,9 +240,9 @@ async def repos_get_detail_identity(cif_id: str, session: Session) -> ReposRetur
                     "expired_date": first_row.CustomerIdentity.expired_date,
                     "place_of_issue": dropdown(first_row.PlaceOfIssue) if first_row.PlaceOfIssue else DROPDOWN_NONE_DICT,
                     "mrz_content": first_row.CustomerIdentity.mrz_content,
-                    "qr_code_content": first_row.CustomerIdentity.qrcode_content
+                    "qr_code_content": first_row.CustomerIdentity.qrcode_content,
+                    "signer": first_row.CustomerIdentity.signer
                 },
-
                 'basic_information': {
                     "full_name_vn": first_row.Customer.full_name_vn,
                     "gender": dropdown(first_row.CustomerGender) if first_row.CustomerGender else DROPDOWN_NONE_DICT,
