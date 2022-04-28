@@ -127,10 +127,10 @@ class GWReportColumnChart(BaseSchema):
 
 class GWReportColumnChartHistoryAccountInfoResponse(BaseSchema):
     fullname_vn: str = Field(..., description="Họ và tên")
-    account_type: str = Field(..., description="Họ và tên")
-    account_type_name: str = Field(..., description="Họ và tên")
-    account_number: str = Field(..., description="Số tài khoản")
-    account_currency: str = Field(..., description="Loại tiền trong tài khoản")
+    type: str = Field(..., description="Loại tài khoản (thanh toán, tiết kiệm…)")
+    type_name: str = Field(..., description="Tên loại tài khoản")
+    number: str = Field(..., description="Số tài khoản")
+    currency: str = Field(..., description="Loại tiền trong tài khoản")
     balance_available_vnd: int = Field(..., description="Số dư khả dụng trong tài khoản vnd")
     report_casa_account: List[GWReportColumnChart] = Field(..., escription="Báo cáo tài khoản CASA")
 
