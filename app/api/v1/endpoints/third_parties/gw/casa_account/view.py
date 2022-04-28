@@ -109,7 +109,7 @@ async def view_gw_get_column_chart_casa_account_info(
     gw_column_chart_casa_account_info = await CtrGWCasaAccount(current_user).ctr_gw_get_column_chart_casa_account_info(
         request=request
     )
-    return ResponseData[List[GWReportColumnChartHistoryAccountInfoResponse]](**gw_column_chart_casa_account_info)
+    return ResponseData[GWReportColumnChartHistoryAccountInfoResponse](**gw_column_chart_casa_account_info)
 
 
 @router.post(

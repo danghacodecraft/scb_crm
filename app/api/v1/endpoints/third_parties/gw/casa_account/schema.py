@@ -64,7 +64,7 @@ class GWAccountInfoResponse(BaseSchema):
     balance: int = Field(..., description="Số dư tài khoản")
     balance_available: float = Field(..., description="Số dư có thể sử dụng")
     balance_available_vnd: int = Field(..., description="Số dư tài khoản có thể sử dụng vnd")
-    balance_lock: str = Field(..., description="Số dư bị phong tỏa")
+    balance_lock: float = Field(..., description="Số dư bị phong tỏa")
     over_draft_limit: str = Field(..., description="Hạn mức thấu chi")
     over_draft_expired_date: Optional[date] = Field(..., description="Ngày hết hạn")
     latest_transaction_date: Optional[date] = Field(..., description="Ngày giao dịch gần nhất")
@@ -119,10 +119,20 @@ class GWReportColumnResponse(BaseSchema):
     transaction_value: int = Field(..., description="Giá trị giao dịch")
 
 
-class GWReportColumnChartHistoryAccountInfoResponse(BaseSchema):
+class GWReportColumnChart(BaseSchema):
     transaction_date: Optional[date] = Field(..., description="Ngày giao dịch")
     withdraw: Optional[GWReportColumnResponse] = Field(description="Giao dịch rút tiền")
     send: Optional[GWReportColumnResponse] = Field(description="Giao dịch gửi tiền")
+
+
+class GWReportColumnChartHistoryAccountInfoResponse(BaseSchema):
+    fullname_vn: str = Field(..., description="Họ và tên")
+    type: str = Field(..., description="Loại tài khoản (thanh toán, tiết kiệm…)")
+    type_name: str = Field(..., description="Tên loại tài khoản")
+    number: str = Field(..., description="Số tài khoản")
+    currency: str = Field(..., description="Loại tiền trong tài khoản")
+    balance_available_vnd: int = Field(..., description="Số dư khả dụng trong tài khoản vnd")
+    report_casa_account: List[GWReportColumnChart] = Field(..., escription="Báo cáo tài khoản CASA")
 
 
 class GWReportColumnChartHistoryAccountInfoRequest(BaseSchema):

@@ -14,7 +14,6 @@ from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.utils.constant.gw import (
     GW_TRANSACTION_TYPE_SEND, GW_TRANSACTION_TYPE_WITHDRAW
 )
-from app.utils.error_messages import ERROR_INVALID_TOTAL
 from app.utils.functions import orjson_loads, string_to_date
 
 
@@ -181,31 +180,26 @@ class CtrGWCasaAccount(BaseController):
             total_value += int(report_casa_account['tran_value'])
             total_count += int(report_casa_account['tran_count'])
 
-        if total_value == 0 or total_count == 0:
-            return self.response_exception(
-                msg=ERROR_INVALID_TOTAL,
-                loc=f'total_count: {total_count}, total_value: {total_value}'
-            )
+        if not (total_value == 0 or total_count == 0):
+            value_percents = 0
+            count_percents = 0
+            for index, pie in enumerate(pie_chart):
+                if index != -1:
+                    value_percent = float(int(pie['transaction_value']) * 100 / total_value)
+                    value_percents += value_percent
 
-        value_percents = 0
-        count_percents = 0
-        for index, pie in enumerate(pie_chart):
-            if index != -1:
-                value_percent = float(int(pie['transaction_value']) * 100 / total_value)
-                value_percents += value_percent
+                    count_percent = float(int(pie['transaction_count']) * 100 / total_count)
+                    count_percents += value_percent
 
-                count_percent = float(int(pie['transaction_count']) * 100 / total_count)
-                count_percents += value_percent
-
-                pie.update(
-                    value_percent=value_percent,
-                    count_percent=count_percent
-                )
-            else:
-                pie.update(
-                    value_percent=100 - value_percents,
-                    count_percent=100 - count_percents
-                )
+                    pie.update(
+                        value_percent=value_percent,
+                        count_percent=count_percent
+                    )
+                else:
+                    pie.update(
+                        value_percent=100 - value_percents,
+                        count_percent=100 - count_percents
+                    )
 
         return self.response(data=pie_chart)
 
@@ -268,7 +262,21 @@ class CtrGWCasaAccount(BaseController):
                     ))
                 previous_date = transaction_date
 
-        return self.response(data=column_chart)
+        gw_casa_account_info = self.call_repos(await repos_gw_get_casa_account_info(
+            account_number=request.account_number,
+            current_user=self.current_user.user_info
+        ))
+
+        customer_info = gw_casa_account_info['retrieveCurrentAccountCASA_out']['data_output']['customer_info']
+        account_info = customer_info['account_info']
+        return self.response(data=dict(
+            fullname_vn=customer_info['full_name'],
+            type=account_info['account_type'],
+            type_name=account_info['account_type_name'],
+            number=account_info['account_num'],
+            currency=account_info['account_currency'],
+            balance_available_vnd=account_info['account_balance_available_vnd'],
+            report_casa_account=column_chart))
 
     async def ctr_gw_get_statement_casa_account_info(self, request: GWReportStatementHistoryAccountInfoRequest):
         gw_report_statements_casa_account_info = self.call_repos(await repos_gw_get_statements_casa_account_info(
