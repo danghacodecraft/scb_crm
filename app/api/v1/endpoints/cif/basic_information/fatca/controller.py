@@ -5,7 +5,9 @@ from app.api.v1.endpoints.cif.basic_information.fatca.repository import (
 from app.api.v1.endpoints.cif.basic_information.fatca.schema import (
     FatcaRequest
 )
-from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
+from app.api.v1.endpoints.cif.repository import (
+    repos_get_booking_code, repos_get_initializing_customer
+)
 from app.settings.event import service_file
 from app.third_parties.oracle.models.master_data.others import FatcaCategory
 from app.utils.constant.cif import (
@@ -89,6 +91,12 @@ class CtrFatca(BaseController):
                 session=self.oracle_session,
             )
         )
+
+        # Lấy Booking Code
+        booking_code = self.call_repos(await repos_get_booking_code(
+            cif_id=cif_id, session=self.oracle_session
+        ))
+        data_response_success.update(booking_code=booking_code)
 
         return self.response(data=data_response_success)
 
