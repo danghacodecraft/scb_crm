@@ -15,25 +15,44 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingCustomer
+    Booking, BookingCustomer, TransactionDaily
 )
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
 )
-from app.third_parties.oracle.models.master_data.others import Branch
+from app.third_parties.oracle.models.master_data.others import (
+    Branch, TransactionStage, TransactionStageStatus
+)
 from app.utils.constant.cif import CONTACT_ADDRESS_CODE
 from app.utils.functions import date_to_datetime, end_time_of_day
 from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese
 
 
-async def repos_count_total_item(search_box: Optional[str], from_date: Optional[date], to_date: Optional[date],
-                                 session: Session) -> ReposReturn:
+async def repos_count_total_item(region_id: Optional[str], branch_id: Optional[str], transaction_type_id: Optional[str],
+                                 status_code: Optional[str], search_box: Optional[str], from_date: Optional[date],
+                                 to_date: Optional[date], session: Session) -> ReposReturn:
     transaction_list = select(
         func.count(Booking.code)
     ) \
         .join(BookingCustomer, Booking.id == BookingCustomer.booking_id) \
         .join(Customer, BookingCustomer.customer_id == Customer.id) \
-        .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id)
+        .join(Branch, Booking.branch_id == Branch.id) \
+        .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
+        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
+        .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
+        .join(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id)
+
+    if region_id:
+        transaction_list = transaction_list.filter(Branch.region_id == region_id)
+
+    if branch_id:
+        transaction_list = transaction_list.filter(Booking.branch_id == branch_id)
+
+    if transaction_type_id:
+        transaction_list = transaction_list.filter(Booking.business_type_id == transaction_type_id)
+
+    if status_code:
+        transaction_list = transaction_list.filter(TransactionStageStatus.code == status_code)
 
     if search_box:
         search_box = f'%{search_box}%'
@@ -60,7 +79,9 @@ async def repos_count_total_item(search_box: Optional[str], from_date: Optional[
     return ReposReturn(data=total_item)
 
 
-async def repos_get_transaction_list(search_box: Optional[str], from_date: Optional[date], to_date: Optional[date],
+async def repos_get_transaction_list(region_id: Optional[str], branch_id: Optional[str],
+                                     transaction_type_id: Optional[str], status_code: Optional[str],
+                                     search_box: Optional[str], from_date: Optional[date], to_date: Optional[date],
                                      limit: int, page: int, session: Session):
     sql = select(
         Customer.full_name_vn,
@@ -69,10 +90,26 @@ async def repos_get_transaction_list(search_box: Optional[str], from_date: Optio
     ) \
         .join(BookingCustomer, Customer.id == BookingCustomer.customer_id) \
         .join(Booking, BookingCustomer.booking_id == Booking.id) \
+        .join(Branch, Booking.branch_id == Branch.id) \
         .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
+        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
+        .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
+        .join(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
         .limit(limit) \
         .offset(limit * (page - 1)) \
         .order_by(desc(Customer.open_cif_at))
+
+    if region_id:
+        sql = sql.filter(Branch.region_id == region_id)
+
+    if branch_id:
+        sql = sql.filter(Booking.branch_id == branch_id)
+
+    if transaction_type_id:
+        sql = sql.filter(Booking.business_type_id == transaction_type_id)
+
+    if status_code:
+        sql = sql.filter(TransactionStageStatus.code == status_code)
 
     if search_box:
         search_box = f'%{search_box}%'
