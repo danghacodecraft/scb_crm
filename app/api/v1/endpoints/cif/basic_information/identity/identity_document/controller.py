@@ -496,7 +496,8 @@ class CtrIdentityDocument(BaseController):
                     )
                 saving_customer_identity.update({
                     "qrcode_content": identity_document_request.ocr_result.identity_document.qr_code_content,
-                    "mrz_content": identity_document_request.ocr_result.identity_document.mrz_content
+                    "mrz_content": identity_document_request.ocr_result.identity_document.mrz_content,
+                    "signer": signer
                 })
             ############################################################################################################
 
