@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import List
+from typing import List, Optional
 
 from pydantic import Field
 
@@ -90,6 +90,7 @@ class OCRDocumentCitizenCardResponse(BaseSchema):
     place_of_issue: OptionalDropdownResponse = Field(..., description="Nơi cấp")
     mrz_content: str = Field(None, description="MRZ")  # CCCD
     qr_code_content: str = Field(None, description="Nội dung QR Code")  # CCCD
+    signer: Optional[str] = Field(None, description="Người ký")  # CCCD
 
 
 # III. Phân tích OCR -> 2. Thông tin cơ bản (CCCD)
