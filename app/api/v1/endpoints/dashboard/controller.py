@@ -9,13 +9,18 @@ from app.utils.functions import dropdown
 
 
 class CtrDashboard(BaseController):
-    async def ctr_get_transaction_list(self, search_box: str, from_date: date, to_date: date):
+    async def ctr_get_transaction_list(self, region_id: str, branch_id: str, transaction_type_id: str,
+                                       status_id: str, search_box: str, from_date: date, to_date: date):
         limit = self.pagination_params.limit
         current_page = 1
         if self.pagination_params.page:
             current_page = self.pagination_params.page
 
         transaction_list = self.call_repos(await repos_get_transaction_list(
+            region_id=region_id,
+            branch_id=branch_id,
+            transaction_type_id=transaction_type_id,
+            status_id=status_id,
             search_box=search_box,
             from_date=from_date,
             to_date=to_date,
@@ -25,6 +30,7 @@ class CtrDashboard(BaseController):
         ))
 
         total_item = self.call_repos(await repos_count_total_item(
+            region_id=region_id, branch_id=branch_id, transaction_type_id=transaction_type_id, status_id=status_id,
             search_box=search_box, from_date=from_date, to_date=to_date, session=self.oracle_session))
 
         total_page = 0
