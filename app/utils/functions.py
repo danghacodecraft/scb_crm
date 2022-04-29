@@ -73,8 +73,13 @@ def date_to_string(_date: date, default='', _format=DATE_INPUT_OUTPUT_FORMAT) ->
 
 
 def string_to_date(string: str, default=None, _format=DATE_INPUT_OUTPUT_FORMAT) -> datetime:
+    """
+    Input: Datetime or date format
+    Output: Date
+    """
     try:
-        return datetime.strptime(string, _format)
+        st = datetime.strptime(string, _format)
+        return st.date()
     except (ValueError, TypeError):
         return default
 
