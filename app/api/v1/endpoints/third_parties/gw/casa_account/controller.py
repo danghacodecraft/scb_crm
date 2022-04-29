@@ -97,22 +97,28 @@ class CtrGWCasaAccount(BaseController):
         account_info = customer_info['account_info']
         branch_info = account_info['branch_info']
         status_info = []
-        list_account_status = orjson_loads(account_info['account_status'])[0]
-        for key, value in list_account_status.items():
-            status_info.append(dict(
-                id=key,
-                code=key,
-                name=value
-            ))
+        if account_info['account_status']:
+            list_account_status = orjson_loads(account_info['account_status'])[0]
+            for key, value in list_account_status.items():
+                status_info.append(dict(
+                    id=key,
+                    code=key,
+                    name=value
+                ))
+        number = account_info['account_num']
+        balance = account_info['account_balance']
+        balance_available = account_info['account_balance_available']
+        balance_available_vnd = account_info['account_balance_available_vnd']
+        balance_lock = account_info['account_balance_lock']
         gw_casa_account_info_response = dict(
-            number=account_info['account_num'],
+            number=number if number else None,
             type=account_info['account_type'],
             type_name=account_info['account_type_name'],
             currency=account_info['account_currency'],
-            balance=account_info['account_balance'],
-            balance_available=account_info['account_balance_available'],
-            balance_available_vnd=account_info['account_balance_available_vnd'],
-            balance_lock=account_info['account_balance_lock'],
+            balance=balance if balance else 0,
+            balance_available=balance_available if balance_available else 0,
+            balance_available_vnd=balance_available_vnd if balance_available_vnd else 0,
+            balance_lock=balance_lock if balance_lock else 0,
             over_draft_limit=account_info['account_over_draft_limit'],
             over_draft_expired_date=string_to_date(account_info['account_over_draft_expired_date'],
                                                    _format=DATETIME_INPUT_OUTPUT_FORMAT),
