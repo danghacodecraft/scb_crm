@@ -275,13 +275,14 @@ class CtrGWCasaAccount(BaseController):
 
         customer_info = gw_casa_account_info['retrieveCurrentAccountCASA_out']['data_output']['customer_info']
         account_info = customer_info['account_info']
+        balance_available_vnd = account_info['account_balance_available_vnd']
         return self.response(data=dict(
             fullname_vn=customer_info['full_name'],
             type=account_info['account_type'],
             type_name=account_info['account_type_name'],
             number=account_info['account_num'],
             currency=account_info['account_currency'],
-            balance_available_vnd=account_info['account_balance_available_vnd'],
+            balance_available_vnd=balance_available_vnd if balance_available_vnd else None,
             report_casa_account=column_chart))
 
     async def ctr_gw_get_statement_casa_account_info(self, request: GWReportStatementHistoryAccountInfoRequest):

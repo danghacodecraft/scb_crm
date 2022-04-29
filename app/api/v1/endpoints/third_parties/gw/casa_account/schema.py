@@ -131,7 +131,7 @@ class GWReportColumnChartHistoryAccountInfoResponse(BaseSchema):
     type_name: str = Field(..., description="Tên loại tài khoản")
     number: str = Field(..., description="Số tài khoản")
     currency: str = Field(..., description="Loại tiền trong tài khoản")
-    balance_available_vnd: int = Field(..., description="Số dư khả dụng trong tài khoản vnd")
+    balance_available_vnd: Optional[int] = Field(..., description="Số dư khả dụng trong tài khoản vnd")
     report_casa_account: List[GWReportColumnChart] = Field(..., escription="Báo cáo tài khoản CASA")
 
 
