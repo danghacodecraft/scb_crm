@@ -48,12 +48,12 @@ class GWCasaAccountByCIFNumberRequest(BaseSchema):
 
 
 class GWCustomerInfoResponse(BaseSchema):
-    fullname_vn: str = Field(..., description="Họ và tên")
-    date_of_birth: str = Field(..., description="Ngày sinh")
-    gender: str = Field(..., description="Giới tính")
-    email: str = Field(..., description="Email")
-    mobile_phone: str = Field(..., description="Điện thoại di động")
-    type: str = Field(..., description="Loại khách hàng (cá nhân hoặc doanh nghiệp)")
+    fullname_vn: Optional[str] = Field(..., description="Họ và tên")
+    date_of_birth: Optional[str] = Field(..., description="Ngày sinh")
+    gender: Optional[str] = Field(..., description="Giới tính")
+    email: Optional[str] = Field(..., description="Email")
+    mobile_phone: Optional[str] = Field(..., description="Điện thoại di động")
+    type: Optional[str] = Field(..., description="Loại khách hàng (cá nhân hoặc doanh nghiệp)")
 
 
 class GWAccountInfoResponse(BaseSchema):
@@ -61,27 +61,27 @@ class GWAccountInfoResponse(BaseSchema):
     type: Optional[str] = Field(..., description="Loại tài khoản")
     type_name: Optional[str] = Field(..., description="Tên loại tài khoản")
     currency: Optional[str] = Field(..., description="Loại tiền trong tài khoản")
-    balance: int = Field(..., description="Số dư tài khoản")
-    balance_available: float = Field(..., description="Số dư có thể sử dụng")
-    balance_available_vnd: int = Field(..., description="Số dư tài khoản có thể sử dụng vnd")
-    balance_lock: float = Field(..., description="Số dư bị phong tỏa")
+    balance: Optional[int] = Field(..., description="Số dư tài khoản")
+    balance_available: Optional[float] = Field(..., description="Số dư có thể sử dụng")
+    balance_available_vnd: Optional[int] = Field(..., description="Số dư tài khoản có thể sử dụng vnd")
+    balance_lock: Optional[float] = Field(..., description="Số dư bị phong tỏa")
     over_draft_limit: Optional[str] = Field(..., description="Hạn mức thấu chi")
     over_draft_expired_date: Optional[date] = Field(..., description="Ngày hết hạn")
     latest_transaction_date: Optional[date] = Field(..., description="Ngày giao dịch gần nhất")
     open_date: Optional[date] = Field(..., description="Ngày mở tài khoản")
     maturity_date: Optional[date] = Field(..., description="Ngày đến hạn")
-    status: List[DropdownResponse] = Field(..., description="Trạng thái tài khoản (no debits, no credit..)")
+    status: Optional[List[DropdownResponse]] = Field(..., description="Trạng thái tài khoản (no debits, no credit..)")
     lock_status: Optional[str] = Field(..., description="Trạng thái tài khoản (phong tỏa hoặc không)")
     class_name: Optional[str] = Field(..., description="Tên sản phẩm. Ví dụ: Tiết kiệm thông thường, phát lộc phát tài…")
     class_code: Optional[str] = Field(..., description="Mã sản phẩm")
     saving_serials: Optional[str] = Field(..., description="Số Series Sổ tiết kiệm")
     pre_open_date: Optional[date] = Field(..., description="Ngày cấp lại sổ")
     service: Optional[str] = Field(..., description="Gói dịch vụ")
-    service_date: Optional[str] = Field(..., description="Ngày tham gia gói dịch vụ")
+    service_date: Optional[date] = Field(..., description="Ngày tham gia gói dịch vụ")
     company_salary: Optional[str] = Field(..., description="Công ty chi lương")
     company_salary_num: Optional[str] = Field(..., description="STK Công ty chi lương")
     service_escrow: Optional[str] = Field(..., description="Dịch vụ ký quỹ")
-    service_escrow_ex_date: Optional[str] = Field(..., description="Ngày đáo hạn ký quỹ")
+    service_escrow_ex_date: Optional[date] = Field(..., description="Ngày đáo hạn ký quỹ")
     branch_info: GWBranchDropdownResponse = Field(..., description="Thông tin đơn vị")
 
 

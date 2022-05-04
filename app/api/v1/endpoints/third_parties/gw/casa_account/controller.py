@@ -31,9 +31,10 @@ class CtrGWCasaAccount(BaseController):
         account_info_list = account_info['selectCurrentAccountFromCIF_out']['data_output']['customer_info'][
             'account_info_list']
         account_infos = []
+
         for account in account_info_list:
-            balance = int(account['account_info_item']['account_balance'])
-            total_balances += balance
+            balance = account['account_info_item']['account_balance']
+            total_balances += int(balance) if balance else 0
             branch_info = account['account_info_item']["branch_info"]
             account_infos.append(dict(
                 number=account['account_info_item']["account_num"],
@@ -80,18 +81,18 @@ class CtrGWCasaAccount(BaseController):
 
         customer_info = gw_casa_account_info['retrieveCurrentAccountCASA_out']['data_output']['customer_info']
         gw_casa_customer_info_response = dict(
-            fullname_vn=customer_info['full_name'],
-            date_of_birth=customer_info['birthday'],
-            gender=customer_info['gender'],
-            email=customer_info['email'],
-            mobile_phone=customer_info['mobile_phone'],
-            type=customer_info['customer_type']
+            fullname_vn=customer_info['full_name'] if customer_info['full_name'] else None,
+            date_of_birth=customer_info['birthday'] if customer_info['birthday'] else None,
+            gender=customer_info['gender'] if customer_info['gender'] else None,
+            email=customer_info['email'] if customer_info['email'] else None,
+            mobile_phone=customer_info['mobile_phone'] if customer_info['mobile_phone'] else None,
+            type=customer_info['customer_type'] if customer_info['customer_type'] else None
         )
 
         cif_info = customer_info['cif_info']
         gw_casa_cif_info_response = dict(
-            cif_number=cif_info['cif_num'],
-            issued_date=cif_info['cif_issued_date']
+            cif_number=cif_info['cif_num'] if cif_info['cif_num'] else None,
+            issued_date=cif_info['cif_issued_date'] if cif_info['cif_issued_date'] else None
         )
 
         account_info = customer_info['account_info']
@@ -106,41 +107,64 @@ class CtrGWCasaAccount(BaseController):
                     name=value
                 ))
         number = account_info['account_num']
+        account_type = account_info['account_type']
+        type_name = account_info['account_type_name']
+        currency = account_info['account_currency']
         balance = account_info['account_balance']
         balance_available = account_info['account_balance_available']
         balance_available_vnd = account_info['account_balance_available_vnd']
         balance_lock = account_info['account_balance_lock']
+        over_draft_limit = account_info['account_over_draft_limit']
+        over_draft_expired_date = string_to_date(account_info['account_over_draft_expired_date'],
+                                                 _format=DATETIME_INPUT_OUTPUT_FORMAT)
+        latest_transaction_date = string_to_date(account_info['account_latest_trans_date'],
+                                                 _format=DATETIME_INPUT_OUTPUT_FORMAT)
+        open_date = string_to_date(account_info['account_open_date'], _format=DATETIME_INPUT_OUTPUT_FORMAT)
+        maturity_date = string_to_date(account_info['account_maturity_date'], _format=DATETIME_INPUT_OUTPUT_FORMAT)
+        lock_status = account_info['account_lock_status']
+        class_name = account_info["account_class_name"]
+        class_code = account_info["account_class_code"]
+        saving_serials = account_info['account_saving_serials']
+        pre_open_date = string_to_date(account_info['account_pre_open_date'], _format=DATETIME_INPUT_OUTPUT_FORMAT)
+        service = account_info['account_service']
+        service_date = string_to_date(account_info['account_service_date'], _format=DATETIME_INPUT_OUTPUT_FORMAT)
+        company_salary = account_info['account_company_salary']
+        company_salary_num = account_info['account_company_salary_num']
+        service_escrow = account_info['account_service_escrow']
+        service_escrow_ex_date = string_to_date(account_info['account_service_escrow_ex_date'],
+                                                _format=DATETIME_INPUT_OUTPUT_FORMAT)
+        branch_code = branch_info['branch_code']
+        branch_name = branch_info['branch_name']
+
         gw_casa_account_info_response = dict(
             number=number if number else None,
-            type=account_info['account_type'],
-            type_name=account_info['account_type_name'],
-            currency=account_info['account_currency'],
-            balance=balance if balance else 0,
-            balance_available=balance_available if balance_available else 0,
-            balance_available_vnd=balance_available_vnd if balance_available_vnd else 0,
-            balance_lock=balance_lock if balance_lock else 0,
-            over_draft_limit=account_info['account_over_draft_limit'],
-            over_draft_expired_date=string_to_date(account_info['account_over_draft_expired_date'],
-                                                   _format=DATETIME_INPUT_OUTPUT_FORMAT),
-            latest_transaction_date=string_to_date(account_info['account_latest_trans_date'],
-                                                   _format=DATETIME_INPUT_OUTPUT_FORMAT),
-            open_date=string_to_date(account_info['account_open_date'], _format=DATETIME_INPUT_OUTPUT_FORMAT),
-            maturity_date=string_to_date(account_info['account_maturity_date'], _format=DATETIME_INPUT_OUTPUT_FORMAT),
-            status=status_info,
-            lock_status=account_info['account_lock_status'],
-            class_name=account_info['account_class_name'],
-            class_code=account_info['account_class_code'],
-            saving_serials=account_info['account_saving_serials'],
-            pre_open_date=string_to_date(account_info['account_pre_open_date'], _format=DATETIME_INPUT_OUTPUT_FORMAT),
-            service=account_info['account_service'],
-            service_date=account_info['account_service_date'],
-            company_salary=account_info['account_company_salary'],
-            company_salary_num=account_info['account_company_salary_num'],
-            service_escrow=account_info['account_service_escrow'],
-            service_escrow_ex_date=account_info['account_service_escrow_ex_date'],
+            type=account_type if account_type else None,
+            type_name=type_name if type_name else None,
+            currency=currency if currency else None,
+            balance=balance if balance else None,
+            balance_available=balance_available if balance_available else None,
+            balance_available_vnd=balance_available_vnd if balance_available_vnd else None,
+            balance_lock=balance_lock if balance_lock else None,
+            over_draft_limit=over_draft_limit if over_draft_limit else None,
+            over_draft_expired_date=over_draft_expired_date,
+            latest_transaction_date=latest_transaction_date,
+            open_date=open_date,
+            maturity_date=maturity_date,
+            status=status_info if status_info else None,
+            lock_status=lock_status if lock_status else None,
+            class_name=class_name if class_name else None,
+            class_code=class_code if class_code else None,
+            saving_serials=saving_serials if saving_serials else None,
+            pre_open_date=pre_open_date,
+            service=service if service else None,
+            service_date=service_date,
+            company_salary=company_salary if company_salary else None,
+            company_salary_num=company_salary_num if company_salary_num else None,
+            service_escrow=service_escrow if service_escrow else None,
+            service_escrow_ex_date=service_escrow_ex_date,
             branch_info=dict(
-                code=branch_info['branch_code'],
-                name=branch_info['branch_name']
+                code=branch_code if branch_code else None,
+                name=branch_name if branch_name else None
             )
         )
 
