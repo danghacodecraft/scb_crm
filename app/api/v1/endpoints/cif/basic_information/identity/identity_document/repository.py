@@ -778,8 +778,26 @@ async def repos_upload_identity_document_and_ocr(
         )
 
     ocr_response_data.update(response_data)
-
+    ocr_response_data.update({
+        'ocr_result_ekyc': {
+            "document_type": ocr_response.get('document_type'),
+            "data": ocr_response.get('data')
+        }
+    })
     return ReposReturn(data=ocr_response_data)
+
+
+async def repos_validate_ekyc(request_body: dict):
+    is_success, response = await service_ekyc.validate_ekyc(request_body=request_body)
+
+    if not is_success:
+        return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_EKYC, detail=response.get('errors', '').get('message'))
+
+    response_data = {
+        'success': response['success'],
+        'warning': response['errors']
+    }
+    return ReposReturn(data=response_data)
 
 
 async def mapping_ekyc_front_side_identity_card_ocr_data(image_url: str, ocr_data: dict, session: Session):

@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Optional
 
-from pydantic import Field
+from pydantic import Field, validator
 
 from app.api.base.schema import BaseSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
@@ -92,11 +92,18 @@ class IdentityDocumentTypeRequest(BaseSchema):
 
 class IdentityCardSaveRequest(BaseSchema):
     cif_id: str = Field(None, description="ID định danh CIF")
+    ocr_result_ekyc: dict = Field(..., description="Phân tích OCR EKYC")
     cif_information: CifInformationRequest = Field(..., description="Thông tin CIF")
     identity_document_type: IdentityDocumentTypeRequest = Field(..., description="Loại giấy tờ định danh")
     front_side_information: FrontSideIdentityCitizenCardRequest = Field(..., description="Thông tin mặt trước")
     back_side_information: BackSideIdentityCitizenCardRequest = Field(..., description="Thông tin mặt sau")
     ocr_result: OCRResultIdentityCardRequest = Field(..., description="Phân tích OCR")
+
+    @validator('ocr_result_ekyc', pre=True)
+    def check_json(cls, json_field):
+        if not bool(json_field):
+            raise TypeError('json_field content required')
+        return json_field
 
 
 ########################################################################################################################
@@ -134,11 +141,18 @@ class OCRResultCitizenCardRequest(BaseSchema):  # noqa
 # REQUEST CCCD
 class CitizenCardSaveRequest(BaseSchema):
     cif_id: str = Field(None, description="ID định danh CIF")  # noqa
+    ocr_result_ekyc: dict = Field(..., description="Phân tích OCR EKYC")
     cif_information: CifInformationRequest = Field(..., description="Thông tin CIF")
     identity_document_type: IdentityDocumentTypeRequest = Field(..., description="Loại giấy tờ định danh")
     front_side_information: FrontSideIdentityCitizenCardRequest = Field(..., description="Thông tin mặt trước")
     back_side_information: BackSideIdentityCitizenCardRequest = Field(..., description="Thông tin mặt sau")
     ocr_result: OCRResultCitizenCardRequest = Field(..., description="Phân tích OCR")
+
+    @validator('ocr_result_ekyc', pre=True)
+    def check_json(cls, json_field):
+        if not bool(json_field):
+            raise TypeError('json_field content required')
+        return json_field
 
 
 ########################################################################################################################
@@ -151,6 +165,7 @@ class InformationPassportRequest(BaseSchema):
     identity_avatar_image_uuid: str = Field(..., min_length=1, description="Hình ảnh khuôn mặt Hộ chiếu")
     face_compare_image_url: str = Field(..., min_length=1, description="Hình ảnh chụp khuôn mặt")
     face_uuid_ekyc: str = Field(..., min_length=1, description="uuid lấy từ so sánh khuôn mặt")
+
 
 # II. Phân tích OCR -> 1. Giấy tờ định danh (Hộ Chiếu)
 class OCRDocumentPassportRequest(BaseSchema):  # noqa
@@ -182,10 +197,17 @@ class OCRResultPassportRequest(BaseSchema):
 # REQUEST HC
 class PassportSaveRequest(BaseSchema):
     cif_id: str = Field(None, description="ID định danh CIF")
+    ocr_result_ekyc: dict = Field(..., description="Phân tích OCR EKYC")
     cif_information: CifInformationRequest = Field(..., description="Thông tin CIF")
     identity_document_type: IdentityDocumentTypeRequest = Field(..., description="Loại giấy tờ định danh")
     passport_information: InformationPassportRequest = Field(..., description="Thông tin hộ chiếu")
     ocr_result: OCRResultPassportRequest = Field(..., description="Phân tích OCR")
+
+    @validator('ocr_result_ekyc', pre=True)
+    def check_json(cls, json_field):
+        if not bool(json_field):
+            raise TypeError('json_field content required')
+        return json_field
 
 
 ########################################################################################################################
@@ -194,3 +216,8 @@ class PassportSaveRequest(BaseSchema):
 # So sánh khuôn mặt
 class FaceCompareRequest(BaseSchema):
     face_image_url: str = Field(..., min_length=1, description="URL hình ảnh khuôn mặt đối chiếu")
+
+
+class OcrEkycRequest(BaseSchema):
+    document_type: int = Field(..., description='Loại giấy tờ tùy thân được lấy từ ocr_result_ekyc')
+    data: dict = Field(..., description='thông tin ocr_result_ekyc (cả 2 mặt) của giấy tờ tùy thân')

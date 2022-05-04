@@ -7,10 +7,12 @@ from app.api.v1.controller import PermissionController
 from app.api.v1.endpoints.cif.basic_information.identity.identity_document.repository import (
     repos_compare_face, repos_get_detail_identity,
     repos_get_identity_image_transactions, repos_get_identity_information,
-    repos_save_identity, repos_upload_identity_document_and_ocr
+    repos_save_identity, repos_upload_identity_document_and_ocr,
+    repos_validate_ekyc
 )
 from app.api.v1.endpoints.cif.basic_information.identity.identity_document.schema_request import (
-    CitizenCardSaveRequest, IdentityCardSaveRequest, PassportSaveRequest
+    CitizenCardSaveRequest, IdentityCardSaveRequest, OcrEkycRequest,
+    PassportSaveRequest
 )
 from app.api.v1.endpoints.cif.repository import (
     repos_check_not_exist_cif_number
@@ -67,7 +69,7 @@ from app.utils.error_messages import (  # noqa
 )
 from app.utils.functions import (  # noqa
     calculate_age, date_to_string, datetime_to_string, dropdown, now,
-    parse_file_uuid
+    orjson_dumps, parse_file_uuid
 )
 from app.utils.vietnamese_converter import (
     convert_to_unsigned_vietnamese, make_short_name, split_name
@@ -314,7 +316,8 @@ class CtrIdentityDocument(BaseController):
             "maker_at": now(),
             "maker_id": current_user_code,
             "updater_at": now(),
-            "updater_id": current_user_code
+            "updater_id": current_user_code,
+            "ocr_result": orjson_dumps(identity_document_request.ocr_result_ekyc)
         }
 
         gender_id = basic_information.gender.id
@@ -691,14 +694,14 @@ class CtrIdentityDocument(BaseController):
                 detail=f"{IDENTITY_DOCUMENT_TYPE_TYPE}",
                 loc="identity_document_type -> type_id"
             )
-        is_valid, validate_response = await service_ekyc.validate(data=ekyc_request_data,
-                                                                  document_type=ekyc_document_type_request)
-        if not is_valid:
-            errors = validate_response['errors']
-            return_errors = []
-            for key, value in errors.items():
-                return_errors.append(f"{key} -> {value}")
-            return self.response_exception(msg=ERROR_CALL_SERVICE_EKYC, detail=', '.join(return_errors))
+        # is_valid, validate_response = await service_ekyc.validate(data=ekyc_request_data,
+        #                                                           document_type=ekyc_document_type_request)
+        # if not is_valid:
+        #     errors = validate_response['errors']
+        #     return_errors = []
+        #     for key, value in errors.items():
+        #         return_errors.append(f"{key} -> {value}")
+        #     return self.response_exception(msg=ERROR_CALL_SERVICE_EKYC, detail=', '.join(return_errors))
 
         # So sánh khuôn mặt
         if not compare_face_uuid_ekyc:
@@ -838,6 +841,20 @@ class CtrIdentityDocument(BaseController):
         )
 
         return self.response(data=face_compare_info)
+
+    async def validate_ekyc(self, ocr_ekyc_request: OcrEkycRequest):
+
+        if not ocr_ekyc_request.data:
+            return self.response_exception(msg=ERROR_NO_DATA)
+
+        request_body = {
+            "document_type": ocr_ekyc_request.document_type,
+            "data": ocr_ekyc_request.data
+        }
+
+        response = self.call_repos(await repos_validate_ekyc(request_body=request_body))
+
+        return self.response(data=response)
 
 
 async def parse_identity_model_to_dict(

@@ -165,6 +165,7 @@ class PassportDetailResponse(BaseSchema):
     passport_information: InformationPassportResponse = Field(..., description="Thông tin hộ chiếu")
     ocr_result: OCRResultPassportResponse = Field(..., description="Phân tích OCR")
 
+
 ########################################################################################################################
 
 
@@ -179,3 +180,11 @@ class LogResponse(BaseSchema):
     reference_flag: bool = Field(..., description="Cờ giấy tờ định danh dùng để so sánh với hình gốc")
     created_date: date = Field(..., description="Ngày ghi log")
     identity_images: List[IdentityImage] = Field(..., description="Danh sách hình ảnh")
+
+
+########################################################################################################################
+# Response Validate ekyc
+########################################################################################################################
+class ValidateResponse(BaseSchema):
+    success: bool = Field(..., description='Trạng thái validate ekyc')
+    warning: dict = Field(..., description='Cảnh báo các trường đang không đúng với validate')
