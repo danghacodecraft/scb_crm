@@ -69,7 +69,7 @@ from app.utils.error_messages import (  # noqa
 )
 from app.utils.functions import (  # noqa
     calculate_age, date_to_string, datetime_to_string, dropdown, now,
-    parse_file_uuid
+    orjson_dumps, parse_file_uuid
 )
 from app.utils.vietnamese_converter import (
     convert_to_unsigned_vietnamese, make_short_name, split_name
@@ -316,7 +316,8 @@ class CtrIdentityDocument(BaseController):
             "maker_at": now(),
             "maker_id": current_user_code,
             "updater_at": now(),
-            "updater_id": current_user_code
+            "updater_id": current_user_code,
+            "ocr_result": orjson_dumps(identity_document_request.ocr_result_ekyc)
         }
 
         gender_id = basic_information.gender.id
