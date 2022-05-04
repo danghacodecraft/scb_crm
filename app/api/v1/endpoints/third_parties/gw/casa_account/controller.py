@@ -33,33 +33,50 @@ class CtrGWCasaAccount(BaseController):
         account_infos = []
 
         for account in account_info_list:
-            balance = account['account_info_item']['account_balance']
-            total_balances += int(balance) if balance else 0
-            branch_info = account['account_info_item']["branch_info"]
+            account_info_item = account['account_info_item']
+            balance = account_info_item['account_balance']
+            total_balances += float(balance) if balance else 0
+            branch_info = account_info_item["branch_info"]
+            account_number = account_info_item["account_num"]
+            account_type = account_info_item["account_type"]
+            currency = account_info_item["account_currency"]
+            balance_available = account_info_item["account_balance_available"]
+            balance_available_vnd = account_info_item["account_balance_available_vnd"]
+            balance_lock = account_info_item["account_balance_lock"]
+            over_draft_limit = account['account_info_item']["account_over_draft_limit"]
+            over_draft_expired_date = string_to_date(account['account_info_item']["account_over_draft_expired_date"],
+                                                     _format=DATETIME_INPUT_OUTPUT_FORMAT)
+            latest_trans_date = string_to_date(account['account_info_item']["account_latest_trans_date"],
+                                               _format=DATETIME_INPUT_OUTPUT_FORMAT)
+            open_date = string_to_date(account['account_info_item']["account_open_date"],
+                                       _format=DATETIME_INPUT_OUTPUT_FORMAT)
+            maturity_date = string_to_date(account['account_info_item']["account_maturity_date"],
+                                           _format=DATETIME_INPUT_OUTPUT_FORMAT)
+            lock_status = account['account_info_item']["account_lock_status"]
+            class_name = account['account_info_item']["account_class_name"]
+            class_code = account['account_info_item']["account_class_code"]
+            branch_code = branch_info['branch_code']
+            branch_name = branch_info['branch_name']
             account_infos.append(dict(
-                number=account['account_info_item']["account_num"],
-                type=account['account_info_item']["account_type"],
-                type_name=account['account_info_item']["account_type_name"],
-                currency=account['account_info_item']["account_currency"],
-                balance=account['account_info_item']["account_balance"],
-                balance_available=account['account_info_item']["account_balance_available"],
-                balance_available_vnd=account['account_info_item']["account_balance_available_vnd"],
-                balance_lock=account['account_info_item']["account_balance_lock"],
-                over_draft_limit=account['account_info_item']["account_over_draft_limit"],
-                over_draft_expired_date=string_to_date(account['account_info_item']["account_over_draft_expired_date"],
-                                                       _format=DATETIME_INPUT_OUTPUT_FORMAT),
-                latest_trans_date=string_to_date(account['account_info_item']["account_latest_trans_date"],
-                                                 _format=DATETIME_INPUT_OUTPUT_FORMAT),
-                open_date=string_to_date(account['account_info_item']["account_open_date"],
-                                         _format=DATETIME_INPUT_OUTPUT_FORMAT),
-                maturity_date=string_to_date(account['account_info_item']["account_maturity_date"],
-                                             _format=DATETIME_INPUT_OUTPUT_FORMAT),
-                lock_status=account['account_info_item']["account_lock_status"],
-                class_name=account['account_info_item']["account_class_name"],
-                class_code=account['account_info_item']["account_class_code"],
+                number=account_number if account_number else None,
+                type=account_type if account_type else None,
+                type_name=account_type if account_type else None,
+                currency=currency if currency else None,
+                balance=balance if balance else None,
+                balance_available=balance_available if balance_available else None,
+                balance_available_vnd=balance_available_vnd if balance_available_vnd else None,
+                balance_lock=balance_lock if balance_lock else None,
+                over_draft_limit=over_draft_limit if over_draft_limit else None,
+                over_draft_expired_date=over_draft_expired_date,
+                latest_trans_date=latest_trans_date,
+                open_date=open_date,
+                maturity_date=maturity_date,
+                lock_status=lock_status if lock_status else None,
+                class_name=class_name if class_name else None,
+                class_code=class_code if class_code else None,
                 branch_info=dict(
-                    code=branch_info["branch_code"],
-                    name=branch_info["branch_name"]
+                    code=branch_code if branch_code else None,
+                    name=branch_name if branch_name else None
                 )
             ))
 

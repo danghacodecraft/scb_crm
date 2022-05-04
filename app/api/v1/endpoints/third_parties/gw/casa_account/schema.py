@@ -15,21 +15,21 @@ from app.api.v1.schemas.utils import DropdownResponse
 
 
 class CasaAccountByCIFNumberResponse(BaseSchema):
-    number: str = Field(..., description="Số tài khoản")
-    type: str = Field(..., description="Loại tài khoản (thanh toán, tiết kiệm…)")
-    type_name: str = Field(..., description="Tên loại tài khoản")
-    currency: str = Field(..., description="Loại tiền trong tài khoản")
-    balance: int = Field(..., description="Số dư tài khoản")
-    balance_available: float = Field(..., description="Số dư có thể sử dụng")
-    balance_available_vnd: int = Field(..., description="Số dư tài khoản có thể sử dụng vnd")
-    balance_lock: float = Field(..., description="Số dư bị phong tỏa")
+    number: Optional[str] = Field(..., description="Số tài khoản")
+    type: Optional[str] = Field(..., description="Loại tài khoản (thanh toán, tiết kiệm…)")
+    type_name: Optional[str] = Field(..., description="Tên loại tài khoản")
+    currency: Optional[str] = Field(..., description="Loại tiền trong tài khoản")
+    balance: Optional[float] = Field(..., description="Số dư tài khoản")
+    balance_available: Optional[float] = Field(..., description="Số dư có thể sử dụng")
+    balance_available_vnd: Optional[int] = Field(..., description="Số dư tài khoản có thể sử dụng vnd")
+    balance_lock: Optional[float] = Field(..., description="Số dư bị phong tỏa")
     over_draft_limit: Optional[str] = Field(..., description="Hạn mức thấu chi")
     over_draft_expired_date: Optional[date] = Field(..., description="Ngày hết hạn")
     latest_trans_date: Optional[date] = Field(..., description="Ngày giao dịch gần nhất")
-    open_date: date = Field(..., description="Ngày mở tài khoản")
+    open_date: Optional[date] = Field(..., description="Ngày mở tài khoản")
     maturity_date: Optional[date] = Field(..., description="Ngày đến hạn")
-    lock_status: str = Field(..., description="Trạng thái tài khoản (phong tỏa hoặc không)")
-    class_name: str = Field(
+    lock_status: Optional[str] = Field(..., description="Trạng thái tài khoản (phong tỏa hoặc không)")
+    class_name: Optional[str] = Field(
         ...,
         description="Tên sản phẩm. Ví dụ: Tiết kiệm thông thường, phát lộc phát tài…"
     )
@@ -38,7 +38,7 @@ class CasaAccountByCIFNumberResponse(BaseSchema):
 
 
 class GWCasaAccountByCIFNumberResponse(BaseSchema):
-    total_balances: int = Field(..., description="Tổng số dư")
+    total_balances: Optional[float] = Field(..., description="Tổng số dư")
     total_items: int = Field(..., description="Số lượng tài khoản")
     account_info_list: List[CasaAccountByCIFNumberResponse] = Field(..., description="Chi tiết tài khoản")
 
