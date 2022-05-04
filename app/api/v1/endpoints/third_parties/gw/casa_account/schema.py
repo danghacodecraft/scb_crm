@@ -26,7 +26,7 @@ class CasaAccountByCIFNumberResponse(BaseSchema):
     over_draft_limit: Optional[str] = Field(..., description="Hạn mức thấu chi")
     over_draft_expired_date: Optional[date] = Field(..., description="Ngày hết hạn")
     latest_trans_date: Optional[date] = Field(..., description="Ngày giao dịch gần nhất")
-    open_date: date = Field(..., description="Ngày mở tài khoản")
+    open_date: Optional[date] = Field(..., description="Ngày mở tài khoản")
     maturity_date: Optional[date] = Field(..., description="Ngày đến hạn")
     lock_status: Optional[str] = Field(..., description="Trạng thái tài khoản (phong tỏa hoặc không)")
     class_name: Optional[str] = Field(
