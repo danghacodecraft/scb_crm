@@ -1,7 +1,7 @@
 from datetime import date
 from typing import List, Optional
 
-from pydantic import Field
+from pydantic import Field, validator
 
 from app.api.base.schema import BaseSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
@@ -19,7 +19,7 @@ class CasaAccountByCIFNumberResponse(BaseSchema):
     type: Optional[str] = Field(..., description="Loại tài khoản (thanh toán, tiết kiệm…)")
     type_name: Optional[str] = Field(..., description="Tên loại tài khoản")
     currency: Optional[str] = Field(..., description="Loại tiền trong tài khoản")
-    balance: Optional[float] = Field(..., description="Số dư tài khoản")
+    balance: Optional[int] = Field(..., description="Số dư tài khoản")
     balance_available: Optional[float] = Field(..., description="Số dư có thể sử dụng")
     balance_available_vnd: Optional[int] = Field(..., description="Số dư tài khoản có thể sử dụng vnd")
     balance_lock: Optional[float] = Field(..., description="Số dư bị phong tỏa")
@@ -36,9 +36,15 @@ class CasaAccountByCIFNumberResponse(BaseSchema):
     class_code: Optional[str] = Field(..., description="Mã sản phẩm")
     branch_info: GWBranchDropdownResponse = Field(...)
 
+    @validator('*', pre=True)
+    def check_blank_str(string): # noqa
+        if string == '':
+            return None
+        return string
+
 
 class GWCasaAccountByCIFNumberResponse(BaseSchema):
-    total_balances: Optional[float] = Field(..., description="Tổng số dư")
+    total_balances: Optional[int] = Field(..., description="Tổng số dư")
     total_items: int = Field(..., description="Số lượng tài khoản")
     account_info_list: List[CasaAccountByCIFNumberResponse] = Field(..., description="Chi tiết tài khoản")
 
@@ -54,6 +60,12 @@ class GWCustomerInfoResponse(BaseSchema):
     email: Optional[str] = Field(..., description="Email")
     mobile_phone: Optional[str] = Field(..., description="Điện thoại di động")
     type: Optional[str] = Field(..., description="Loại khách hàng (cá nhân hoặc doanh nghiệp)")
+
+    @validator('*', pre=True)
+    def check_blank_str(string):  # noqa
+        if string == '':
+            return None
+        return string
 
 
 class GWAccountInfoResponse(BaseSchema):
@@ -83,6 +95,12 @@ class GWAccountInfoResponse(BaseSchema):
     service_escrow: Optional[str] = Field(..., description="Dịch vụ ký quỹ")
     service_escrow_ex_date: Optional[date] = Field(..., description="Ngày đáo hạn ký quỹ")
     branch_info: GWBranchDropdownResponse = Field(..., description="Thông tin đơn vị")
+
+    @validator('*', pre=True)
+    def check_blank_str(string):  # noqa
+        if string == '':
+            return None
+        return string
 
 
 class GWCasaAccountResponse(BaseSchema):
@@ -143,6 +161,8 @@ class GWReportColumnChartHistoryAccountInfoRequest(BaseSchema):
 
 class GWReportStatementHistoryAccountInfoRequest(BaseSchema):
     account_number: str = Field(..., description="Số tài khoản")
+    from_date: date = Field(date(year=2020, month=4, day=20), description="Từ ngày")
+    to_date: date = Field(date(year=2025, month=7, day=20), description="Đến ngày")
 
 
 class GWReportStatementHistoryAccountInfoResponse(BaseSchema):
