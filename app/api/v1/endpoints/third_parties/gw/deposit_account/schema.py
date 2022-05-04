@@ -58,7 +58,7 @@ class GWAccountStaffInfoIndirectResponse(BaseSchema):
 class GWDepositAccountInfoResponse(BaseSchema):
     number: Optional[str] = Field(..., description="Số tài khoản")
     term: Optional[str] = Field(..., description="Kỳ hạn, 1 tháng ,2 tháng… Dành cho tài khoản tiết kiệm")
-    type: Optional[str] = Field(..., description="Loại tài khoản (thanh toán, tiết kiệm…)"),
+    type: Optional[str] = Field(..., description="Loại tài khoản (thanh toán, tiết kiệm…)")
     type_name: Optional[str] = Field(..., description="Tên loại tài khoản")
     saving_serials: Optional[str] = Field(..., description="Số Series Sổ tiết kiệm")
     currency: Optional[str] = Field(..., description="Loại tiền trong tài khoản")
