@@ -5,7 +5,7 @@ from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
-    GWCasaAccountByCIFNumberRequest
+    GWCasaAccountByCIFNumberRequest, GWCasaAccountByCIFNumberResponse
 )
 from app.api.v1.endpoints.third_parties.gw.deposit_account.controller import (
     CtrGWDepositAccount
@@ -17,6 +17,7 @@ from app.api.v1.endpoints.third_parties.gw.deposit_account.example import (
 from app.api.v1.endpoints.third_parties.gw.deposit_account.schema import (
     GWDepositAccountByCIFNumberResponse, GWDepositAccountTDResponse
 )
+from app.api.v1.schemas.utils import SaveSuccessResponse
 
 router = APIRouter()
 
@@ -26,7 +27,7 @@ router = APIRouter()
     name="[GW] Danh sách Tài khoản tiết kiệm theo số CIF",
     description="[GW] Tìm kiếm danh sách Tài khoản tiết kiệm theo số CIF",
     responses=swagger_response(
-        response_model=ResponseData[GWDepositAccountByCIFNumberResponse],
+        response_model=ResponseData[GWCasaAccountByCIFNumberResponse],
         success_examples=DEPOSIT_ACCOUNT_BY_CIF_NUMBER_SUCCESS_EXAMPLE,
         success_status_code=status.HTTP_200_OK
     )
@@ -46,7 +47,7 @@ async def view_gw_get_deposit_account_by_cif_number(
     name="[Thông tin tài khoản] Chi tiết tài khoản tiết kiệm",
     description="Lấy chi tiết tài Khoản tiết kiệm theo số tài khoản",
     responses=swagger_response(
-        response_model=ResponseData[GWDepositAccountTDResponse],
+        response_model=ResponseData[SaveSuccessResponse],
         success_examples=DEPOSIT_ACCOUNT_TD_SUCCESS_EXAMPLE,
         success_status_code=status.HTTP_200_OK
     )
