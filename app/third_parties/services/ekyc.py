@@ -172,6 +172,23 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"errors": {"message": "eKYC error please try again later"}}
 
+    async def validate_ekyc(self, request_body: dict):
+        api_url = f"{self.url}/api/v1/card-service/validate/"
+
+        headers = self.headers
+        # thay đổi giá trị x-transaction-id
+        headers['X-TRANSACTION-ID'] = "CRM_"
+        try:
+            async with self.session.post(url=api_url, json=request_body, headers=headers, ssl=False) as response:
+                logger.log("SERVICE", f"[VALIDATE_EKYC] {response.status} : {api_url}")
+                response_body = await response.json()
+
+                return True, response_body
+
+        except Exception as ex:
+            logger.error(str(ex))
+            return False, {"errors": {"message": "eKYC error please try again later"}}
+
     async def get_list_kss(self, query_data):
         api_url = f"{self.url}/api/v1/customer-service/crm/"
 

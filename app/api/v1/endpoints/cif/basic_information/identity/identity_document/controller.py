@@ -7,10 +7,12 @@ from app.api.v1.controller import PermissionController
 from app.api.v1.endpoints.cif.basic_information.identity.identity_document.repository import (
     repos_compare_face, repos_get_detail_identity,
     repos_get_identity_image_transactions, repos_get_identity_information,
-    repos_save_identity, repos_upload_identity_document_and_ocr
+    repos_save_identity, repos_upload_identity_document_and_ocr,
+    repos_validate_ekyc
 )
 from app.api.v1.endpoints.cif.basic_information.identity.identity_document.schema_request import (
-    CitizenCardSaveRequest, IdentityCardSaveRequest, PassportSaveRequest
+    CitizenCardSaveRequest, IdentityCardSaveRequest, OcrEkycRequest,
+    PassportSaveRequest
 )
 from app.api.v1.endpoints.cif.repository import (
     repos_check_not_exist_cif_number
@@ -838,6 +840,20 @@ class CtrIdentityDocument(BaseController):
         )
 
         return self.response(data=face_compare_info)
+
+    async def validate_ekyc(self, ocr_ekyc_request: OcrEkycRequest):
+
+        if not ocr_ekyc_request.data:
+            return self.response_exception(msg=ERROR_NO_DATA)
+
+        request_body = {
+            "document_type": ocr_ekyc_request.document_type,
+            "data": ocr_ekyc_request.data
+        }
+
+        response = self.call_repos(await repos_validate_ekyc(request_body=request_body))
+
+        return self.response(data=response)
 
 
 async def parse_identity_model_to_dict(

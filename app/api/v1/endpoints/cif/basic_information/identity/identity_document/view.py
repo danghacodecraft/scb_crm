@@ -21,11 +21,12 @@ from app.api.v1.endpoints.cif.basic_information.identity.identity_document.ocr_s
     OCRFrontSideIdentityCardResponse, OCRPassportResponse
 )
 from app.api.v1.endpoints.cif.basic_information.identity.identity_document.schema_request import (
-    CitizenCardSaveRequest, IdentityCardSaveRequest, PassportSaveRequest
+    CitizenCardSaveRequest, IdentityCardSaveRequest, OcrEkycRequest,
+    PassportSaveRequest
 )
 from app.api.v1.endpoints.cif.basic_information.identity.identity_document.schema_response import (
     CitizenCardDetailResponse, IdentityCardDetailResponse, LogResponse,
-    PassportDetailResponse
+    PassportDetailResponse, ValidateResponse
 )
 from app.api.v1.schemas.utils import SaveSuccessResponse
 from app.utils.constant.cif import (
@@ -196,3 +197,21 @@ async def view_compare_face(
         identity_image_uuid=identity_image_uuid
     )
     return ResponseData[CompareSuccessResponse](**face_compare_info)
+
+
+@router_special.post(
+    path="/basic-information/identity/identity-document/validate/",
+    name="1. GTĐD - A. GTĐD - validate",
+    description="validate ocr",
+    responses=swagger_response(
+        response_model=ResponseData[ValidateResponse],
+        success_status_code=status.HTTP_200_OK
+    ),
+    tags=['[CIF] I. TTCN']
+)
+async def validate_ekyc(
+        ocr_ekyc_request: OcrEkycRequest,
+        current_user=Depends(get_current_user_from_header())
+):
+    data = await CtrIdentityDocument(current_user).validate_ekyc(ocr_ekyc_request=ocr_ekyc_request)
+    return ResponseData[ValidateResponse](**data)
