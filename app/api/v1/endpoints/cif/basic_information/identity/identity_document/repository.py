@@ -792,7 +792,6 @@ async def mapping_ekyc_front_side_identity_card_ocr_data(image_url: str, ocr_dat
     )
 
     try:
-        # TODO: tách tỉnh ra query. Hỏi thăm bên eKYC xem có case đặc biệt không
         place_of_origin = ocr_data.get('place_of_origin', ', ').split(', ')[-1]
     except ValueError:
         place_of_origin = None
@@ -803,23 +802,32 @@ async def mapping_ekyc_front_side_identity_card_ocr_data(image_url: str, ocr_dat
         session=session
     )
 
-    try:
-        number_and_street, ward, district, province = ocr_data.get('place_of_residence', ', , , ').split(', ')
-    except ValueError:
-        number_and_street = ward = district = province = ''
+    province_code = ocr_data.get('address_info').get('province_code')
+    province_name = ocr_data.get('address_info').get('province_name')
+
+    district_code = ocr_data.get('address_info').get('district_code')
+    district_name = ocr_data.get('address_info').get('district_name')
+
+    ward_code = ocr_data.get('address_info').get('ward_code')
+    ward_name = ocr_data.get('address_info').get('ward_name')
+
+    number_and_street = ocr_data.get('address_info').get('street_name')
 
     optional_province = await get_optional_model_object_by_code_or_name(
-        model_name=province,
+        model_name=province_name,
+        model_code=province_code,
         model=AddressProvince,
         session=session
     )
     optional_district = await get_optional_model_object_by_code_or_name(
-        model_name=district,
+        model_name=district_name,
+        model_code=district_code,
         model=AddressDistrict,
         session=session
     )
     optional_ward = await get_optional_model_object_by_code_or_name(
-        model_name=ward,
+        model_name=ward_name,
+        model_code=ward_code,
         model=AddressWard,
         session=session
     )

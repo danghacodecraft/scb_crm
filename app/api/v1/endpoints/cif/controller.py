@@ -7,6 +7,7 @@ from app.api.v1.endpoints.cif.repository import (
 )
 from app.api.v1.endpoints.cif.schema import CustomerByCIFNumberRequest
 from app.api.v1.endpoints.user.contact.repository import repo_contact
+from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.third_parties.oracle.models.master_data.address import (
     AddressDistrict, AddressProvince, AddressWard
 )
@@ -19,8 +20,8 @@ from app.utils.constant.cif import (
 from app.utils.constant.soa import SOA_DATETIME_FORMAT
 from app.utils.error_messages import ERROR_CIF_ID_NOT_EXIST
 from app.utils.functions import (
-    date_string_to_other_date_string_format, datetime_to_date, dropdown,
-    dropdownflag, orjson_loads
+    date_string_to_other_date_string_format, dropdown, dropdownflag,
+    orjson_loads, string_to_date
 )
 from app.utils.vietnamese_converter import split_name
 
@@ -38,54 +39,42 @@ class CtrCustomer(BaseController):
         profile_histories = self.call_repos((await repos_profile_history(cif_id=cif_id, session=self.oracle_session)))
         full_logs = []
         for _, _, booking_business_form in profile_histories:
-            full_logs.append(dict(
-                created_at=booking_business_form.created_at,
-                data=orjson_loads(booking_business_form.log_data)
-            ))
-
+            log_data = orjson_loads(booking_business_form.log_data)
+            if log_data:
+                full_logs.extend(log_data)
         full_logs = sorted(full_logs, key=lambda d: d['created_at'], reverse=True)
-        log_details = []
-        log_datas = {}
         prev_created_at = None
+        log_details = []
+        response_datas = {}
         for full_log in full_logs:
-            created_at = datetime_to_date(full_log['created_at'])
+            created_at = string_to_date(full_log['created_at'], _format=DATETIME_INPUT_OUTPUT_FORMAT)
+            log_data = dict(
+                description=full_log['description'],
+                completed_at=full_log['completed_at'],
+                started_at=full_log['created_at'],
+                status=PROFILE_HISTORY_STATUS[full_log['status']],
+                branch_id=full_log['branch_id'],
+                branch_code=full_log['branch_code'],
+                branch_name=full_log['branch_name'],
+                user_id=full_log['user_id'],
+                user_name=full_log['user_name'],
+                position_id=full_log['position_id'],
+                position_code=full_log['position_code'],
+                position_name=full_log['position_name']
+            )
             if not prev_created_at:
-                prev_created_at = datetime_to_date(full_log['created_at'])
-
-            for log in full_log['data']:
-                log_data = dict(
-                    description=log['description'],
-                    completed_at=log['completed_at'],
-                    started_at=log['created_at'],
-                    status=PROFILE_HISTORY_STATUS[log['status']],
-                    branch_id=log['branch_id'],
-                    branch_code=log['branch_code'],
-                    branch_name=log['branch_name'],
-                    user_id=log['user_id'],
-                    user_name=log['user_name'],
-                    position_id=log['position_id'],
-                    position_code=log['position_code'],
-                    position_name=log['position_name']
-                )
-                if prev_created_at != created_at:
-                    log_details = []
-                log_details.append(log_data)
-
                 prev_created_at = created_at
-            log_datas.update({
-                created_at: log_details
-            })
+            if prev_created_at != created_at:
+                log_details = []
 
-        response_datas = []
-        # Chỉ giữ những log có detail, những log rỗng bỏ đi
-        for created_at, log_details in log_datas.items():
-            if log_details:
-                response_datas.append(dict(
-                    created_at=created_at,
-                    log_details=log_details
-                ))
+            log_details.append(log_data)
 
-        return self.response(data=response_datas)
+            response_datas.update({created_at: log_details})
+
+        return self.response(data=[dict(
+            created_at=created_at,
+            log_details=log_details
+        ) for created_at, log_details in response_datas.items()])
 
     async def ctr_customer_information(self, cif_id: str):
         customer_information = self.call_repos(
