@@ -693,14 +693,14 @@ class CtrIdentityDocument(BaseController):
                 detail=f"{IDENTITY_DOCUMENT_TYPE_TYPE}",
                 loc="identity_document_type -> type_id"
             )
-        is_valid, validate_response = await service_ekyc.validate(data=ekyc_request_data,
-                                                                  document_type=ekyc_document_type_request)
-        if not is_valid:
-            errors = validate_response['errors']
-            return_errors = []
-            for key, value in errors.items():
-                return_errors.append(f"{key} -> {value}")
-            return self.response_exception(msg=ERROR_CALL_SERVICE_EKYC, detail=', '.join(return_errors))
+        # is_valid, validate_response = await service_ekyc.validate(data=ekyc_request_data,
+        #                                                           document_type=ekyc_document_type_request)
+        # if not is_valid:
+        #     errors = validate_response['errors']
+        #     return_errors = []
+        #     for key, value in errors.items():
+        #         return_errors.append(f"{key} -> {value}")
+        #     return self.response_exception(msg=ERROR_CALL_SERVICE_EKYC, detail=', '.join(return_errors))
 
         # So sánh khuôn mặt
         if not compare_face_uuid_ekyc:
