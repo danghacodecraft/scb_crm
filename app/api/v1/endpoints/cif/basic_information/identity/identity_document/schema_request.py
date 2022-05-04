@@ -152,6 +152,7 @@ class InformationPassportRequest(BaseSchema):
     face_compare_image_url: str = Field(..., min_length=1, description="Hình ảnh chụp khuôn mặt")
     face_uuid_ekyc: str = Field(..., min_length=1, description="uuid lấy từ so sánh khuôn mặt")
 
+
 # II. Phân tích OCR -> 1. Giấy tờ định danh (Hộ Chiếu)
 class OCRDocumentPassportRequest(BaseSchema):  # noqa
     identity_number: str = Field(..., min_length=1, description="Số GTĐD")
@@ -194,3 +195,8 @@ class PassportSaveRequest(BaseSchema):
 # So sánh khuôn mặt
 class FaceCompareRequest(BaseSchema):
     face_image_url: str = Field(..., min_length=1, description="URL hình ảnh khuôn mặt đối chiếu")
+
+
+class OcrEkycRequest(BaseSchema):
+    document_type: int = Field(..., description='Loại giấy tờ tùy thân được lấy từ ocr_result_ekyc')
+    data: dict = Field(..., description='thông tin ocr_result_ekyc (cả 2 mặt) của giấy tờ tùy thân')
