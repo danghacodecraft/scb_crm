@@ -45,6 +45,11 @@ class GWCustomerListAddressInfo(BaseSchema):
     address_full: str = Field(..., description="Địa chỉ đầy đủ")
 
 
+class GWCustomerListAddress(BaseSchema):
+    contact_address_full: str = Field(..., description="Địa chỉ liên lạc đầy đủ")
+    address_full: str = Field(..., description="Địa chỉ đầy đủ")
+
+
 class GWCustomerDetailAddressInfo(BaseSchema):
     address_full: str = Field(..., description="Địa chỉ đầy đủ")
     contact_address_full: str = Field(..., description="Địa chỉ liên lạc đầy đủ")
@@ -101,3 +106,41 @@ class GWCustomerInfoDetailResponse(BaseSchema):
     address_info: GWCustomerDetailAddressInfo = Field(..., description="Thông tin địa chỉ")
     job_info: GWCustomerJobInfo = Field(..., description="Thông tin việc làm")
     branch_info: GWBranchDropdownResponse = Field(..., description="Thông tin đơn vị")
+
+
+class GWCoownerResponse(BaseSchema):
+    full_name_vn: str = Field(..., description="Họ và tên")
+    date_of_birth: str = Field(..., description="Ngày sinh")
+    gender: str = Field(..., description="Giới tính")
+    email: str = Field(..., description="Địa chỉ email")
+    nationality_code: str = Field(..., description="mã quốc tịch")
+    mobile_phone: str = Field(..., description="Điện thoại di động")
+    customer_type: str = Field(..., description="Loại khách hàng")
+    coowner_relationship: str = Field(..., description="Mối quan hệ đồng sở hữu")
+    cif_info: GWCustomerCIFInfoResponse = Field(..., description="Thông tin CIF")
+    id_info: GWCustomerIDInfoResponse = Field(..., description="Thông tin giấy tờ định danh")
+    address_info: GWCustomerListAddress = Field(..., description="Thông tin địa chỉ")
+
+
+class GWCoownerListResponse(BaseSchema):
+    total_items: int = Field(..., description="Số lượng khách hàng")
+    coowner_info_list: List[GWCoownerResponse] = Field(..., description="Danh sách khách hàng")
+
+
+class GWAuthorizedResponse(BaseSchema):
+    full_name_vn: str = Field(..., description="Họ và tên")
+    date_of_birth: str = Field(..., description="Ngày sinh")
+    gender: str = Field(..., description="Giới tính")
+    email: str = Field(..., description="Địa chỉ email")
+    nationality_code: str = Field(..., description="mã quốc tịch")
+    mobile_phone: str = Field(..., description="Điện thoại di động")
+    customer_type: str = Field(..., description="Loại khách hàng")
+    coowner_relationship: str = Field(..., description="Mối quan hệ đồng sở hữu")
+    cif_info: GWCustomerCIFInfoResponse = Field(..., description="Thông tin CIF")
+    id_info: GWCustomerIDInfoResponse = Field(..., description="Thông tin giấy tờ định danh")
+    address_info: GWCustomerListAddress = Field(..., description="Thông tin địa chỉ")
+
+
+class GWAuthorizedListResponse(BaseSchema):
+    total_items: int = Field(..., description="Số lượng khách hàng")
+    authorized_info_list: List[GWAuthorizedResponse] = Field(..., description="Danh sách khách hàng")

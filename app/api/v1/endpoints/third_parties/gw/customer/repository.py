@@ -45,3 +45,39 @@ async def repos_gw_get_customer_info_detail(
         )
 
     return ReposReturn(data=customer_info)
+
+
+async def repos_gw_get_coowner(
+        account_number: str, current_user
+):
+    current_user = current_user.user_info
+    is_success, coowner = await service_gw.get_coowner(
+        account_number=account_number, current_user=current_user
+    )
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="get_coowner_list",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(coowner)
+        )
+
+    return ReposReturn(data=coowner)
+
+
+async def repos_gw_get_authorized(
+        account_number: str, current_user
+):
+    current_user = current_user.user_info
+    is_success, authorized = await service_gw.get_authorized(
+        account_number=account_number, current_user=current_user
+    )
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="get_authorized_list",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(authorized)
+        )
+
+    return ReposReturn(data=authorized)
