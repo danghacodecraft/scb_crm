@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, Path
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -9,12 +9,16 @@ from app.api.v1.endpoints.third_parties.gw.customer.controller import (
     CtrGWCustomer
 )
 from app.api.v1.endpoints.third_parties.gw.customer.example import (
+    AUTHORIZED_ACCOUNT_NUMBER, COOWNER_ACCOUNT_NUMBER,
+    CUSTOMER_AUTHORIZER_SUCCESS_EXAMPLE,
     CUSTOMER_CHECK_EXIST_CIF_ID_FAIL_EXAMPLE,
     CUSTOMER_CHECK_EXIST_CIF_ID_SUCCESS_EXAMPLE, CUSTOMER_CIF_ID,
-    CUSTOMER_INFO_DETAIL_SUCCESS_EXAMPLE, CUSTOMER_INFO_LIST_SUCCESS_EXAMPLE
+    CUSTOMER_COOWNER_SUCCESS_EXAMPLE, CUSTOMER_INFO_DETAIL_SUCCESS_EXAMPLE,
+    CUSTOMER_INFO_LIST_SUCCESS_EXAMPLE
 )
 from app.api.v1.endpoints.third_parties.gw.customer.schema import (
-    CustomerInfoListCIFRequest, GWCustomerCheckExistRequest,
+    CustomerInfoListCIFRequest, GWAuthorizedListResponse,
+    GWCoownerListResponse, GWCustomerCheckExistRequest,
     GWCustomerCheckExistResponse, GWCustomerInfoDetailResponse,
     GWCustomerInfoListResponse
 )
@@ -85,3 +89,43 @@ async def view_gw_get_customer_info_detail(
         cif_number=cif_number
     )
     return ResponseData[GWCustomerInfoDetailResponse](**gw_customer_info_detail)
+
+
+@router.post(
+    path="/coowner/{account_number}/",
+    name="[GW] Lấy danh sách đồng sở hữu theo số tài khoản",
+    description="Lấy danh sách đồng sở hữu theo số tài khoản",
+    responses=swagger_response(
+        response_model=ResponseData[GWCoownerListResponse],
+        success_examples=CUSTOMER_COOWNER_SUCCESS_EXAMPLE,
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_coowner(
+        account_number: str = Path(..., description="Số tài khoản", example=COOWNER_ACCOUNT_NUMBER),
+        current_user=Depends(get_current_user_from_header())
+):
+    gw_customer_coowner = await CtrGWCustomer(current_user).ctr_gw_get_coowner(
+        account_number=account_number
+    )
+    return ResponseData[GWCoownerListResponse](**gw_customer_coowner)
+
+
+@router.post(
+    path="/authorized/{account_number}/",
+    name="[GW] Lấy danh sách ủy quyền theo tài khoản",
+    description="Lấy danh sách ủy quyền theo tài khoản",
+    responses=swagger_response(
+        response_model=ResponseData[GWAuthorizedListResponse],
+        success_examples=CUSTOMER_AUTHORIZER_SUCCESS_EXAMPLE,
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_authorized(
+        account_number: str = Path(..., description="Số tài khoản", example=AUTHORIZED_ACCOUNT_NUMBER),
+        current_user=Depends(get_current_user_from_header())
+):
+    gw_customer_authorized = await CtrGWCustomer(current_user).ctr_gw_get_authorized(
+        account_number=account_number
+    )
+    return ResponseData[GWAuthorizedListResponse](**gw_customer_authorized)
