@@ -65,6 +65,8 @@ class GWDepositAccountInfoResponse(BaseSchema):
     balance: Optional[int] = Field(..., description="Số dư tài khoản")
     balance_available: Optional[float] = Field(..., description="Số dư có thể sử dụng")
     balance_available_vnd: Optional[int] = Field(..., description="Số dư tài khoản có thể sử dụng vnd")
+    balance_lock: Optional[float] = Field(..., description="Số dư tài khoản bị phong tỏa")
+    interest_receivable_type: Optional[str] = Field(..., description="Hình thức lĩnh lãi")
     open_date: Optional[date] = Field(..., description="Ngày mở tài khoản")
     maturity_date: Optional[date] = Field(..., description="Ngày đến hạn")
     lock_status: Optional[str] = Field(..., description="Trạng thái tài khoản (phong tỏa hoặc không)")

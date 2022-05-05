@@ -844,6 +844,8 @@ class CtrIdentityDocument(BaseController):
 
     async def validate_ekyc(self, ocr_ekyc_request: OcrEkycRequest):
 
+        qc_code = ocr_ekyc_request.qr_code
+
         if not ocr_ekyc_request.data:
             return self.response_exception(msg=ERROR_NO_DATA)
 
@@ -852,6 +854,10 @@ class CtrIdentityDocument(BaseController):
             "data": ocr_ekyc_request.data
         }
 
+        if ocr_ekyc_request.document_type == EKYC_DOCUMENT_TYPE_NEW_CITIZEN:
+            request_body['data'].update({
+                'qr_code': qc_code
+            })
         response = self.call_repos(await repos_validate_ekyc(request_body=request_body))
 
         return self.response(data=response)

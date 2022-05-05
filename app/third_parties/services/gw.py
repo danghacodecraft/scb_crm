@@ -8,9 +8,12 @@ from starlette import status
 from app.api.v1.endpoints.user.schema import UserInfoResponse
 from app.settings.service import SERVICE
 from app.utils.constant.gw import (
+    GW_AUTHORIZED_REF_DATA_MGM_ACC_NUM, GW_COOWNER_REF_DATA_MGM_ACC_NUM,
     GW_CURRENT_ACCOUNT_CASA, GW_CURRENT_ACCOUNT_FROM_CIF,
     GW_CUSTOMER_REF_DATA_MGMT_CIF_NUM, GW_DEPOSIT_ACCOUNT_FROM_CIF,
-    GW_DEPOSIT_ACCOUNT_TD, GW_ENDPOINT_URL_RETRIEVE_CURRENT_ACCOUNT_CASA,
+    GW_DEPOSIT_ACCOUNT_TD, GW_ENDPOINT_URL_RETRIEVE_AUTHORIZED_ACCOUNT_NUM,
+    GW_ENDPOINT_URL_RETRIEVE_COOWNER_ACCOUNT_NUM,
+    GW_ENDPOINT_URL_RETRIEVE_CURRENT_ACCOUNT_CASA,
     GW_ENDPOINT_URL_RETRIEVE_CURRENT_ACCOUNT_CASA_FROM_CIF,
     GW_ENDPOINT_URL_RETRIEVE_CUS_DATA_MGMT_CIF_NUM,
     GW_ENDPOINT_URL_RETRIEVE_CUS_REF_DATA_MGMT,
@@ -211,8 +214,8 @@ class ServiceGW:
             current_user: UserInfoResponse,
             account_number: str,
             transaction_name: str,
-            # from_date: date,
-            # to_date: date
+            from_date: date,
+            to_date: date
     ):
         request_data = {
             "selectReportStatementCaSaFromAcc_in": {
@@ -231,8 +234,8 @@ class ServiceGW:
                         "transaction_name": transaction_name,
                         "transaction_value": {
                             "P_ACC": account_number,
-                            "P_FDATE": "2016-02-01",
-                            "P_TDATE": "2016-02-28"
+                            "P_FDATE": date_to_string(from_date),
+                            "P_TDATE": date_to_string(to_date)
                         }
                     }
                 }
@@ -439,7 +442,14 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
-    async def get_customer_info_list(self, current_user: UserInfoResponse, customer_cif_number):
+    async def get_customer_info_list(
+            self,
+            current_user: UserInfoResponse,
+            cif_number: str,
+            identity_number: str,
+            mobile_number: str,
+            full_name: str
+    ):
         request_data = {
             "selectCustomerRefDataMgmtCIFNum_in": {
                 "transaction_info": {
@@ -456,10 +466,10 @@ class ServiceGW:
                     "transaction_info": {
                         "transaction_name": GW_CUSTOMER_REF_DATA_MGMT_CIF_NUM,
                         "transaction_value": {
-                            "cif_num": customer_cif_number,
-                            "id_num": "",
-                            "mobile_num": "",
-                            "full_name": ""
+                            "cif_num": cif_number,
+                            "id_num": identity_number,
+                            "mobile_num": mobile_number,
+                            "full_name": full_name
                         }
                     }
                 }
@@ -520,6 +530,114 @@ class ServiceGW:
             }
         }
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_CUS_REF_DATA_MGMT}"
+
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data
+                else:
+                    return_data = await response.json()
+                    return True, return_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data
+
+    async def get_coowner(self, current_user: UserInfoResponse, account_number):
+        request_data = {
+            "selectCoownerRefDataMgmtAccNum_in": {
+                "transaction_info": {
+                    "client_code": "CRM",
+                    "client_ref_num": "20190702091907_4232781",
+                    "client_ip": "10.4.4.x",
+                    "server_ref_num": "string",
+                    "branch_info": {
+                        "branch_name": current_user.hrm_branch_name,
+                        "branch_code": current_user.hrm_branch_code
+                    }
+                },
+                "data_input": {
+                    "transaction_info": {
+                        "transaction_name": GW_COOWNER_REF_DATA_MGM_ACC_NUM,
+                        "transaction_value": {
+                            "account_num": account_number
+                        }
+                    }
+                }
+            }
+        }
+        api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_COOWNER_ACCOUNT_NUM}"
+
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data
+                else:
+                    return_data = await response.json()
+                    return True, return_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data
+
+    async def get_authorized(self, current_user: UserInfoResponse, account_number):
+        request_data = {
+            "selectAuthorizedRefDataMgmtAccNum_in": {
+                "transaction_info": {
+                    "client_code": "CRM",
+                    "client_ref_num": "20190702091907_4232781",
+                    "client_ip": "10.4.4.x",
+                    "server_ref_num": "string",
+                    "branch_info": {
+                        "branch_name": current_user.hrm_branch_name,
+                        "branch_code": current_user.hrm_branch_code
+                    }
+                },
+                "data_input": {
+                    "transaction_info": {
+                        "transaction_name": GW_AUTHORIZED_REF_DATA_MGM_ACC_NUM,
+                        "transaction_value": {
+                            "account_num": account_number
+                        }
+                    }
+                }
+            }
+        }
+        api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_AUTHORIZED_ACCOUNT_NUM}"
 
         return_errors = dict(
             loc="SERVICE GW",

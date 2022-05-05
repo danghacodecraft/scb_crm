@@ -1,5 +1,6 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
+    repos_gw_get_authorized, repos_gw_get_coowner,
     repos_gw_get_customer_info_detail, repos_gw_get_customer_info_list
 )
 
@@ -7,11 +8,19 @@ from app.api.v1.endpoints.third_parties.gw.customer.repository import (
 class CtrGWCustomer(BaseController):
     async def ctr_gw_get_customer_info_list(
             self,
-            cif_number: str
+            cif_number: str,
+            identity_number: str,
+            mobile_number: str,
+            full_name: str
     ):
         current_user = self.current_user
         customer_info_list = self.call_repos(await repos_gw_get_customer_info_list(
-            cif_number=cif_number, current_user=current_user))
+            cif_number=cif_number,
+            identity_number=identity_number,
+            mobile_number=mobile_number,
+            full_name=full_name,
+            current_user=current_user
+        ))
         response_data = {}
         customer_list = customer_info_list["selectCustomerRefDataMgmtCIFNum_out"]["data_output"]["customer_list"]
 
@@ -133,3 +142,103 @@ class CtrGWCustomer(BaseController):
         return self.response(data=dict(
             is_existed=True if customer_info['id_num'] else False
         ))
+
+    async def ctr_gw_get_coowner(self, account_number: str):
+        current_user = self.current_user
+        coowner_info_list = self.call_repos(await repos_gw_get_coowner(
+            account_number=account_number, current_user=current_user))
+
+        response_data = {}
+        coowner_list = coowner_info_list["selectCoownerRefDataMgmtAccNum_out"]["data_output"][
+            "coowner_info_list"]
+
+        data_response = []
+
+        for coowner in coowner_list:
+            coowner_info = coowner["coowner_info_item"]['customer_info']
+            cif_info = coowner_info['cif_info']
+            id_info = coowner_info['id_info']
+            address_info = coowner_info['address_info']
+
+            data_response.append(dict(
+                full_name_vn=coowner_info['full_name'],
+                date_of_birth=coowner_info['birthday'],
+                gender=coowner_info['gender'],
+                email=coowner_info['email'],
+                mobile_phone=coowner_info['mobile_phone'],
+                nationality_code=coowner_info['nationality_code'],
+                customer_type=coowner_info['customer_type'],
+                coowner_relationship=coowner_info['coowner_relationship'],
+                cif_info=dict(
+                    cif_number=cif_info['cif_num'],
+                    issued_date=cif_info['cif_issued_date']
+                ),
+                id_info=dict(
+                    number=id_info['id_num'],
+                    name=id_info['id_name'],
+                    issued_date=id_info['id_issued_date'],
+                    expired_date=id_info['id_expired_date'],
+                    place_of_issue=id_info['id_issued_location']
+                ),
+                address_info=dict(
+                    contact_address_full=address_info['contact_address_full'],
+                    address_full=address_info['address_full']
+                )
+            ))
+
+            response_data.update({
+                "coowner_info_list": data_response,
+                "total_items": len(data_response)
+            })
+
+            return self.response(data=response_data)
+
+    async def ctr_gw_get_authorized(self, account_number: str):
+        current_user = self.current_user
+        authorized_info_list = self.call_repos(await repos_gw_get_authorized(
+            account_number=account_number, current_user=current_user))
+
+        response_data = {}
+        authorized_list = authorized_info_list["selectAuthorizedRefDataMgmtAccNum_out"]["data_output"][
+            "authorized_info_list"]
+
+        data_response = []
+
+        for authorized in authorized_list:
+            authorized_info = authorized["authorized_info_item"]['customer_info']
+            cif_info = authorized_info['cif_info']
+            id_info = authorized_info['id_info']
+            address_info = authorized_info['address_info']
+
+            data_response.append(dict(
+                full_name_vn=authorized_info['full_name'],
+                date_of_birth=authorized_info['birthday'],
+                gender=authorized_info['gender'],
+                email=authorized_info['email'],
+                mobile_phone=authorized_info['mobile_phone'],
+                nationality_code=authorized_info['nationality_code'],
+                customer_type=authorized_info['customer_type'],
+                coowner_relationship=authorized_info['coowner_relationship'],
+                cif_info=dict(
+                    cif_number=cif_info['cif_num'],
+                    issued_date=cif_info['cif_issued_date']
+                ),
+                id_info=dict(
+                    number=id_info['id_num'],
+                    name=id_info['id_name'],
+                    issued_date=id_info['id_issued_date'],
+                    expired_date=id_info['id_expired_date'],
+                    place_of_issue=id_info['id_issued_location']
+                ),
+                address_info=dict(
+                    contact_address_full=address_info['contact_address_full'],
+                    address_full=address_info['address_full']
+                )
+            ))
+
+            response_data.update({
+                "authorized_info_list": data_response,
+                "total_items": len(data_response)
+            })
+
+            return self.response(data=response_data)
