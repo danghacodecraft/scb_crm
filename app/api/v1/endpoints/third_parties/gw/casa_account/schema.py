@@ -37,14 +37,14 @@ class CasaAccountByCIFNumberResponse(BaseSchema):
     branch_info: GWBranchDropdownResponse = Field(...)
 
     @validator('*', pre=True)
-    def check_blank_str(string): # noqa
+    def check_blank_str(string):
         if string == '':
             return None
         return string
 
 
 class GWCasaAccountByCIFNumberResponse(BaseSchema):
-    total_balances: Optional[int] = Field(..., description="Tổng số dư")
+    total_balances: int = Field(..., description="Tổng số dư")
     total_items: int = Field(..., description="Số lượng tài khoản")
     account_info_list: List[CasaAccountByCIFNumberResponse] = Field(..., description="Chi tiết tài khoản")
 
@@ -82,7 +82,7 @@ class GWAccountInfoResponse(BaseSchema):
     latest_transaction_date: Optional[date] = Field(..., description="Ngày giao dịch gần nhất")
     open_date: Optional[date] = Field(..., description="Ngày mở tài khoản")
     maturity_date: Optional[date] = Field(..., description="Ngày đến hạn")
-    status: Optional[List[DropdownResponse]] = Field(..., description="Trạng thái tài khoản (no debits, no credit..)")
+    status: List[DropdownResponse] = Field(..., description="Trạng thái tài khoản (no debits, no credit..)")
     lock_status: Optional[str] = Field(..., description="Trạng thái tài khoản (phong tỏa hoặc không)")
     class_name: Optional[str] = Field(..., description="Tên sản phẩm. Ví dụ: Tiết kiệm thông thường, phát lộc phát tài…")
     class_code: Optional[str] = Field(..., description="Mã sản phẩm")
@@ -161,8 +161,6 @@ class GWReportColumnChartHistoryAccountInfoRequest(BaseSchema):
 
 class GWReportStatementHistoryAccountInfoRequest(BaseSchema):
     account_number: str = Field(..., description="Số tài khoản")
-    from_date: date = Field(date(year=2020, month=4, day=20), description="Từ ngày")
-    to_date: date = Field(date(year=2025, month=7, day=20), description="Đến ngày")
 
 
 class GWReportStatementHistoryAccountInfoResponse(BaseSchema):
