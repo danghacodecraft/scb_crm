@@ -27,7 +27,8 @@ from app.utils.constant.cif import (
 )
 from app.utils.constant.ekyc import EKYC_FLAG
 from app.utils.functions import (
-    calculate_age, date_to_string, datetime_to_string, now
+    calculate_age, date_to_string, datetime_to_string, gen_qr_code, now,
+    orjson_dumps
 )
 from app.utils.vietnamese_converter import (
     convert_to_unsigned_vietnamese, make_short_name, split_name
@@ -117,7 +118,7 @@ class CtrIdentityMobile(BaseController):
                     identity_type=EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
                     session=self.oracle_session
                 )))
-
+        print('full_name_ocr', ocr_data_front_side['ocr_result']['basic_information']['full_name_vn'])
         if full_name_vn != ocr_data_front_side['ocr_result']['basic_information']['full_name_vn']:
             return self.response_exception(msg='full_name_vn is not same')
 
@@ -196,13 +197,19 @@ class CtrIdentityMobile(BaseController):
                 # trường hợp cccd có giới tính
                 ocr_gender_id = ocr_data_front_side['ocr_result']['basic_information']['gender']['id']
 
+        print(ocr_data_front_side['ocr_result']['identity_document']['identity_number'])
         if ocr_data_front_side['ocr_result']['identity_document']['identity_number'] != identity_number:
             return self.response_exception(msg='identity_number not same')
 
+        print(ocr_place_of_issue_id)
         # tạo customer_identity
         if ocr_place_of_issue_id:
             if ocr_place_of_issue_id != place_of_issue_id:
                 return self.response_exception(msg='place_of_issue_id not same')
+
+        ocr_result_ekyc_data = {}
+        ocr_result_ekyc_data.update(ocr_data_front_side['ocr_result_ekyc']['data'])
+        ocr_result_ekyc_data.update(ocr_data_back_side['ocr_result_ekyc']['data'])
 
         saving_customer_identity = {  # noqa
             "identity_type_id": identity_type,
@@ -213,7 +220,9 @@ class CtrIdentityMobile(BaseController):
             "maker_at": now(),
             "maker_id": current_user.user_info.code,
             "updater_at": now(),
-            "updater_id": current_user.user_info.code
+            "updater_id": current_user.user_info.code,
+            "ocr_result": orjson_dumps(ocr_result_ekyc_data)
+
         }
         if identity_type == IDENTITY_DOCUMENT_TYPE_PASSPORT:
             saving_customer_identity.update({
@@ -223,11 +232,19 @@ class CtrIdentityMobile(BaseController):
                 "identity_number_in_passport": ocr_data_front_side['ocr_result']['basic_information'][
                     'identity_card_number']
             })
+        print('ocr_data_front_side', ocr_data_front_side)
+        print('ocr_data_back_side', ocr_data_back_side)
         if identity_type == IDENTITY_DOCUMENT_TYPE_CITIZEN_CARD:
+
             saving_customer_identity.update({
-                "qrcode_content": None,
-                "mrz_content": ocr_data_back_side['ocr_result']['identity_document']['mrz_content']
+                "mrz_content": ocr_data_back_side['ocr_result']['identity_document']['mrz_content'],
+                "signer": ocr_data_back_side['ocr_result']['identity_document']['signer']
             })
+            if ocr_data_front_side['ocr_result_ekyc']['document_type'] == EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD:
+                qr_code = gen_qr_code(ocr_result_ekyc_data)
+                saving_customer_identity.update({
+                    "qrcode_content": qr_code
+                })
 
         # dict dùng để tạo mới hoặc lưu lại customer_individual_info
         if ocr_gender_id and ocr_gender_id != gender_id:
@@ -517,6 +534,7 @@ class CtrIdentityMobile(BaseController):
                     "face_uuid_ekyc": face_compare_mobile['face_uuid_ekyc']
                 }
             })
+
         info_save_document = self.call_repos(
             await repos_save_identity(
                 identity_document_type_id=identity_type,
