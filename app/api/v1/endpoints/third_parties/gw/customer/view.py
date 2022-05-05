@@ -37,7 +37,10 @@ async def view_gw_get_customer_info_list(
         current_user=Depends(get_current_user_from_header())
 ):
     gw_customer_info_list = await CtrGWCustomer(current_user).ctr_gw_get_customer_info_list(
-        cif_number=request.cif_number
+        cif_number=request.cif_number,
+        identity_number=request.identity_number,
+        mobile_number=request.mobile_number,
+        full_name=request.full_name
     )
 
     return ResponseData[GWCustomerInfoListResponse](**gw_customer_info_list)

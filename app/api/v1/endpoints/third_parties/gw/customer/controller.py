@@ -7,11 +7,19 @@ from app.api.v1.endpoints.third_parties.gw.customer.repository import (
 class CtrGWCustomer(BaseController):
     async def ctr_gw_get_customer_info_list(
             self,
-            cif_number: str
+            cif_number: str,
+            identity_number: str,
+            mobile_number: str,
+            full_name: str
     ):
         current_user = self.current_user
         customer_info_list = self.call_repos(await repos_gw_get_customer_info_list(
-            cif_number=cif_number, current_user=current_user))
+            cif_number=cif_number,
+            identity_number=identity_number,
+            mobile_number=mobile_number,
+            full_name=full_name,
+            current_user=current_user
+        ))
         response_data = {}
         customer_list = customer_info_list["selectCustomerRefDataMgmtCIFNum_out"]["data_output"]["customer_list"]
 
