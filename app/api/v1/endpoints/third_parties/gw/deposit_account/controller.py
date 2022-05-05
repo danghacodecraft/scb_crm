@@ -93,6 +93,8 @@ class CtrGWDepositAccount(BaseController):
             "balance": account_info["account_balance"],
             "balance_available": account_info["account_balance_available"],
             "balance_available_vnd": account_info["account_balance_available_vnd"],
+            "balance_lock": account_info["account_balance_lock"],
+            "interest_receivable_type": account_info["account_interest_receivable_type"],
             "open_date": string_to_date(account_info["account_open_date"], _format=DATETIME_INPUT_OUTPUT_FORMAT),
             "maturity_date": string_to_date(account_info["account_maturity_date"],
                                             _format=DATETIME_INPUT_OUTPUT_FORMAT),
