@@ -5,11 +5,19 @@ from app.utils.error_messages import ERROR_CALL_SERVICE_GW
 
 
 async def repos_gw_get_customer_info_list(
-        cif_number: str, current_user
+        cif_number: str,
+        identity_number: str,
+        mobile_number: str,
+        full_name: str,
+        current_user: AuthResponse
 ):
     current_user = current_user.user_info
     is_success, customer_infos = await service_gw.get_customer_info_list(
-        customer_cif_number=cif_number, current_user=current_user
+        cif_number=cif_number,
+        identity_number=identity_number,
+        mobile_number=mobile_number,
+        full_name=full_name,
+        current_user=current_user
     )
     if not is_success:
         return ReposReturn(

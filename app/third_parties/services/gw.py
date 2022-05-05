@@ -439,7 +439,14 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
-    async def get_customer_info_list(self, current_user: UserInfoResponse, customer_cif_number):
+    async def get_customer_info_list(
+            self,
+            current_user: UserInfoResponse,
+            cif_number: str,
+            identity_number: str,
+            mobile_number: str,
+            full_name: str
+    ):
         request_data = {
             "selectCustomerRefDataMgmtCIFNum_in": {
                 "transaction_info": {
@@ -456,10 +463,10 @@ class ServiceGW:
                     "transaction_info": {
                         "transaction_name": GW_CUSTOMER_REF_DATA_MGMT_CIF_NUM,
                         "transaction_value": {
-                            "cif_num": customer_cif_number,
-                            "id_num": "",
-                            "mobile_num": "",
-                            "full_name": ""
+                            "cif_num": cif_number,
+                            "id_num": identity_number,
+                            "mobile_num": mobile_number,
+                            "full_name": full_name
                         }
                     }
                 }

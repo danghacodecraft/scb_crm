@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 
 from pydantic import Field
 
@@ -14,7 +14,10 @@ class CustomerInfoCIFResponse(BaseSchema):
 
 
 class CustomerInfoListCIFRequest(BaseSchema):
-    cif_number: Optional[str] = CustomField().OptionalCIFNumberField
+    cif_number: str = Field("", description="Số CIF")
+    identity_number: str = Field("", description="Số CMND/CCCD/HC")
+    mobile_number: str = Field("", description="Số điện thoại")
+    full_name: str = Field("", description="Họ tên")
 
 
 class GWCustomerCheckExistResponse(BaseSchema):
