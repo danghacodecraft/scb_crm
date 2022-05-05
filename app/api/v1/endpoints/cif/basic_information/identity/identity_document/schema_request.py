@@ -220,4 +220,5 @@ class FaceCompareRequest(BaseSchema):
 
 class OcrEkycRequest(BaseSchema):
     document_type: int = Field(..., description='Loại giấy tờ tùy thân được lấy từ ocr_result_ekyc')
+    qr_code: str = Field(None, description='qr_code truyền lên khi giấy tờ là CCCD mới')
     data: dict = Field(..., description='thông tin ocr_result_ekyc (cả 2 mặt) của giấy tờ tùy thân')
