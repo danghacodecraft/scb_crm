@@ -8,6 +8,8 @@ from app.api.v1.endpoints.third_parties.gw.deposit_account import \
     view as views_deposit_account
 from app.api.v1.endpoints.third_parties.gw.employee import \
     view as views_employee
+from app.api.v1.endpoints.third_parties.gw.organization import \
+    view as views_organization
 
 router_module = APIRouter()
 
@@ -22,4 +24,7 @@ router_module.include_router(
 )
 router_module.include_router(
     router=views_employee.router, prefix="/employee", tags=["[Third-Party][GW][Employee]"]
+)
+router_module.include_router(
+    router=views_organization.router, prefix="/organization", tags=["[Third-Party][GW][Organization]"]
 )
