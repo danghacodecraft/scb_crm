@@ -211,8 +211,8 @@ class ServiceGW:
             current_user: UserInfoResponse,
             account_number: str,
             transaction_name: str,
-            # from_date: date,
-            # to_date: date
+            from_date: date,
+            to_date: date
     ):
         request_data = {
             "selectReportStatementCaSaFromAcc_in": {
@@ -231,8 +231,8 @@ class ServiceGW:
                         "transaction_name": transaction_name,
                         "transaction_value": {
                             "P_ACC": account_number,
-                            "P_FDATE": "2016-02-01",
-                            "P_TDATE": "2016-02-28"
+                            "P_FDATE": date_to_string(from_date),
+                            "P_TDATE": date_to_string(to_date)
                         }
                     }
                 }

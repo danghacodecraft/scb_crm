@@ -285,7 +285,9 @@ class CtrGWCasaAccount(BaseController):
     async def ctr_gw_get_statement_casa_account_info(self, request: GWReportStatementHistoryAccountInfoRequest):
         gw_report_statements_casa_account_info = self.call_repos(await repos_gw_get_statements_casa_account_info(
             account_number=request.account_number,
-            current_user=self.current_user.user_info
+            current_user=self.current_user.user_info,
+            from_date=request.from_date,
+            to_date=request.to_date
         ))
         report_casa_accounts = \
             gw_report_statements_casa_account_info['selectReportStatementCaSaFromAcc_out']['data_output']['report_info']['report_casa_account']
