@@ -59,3 +59,59 @@ ORGANIZATION_INFO_SUCCESS_EXAMPLE = {
         }
     }
 }
+
+ORGANIZATION_INFO_FROM_PARENT_SUCCESS_EXAMPLE = {
+    "example": {
+        "value": {
+            "data": [
+                {
+                    "id": "126",
+                    "parent_id": "4",
+                    "name": "Ban Điều hành/Giám đốc",
+                    "short_name": "",
+                    "path": "1;4;126;",
+                    "path_description": "Ngân hàng TMCP Sài Gòn;Ban Điều hành;Ban Điều hành/Giám đốc;",
+                    "order_by": "1"
+                },
+                {
+                    "id": "128",
+                    "parent_id": "4",
+                    "name": "Các Hội đồng/Ban thuộc TGĐ",
+                    "short_name": "",
+                    "path": "1;4;128;",
+                    "path_description": "Ngân hàng TMCP Sài Gòn;Ban Điều hành;Các Hội đồng/Ban thuộc TGĐ;",
+                    "order_by": "2"
+                }
+            ],
+            "errors": []
+        }
+    }
+}
+
+ORGANIZATION_INFO_FROM_CHILD_SUCCESS_EXAMPLE = {
+    "example": {
+        "value": {
+            "data": [
+                {
+                    "id": "126",
+                    "parent_id": "4",
+                    "name": "Ban Điều hành/Giám đốc",
+                    "short_name": "",
+                    "path": "1;4;126;",
+                    "path_description": "Ngân hàng TMCP Sài Gòn;Ban Điều hành;Ban Điều hành/Giám đốc;",
+                    "order_by": "1"
+                },
+                {
+                    "id": "128",
+                    "parent_id": "4",
+                    "name": "Các Hội đồng/Ban thuộc TGĐ",
+                    "short_name": "",
+                    "path": "1;4;128;",
+                    "path_description": "Ngân hàng TMCP Sài Gòn;Ban Điều hành;Các Hội đồng/Ban thuộc TGĐ;",
+                    "order_by": "2"
+                }
+            ],
+            "errors": []
+        }
+    }
+}
