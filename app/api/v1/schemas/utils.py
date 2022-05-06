@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import Field
+from pydantic import Field, validator
 from pydantic.schema import datetime
 
 from app.api.base.schema import BaseSchema
@@ -16,6 +16,12 @@ class OptionalDropdownResponse(BaseSchema):
     id: Optional[str] = Field(None, min_length=1, description='`Chuỗi định danh`', nullable=True)
     code: Optional[str] = Field(None, min_length=1, description='`Mã`', nullable=True)
     name: Optional[str] = Field(None, min_length=1, description='`Tên`', nullable=True)
+
+    @validator('*', pre=True)
+    def check_blank_str(string):
+        if string == '':
+            return None
+        return string
 
 
 class DropdownRequest(BaseSchema):
