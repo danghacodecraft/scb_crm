@@ -1,7 +1,7 @@
 from datetime import date
 from typing import List, Optional
 
-from pydantic import Field, validator
+from pydantic import Field
 
 from app.api.base.schema import BaseSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
@@ -36,12 +36,6 @@ class CasaAccountByCIFNumberResponse(BaseSchema):
     class_code: Optional[str] = Field(..., description="Mã sản phẩm")
     branch_info: GWBranchDropdownResponse = Field(...)
 
-    @validator('*', pre=True)
-    def check_blank_str(string):
-        if string == '':
-            return None
-        return string
-
 
 class GWCasaAccountByCIFNumberResponse(BaseSchema):
     total_balances: int = Field(..., description="Tổng số dư")
@@ -61,12 +55,6 @@ class GWCustomerInfoResponse(BaseSchema):
     mobile_phone: Optional[str] = Field(..., description="Điện thoại di động")
     type: Optional[str] = Field(..., description="Loại khách hàng (cá nhân hoặc doanh nghiệp)")
 
-    @validator('*', pre=True)
-    def check_blank_str(string):  # noqa
-        if string == '':
-            return None
-        return string
-
 
 class GWAccountInfoResponse(BaseSchema):
     number: Optional[str] = Field(..., description="Số tài khoản")
@@ -84,7 +72,8 @@ class GWAccountInfoResponse(BaseSchema):
     maturity_date: Optional[date] = Field(..., description="Ngày đến hạn")
     status: List[DropdownResponse] = Field(..., description="Trạng thái tài khoản (no debits, no credit..)")
     lock_status: Optional[str] = Field(..., description="Trạng thái tài khoản (phong tỏa hoặc không)")
-    class_name: Optional[str] = Field(..., description="Tên sản phẩm. Ví dụ: Tiết kiệm thông thường, phát lộc phát tài…")
+    class_name: Optional[str] = Field(...,
+                                      description="Tên sản phẩm. Ví dụ: Tiết kiệm thông thường, phát lộc phát tài…")
     class_code: Optional[str] = Field(..., description="Mã sản phẩm")
     saving_serials: Optional[str] = Field(..., description="Số Series Sổ tiết kiệm")
     pre_open_date: Optional[date] = Field(..., description="Ngày cấp lại sổ")
@@ -95,12 +84,6 @@ class GWAccountInfoResponse(BaseSchema):
     service_escrow: Optional[str] = Field(..., description="Dịch vụ ký quỹ")
     service_escrow_ex_date: Optional[date] = Field(..., description="Ngày đáo hạn ký quỹ")
     branch_info: GWBranchDropdownResponse = Field(..., description="Thông tin đơn vị")
-
-    @validator('*', pre=True)
-    def check_blank_str(string):  # noqa
-        if string == '':
-            return None
-        return string
 
 
 class GWCasaAccountResponse(BaseSchema):
