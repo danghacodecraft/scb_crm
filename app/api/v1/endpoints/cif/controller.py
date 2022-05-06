@@ -1,11 +1,14 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.repository import (
-    repos_check_exist_cif, repos_customer_information, repos_get_cif_info,
+    repos_customer_information, repos_get_cif_info,
     repos_get_initializing_customer, repos_get_total_participants,
     repos_profile_history, repos_retrieve_customer_information_by_cif_number,
     repos_validate_cif_number
 )
 from app.api.v1.endpoints.cif.schema import CustomerByCIFNumberRequest
+from app.api.v1.endpoints.third_parties.gw.customer.repository import (
+    repos_gw_get_customer_info_detail
+)
 from app.api.v1.endpoints.user.contact.repository import repo_contact
 from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.third_parties.oracle.models.master_data.address import (
@@ -17,6 +20,7 @@ from app.utils.constant.cif import (
     CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE, DROPDOWN_NONE_DICT,
     PROFILE_HISTORY_STATUS, SOA_GENDER_TYPE_MALE
 )
+from app.utils.constant.gw import GW_LOC_CHECK_CIF_EXIST
 from app.utils.constant.soa import SOA_DATETIME_FORMAT
 from app.utils.error_messages import ERROR_CIF_ID_NOT_EXIST
 from app.utils.functions import (
@@ -151,10 +155,21 @@ class CtrCustomer(BaseController):
         # validate cif_number
         self.call_repos(await repos_validate_cif_number(cif_number=cif_number))
 
-        check_exist_info = self.call_repos(
-            await repos_check_exist_cif(cif_number=cif_number)
-        )
-        return self.response(data=check_exist_info)
+        # check_exist_info = self.call_repos(
+        #     await repos_check_exist_cif(cif_number=cif_number)
+        # )
+        # return self.response(data=check_exist_info)
+        gw_check_exist_customer_detail_info = self.call_repos(await repos_gw_get_customer_info_detail(
+            cif_number=cif_number,
+            current_user=self.current_user,
+            loc=GW_LOC_CHECK_CIF_EXIST
+        ))
+        data_output = gw_check_exist_customer_detail_info['retrieveCustomerRefDataMgmt_out']['data_output']
+        customer_info = data_output['customer_info']['id_info']
+
+        return self.response(data=dict(
+            is_existed=True if customer_info['id_num'] else False
+        ))
 
     async def ctr_retrieve_customer_information_by_cif_number(
             self,
