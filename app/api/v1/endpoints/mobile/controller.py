@@ -1,8 +1,10 @@
+
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.basic_information.identity.identity_document.repository import (
     repos_compare_face, repos_save_identity,
     repos_upload_identity_document_and_ocr
 )
+from app.api.v1.endpoints.customer_service.controller import CtrKSS
 from app.api.v1.endpoints.file.controller import CtrFile
 from app.api.v1.endpoints.file.repository import repos_upload_file
 from app.api.v1.endpoints.mobile.repository import (
@@ -41,8 +43,8 @@ class CtrIdentityMobile(BaseController):
             self,
             request: IdentityMobileRequest
     ):
-        full_name_vn, date_of_birth, gender_id, nationality_id, identity_number, issued_date, \
-            expired_date, place_of_issue_id, identity_type, front_side_image, back_side_image, avatar_image = request
+        full_name_vn, date_of_birth, gender_id, nationality_id, identity_number, issued_date, expired_date, \
+            place_of_issue_id, identity_type, front_side_image, back_side_image, avatar_image, phone_number = request
 
         if not front_side_image or not avatar_image:
             return self.response_exception(msg='MISSING IMAGE')
@@ -118,6 +120,9 @@ class CtrIdentityMobile(BaseController):
                     identity_type=EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
                     session=self.oracle_session
                 )))
+        print('ocr_data_front_side', ocr_data_front_side)
+        print('ocr_data_back_side', ocr_data_back_side)
+
         print('full_name_ocr', ocr_data_front_side['ocr_result']['basic_information']['full_name_vn'])
         if full_name_vn != ocr_data_front_side['ocr_result']['basic_information']['full_name_vn']:
             return self.response_exception(msg='full_name_vn is not same')
@@ -134,6 +139,7 @@ class CtrIdentityMobile(BaseController):
             "first_name": first_name,
             "middle_name": middle_name,
             "last_name": last_name,
+            "mobile_number": phone_number,
             "short_name": make_short_name(first_name, middle_name, last_name),
             "active_flag": True,
             "open_cif_at": now(),
@@ -207,9 +213,12 @@ class CtrIdentityMobile(BaseController):
             if ocr_place_of_issue_id != place_of_issue_id:
                 return self.response_exception(msg='place_of_issue_id not same')
 
-        ocr_result_ekyc_data = {}
-        ocr_result_ekyc_data.update(ocr_data_front_side['ocr_result_ekyc']['data'])
-        ocr_result_ekyc_data.update(ocr_data_back_side['ocr_result_ekyc']['data'])
+        ocr_result_ekyc_data = {
+            "document_type": ocr_data_front_side['ocr_result_ekyc']['document_type'],
+            "data": {}
+        }
+        ocr_result_ekyc_data['data'].update(ocr_data_front_side['ocr_result_ekyc']['data'])
+        ocr_result_ekyc_data['data'].update(ocr_data_back_side['ocr_result_ekyc']['data'])
 
         saving_customer_identity = {  # noqa
             "identity_type_id": identity_type,
@@ -222,7 +231,6 @@ class CtrIdentityMobile(BaseController):
             "updater_at": now(),
             "updater_id": current_user.user_info.code,
             "ocr_result": orjson_dumps(ocr_result_ekyc_data)
-
         }
         if identity_type == IDENTITY_DOCUMENT_TYPE_PASSPORT:
             saving_customer_identity.update({
@@ -241,7 +249,7 @@ class CtrIdentityMobile(BaseController):
                 "signer": ocr_data_back_side['ocr_result']['identity_document']['signer']
             })
             if ocr_data_front_side['ocr_result_ekyc']['document_type'] == EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD:
-                qr_code = gen_qr_code(ocr_result_ekyc_data)
+                qr_code = gen_qr_code(ocr_result_ekyc_data.get('data'))
                 saving_customer_identity.update({
                     "qrcode_content": qr_code
                 })
@@ -535,6 +543,22 @@ class CtrIdentityMobile(BaseController):
                 }
             })
 
+        customer_id_ekyc = await CtrKSS().ctr_save_customer( # noqa
+            document_id=ocr_result_ekyc_data['data']['document_id'],
+            document_type=ocr_result_ekyc_data['data']['document_type'],
+            date_of_issue=ocr_result_ekyc_data['data']['date_of_issue'],
+            place_of_issue=ocr_result_ekyc_data['data']['place_of_issue'],
+            face_ids=ocr_result_ekyc_data['data']['document_type'],
+            full_name=ocr_result_ekyc_data['data']['full_name'],
+            date_of_birth=ocr_result_ekyc_data['data']['date_of_birth'],
+            date_of_expiry=ocr_result_ekyc_data['data']['date_of_expiry'],
+            place_of_residence=ocr_result_ekyc_data['data']['place_of_residence'],
+            place_of_origin=ocr_result_ekyc_data['data']['place_of_origin'],
+            phone_number=phone_number,
+            gender=ocr_result_ekyc_data['data']['gender'],
+            ocr_data=ocr_result_ekyc_data['data'],
+            attachment_info=ocr_result_ekyc_data['data']['document_type']
+        )
         info_save_document = self.call_repos(
             await repos_save_identity(
                 identity_document_type_id=identity_type,

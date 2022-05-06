@@ -1,3 +1,5 @@
+from typing import List
+
 from app.api.base.repository import ReposReturn
 from app.settings.event import service_ekyc
 from app.utils.error_messages import ERROR_CALL_SERVICE_EKYC
@@ -105,4 +107,40 @@ async def repos_get_post_control(query_params) -> ReposReturn:
             msg=response['message'],
             detail=response['message']
         )
+    return ReposReturn(data=response)
+
+
+async def repos_save_customer(
+        document_id: str,
+        document_type: int,
+        date_of_issue: str,
+        place_of_issue: str,
+        face_ids: List,
+        full_name: str,
+        date_of_birth: str,
+        date_of_expiry: str,
+        place_of_residence: str,
+        place_of_origin: str,
+        phone_number: str,
+        gender: str,
+        ocr_data: dict,
+        attachment_info: dict,
+):
+    body_request = {
+        "document_id": document_id,
+        "document_type": document_type,
+        "date_of_issue": date_of_issue,
+        "place_of_issue": place_of_issue,
+        "full_name": full_name,
+        "date_of_birth": date_of_birth,
+        "date_of_expiry": date_of_expiry,
+        "place_of_residence": place_of_residence,
+        "place_of_origin": place_of_origin,
+        "phone_number": phone_number,
+        "gender": gender,
+        "face_ids": face_ids,
+        "ocr_data": ocr_data,
+        "attachment_info": attachment_info
+    }
+    response = await service_ekyc.save_customer_ekyc(body_data=body_request)
     return ReposReturn(data=response)

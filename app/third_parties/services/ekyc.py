@@ -643,3 +643,24 @@ class ServiceEKYC:
                         "message": ERROR_INVALID_URL,
                         "detail": f"Invalid: {url}"
                     }
+
+    async def save_customer_ekyc(self, body_data: dict):
+        api_url = f"{self.url}/api/v1/customer-service/customers/"
+
+        headers = self.headers
+        # thay đổi giá trị x-transaction-id+
+        headers['X-TRANSACTION-ID'] = "CRM_"
+
+        try:
+            async with self.session.post(url=api_url, json=body_data, headers=headers, ssl=False) as response:
+                logger.log("SERVICE", f"[EKYC SAVE CUSTOMER] {response.status} : {api_url}")
+                if response.status == status.HTTP_201_CREATED:
+                    return True, await response.json()
+                else:
+                    return False, {
+                        "message": ERROR_CALL_SERVICE_EKYC,
+                        "detail": "STATUS " + str(response.status)
+                    }
+        except Exception as ex:
+            logger.error(str(ex))
+            return False, {"message": str(ex)}

@@ -6,7 +6,7 @@ from app.api.v1.endpoints.customer_service.repository import (
     repos_get_history_post_post_check, repos_get_list_branch,
     repos_get_list_kss, repos_get_list_zone, repos_get_post_control,
     repos_get_statistics, repos_get_statistics_month,
-    repos_get_statistics_profiles, repos_update_post_check
+    repos_get_statistics_profiles, repos_save_customer, repos_update_post_check
 )
 from app.api.v1.endpoints.customer_service.schema import (
     CreatePostCheckRequest, QueryParamsKSSRequest, UpdatePostCheckRequest
@@ -303,3 +303,54 @@ class CtrKSS(BaseController):
         customer_detail = self.call_repos(await repos_get_customer_detail(postcheck_uuid=postcheck_uuid))
 
         return self.response(data=customer_detail)
+
+    async def ctr_save_customer(
+            self,
+            document_id: str,
+            document_type: int,
+            date_of_issue: str,
+            place_of_issue: str,
+            full_name: str,
+            date_of_birth: str,
+            date_of_expiry: str,
+            place_of_residence: str,
+            place_of_origin: str,
+            gender: str,
+            face_ids: [str],
+            ocr_data: dict,
+            attachment_info: dict,
+            phone_number: str,
+    ):
+        body = { # noqa
+            "document_id": document_id,
+            "document_type": document_type,
+            "date_of_issue": date_of_issue,
+            "place_of_issue": place_of_issue,
+            "full_name": full_name,
+            "date_of_birth": date_of_birth,
+            "date_of_expiry": date_of_expiry,
+            "place_of_residence": place_of_residence,
+            "place_of_origin": place_of_origin,
+            "phone_number": phone_number,
+            "gender": gender,
+            "face_ids": face_ids,
+            "ocr_data": ocr_data,
+            "attachment_info": attachment_info
+        }
+        customer = self.call_repos(await repos_save_customer(
+            # document_id=document_id,
+            # document_type=document_type,
+            # date_of_issue=date_of_issue,
+            # place_of_issue=place_of_issue,
+            # face_ids=face_ids,
+            # full_name=full_name,
+            # date_of_birth=date_of_birth,
+            # date_of_expiry=date_of_expiry,
+            # place_of_residence=place_of_residence,
+            # place_of_origin=place_of_origin,
+            # phone_number=phone_number,
+            # gender=gender,
+            # ocr_data=ocr_data,
+            # attachment_info=attachment_info
+        ))
+        return self.response(data=customer)
