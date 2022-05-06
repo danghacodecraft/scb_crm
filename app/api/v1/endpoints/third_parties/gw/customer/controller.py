@@ -3,6 +3,7 @@ from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_gw_get_authorized, repos_gw_get_coowner,
     repos_gw_get_customer_info_detail, repos_gw_get_customer_info_list
 )
+from app.utils.error_messages import ERROR_AT_LEAST_ONE_FIELD
 
 
 class CtrGWCustomer(BaseController):
@@ -14,6 +15,10 @@ class CtrGWCustomer(BaseController):
             full_name: str
     ):
         current_user = self.current_user
+        if not (cif_number and identity_number and mobile_number and full_name):
+            return self.response_exception(msg=ERROR_AT_LEAST_ONE_FIELD,
+                                           loc="cif_number, identity_number, mobile_number, full_name")
+
         customer_info_list = self.call_repos(await repos_gw_get_customer_info_list(
             cif_number=cif_number,
             identity_number=identity_number,
@@ -129,15 +134,16 @@ class CtrGWCustomer(BaseController):
         ))
 
     async def ctr_gw_check_exist_customer_detail_info(
-        self,
-        cif_number: str
+            self,
+            cif_number: str
     ):
         gw_check_exist_customer_detail_info = self.call_repos(await repos_gw_get_customer_info_detail(
             cif_number=cif_number,
             current_user=self.current_user
         ))
-        customer_info = gw_check_exist_customer_detail_info['retrieveCustomerRefDataMgmt_out']['data_output']['customer_info'][
-            'id_info']
+        customer_info = \
+            gw_check_exist_customer_detail_info['retrieveCustomerRefDataMgmt_out']['data_output']['customer_info'][
+                'id_info']
 
         return self.response(data=dict(
             is_existed=True if customer_info['id_num'] else False
