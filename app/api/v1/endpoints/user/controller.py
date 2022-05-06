@@ -14,7 +14,7 @@ class CtrUser(BaseController):
         return self.response_paging(data=users, current_page=1, total_page=1, total_items=len(users))
 
     async def ctr_login(self, credentials: HTTPBasicCredentials):
-        auth_res = self.call_repos(await repos_login(username=credentials.username, password=credentials.password))
+        auth_res = self.call_repos(await repos_login(username=credentials.username.upper(), password=credentials.password))
         return self.response(data=auth_res)
 
     async def ctr_get_current_user_info(self):
