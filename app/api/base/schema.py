@@ -2,7 +2,7 @@ from typing import Any, Generic, List, TypeVar
 from uuid import UUID
 
 import orjson
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from pydantic.generics import GenericModel
 from pydantic.schema import date, datetime
 
@@ -24,6 +24,12 @@ class BaseSchema(BaseModel):
             datetime: lambda dt: datetime_to_string(dt),
             date: lambda d: date_to_string(d)
         }
+
+    @validator('*', pre=True)
+    def check_blank_str(string):
+        if string == '':
+            return None
+        return string
 
     def set_uuid(self, uuid: [str, UUID]):
         object.__setattr__(self, 'uuid', uuid)

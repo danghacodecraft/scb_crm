@@ -1,7 +1,7 @@
 from datetime import date
 from typing import List, Optional
 
-from pydantic import Field, validator
+from pydantic import Field
 
 from app.api.base.schema import BaseSchema
 from app.api.v1.endpoints.third_parties.gw.schema import (
@@ -14,45 +14,21 @@ class GWDepositPayinAccountResponse(BaseSchema):
                                 + Trường hợp p_payout_type='S' -->Truyền giá trị
                                 + Trường hợp p_payout_type='Y' --> Null""")
 
-    @validator('*', pre=True)
-    def check_blank_str(string):
-        if string == '':
-            return None
-        return string
-
 
 class GWDepositPayoutAccountResponse(BaseSchema):
     number: Optional[str] = Field(..., description="""Số tài khoản chỉ định lúc đáo hạn
                                 + Trường hợp p_payout_type='S' -->Truyền giá trị
                                 + Trường hợp p_payout_type='Y' --> Null""")
 
-    @validator('*', pre=True)
-    def check_blank_str(string):
-        if string == '':
-            return None
-        return string
-
 
 class GWAccountStaffInfoDirectResponse(BaseSchema):
     code: Optional[str] = Field(..., description="Mã nhân viên")
     name: Optional[str] = Field(..., description="Tên nhân viên")
 
-    @validator('*', pre=True)
-    def check_blank_str(string):
-        if string == '':
-            return None
-        return string
-
 
 class GWAccountStaffInfoIndirectResponse(BaseSchema):
     code: Optional[str] = Field(..., description="Mã nhân viên")
     name: Optional[str] = Field(..., description="Tên nhân viên")
-
-    @validator('*', pre=True)
-    def check_blank_str(string):
-        if string == '':
-            return None
-        return string
 
 
 class GWDepositAccountInfoResponse(BaseSchema):
@@ -81,12 +57,6 @@ class GWDepositAccountInfoResponse(BaseSchema):
     staff_info_indirect: GWAccountStaffInfoIndirectResponse = Field(...,
                                                                     description="Thông tin nhân viên không trực tiếp")
 
-    @validator('*', pre=True)
-    def check_blank_str(string):
-        if string == '':
-            return None
-        return string
-
 
 class GWDepositCustomerInfoResponse(BaseSchema):
     fullname_vn: Optional[str] = Field(..., description="Họ và tên")
@@ -95,12 +65,6 @@ class GWDepositCustomerInfoResponse(BaseSchema):
     email: Optional[str] = Field(..., description="Địa chỉ Email")
     mobile_phone: Optional[str] = Field(..., description="Điện thoại di động")
     type: Optional[str] = Field(..., description="Loại khách hàng (cá nhân hoặc doanh nghiệp)")
-
-    @validator('*', pre=True)
-    def check_blank_str(string):
-        if string == '':
-            return None
-        return string
 
 
 class GWDepositAccountTDResponse(BaseSchema):
@@ -130,12 +94,6 @@ class GWDepositAccountByCIFNumberInfoResponse(BaseSchema):
     branch_info: GWBranchDropdownResponse = Field(..., description="Thông tin chi nhánh")
     payin_account: GWDepositPayinAccountResponse = Field(..., description="Số tài khoản nguồn")
     payout_account: GWDepositPayoutAccountResponse = Field(..., description="Số tài khoản chỉ định lúc đáo hạn")
-
-    @validator('*', pre=True)
-    def check_blank_str(string):
-        if string == '':
-            return None
-        return string
 
 
 class GWDepositAccountByCIFNumberResponse(BaseSchema):
