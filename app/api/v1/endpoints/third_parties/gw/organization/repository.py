@@ -5,6 +5,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_RETRIEVE_ORGANIZATION_INFO,
     GW_ENDPOINT_URL_RETRIEVE_ORGANIZATION_INFO_FROM_CHILD,
     GW_ENDPOINT_URL_RETRIEVE_ORGANIZATION_INFO_FROM_PARENT,
+    GW_ORGANIZATION_FROM_CHILD_ID, GW_ORGANIZATION_ID,
     GW_ORGANIZATION_INFO_FROM_CHILD_NAME,
     GW_ORGANIZATION_INFO_FROM_PARENT_NAME, GW_ORGANIZATION_INFO_NAME,
     GW_TRANSACTION_NAME_ALL, GW_TRANSACTION_NAME_CHILD,
@@ -22,7 +23,7 @@ async def repos_gw_get_organization_info(
         current_user=current_user,
         endpoint=GW_ENDPOINT_URL_RETRIEVE_ORGANIZATION_INFO,
         function_name=GW_ORGANIZATION_INFO_NAME,
-        id=""
+        id=GW_ORGANIZATION_ID
     )
     if not is_success:
         return ReposReturn(
@@ -44,7 +45,7 @@ async def repos_gw_get_organization_info_from_parent(
         current_user=current_user,
         endpoint=GW_ENDPOINT_URL_RETRIEVE_ORGANIZATION_INFO_FROM_PARENT,
         function_name=GW_ORGANIZATION_INFO_FROM_PARENT_NAME,
-        id=""
+        id=GW_ORGANIZATION_ID
     )
     if not is_success:
         return ReposReturn(
@@ -66,7 +67,7 @@ async def repos_gw_get_organization_info_from_child(
         current_user=current_user,
         endpoint=GW_ENDPOINT_URL_RETRIEVE_ORGANIZATION_INFO_FROM_CHILD,
         function_name=GW_ORGANIZATION_INFO_FROM_CHILD_NAME,
-        id="4"
+        id=GW_ORGANIZATION_FROM_CHILD_ID
     )
     if not is_success:
         return ReposReturn(
