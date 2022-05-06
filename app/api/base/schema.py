@@ -25,7 +25,7 @@ class BaseSchema(BaseModel):
             date: lambda d: date_to_string(d)
         }
 
-    @validator('*', pre=True)
+    @validator('*')
     def check_blank_str(string):
         if string == '':
             return None
