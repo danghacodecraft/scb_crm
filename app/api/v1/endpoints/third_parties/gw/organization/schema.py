@@ -19,3 +19,23 @@ class GWOrgInfoResponse(BaseSchema):
 
 
 GWOrgInfoResponse.update_forward_refs()
+
+
+class GWOrgInfoFromParentResponse(BaseSchema):
+    id: str = Field(..., description="Mã nhân viên")
+    parent_id: str = Field(..., description="Tên nhân viên")
+    name: str = Field(..., description="Tên đầy đủ")
+    short_name: str = Field(..., description="Địa điểm làm việc")
+    path: str = Field(..., description="Địa chỉ email SCB")
+    path_description: str = Field(..., description="Điện thoại liên lạc")
+    order_by: str = Field(..., description="Điện thoại nội bộ")
+
+
+class GWOrgInfoFromChildResponse(BaseSchema):
+    id: str = Field(..., description="Mã nhân viên")
+    parent_id: str = Field(..., description="Tên nhân viên")
+    name: str = Field(..., description="Tên đầy đủ")
+    short_name: str = Field(..., description="Địa điểm làm việc")
+    path: str = Field(..., description="Địa chỉ email SCB")
+    path_description: str = Field(..., description="Điện thoại liên lạc")
+    order_by: str = Field(..., description="Điện thoại nội bộ")
