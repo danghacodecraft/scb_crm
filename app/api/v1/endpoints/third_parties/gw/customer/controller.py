@@ -3,6 +3,7 @@ from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_gw_get_authorized, repos_gw_get_coowner,
     repos_gw_get_customer_info_detail, repos_gw_get_customer_info_list
 )
+from app.utils.constant.gw import GW_LOC_CHECK_CIF_EXIST
 
 
 class CtrGWCustomer(BaseController):
@@ -134,7 +135,8 @@ class CtrGWCustomer(BaseController):
     ):
         gw_check_exist_customer_detail_info = self.call_repos(await repos_gw_get_customer_info_detail(
             cif_number=cif_number,
-            current_user=self.current_user
+            current_user=self.current_user,
+            loc=GW_LOC_CHECK_CIF_EXIST
         ))
         customer_info = gw_check_exist_customer_detail_info['retrieveCustomerRefDataMgmt_out']['data_output']['customer_info'][
             'id_info']
