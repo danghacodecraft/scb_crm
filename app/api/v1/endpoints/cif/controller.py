@@ -221,62 +221,58 @@ class CtrCustomer(BaseController):
         )
 
         identity_info = customer_info['id_info']
-        identity_number = identity_info['id_num']
-        identity_issued_date = date_string_to_other_date_string_format(
-            date_input=identity_info['id_issued_date'],
-            from_format=GW_DATETIME_FORMAT,
-            to_format=GW_DATE_FORMAT
-        )
-        identity_place_of_issue = identity_info['id_issued_location']
         identity_information = dict(
-            identity_number=identity_number,
-            issued_date=identity_issued_date,
-            place_of_issue=identity_place_of_issue
+            identity_number=identity_info['id_num'],
+            issued_date=date_string_to_other_date_string_format(
+                date_input=identity_info['id_issued_date'],
+                from_format=GW_DATETIME_FORMAT,
+                to_format=GW_DATE_FORMAT
+            ),
+            expired_date=date_string_to_other_date_string_format(
+                date_input=identity_info['id_expired_date'],
+                from_format=GW_DATETIME_FORMAT,
+                to_format=GW_DATE_FORMAT
+            ),
+            place_of_issue=identity_info['id_issued_location']
         )
-        #
-        # customer_address = customer_info['address_info']
-        # if flat_address:
-        #     resident_address_response = dict(number_and_street=customer_address["address_full"])
-        #     contact_address_response = dict(number_and_street=customer_address["contact_address_full"])
-        # else:
-        #     _, resident_address = matching_place_residence(customer_address["address_full"])
-        #
-        #     resident_address_province = resident_address["province_code"]
-        #     if resident_address_province != '':
-        #         resident_address_province_code = 'NAM' if gender == 'M' else 'NU'
-        #         resident_address_province = await self.get_model_object_by_id(model_id=resident_address_province_code, model=AddressProvince, loc="resident_address_province_code")
-        #         resident_address_province = dropdown(resident_address_province)
-        #     resident_address_district = resident_address["district_code"]
-        #     resident_address_ward = resident_address["ward_code"]
-        #     resident_address_number_and_street = resident_address["street_name"]
-        #     resident_address_response = dict(
-        #         province=resident_address_province,
-        #         district=resident_address_district,
-        #         ward=resident_address_ward,
-        #         number_and_street=resident_address_number_and_street
-        #     )
-        #
-        #     _, contact_address = matching_place_residence(customer_address["contact_address_full"])
-        #     contact_address_province = contact_address["province_code"]
-        #     contact_address_district = contact_address["district_code"]
-        #     contact_address_ward = contact_address["ward_code"]
-        #     contact_address_number_and_street = contact_address["street_name"]
-        #     contact_address_response = dict(
-        #         province=contact_address_province,
-        #         district=contact_address_district,
-        #         ward=contact_address_ward,
-        #         number_and_street=contact_address_number_and_street
-        #     )
+
+        address_info = customer_info['address_info']
+
+        # resident_address_province = address_info["province"]
+        # resident_address_district = address_info["district"]
+        # resident_address_ward = address_info["ward"]
+        # resident_address_number_and_street = address_info["street_name"]
+        resident_address_full = address_info["address_full"]
+        resident_address_response = dict(
+            # province=resident_address_province,
+            # district=resident_address_district,
+            # ward=resident_address_ward,
+            # number_and_street=resident_address_number_and_street,
+            address_full=resident_address_full
+        )
+
+        # contact_address_province = contact_address["province"]
+        # contact_address_district = contact_address["district"]
+        # contact_address_ward = contact_address["ward"]
+        # contact_address_number_and_street = contact_address["street_name"]
+        contact_address_full = address_info["contact_address_full"]
+        contact_address_response = dict(
+            # province=contact_address_province,
+            # district=contact_address_district,
+            # ward=contact_address_ward,
+            # number_and_street=contact_address_number_and_street,
+            address_full=contact_address_full
+        )
 
         customer_information = {
             "cif_information": cif_information,
             "customer_information": customer_information,
             # "career_information": career_information,
             "identity_information": identity_information,
-            # "address_info": dict(
-            #     resident_address=resident_address_response,
-            #     contact_address=contact_address_response
-            # )
+            "address_info": dict(
+                resident_address=resident_address_response,
+                contact_address=contact_address_response
+            )
         }
         return self.response(data=customer_information)
 

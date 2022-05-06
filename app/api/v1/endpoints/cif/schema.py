@@ -166,7 +166,21 @@ class GWCustomerInformation(BaseSchema):
 class GWCustomerIdentityInformation(BaseSchema):
     identity_number: Optional[str] = Field(..., description="Số CMND/CCCD/Hộ chiếu")
     issued_date: Optional[date] = Field(..., description="Ngày cấp")
+    expired_date: Optional[date] = Field(..., description="Ngày hết hạn")
     place_of_issue: Optional[str] = Field(..., description="Nơi cấp")
+
+
+class GWAddressInfo(BaseSchema):
+    # province: Optional[str] = Field(..., description="Tỉnh/Thành phố")
+    # district: Optional[str] = Field(..., description="Quận/Huyện")
+    # ward: Optional[str] = Field(..., description="Phường/Xã")
+    # name: Optional[str] = Field(..., description="Địa chỉ")
+    address_full: Optional[str] = Field(..., description="Địa chỉ đầy đủ")
+
+
+class GWCustomerAddressInfoRes(BaseSchema):
+    resident_address: GWAddressInfo = Field(..., description="Địa chỉ thường trú")
+    contact_address: GWAddressInfo = Field(..., description="Địa chỉ liên lạc")
 
 
 class CustomerByCIFNumberResponse(BaseSchema):
@@ -176,6 +190,7 @@ class CustomerByCIFNumberResponse(BaseSchema):
         ...,
         description="Thông tin giấy tờ định danh khách hàng"
     )
+    address_info: GWCustomerAddressInfoRes = Field(..., description="Thông tin địa chỉ khách hàng")
     # cif_information: SOACIFInformation = Field(..., description="Thông tin CIF")
     # customer_information: SOACustomerInformation = Field(..., description="Thông tin khách hàng")
     # # career_information: DropdownResponse = Field(..., description="Thông tin nghề nghiệp khách hàng")
