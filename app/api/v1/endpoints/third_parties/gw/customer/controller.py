@@ -15,7 +15,7 @@ class CtrGWCustomer(BaseController):
             full_name: str
     ):
         current_user = self.current_user
-        if not (cif_number and identity_number and mobile_number and full_name):
+        if {cif_number, identity_number, mobile_number, full_name} == {None}:
             return self.response_exception(msg=ERROR_AT_LEAST_ONE_FIELD,
                                            loc="cif_number, identity_number, mobile_number, full_name")
 
