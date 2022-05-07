@@ -171,10 +171,10 @@ class GWCustomerIdentityInformation(BaseSchema):
 
 
 class GWAddressInfo(BaseSchema):
-    # province: Optional[str] = Field(..., description="Tỉnh/Thành phố")
-    # district: Optional[str] = Field(..., description="Quận/Huyện")
-    # ward: Optional[str] = Field(..., description="Phường/Xã")
-    # name: Optional[str] = Field(..., description="Địa chỉ")
+    province: Optional[str] = Field(..., description="Tỉnh/Thành phố")
+    district: Optional[str] = Field(..., description="Quận/Huyện")
+    ward: Optional[str] = Field(..., description="Phường/Xã")
+    number_and_street: Optional[str] = Field(..., description="Số nhà, tên đường")
     address_full: Optional[str] = Field(..., description="Địa chỉ đầy đủ")
 
 

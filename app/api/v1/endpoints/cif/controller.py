@@ -236,31 +236,32 @@ class CtrCustomer(BaseController):
             place_of_issue=identity_info['id_issued_location']
         )
 
-        address_info = customer_info['address_info']
+        resident_address_info = customer_info['p_address_info']
 
-        # resident_address_province = address_info["province"]
-        # resident_address_district = address_info["district"]
-        # resident_address_ward = address_info["ward"]
-        # resident_address_number_and_street = address_info["street_name"]
-        resident_address_full = address_info["address_full"]
+        resident_address_province = resident_address_info["city_name"]
+        resident_address_district = resident_address_info["district_name"]
+        resident_address_ward = resident_address_info["ward_name"]
+        resident_address_number_and_street = resident_address_info["line"]
+        resident_address_full = resident_address_info["address_full"]
         resident_address_response = dict(
-            # province=resident_address_province,
-            # district=resident_address_district,
-            # ward=resident_address_ward,
-            # number_and_street=resident_address_number_and_street,
+            province=resident_address_province,
+            district=resident_address_district,
+            ward=resident_address_ward,
+            number_and_street=resident_address_number_and_street,
             address_full=resident_address_full
         )
 
-        # contact_address_province = contact_address["province"]
-        # contact_address_district = contact_address["district"]
-        # contact_address_ward = contact_address["ward"]
-        # contact_address_number_and_street = contact_address["street_name"]
-        contact_address_full = address_info["contact_address_full"]
+        contact_address_info = customer_info['t_address_info']
+        contact_address_province = contact_address_info["contact_address_city_name"]
+        contact_address_district = contact_address_info["contact_address_district_name"]
+        contact_address_ward = contact_address_info["contact_address_ward_name"]
+        contact_address_number_and_street = contact_address_info["contact_address_line"]
+        contact_address_full = contact_address_info["contact_address_full"]
         contact_address_response = dict(
-            # province=contact_address_province,
-            # district=contact_address_district,
-            # ward=contact_address_ward,
-            # number_and_street=contact_address_number_and_street,
+            province=contact_address_province,
+            district=contact_address_district,
+            ward=contact_address_ward,
+            number_and_street=contact_address_number_and_street,
             address_full=contact_address_full
         )
 
