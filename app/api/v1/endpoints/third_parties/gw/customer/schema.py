@@ -52,7 +52,10 @@ class GWCustomerListAddress(BaseSchema):
 
 class GWCustomerDetailAddressInfo(BaseSchema):
     address_full: Optional[str] = Field(..., description="Địa chỉ đầy đủ")
-    contact_address_full: Optional[str] = Field(..., description="Địa chỉ liên lạc đầy đủ")
+    number_and_street: Optional[str] = Field(..., description="Địa chỉ liên lạc - tên đường, số nhà")
+    ward: Optional[str] = Field(..., description="Tên Địa chỉ liên lạc - phường/xã")
+    district: Optional[str] = Field(..., description="Tên Địa chỉ liên lạc - quận/huyện")
+    province: Optional[str] = Field(..., description="Tên Địa chỉ liên lạc - tỉnh/thành")
 
 
 class GWCustomerInfoItemResponse(BaseSchema):
@@ -103,7 +106,8 @@ class GWCustomerInfoDetailResponse(BaseSchema):
     is_staff: str = Field(..., description="Y nếu là CBNV, N nếu ko phải")
     cif_info: GWCustomerCIFInfoResponse = Field(..., description="Thông tin CIF")
     id_info: GWCustomerIDInfoResponse = Field(..., description="Thông tin giấy tờ định danh")
-    address_info: GWCustomerDetailAddressInfo = Field(..., description="Thông tin địa chỉ")
+    resident_address: GWCustomerDetailAddressInfo = Field(..., description="Thông tin địa chỉ thường trú")
+    contact_address: GWCustomerDetailAddressInfo = Field(..., description="Thông tin địa chỉ liên hệ")
     job_info: GWCustomerJobInfo = Field(..., description="Thông tin việc làm")
     branch_info: GWBranchDropdownResponse = Field(..., description="Thông tin đơn vị")
 
