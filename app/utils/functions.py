@@ -29,6 +29,14 @@ def dropdown(data) -> dict:
     }
 
 
+def dropdown_name(name: str) -> dict:
+    return {
+        'id': None,
+        'code': None,
+        'name': name
+    }
+
+
 # dropdown trả về content
 def special_dropdown(data) -> dict:
     return {
