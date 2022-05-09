@@ -12,6 +12,7 @@ from app.api.v1.endpoints.mobile.repository import (
 )
 from app.api.v1.endpoints.mobile.schema import IdentityMobileRequest
 from app.api.v1.validator import validate_history_data
+from app.settings.event import service_ekyc
 from app.third_parties.oracle.models.master_data.address import AddressCountry
 from app.third_parties.oracle.models.master_data.customer import CustomerGender
 from app.utils.constant.cif import (
@@ -28,6 +29,7 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_STATUS_INIT, RESIDENT_ADDRESS_CODE
 )
 from app.utils.constant.ekyc import EKYC_FLAG
+from app.utils.error_messages import ERROR_CALL_SERVICE_EKYC
 from app.utils.functions import (
     calculate_age, date_to_string, datetime_to_string, gen_qr_code, now,
     orjson_dumps
@@ -218,7 +220,8 @@ class CtrIdentityMobile(BaseController):
             "data": {}
         }
         ocr_result_ekyc_data['data'].update(ocr_data_front_side['ocr_result_ekyc']['data'])
-        ocr_result_ekyc_data['data'].update(ocr_data_back_side['ocr_result_ekyc']['data'])
+        if ocr_data_back_side:
+            ocr_result_ekyc_data['data'].update(ocr_data_back_side['ocr_result_ekyc']['data'])
 
         saving_customer_identity = {  # noqa
             "identity_type_id": identity_type,
@@ -351,6 +354,17 @@ class CtrIdentityMobile(BaseController):
             name=avatar_image_name,
             ekyc_flag=EKYC_FLAG
         ))
+
+        # thêm chân dung vào ekyc
+        is_success_add_face, add_face_info = await service_ekyc.add_face_ekyc(
+            file=avatar_image,
+            filename=avatar_image_name
+        )
+        if not is_success_add_face:
+            return self.response_exception(msg=ERROR_CALL_SERVICE_EKYC, detail=add_face_info.get('message', ''))
+
+        face_ids = add_face_info['data']['face_id']
+
         # compare avatar_image with identity_avatar_image_uuid từ ocr front_side
         if identity_type != IDENTITY_DOCUMENT_TYPE_PASSPORT:
             face_compare_mobile = self.call_repos(await repos_compare_face(
@@ -543,22 +557,18 @@ class CtrIdentityMobile(BaseController):
                 }
             })
 
-        customer_id_ekyc = await CtrKSS().ctr_save_customer( # noqa
-            document_id=ocr_result_ekyc_data['data']['document_id'],
-            document_type=ocr_result_ekyc_data['data']['document_type'],
-            date_of_issue=ocr_result_ekyc_data['data']['date_of_issue'],
-            place_of_issue=ocr_result_ekyc_data['data']['place_of_issue'],
-            face_ids=ocr_result_ekyc_data['data']['document_type'],
-            full_name=ocr_result_ekyc_data['data']['full_name'],
-            date_of_birth=ocr_result_ekyc_data['data']['date_of_birth'],
-            date_of_expiry=ocr_result_ekyc_data['data']['date_of_expiry'],
-            place_of_residence=ocr_result_ekyc_data['data']['place_of_residence'],
-            place_of_origin=ocr_result_ekyc_data['data']['place_of_origin'],
+        customer_id_ekyc = await CtrKSS().ctr_save_customer_ekyc( # noqa
+            ocr_result_ekyc_data=ocr_result_ekyc_data,
+            face_ids=face_ids,
             phone_number=phone_number,
-            gender=ocr_result_ekyc_data['data']['gender'],
-            ocr_data=ocr_result_ekyc_data['data'],
-            attachment_info=ocr_result_ekyc_data['data']['document_type']
+            front_image=ocr_data_front_side['ocr_result_ekyc']['uuid'],
+            front_image_name=ocr_data_front_side['ocr_result_ekyc']['file_name'],
+            back_image=ocr_data_back_side['ocr_result_ekyc']['uuid'] if ocr_data_back_side else None,
+            back_image_name=ocr_data_back_side['ocr_result_ekyc']['uuid'] if ocr_data_back_side else None,
+            avatar_image=add_face_info['data']['uuid'],
+            avatar_image_name=add_face_info['data']['file_name'],
         )
+
         info_save_document = self.call_repos(
             await repos_save_identity(
                 identity_document_type_id=identity_type,

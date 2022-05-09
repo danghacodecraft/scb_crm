@@ -1,3 +1,5 @@
+from typing import Optional
+
 from starlette import status
 
 from app.api.base.controller import BaseController
@@ -6,7 +8,8 @@ from app.api.v1.endpoints.customer_service.repository import (
     repos_get_history_post_post_check, repos_get_list_branch,
     repos_get_list_kss, repos_get_list_zone, repos_get_post_control,
     repos_get_statistics, repos_get_statistics_month,
-    repos_get_statistics_profiles, repos_save_customer, repos_update_post_check
+    repos_get_statistics_profiles, repos_save_customer_ekyc,
+    repos_update_post_check
 )
 from app.api.v1.endpoints.customer_service.schema import (
     CreatePostCheckRequest, QueryParamsKSSRequest, UpdatePostCheckRequest
@@ -15,6 +18,7 @@ from app.utils.constant.ekyc import (
     GROUP_ROLE_CODE_AP, GROUP_ROLE_CODE_IN, GROUP_ROLE_CODE_VIEW, MENU_CODE
 )
 from app.utils.error_messages import ERROR_PERMISSION, MESSAGE_STATUS
+from app.utils.functions import gen_qr_code
 
 
 class CtrKSS(BaseController):
@@ -304,53 +308,70 @@ class CtrKSS(BaseController):
 
         return self.response(data=customer_detail)
 
-    async def ctr_save_customer(
+    async def ctr_save_customer_ekyc(
             self,
-            document_id: str,
-            document_type: int,
-            date_of_issue: str,
-            place_of_issue: str,
-            full_name: str,
-            date_of_birth: str,
-            date_of_expiry: str,
-            place_of_residence: str,
-            place_of_origin: str,
-            gender: str,
-            face_ids: [str],
-            ocr_data: dict,
-            attachment_info: dict,
+            face_ids: int,
+            ocr_result_ekyc_data: dict,
             phone_number: str,
+            front_image: Optional[str] = None,
+            front_image_name: Optional[str] = None,
+            back_image: Optional[str] = None,
+            back_image_name: Optional[str] = None,
+            avatar_image: Optional[str] = None,
+            avatar_image_name: Optional[str] = None
     ):
-        body = { # noqa
-            "document_id": document_id,
-            "document_type": document_type,
-            "date_of_issue": date_of_issue,
-            "place_of_issue": place_of_issue,
-            "full_name": full_name,
-            "date_of_birth": date_of_birth,
-            "date_of_expiry": date_of_expiry,
-            "place_of_residence": place_of_residence,
-            "place_of_origin": place_of_origin,
-            "phone_number": phone_number,
-            "gender": gender,
-            "face_ids": face_ids,
-            "ocr_data": ocr_data,
-            "attachment_info": attachment_info
-        }
-        customer = self.call_repos(await repos_save_customer(
-            # document_id=document_id,
-            # document_type=document_type,
-            # date_of_issue=date_of_issue,
-            # place_of_issue=place_of_issue,
-            # face_ids=face_ids,
-            # full_name=full_name,
-            # date_of_birth=date_of_birth,
-            # date_of_expiry=date_of_expiry,
-            # place_of_residence=place_of_residence,
-            # place_of_origin=place_of_origin,
-            # phone_number=phone_number,
-            # gender=gender,
-            # ocr_data=ocr_data,
-            # attachment_info=attachment_info
+        print('hmmmmmmmmmmmmmmmmmmmmmmmmmm')
+        print(ocr_result_ekyc_data)
+        if ocr_result_ekyc_data['document_type'] == 0:
+            body = {
+                "document_id": ocr_result_ekyc_data['data']['document_id'],
+                "document_type": ocr_result_ekyc_data['document_type'],
+                "date_of_issue": ocr_result_ekyc_data['data']['date_of_issue'],
+                "place_of_issue": ocr_result_ekyc_data['data']['place_of_issue'],
+                "full_name": ocr_result_ekyc_data['data']['full_name'],
+                "date_of_birth": ocr_result_ekyc_data['data']['date_of_birth'],
+                "place_of_origin": ocr_result_ekyc_data['data']['place_of_origin'],
+                "date_of_expiry": ocr_result_ekyc_data['data']['date_of_expiry'],
+                "phone_number": phone_number,
+                "face_ids": [face_ids],
+                "ocr_data": ocr_result_ekyc_data['data'],
+                "attachment_info": {
+                    'front_image': front_image,
+                    "front_image_name": front_image_name,
+                    "avatar_image": avatar_image,
+                    "avatar_image_name": avatar_image_name
+                }
+            }
+        else:
+            body = {
+                "document_id": ocr_result_ekyc_data['data']['document_id'],
+                "document_type": ocr_result_ekyc_data['document_type'],
+                "date_of_issue": ocr_result_ekyc_data['data']['date_of_issue'],
+                "place_of_issue": ocr_result_ekyc_data['data']['place_of_issue'],
+                "full_name": ocr_result_ekyc_data['data']['full_name'],
+                "date_of_birth": ocr_result_ekyc_data['data']['date_of_birth'],
+                "date_of_expiry": ocr_result_ekyc_data.get('data').get('date_of_expiry'),
+                "place_of_residence": ocr_result_ekyc_data['data']['place_of_residence'],
+                "place_of_origin": ocr_result_ekyc_data['data']['place_of_origin'],
+                "phone_number": phone_number,
+                "gender": ocr_result_ekyc_data['data']['gender'],
+                "face_ids": [face_ids],
+                "ocr_data": ocr_result_ekyc_data['data'],
+                "attachment_info": {
+                    'front_image': front_image,
+                    "front_image_name": front_image_name,
+                    "back_image": back_image,
+                    "back_image_name": back_image_name,
+                    "avatar_image": avatar_image,
+                    "avatar_image_name": avatar_image_name
+                }
+            }
+            if ocr_result_ekyc_data['document_type'] == 4:
+                body.update({
+                    "qr_code_data": gen_qr_code(ocr_result_ekyc_data.get('data'))
+                })
+        print(body)
+        customer = self.call_repos(await repos_save_customer_ekyc(
+            body_request=body
         ))
         return self.response(data=customer)
