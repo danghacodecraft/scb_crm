@@ -13,14 +13,6 @@ from app.settings.config import (
 from app.utils.constant.utils import UTF_8
 
 
-def dropdown_name(name) -> dict:
-    return {
-        'id': None,
-        'code': None,
-        'name': name
-    }
-
-
 def dropdown(data) -> dict:
     return {
         'id': data.id,
@@ -29,12 +21,16 @@ def dropdown(data) -> dict:
     }
 
 
-def dropdown_name(name: str) -> dict:
+def dropdown_name(name: str, code: Optional[str] = None) -> dict:
     return {
-        'id': None,
-        'code': None,
+        'id': code,
+        'code': code,
         'name': name
     }
+
+
+def optional_dropdown(obj, obj_name: Optional[str], obj_code: Optional[str] = None) -> dict:
+    return dropdown(obj) if obj else dropdown_name(name=obj_name, code=obj_code)
 
 
 # dropdown trả về content

@@ -90,7 +90,7 @@ class CifCustomerInformationResponse(BaseSchema):
     # TODO: thông tin về loại khách hàng khi tạo CIF chưa có
     customer_type: OptionalDropdownResponse = Field(None, description="Loại khách hàng")
     # TODO: hạng tín dụng chưa có field trong customer
-    credit_rating: Optional[str] = Field(..., description="Hạng tín dụng")
+    credit_rating: Optional[str] = Field(..., description="Hạng tín dng")
     address: str = Field(..., description="Địa chỉ")
     total_employees: int = Field(..., description="Tổng số người tham gia")
     employees: List[EmployeeResponse] = Field(..., description="Danh sách nhân viên")
@@ -207,4 +207,4 @@ class CustomerByCIFNumberRequest(BaseSchema):
 
 
 class GWCustomerDetailRequest(BaseSchema):
-    parameter: str = Field(GW_REQUEST_PARAMETER_DEFAULT, description=f"""Tham số truyền vào {GW_REQUEST_PARAMETER}""")
+    parameter: str = Field(GW_REQUEST_PARAMETER_DEFAULT, description=f"""Tham số truyền vào `{GW_REQUEST_PARAMETER}`""")

@@ -13,6 +13,9 @@ from app.third_parties.oracle.models.master_data.customer import (
     CustomerGender, CustomerType
 )
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
+from app.third_parties.oracle.models.master_data.others import (
+    Branch, Career, MaritalStatus
+)
 from app.utils.constant.cif import CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE
 from app.utils.constant.gw import (
     GW_DATE_FORMAT, GW_DATETIME_FORMAT, GW_GENDER_FEMALE, GW_GENDER_MALE,
@@ -20,7 +23,8 @@ from app.utils.constant.gw import (
     GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP
 )
 from app.utils.functions import (
-    date_string_to_other_date_string_format, dropdown, dropdown_name
+    date_string_to_other_date_string_format, dropdown, dropdown_name,
+    optional_dropdown
 )
 from app.utils.vietnamese_converter import (
     convert_to_unsigned_vietnamese, split_name
@@ -105,7 +109,12 @@ class CtrGWCustomer(BaseController):
         email = customer_info['email']
 
         cif_info = customer_info['cif_info']
-        cif_issued_date = cif_info['cif_issued_date']
+        cif_issued_date = date_string_to_other_date_string_format(
+            date_input=cif_info['cif_issued_date'],
+            from_format=GW_DATETIME_FORMAT,
+            to_format=GW_DATE_FORMAT
+        )
+
         date_of_birth = date_string_to_other_date_string_format(
             date_input=customer_info['birthday'],
             from_format=GW_DATETIME_FORMAT,
@@ -180,7 +189,7 @@ class CtrGWCustomer(BaseController):
             session=self.oracle_session
         )
         dropdown_resident_address_district = dropdown(
-            resident_address_province) if resident_address_district else dropdown_name(
+            resident_address_district) if resident_address_district else dropdown_name(
             resident_address_district_code_or_name)
 
         resident_address_ward_code_or_name = resident_address_info["ward_name"]
@@ -226,7 +235,7 @@ class CtrGWCustomer(BaseController):
             session=self.oracle_session
         )
         dropdown_contact_address_district = dropdown(
-            contact_address_province) if contact_address_district else dropdown_name(
+            contact_address_district) if contact_address_district else dropdown_name(
             contact_address_district_code_or_name)
 
         contact_address_ward_code_or_name = contact_address_info["contact_address_ward_name"]
@@ -243,14 +252,16 @@ class CtrGWCustomer(BaseController):
 
         contact_address_full = contact_address_info["contact_address_full"]
 
+        identity_issued_date = date_string_to_other_date_string_format(
+            date_input=identity_info['id_issued_date'],
+            from_format=GW_DATETIME_FORMAT,
+            to_format=GW_DATE_FORMAT
+        )
+
         if parameter == GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP:
             cif_information = dict(
                 cif_number=cif_number,
-                issued_date=date_string_to_other_date_string_format(
-                    date_input=cif_issued_date,
-                    from_format=GW_DATETIME_FORMAT,
-                    to_format=GW_DATE_FORMAT
-                ),
+                issued_date=cif_issued_date,
                 customer_type=dropdown_customer_type
             )
 
@@ -270,11 +281,7 @@ class CtrGWCustomer(BaseController):
 
             identity_information = dict(
                 identity_number=identity_info['id_num'],
-                issued_date=date_string_to_other_date_string_format(
-                    date_input=identity_info['id_issued_date'],
-                    from_format=GW_DATETIME_FORMAT,
-                    to_format=GW_DATE_FORMAT
-                ),
+                issued_date=identity_issued_date,
                 expired_date=date_string_to_other_date_string_format(
                     date_input=identity_info['id_expired_date'],
                     from_format=GW_DATETIME_FORMAT,
@@ -305,63 +312,107 @@ class CtrGWCustomer(BaseController):
             data_output = customer_info_detail['retrieveCustomerRefDataMgmt_out']['data_output']
             customer_info = data_output['customer_info']
 
-            cif_info = customer_info['cif_info']
-            id_info = customer_info['id_info']
             job_info = customer_info['job_info']
             branch_info = customer_info['branch_info']
 
+            short_name = customer_info['short_name']
+
+            martial_status_code_or_name = customer_info['martial_status']
+            martial_status = await get_optional_model_object_by_code_or_name(
+                model=MaritalStatus,
+                model_code=martial_status_code_or_name,
+                model_name=martial_status_code_or_name,
+                session=self.oracle_session
+            )
+            dropdown_martial_status = optional_dropdown(obj=martial_status, obj_name=martial_status_code_or_name)
+
+            resident_status_code_or_name = customer_info['resident_status']
+            resident_status = await get_optional_model_object_by_code_or_name(
+                model=MaritalStatus,
+                model_code=resident_status_code_or_name,
+                model_name=resident_status_code_or_name,
+                session=self.oracle_session
+            )
+            dropdown_resident_status = optional_dropdown(obj=resident_status, obj_name=resident_status_code_or_name)
+
+            identity_expired_date = date_string_to_other_date_string_format(
+                date_input=identity_info['id_expired_date'],
+                from_format=GW_DATETIME_FORMAT,
+                to_format=GW_DATE_FORMAT
+            )
+
+            biz_license_issue_date = date_string_to_other_date_string_format(
+                date_input=customer_info['biz_license_issue_date'],
+                from_format=GW_DATETIME_FORMAT,
+                to_format=GW_DATE_FORMAT
+            )
+
+            branch_name = branch_info["branch_name"]
+            branch_code = branch_info["branch_code"]
+            branch = await get_optional_model_object_by_code_or_name(
+                model=Branch,
+                model_code=branch_code,
+                model_name=branch_name,
+                session=self.oracle_session
+            )
+            dropdown_branch = optional_dropdown(obj=branch, obj_name=branch_name, obj_code=branch_code)
+
+            job_name = job_info["professional_name"]
+            job_code = job_info["professional_code"]
+            job = await get_optional_model_object_by_code_or_name(
+                model=Career,
+                model_code=job_code,
+                model_name=job_name,
+                session=self.oracle_session
+            )
+            dropdown_job = optional_dropdown(obj=job, obj_name=job_name, obj_code=job_code)
+
             return self.response(data=dict(
                 fullname_vn=full_name_vn,
-                short_name=customer_info['short_name'],
-                date_of_birth=customer_info['birthday'],
-                martial_status=customer_info['martial_status'],
+                short_name=short_name,
+                date_of_birth=date_of_birth,
+                martial_status=dropdown_martial_status,
                 gender=dropdown_gender,
-                email=customer_info['email'],
-                nationality_code=customer_info['nationality_code'],
+                email=email,
+                nationality=dropdown_nationality,
                 mobile_phone=customer_info['mobile_phone'],
                 telephone=customer_info['telephone'],
                 otherphone=customer_info['otherphone'],
-                customer_type=customer_info['customer_type'],
-                resident_status=customer_info['resident_status'],
+                customer_type=dropdown_customer_type,
+                resident_status=dropdown_resident_status,
                 legal_representativeprsn_name=customer_info['legal_representativeprsn_name'],
                 legal_representativeprsn_id=customer_info['legal_representativeprsn_id'],
                 biz_contact_person_phone_num=customer_info['biz_contact_person_phone_num'],
                 biz_line=customer_info['biz_line'],
-                biz_license_issue_date=customer_info['biz_license_issue_date'],
+                biz_license_issue_date=biz_license_issue_date,
                 is_staff=customer_info['is_staff'],
                 cif_info=dict(
-                    cif_number=cif_info["cif_num"],
-                    issued_date=cif_info["cif_issued_date"]
+                    cif_number=cif_number,
+                    issued_date=cif_issued_date
                 ),
                 id_info=dict(
-                    number=id_info["id_num"],
-                    name=id_info["id_name"],
-                    issued_date=id_info["id_issued_date"],
-                    expired_date=id_info["id_expired_date"],
-                    place_of_issue=id_info["id_issued_location"]
+                    number=identity_info["id_num"],
+                    name=identity_info["id_name"],
+                    issued_date=identity_issued_date,
+                    expired_date=identity_expired_date,
+                    place_of_issue=dropdown_place_of_issue
                 ),
                 resident_address=dict(
-                    address_full=customer_info["p_address_info"]['address_full'],
-                    number_and_street=customer_info["p_address_info"]['line'],
-                    ward=customer_info["p_address_info"]['ward_name'],
-                    district=customer_info["p_address_info"]['district_name'],
-                    province=customer_info["p_address_info"]['city_name'],
+                    address_full=resident_address_info['address_full'],
+                    number_and_street=resident_address_info['line'],
+                    ward=dropdown_resident_address_ward,
+                    district=dropdown_resident_address_district,
+                    province=dropdown_resident_address_province
                 ),
                 contact_address=dict(
-                    address_full=customer_info["t_address_info"]['contact_address_full'],
-                    number_and_street=customer_info["t_address_info"]['contact_address_line'],
-                    ward=customer_info["t_address_info"]['contact_address_ward_name'],
-                    district=customer_info["t_address_info"]['contact_address_district_name'],
-                    province=customer_info["t_address_info"]['contact_address_city_name']
+                    address_full=contact_address_info['contact_address_full'],
+                    number_and_street=contact_address_info['contact_address_line'],
+                    ward=dropdown_contact_address_ward,
+                    district=dropdown_contact_address_district,
+                    province=dropdown_contact_address_province
                 ),
-                job_info=dict(
-                    name=job_info["professional_name"],
-                    code=job_info["professional_code"]
-                ),
-                branch_info=dict(
-                    name=branch_info["branch_name"],
-                    code=branch_info["branch_code"]
-                )
+                job_info=dropdown_job,
+                branch_info=dropdown_branch
             ))
         return self.response(data=customer_information)
 
@@ -374,8 +425,8 @@ class CtrGWCustomer(BaseController):
             current_user=self.current_user,
             loc=GW_LOC_CHECK_CIF_EXIST
         ))
-        customer_info = gw_check_exist_customer_detail_info['retrieveCustomerRefDataMgmt_out']['data_output']['customer_info'][
-            'id_info']
+        data_output = gw_check_exist_customer_detail_info['retrieveCustomerRefDataMgmt_out']['data_output']
+        customer_info = data_output['customer_info']['id_info']
 
         return self.response(data=dict(
             is_existed=True if customer_info['id_num'] else False

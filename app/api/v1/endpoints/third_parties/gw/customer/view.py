@@ -1,3 +1,5 @@
+from typing import Union
+
 from fastapi import APIRouter, Body, Depends, Path
 from starlette import status
 
@@ -81,7 +83,10 @@ async def view_gw_check_exist_casa_account_info(
     name="[GW] Lấy chi tiết thông tin khách hàng",
     description="Lấy chi tiết thông tin khách hàng theo CIF",
     responses=swagger_response(
-        response_model=ResponseData[GWCustomerInfoDetailResponse],
+        response_model=Union[
+            ResponseData[GWCustomerInfoDetailResponse],
+            ResponseData[GuardianOrCustomerRelationshipByCIFNumberResponse]
+        ],
         success_examples=CUSTOMER_INFO_DETAIL_SUCCESS_EXAMPLE,
         success_status_code=status.HTTP_200_OK
     )
@@ -106,7 +111,7 @@ async def view_gw_get_customer_info_detail(
 
 @router.post(
     path="/coowner/{account_number}/",
-    name="[GW] Lấy danh sách đồng sở hữu theo số tài khoản",
+    name="[GW] Lấy dash sách đồng sở hữu theo số tài khoản",
     description="Lấy danh sách đồng sở hữu theo số tài khoản",
     responses=swagger_response(
         response_model=ResponseData[GWCoownerListResponse],
