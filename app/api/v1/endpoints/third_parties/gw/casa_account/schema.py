@@ -84,6 +84,7 @@ class GWAccountInfoResponse(BaseSchema):
     service_escrow: Optional[str] = Field(..., description="Dịch vụ ký quỹ")
     service_escrow_ex_date: Optional[date] = Field(..., description="Ngày đáo hạn ký quỹ")
     branch_info: GWBranchDropdownResponse = Field(..., description="Thông tin đơn vị")
+    product_package: Optional[str] = Field(..., description="Gói sản phẩm")
 
 
 class GWCasaAccountResponse(BaseSchema):
