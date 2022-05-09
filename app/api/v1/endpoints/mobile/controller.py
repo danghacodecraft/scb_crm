@@ -12,6 +12,7 @@ from app.api.v1.endpoints.mobile.repository import (
 )
 from app.api.v1.endpoints.mobile.schema import IdentityMobileRequest
 from app.api.v1.validator import validate_history_data
+from app.settings.config import DATE_INPUT_OUTPUT_EKYC_FORMAT
 from app.settings.event import service_ekyc
 from app.third_parties.oracle.models.master_data.address import AddressCountry
 from app.third_parties.oracle.models.master_data.customer import CustomerGender
@@ -560,6 +561,8 @@ class CtrIdentityMobile(BaseController):
         customer_id_ekyc = await CtrKSS().ctr_save_customer_ekyc( # noqa
             ocr_result_ekyc_data=ocr_result_ekyc_data,
             face_ids=face_ids,
+            gender=gender_id,
+            date_of_expiry=date_to_string(expired_date, _format=DATE_INPUT_OUTPUT_EKYC_FORMAT),
             phone_number=phone_number,
             front_image=ocr_data_front_side['ocr_result_ekyc']['uuid'],
             front_image_name=ocr_data_front_side['ocr_result_ekyc']['file_name'],
@@ -569,6 +572,7 @@ class CtrIdentityMobile(BaseController):
             avatar_image_name=add_face_info['data']['file_name'],
         )
 
+        print('customer_id_ekyc', customer_id_ekyc)
         info_save_document = self.call_repos(
             await repos_save_identity(
                 identity_document_type_id=identity_type,

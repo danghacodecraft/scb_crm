@@ -14,6 +14,10 @@ from app.api.v1.endpoints.customer_service.repository import (
 from app.api.v1.endpoints.customer_service.schema import (
     CreatePostCheckRequest, QueryParamsKSSRequest, UpdatePostCheckRequest
 )
+from app.utils.constant.cif import (
+    EKYC_DOCUMENT_TYPE_NEW_CITIZEN, EKYC_DOCUMENT_TYPE_OLD_CITIZEN,
+    EKYC_DOCUMENT_TYPE_OLD_IDENTITY, EKYC_DOCUMENT_TYPE_PASSPORT
+)
 from app.utils.constant.ekyc import (
     GROUP_ROLE_CODE_AP, GROUP_ROLE_CODE_IN, GROUP_ROLE_CODE_VIEW, MENU_CODE
 )
@@ -312,6 +316,8 @@ class CtrKSS(BaseController):
             self,
             face_ids: int,
             ocr_result_ekyc_data: dict,
+            gender: str,
+            date_of_expiry: str,
             phone_number: str,
             front_image: Optional[str] = None,
             front_image_name: Optional[str] = None,
@@ -322,19 +328,22 @@ class CtrKSS(BaseController):
     ):
         print('hmmmmmmmmmmmmmmmmmmmmmmmmmm')
         print(ocr_result_ekyc_data)
-        if ocr_result_ekyc_data['document_type'] == 0:
+        gender = "F" if gender == "NU" else "M"
+        ocr_data = ocr_result_ekyc_data.get('data')
+        if ocr_result_ekyc_data['document_type'] == EKYC_DOCUMENT_TYPE_PASSPORT:
             body = {
-                "document_id": ocr_result_ekyc_data['data']['document_id'],
+                "document_id": ocr_data.get('document_id'),
                 "document_type": ocr_result_ekyc_data['document_type'],
-                "date_of_issue": ocr_result_ekyc_data['data']['date_of_issue'],
-                "place_of_issue": ocr_result_ekyc_data['data']['place_of_issue'],
-                "full_name": ocr_result_ekyc_data['data']['full_name'],
-                "date_of_birth": ocr_result_ekyc_data['data']['date_of_birth'],
-                "place_of_origin": ocr_result_ekyc_data['data']['place_of_origin'],
-                "date_of_expiry": ocr_result_ekyc_data['data']['date_of_expiry'],
+                "date_of_issue": ocr_data.get('date_of_issue'),
+                "place_of_issue": ocr_data.get('place_of_issue'),
+                "full_name": ocr_data.get('full_name'),
+                "date_of_birth": ocr_data.get('date_of_birth'),
+                "place_of_origin": ocr_data.get('place_of_origin'),
+                "date_of_expiry": ocr_data.get('date_of_expiry'),
+                "gender": ocr_data.get('gender'),
                 "phone_number": phone_number,
                 "face_ids": [face_ids],
-                "ocr_data": ocr_result_ekyc_data['data'],
+                "ocr_data": ocr_data,
                 "attachment_info": {
                     'front_image': front_image,
                     "front_image_name": front_image_name,
@@ -344,19 +353,17 @@ class CtrKSS(BaseController):
             }
         else:
             body = {
-                "document_id": ocr_result_ekyc_data['data']['document_id'],
+                "document_id": ocr_data.get('document_id'),
                 "document_type": ocr_result_ekyc_data['document_type'],
-                "date_of_issue": ocr_result_ekyc_data['data']['date_of_issue'],
-                "place_of_issue": ocr_result_ekyc_data['data']['place_of_issue'],
-                "full_name": ocr_result_ekyc_data['data']['full_name'],
-                "date_of_birth": ocr_result_ekyc_data['data']['date_of_birth'],
-                "date_of_expiry": ocr_result_ekyc_data.get('data').get('date_of_expiry'),
-                "place_of_residence": ocr_result_ekyc_data['data']['place_of_residence'],
-                "place_of_origin": ocr_result_ekyc_data['data']['place_of_origin'],
+                "date_of_issue": ocr_data.get('date_of_issue'),
+                "place_of_issue": ocr_data.get('place_of_issue'),
+                "full_name": ocr_data.get('full_name'),
+                "date_of_birth": ocr_data.get('date_of_birth'),
+                "place_of_residence": ocr_data.get('place_of_residence'),
+                "place_of_origin": ocr_data.get('place_of_origin'),
                 "phone_number": phone_number,
-                "gender": ocr_result_ekyc_data['data']['gender'],
                 "face_ids": [face_ids],
-                "ocr_data": ocr_result_ekyc_data['data'],
+                "ocr_data": ocr_data,
                 "attachment_info": {
                     'front_image': front_image,
                     "front_image_name": front_image_name,
@@ -366,9 +373,23 @@ class CtrKSS(BaseController):
                     "avatar_image_name": avatar_image_name
                 }
             }
-            if ocr_result_ekyc_data['document_type'] == 4:
+            if ocr_result_ekyc_data['document_type'] == EKYC_DOCUMENT_TYPE_OLD_IDENTITY:
                 body.update({
-                    "qr_code_data": gen_qr_code(ocr_result_ekyc_data.get('data'))
+                    "date_of_expiry": date_of_expiry,
+                    "gender": gender,
+                })
+
+            if ocr_result_ekyc_data['document_type'] == EKYC_DOCUMENT_TYPE_OLD_CITIZEN:
+                body.update({
+                    "date_of_expiry": ocr_data.get('date_of_expiry'),
+                    "gender": ocr_data.get('gender'),
+                })
+
+            if ocr_result_ekyc_data['document_type'] == EKYC_DOCUMENT_TYPE_NEW_CITIZEN:
+                body.update({
+                    "qr_code_data": gen_qr_code(ocr_data),
+                    "date_of_expiry": ocr_data.get('date_of_expiry'),
+                    "gender": ocr_data.get('gender'),
                 })
         print(body)
         customer = self.call_repos(await repos_save_customer_ekyc(
