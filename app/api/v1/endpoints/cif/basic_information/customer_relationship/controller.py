@@ -14,16 +14,22 @@ from app.api.v1.endpoints.cif.repository import (
     repos_check_exist_cif, repos_get_booking_code,
     repos_get_initializing_customer
 )
+from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
+from app.settings.event import service_gw
 from app.third_parties.oracle.models.master_data.customer import (
     CustomerRelationshipType
 )
 from app.utils.constant.cif import (
-    BUSINESS_FORM_TTCN_MQHKH, CUSTOMER_RELATIONSHIP_TYPE_CUSTOMER_RELATIONSHIP
+    BUSINESS_FORM_TTCN_MQHKH, CUSTOMER_RELATIONSHIP_TYPE_CUSTOMER_RELATIONSHIP,
+    DROPDOWN_NONE_DICT
 )
 from app.utils.error_messages import (
-    ERROR_CIF_NUMBER_DUPLICATED, ERROR_RELATION_CUSTOMER_SELF_RELATED
+    ERROR_CALL_SERVICE_GW, ERROR_CIF_NUMBER_DUPLICATED,
+    ERROR_RELATION_CUSTOMER_SELF_RELATED
 )
-from app.utils.functions import orjson_dumps
+from app.utils.functions import (
+    dropdown, dropdown_name, orjson_dumps, string_to_date
+)
 
 
 class CtrCustomerRelationship(BaseController):
@@ -33,7 +39,84 @@ class CtrCustomerRelationship(BaseController):
                 cif_id=cif_id,
                 session=self.oracle_session,
             ))
-        return self.response(data=detail_customer_relationship_info)
+
+        relationship_details = []
+        for relationship, relationship_type in detail_customer_relationship_info:
+            is_success, customer_relationship = await service_gw.get_customer_info_detail(
+                customer_cif_number=relationship.customer_personal_relationship_cif_number,
+                current_user=self.current_user.user_info
+            )
+            if not is_success:
+                return self.response_exception(
+                    msg=ERROR_CALL_SERVICE_GW,
+                    detail='customer_relationship',
+                    loc='customer_relationship'
+                )
+
+            customer_relationship_item = {}
+
+            customer_relationship_data = customer_relationship['retrieveCustomerRefDataMgmt_out']['data_output'][
+                'customer_info']
+
+            identity_document = customer_relationship_data['id_info']
+
+            resident_address = customer_relationship_data["p_address_info"]
+            contact_address = customer_relationship_data["t_address_info"]
+
+            customer_relationship_item.update(
+                id=relationship.customer_personal_relationship_cif_number,
+                avatar_url=None,
+                basic_information=dict(
+                    cif_number=relationship.customer_personal_relationship_cif_number,
+                    full_name_vn=customer_relationship_data['full_name'],
+                    customer_relationship=dropdown(relationship_type),
+                    date_of_birth=string_to_date(customer_relationship_data['birthday'],
+                                                 _format=DATETIME_INPUT_OUTPUT_FORMAT),
+                    gender=dropdown_name(customer_relationship_data["gender"])
+                    if customer_relationship_data["gender"] else DROPDOWN_NONE_DICT,
+                    nationality=dropdown_name(customer_relationship_data["nationality_code"])
+                    if customer_relationship_data["nationality_code"] else DROPDOWN_NONE_DICT,
+                    telephone_number=customer_relationship_data['telephone'],
+                    mobile_number=customer_relationship_data['mobile_phone'],
+                    email=customer_relationship_data['email']),
+                identity_document=dict(
+                    identity_number=identity_document['id_num'],
+                    issued_date=string_to_date(identity_document['id_issued_date'],
+                                               _format=DATETIME_INPUT_OUTPUT_FORMAT),
+                    expired_date=string_to_date(identity_document['id_expired_date'],
+                                                _format=DATETIME_INPUT_OUTPUT_FORMAT),
+                    place_of_issue=dropdown_name(identity_document['id_issued_location'])
+                    if identity_document['id_issued_location'] else DROPDOWN_NONE_DICT
+                ),
+                address_information=dict(
+                    resident_address=dict(
+                        province=dropdown_name(resident_address["city_name"])
+                        if resident_address["city_name"] else DROPDOWN_NONE_DICT,
+                        district=dropdown_name(resident_address["district_name"])
+                        if resident_address["city_name"] else DROPDOWN_NONE_DICT,
+                        ward=dropdown_name(resident_address["ward_name"])
+                        if resident_address["city_name"] else DROPDOWN_NONE_DICT,
+                        number_and_street=resident_address["line"] if resident_address["line"] else None
+                    ),
+                    contact_address=dict(
+                        province=dropdown_name(contact_address["contact_address_city_name"])
+                        if contact_address["contact_address_city_name"] else DROPDOWN_NONE_DICT,
+                        district=dropdown_name(contact_address["contact_address_district_name"])
+                        if contact_address["contact_address_district_name"] else DROPDOWN_NONE_DICT,
+                        ward=dropdown_name(contact_address["contact_address_ward_name"])
+                        if contact_address["contact_address_ward_name"] else DROPDOWN_NONE_DICT,
+                        number_and_street=contact_address["contact_address_line"]
+                        if contact_address["contact_address_line"] else None
+                    )))
+            relationship_details.append(customer_relationship_item)
+
+        data = {
+            'customer_relationship_flag': True if detail_customer_relationship_info else False,
+            'number_of_customer_relationship': len(detail_customer_relationship_info),
+            "relationships": relationship_details
+        }
+
+        return self.response(data=data)
 
     async def save(self,
                    cif_id: str,
