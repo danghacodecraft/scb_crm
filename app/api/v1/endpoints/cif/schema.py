@@ -6,6 +6,9 @@ from pydantic import Field
 from app.api.base.schema import BaseSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
 from app.api.v1.schemas.utils import DropdownResponse, OptionalDropdownResponse
+from app.utils.constant.gw import (
+    GW_REQUEST_PARAMETER, GW_REQUEST_PARAMETER_DEFAULT
+)
 
 
 class CifInformationResponse(BaseSchema):
@@ -201,3 +204,7 @@ class CustomerByCIFNumberResponse(BaseSchema):
 
 class CustomerByCIFNumberRequest(BaseSchema):
     cif_number: str = CustomField().CIFNumberField
+
+
+class GWCustomerDetailRequest(BaseSchema):
+    parameter: str = Field(GW_REQUEST_PARAMETER_DEFAULT, description=f"""Tham số truyền vào {GW_REQUEST_PARAMETER}""")

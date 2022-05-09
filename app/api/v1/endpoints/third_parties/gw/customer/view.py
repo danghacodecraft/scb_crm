@@ -5,6 +5,7 @@ from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.cif.base_field import CustomField
+from app.api.v1.endpoints.cif.schema import GWCustomerDetailRequest
 from app.api.v1.endpoints.third_parties.gw.customer.controller import (
     CtrGWCustomer
 )
@@ -17,10 +18,14 @@ from app.api.v1.endpoints.third_parties.gw.customer.example import (
     CUSTOMER_INFO_LIST_SUCCESS_EXAMPLE
 )
 from app.api.v1.endpoints.third_parties.gw.customer.schema import (
-    CustomerInfoListCIFRequest, GWAuthorizedListResponse,
-    GWCoownerListResponse, GWCustomerCheckExistRequest,
-    GWCustomerCheckExistResponse, GWCustomerInfoDetailResponse,
-    GWCustomerInfoListResponse
+    CustomerInfoListCIFRequest,
+    GuardianOrCustomerRelationshipByCIFNumberResponse,
+    GWAuthorizedListResponse, GWCoownerListResponse,
+    GWCustomerCheckExistRequest, GWCustomerCheckExistResponse,
+    GWCustomerInfoDetailResponse, GWCustomerInfoListResponse
+)
+from app.utils.constant.gw import (
+    GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP
 )
 
 router = APIRouter()
@@ -83,12 +88,20 @@ async def view_gw_check_exist_casa_account_info(
 )
 async def view_gw_get_customer_info_detail(
     cif_number: str = CustomField().CIFNumberPath,
+    request: GWCustomerDetailRequest = Body(...),
     current_user=Depends(get_current_user_from_header())
 ):
+    parameter = request.parameter
+
     gw_customer_info_detail = await CtrGWCustomer(current_user).ctr_gw_get_customer_info_detail(
-        cif_number=cif_number
+        cif_number=cif_number,
+        parameter=parameter
     )
-    return ResponseData[GWCustomerInfoDetailResponse](**gw_customer_info_detail)
+
+    if parameter == GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP:
+        return ResponseData[GuardianOrCustomerRelationshipByCIFNumberResponse](**gw_customer_info_detail)
+    else:
+        return ResponseData[GWCustomerInfoDetailResponse](**gw_customer_info_detail)
 
 
 @router.post(
