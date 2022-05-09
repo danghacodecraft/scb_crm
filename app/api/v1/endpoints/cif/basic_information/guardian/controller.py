@@ -14,25 +14,105 @@ from app.api.v1.endpoints.cif.basic_information.repository import (
 from app.api.v1.endpoints.cif.repository import (
     repos_get_booking_code, repos_get_initializing_customer
 )
+from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
+from app.settings.event import service_gw
 from app.utils.constant.cif import (
-    BUSINESS_FORM_TTCN_NGH, CUSTOMER_RELATIONSHIP_TYPE_GUARDIAN
+    BUSINESS_FORM_TTCN_NGH, CUSTOMER_RELATIONSHIP_TYPE_GUARDIAN,
+    DROPDOWN_NONE_DICT
 )
 from app.utils.error_messages import (
     ERROR_CIF_NUMBER_DUPLICATED, ERROR_RELATION_CUSTOMER_SELF_RELATED,
     ERROR_RELATIONSHIP_NOT_GUARDIAN
 )
-from app.utils.functions import orjson_dumps
+from app.utils.functions import (
+    dropdown, dropdown_name, orjson_dumps, string_to_date
+)
 
 
 class CtrGuardian(BaseController):
     async def detail(self, cif_id: str):
-        detail_guardian_info = self.call_repos(
+
+        guardians = self.call_repos(
             await repos_get_guardians(
                 session=self.oracle_session,
                 cif_id=cif_id
             ))
 
-        return self.response(data=detail_guardian_info)
+        guardian_details = []
+        for guardian, guardian_relationship in guardians:
+            is_success, guardian_detail = await service_gw.get_customer_info_detail(
+                customer_cif_number=guardian.customer_personal_relationship_cif_number,
+                current_user=self.current_user.user_info)
+
+            if not is_success:
+                return self.response_exception(
+                    msg='call gw',
+                    loc="cif_number",
+                )
+
+            guardian_item = {}
+
+            guardian_detail_data = guardian_detail['retrieveCustomerRefDataMgmt_out']['data_output']['customer_info']
+
+            identity_document = guardian_detail_data['id_info']
+
+            resident_address = guardian_detail_data["p_address_info"]
+            contact_address = guardian_detail_data["t_address_info"]
+
+            guardian_item.update(
+                id=guardian.customer_personal_relationship_cif_number,
+                avatar_url=None,
+                basic_information=dict(
+                    cif_number=guardian.customer_personal_relationship_cif_number,
+                    full_name_vn=guardian_detail_data['full_name'],
+                    customer_relationship=dropdown(guardian_relationship),
+                    date_of_birth=string_to_date(guardian_detail_data['birthday'],
+                                                 _format=DATETIME_INPUT_OUTPUT_FORMAT),
+                    gender=dropdown_name(guardian_detail_data["gender"])
+                    if guardian_detail_data["gender"] else DROPDOWN_NONE_DICT,
+                    nationality=dropdown_name(guardian_detail_data["nationality_code"])
+                    if guardian_detail_data["nationality_code"] else DROPDOWN_NONE_DICT,
+                    telephone_number=guardian_detail_data['telephone'],
+                    mobile_number=guardian_detail_data['mobile_phone'],
+                    email=guardian_detail_data['email']),
+                identity_document=dict(
+                    identity_number=identity_document['id_num'],
+                    issued_date=string_to_date(identity_document['id_issued_date'],
+                                               _format=DATETIME_INPUT_OUTPUT_FORMAT),
+                    expired_date=string_to_date(identity_document['id_expired_date'],
+                                                _format=DATETIME_INPUT_OUTPUT_FORMAT),
+                    place_of_issue=dropdown_name(identity_document['id_issued_location'])
+                    if identity_document['id_issued_location'] else DROPDOWN_NONE_DICT
+                ),
+                address_information=dict(
+                    resident_address=dict(
+                        province=dropdown_name(resident_address["city_name"])
+                        if resident_address["city_name"] else DROPDOWN_NONE_DICT,
+                        district=dropdown_name(resident_address["district_name"])
+                        if resident_address["city_name"] else DROPDOWN_NONE_DICT,
+                        ward=dropdown_name(resident_address["ward_name"])
+                        if resident_address["city_name"] else DROPDOWN_NONE_DICT,
+                        number_and_street=resident_address["line"] if resident_address["line"] else None
+                    ),
+                    contact_address=dict(
+                        province=dropdown_name(contact_address["contact_address_city_name"])
+                        if contact_address["contact_address_city_name"] else DROPDOWN_NONE_DICT,
+                        district=dropdown_name(contact_address["contact_address_district_name"])
+                        if contact_address["contact_address_district_name"] else DROPDOWN_NONE_DICT,
+                        ward=dropdown_name(contact_address["contact_address_ward_name"])
+                        if contact_address["contact_address_ward_name"] else DROPDOWN_NONE_DICT,
+                        number_and_street=contact_address["contact_address_line"]
+                        if contact_address["contact_address_line"] else None
+                    )))
+
+            guardian_details.append(guardian_item)
+        data_response = {
+            "guardian_flag": True if guardians else False,
+            "number_of_guardian": len(guardians),
+            "guardians": guardian_details
+        }
+
+        return self.response(data=data_response)
 
     async def save(self,
                    cif_id: str,

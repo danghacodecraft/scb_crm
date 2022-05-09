@@ -2,9 +2,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn
-from app.api.v1.endpoints.cif.basic_information.repository import (
-    repos_get_customer_detail_by_cif_number
-)
 from app.third_parties.oracle.models.cif.basic_information.guardian_and_relationship.model import (
     CustomerPersonalRelationship
 )
@@ -17,7 +14,6 @@ from app.third_parties.oracle.models.master_data.customer import (
 from app.utils.constant.cif import (
     CUSTOMER_RELATIONSHIP_TYPE_CUSTOMER_RELATIONSHIP
 )
-from app.utils.functions import dropdown
 
 CUSTOMER_RELATIONSHIP_INFO_DETAIL = {
     "customer_relationship_flag": True,
@@ -120,24 +116,7 @@ async def repos_get_customer_relationships(
         )
     ).all()
 
-    relationship_details = []
-    for relationship, relationship_type in customer_relationships:
-        customer_relationship = await repos_get_customer_detail_by_cif_number(
-            cif_number=relationship.customer_personal_relationship_cif_number,
-            session=session
-        )
-        # kiểm tra gọi service SOA
-        if customer_relationship.is_error:
-            return customer_relationship
-        customer_relationship.data['basic_information']['customer_relationship'] = dropdown(relationship_type)
-        relationship_details.append(customer_relationship.data)
-
-    data = {
-        'customer_relationship_flag': True if customer_relationships else False,
-        'number_of_customer_relationship': len(customer_relationships),
-        "relationships": relationship_details
-    }
-    return ReposReturn(data=data)
+    return ReposReturn(data=customer_relationships)
 
     # móc data từ db crm
     # customer_relationships = session.execute(
