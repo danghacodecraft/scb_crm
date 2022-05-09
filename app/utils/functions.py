@@ -13,6 +13,14 @@ from app.settings.config import (
 from app.utils.constant.utils import UTF_8
 
 
+def dropdown_name(name) -> dict:
+    return {
+        'id': None,
+        'code': None,
+        'name': name
+    }
+
+
 def dropdown(data) -> dict:
     return {
         'id': data.id,

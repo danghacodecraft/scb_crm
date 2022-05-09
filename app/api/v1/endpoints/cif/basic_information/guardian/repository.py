@@ -5,9 +5,6 @@ from sqlalchemy import case, delete, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
-from app.api.v1.endpoints.cif.basic_information.repository import (
-    repos_get_customer_detail_by_cif_number
-)
 from app.api.v1.endpoints.repository import (
     write_transaction_log_and_update_booking
 )
@@ -25,7 +22,7 @@ from app.utils.constant.cif import CUSTOMER_RELATIONSHIP_TYPE_GUARDIAN
 from app.utils.error_messages import (
     ERROR_CIF_NUMBER_NOT_COMPLETED, ERROR_CIF_NUMBER_NOT_EXIST
 )
-from app.utils.functions import dropdown, now
+from app.utils.functions import now
 
 
 async def repos_get_guardians(
@@ -45,25 +42,8 @@ async def repos_get_guardians(
             CustomerPersonalRelationship.type == CUSTOMER_RELATIONSHIP_TYPE_GUARDIAN,
         )
     ).all()
-    guardian_details = []
-    for guardian, guardian_relationship in guardians:
-        guardian_detail = await repos_get_customer_detail_by_cif_number(
-            cif_number=guardian.customer_personal_relationship_cif_number,
-            session=session
-        )
 
-        # kiểm tra gọi service SOA
-        if guardian_detail.is_error:
-            return guardian_detail
-        guardian_detail.data["basic_information"]["customer_relationship"] = dropdown(guardian_relationship)
-
-        guardian_details.append(guardian_detail.data)
-    data = {
-        "guardian_flag": True if guardians else False,
-        "number_of_guardian": len(guardians),
-        "guardians": guardian_details
-    }
-    return ReposReturn(data=data)
+    return ReposReturn(data=guardians)
 
     # guardians = session.execute(
     #     select(
