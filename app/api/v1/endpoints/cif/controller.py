@@ -5,18 +5,32 @@ from app.api.v1.endpoints.cif.repository import (
     repos_profile_history, repos_validate_cif_number
 )
 from app.api.v1.endpoints.cif.schema import CustomerByCIFNumberRequest
+from app.api.v1.endpoints.repository import (
+    get_optional_model_object_by_code_or_name
+)
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_gw_get_customer_info_detail
 )
 from app.api.v1.endpoints.user.contact.repository import repo_contact
 from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
-from app.utils.constant.cif import DROPDOWN_NONE_DICT, PROFILE_HISTORY_STATUS
+from app.third_parties.oracle.models.master_data.address import (
+    AddressDistrict, AddressProvince
+)
+from app.third_parties.oracle.models.master_data.customer import (
+    CustomerGender, CustomerType
+)
+from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
+from app.utils.constant.cif import (
+    CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE, DROPDOWN_NONE_DICT,
+    PROFILE_HISTORY_STATUS
+)
 from app.utils.constant.gw import (
-    GW_DATE_FORMAT, GW_DATETIME_FORMAT, GW_LOC_CHECK_CIF_EXIST
+    GW_DATE_FORMAT, GW_DATETIME_FORMAT, GW_GENDER_FEMALE, GW_GENDER_MALE,
+    GW_LOC_CHECK_CIF_EXIST
 )
 from app.utils.functions import (
-    date_string_to_other_date_string_format, dropdown, dropdownflag,
-    orjson_loads, string_to_date
+    date_string_to_other_date_string_format, dropdown, dropdown_name,
+    dropdownflag, orjson_loads, string_to_date
 )
 from app.utils.vietnamese_converter import (
     convert_to_unsigned_vietnamese, split_name
@@ -186,7 +200,15 @@ class CtrCustomer(BaseController):
         customer_info = data_output['customer_info']
         cif_info = customer_info['cif_info']
 
-        customer_type = customer_info['customer_type']
+        customer_type_code = customer_info['customer_type']
+        customer_type = await get_optional_model_object_by_code_or_name(
+            model=CustomerType,
+            model_code=customer_type_code,
+            model_name=None,
+            session=self.oracle_session
+        )
+        dropdown_customer_type = dropdown(customer_type) if customer_type else dropdown_name(customer_type_code)
+
         cif_information = dict(
             cif_number=cif_number,
             issued_date=date_string_to_other_date_string_format(
@@ -194,13 +216,35 @@ class CtrCustomer(BaseController):
                 from_format=GW_DATETIME_FORMAT,
                 to_format=GW_DATE_FORMAT
             ),
-            customer_type=customer_type
+            customer_type=dropdown_customer_type
         )
 
         full_name_vn = customer_info['full_name']
         full_name = convert_to_unsigned_vietnamese(full_name_vn)
         # Tách Họ, Tên và Ten đệm
         last_name, middle_name, first_name = split_name(full_name_vn)
+
+        gender_name = customer_info["gender"]
+        if gender_name == GW_GENDER_MALE:
+            gender_name = CRM_GENDER_TYPE_MALE
+        if gender_name == GW_GENDER_FEMALE:
+            gender_name = CRM_GENDER_TYPE_FEMALE
+        gender = await get_optional_model_object_by_code_or_name(
+            model=CustomerGender,
+            model_code=None,
+            model_name=gender_name,
+            session=self.oracle_session
+        )
+        dropdown_gender = dropdown(gender) if gender else dropdown_name(gender_name)
+
+        nationality_code = customer_info["nationality_code"]
+        nationality = await get_optional_model_object_by_code_or_name(
+            model=CustomerGender,
+            model_code=nationality_code,
+            model_name=None,
+            session=self.oracle_session
+        )
+        dropdown_nationality = dropdown(nationality) if nationality else dropdown_name(nationality_code)
 
         customer_information = dict(
             full_name=full_name,
@@ -213,14 +257,22 @@ class CtrCustomer(BaseController):
                 from_format=GW_DATETIME_FORMAT,
                 to_format=GW_DATE_FORMAT
             ),
-            gender=customer_info['gender'],
-            nationality=customer_info['nationality_code'],
+            gender=dropdown_gender,
+            nationality=dropdown_nationality,
             mobile=customer_info['mobile_phone'],
             telephone=customer_info['telephone'],
             email=customer_info['email']
         )
 
         identity_info = customer_info['id_info']
+        place_of_issue_name = identity_info["id_issued_location"]
+        place_of_issue = await get_optional_model_object_by_code_or_name(
+            model=PlaceOfIssue,
+            model_code=None,
+            model_name=place_of_issue_name,
+            session=self.oracle_session
+        )
+        dropdown_place_of_issue = dropdown(place_of_issue) if place_of_issue else dropdown_name(place_of_issue_name)
         identity_information = dict(
             identity_number=identity_info['id_num'],
             issued_date=date_string_to_other_date_string_format(
@@ -233,34 +285,93 @@ class CtrCustomer(BaseController):
                 from_format=GW_DATETIME_FORMAT,
                 to_format=GW_DATE_FORMAT
             ),
-            place_of_issue=identity_info['id_issued_location']
+            place_of_issue=dropdown_place_of_issue
         )
 
         resident_address_info = customer_info['p_address_info']
 
-        resident_address_province = resident_address_info["city_name"]
-        resident_address_district = resident_address_info["district_name"]
-        resident_address_ward = resident_address_info["ward_name"]
+        resident_address_province_name = resident_address_info["city_name"]
+        resident_address_province = await get_optional_model_object_by_code_or_name(
+            model=AddressProvince,
+            model_code=None,
+            model_name=resident_address_province_name,
+            session=self.oracle_session
+        )
+        dropdown_resident_address_province = dropdown(
+            resident_address_province) if resident_address_province else dropdown_name(resident_address_province_name)
+
+        resident_address_district_name = resident_address_info["district_name"]
+        resident_address_district = await get_optional_model_object_by_code_or_name(
+            model=AddressDistrict,
+            model_code=None,
+            model_name=resident_address_district_name,
+            session=self.oracle_session
+        )
+        dropdown_resident_address_district = dropdown(
+            resident_address_province) if resident_address_district else dropdown_name(resident_address_district_name)
+
+        resident_address_ward_name = resident_address_info["ward_name"]
+        resident_address_ward = await get_optional_model_object_by_code_or_name(
+            model=AddressDistrict,
+            model_code=None,
+            model_name=resident_address_ward_name,
+            session=self.oracle_session
+        )
+        dropdown_resident_address_ward = dropdown(
+            resident_address_ward) if resident_address_ward else dropdown_name(resident_address_ward_name)
+
         resident_address_number_and_street = resident_address_info["line"]
+
         resident_address_full = resident_address_info["address_full"]
+
         resident_address_response = dict(
-            province=resident_address_province,
-            district=resident_address_district,
-            ward=resident_address_ward,
+            province=dropdown_resident_address_province,
+            district=dropdown_resident_address_district,
+            ward=dropdown_resident_address_ward,
             number_and_street=resident_address_number_and_street,
             address_full=resident_address_full
         )
 
         contact_address_info = customer_info['t_address_info']
-        contact_address_province = contact_address_info["contact_address_city_name"]
-        contact_address_district = contact_address_info["contact_address_district_name"]
-        contact_address_ward = contact_address_info["contact_address_ward_name"]
+
+        contact_address_province_name = contact_address_info["contact_address_city_name"]
+        contact_address_province = await get_optional_model_object_by_code_or_name(
+            model=AddressProvince,
+            model_code=None,
+            model_name=contact_address_province_name,
+            session=self.oracle_session
+        )
+        dropdown_contact_address_province = dropdown(
+            contact_address_province) if contact_address_province else dropdown_name(contact_address_province_name)
+
+        contact_address_district_name = contact_address_info["contact_address_district_name"]
+        contact_address_district = await get_optional_model_object_by_code_or_name(
+            model=AddressDistrict,
+            model_code=None,
+            model_name=contact_address_district_name,
+            session=self.oracle_session
+        )
+        dropdown_contact_address_district = dropdown(
+            contact_address_province) if contact_address_district else dropdown_name(contact_address_district_name)
+
+        contact_address_ward_name = contact_address_info["contact_address_ward_name"]
+        contact_address_ward = await get_optional_model_object_by_code_or_name(
+            model=AddressDistrict,
+            model_code=None,
+            model_name=contact_address_ward_name,
+            session=self.oracle_session
+        )
+        dropdown_contact_address_ward = dropdown(
+            contact_address_ward) if contact_address_ward else dropdown_name(contact_address_ward_name)
+
         contact_address_number_and_street = contact_address_info["contact_address_line"]
+
         contact_address_full = contact_address_info["contact_address_full"]
+
         contact_address_response = dict(
-            province=contact_address_province,
-            district=contact_address_district,
-            ward=contact_address_ward,
+            province=dropdown_contact_address_province,
+            district=dropdown_contact_address_district,
+            ward=dropdown_contact_address_ward,
             number_and_street=contact_address_number_and_street,
             address_full=contact_address_full
         )
