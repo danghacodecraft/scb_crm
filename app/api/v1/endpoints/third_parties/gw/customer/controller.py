@@ -3,7 +3,7 @@ from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_gw_get_authorized, repos_gw_get_coowner,
     repos_gw_get_customer_info_detail, repos_gw_get_customer_info_list
 )
-from app.utils.error_messages import ERROR_AT_LEAST_ONE_FIELD
+from app.utils.constant.gw import GW_LOC_CHECK_CIF_EXIST
 
 
 class CtrGWCustomer(BaseController):
@@ -15,10 +15,6 @@ class CtrGWCustomer(BaseController):
             full_name: str
     ):
         current_user = self.current_user
-        if {cif_number, identity_number, mobile_number, full_name} == {None}:
-            return self.response_exception(msg=ERROR_AT_LEAST_ONE_FIELD,
-                                           loc="cif_number, identity_number, mobile_number, full_name")
-
         customer_info_list = self.call_repos(await repos_gw_get_customer_info_list(
             cif_number=cif_number,
             identity_number=identity_number,
@@ -85,6 +81,7 @@ class CtrGWCustomer(BaseController):
 
         cif_info = customer_info['cif_info']
         id_info = customer_info['id_info']
+        address_info = customer_info['address_info']
         job_info = customer_info['job_info']
         branch_info = customer_info['branch_info']
 
@@ -118,19 +115,9 @@ class CtrGWCustomer(BaseController):
                 expired_date=id_info["id_expired_date"],
                 place_of_issue=id_info["id_issued_location"]
             ),
-            resident_address=dict(
-                address_full=customer_info["p_address_info"]['address_full'],
-                number_and_street=customer_info["p_address_info"]['line'],
-                ward=customer_info["p_address_info"]['ward_name'],
-                district=customer_info["p_address_info"]['district_name'],
-                province=customer_info["p_address_info"]['city_name'],
-            ),
-            contact_address=dict(
-                address_full=customer_info["t_address_info"]['contact_address_full'],
-                number_and_street=customer_info["t_address_info"]['contact_address_line'],
-                ward=customer_info["t_address_info"]['contact_address_ward_name'],
-                district=customer_info["t_address_info"]['contact_address_district_name'],
-                province=customer_info["t_address_info"]['contact_address_city_name']
+            address_info=dict(
+                address_full=address_info["address_full"],
+                contact_address_full=address_info["contact_address_full"],
             ),
             job_info=dict(
                 name=job_info["professional_name"],
@@ -143,16 +130,16 @@ class CtrGWCustomer(BaseController):
         ))
 
     async def ctr_gw_check_exist_customer_detail_info(
-            self,
-            cif_number: str
+        self,
+        cif_number: str
     ):
         gw_check_exist_customer_detail_info = self.call_repos(await repos_gw_get_customer_info_detail(
             cif_number=cif_number,
-            current_user=self.current_user
+            current_user=self.current_user,
+            loc=GW_LOC_CHECK_CIF_EXIST
         ))
-        customer_info = \
-            gw_check_exist_customer_detail_info['retrieveCustomerRefDataMgmt_out']['data_output']['customer_info'][
-                'id_info']
+        customer_info = gw_check_exist_customer_detail_info['retrieveCustomerRefDataMgmt_out']['data_output']['customer_info'][
+            'id_info']
 
         return self.response(data=dict(
             is_existed=True if customer_info['id_num'] else False

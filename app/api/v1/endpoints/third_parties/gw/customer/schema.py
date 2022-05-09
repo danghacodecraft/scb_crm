@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List
 
 from pydantic import Field
 
@@ -14,10 +14,10 @@ class CustomerInfoCIFResponse(BaseSchema):
 
 
 class CustomerInfoListCIFRequest(BaseSchema):
-    cif_number: Optional[str] = Field("", description="Số CIF")
-    identity_number: Optional[str] = Field("", description="Số CMND/CCCD/HC")
-    mobile_number: Optional[str] = Field("", description="Số điện thoại")
-    full_name: Optional[str] = Field("", description="Họ tên")
+    cif_number: str = Field("", description="Số CIF")
+    identity_number: str = Field("", description="Số CMND/CCCD/HC")
+    mobile_number: str = Field("", description="Số điện thoại")
+    full_name: str = Field("", description="Họ tên")
 
 
 class GWCustomerCheckExistResponse(BaseSchema):
@@ -29,46 +29,43 @@ class GWCustomerCheckExistRequest(BaseSchema):
 
 
 class GWCustomerCIFInfoResponse(BaseSchema):
-    cif_number: Optional[str] = Field(..., description="Số CIF")
-    issued_date: Optional[str] = Field(..., description="Ngày cấp số CIF")
+    cif_number: str = Field(..., description="Số CIF")
+    issued_date: str = Field(..., description="Ngày cấp số CIF")
 
 
 class GWCustomerIDInfoResponse(BaseSchema):
-    number: Optional[str] = Field(..., description="CMND/Hộ chiếu, số đăng ký kinh doanh nếu là khách hàng doanh nghiệp")
-    name: Optional[str] = Field(..., description="Tên giấy tờ")
-    issued_date: Optional[str] = Field(..., description="Ngày cấp chứng minh nhân dân hoặc hộ chiếu")
-    expired_date: Optional[str] = Field(..., description="Ngày hết hạn chứng minh nhân dân hoặc hộ chiếu")
-    place_of_issue: Optional[str] = Field(..., description="Nơi cấp chứng minh nhân dân hoặc hộ chiếu")
+    number: str = Field(..., description="CMND/Hộ chiếu, số đăng ký kinh doanh nếu là khách hàng doanh nghiệp")
+    name: str = Field(..., description="Tên giấy tờ")
+    issued_date: str = Field(..., description="Ngày cấp chứng minh nhân dân hoặc hộ chiếu")
+    expired_date: str = Field(..., description="Ngày hết hạn chứng minh nhân dân hoặc hộ chiếu")
+    place_of_issue: str = Field(..., description="Nơi cấp chứng minh nhân dân hoặc hộ chiếu")
 
 
 class GWCustomerListAddressInfo(BaseSchema):
-    address_full: Optional[str] = Field(..., description="Địa chỉ đầy đủ")
+    address_full: str = Field(..., description="Địa chỉ đầy đủ")
 
 
 class GWCustomerListAddress(BaseSchema):
-    contact_address_full: Optional[str] = Field(..., description="Địa chỉ liên lạc đầy đủ")
-    address_full: Optional[str] = Field(..., description="Địa chỉ đầy đủ")
+    contact_address_full: str = Field(..., description="Địa chỉ liên lạc đầy đủ")
+    address_full: str = Field(..., description="Địa chỉ đầy đủ")
 
 
 class GWCustomerDetailAddressInfo(BaseSchema):
-    address_full: Optional[str] = Field(..., description="Địa chỉ đầy đủ")
-    number_and_street: Optional[str] = Field(..., description="Địa chỉ liên lạc - tên đường, số nhà")
-    ward: Optional[str] = Field(..., description="Tên Địa chỉ liên lạc - phường/xã")
-    district: Optional[str] = Field(..., description="Tên Địa chỉ liên lạc - quận/huyện")
-    province: Optional[str] = Field(..., description="Tên Địa chỉ liên lạc - tỉnh/thành")
+    address_full: str = Field(..., description="Địa chỉ đầy đủ")
+    contact_address_full: str = Field(..., description="Địa chỉ liên lạc đầy đủ")
 
 
 class GWCustomerInfoItemResponse(BaseSchema):
-    fullname_vn: Optional[str] = Field(..., description="Họ và tên")
-    date_of_birth: Optional[str] = Field(..., description="Ngày sinh")
-    martial_status: Optional[str] = Field(..., description="Tình trạng hôn nhân")
-    gender: Optional[str] = Field(..., description="Giới tính")
-    email: Optional[str] = Field(..., description="Địa chỉ email")
-    nationality_code: Optional[str] = Field(..., description="mã quốc tịch")
-    mobile_phone: Optional[str] = Field(..., description="Điện thoại di động")
-    telephone: Optional[str] = Field(..., description="Điện thoại bàn")
-    otherphone: Optional[str] = Field(..., description="Số điện thoại khác")
-    customer_type: Optional[str] = Field(..., description="Loại khách hàng (cá nhân hoặc doanh nghiệp)")
+    fullname_vn: str = Field(..., description="Họ và tên")
+    date_of_birth: str = Field(..., description="Ngày sinh")
+    martial_status: str = Field(..., description="Tình trạng hôn nhân")
+    gender: str = Field(..., description="Giới tính")
+    email: str = Field(..., description="Địa chỉ email")
+    nationality_code: str = Field(..., description="mã quốc tịch")
+    mobile_phone: str = Field(..., description="Điện thoại di động")
+    telephone: str = Field(..., description="Điện thoại bàn")
+    otherphone: str = Field(..., description="Số điện thoại khác")
+    customer_type: str = Field(..., description="Loại khách hàng (cá nhân hoặc doanh nghiệp)")
     cif_info: GWCustomerCIFInfoResponse = Field(..., description="Thông tin CIF")
     id_info: GWCustomerIDInfoResponse = Field(..., description="Thông tin giấy tờ định danh")
     branch_info: GWBranchDropdownResponse = Field(..., description="Thông tin đơn vị")
@@ -106,8 +103,7 @@ class GWCustomerInfoDetailResponse(BaseSchema):
     is_staff: str = Field(..., description="Y nếu là CBNV, N nếu ko phải")
     cif_info: GWCustomerCIFInfoResponse = Field(..., description="Thông tin CIF")
     id_info: GWCustomerIDInfoResponse = Field(..., description="Thông tin giấy tờ định danh")
-    resident_address: GWCustomerDetailAddressInfo = Field(..., description="Thông tin địa chỉ thường trú")
-    contact_address: GWCustomerDetailAddressInfo = Field(..., description="Thông tin địa chỉ liên hệ")
+    address_info: GWCustomerDetailAddressInfo = Field(..., description="Thông tin địa chỉ")
     job_info: GWCustomerJobInfo = Field(..., description="Thông tin việc làm")
     branch_info: GWBranchDropdownResponse = Field(..., description="Thông tin đơn vị")
 
