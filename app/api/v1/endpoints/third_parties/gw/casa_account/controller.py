@@ -135,6 +135,7 @@ class CtrGWCasaAccount(BaseController):
             service_escrow=account_info['account_service_escrow'],
             service_escrow_ex_date=string_to_date(account_info['account_service_escrow_ex_date'],
                                                   _format=DATETIME_INPUT_OUTPUT_FORMAT),
+            product_package=account_info["account_product_package"],
             branch_info=dict(
                 code=branch_info['branch_code'],
                 name=branch_info['branch_name']
