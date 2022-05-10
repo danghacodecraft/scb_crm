@@ -30,7 +30,7 @@ async def save_identity_mobile(
     response_data = await CtrIdentityMobile(current_user).save_identity_mobile(
         request=request
     )
-    return ResponseData(**response_data)
+    return ResponseData[SaveSuccessResponse](**response_data)
 
 
 @router.get(
