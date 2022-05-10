@@ -8,7 +8,7 @@ from app.api.v1.endpoints.approval.common_repository import (
 )
 from app.api.v1.endpoints.approval.repository import (
     repos_approval_get_face_authentication, repos_approve,
-    repos_get_approval_identity_faces, repos_get_approval_identity_image,
+    repos_get_approval_identity_faces, repos_get_approval_identity_images,
     repos_get_approval_process, repos_get_compare_image_transactions
 )
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
@@ -30,7 +30,11 @@ from app.utils.constant.idm import (
 from app.utils.error_messages import (
     ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
     ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT,
-    ERROR_APPROVAL_INCORRECT_UPLOAD_SIGNATURE, ERROR_APPROVAL_UPLOAD_FACE,
+    ERROR_APPROVAL_INCORRECT_UPLOAD_SIGNATURE,
+    ERROR_APPROVAL_NO_DATA_IN_IDENTITY_STEP,
+    ERROR_APPROVAL_NO_FACE_IN_IDENTITY_STEP,
+    ERROR_APPROVAL_NO_FINGERPRINT_IN_IDENTITY_STEP,
+    ERROR_APPROVAL_NO_SIGNATURE_IN_IDENTITY_STEP, ERROR_APPROVAL_UPLOAD_FACE,
     ERROR_APPROVAL_UPLOAD_FINGERPRINT, ERROR_APPROVAL_UPLOAD_SIGNATURE,
     ERROR_CONTENT_NOT_NULL, ERROR_PERMISSION, ERROR_STAGE_COMPLETED,
     ERROR_VALIDATE, MESSAGE_STATUS
@@ -75,6 +79,8 @@ class CtrApproval(BaseController):
     async def ctr_get_approval(self, cif_id: str, amount: int): # noqa
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
+        current_user = self.current_user.user_info
+        auth_response = self.current_user
 
         ################################################################################################################
         # THÔNG TIN XÁC THỰC
@@ -87,13 +93,15 @@ class CtrApproval(BaseController):
         image_face_uuids = []
 
         compare_face_uuid = None
-        # Lấy tất cả hình ảnh ở bước GTDD
-        face_transactions = self.call_repos(await repos_get_approval_identity_image(
+
+        transactions = self.call_repos(await repos_get_approval_identity_images(
             cif_id=cif_id,
-            image_type_id=IMAGE_TYPE_FACE,
-            identity_type="Face",
             session=self.oracle_session
         ))
+
+        (
+            face_transactions, fingerprint_transactions, signature_transactions
+        ) = await self.check_data_in_identity_step_and_get_faces_fingerprints_signatures(transactions)
 
         identity_image_ids = []
         for identity, identity_image in face_transactions:
@@ -157,14 +165,6 @@ class CtrApproval(BaseController):
 
         compare_signature_uuid = None
 
-        # Lấy tất cả hình ảnh ở bước GTDD
-        signature_transactions = self.call_repos(await repos_get_approval_identity_image(
-            cif_id=cif_id,
-            image_type_id=IMAGE_TYPE_SIGNATURE,
-            identity_type="Signature",
-            session=self.oracle_session
-        ))
-
         identity_signature_image_ids = []
         for identity, identity_image in signature_transactions:
             identity_signature_uuid = identity_image.image_url
@@ -224,14 +224,6 @@ class CtrApproval(BaseController):
         image_fingerprint_uuids = []
 
         compare_fingerprint_uuid = None
-
-        # Lấy tất cả hình ảnh ở bước GTDD
-        fingerprint_transactions = self.call_repos(await repos_get_approval_identity_image(
-            cif_id=cif_id,
-            image_type_id=IMAGE_TYPE_FINGERPRINT,
-            identity_type="Fingerprint",
-            session=self.oracle_session
-        ))
 
         identity_fingerprint_image_ids = []
         for _, identity_image in fingerprint_transactions:
@@ -337,13 +329,23 @@ class CtrApproval(BaseController):
         # GDV chưa gửi hồ sơ
         if previous_stage_code == CIF_STAGE_BEGIN:
             is_stage_teller = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
-                auth_response=self.current_user,
+                auth_response=auth_response,
                 menu_code=IDM_MENU_CODE_OPEN_CIF,
                 group_role_code=IDM_GROUP_ROLE_CODE_OPEN_CIF,
                 permission_code=IDM_PERMISSION_CODE_OPEN_CIF,
                 stage_code=CIF_STAGE_INIT
             ))
-            if is_stage_teller:
+            if not is_stage_teller:
+                return self.response_exception(
+                    loc=f"Stage: {previous_stage_code}, "
+                        f"User: {current_user.username}, "
+                        f"IDM_MENU_CODE: {IDM_MENU_CODE_OPEN_CIF}, "
+                        f"IDM_GROUP_ROLE_CODE: {IDM_GROUP_ROLE_CODE_OPEN_CIF}, "
+                        f"IDM_PERMISSION_CODE: {IDM_PERMISSION_CODE_OPEN_CIF}",
+                    msg=ERROR_PERMISSION,
+                    error_status_code=status.HTTP_403_FORBIDDEN
+                )
+            else:
                 teller_is_disable = False
             teller_stage_code = None
         # KSV nhận hồ sơ từ GDV
@@ -355,26 +357,46 @@ class CtrApproval(BaseController):
             teller_created_by = previous_transaction_sender.user_fullname
 
             is_stage_supervisor = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
-                auth_response=self.current_user,
+                auth_response=auth_response,
                 menu_code=IDM_MENU_CODE_OPEN_CIF,
                 group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
                 permission_code=IDM_PERMISSION_CODE_KSV,
                 stage_code=CIF_STAGE_APPROVE_KSV
             ))
-            if is_stage_supervisor:
+            if not is_stage_supervisor:
+                return self.response_exception(
+                    loc=f"Stage: {previous_stage_code}, "
+                        f"User: {current_user.username}, "
+                        f"IDM_MENU_CODE: {IDM_MENU_CODE_OPEN_CIF}, "
+                        f"IDM_GROUP_ROLE_CODE: {IDM_GROUP_ROLE_CODE_APPROVAL}, "
+                        f"IDM_PERMISSION_CODE: {IDM_PERMISSION_CODE_KSV}",
+                    msg=ERROR_PERMISSION,
+                    error_status_code=status.HTTP_403_FORBIDDEN
+                )
+            else:
                 supervisor_is_disable = False
 
         # KSS nhận hồ sơ từ KSV
         elif previous_stage_code == CIF_STAGE_APPROVE_KSV:
             is_stage_audit = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
-                auth_response=self.current_user,
+                auth_response=auth_response,
                 menu_code=IDM_MENU_CODE_OPEN_CIF,
                 group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
                 permission_code=IDM_PERMISSION_CODE_KSS,
                 stage_code=CIF_STAGE_APPROVE_KSS
             ))
-            if is_stage_audit:
-                audit_is_disable = False   # Chưa được mô tả cho KSS tạm thời dùng Role của KSV
+            if not is_stage_audit:
+                return self.response_exception(
+                    loc=f"Stage: {previous_stage_code}, "
+                        f"User: {current_user.username}, "
+                        f"IDM_MENU_CODE: {IDM_MENU_CODE_OPEN_CIF}, "
+                        f"IDM_GROUP_ROLE_CODE: {IDM_GROUP_ROLE_CODE_APPROVAL}, "
+                        f"IDM_PERMISSION_CODE: {IDM_PERMISSION_CODE_KSS}",
+                    msg=ERROR_PERMISSION,
+                    error_status_code=status.HTTP_403_FORBIDDEN
+                )
+            else:
+                audit_is_disable = False   # TODO: Chưa được mô tả cho KSS tạm thời dùng Role của KSV
 
             supervisor_stage_code = previous_stage_code
             supervisor_transaction_daily = previous_transaction_daily
@@ -469,10 +491,23 @@ class CtrApproval(BaseController):
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
         current_user = self.current_user.user_info
+        auth_response = self.current_user
+
+        ################################################################################################################
+        # THÔNG TIN BIỂU MẪU
+        ################################################################################################################
+        # TODO: Kiểm tra số biểu mẫu gửi xuống có bằng với số biểu mẫu liên quan hay không
 
         ################################################################################################################
         # THÔNG TIN XÁC THỰC
         ################################################################################################################
+
+        # Lấy tất cả hình ảnh ở bước GTDD
+        transactions = self.call_repos(await repos_get_approval_identity_images(
+            cif_id=cif_id,
+            session=self.oracle_session
+        ))
+        await self.check_data_in_identity_step_and_get_faces_fingerprints_signatures(transactions)
 
         ################################################################################################################
         # Khuôn mặt
@@ -676,7 +711,7 @@ class CtrApproval(BaseController):
             # check quyền user
             if current_stage_code == CIF_STAGE_INIT:
                 self.call_repos(await PermissionController.ctr_approval_check_permission(
-                    auth_response=self.current_user,
+                    auth_response=auth_response,
                     menu_code=IDM_MENU_CODE_OPEN_CIF,
                     group_role_code=IDM_GROUP_ROLE_CODE_OPEN_CIF,
                     permission_code=IDM_PERMISSION_CODE_OPEN_CIF,
@@ -684,7 +719,7 @@ class CtrApproval(BaseController):
                 ))
             elif current_stage_code == CIF_STAGE_APPROVE_KSV:
                 self.call_repos(await PermissionController.ctr_approval_check_permission(
-                    auth_response=self.current_user,
+                    auth_response=auth_response,
                     menu_code=IDM_MENU_CODE_OPEN_CIF,
                     group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
                     permission_code=IDM_PERMISSION_CODE_KSV,
@@ -692,7 +727,7 @@ class CtrApproval(BaseController):
                 ))
             elif current_stage_code == CIF_STAGE_APPROVE_KSS:
                 self.call_repos(await PermissionController.ctr_approval_check_permission(
-                    auth_response=self.current_user,
+                    auth_response=auth_response,
                     menu_code=IDM_MENU_CODE_OPEN_CIF,
                     group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
                     permission_code=IDM_PERMISSION_CODE_KSS,
@@ -905,3 +940,44 @@ class CtrApproval(BaseController):
                 return self.response_exception(msg=ERROR_STAGE_COMPLETED, loc="description")
 
         return description
+
+    async def check_data_in_identity_step_and_get_faces_fingerprints_signatures(self, transactions):
+        """
+        Input: CustomerIdentity, CustomerIdentityImage
+        Output: (face_transactions, fingerprint_transactions, signature_transactions)
+        """
+        is_existed_face = False
+        is_existed_fingerprint = False
+        is_existed_signature = False
+        face_transactions = []
+        fingerprint_transactions = []
+        signature_transactions = []
+        for transaction in transactions:
+            _, customer_identity_image = transaction
+            image_type_id = customer_identity_image.image_type_id
+            if image_type_id == IMAGE_TYPE_FACE:
+                is_existed_face = True
+                face_transactions.append(transaction)
+                continue
+            if image_type_id == IMAGE_TYPE_FINGERPRINT:
+                is_existed_fingerprint = True
+                fingerprint_transactions.append(transaction)
+                continue
+            if image_type_id == IMAGE_TYPE_SIGNATURE:
+                is_existed_signature = True
+                signature_transactions.append(transaction)
+                continue
+        errors = []
+        if not is_existed_face:
+            errors.append(MESSAGE_STATUS[ERROR_APPROVAL_NO_FACE_IN_IDENTITY_STEP])
+        if not is_existed_fingerprint:
+            errors.append(MESSAGE_STATUS[ERROR_APPROVAL_NO_FINGERPRINT_IN_IDENTITY_STEP])
+        if not is_existed_signature:
+            errors.append(MESSAGE_STATUS[ERROR_APPROVAL_NO_SIGNATURE_IN_IDENTITY_STEP])
+        if errors:
+            return self.response_exception(
+                msg=ERROR_APPROVAL_NO_DATA_IN_IDENTITY_STEP,
+                detail=', '.join(set(errors)),
+                error_status_code=status.HTTP_403_FORBIDDEN
+            )
+        return self.response(data=(face_transactions, fingerprint_transactions, signature_transactions))
