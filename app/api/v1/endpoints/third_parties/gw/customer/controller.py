@@ -3,7 +3,7 @@ from app.api.v1.endpoints.repository import (
     get_optional_model_object_by_code_or_name
 )
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
-    repos_get_list_cif_id_from_cif_number, repos_gw_get_authorized,
+    repos_get_cif_ids_from_cif_numbers, repos_gw_get_authorized,
     repos_gw_get_coowner, repos_gw_get_customer_info_detail,
     repos_gw_get_customer_info_list
 )
@@ -94,7 +94,7 @@ class CtrGWCustomer(BaseController):
 
             cif_numbers.append(cif_info['cif_num'])
 
-        cif_in_db = self.call_repos(await repos_get_list_cif_id_from_cif_number(
+        cif_in_db = self.call_repos(await repos_get_cif_ids_from_cif_numbers(
             cif_numbers=cif_numbers, session=self.oracle_session))
         for cif_id, cif_number in cif_in_db:
             for customer in customer_list_info:

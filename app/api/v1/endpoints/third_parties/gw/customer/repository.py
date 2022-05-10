@@ -38,7 +38,7 @@ async def repos_gw_get_customer_info_list(
     return ReposReturn(data=customer_infos)
 
 
-async def repos_get_list_cif_id_from_cif_number(cif_numbers: List, session: Session):
+async def repos_get_cif_ids_from_cif_numbers(cif_numbers: List, session: Session):
     customer_ids = session.execute(
         select(
             Customer.id,
