@@ -8,7 +8,7 @@ from app.api.v1.endpoints.approval.common_repository import (
 )
 from app.api.v1.endpoints.approval.repository import (
     repos_approval_get_face_authentication, repos_approve,
-    repos_get_approval_identity_faces,
+    repos_get_approval_identity_faces, repos_get_approval_identity_images,
     repos_get_approval_identity_images_by_image_type_id,
     repos_get_approval_process, repos_get_compare_image_transactions
 )
@@ -31,7 +31,10 @@ from app.utils.constant.idm import (
 from app.utils.error_messages import (
     ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
     ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT,
-    ERROR_APPROVAL_INCORRECT_UPLOAD_SIGNATURE, ERROR_APPROVAL_UPLOAD_FACE,
+    ERROR_APPROVAL_INCORRECT_UPLOAD_SIGNATURE,
+    ERROR_APPROVAL_NO_FACE_IN_IDENTITY_STEP,
+    ERROR_APPROVAL_NO_FINGERPRINT_IN_IDENTITY_STEP,
+    ERROR_APPROVAL_NO_SIGNATURE_IN_IDENTITY_STEP, ERROR_APPROVAL_UPLOAD_FACE,
     ERROR_APPROVAL_UPLOAD_FINGERPRINT, ERROR_APPROVAL_UPLOAD_SIGNATURE,
     ERROR_CONTENT_NOT_NULL, ERROR_PERMISSION, ERROR_STAGE_COMPLETED,
     ERROR_VALIDATE, MESSAGE_STATUS
@@ -474,6 +477,31 @@ class CtrApproval(BaseController):
         ################################################################################################################
         # THÔNG TIN XÁC THỰC
         ################################################################################################################
+
+        # Lấy tất cả hình ảnh ở bước GTDD
+        transactions = self.call_repos(await repos_get_approval_identity_images(
+            cif_id=cif_id,
+            session=self.oracle_session
+        ))
+        is_existed_face = False
+        is_existed_fingerprint = False
+        is_existed_signature = False
+        for customer_identity, customer_identity_image in transactions:
+            if customer_identity_image.image_type_id == IMAGE_TYPE_FACE:
+                is_existed_face = True
+                continue
+            if customer_identity_image.image_type_id == IMAGE_TYPE_FINGERPRINT:
+                is_existed_fingerprint = True
+                continue
+            if customer_identity_image.image_type_id == IMAGE_TYPE_SIGNATURE:
+                is_existed_signature = True
+                continue
+        if not is_existed_face:
+            return self.response_exception(msg=ERROR_APPROVAL_NO_FACE_IN_IDENTITY_STEP)
+        if not is_existed_fingerprint:
+            return self.response_exception(msg=ERROR_APPROVAL_NO_FINGERPRINT_IN_IDENTITY_STEP)
+        if not is_existed_signature:
+            return self.response_exception(msg=ERROR_APPROVAL_NO_SIGNATURE_IN_IDENTITY_STEP)
 
         ################################################################################################################
         # Khuôn mặt
