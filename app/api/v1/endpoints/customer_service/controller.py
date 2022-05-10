@@ -15,8 +15,9 @@ from app.api.v1.endpoints.customer_service.schema import (
     CreatePostCheckRequest, QueryParamsKSSRequest, UpdatePostCheckRequest
 )
 from app.utils.constant.cif import (
-    EKYC_DOCUMENT_TYPE_NEW_CITIZEN, EKYC_DOCUMENT_TYPE_OLD_CITIZEN,
-    EKYC_DOCUMENT_TYPE_OLD_IDENTITY, EKYC_DOCUMENT_TYPE_PASSPORT
+    CRM_GENDER_TYPE_FEMALE, EKYC_DOCUMENT_TYPE_NEW_CITIZEN,
+    EKYC_DOCUMENT_TYPE_OLD_CITIZEN, EKYC_DOCUMENT_TYPE_PASSPORT,
+    EKYC_GENDER_TYPE_FEMALE, EKYC_GENDER_TYPE_MALE
 )
 from app.utils.constant.ekyc import (
     GROUP_ROLE_CODE_AP, GROUP_ROLE_CODE_IN, GROUP_ROLE_CODE_VIEW, MENU_CODE
@@ -326,10 +327,10 @@ class CtrKSS(BaseController):
             avatar_image: Optional[str] = None,
             avatar_image_name: Optional[str] = None
     ):
-        print('hmmmmmmmmmmmmmmmmmmmmmmmmmm')
-        print(ocr_result_ekyc_data)
-        gender = "F" if gender == "NU" else "M"
+
+        gender = EKYC_GENDER_TYPE_FEMALE if gender == CRM_GENDER_TYPE_FEMALE else EKYC_GENDER_TYPE_MALE
         ocr_data = ocr_result_ekyc_data.get('data')
+
         if ocr_result_ekyc_data['document_type'] == EKYC_DOCUMENT_TYPE_PASSPORT:
             body = {
                 "document_id": ocr_data.get('document_id'),
@@ -373,11 +374,6 @@ class CtrKSS(BaseController):
                     "avatar_image_name": avatar_image_name
                 }
             }
-            if ocr_result_ekyc_data['document_type'] == EKYC_DOCUMENT_TYPE_OLD_IDENTITY:
-                body.update({
-                    "date_of_expiry": date_of_expiry,
-                    "gender": gender,
-                })
 
             if ocr_result_ekyc_data['document_type'] == EKYC_DOCUMENT_TYPE_OLD_CITIZEN:
                 body.update({
@@ -385,14 +381,20 @@ class CtrKSS(BaseController):
                     "gender": ocr_data.get('gender'),
                 })
 
-            if ocr_result_ekyc_data['document_type'] == EKYC_DOCUMENT_TYPE_NEW_CITIZEN:
+            elif ocr_result_ekyc_data['document_type'] == EKYC_DOCUMENT_TYPE_NEW_CITIZEN:
                 body.update({
                     "qr_code_data": gen_qr_code(ocr_data),
                     "date_of_expiry": ocr_data.get('date_of_expiry'),
                     "gender": ocr_data.get('gender'),
                 })
-        print(body)
+            else:
+                body.update({
+                    "date_of_expiry": date_of_expiry,
+                    "gender": gender,
+                })
+
         customer = self.call_repos(await repos_save_customer_ekyc(
             body_request=body
         ))
+
         return self.response(data=customer)

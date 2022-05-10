@@ -123,10 +123,7 @@ class CtrIdentityMobile(BaseController):
                     identity_type=EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
                     session=self.oracle_session
                 )))
-        print('ocr_data_front_side', ocr_data_front_side)
-        print('ocr_data_back_side', ocr_data_back_side)
 
-        print('full_name_ocr', ocr_data_front_side['ocr_result']['basic_information']['full_name_vn'])
         if full_name_vn != ocr_data_front_side['ocr_result']['basic_information']['full_name_vn']:
             return self.response_exception(msg='full_name_vn is not same')
 
@@ -146,7 +143,7 @@ class CtrIdentityMobile(BaseController):
             "short_name": make_short_name(first_name, middle_name, last_name),
             "active_flag": True,
             "open_cif_at": now(),
-            "open_branch_id": "000",  # TODO
+            "open_branch_id": current_user.user_info.hrm_branch_code,
             "kyc_level_id": "KYC_1",  # TODO
             "customer_category_id": "D0682B44BEB3830EE0530100007F1DDC",  # TODO
             "customer_economic_profession_id": None,
@@ -206,11 +203,9 @@ class CtrIdentityMobile(BaseController):
                 # trường hợp cccd có giới tính
                 ocr_gender_id = ocr_data_front_side['ocr_result']['basic_information']['gender']['id']
 
-        print(ocr_data_front_side['ocr_result']['identity_document']['identity_number'])
         if ocr_data_front_side['ocr_result']['identity_document']['identity_number'] != identity_number:
             return self.response_exception(msg='identity_number not same')
 
-        print(ocr_place_of_issue_id)
         # tạo customer_identity
         if ocr_place_of_issue_id:
             if ocr_place_of_issue_id != place_of_issue_id:
@@ -244,10 +239,8 @@ class CtrIdentityMobile(BaseController):
                 "identity_number_in_passport": ocr_data_front_side['ocr_result']['basic_information'][
                     'identity_card_number']
             })
-        print('ocr_data_front_side', ocr_data_front_side)
-        print('ocr_data_back_side', ocr_data_back_side)
-        if identity_type == IDENTITY_DOCUMENT_TYPE_CITIZEN_CARD:
 
+        if identity_type == IDENTITY_DOCUMENT_TYPE_CITIZEN_CARD:
             saving_customer_identity.update({
                 "mrz_content": ocr_data_back_side['ocr_result']['identity_document']['mrz_content'],
                 "signer": ocr_data_back_side['ocr_result']['identity_document']['signer']
@@ -572,7 +565,6 @@ class CtrIdentityMobile(BaseController):
             avatar_image_name=add_face_info['data']['file_name'],
         )
 
-        print('customer_id_ekyc', customer_id_ekyc)
         info_save_document = self.call_repos(
             await repos_save_identity(
                 identity_document_type_id=identity_type,
