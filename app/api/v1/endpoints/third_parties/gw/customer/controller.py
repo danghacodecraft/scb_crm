@@ -19,7 +19,7 @@ from app.third_parties.oracle.models.master_data.others import (
 from app.utils.constant.cif import CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE
 from app.utils.constant.gw import (
     GW_DATE_FORMAT, GW_DATETIME_FORMAT, GW_GENDER_FEMALE, GW_GENDER_MALE,
-    GW_LOC_CHECK_CIF_EXIST,
+    GW_LOC_CHECK_CIF_EXIST, GW_REQUEST_PARAMETER_DEBIT_CARD,
     GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP
 )
 from app.utils.functions import (
@@ -257,6 +257,25 @@ class CtrGWCustomer(BaseController):
         telephone = customer_info['telephone']
         email = customer_info['email']
 
+        branch_info = customer_info['branch_info']
+        branch_name = branch_info["branch_name"]
+        branch_code = branch_info["branch_code"]
+        branch = await get_optional_model_object_by_code_or_name(
+            model=Branch,
+            model_code=branch_code,
+            model_name=branch_name,
+            session=self.oracle_session
+        )
+        dropdown_branch = optional_dropdown(obj=branch, obj_name=branch_name, obj_code=branch_code)
+
+        delivery_address_response = dict(
+            province=dropdown_resident_address_province,
+            district=dropdown_resident_address_district,
+            ward=dropdown_resident_address_ward,
+            number_and_street=resident_address_number_and_street,
+            address_full=resident_address_full
+        )
+
         if parameter == GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP:
             cif_information = dict(
                 cif_number=cif_number,
@@ -307,12 +326,24 @@ class CtrGWCustomer(BaseController):
                     contact_address=contact_address_response
                 )
             )
+        elif parameter == GW_REQUEST_PARAMETER_DEBIT_CARD:
+            customer_information = dict(
+                cif_number=cif_number,
+                name_on_card=dict(
+                    last_name_on_card=last_name,
+                    middle_name_on_card=middle_name,
+                    first_name_on_card=first_name
+                ),
+                card_delivery_address=dict(
+                    branch=dropdown_branch,
+                    delivery_address=delivery_address_response
+                )
+            )
         else:
             data_output = customer_info_detail['retrieveCustomerRefDataMgmt_out']['data_output']
             customer_info = data_output['customer_info']
 
             job_info = customer_info['job_info']
-            branch_info = customer_info['branch_info']
 
             short_name = customer_info['short_name']
 
@@ -345,16 +376,6 @@ class CtrGWCustomer(BaseController):
                 from_format=GW_DATETIME_FORMAT,
                 to_format=GW_DATE_FORMAT
             )
-
-            branch_name = branch_info["branch_name"]
-            branch_code = branch_info["branch_code"]
-            branch = await get_optional_model_object_by_code_or_name(
-                model=Branch,
-                model_code=branch_code,
-                model_name=branch_name,
-                session=self.oracle_session
-            )
-            dropdown_branch = optional_dropdown(obj=branch, obj_name=branch_name, obj_code=branch_code)
 
             job_name = job_info["professional_name"]
             job_code = job_info["professional_code"]
@@ -413,6 +434,7 @@ class CtrGWCustomer(BaseController):
                 job_info=dropdown_job,
                 branch_info=dropdown_branch
             ))
+
         return self.response(data=customer_information)
 
     async def ctr_gw_check_exist_customer_detail_info(
