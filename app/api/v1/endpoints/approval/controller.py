@@ -32,6 +32,7 @@ from app.utils.error_messages import (
     ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
     ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT,
     ERROR_APPROVAL_INCORRECT_UPLOAD_SIGNATURE,
+    ERROR_APPROVAL_NO_DATA_IN_IDENTITY_STEP,
     ERROR_APPROVAL_NO_FACE_IN_IDENTITY_STEP,
     ERROR_APPROVAL_NO_FINGERPRINT_IN_IDENTITY_STEP,
     ERROR_APPROVAL_NO_SIGNATURE_IN_IDENTITY_STEP, ERROR_APPROVAL_UPLOAD_FACE,
@@ -534,12 +535,19 @@ class CtrApproval(BaseController):
             if customer_identity_image.image_type_id == IMAGE_TYPE_SIGNATURE:
                 is_existed_signature = True
                 continue
+        errors = []
         if not is_existed_face:
-            return self.response_exception(msg=ERROR_APPROVAL_NO_FACE_IN_IDENTITY_STEP)
+            errors.append(MESSAGE_STATUS[ERROR_APPROVAL_NO_FACE_IN_IDENTITY_STEP])
         if not is_existed_fingerprint:
-            return self.response_exception(msg=ERROR_APPROVAL_NO_FINGERPRINT_IN_IDENTITY_STEP)
+            errors.append(MESSAGE_STATUS[ERROR_APPROVAL_NO_FINGERPRINT_IN_IDENTITY_STEP])
         if not is_existed_signature:
-            return self.response_exception(msg=ERROR_APPROVAL_NO_SIGNATURE_IN_IDENTITY_STEP)
+            errors.append(MESSAGE_STATUS[ERROR_APPROVAL_NO_SIGNATURE_IN_IDENTITY_STEP])
+        if errors:
+            return self.response_exception(
+                msg=ERROR_APPROVAL_NO_DATA_IN_IDENTITY_STEP,
+                detail=', '.join(set(errors)),
+                error_status_code=status.HTTP_403_FORBIDDEN
+            )
 
         ################################################################################################################
         # Khuôn mặt
