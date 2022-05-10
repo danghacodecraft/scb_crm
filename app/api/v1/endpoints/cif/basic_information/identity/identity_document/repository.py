@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn, auto_commit
 from app.api.v1.endpoints.repository import (
-    generate_booking_code, get_optional_model_object_by_code_or_name,
+    get_optional_model_object_by_code_or_name, repos_create_booking,
     repos_get_model_object_by_id_or_code,
     write_transaction_log_and_update_booking
 )
@@ -26,7 +26,7 @@ from app.third_parties.oracle.models.cif.basic_information.personal.model import
     CustomerIndividualInfo
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingBusinessForm, BookingCustomer, TransactionDaily,
+    BookingBusinessForm, BookingCustomer, TransactionDaily,
     TransactionReceiver, TransactionSender
 )
 from app.third_parties.oracle.models.master_data.address import (
@@ -42,10 +42,9 @@ from app.third_parties.oracle.models.master_data.others import (
 )
 from app.utils.constant.cif import (
     ACTIVE_FLAG_ACTIVED, ADDRESS_COUNTRY_CODE_VN, BUSINESS_FORM_TTCN_GTDD_GTDD,
-    BUSINESS_FORM_TTCN_GTDD_KM, BUSINESS_TYPE_INIT_CIF, CONTACT_ADDRESS_CODE,
-    CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE, DROPDOWN_NONE_DICT,
-    EKYC_DOCUMENT_TYPE, EKYC_GENDER_TYPE_FEMALE,
-    EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
+    BUSINESS_FORM_TTCN_GTDD_KM, CONTACT_ADDRESS_CODE, CRM_GENDER_TYPE_FEMALE,
+    CRM_GENDER_TYPE_MALE, DROPDOWN_NONE_DICT, EKYC_DOCUMENT_TYPE,
+    EKYC_GENDER_TYPE_FEMALE, EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_BACK_SIDE_IDENTITY_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD,
@@ -55,9 +54,8 @@ from app.utils.constant.cif import (
 )
 from app.utils.constant.ekyc import EKYC_DATE_FORMAT
 from app.utils.error_messages import (
-    ERROR_BOOKING_CODE_EXISTED, ERROR_CALL_SERVICE_EKYC,
-    ERROR_CALL_SERVICE_FILE, ERROR_CIF_ID_NOT_EXIST,
-    ERROR_COMPARE_IMAGE_IS_EXISTED, MESSAGE_STATUS
+    ERROR_CALL_SERVICE_EKYC, ERROR_CALL_SERVICE_FILE, ERROR_CIF_ID_NOT_EXIST,
+    ERROR_COMPARE_IMAGE_IS_EXISTED
 )
 from app.utils.functions import (
     date_string_to_other_date_string_format, dropdown, generate_uuid, now,
@@ -345,7 +343,6 @@ async def repos_save_identity(
         session: Session
 ) -> ReposReturn:
     current_user_code = current_user.code
-    current_user_branch_id = current_user.hrm_branch_id
     new_first_identity_image_id = generate_uuid()  # ID ảnh mặt trước hoặc ảnh hộ chiếu
     new_second_identity_image_id = generate_uuid()  # ID ảnh mặt sau
 
@@ -412,21 +409,17 @@ async def repos_save_identity(
                 CustomerAddress(**saving_customer_contact_address)
             )
 
-        new_booking_id = generate_uuid()
-        is_existed, booking_code = await generate_booking_code(
-            branch_code=current_user_branch_id,
-            business_type_code=BUSINESS_TYPE_INIT_CIF,
-            session=session
+        booking = await repos_create_booking(
+            transaction_id=saving_transaction_daily['transaction_id'],
+            session=session,
+            current_user=current_user
         )
+        if booking.is_error:
+            return ReposReturn(is_error=True, msg=booking.msg, detail=booking.detail)
 
-        if is_existed:
-            return ReposReturn(
-                is_error=True,
-                msg=ERROR_BOOKING_CODE_EXISTED,
-                detail=MESSAGE_STATUS[ERROR_BOOKING_CODE_EXISTED]
-            )
+        new_booking_id, booking_code = booking.data
 
-        # create booking & log
+        # create log
         session.add_all([
             # Tạo BOOKING, CRM_TRANSACTION_DAILY -> CRM_BOOKING -> BOOKING_CUSTOMER -> BOOKING_BUSSINESS_FORM
             TransactionStageStatus(**saving_transaction_stage_status),
@@ -434,15 +427,6 @@ async def repos_save_identity(
             TransactionDaily(**saving_transaction_daily),
             TransactionSender(**saving_transaction_sender),
             TransactionReceiver(**saving_transaction_receiver),
-            Booking(
-                id=new_booking_id,
-                code=booking_code,
-                transaction_id=saving_transaction_daily['transaction_id'],
-                business_type_id=BUSINESS_TYPE_INIT_CIF,
-                branch_id=current_user_branch_id,
-                created_at=now(),
-                updated_at=now()
-            ),
             BookingCustomer(
                 booking_id=new_booking_id,
                 customer_id=new_customer_id
