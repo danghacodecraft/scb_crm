@@ -8,7 +8,8 @@ from app.api.v1.endpoints.approval.common_repository import (
 )
 from app.api.v1.endpoints.approval.repository import (
     repos_approval_get_face_authentication, repos_approve,
-    repos_get_approval_identity_faces, repos_get_approval_identity_image,
+    repos_get_approval_identity_faces,
+    repos_get_approval_identity_images_by_image_type_id,
     repos_get_approval_process, repos_get_compare_image_transactions
 )
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
@@ -88,7 +89,7 @@ class CtrApproval(BaseController):
 
         compare_face_uuid = None
         # Lấy tất cả hình ảnh ở bước GTDD
-        face_transactions = self.call_repos(await repos_get_approval_identity_image(
+        face_transactions = self.call_repos(await repos_get_approval_identity_images_by_image_type_id(
             cif_id=cif_id,
             image_type_id=IMAGE_TYPE_FACE,
             identity_type="Face",
@@ -158,7 +159,7 @@ class CtrApproval(BaseController):
         compare_signature_uuid = None
 
         # Lấy tất cả hình ảnh ở bước GTDD
-        signature_transactions = self.call_repos(await repos_get_approval_identity_image(
+        signature_transactions = self.call_repos(await repos_get_approval_identity_images_by_image_type_id(
             cif_id=cif_id,
             image_type_id=IMAGE_TYPE_SIGNATURE,
             identity_type="Signature",
@@ -226,7 +227,7 @@ class CtrApproval(BaseController):
         compare_fingerprint_uuid = None
 
         # Lấy tất cả hình ảnh ở bước GTDD
-        fingerprint_transactions = self.call_repos(await repos_get_approval_identity_image(
+        fingerprint_transactions = self.call_repos(await repos_get_approval_identity_images_by_image_type_id(
             cif_id=cif_id,
             image_type_id=IMAGE_TYPE_FINGERPRINT,
             identity_type="Fingerprint",

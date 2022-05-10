@@ -5,7 +5,7 @@ from app.api.v1.endpoints.approval.face.repository import (
     repos_save_approval_compare_face
 )
 from app.api.v1.endpoints.approval.repository import (
-    repos_get_approval_identity_image
+    repos_get_approval_identity_images_by_image_type_id
 )
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.api.v1.endpoints.file.repository import repos_upload_file
@@ -42,7 +42,7 @@ class CtrApproveFace(BaseController):
         compare_face_uuid = face_info['uuid']
 
         # Lấy tất cả hình ảnh mới nhất ở bước GTDD
-        face_transactions = self.call_repos(await repos_get_approval_identity_image(
+        face_transactions = self.call_repos(await repos_get_approval_identity_images_by_image_type_id(
             image_type_id=IMAGE_TYPE_FACE,
             identity_type="FACE",
             cif_id=cif_id,

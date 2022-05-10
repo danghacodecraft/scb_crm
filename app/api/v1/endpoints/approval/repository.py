@@ -201,7 +201,7 @@ async def repos_get_compare_image_transactions(
     return ReposReturn(data=compare_image_transactions)
 
 
-async def repos_get_approval_identity_image(
+async def repos_get_approval_identity_images_by_image_type_id(
     cif_id: str,
     image_type_id: str,
     identity_type: str,
