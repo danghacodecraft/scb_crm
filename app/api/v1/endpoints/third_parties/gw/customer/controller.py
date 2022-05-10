@@ -124,7 +124,7 @@ class CtrGWCustomer(BaseController):
             )
 
             id_expired_date = date_string_to_other_date_string_format(
-                date_input=id_info['id_issued_date'],
+                date_input=id_info['id_expired_date'],
                 from_format=GW_DATETIME_FORMAT,
                 to_format=GW_DATE_FORMAT
             )
