@@ -79,7 +79,8 @@ class CtrApproval(BaseController):
     async def ctr_get_approval(self, cif_id: str, amount: int): # noqa
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
-        current_user = self.current_user
+        current_user = self.current_user.user_info
+        auth_response = self.current_user
 
         ################################################################################################################
         # THÔNG TIN XÁC THỰC
@@ -342,7 +343,7 @@ class CtrApproval(BaseController):
         # GDV chưa gửi hồ sơ
         if previous_stage_code == CIF_STAGE_BEGIN:
             is_stage_teller = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
-                auth_response=current_user,
+                auth_response=auth_response,
                 menu_code=IDM_MENU_CODE_OPEN_CIF,
                 group_role_code=IDM_GROUP_ROLE_CODE_OPEN_CIF,
                 permission_code=IDM_PERMISSION_CODE_OPEN_CIF,
@@ -351,7 +352,7 @@ class CtrApproval(BaseController):
             if not is_stage_teller:
                 return self.response_exception(
                     loc=f"Stage: {previous_stage_code}, "
-                        f"User: {current_user.name}, "
+                        f"User: {current_user.username}, "
                         f"IDM_MENU_CODE: {IDM_MENU_CODE_OPEN_CIF}, "
                         f"IDM_GROUP_ROLE_CODE: {IDM_GROUP_ROLE_CODE_OPEN_CIF}, "
                         f"IDM_PERMISSION_CODE: {IDM_PERMISSION_CODE_OPEN_CIF}",
@@ -370,7 +371,7 @@ class CtrApproval(BaseController):
             teller_created_by = previous_transaction_sender.user_fullname
 
             is_stage_supervisor = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
-                auth_response=current_user,
+                auth_response=auth_response,
                 menu_code=IDM_MENU_CODE_OPEN_CIF,
                 group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
                 permission_code=IDM_PERMISSION_CODE_KSV,
@@ -379,7 +380,7 @@ class CtrApproval(BaseController):
             if not is_stage_supervisor:
                 return self.response_exception(
                     loc=f"Stage: {previous_stage_code}, "
-                        f"User: {current_user.name}, "
+                        f"User: {current_user.username}, "
                         f"IDM_MENU_CODE: {IDM_MENU_CODE_OPEN_CIF}, "
                         f"IDM_GROUP_ROLE_CODE: {IDM_GROUP_ROLE_CODE_APPROVAL}, "
                         f"IDM_PERMISSION_CODE: {IDM_PERMISSION_CODE_KSV}",
@@ -392,7 +393,7 @@ class CtrApproval(BaseController):
         # KSS nhận hồ sơ từ KSV
         elif previous_stage_code == CIF_STAGE_APPROVE_KSV:
             is_stage_audit = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
-                auth_response=self.current_user,
+                auth_response=auth_response,
                 menu_code=IDM_MENU_CODE_OPEN_CIF,
                 group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
                 permission_code=IDM_PERMISSION_CODE_KSS,
@@ -401,7 +402,7 @@ class CtrApproval(BaseController):
             if not is_stage_audit:
                 return self.response_exception(
                     loc=f"Stage: {previous_stage_code}, "
-                        f"User: {current_user.name}, "
+                        f"User: {current_user.username}, "
                         f"IDM_MENU_CODE: {IDM_MENU_CODE_OPEN_CIF}, "
                         f"IDM_GROUP_ROLE_CODE: {IDM_GROUP_ROLE_CODE_APPROVAL}, "
                         f"IDM_PERMISSION_CODE: {IDM_PERMISSION_CODE_KSS}",
@@ -504,6 +505,7 @@ class CtrApproval(BaseController):
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
         current_user = self.current_user.user_info
+        auth_response = self.current_user
 
         ################################################################################################################
         # THÔNG TIN BIỂU MẪU
@@ -741,7 +743,7 @@ class CtrApproval(BaseController):
             # check quyền user
             if current_stage_code == CIF_STAGE_INIT:
                 self.call_repos(await PermissionController.ctr_approval_check_permission(
-                    auth_response=self.current_user,
+                    auth_response=auth_response,
                     menu_code=IDM_MENU_CODE_OPEN_CIF,
                     group_role_code=IDM_GROUP_ROLE_CODE_OPEN_CIF,
                     permission_code=IDM_PERMISSION_CODE_OPEN_CIF,
@@ -749,7 +751,7 @@ class CtrApproval(BaseController):
                 ))
             elif current_stage_code == CIF_STAGE_APPROVE_KSV:
                 self.call_repos(await PermissionController.ctr_approval_check_permission(
-                    auth_response=self.current_user,
+                    auth_response=auth_response,
                     menu_code=IDM_MENU_CODE_OPEN_CIF,
                     group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
                     permission_code=IDM_PERMISSION_CODE_KSV,
@@ -757,7 +759,7 @@ class CtrApproval(BaseController):
                 ))
             elif current_stage_code == CIF_STAGE_APPROVE_KSS:
                 self.call_repos(await PermissionController.ctr_approval_check_permission(
-                    auth_response=self.current_user,
+                    auth_response=auth_response,
                     menu_code=IDM_MENU_CODE_OPEN_CIF,
                     group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
                     permission_code=IDM_PERMISSION_CODE_KSS,
