@@ -81,7 +81,6 @@ class CtrGWCustomer(BaseController):
 
         cif_info = customer_info['cif_info']
         id_info = customer_info['id_info']
-        address_info = customer_info['address_info']
         job_info = customer_info['job_info']
         branch_info = customer_info['branch_info']
 
@@ -115,9 +114,19 @@ class CtrGWCustomer(BaseController):
                 expired_date=id_info["id_expired_date"],
                 place_of_issue=id_info["id_issued_location"]
             ),
-            address_info=dict(
-                address_full=address_info["address_full"],
-                contact_address_full=address_info["contact_address_full"],
+            resident_address=dict(
+                address_full=customer_info["p_address_info"]['address_full'],
+                number_and_street=customer_info["p_address_info"]['line'],
+                ward=customer_info["p_address_info"]['ward_name'],
+                district=customer_info["p_address_info"]['district_name'],
+                province=customer_info["p_address_info"]['city_name'],
+            ),
+            contact_address=dict(
+                address_full=customer_info["t_address_info"]['contact_address_full'],
+                number_and_street=customer_info["t_address_info"]['contact_address_line'],
+                ward=customer_info["t_address_info"]['contact_address_ward_name'],
+                district=customer_info["t_address_info"]['contact_address_district_name'],
+                province=customer_info["t_address_info"]['contact_address_city_name']
             ),
             job_info=dict(
                 name=job_info["professional_name"],
