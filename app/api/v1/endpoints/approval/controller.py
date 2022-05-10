@@ -79,6 +79,7 @@ class CtrApproval(BaseController):
     async def ctr_get_approval(self, cif_id: str, amount: int): # noqa
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
+        current_user = self.current_user
 
         ################################################################################################################
         # THÔNG TIN XÁC THỰC
@@ -341,13 +342,23 @@ class CtrApproval(BaseController):
         # GDV chưa gửi hồ sơ
         if previous_stage_code == CIF_STAGE_BEGIN:
             is_stage_teller = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
-                auth_response=self.current_user,
+                auth_response=current_user,
                 menu_code=IDM_MENU_CODE_OPEN_CIF,
                 group_role_code=IDM_GROUP_ROLE_CODE_OPEN_CIF,
                 permission_code=IDM_PERMISSION_CODE_OPEN_CIF,
                 stage_code=CIF_STAGE_INIT
             ))
-            if is_stage_teller:
+            if not is_stage_teller:
+                return self.response_exception(
+                    loc=f"Stage: {previous_stage_code}, "
+                        f"User: {current_user.name}, "
+                        f"IDM_MENU_CODE: {IDM_MENU_CODE_OPEN_CIF}, "
+                        f"IDM_GROUP_ROLE_CODE: {IDM_GROUP_ROLE_CODE_OPEN_CIF}, "
+                        f"IDM_PERMISSION_CODE: {IDM_PERMISSION_CODE_OPEN_CIF}",
+                    msg=ERROR_PERMISSION,
+                    error_status_code=status.HTTP_403_FORBIDDEN
+                )
+            else:
                 teller_is_disable = False
             teller_stage_code = None
         # KSV nhận hồ sơ từ GDV
@@ -359,13 +370,23 @@ class CtrApproval(BaseController):
             teller_created_by = previous_transaction_sender.user_fullname
 
             is_stage_supervisor = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
-                auth_response=self.current_user,
+                auth_response=current_user,
                 menu_code=IDM_MENU_CODE_OPEN_CIF,
                 group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
                 permission_code=IDM_PERMISSION_CODE_KSV,
                 stage_code=CIF_STAGE_APPROVE_KSV
             ))
-            if is_stage_supervisor:
+            if not is_stage_supervisor:
+                return self.response_exception(
+                    loc=f"Stage: {previous_stage_code}, "
+                        f"User: {current_user.name}, "
+                        f"IDM_MENU_CODE: {IDM_MENU_CODE_OPEN_CIF}, "
+                        f"IDM_GROUP_ROLE_CODE: {IDM_GROUP_ROLE_CODE_APPROVAL}, "
+                        f"IDM_PERMISSION_CODE: {IDM_PERMISSION_CODE_KSV}",
+                    msg=ERROR_PERMISSION,
+                    error_status_code=status.HTTP_403_FORBIDDEN
+                )
+            else:
                 supervisor_is_disable = False
 
         # KSS nhận hồ sơ từ KSV
@@ -377,8 +398,18 @@ class CtrApproval(BaseController):
                 permission_code=IDM_PERMISSION_CODE_KSS,
                 stage_code=CIF_STAGE_APPROVE_KSS
             ))
-            if is_stage_audit:
-                audit_is_disable = False   # Chưa được mô tả cho KSS tạm thời dùng Role của KSV
+            if not is_stage_audit:
+                return self.response_exception(
+                    loc=f"Stage: {previous_stage_code}, "
+                        f"User: {current_user.name}, "
+                        f"IDM_MENU_CODE: {IDM_MENU_CODE_OPEN_CIF}, "
+                        f"IDM_GROUP_ROLE_CODE: {IDM_GROUP_ROLE_CODE_APPROVAL}, "
+                        f"IDM_PERMISSION_CODE: {IDM_PERMISSION_CODE_KSS}",
+                    msg=ERROR_PERMISSION,
+                    error_status_code=status.HTTP_403_FORBIDDEN
+                )
+            else:
+                audit_is_disable = False   # TODO: Chưa được mô tả cho KSS tạm thời dùng Role của KSV
 
             supervisor_stage_code = previous_stage_code
             supervisor_transaction_daily = previous_transaction_daily
