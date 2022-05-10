@@ -607,25 +607,84 @@ class CtrGWCustomer(BaseController):
             id_info = authorized_info['id_info']
             address_info = authorized_info['address_info']
 
+            date_of_birth = date_string_to_other_date_string_format(
+                date_input=authorized_info['birthday'],
+                from_format=GW_DATETIME_FORMAT,
+                to_format=GW_DATE_FORMAT
+            )
+            # thay đổi giới tính thành danh mục trong crm
+            gender_code = authorized_info['gender']
+            if gender_code == GW_GENDER_MALE:
+                gender_code = CRM_GENDER_TYPE_MALE
+            if gender_code == GW_GENDER_FEMALE:
+                gender_code = CRM_GENDER_TYPE_FEMALE
+
+            gender = await get_optional_model_object_by_code_or_name(
+                model=CustomerGender,
+                model_code=gender_code,
+                model_name=gender_code,
+                session=self.oracle_session
+            )
+            dropdown_gender = dropdown(gender) if gender else dropdown_name(gender_code)
+
+            nationality_code = authorized_info['nationality_code']
+
+            nationality = await get_optional_model_object_by_code_or_name(
+                model=AddressCountry,
+                model_code=nationality_code,
+                model_name=nationality_code,
+                session=self.oracle_session
+            )
+            dropdown_nationality = dropdown(nationality) if nationality else dropdown_name(nationality)
+
+            cif_issued_date = cif_info['cif_issued_date']
+            cif_issued_date = date_string_to_other_date_string_format(
+                date_input=cif_issued_date,
+                from_format=GW_DATETIME_FORMAT,
+                to_format=GW_DATE_FORMAT
+            )
+            id_issued_date = id_info['id_issued_date']
+            id_issued_date = date_string_to_other_date_string_format(
+                date_input=id_issued_date,
+                from_format=GW_DATETIME_FORMAT,
+                to_format=GW_DATE_FORMAT
+            )
+            id_expired_date = id_info['id_expired_date']
+            id_expired_date = date_string_to_other_date_string_format(
+                date_input=id_expired_date,
+                from_format=GW_DATETIME_FORMAT,
+                to_format=GW_DATE_FORMAT
+            )
+
+            place_of_issue_code_or_name = id_info['id_issued_location']
+            place_of_issue = await get_optional_model_object_by_code_or_name(
+                model=PlaceOfIssue,
+                model_code=place_of_issue_code_or_name,
+                model_name=place_of_issue_code_or_name,
+                session=self.oracle_session
+            )
+            dropdown_place_of_issue = dropdown(place_of_issue) if place_of_issue else dropdown_name(
+                place_of_issue_code_or_name)
+
             data_response.append(dict(
                 full_name_vn=authorized_info['full_name'],
-                date_of_birth=authorized_info['birthday'],
-                gender=authorized_info['gender'],
+                date_of_birth=date_of_birth,
+                gender=dropdown_gender,
                 email=authorized_info['email'],
                 mobile_phone=authorized_info['mobile_phone'],
-                nationality_code=authorized_info['nationality_code'],
+                nationality=dropdown_nationality,
                 customer_type=authorized_info['customer_type'],
                 coowner_relationship=authorized_info['coowner_relationship'],
                 cif_info=dict(
                     cif_number=cif_info['cif_num'],
-                    issued_date=cif_info['cif_issued_date']
+                    issued_date=cif_issued_date
                 ),
                 id_info=dict(
                     number=id_info['id_num'],
                     name=id_info['id_name'],
-                    issued_date=id_info['id_issued_date'],
-                    expired_date=id_info['id_expired_date'],
-                    place_of_issue=id_info['id_issued_location']
+                    issued_date=id_issued_date,
+                    expired_date=id_expired_date,
+                    place_of_issue=dropdown_place_of_issue
                 ),
                 address_info=dict(
                     contact_address_full=address_info['contact_address_full'],
