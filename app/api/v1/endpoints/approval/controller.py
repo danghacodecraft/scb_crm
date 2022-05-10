@@ -9,7 +9,6 @@ from app.api.v1.endpoints.approval.common_repository import (
 from app.api.v1.endpoints.approval.repository import (
     repos_approval_get_face_authentication, repos_approve,
     repos_get_approval_identity_faces, repos_get_approval_identity_images,
-    repos_get_approval_identity_images_by_image_type_id,
     repos_get_approval_process, repos_get_compare_image_transactions
 )
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
@@ -94,13 +93,15 @@ class CtrApproval(BaseController):
         image_face_uuids = []
 
         compare_face_uuid = None
-        # Lấy tất cả hình ảnh ở bước GTDD
-        face_transactions = self.call_repos(await repos_get_approval_identity_images_by_image_type_id(
+
+        transactions = self.call_repos(await repos_get_approval_identity_images(
             cif_id=cif_id,
-            image_type_id=IMAGE_TYPE_FACE,
-            identity_type="Face",
             session=self.oracle_session
         ))
+
+        (
+            face_transactions, fingerprint_transactions, signature_transactions
+        ) = await self.check_data_in_identity_step_and_get_faces_fingerprints_signatures(transactions)
 
         identity_image_ids = []
         for identity, identity_image in face_transactions:
@@ -164,14 +165,6 @@ class CtrApproval(BaseController):
 
         compare_signature_uuid = None
 
-        # Lấy tất cả hình ảnh ở bước GTDD
-        signature_transactions = self.call_repos(await repos_get_approval_identity_images_by_image_type_id(
-            cif_id=cif_id,
-            image_type_id=IMAGE_TYPE_SIGNATURE,
-            identity_type="Signature",
-            session=self.oracle_session
-        ))
-
         identity_signature_image_ids = []
         for identity, identity_image in signature_transactions:
             identity_signature_uuid = identity_image.image_url
@@ -231,14 +224,6 @@ class CtrApproval(BaseController):
         image_fingerprint_uuids = []
 
         compare_fingerprint_uuid = None
-
-        # Lấy tất cả hình ảnh ở bước GTDD
-        fingerprint_transactions = self.call_repos(await repos_get_approval_identity_images_by_image_type_id(
-            cif_id=cif_id,
-            image_type_id=IMAGE_TYPE_FINGERPRINT,
-            identity_type="Fingerprint",
-            session=self.oracle_session
-        ))
 
         identity_fingerprint_image_ids = []
         for _, identity_image in fingerprint_transactions:
@@ -522,32 +507,7 @@ class CtrApproval(BaseController):
             cif_id=cif_id,
             session=self.oracle_session
         ))
-        is_existed_face = False
-        is_existed_fingerprint = False
-        is_existed_signature = False
-        for customer_identity, customer_identity_image in transactions:
-            if customer_identity_image.image_type_id == IMAGE_TYPE_FACE:
-                is_existed_face = True
-                continue
-            if customer_identity_image.image_type_id == IMAGE_TYPE_FINGERPRINT:
-                is_existed_fingerprint = True
-                continue
-            if customer_identity_image.image_type_id == IMAGE_TYPE_SIGNATURE:
-                is_existed_signature = True
-                continue
-        errors = []
-        if not is_existed_face:
-            errors.append(MESSAGE_STATUS[ERROR_APPROVAL_NO_FACE_IN_IDENTITY_STEP])
-        if not is_existed_fingerprint:
-            errors.append(MESSAGE_STATUS[ERROR_APPROVAL_NO_FINGERPRINT_IN_IDENTITY_STEP])
-        if not is_existed_signature:
-            errors.append(MESSAGE_STATUS[ERROR_APPROVAL_NO_SIGNATURE_IN_IDENTITY_STEP])
-        if errors:
-            return self.response_exception(
-                msg=ERROR_APPROVAL_NO_DATA_IN_IDENTITY_STEP,
-                detail=', '.join(set(errors)),
-                error_status_code=status.HTTP_403_FORBIDDEN
-            )
+        await self.check_data_in_identity_step_and_get_faces_fingerprints_signatures(transactions)
 
         ################################################################################################################
         # Khuôn mặt
@@ -980,3 +940,44 @@ class CtrApproval(BaseController):
                 return self.response_exception(msg=ERROR_STAGE_COMPLETED, loc="description")
 
         return description
+
+    async def check_data_in_identity_step_and_get_faces_fingerprints_signatures(self, transactions):
+        """
+        Input: CustomerIdentity, CustomerIdentityImage
+        Output: (face_transactions, fingerprint_transactions, signature_transactions)
+        """
+        is_existed_face = False
+        is_existed_fingerprint = False
+        is_existed_signature = False
+        face_transactions = []
+        fingerprint_transactions = []
+        signature_transactions = []
+        for transaction in transactions:
+            _, customer_identity_image = transaction
+            image_type_id = customer_identity_image.image_type_id
+            if image_type_id == IMAGE_TYPE_FACE:
+                is_existed_face = True
+                face_transactions.append(transaction)
+                continue
+            if image_type_id == IMAGE_TYPE_FINGERPRINT:
+                is_existed_fingerprint = True
+                fingerprint_transactions.append(transaction)
+                continue
+            if image_type_id == IMAGE_TYPE_SIGNATURE:
+                is_existed_signature = True
+                signature_transactions.append(transaction)
+                continue
+        errors = []
+        if not is_existed_face:
+            errors.append(MESSAGE_STATUS[ERROR_APPROVAL_NO_FACE_IN_IDENTITY_STEP])
+        if not is_existed_fingerprint:
+            errors.append(MESSAGE_STATUS[ERROR_APPROVAL_NO_FINGERPRINT_IN_IDENTITY_STEP])
+        if not is_existed_signature:
+            errors.append(MESSAGE_STATUS[ERROR_APPROVAL_NO_SIGNATURE_IN_IDENTITY_STEP])
+        if errors:
+            return self.response_exception(
+                msg=ERROR_APPROVAL_NO_DATA_IN_IDENTITY_STEP,
+                detail=', '.join(set(errors)),
+                error_status_code=status.HTTP_403_FORBIDDEN
+            )
+        return self.response(data=(face_transactions, fingerprint_transactions, signature_transactions))
