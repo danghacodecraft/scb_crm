@@ -86,7 +86,8 @@ async def view_gw_check_exist_casa_account_info(
     responses=swagger_response(
         response_model=Union[
             ResponseData[GWCustomerInfoDetailResponse],
-            ResponseData[GuardianOrCustomerRelationshipByCIFNumberResponse]
+            ResponseData[GuardianOrCustomerRelationshipByCIFNumberResponse],
+            ResponseData[DebitCardByCIFNumberResponse]
         ],
         success_examples=CUSTOMER_INFO_DETAIL_SUCCESS_EXAMPLE,
         success_status_code=status.HTTP_200_OK
