@@ -3,11 +3,12 @@ from app.api.v1.endpoints.repository import (
     get_optional_model_object_by_code_or_name
 )
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
-    repos_gw_get_authorized, repos_gw_get_coowner,
-    repos_gw_get_customer_info_detail, repos_gw_get_customer_info_list
+    repos_get_customer_ids_from_cif_numbers, repos_gw_get_authorized,
+    repos_gw_get_coowner, repos_gw_get_customer_info_detail,
+    repos_gw_get_customer_info_list
 )
 from app.third_parties.oracle.models.master_data.address import (
-    AddressDistrict, AddressProvince
+    AddressCountry, AddressDistrict, AddressProvince
 )
 from app.third_parties.oracle.models.master_data.customer import (
     CustomerGender, CustomerType
@@ -51,35 +52,113 @@ class CtrGWCustomer(BaseController):
         customer_list = customer_info_list["selectCustomerRefDataMgmtCIFNum_out"]["data_output"]["customer_list"]
 
         customer_list_info = []
+        cif_numbers = []
 
         for customer in customer_list:
             customer_info = customer["customer_info_item"]['customer_info']
+
             cif_info = customer_info['cif_info']
             id_info = customer_info['id_info']
+
             address_info = customer_info['address_info']
             branch_info = customer_info['branch_info']
 
+            date_of_birth = date_string_to_other_date_string_format(
+                date_input=customer_info['birthday'],
+                from_format=GW_DATETIME_FORMAT,
+                to_format=GW_DATE_FORMAT
+            )
+
+            martial_status_code_or_name = customer_info['martial_status']
+            martial_status = await get_optional_model_object_by_code_or_name(
+                model=MaritalStatus,
+                model_code=martial_status_code_or_name,
+                model_name=martial_status_code_or_name,
+                session=self.oracle_session
+            )
+            dropdown_martial_status = optional_dropdown(obj=martial_status, obj_name=martial_status_code_or_name)
+
+            gender_code_or_name = customer_info["gender"]
+            if gender_code_or_name == GW_GENDER_MALE:
+                gender_code_or_name = CRM_GENDER_TYPE_MALE
+            if gender_code_or_name == GW_GENDER_FEMALE:
+                gender_code_or_name = CRM_GENDER_TYPE_FEMALE
+            gender = await get_optional_model_object_by_code_or_name(
+                model=CustomerGender,
+                model_code=gender_code_or_name,
+                model_name=gender_code_or_name,
+                session=self.oracle_session
+            )
+            dropdown_gender = dropdown(gender) if gender else dropdown_name(gender_code_or_name)
+
+            nationality_code_or_name = customer_info["nationality_code"]
+
+            nationality = await get_optional_model_object_by_code_or_name(
+                model=AddressCountry,
+                model_code=nationality_code_or_name,
+                model_name=nationality_code_or_name,
+                session=self.oracle_session
+            )
+            dropdown_nationality = dropdown(nationality) if nationality else dropdown_name(nationality_code_or_name)
+
+            customer_type_code_or_name = customer_info['customer_type']
+            customer_type = await get_optional_model_object_by_code_or_name(
+                model=CustomerType,
+                model_code=customer_type_code_or_name,
+                model_name=customer_type_code_or_name,
+                session=self.oracle_session
+            )
+            dropdown_customer_type = dropdown(customer_type) if customer_type else dropdown_name(
+                customer_type_code_or_name)
+
+            cif_issued_date = date_string_to_other_date_string_format(
+                date_input=cif_info['cif_issued_date'],
+                from_format=GW_DATETIME_FORMAT,
+                to_format=GW_DATE_FORMAT
+            )
+
+            id_issued_date = date_string_to_other_date_string_format(
+                date_input=id_info['id_issued_date'],
+                from_format=GW_DATETIME_FORMAT,
+                to_format=GW_DATE_FORMAT
+            )
+
+            id_expired_date = date_string_to_other_date_string_format(
+                date_input=id_info['id_expired_date'],
+                from_format=GW_DATETIME_FORMAT,
+                to_format=GW_DATE_FORMAT
+            )
+            place_of_issue_code_or_name = id_info["id_issued_location"]
+            place_of_issue = await get_optional_model_object_by_code_or_name(
+                model=PlaceOfIssue,
+                model_code=place_of_issue_code_or_name,
+                model_name=place_of_issue_code_or_name,
+                session=self.oracle_session
+            )
+            dropdown_place_of_issue = dropdown(place_of_issue) if place_of_issue else dropdown_name(
+                place_of_issue_code_or_name)
+
             customer_list_info.append(dict(
                 fullname_vn=customer_info['full_name'],
-                date_of_birth=customer_info['birthday'],
-                martial_status=customer_info['martial_status'],
-                gender=customer_info['gender'],
+                date_of_birth=date_of_birth,
+                martial_status=dropdown_martial_status,
+                gender=dropdown_gender,
                 email=customer_info['email'],
-                nationality_code=customer_info['nationality_code'],
+                nationality=dropdown_nationality,
                 mobile_phone=customer_info['mobile_phone'],
                 telephone=customer_info['telephone'],
                 otherphone=customer_info['otherphone'],
-                customer_type=customer_info['customer_type'],
+                customer_type=dropdown_customer_type,
                 cif_info=dict(
                     cif_number=cif_info['cif_num'],
-                    issued_date=cif_info['cif_issued_date']
+                    issued_date=cif_issued_date
                 ),
                 id_info=dict(
                     number=id_info['id_num'],
                     name=id_info['id_name'],
-                    issued_date=id_info['id_issued_date'],
-                    expired_date=id_info['id_expired_date'],
-                    place_of_issue=id_info['id_issued_location']
+                    issued_date=id_issued_date,
+                    expired_date=id_expired_date,
+                    place_of_issue=dropdown_place_of_issue
                 ),
                 address_info=dict(
                     address_full=address_info['address_full']
@@ -89,6 +168,14 @@ class CtrGWCustomer(BaseController):
                     code=branch_info['branch_code'],
                 )
             ))
+            cif_numbers.append(cif_info['cif_num'])
+
+        cif_in_db = self.call_repos(await repos_get_customer_ids_from_cif_numbers(
+            cif_numbers=cif_numbers, session=self.oracle_session))
+        for customer_id, cif_number in cif_in_db:
+            for customer in customer_list_info:
+                if cif_number == customer['cif_info']['cif_number']:
+                    customer['cif_info'].update(customer_id=customer_id)
 
         response_data.update({
             "customer_info_list": customer_list_info,
@@ -146,7 +233,7 @@ class CtrGWCustomer(BaseController):
 
         nationality_code_or_name = customer_info["nationality_code"]
         nationality = await get_optional_model_object_by_code_or_name(
-            model=CustomerGender,
+            model=AddressCountry,
             model_code=nationality_code_or_name,
             model_name=nationality_code_or_name,
             session=self.oracle_session

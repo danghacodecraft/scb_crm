@@ -31,6 +31,7 @@ class GWCustomerCheckExistRequest(BaseSchema):
 
 
 class GWCustomerCIFInfoResponse(BaseSchema):
+    customer_id: Optional[str] = Field(None, description="Mã khách hàng")
     cif_number: Optional[str] = Field(..., description="Số CIF")
     issued_date: Optional[date] = Field(..., description="Ngày cấp số CIF")
 
@@ -40,8 +41,8 @@ class GWCustomerIDInfoResponse(BaseSchema):
         ..., description="CMND/Hộ chiếu, số đăng ký kinh doanh nếu là khách hàng doanh nghiệp"
     )
     name: Optional[str] = Field(..., description="Tên giấy tờ")
-    issued_date: Optional[date] = Field(..., description="Ngày cấp chứng minh nhân dân hoặc hộ chiếu")
-    expired_date: Optional[date] = Field(..., description="Ngày hết hạn chứng minh nhân dân hoặc hộ chiếu")
+    issued_date: Optional[str] = Field(..., description="Ngày cấp chứng minh nhân dân hoặc hộ chiếu")
+    expired_date: Optional[str] = Field(..., description="Ngày hết hạn chứng minh nhân dân hoặc hộ chiếu")
     place_of_issue: OptionalDropdownResponse = Field(..., description="Nơi cấp chứng minh nhân dân hoặc hộ chiếu")
 
 
@@ -64,7 +65,7 @@ class GWCustomerDetailAddressInfo(BaseSchema):
 
 class GWCustomerInfoItemResponse(BaseSchema):
     fullname_vn: Optional[str] = Field(..., description="Họ và tên")
-    date_of_birth: Optional[date] = Field(..., description="Ngày sinh")
+    date_of_birth: Optional[str] = Field(..., description="Ngày sinh")
     martial_status: OptionalDropdownResponse = Field(..., description="Tình trạng hôn nhân")
     gender: OptionalDropdownResponse = Field(..., description="Giới tính")
     email: Optional[str] = Field(..., description="Địa chỉ email")
