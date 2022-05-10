@@ -1,6 +1,14 @@
+from typing import List
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from app.api.base.repository import ReposReturn
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.settings.event import service_gw
+from app.third_parties.oracle.models.cif.basic_information.model import (
+    Customer
+)
 from app.utils.error_messages import ERROR_CALL_SERVICE_GW
 
 
@@ -28,6 +36,19 @@ async def repos_gw_get_customer_info_list(
         )
 
     return ReposReturn(data=customer_infos)
+
+
+async def repos_get_list_cif_id_from_cif_number(cif_numbers: List, session: Session):
+    customer_ids = session.execute(
+        select(
+            Customer.id,
+            Customer.cif_number
+        ).filter(
+            Customer.cif_number.in_(cif_numbers)
+        )
+    ).all()
+
+    return ReposReturn(data=customer_ids)
 
 
 async def repos_gw_get_customer_info_detail(

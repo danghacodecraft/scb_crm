@@ -1,7 +1,8 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
-    repos_gw_get_authorized, repos_gw_get_coowner,
-    repos_gw_get_customer_info_detail, repos_gw_get_customer_info_list
+    repos_get_list_cif_id_from_cif_number, repos_gw_get_authorized,
+    repos_gw_get_coowner, repos_gw_get_customer_info_detail,
+    repos_gw_get_customer_info_list
 )
 from app.utils.constant.gw import GW_LOC_CHECK_CIF_EXIST
 
@@ -26,6 +27,7 @@ class CtrGWCustomer(BaseController):
         customer_list = customer_info_list["selectCustomerRefDataMgmtCIFNum_out"]["data_output"]["customer_list"]
 
         customer_list_info = []
+        cif_numbers = []
 
         for customer in customer_list:
             customer_info = customer["customer_info_item"]['customer_info']
@@ -64,6 +66,15 @@ class CtrGWCustomer(BaseController):
                     code=branch_info['branch_code'],
                 )
             ))
+
+            cif_numbers.append(cif_info['cif_num'])
+
+        cif_in_db = self.call_repos(await repos_get_list_cif_id_from_cif_number(
+            cif_numbers=cif_numbers, session=self.oracle_session))
+        for cif_id, cif_number in cif_in_db:
+            for customer in customer_list_info:
+                if cif_number == customer['cif_info']['cif_number']:
+                    customer['cif_info'].update(cif_id=cif_id)
 
         response_data.update({
             "customer_info_list": customer_list_info,

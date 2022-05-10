@@ -29,6 +29,7 @@ class GWCustomerCheckExistRequest(BaseSchema):
 
 
 class GWCustomerCIFInfoResponse(BaseSchema):
+    cif_id: Optional[str] = Field(None, description="ID CIF")
     cif_number: str = Field(..., description="Số CIF")
     issued_date: str = Field(..., description="Ngày cấp số CIF")
 
