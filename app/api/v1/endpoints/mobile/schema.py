@@ -4,6 +4,7 @@ from fastapi import File, UploadFile
 from pydantic import Field
 
 from app.api.base.schema import BaseSchema
+from app.utils.constant.validate import REGULAR_PHONE_NUMBER
 
 
 class IdentityMobileRequest(BaseSchema):
@@ -20,11 +21,12 @@ class IdentityMobileRequest(BaseSchema):
             identity_type: str = File(..., description='loại giấy tờ dịnh danh'),
             front_side_image: UploadFile = File(..., description='hộ chiếu hoặc mặt trước DTDD'),
             back_side_image: UploadFile = File(None, description='Mặt sau DTDD'),
-            avatar_image: UploadFile = File(..., description='hình ảnh khuôn mặt')
+            avatar_image: UploadFile = File(..., description='hình ảnh khuôn mặt'),
+            phone_number: str = File(..., description='Số điện thoại', regex=REGULAR_PHONE_NUMBER)
 
     ):
         return (full_name_vn, date_of_birth, gender_id, nationality_id, identity_number, issued_date, expired_date,
-                place_of_issue_id, identity_type, front_side_image, back_side_image, avatar_image)
+                place_of_issue_id, identity_type, front_side_image, back_side_image, avatar_image, phone_number)
 
 
 class CustomerMobileRequest(BaseSchema):

@@ -230,3 +230,20 @@ async def view_customer(
     customer_detail_information = await CtrKSS(current_user).ctr_get_customer_detail(postcheck_uuid=postcheck_uuid)
 
     return ResponseData[CustomerDetailResponse](**customer_detail_information)
+
+
+# @router.post(
+#     path="/customer/",
+#     name="Tạo khách hàng",
+#     description="Tạo khách hàng",
+#     responses=swagger_response(
+#         response_model=ResponseData[CustomerDetailResponse],
+#         success_status_code=status.HTTP_200_OK
+#     )
+# )
+# async def save_customer_ekyc(
+#     current_user=Depends(get_current_user_from_header())
+# ):
+#     customer = await CtrKSS(current_user).ctr_save_customer()
+#
+#     return ResponseData(**customer)
