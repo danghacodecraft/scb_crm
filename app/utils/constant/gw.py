@@ -11,7 +11,7 @@ GW_ENDPOINT_URL_RETRIEVE_REPORT_CASA_ACCOUNT = '/report/v1.0/rest/selectReportCa
 GW_ENDPOINT_URL_RETRIEVE_DEPOSIT_ACCOUNT_FROM_CIF = '/depositaccount/v1.0/rest/selectDepositAccountFromCIF'
 GW_ENDPOINT_URL_RETRIEVE_DEPOSIT_ACCOUNT_TD = "/depositaccount/v1.0/rest/retrieveDepositAccountTD"
 GW_ENDPOINT_URL_RETRIEVE_AUTHORIZED_ACCOUNT_NUM = "/customer/v1.0/rest/selectAuthorizedRefDataMgmtAccNum"
-GW_ENDPOINT_URL_RETRIEVE_COOWNER_ACCOUNT_NUM = "/customer/v1.0/rest/selectCoownerRefDataMgmtAccNum"
+GW_ENDPOINT_URL_RETRIEVE_CO_OWNER_ACCOUNT_NUM = "/customer/v1.0/rest/selectCoownerRefDataMgmtAccNum"
 GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_CODE = "/employee/v1.0/rest/selectEmployeeInfoFromCode"
 GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_USER_NAME = "/employee/v1.0/rest/selectEmployeeInfoFromUserName"
 GW_ENDPOINT_URL_RETRIEVE_ORGANIZATION_INFO = "/organization/v1.0/rest/selectOrgInfo"
@@ -42,7 +42,7 @@ GW_TRANSACTION_TYPE_WITHDRAW = "RUT"
 
 GW_AUTHORIZED_REF_DATA_MGM_ACC_NUM = "AuthorizedRefDataMgmAccNum"
 
-GW_COOWNER_REF_DATA_MGM_ACC_NUM = "CoownerRefDataMgmAccNum"
+GW_CO_OWNER_REF_DATA_MGM_ACC_NUM = "CoownerRefDataMgmAccNum"
 
 GW_EMPLOYEE_FROM_CODE = "EmployeeFromCode"
 GW_EMPLOYEE_FROM_NAME = "EmployeeFromName"

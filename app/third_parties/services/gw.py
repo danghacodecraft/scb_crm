@@ -8,12 +8,12 @@ from starlette import status
 from app.api.v1.endpoints.user.schema import UserInfoResponse
 from app.settings.service import SERVICE
 from app.utils.constant.gw import (
-    GW_AUTHORIZED_REF_DATA_MGM_ACC_NUM, GW_COOWNER_REF_DATA_MGM_ACC_NUM,
+    GW_AUTHORIZED_REF_DATA_MGM_ACC_NUM, GW_CO_OWNER_REF_DATA_MGM_ACC_NUM,
     GW_CURRENT_ACCOUNT_CASA, GW_CURRENT_ACCOUNT_FROM_CIF,
     GW_CUSTOMER_REF_DATA_MGMT_CIF_NUM, GW_DEPOSIT_ACCOUNT_FROM_CIF,
     GW_DEPOSIT_ACCOUNT_TD, GW_EMPLOYEE_FROM_CODE, GW_EMPLOYEE_FROM_NAME,
     GW_ENDPOINT_URL_RETRIEVE_AUTHORIZED_ACCOUNT_NUM,
-    GW_ENDPOINT_URL_RETRIEVE_COOWNER_ACCOUNT_NUM,
+    GW_ENDPOINT_URL_RETRIEVE_CO_OWNER_ACCOUNT_NUM,
     GW_ENDPOINT_URL_RETRIEVE_CURRENT_ACCOUNT_CASA,
     GW_ENDPOINT_URL_RETRIEVE_CURRENT_ACCOUNT_CASA_FROM_CIF,
     GW_ENDPOINT_URL_RETRIEVE_CUS_DATA_MGMT_CIF_NUM,
@@ -563,7 +563,7 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
-    async def get_coowner(self, current_user: UserInfoResponse, account_number):
+    async def get_co_owner(self, current_user: UserInfoResponse, account_number):
         request_data = {
             "selectCoownerRefDataMgmtAccNum_in": {
                 "transaction_info": {
@@ -578,7 +578,7 @@ class ServiceGW:
                 },
                 "data_input": {
                     "transaction_info": {
-                        "transaction_name": GW_COOWNER_REF_DATA_MGM_ACC_NUM,
+                        "transaction_name": GW_CO_OWNER_REF_DATA_MGM_ACC_NUM,
                         "transaction_value": {
                             "account_num": account_number
                         }
@@ -586,7 +586,7 @@ class ServiceGW:
                 }
             }
         }
-        api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_COOWNER_ACCOUNT_NUM}"
+        api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_CO_OWNER_ACCOUNT_NUM}"
 
         return_errors = dict(
             loc="SERVICE GW",

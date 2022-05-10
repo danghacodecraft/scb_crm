@@ -22,7 +22,7 @@ from app.api.v1.endpoints.third_parties.gw.customer.example import (
 from app.api.v1.endpoints.third_parties.gw.customer.schema import (
     CustomerInfoListCIFRequest, DebitCardByCIFNumberResponse,
     GuardianOrCustomerRelationshipByCIFNumberResponse,
-    GWAuthorizedListResponse, GWCoownerListResponse,
+    GWAuthorizedListResponse, GWCoOwnerListResponse,
     GWCustomerCheckExistRequest, GWCustomerCheckExistResponse,
     GWCustomerInfoDetailResponse, GWCustomerInfoListResponse
 )
@@ -116,23 +116,23 @@ async def view_gw_get_customer_info_detail(
 
 
 @router.post(
-    path="/coowner/{account_number}/",
+    path="/{account_number}/co-owner/",
     name="[GW] Lấy dash sách đồng sở hữu theo số tài khoản",
     description="Lấy danh sách đồng sở hữu theo số tài khoản",
     responses=swagger_response(
-        response_model=ResponseData[GWCoownerListResponse],
+        response_model=ResponseData[GWCoOwnerListResponse],
         success_examples=CUSTOMER_COOWNER_SUCCESS_EXAMPLE,
         success_status_code=status.HTTP_200_OK
     )
 )
-async def view_gw_coowner(
+async def view_gw_co_owner(
         account_number: str = Path(..., description="Số tài khoản", example=COOWNER_ACCOUNT_NUMBER),
         current_user=Depends(get_current_user_from_header())
 ):
-    gw_customer_coowner = await CtrGWCustomer(current_user).ctr_gw_get_coowner(
+    gw_customer_co_owner = await CtrGWCustomer(current_user).ctr_gw_get_co_owner(
         account_number=account_number
     )
-    return ResponseData[GWCoownerListResponse](**gw_customer_coowner)
+    return ResponseData[GWCoOwnerListResponse](**gw_customer_co_owner)
 
 
 @router.post(

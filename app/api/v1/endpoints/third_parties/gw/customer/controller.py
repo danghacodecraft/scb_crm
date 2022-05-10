@@ -4,18 +4,18 @@ from app.api.v1.endpoints.repository import (
 )
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_get_customer_ids_from_cif_numbers, repos_gw_get_authorized,
-    repos_gw_get_coowner, repos_gw_get_customer_info_detail,
+    repos_gw_get_co_owner, repos_gw_get_customer_info_detail,
     repos_gw_get_customer_info_list
 )
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince
 )
 from app.third_parties.oracle.models.master_data.customer import (
-    CustomerGender, CustomerType
+    CustomerGender, CustomerRelationshipType, CustomerType
 )
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import (
-    Branch, Career, MaritalStatus
+    Branch, Career, MaritalStatus, ResidentStatus
 )
 from app.utils.constant.cif import CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE
 from app.utils.constant.gw import (
@@ -445,7 +445,7 @@ class CtrGWCustomer(BaseController):
 
             resident_status_code_or_name = customer_info['resident_status']
             resident_status = await get_optional_model_object_by_code_or_name(
-                model=MaritalStatus,
+                model=ResidentStatus,
                 model_code=resident_status_code_or_name,
                 model_name=resident_status_code_or_name,
                 session=self.oracle_session
@@ -540,42 +540,120 @@ class CtrGWCustomer(BaseController):
             is_existed=True if customer_info['id_num'] else False
         ))
 
-    async def ctr_gw_get_coowner(self, account_number: str):
+    async def ctr_gw_get_co_owner(self, account_number: str):
         current_user = self.current_user
-        coowner_info_list = self.call_repos(await repos_gw_get_coowner(
+        co_owner_info_list = self.call_repos(await repos_gw_get_co_owner(
             account_number=account_number, current_user=current_user))
 
-        response_data = {}
-        coowner_list = coowner_info_list["selectCoownerRefDataMgmtAccNum_out"]["data_output"][
+        co_owner_list = co_owner_info_list["selectCoownerRefDataMgmtAccNum_out"]["data_output"][
             "coowner_info_list"]
 
         data_response = []
 
-        for coowner in coowner_list:
-            coowner_info = coowner["coowner_info_item"]['customer_info']
-            cif_info = coowner_info['cif_info']
-            id_info = coowner_info['id_info']
-            address_info = coowner_info['address_info']
+        for co_owner in co_owner_list:
+            co_owner_info = co_owner["coowner_info_item"]['customer_info']
+            cif_info = co_owner_info['cif_info']
+            identity_info = co_owner_info['id_info']
+            address_info = co_owner_info['address_info']
+
+            gender_code_or_name = co_owner_info['gender']
+            if gender_code_or_name == GW_GENDER_MALE:
+                gender_code_or_name = CRM_GENDER_TYPE_MALE
+            if gender_code_or_name == GW_GENDER_FEMALE:
+                gender_code_or_name = CRM_GENDER_TYPE_FEMALE
+            gender = await get_optional_model_object_by_code_or_name(
+                model=CustomerGender,
+                model_code=gender_code_or_name,
+                model_name=None,
+                session=self.oracle_session
+            )
+            dropdown_gender = optional_dropdown(obj=gender, obj_name=gender_code_or_name)
+
+            nationality_code_or_name = co_owner_info["nationality_code"]
+            nationality = await get_optional_model_object_by_code_or_name(
+                model=AddressCountry,
+                model_code=nationality_code_or_name,
+                model_name=nationality_code_or_name,
+                session=self.oracle_session
+            )
+            dropdown_nationality = optional_dropdown(obj=nationality, obj_name=nationality_code_or_name)
+
+            customer_type_code_or_name = co_owner_info['customer_type']
+            customer_type = await get_optional_model_object_by_code_or_name(
+                model=CustomerType,
+                model_code=customer_type_code_or_name,
+                model_name=None,
+                session=self.oracle_session
+            )
+            dropdown_customer_type = optional_dropdown(
+                obj=customer_type,
+                obj_name=customer_type_code_or_name
+            )
+
+            customer_relationship_code_or_name = co_owner_info['coowner_relationship']
+            customer_relationship = await get_optional_model_object_by_code_or_name(
+                model=CustomerRelationshipType,
+                model_code=customer_relationship_code_or_name,
+                model_name=None,
+                session=self.oracle_session
+            )
+            dropdown_customer_relationship = optional_dropdown(
+                obj=customer_relationship,
+                obj_name=customer_relationship_code_or_name
+            )
+
+            cif_issued_date = date_string_to_other_date_string_format(
+                date_input=cif_info['cif_issued_date'],
+                from_format=GW_DATETIME_FORMAT,
+                to_format=GW_DATE_FORMAT
+            )
+
+            identity_issued_date = date_string_to_other_date_string_format(
+                date_input=identity_info['id_issued_date'],
+                from_format=GW_DATETIME_FORMAT,
+                to_format=GW_DATE_FORMAT
+            )
+
+            identity_expired_date = date_string_to_other_date_string_format(
+                date_input=identity_info['id_expired_date'],
+                from_format=GW_DATETIME_FORMAT,
+                to_format=GW_DATE_FORMAT
+            )
+
+            place_of_issue_code_or_name = identity_info["id_issued_location"]
+            place_of_issue = await get_optional_model_object_by_code_or_name(
+                model=PlaceOfIssue,
+                model_code=None,
+                model_name=place_of_issue_code_or_name,
+                session=self.oracle_session
+            )
+            dropdown_place_of_issue = optional_dropdown(obj=place_of_issue, obj_name=place_of_issue_code_or_name)
+
+            date_of_birth = date_string_to_other_date_string_format(
+                date_input=co_owner_info['birthday'],
+                from_format=GW_DATETIME_FORMAT,
+                to_format=GW_DATE_FORMAT
+            )
 
             data_response.append(dict(
-                full_name_vn=coowner_info['full_name'],
-                date_of_birth=coowner_info['birthday'],
-                gender=coowner_info['gender'],
-                email=coowner_info['email'],
-                mobile_phone=coowner_info['mobile_phone'],
-                nationality_code=coowner_info['nationality_code'],
-                customer_type=coowner_info['customer_type'],
-                coowner_relationship=coowner_info['coowner_relationship'],
+                full_name_vn=co_owner_info['full_name'],
+                date_of_birth=date_of_birth,
+                gender=dropdown_gender,
+                email=co_owner_info['email'],
+                mobile_phone=co_owner_info['mobile_phone'],
+                nationality=dropdown_nationality,
+                customer_type=dropdown_customer_type,
+                co_owner_relationship=dropdown_customer_relationship,
                 cif_info=dict(
                     cif_number=cif_info['cif_num'],
-                    issued_date=cif_info['cif_issued_date']
+                    issued_date=cif_issued_date
                 ),
                 id_info=dict(
-                    number=id_info['id_num'],
-                    name=id_info['id_name'],
-                    issued_date=id_info['id_issued_date'],
-                    expired_date=id_info['id_expired_date'],
-                    place_of_issue=id_info['id_issued_location']
+                    number=identity_info['id_num'],
+                    name=identity_info['id_name'],
+                    issued_date=identity_issued_date,
+                    expired_date=identity_expired_date,
+                    place_of_issue=dropdown_place_of_issue
                 ),
                 address_info=dict(
                     contact_address_full=address_info['contact_address_full'],
@@ -583,12 +661,10 @@ class CtrGWCustomer(BaseController):
                 )
             ))
 
-            response_data.update({
-                "coowner_info_list": data_response,
-                "total_items": len(data_response)
-            })
-
-            return self.response(data=response_data)
+        return self.response(data={
+            "co_owner_info_list": data_response,
+            "total_items": len(data_response)
+        })
 
     async def ctr_gw_get_authorized(self, account_number: str):
         current_user = self.current_user
