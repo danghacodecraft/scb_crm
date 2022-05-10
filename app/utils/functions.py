@@ -219,3 +219,27 @@ def replace_with_cdn(cdn, file_url: str) -> str:
         return file_url.replace(f'{file_url_parse_result.scheme}://{file_url_parse_result.netloc}', cdn)
     else:
         return file_url
+
+
+def gen_qr_code(data: dict):
+    """
+        Data truyền vào là 1 dict gồm nhiều key
+    """
+    identity = data.get('document_id')
+    name = data.get('full_name')
+    gender = data.get('gender')
+    # gender = "Nam" if gender == "M" else "Nu"
+    if gender == "M":
+        gender = "Nam"
+    elif gender == "F":
+        gender = "Nu"
+
+    address = data.get('place_of_residence')
+
+    dob = data.get('date_of_birth').replace("/", "")
+    date_of_issue = data.get('date_of_issue').replace("/", "")
+
+    if None in [identity, name, gender, address, dob, date_of_issue]:
+        return None
+
+    return identity + "||" + name + "|" + dob + "|" + gender + "|" + address + "|" + date_of_issue

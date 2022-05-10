@@ -102,11 +102,7 @@ class CtrGWCustomer(BaseController):
         customer_info_detail = self.call_repos(await repos_gw_get_customer_info_detail(
             cif_number=cif_number, current_user=current_user))
 
-        data_output = customer_info_detail['retrieveCustomerRefDataMgmt_out']['data_output']
-        customer_info = data_output['customer_info']
-        mobile = customer_info['mobile_phone']
-        telephone = customer_info['telephone']
-        email = customer_info['email']
+        customer_info = customer_info_detail['retrieveCustomerRefDataMgmt_out']['data_output']['customer_info']
 
         cif_info = customer_info['cif_info']
         cif_issued_date = date_string_to_other_date_string_format(
@@ -257,6 +253,9 @@ class CtrGWCustomer(BaseController):
             from_format=GW_DATETIME_FORMAT,
             to_format=GW_DATE_FORMAT
         )
+        mobile = customer_info['mobile_phone']
+        telephone = customer_info['telephone']
+        email = customer_info['email']
 
         if parameter == GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP:
             cif_information = dict(

@@ -106,3 +106,11 @@ async def repos_get_post_control(query_params) -> ReposReturn:
             detail=response['message']
         )
     return ReposReturn(data=response)
+
+
+async def repos_save_customer_ekyc(
+    body_request: dict
+):
+    is_success, response = await service_ekyc.save_customer_ekyc(body_data=body_request)
+
+    return ReposReturn(data=response)

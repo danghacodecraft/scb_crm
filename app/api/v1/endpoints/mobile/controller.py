@@ -1,8 +1,10 @@
+
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.basic_information.identity.identity_document.repository import (
     repos_compare_face, repos_save_identity,
     repos_upload_identity_document_and_ocr
 )
+from app.api.v1.endpoints.customer_service.controller import CtrKSS
 from app.api.v1.endpoints.file.controller import CtrFile
 from app.api.v1.endpoints.file.repository import repos_upload_file
 from app.api.v1.endpoints.mobile.repository import (
@@ -10,6 +12,8 @@ from app.api.v1.endpoints.mobile.repository import (
 )
 from app.api.v1.endpoints.mobile.schema import IdentityMobileRequest
 from app.api.v1.validator import validate_history_data
+from app.settings.config import DATE_INPUT_OUTPUT_EKYC_FORMAT
+from app.settings.event import service_ekyc
 from app.third_parties.oracle.models.master_data.address import AddressCountry
 from app.third_parties.oracle.models.master_data.customer import CustomerGender
 from app.utils.constant.cif import (
@@ -26,8 +30,10 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_STATUS_INIT, RESIDENT_ADDRESS_CODE
 )
 from app.utils.constant.ekyc import EKYC_FLAG
+from app.utils.error_messages import ERROR_CALL_SERVICE_EKYC
 from app.utils.functions import (
-    calculate_age, date_to_string, datetime_to_string, now
+    calculate_age, date_to_string, datetime_to_string, gen_qr_code, now,
+    orjson_dumps
 )
 from app.utils.vietnamese_converter import (
     convert_to_unsigned_vietnamese, make_short_name, split_name
@@ -40,8 +46,8 @@ class CtrIdentityMobile(BaseController):
             self,
             request: IdentityMobileRequest
     ):
-        full_name_vn, date_of_birth, gender_id, nationality_id, identity_number, issued_date, \
-            expired_date, place_of_issue_id, identity_type, front_side_image, back_side_image, avatar_image = request
+        full_name_vn, date_of_birth, gender_id, nationality_id, identity_number, issued_date, expired_date, \
+            place_of_issue_id, identity_type, front_side_image, back_side_image, avatar_image, phone_number = request
 
         if not front_side_image or not avatar_image:
             return self.response_exception(msg='MISSING IMAGE')
@@ -133,10 +139,11 @@ class CtrIdentityMobile(BaseController):
             "first_name": first_name,
             "middle_name": middle_name,
             "last_name": last_name,
+            "mobile_number": phone_number,
             "short_name": make_short_name(first_name, middle_name, last_name),
             "active_flag": True,
             "open_cif_at": now(),
-            "open_branch_id": "000",  # TODO
+            "open_branch_id": current_user.user_info.hrm_branch_code,
             "kyc_level_id": "KYC_1",  # TODO
             "customer_category_id": "D0682B44BEB3830EE0530100007F1DDC",  # TODO
             "customer_economic_profession_id": None,
@@ -204,6 +211,14 @@ class CtrIdentityMobile(BaseController):
             if ocr_place_of_issue_id != place_of_issue_id:
                 return self.response_exception(msg='place_of_issue_id not same')
 
+        ocr_result_ekyc_data = {
+            "document_type": ocr_data_front_side['ocr_result_ekyc']['document_type'],
+            "data": {}
+        }
+        ocr_result_ekyc_data['data'].update(ocr_data_front_side['ocr_result_ekyc']['data'])
+        if ocr_data_back_side:
+            ocr_result_ekyc_data['data'].update(ocr_data_back_side['ocr_result_ekyc']['data'])
+
         saving_customer_identity = {  # noqa
             "identity_type_id": identity_type,
             "identity_num": ocr_data_front_side['ocr_result']['identity_document']['identity_number'],
@@ -213,7 +228,8 @@ class CtrIdentityMobile(BaseController):
             "maker_at": now(),
             "maker_id": current_user.user_info.code,
             "updater_at": now(),
-            "updater_id": current_user.user_info.code
+            "updater_id": current_user.user_info.code,
+            "ocr_result": orjson_dumps(ocr_result_ekyc_data)
         }
         if identity_type == IDENTITY_DOCUMENT_TYPE_PASSPORT:
             saving_customer_identity.update({
@@ -223,11 +239,17 @@ class CtrIdentityMobile(BaseController):
                 "identity_number_in_passport": ocr_data_front_side['ocr_result']['basic_information'][
                     'identity_card_number']
             })
+
         if identity_type == IDENTITY_DOCUMENT_TYPE_CITIZEN_CARD:
             saving_customer_identity.update({
-                "qrcode_content": None,
-                "mrz_content": ocr_data_back_side['ocr_result']['identity_document']['mrz_content']
+                "mrz_content": ocr_data_back_side['ocr_result']['identity_document']['mrz_content'],
+                "signer": ocr_data_back_side['ocr_result']['identity_document']['signer']
             })
+            if ocr_data_front_side['ocr_result_ekyc']['document_type'] == EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD:
+                qr_code = gen_qr_code(ocr_result_ekyc_data.get('data'))
+                saving_customer_identity.update({
+                    "qrcode_content": qr_code
+                })
 
         # dict dùng để tạo mới hoặc lưu lại customer_individual_info
         if ocr_gender_id and ocr_gender_id != gender_id:
@@ -326,6 +348,17 @@ class CtrIdentityMobile(BaseController):
             name=avatar_image_name,
             ekyc_flag=EKYC_FLAG
         ))
+
+        # thêm chân dung vào ekyc
+        is_success_add_face, add_face_info = await service_ekyc.add_face_ekyc(
+            file=avatar_image,
+            filename=avatar_image_name
+        )
+        if not is_success_add_face:
+            return self.response_exception(msg=ERROR_CALL_SERVICE_EKYC, detail=add_face_info.get('message', ''))
+
+        face_ids = add_face_info['data']['face_id']
+
         # compare avatar_image with identity_avatar_image_uuid từ ocr front_side
         if identity_type != IDENTITY_DOCUMENT_TYPE_PASSPORT:
             face_compare_mobile = self.call_repos(await repos_compare_face(
@@ -517,6 +550,21 @@ class CtrIdentityMobile(BaseController):
                     "face_uuid_ekyc": face_compare_mobile['face_uuid_ekyc']
                 }
             })
+
+        customer_id_ekyc = await CtrKSS().ctr_save_customer_ekyc( # noqa
+            ocr_result_ekyc_data=ocr_result_ekyc_data,
+            face_ids=face_ids,
+            gender=gender_id,
+            date_of_expiry=date_to_string(expired_date, _format=DATE_INPUT_OUTPUT_EKYC_FORMAT),
+            phone_number=phone_number,
+            front_image=ocr_data_front_side['ocr_result_ekyc']['uuid'],
+            front_image_name=ocr_data_front_side['ocr_result_ekyc']['file_name'],
+            back_image=ocr_data_back_side['ocr_result_ekyc']['uuid'] if ocr_data_back_side else None,
+            back_image_name=ocr_data_back_side['ocr_result_ekyc']['uuid'] if ocr_data_back_side else None,
+            avatar_image=add_face_info['data']['uuid'],
+            avatar_image_name=add_face_info['data']['file_name'],
+        )
+
         info_save_document = self.call_repos(
             await repos_save_identity(
                 identity_document_type_id=identity_type,

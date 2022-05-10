@@ -201,14 +201,14 @@ async def repos_get_compare_image_transactions(
     return ReposReturn(data=compare_image_transactions)
 
 
-async def repos_get_approval_identity_image(
+async def repos_get_approval_identity_images_by_image_type_id(
     cif_id: str,
     image_type_id: str,
     identity_type: str,
     session: Session
 ):
     """
-    Lấy tất cả hình ảnh ở bước GTDD
+    Lấy tất cả hình ảnh ở bước GTDD bằng image_type_id
     Output: CustomerIdentity, CustomerIdentityImage
     """
     customer_identities = session.execute(
@@ -225,5 +225,28 @@ async def repos_get_approval_identity_image(
     ).all()
     if not customer_identities:
         return ReposReturn(is_error=True, detail=f"No {identity_type} in Identity Step")
+
+    return ReposReturn(data=customer_identities)
+
+
+async def repos_get_approval_identity_images(
+    cif_id: str,
+    session: Session
+):
+    """
+    Lấy tất cả hình ảnh ở bước GTDD
+    Output: CustomerIdentity, CustomerIdentityImage
+    """
+    customer_identities = session.execute(
+        select(
+            CustomerIdentity,
+            CustomerIdentityImage
+        )
+        .join(CustomerIdentityImage, and_(
+            CustomerIdentity.id == CustomerIdentityImage.identity_id
+        ))
+        .filter(CustomerIdentity.customer_id == cif_id)
+        .order_by(desc(CustomerIdentity.updater_at))
+    ).all()
 
     return ReposReturn(data=customer_identities)

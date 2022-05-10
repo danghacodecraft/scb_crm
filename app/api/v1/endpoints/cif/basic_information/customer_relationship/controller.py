@@ -14,10 +14,16 @@ from app.api.v1.endpoints.cif.repository import (
     repos_check_exist_cif, repos_get_booking_code,
     repos_get_initializing_customer
 )
+from app.api.v1.endpoints.repository import (
+    get_optional_model_object_by_code_or_name
+)
 from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.settings.event import service_gw
+from app.third_parties.oracle.models.master_data.address import (
+    AddressCountry, AddressDistrict, AddressProvince, AddressWard
+)
 from app.third_parties.oracle.models.master_data.customer import (
-    CustomerRelationshipType
+    CustomerGender, CustomerRelationshipType
 )
 from app.utils.constant.cif import (
     BUSINESS_FORM_TTCN_MQHKH, CUSTOMER_RELATIONSHIP_TYPE_CUSTOMER_RELATIONSHIP,
@@ -58,10 +64,92 @@ class CtrCustomerRelationship(BaseController):
             customer_relationship_data = customer_relationship['retrieveCustomerRefDataMgmt_out']['data_output'][
                 'customer_info']
 
-            identity_document = customer_relationship_data['id_info']
+            gender_info = customer_relationship_data["gender"]
+            gender = await get_optional_model_object_by_code_or_name(
+                model=CustomerGender,
+                model_code=gender_info,
+                model_name=gender_info,
+                session=self.oracle_session
+            )
+
+            dropdown_gender = dropdown(gender) if gender else dropdown_name(gender)
+
+            nationality_code = customer_relationship_data["nationality_code"]
+            nationality = await get_optional_model_object_by_code_or_name(
+                model=AddressCountry,
+                model_code=nationality_code,
+                model_name=nationality_code,
+                session=self.oracle_session
+            )
+
+            dropdown_nationality = dropdown(nationality) if nationality else dropdown_name(nationality)
 
             resident_address = customer_relationship_data["p_address_info"]
             contact_address = customer_relationship_data["t_address_info"]
+
+            resident_city_name = resident_address["city_name"]
+            resident_city = await get_optional_model_object_by_code_or_name(
+                model=AddressProvince,
+                model_code=resident_city_name,
+                model_name=resident_city_name,
+                session=self.oracle_session
+            )
+
+            resident_dropdown_city = dropdown(resident_city) if resident_city else dropdown_name(resident_city)
+
+            resident_district_name = resident_address["district_name"]
+            resident_district = await get_optional_model_object_by_code_or_name(
+                model=AddressDistrict,
+                model_code=resident_district_name,
+                model_name=resident_district_name,
+                session=self.oracle_session
+            )
+
+            resident_dropdown_district = dropdown(resident_district) if resident_district \
+                else dropdown_name(resident_district)
+
+            resident_address_ward = resident_address["ward_name"]
+            resident_ward = await get_optional_model_object_by_code_or_name(
+                model=AddressWard,
+                model_code=resident_address_ward,
+                model_name=resident_address_ward,
+                session=self.oracle_session
+            )
+
+            resident_dropdown_ward = dropdown(resident_ward) if resident_ward else dropdown_name(resident_ward)
+
+            contact_city_name = contact_address["contact_address_city_name"]
+            contact_city = await get_optional_model_object_by_code_or_name(
+                model=AddressProvince,
+                model_code=contact_city_name,
+                model_name=contact_city_name,
+                session=self.oracle_session
+            )
+
+            contact_dropdown_city = dropdown(contact_city) if contact_city else dropdown_name(contact_city)
+
+            contact_district_name = contact_address["contact_address_district_name"]
+            contact_district = await get_optional_model_object_by_code_or_name(
+                model=AddressDistrict,
+                model_code=contact_district_name,
+                model_name=contact_district_name,
+                session=self.oracle_session
+            )
+
+            contact_dropdown_district = dropdown(contact_district) if contact_district \
+                else dropdown_name(contact_district)
+
+            contact_address_ward = contact_address["contact_address_ward_name"]
+            contact_ward = await get_optional_model_object_by_code_or_name(
+                model=AddressWard,
+                model_code=contact_address_ward,
+                model_name=contact_address_ward,
+                session=self.oracle_session
+            )
+
+            contact_dropdown_ward = dropdown(contact_ward) if contact_ward else dropdown_name(contact_ward)
+
+            identity_document = customer_relationship_data['id_info']
 
             customer_relationship_item.update(
                 id=relationship.customer_personal_relationship_cif_number,
@@ -72,10 +160,8 @@ class CtrCustomerRelationship(BaseController):
                     customer_relationship=dropdown(relationship_type),
                     date_of_birth=string_to_date(customer_relationship_data['birthday'],
                                                  _format=DATETIME_INPUT_OUTPUT_FORMAT),
-                    gender=dropdown_name(customer_relationship_data["gender"])
-                    if customer_relationship_data["gender"] else DROPDOWN_NONE_DICT,
-                    nationality=dropdown_name(customer_relationship_data["nationality_code"])
-                    if customer_relationship_data["nationality_code"] else DROPDOWN_NONE_DICT,
+                    gender=dropdown_gender,
+                    nationality=dropdown_nationality,
                     telephone_number=customer_relationship_data['telephone'],
                     mobile_number=customer_relationship_data['mobile_phone'],
                     email=customer_relationship_data['email']),
@@ -90,23 +176,16 @@ class CtrCustomerRelationship(BaseController):
                 ),
                 address_information=dict(
                     resident_address=dict(
-                        province=dropdown_name(resident_address["city_name"])
-                        if resident_address["city_name"] else DROPDOWN_NONE_DICT,
-                        district=dropdown_name(resident_address["district_name"])
-                        if resident_address["city_name"] else DROPDOWN_NONE_DICT,
-                        ward=dropdown_name(resident_address["ward_name"])
-                        if resident_address["city_name"] else DROPDOWN_NONE_DICT,
-                        number_and_street=resident_address["line"] if resident_address["line"] else None
+                        province=resident_dropdown_city,
+                        district=resident_dropdown_district,
+                        ward=resident_dropdown_ward,
+                        number_and_street=resident_address["line"]
                     ),
                     contact_address=dict(
-                        province=dropdown_name(contact_address["contact_address_city_name"])
-                        if contact_address["contact_address_city_name"] else DROPDOWN_NONE_DICT,
-                        district=dropdown_name(contact_address["contact_address_district_name"])
-                        if contact_address["contact_address_district_name"] else DROPDOWN_NONE_DICT,
-                        ward=dropdown_name(contact_address["contact_address_ward_name"])
-                        if contact_address["contact_address_ward_name"] else DROPDOWN_NONE_DICT,
+                        province=contact_dropdown_city,
+                        district=contact_dropdown_district,
+                        ward=contact_dropdown_ward,
                         number_and_street=contact_address["contact_address_line"]
-                        if contact_address["contact_address_line"] else None
                     )))
             relationship_details.append(customer_relationship_item)
 

@@ -781,6 +781,8 @@ async def repos_upload_identity_document_and_ocr(
     ocr_response_data.update({
         'ocr_result_ekyc': {
             "document_type": ocr_response.get('document_type'),
+            "uuid": ocr_response.get('uuid'),
+            "file_name": ocr_response.get('file_name'),
             "data": ocr_response.get('data')
         }
     })
