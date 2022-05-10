@@ -1,3 +1,5 @@
+from typing import Union
+
 from fastapi import APIRouter, Body, Depends, Path
 from starlette import status
 
@@ -5,6 +7,7 @@ from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.cif.base_field import CustomField
+from app.api.v1.endpoints.cif.schema import GWCustomerDetailRequest
 from app.api.v1.endpoints.third_parties.gw.customer.controller import (
     CtrGWCustomer
 )
@@ -17,10 +20,15 @@ from app.api.v1.endpoints.third_parties.gw.customer.example import (
     CUSTOMER_INFO_LIST_SUCCESS_EXAMPLE
 )
 from app.api.v1.endpoints.third_parties.gw.customer.schema import (
-    CustomerInfoListCIFRequest, GWAuthorizedListResponse,
-    GWCoownerListResponse, GWCustomerCheckExistRequest,
-    GWCustomerCheckExistResponse, GWCustomerInfoDetailResponse,
-    GWCustomerInfoListResponse
+    CustomerInfoListCIFRequest, DebitCardByCIFNumberResponse,
+    GuardianOrCustomerRelationshipByCIFNumberResponse,
+    GWAuthorizedListResponse, GWCoownerListResponse,
+    GWCustomerCheckExistRequest, GWCustomerCheckExistResponse,
+    GWCustomerInfoDetailResponse, GWCustomerInfoListResponse
+)
+from app.utils.constant.gw import (
+    GW_REQUEST_PARAMETER_DEBIT_CARD,
+    GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP
 )
 
 router = APIRouter()
@@ -76,24 +84,39 @@ async def view_gw_check_exist_casa_account_info(
     name="[GW] Lấy chi tiết thông tin khách hàng",
     description="Lấy chi tiết thông tin khách hàng theo CIF",
     responses=swagger_response(
-        response_model=ResponseData[GWCustomerInfoDetailResponse],
+        response_model=Union[
+            ResponseData[GWCustomerInfoDetailResponse],
+            ResponseData[GuardianOrCustomerRelationshipByCIFNumberResponse]
+        ],
         success_examples=CUSTOMER_INFO_DETAIL_SUCCESS_EXAMPLE,
         success_status_code=status.HTTP_200_OK
     )
 )
 async def view_gw_get_customer_info_detail(
     cif_number: str = CustomField().CIFNumberPath,
+    request: GWCustomerDetailRequest = Body(...),
     current_user=Depends(get_current_user_from_header())
 ):
+    parameter = request.parameter
+
     gw_customer_info_detail = await CtrGWCustomer(current_user).ctr_gw_get_customer_info_detail(
-        cif_number=cif_number
+        cif_number=cif_number,
+        parameter=parameter
     )
-    return ResponseData[GWCustomerInfoDetailResponse](**gw_customer_info_detail)
+
+    if parameter == GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP:
+        return ResponseData[GuardianOrCustomerRelationshipByCIFNumberResponse](**gw_customer_info_detail)
+
+    elif parameter == GW_REQUEST_PARAMETER_DEBIT_CARD:
+        return ResponseData[DebitCardByCIFNumberResponse](**gw_customer_info_detail)
+
+    else:
+        return ResponseData[GWCustomerInfoDetailResponse](**gw_customer_info_detail)
 
 
 @router.post(
     path="/coowner/{account_number}/",
-    name="[GW] Lấy danh sách đồng sở hữu theo số tài khoản",
+    name="[GW] Lấy dash sách đồng sở hữu theo số tài khoản",
     description="Lấy danh sách đồng sở hữu theo số tài khoản",
     responses=swagger_response(
         response_model=ResponseData[GWCoownerListResponse],
