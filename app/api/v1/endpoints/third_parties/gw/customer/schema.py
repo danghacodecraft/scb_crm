@@ -8,7 +8,7 @@ from app.api.v1.endpoints.cif.base_field import CustomField
 from app.api.v1.endpoints.third_parties.gw.schema import (
     GWBranchDropdownResponse
 )
-from app.api.v1.schemas.utils import OptionalDropdownResponse
+from app.api.v1.schemas.utils import DropdownResponse, OptionalDropdownResponse
 
 
 class CustomerInfoCIFResponse(BaseSchema):
@@ -209,3 +209,20 @@ class GuardianOrCustomerRelationshipByCIFNumberResponse(BaseSchema):
         description="Thông tin giấy tờ định danh khách hàng"
     )
     address_info: GWCustomerAddressInfoRes = Field(..., description="Thông tin địa chỉ khách hàng")
+
+
+class NameOnCardResponse(BaseSchema):
+    last_name_on_card: Optional[str] = Field(..., description="Tên")
+    middle_name_on_card: Optional[str] = Field(..., description="tên lót")
+    first_name_on_card: Optional[str] = Field(..., description="Họ")
+
+
+class CardDeliveryAddressResponse(BaseSchema):
+    branch: Optional[DropdownResponse] = Field(..., description=" chi nhánh scb nhận thẻ")
+    delivery_address: Optional[GWAddressInfo] = Field(..., descripion="Địa chỉ nhân thẻ")
+
+
+class DebitCardByCIFNumberResponse(BaseSchema):
+    cif_number: str = Field(..., description="Số CIF")
+    name_on_card: NameOnCardResponse = Field(..., description="Tên trên thẻ")
+    card_delivery_address: CardDeliveryAddressResponse = Field(..., description="Địa chỉ giao nhận thẻ")

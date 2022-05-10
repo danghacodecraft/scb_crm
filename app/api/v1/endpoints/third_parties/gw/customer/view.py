@@ -20,13 +20,14 @@ from app.api.v1.endpoints.third_parties.gw.customer.example import (
     CUSTOMER_INFO_LIST_SUCCESS_EXAMPLE
 )
 from app.api.v1.endpoints.third_parties.gw.customer.schema import (
-    CustomerInfoListCIFRequest,
+    CustomerInfoListCIFRequest, DebitCardByCIFNumberResponse,
     GuardianOrCustomerRelationshipByCIFNumberResponse,
     GWAuthorizedListResponse, GWCoownerListResponse,
     GWCustomerCheckExistRequest, GWCustomerCheckExistResponse,
     GWCustomerInfoDetailResponse, GWCustomerInfoListResponse
 )
 from app.utils.constant.gw import (
+    GW_REQUEST_PARAMETER_DEBIT_CARD,
     GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP
 )
 
@@ -105,6 +106,10 @@ async def view_gw_get_customer_info_detail(
 
     if parameter == GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP:
         return ResponseData[GuardianOrCustomerRelationshipByCIFNumberResponse](**gw_customer_info_detail)
+
+    elif parameter == GW_REQUEST_PARAMETER_DEBIT_CARD:
+        return ResponseData[DebitCardByCIFNumberResponse](**gw_customer_info_detail)
+
     else:
         return ResponseData[GWCustomerInfoDetailResponse](**gw_customer_info_detail)
 
