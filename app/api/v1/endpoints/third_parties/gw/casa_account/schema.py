@@ -158,3 +158,19 @@ class GWReportStatementHistoryAccountInfoResponse(BaseSchema):
     credit: Optional[int] = Field(..., description="Ghi có")
     debit: Optional[int] = Field(..., description="Ghi nợ")
     balance: Optional[int] = Field(..., description="Số dư")
+
+
+class GWReportStatementHistoryTDAccountInfoRequest(BaseSchema):
+    account_number: str = Field(..., description="Số tài khoản")
+    from_date: date = Field(date(year=2020, month=4, day=20), description="Từ ngày")
+    to_date: date = Field(date(year=2025, month=7, day=20), description="Đến ngày")
+
+
+class GWReportStatementHistoryTDAccountInfoResponse(BaseSchema):
+    code: Optional[str] = Field(..., description="Mã giao dịch")
+    transaction_date: Optional[date] = Field(..., description="Ngày giao dịch")
+    description: Optional[str] = Field(..., description="Chi tiết giao dịch")
+    amount: Optional[str] = Field(..., description="Số tiền")
+    rate: Optional[str] = Field(..., description="Lãi suất")
+    balance: Optional[int] = Field(..., description="Số dư cuối giao dịch")
+    expire_date: Optional[date] = Field(..., description='Ngày đến hạn')
