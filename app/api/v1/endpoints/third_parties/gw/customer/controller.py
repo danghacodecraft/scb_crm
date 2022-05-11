@@ -775,9 +775,9 @@ class CtrGWCustomer(BaseController):
                 )
             ))
 
-            response_data.update({
-                "authorized_info_list": data_response,
-                "total_items": len(data_response)
-            })
+        response_data.update({
+            "authorized_info_list": data_response,
+            "total_items": len(data_response)
+        })
 
-            return self.response(data=response_data)
+        return self.response(data=response_data)
