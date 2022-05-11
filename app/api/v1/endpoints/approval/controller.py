@@ -980,4 +980,4 @@ class CtrApproval(BaseController):
                 detail=', '.join(set(errors)),
                 error_status_code=status.HTTP_403_FORBIDDEN
             )
-        return self.response(data=(face_transactions, fingerprint_transactions, signature_transactions))
+        return face_transactions, fingerprint_transactions, signature_transactions
