@@ -2,7 +2,10 @@ from datetime import date
 
 from app.api.base.repository import ReposReturn
 from app.settings.event import service_gw
-from app.utils.constant.gw import GW_TRANSACTION_NAME_STATEMENT
+from app.utils.constant.gw import (
+    GW_ENDPOINT_URL_RETRIEVE_REPORT_TD_FROM_CIF,
+    GW_TRANSACTION_NAME_COLUMN_CHART_TD, GW_TRANSACTION_NAME_STATEMENT
+)
 from app.utils.error_messages import ERROR_CALL_SERVICE_GW
 
 
@@ -57,3 +60,24 @@ async def ctr_gw_get_statement_deposit_account_td(
     )
 
     return ReposReturn(data=gw_report_history_td_account_info)
+
+
+async def repos_gw_get_column_chart_deposit_account_info(
+    account_number: str, current_user
+):
+    current_user = current_user.user_info
+    is_success, gw_get_column_chart_deposit_account_info = await service_gw.select_report_td_from_cif_data_input(
+        account_number=account_number,
+        current_user=current_user,
+        endpoint=GW_ENDPOINT_URL_RETRIEVE_REPORT_TD_FROM_CIF,
+        transaction_name=GW_TRANSACTION_NAME_COLUMN_CHART_TD
+    )
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="gw_get_column_chart_deposit_account_info",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(gw_get_column_chart_deposit_account_info)
+        )
+
+    return ReposReturn(data=gw_get_column_chart_deposit_account_info)
