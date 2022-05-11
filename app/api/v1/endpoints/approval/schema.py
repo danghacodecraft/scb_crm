@@ -14,7 +14,7 @@ class ProcessInfoResponse(BaseSchema):
     position: OptionalDropdownResponse = Field(..., description="Chức vụ")
     # id: str = Field(..., description="Id log")
     created_at: datetime = Field(..., description="Thời gian tạo")
-    content: str = Field(..., description="Nội dung log ")
+    content: Optional[str] = Field(..., description="Nội dung log ")
 
 
 class CifApprovalProcessResponse(BaseSchema):
