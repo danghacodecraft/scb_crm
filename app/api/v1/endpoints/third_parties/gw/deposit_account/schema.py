@@ -104,13 +104,15 @@ class GWDepositAccountByCIFNumberResponse(BaseSchema):
 
 
 class GWColumnChartDepositAccountRequest(BaseSchema):
-    account_number: str = Field(..., description="Số tài khoản", example="06628960017")
+    account_number: str = Field(..., description="Số tài khoản", example="07051360001")
+    from_date: Optional[date] = Field(..., description="Từ ngày", example=None)
+    to_date: Optional[date] = Field(..., description="Đến ngày", example="2019-01-01")
 
 
 class GWColumnChartDepositAccountResponse(BaseSchema):
     year: Optional[int] = Field(..., description="Năm giao dịch")
     month: Optional[str] = Field(..., description="Tháng giao dịch")
-    value: Optional[int] = Field(..., description="Giá trị giao dịch")
+    value: Optional[float] = Field(..., description="Giá trị giao dịch")
 
 
 class GWReportStatementHistoryTDAccountInfoRequest(BaseSchema):
