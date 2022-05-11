@@ -163,7 +163,7 @@ class CtrTemplateDetail(BaseController):
                 data_request.update({"S1.A.1.9.12": ["Tài khoản thanh toán"]})
                 data_request.update({"S1.A.1.9.13": e_banking.EBankingInfo.account_payment_fee})
             else:
-                data_request.update({"S1.A.1.9.15.1": "Tiền mặt"})
+                data_request.update({"S1.A.1.9.15.1": ["Tiền mặt"]})
             # TODO
             # "S1.A.1.2.5"
 
@@ -351,7 +351,7 @@ class CtrTemplateDetail(BaseController):
                 data_request.update({"S1.A.1.9.12": ["Tài khoản thanh toán/Current account:"]})
                 data_request.update({"S1.A.1.9.13": e_banking.EBankingInfo.account_payment_fee})
             else:
-                data_request.update({"S1.A.1.9.15.1": "Tiền mặt/Cash"})
+                data_request.update({"S1.A.1.9.15.1": ["Tiền mặt/Cash"]})
             # TODO
             # "S1.A.1.2.5"
 
