@@ -5,9 +5,6 @@ from pydantic import Field
 
 from app.api.base.schema import BaseSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
-from app.api.v1.endpoints.third_parties.gw.schema import (
-    GWBranchDropdownResponse
-)
 from app.api.v1.schemas.utils import DropdownResponse, OptionalDropdownResponse
 
 
@@ -76,7 +73,7 @@ class GWCustomerInfoItemResponse(BaseSchema):
     customer_type: OptionalDropdownResponse = Field(..., description="Loại khách hàng (cá nhân hoặc doanh nghiệp)")
     cif_info: GWCustomerCIFInfoResponse = Field(..., description="Thông tin CIF")
     id_info: GWCustomerIDInfoResponse = Field(..., description="Thông tin giấy tờ định danh")
-    branch_info: GWBranchDropdownResponse = Field(..., description="Thông tin đơn vị")
+    branch_info: OptionalDropdownResponse = Field(..., description="Thông tin đơn vị")
     address_info: GWCustomerListAddressInfo = Field(..., description="Thông tin địa chỉ")
 
 
