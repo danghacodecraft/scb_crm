@@ -41,8 +41,8 @@ class GWCustomerIDInfoResponse(BaseSchema):
         ..., description="CMND/Hộ chiếu, số đăng ký kinh doanh nếu là khách hàng doanh nghiệp"
     )
     name: Optional[str] = Field(..., description="Tên giấy tờ")
-    issued_date: Optional[str] = Field(..., description="Ngày cấp chứng minh nhân dân hoặc hộ chiếu")
-    expired_date: Optional[str] = Field(..., description="Ngày hết hạn chứng minh nhân dân hoặc hộ chiếu")
+    issued_date: Optional[date] = Field(..., description="Ngày cấp chứng minh nhân dân hoặc hộ chiếu")
+    expired_date: Optional[date] = Field(..., description="Ngày hết hạn chứng minh nhân dân hoặc hộ chiếu")
     place_of_issue: OptionalDropdownResponse = Field(..., description="Nơi cấp chứng minh nhân dân hoặc hộ chiếu")
 
 
@@ -65,7 +65,7 @@ class GWCustomerDetailAddressInfo(BaseSchema):
 
 class GWCustomerInfoItemResponse(BaseSchema):
     fullname_vn: Optional[str] = Field(..., description="Họ và tên")
-    date_of_birth: Optional[str] = Field(..., description="Ngày sinh")
+    date_of_birth: Optional[date] = Field(..., description="Ngày sinh")
     martial_status: OptionalDropdownResponse = Field(..., description="Tình trạng hôn nhân")
     gender: OptionalDropdownResponse = Field(..., description="Giới tính")
     email: Optional[str] = Field(..., description="Địa chỉ email")
@@ -121,23 +121,23 @@ class GWCustomerInfoDetailResponse(BaseSchema):
     branch_info: OptionalDropdownResponse = Field(..., description="Thông tin đơn vị")
 
 
-class GWCoownerResponse(BaseSchema):
-    full_name_vn: str = Field(..., description="Họ và tên")
-    date_of_birth: str = Field(..., description="Ngày sinh")
-    gender: str = Field(..., description="Giới tính")
-    email: str = Field(..., description="Địa chỉ email")
-    nationality_code: str = Field(..., description="mã quốc tịch")
-    mobile_phone: str = Field(..., description="Điện thoại di động")
-    customer_type: str = Field(..., description="Loại khách hàng")
-    coowner_relationship: str = Field(..., description="Mối quan hệ đồng sở hữu")
+class GWCoOwnerResponse(BaseSchema):
+    full_name_vn: Optional[str] = Field(..., description="Họ và tên")
+    date_of_birth: Optional[str] = Field(..., description="Ngày sinh")
+    gender: OptionalDropdownResponse = Field(..., description="Giới tính")
+    email: Optional[str] = Field(..., description="Địa chỉ email")
+    nationality: OptionalDropdownResponse = Field(..., description="mã quốc tịch")
+    mobile_phone: Optional[str] = Field(..., description="Điện thoại di động")
+    customer_type: OptionalDropdownResponse = Field(..., description="Loại khách hàng")
+    co_owner_relationship: OptionalDropdownResponse = Field(..., description="Mối quan hệ đồng sở hữu")
     cif_info: GWCustomerCIFInfoResponse = Field(..., description="Thông tin CIF")
     id_info: GWCustomerIDInfoResponse = Field(..., description="Thông tin giấy tờ định danh")
     address_info: GWCustomerListAddress = Field(..., description="Thông tin địa chỉ")
 
 
-class GWCoownerListResponse(BaseSchema):
+class GWCoOwnerListResponse(BaseSchema):
     total_items: int = Field(..., description="Số lượng khách hàng")
-    coowner_info_list: List[GWCoownerResponse] = Field(..., description="Danh sách khách hàng")
+    co_owner_info_list: List[GWCoOwnerResponse] = Field(..., description="Danh sách khách hàng")
 
 
 class GWAuthorizedResponse(BaseSchema):
