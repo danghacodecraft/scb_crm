@@ -276,7 +276,7 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
-    async def get_report_statement_casa_td_account(
+    async def get_report_statement_td_account(
             self,
             current_user: UserInfoResponse,
             account_number: str,

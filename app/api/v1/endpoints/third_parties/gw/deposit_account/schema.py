@@ -101,3 +101,9 @@ class GWDepositAccountByCIFNumberResponse(BaseSchema):
     total_items: Optional[int] = Field(..., description="Số lượng tài khoản")
     account_info_list: List[GWDepositAccountByCIFNumberInfoResponse] = Field(
         ..., description="Thông tin danh sách tài khoản")
+
+
+class GWReportStatementHistoryTDAccountInfoRequest(BaseSchema):
+    account_number: str = Field(..., description="Số tài khoản")
+    from_date: date = Field(date(year=2020, month=4, day=20), description="Từ ngày")
+    to_date: date = Field(date(year=2025, month=7, day=20), description="Đến ngày")

@@ -126,7 +126,33 @@ DEPOSIT_ACCOUNT_BY_CIF_NUMBER_SUCCESS_EXAMPLE = {
         }
     }
 }
-
+STATEMENT_DEPOSIT_ACCOUNT_TD_EXAMPLE = {
+    "example": {
+        "value": {
+            "data": [
+                {
+                    "code": "137DEBK2211700FP",
+                    "transaction_date": "2022-04-27",
+                    "description": "Mở sổ tiết kiệm onl trên MB",
+                    "amount": "40000000",
+                    "rate": "7.0",
+                    "balance": 80000000,
+                    "expire_date": "2023-04-27"
+                },
+                {
+                    "code": "137DEBK2211700FP",
+                    "transaction_date": "2022-04-27",
+                    "description": "Mở sổ tiết kiệm onl trên IB",
+                    "amount": "40000000",
+                    "rate": "7.0",
+                    "balance": 80000000,
+                    "expire_date": "2023-04-27"
+                }
+            ],
+            "errors": []
+        }
+    }
+}
 DEPOSIT_ACCOUNT_TD_SUCCESS_EXAMPLE = {
     "example": {
         "value": {
