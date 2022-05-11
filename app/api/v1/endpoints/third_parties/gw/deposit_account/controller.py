@@ -5,6 +5,7 @@ from app.api.v1.endpoints.third_parties.gw.deposit_account.repository import (
     repos_gw_get_deposit_account_by_cif_number, repos_gw_get_deposit_account_td
 )
 from app.api.v1.endpoints.third_parties.gw.deposit_account.schema import (
+    GWColumnChartDepositAccountRequest,
     GWReportStatementHistoryTDAccountInfoRequest
 )
 from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
@@ -183,11 +184,16 @@ class CtrGWDepositAccount(BaseController):
 
     async def ctr_gw_get_column_chart_deposit_account_info(
         self,
-        account_number: str
+        request: GWColumnChartDepositAccountRequest
     ):
         current_user = self.current_user
+
+        account_number = request.account_number
+        from_date = request.from_date
+        to_date = request.to_date
+
         gw_column_chart_deposit_account_infos = self.call_repos(await repos_gw_get_column_chart_deposit_account_info(
-            account_number=account_number, current_user=current_user
+            account_number=account_number, current_user=current_user, from_date=from_date, to_date=to_date
         ))
         data_output = gw_column_chart_deposit_account_infos['selectReportTDFromCif_out']['data_output']
         report_td_accounts = data_output['report_info']['report_td_account']

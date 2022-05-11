@@ -906,7 +906,9 @@ class ServiceGW:
             current_user: UserInfoResponse,
             transaction_name: str,
             endpoint: str,
-            account_number: str
+            account_number: str,
+            from_date: Optional[date],
+            to_date: Optional[date]
     ):
         request_data = {
             "selectReportTDFromCif_in": {
@@ -925,8 +927,8 @@ class ServiceGW:
                         "transaction_name": transaction_name,
                         "transaction_value": {
                             "P_ACC": account_number,
-                            "P_FDATE": "",
-                            "P_TDATE": ""
+                            "P_FDATE": date_to_string(from_date),
+                            "P_TDATE": date_to_string(to_date)
                         }
                     }
                 }

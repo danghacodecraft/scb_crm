@@ -73,7 +73,6 @@ async def view_gw_get_statement_deposit_account_td_info(
     description="Thống kê biến động doanh số tiền gửi bình quân trong 6 tháng (biểu đồ cột màn hình tiền gửi)",
     responses=swagger_response(
         response_model=ResponseData[List[GWColumnChartDepositAccountResponse]],
-        success_examples=DEPOSIT_ACCOUNT_TD_SUCCESS_EXAMPLE,
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -84,7 +83,7 @@ async def view_gw_get_column_chart_deposit_account_info(
     gw_column_chart_deposit_account_info = await CtrGWDepositAccount(
         current_user
     ).ctr_gw_get_column_chart_deposit_account_info(
-        account_number=request.account_number
+        request=request
     )
     return ResponseData[List[GWColumnChartDepositAccountResponse]](**gw_column_chart_deposit_account_info)
 
