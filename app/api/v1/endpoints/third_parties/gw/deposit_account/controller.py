@@ -1,6 +1,7 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.deposit_account.repository import (
     ctr_gw_get_statement_deposit_account_td,
+    repos_gw_get_column_chart_deposit_account_info,
     repos_gw_get_deposit_account_by_cif_number, repos_gw_get_deposit_account_td
 )
 from app.api.v1.endpoints.third_parties.gw.deposit_account.schema import (
@@ -179,3 +180,23 @@ class CtrGWDepositAccount(BaseController):
             ))
 
         return self.response(data=statements)
+
+    async def ctr_gw_get_column_chart_deposit_account_info(
+        self,
+        account_number: str
+    ):
+        current_user = self.current_user
+        gw_column_chart_deposit_account_infos = self.call_repos(await repos_gw_get_column_chart_deposit_account_info(
+            account_number=account_number, current_user=current_user
+        ))
+        data_output = gw_column_chart_deposit_account_infos['selectReportTDFromCif_out']['data_output']
+        report_td_accounts = data_output['report_info']['report_td_account']
+        columns = []
+        for column in report_td_accounts:
+            columns.append(dict(
+                year=column['tran_year'],
+                month=column['tran_month'],
+                value=column['tran_value']
+            ))
+
+        return self.response(data=columns)

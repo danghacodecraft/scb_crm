@@ -19,6 +19,7 @@ from app.api.v1.endpoints.third_parties.gw.deposit_account.example import (
     STATEMENT_DEPOSIT_ACCOUNT_TD_EXAMPLE
 )
 from app.api.v1.endpoints.third_parties.gw.deposit_account.schema import (
+    GWColumnChartDepositAccountRequest, GWColumnChartDepositAccountResponse,
     GWDepositAccountByCIFNumberResponse, GWDepositAccountTDResponse,
     GWReportStatementHistoryTDAccountInfoRequest
 )
@@ -64,6 +65,28 @@ async def view_gw_get_statement_deposit_account_td_info(
         request=request
     )
     return ResponseData[List[GWReportStatementHistoryTDAccountInfoResponse]](**gw_statement_account_td_info)
+
+
+@router.post(
+    path="/column-chart/",
+    name="[Gw] Biểu Đồ Cột",
+    description="Thống kê biến động doanh số tiền gửi bình quân trong 6 tháng (biểu đồ cột màn hình tiền gửi)",
+    responses=swagger_response(
+        response_model=ResponseData[List[GWColumnChartDepositAccountResponse]],
+        success_examples=DEPOSIT_ACCOUNT_TD_SUCCESS_EXAMPLE,
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_get_column_chart_deposit_account_info(
+        request: GWColumnChartDepositAccountRequest = Body(...),
+        current_user=Depends(get_current_user_from_header())
+):
+    gw_column_chart_deposit_account_info = await CtrGWDepositAccount(
+        current_user
+    ).ctr_gw_get_column_chart_deposit_account_info(
+        account_number=request.account_number
+    )
+    return ResponseData[List[GWColumnChartDepositAccountResponse]](**gw_column_chart_deposit_account_info)
 
 
 @router.post(

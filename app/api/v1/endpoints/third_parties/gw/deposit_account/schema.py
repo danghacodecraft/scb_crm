@@ -103,6 +103,16 @@ class GWDepositAccountByCIFNumberResponse(BaseSchema):
         ..., description="Thông tin danh sách tài khoản")
 
 
+class GWColumnChartDepositAccountRequest(BaseSchema):
+    account_number: str = Field(..., description="Số tài khoản", example="06628960017")
+
+
+class GWColumnChartDepositAccountResponse(BaseSchema):
+    year: Optional[int] = Field(..., description="Năm giao dịch")
+    month: Optional[str] = Field(..., description="Tháng giao dịch")
+    value: Optional[int] = Field(..., description="Giá trị giao dịch")
+
+
 class GWReportStatementHistoryTDAccountInfoRequest(BaseSchema):
     account_number: str = Field(..., description="Số tài khoản")
     from_date: date = Field(date(year=2020, month=4, day=20), description="Từ ngày")
