@@ -61,7 +61,6 @@ class CtrGWCustomer(BaseController):
             id_info = customer_info['id_info']
 
             address_info = customer_info['address_info']
-            branch_info = customer_info['branch_info']
 
             date_of_birth = date_string_to_other_date_string_format(
                 date_input=customer_info['birthday'],
@@ -138,6 +137,17 @@ class CtrGWCustomer(BaseController):
             dropdown_place_of_issue = dropdown(place_of_issue) if place_of_issue else dropdown_name(
                 place_of_issue_code_or_name)
 
+            branch_info = customer_info['branch_info']
+            branch_name = branch_info["branch_name"]
+            branch_code = branch_info["branch_code"]
+            branch = await get_optional_model_object_by_code_or_name(
+                model=Branch,
+                model_code=branch_code,
+                model_name=branch_name,
+                session=self.oracle_session
+            )
+            dropdown_branch = optional_dropdown(obj=branch, obj_name=branch_name, obj_code=branch_code)
+
             customer_list_info.append(dict(
                 fullname_vn=customer_info['full_name'],
                 date_of_birth=date_of_birth,
@@ -163,10 +173,7 @@ class CtrGWCustomer(BaseController):
                 address_info=dict(
                     address_full=address_info['address_full']
                 ),
-                branch_info=dict(
-                    name=branch_info['branch_name'],
-                    code=branch_info['branch_code'],
-                )
+                branch_info=dropdown_branch
             ))
             cif_numbers.append(cif_info['cif_num'])
 
