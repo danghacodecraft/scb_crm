@@ -1,17 +1,16 @@
 from typing import Optional
 
-from pydantic import BaseModel
-
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.repository import (
     get_optional_model_object_by_code_or_name
 )
+from app.third_parties.oracle.base import Base
 from app.utils.functions import dropdown, dropdown_name
 
 
 class CtrGW(BaseController):
     async def dropdown_mapping_crm_model_or_dropdown_name(
-            self, model: BaseModel, name: str, code: Optional[str] = None) -> dict:
+            self, model: Base, name: str, code: Optional[str] = None) -> dict:
         """
         Input: code hoặc name
         Output: dropdown object
