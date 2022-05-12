@@ -35,12 +35,22 @@ class ServiceEKYC:
         await self.session.close()
         self.session = None
 
-    async def ocr_identity_document(self, file: bytes, filename: str, identity_type: int) -> Tuple[bool, dict]:
+    async def ocr_identity_document(
+            self,
+            file: bytes,
+            filename: str,
+            identity_type: int,
+            uuid: str = None
+    ) -> Tuple[bool, dict]:
         api_url = f"{self.url}/api/v1/card-service/ocr/"
 
         headers = self.headers
-        # thay đổi giá trị x-transaction-id
+        # thay đổi giá trị x-transaction-id uuid = None
         headers['X-TRANSACTION-ID'] = "CRM_"
+
+        if uuid:
+            UUIDV4 = convert_string_to_uuidv4(uuid)
+            headers['X-TRANSACTION-ID'] = f"CRM_{UUIDV4}"
 
         form_data = aiohttp.FormData()
         form_data.add_field("file", value=file, filename=filename)
@@ -64,7 +74,7 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def add_face(self, file: bytes):
+    async def add_face(self, file: bytes, uuid: str = None):
         """
         Thêm 1 ảnh người vào trong eKYC
         """
@@ -75,6 +85,10 @@ class ServiceEKYC:
         headers = self.headers
         # thay đổi giá trị x-transaction-id
         headers['X-TRANSACTION-ID'] = "CRM_"
+
+        if uuid:
+            UUIDV4 = convert_string_to_uuidv4(uuid)
+            headers['X-TRANSACTION-ID'] = f"CRM_{UUIDV4}"
 
         try:
             async with self.session.post(url=api_url, data=form_data, headers=headers,
@@ -101,7 +115,12 @@ class ServiceEKYC:
                 }),
             }
 
-    async def compare_face(self, face_uuid: str, avatar_image_uuid: str):
+    async def compare_face(
+            self,
+            face_uuid: str,
+            avatar_image_uuid: str,
+            uuid: str = None
+    ):
         """
         So sánh khuôn mặt trong 2 ảnh
         """
@@ -115,6 +134,10 @@ class ServiceEKYC:
             "image_face_1_uuid": face_uuid,
             "image_face_2_uuid": avatar_image_uuid
         }
+
+        if uuid:
+            UUIDV4 = convert_string_to_uuidv4(uuid)
+            headers['X-TRANSACTION-ID'] = f"CRM_{UUIDV4}"
 
         try:
             async with self.session.post(url=api_url, json=data, headers=headers, ssl=False) as response:
@@ -645,18 +668,20 @@ class ServiceEKYC:
                         "detail": f"Invalid: {url}"
                     }
 
-    async def save_customer_ekyc(self, body_data: dict):
+    async def save_customer_ekyc(self, body_data: dict, uuid: str = None):
         api_url = f"{self.url}/api/v1/customer-service/customers/"
 
         headers = self.headers
         # thay đổi giá trị x-transaction-id+
         headers['X-TRANSACTION-ID'] = "CRM_"
+        if uuid:
+            UUIDV4 = convert_string_to_uuidv4(uuid)
+            headers['X-TRANSACTION-ID'] = f"CRM_{UUIDV4}"
 
         try:
             async with self.session.post(url=api_url, json=body_data, headers=headers, ssl=False) as response:
                 logger.log("SERVICE", f"[EKYC SAVE CUSTOMER] {response.status} : {api_url}")
                 response_data = await response.json()
-                print('response_data', response_data)
                 if response.status == status.HTTP_201_CREATED:
                     return True, response_data
                 else:
@@ -668,7 +693,12 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def add_face_ekyc(self, file, filename):
+    async def add_face_ekyc(
+            self,
+            file: bytes,
+            filename: str,
+            uuid: str = None
+    ):
 
         api_url = f"{self.url}/api/v1/face-service/add/"
 
@@ -679,6 +709,10 @@ class ServiceEKYC:
 
         # thay đổi giá trị x-transaction-id
         headers['X-TRANSACTION-ID'] = "CRM_"
+
+        if uuid:
+            UUIDV4 = convert_string_to_uuidv4(uuid)
+            headers['X-TRANSACTION-ID'] = f"CRM_{UUIDV4}"
 
         try:
             async with self.session.post(url=api_url, data=form_data, headers=headers,

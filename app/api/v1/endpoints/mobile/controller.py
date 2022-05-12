@@ -11,6 +11,7 @@ from app.api.v1.endpoints.mobile.repository import (
     repos_get_mobile_identity, repos_get_total_item
 )
 from app.api.v1.endpoints.mobile.schema import IdentityMobileRequest
+from app.api.v1.endpoints.repository import repos_create_booking
 from app.api.v1.validator import validate_history_data
 from app.settings.config import DATE_INPUT_OUTPUT_EKYC_FORMAT
 from app.settings.event import service_ekyc
@@ -74,6 +75,26 @@ class CtrIdentityMobile(BaseController):
         ocr_data_front_side = None
         ocr_data_back_side = None
         upload_back_side = None
+
+        ###############################################################################################################
+        # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CIF
+        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
+            business_type_id=BUSINESS_TYPE_INIT_CIF
+        )
+
+        (saving_transaction_stage_status, saving_transaction_stage, saving_transaction_daily, saving_transaction_sender,
+         saving_transaction_receiver) = transaction_datas
+
+        booking = self.call_repos(await repos_create_booking(
+            transaction_id=saving_transaction_daily['transaction_id'],
+            session=self.oracle_session,
+            current_user=current_user.user_info
+        ))
+        new_booking_id, booking_code = booking
+
+        # if booking.is_error:
+        #     return self.response_exception(msg=booking.msg, detail=booking.detail)
+
         if identity_type == IDENTITY_DOCUMENT_TYPE_PASSPORT:
             ocr_data_front_side = self.call_repos(await repos_upload_identity_document_and_ocr(
                 image_file=front_side_image,
@@ -99,6 +120,7 @@ class CtrIdentityMobile(BaseController):
                     image_file=front_side_image,
                     image_file_name=front_side_image_name,
                     identity_type=EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD,
+                    booking_id=new_booking_id,
                     session=self.oracle_session
                 ))
 
@@ -106,6 +128,7 @@ class CtrIdentityMobile(BaseController):
                     image_file=back_side_image,
                     image_file_name=back_side_image_name,
                     identity_type=EKYC_IDENTITY_TYPE_BACK_SIDE_IDENTITY_CARD,
+                    booking_id=new_booking_id,
                     session=self.oracle_session
                 )))
 
@@ -114,6 +137,7 @@ class CtrIdentityMobile(BaseController):
                     image_file=front_side_image,
                     image_file_name=front_side_image_name,
                     identity_type=EKYC_IDENTITY_TYPE_FRONT_SIDE_CITIZEN_CARD,
+                    booking_id=new_booking_id,
                     session=self.oracle_session
                 ))
 
@@ -121,6 +145,7 @@ class CtrIdentityMobile(BaseController):
                     image_file=back_side_image,
                     image_file_name=back_side_image_name,
                     identity_type=EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
+                    booking_id=new_booking_id,
                     session=self.oracle_session
                 )))
 
@@ -352,7 +377,8 @@ class CtrIdentityMobile(BaseController):
         # thêm chân dung vào ekyc
         is_success_add_face, add_face_info = await service_ekyc.add_face_ekyc(
             file=avatar_image,
-            filename=avatar_image_name
+            filename=avatar_image_name,
+            uuid=new_booking_id
         )
         if not is_success_add_face:
             return self.response_exception(msg=ERROR_CALL_SERVICE_EKYC, detail=add_face_info.get('message', ''))
@@ -364,6 +390,7 @@ class CtrIdentityMobile(BaseController):
             face_compare_mobile = self.call_repos(await repos_compare_face(
                 face_image_data=avatar_image,
                 identity_image_uuid=ocr_data_front_side['front_side_information']['identity_avatar_image_uuid'],
+                booking_id=new_booking_id,
                 session=self.oracle_session
             ))
             identity_avatar_image_uuid = ocr_data_front_side['front_side_information']['identity_avatar_image_uuid']
@@ -377,6 +404,7 @@ class CtrIdentityMobile(BaseController):
             face_compare_mobile = self.call_repos(await repos_compare_face(
                 face_image_data=avatar_image,
                 identity_image_uuid=ocr_data_front_side['passport_information']['identity_avatar_image_uuid'],
+                booking_id=new_booking_id,
                 session=self.oracle_session
             ))
             identity_avatar_image_uuid = ocr_data_front_side['passport_information']['identity_avatar_image_uuid']
@@ -394,14 +422,6 @@ class CtrIdentityMobile(BaseController):
             "maker_id": current_user.user_info.code,
             "maker_at": now()
         }
-        ###############################################################################################################
-        # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CIF
-        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
-            business_type_id=BUSINESS_TYPE_INIT_CIF
-        )
-
-        (saving_transaction_stage_status, saving_transaction_stage, saving_transaction_daily, saving_transaction_sender,
-         saving_transaction_receiver) = transaction_datas
 
         history_datas = [dict(
             description=PROFILE_HISTORY_DESCRIPTIONS_INIT_CIF,
@@ -550,8 +570,9 @@ class CtrIdentityMobile(BaseController):
                     "face_uuid_ekyc": face_compare_mobile['face_uuid_ekyc']
                 }
             })
-
+        # TODO: chưa lưu được customer_id_ekyc
         customer_id_ekyc = await CtrKSS().ctr_save_customer_ekyc( # noqa
+            booking_id=new_booking_id,
             ocr_result_ekyc_data=ocr_result_ekyc_data,
             face_ids=face_ids,
             gender=gender_id,
