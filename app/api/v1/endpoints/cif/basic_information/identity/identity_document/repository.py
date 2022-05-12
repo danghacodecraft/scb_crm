@@ -707,12 +707,14 @@ async def repos_upload_identity_document_and_ocr(
         identity_type: int,
         image_file: bytes,
         image_file_name: str,
-        session: Session
+        session: Session,
+        booking_id: str = None
 ):
     is_success, ocr_response = await service_ekyc.ocr_identity_document(
         file=image_file,
         filename=image_file_name,
-        identity_type=identity_type
+        identity_type=identity_type,
+        uuid=booking_id
     )
     if not is_success:
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_EKYC, detail=ocr_response.get('message', ''))
@@ -1143,14 +1145,19 @@ async def mapping_ekyc_back_side_citizen_card_ocr_data(image_url: str, ocr_data:
 ########################################################################################################################
 # So sánh khuôn mặt đối chiếu với khuôn mặt trên giấy tờ định danh
 ########################################################################################################################
-async def repos_compare_face(face_image_data: bytes, identity_image_uuid: str, session: Session):
-    is_success_add_face, add_face_info = await service_ekyc.add_face(file=face_image_data)
+async def repos_compare_face(
+        face_image_data: bytes,
+        identity_image_uuid: str,
+        session: Session,
+        booking_id: str = None
+):
+    is_success_add_face, add_face_info = await service_ekyc.add_face(file=face_image_data, uuid=booking_id)
 
     if not is_success_add_face:
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_EKYC, detail=add_face_info.get('message', ''))
 
     face_uuid = add_face_info.get('data').get('uuid')
-    is_success, compare_face_info = await service_ekyc.compare_face(face_uuid, identity_image_uuid)
+    is_success, compare_face_info = await service_ekyc.compare_face(face_uuid, identity_image_uuid, uuid=booking_id)
 
     if not is_success:
         return ReposReturn(
