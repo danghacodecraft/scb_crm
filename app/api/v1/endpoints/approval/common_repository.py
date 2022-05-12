@@ -175,12 +175,19 @@ async def repos_get_stage_information(
         business_type_id: str,
         stage_id: str,
         session: Session,
-        reject_flag: bool = False
+        reject_flag: bool,
+        is_give_back: bool = False
 ):
     """
     Lấy thông tin Stage
     Output: StageStatus, Stage, StageLane, Lane, StagePhase, Phase, StageRole
     """
+    if is_give_back:
+        # Nếu trả lại hồ sơ set reject flag để Khởi tạo hồ sơ lấy đc data
+        reject_flag = False
+    if stage_id == CIF_STAGE_INIT:
+        reject_flag = False
+
     stage_info = session.execute(
         select(
             StageStatus,

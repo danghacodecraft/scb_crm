@@ -450,6 +450,7 @@ class TransactionStage(Base):
     transaction_stage_phase_code = Column(VARCHAR(50), comment='Mã bước thực hiện kiểu chữ(vd: IN, DUYET)')
     transaction_stage_phase_name = Column(VARCHAR(250), comment='Tên bước hiện')
     responsible_flag = Column(NUMBER(1, 0, False), comment='Cờ người chịu trách nhiệm của bước thực hiện')
+    is_reject = Column(NUMBER(1, 0, False), comment='Cờ từ chối phê duyệt')
     action_id = Column(
         'transaction_stage_action_id',
         ForeignKey('crm_transaction_stage_action.transaction_stage_action_id'),
