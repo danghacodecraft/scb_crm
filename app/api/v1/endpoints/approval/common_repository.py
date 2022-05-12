@@ -6,8 +6,8 @@ from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingCustomer, TransactionDaily, TransactionSender
 )
 from app.third_parties.oracle.models.master_data.others import (
-    Lane, Phase, Stage, StageLane, StagePhase, StageRole, StageStatus,
-    TransactionStage, TransactionStageStatus
+    Lane, Phase, Stage, StageAction, StageLane, StagePhase, StageRole,
+    StageStatus, TransactionStage, TransactionStageStatus
 )
 from app.utils.constant.approval import (
     CIF_STAGE_APPROVE_KSS, CIF_STAGE_BEGIN, CIF_STAGE_INIT
@@ -176,6 +176,7 @@ async def repos_get_stage_information(
         stage_id: str,
         session: Session,
         reject_flag: bool,
+        stage_action_id: str,
         is_give_back: bool = False
 ):
     """
@@ -196,7 +197,8 @@ async def repos_get_stage_information(
             Lane,
             StagePhase,
             Phase,
-            StageRole
+            StageRole,
+            StageAction
         )
         .join(StageStatus, Stage.status_id == StageStatus.id)
         .outerjoin(StageLane, Stage.id == StageLane.stage_id)
@@ -204,6 +206,11 @@ async def repos_get_stage_information(
         .outerjoin(StagePhase, Stage.id == StagePhase.stage_id)
         .outerjoin(Phase, StagePhase.phase_id == Phase.id)
         .outerjoin(StageRole, Stage.id == StageRole.stage_id)
+        .outerjoin(StageAction, and_(
+            Stage.id == StageAction.stage_id,
+            StageAction.id == stage_action_id,
+            StageAction.is_reject == reject_flag
+        ))
         .filter(and_(
             Stage.id == stage_id,
             Stage.business_type_id == business_type_id,

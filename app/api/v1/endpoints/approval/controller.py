@@ -38,7 +38,7 @@ from app.utils.error_messages import (
     ERROR_APPROVAL_NO_SIGNATURE_IN_IDENTITY_STEP, ERROR_APPROVAL_UPLOAD_FACE,
     ERROR_APPROVAL_UPLOAD_FINGERPRINT, ERROR_APPROVAL_UPLOAD_SIGNATURE,
     ERROR_CONTENT_NOT_NULL, ERROR_PERMISSION, ERROR_STAGE_COMPLETED,
-    ERROR_VALIDATE, MESSAGE_STATUS
+    ERROR_VALIDATE, ERROR_WRONG_STAGE_ACTION, MESSAGE_STATUS
 )
 from app.utils.functions import generate_uuid, now, orjson_dumps, orjson_loads
 
@@ -567,6 +567,7 @@ class CtrApproval(BaseController):
         ################################################################################################################
         content = request.approval.content
         reject_flag = request.approval.reject_flag
+        action_id = request.approval.action_id
         business_type_id = BUSINESS_TYPE_INIT_CIF
 
         _, _, _, previous_transaction_stage, _, _ = self.call_repos(
@@ -584,12 +585,13 @@ class CtrApproval(BaseController):
         is_give_back = False
         if previous_transaction_stage:
             is_stage_init = False
-            _, previous_stage, _, _, _, _, _ = self.call_repos(
+            _, previous_stage, _, _, _, _, _, _ = self.call_repos(
                 await repos_get_stage_information(
                     business_type_id=business_type_id,
                     stage_id=previous_transaction_stage.transaction_stage_phase_code,
                     session=self.oracle_session,
-                    reject_flag=previous_transaction_stage.is_reject
+                    reject_flag=previous_transaction_stage.is_reject,
+                    stage_action_id=action_id
                 ))
             previous_stage_code = previous_stage.code
             previous_stage_is_reject = previous_stage.is_reject
@@ -677,7 +679,7 @@ class CtrApproval(BaseController):
                     loc="authentication -> signature -> compare_face_image_uuid"
                 )
             ############################################################################################################
-            if previous_stage_is_reject:
+            if previous_stage_is_reject or previous_stage_code == CIF_STAGE_BEGIN:
                 current_stage = self.call_repos(await repos_get_stage_teller(
                     business_type_id=business_type_id,
                     session=self.oracle_session
@@ -702,14 +704,17 @@ class CtrApproval(BaseController):
                 )
             )
 
-        current_stage_status, current_stage, _, current_lane, _, current_phase, current_stage_role = self.call_repos(
-            await repos_get_stage_information(
-                business_type_id=business_type_id,
-                stage_id=current_stage_code,
-                session=self.oracle_session,
-                reject_flag=reject_flag,
-                is_give_back=is_give_back
-            ))
+        (
+            current_stage_status, current_stage, _, current_lane, _, current_phase, current_stage_role,
+            current_stage_action
+        ) = self.call_repos(await repos_get_stage_information(
+            business_type_id=business_type_id,
+            stage_id=current_stage_code,
+            session=self.oracle_session,
+            reject_flag=reject_flag,
+            stage_action_id=action_id,
+            is_give_back=is_give_back
+        ))
 
         current_stage_status_code = None
         current_stage_status_name = None
@@ -720,6 +725,8 @@ class CtrApproval(BaseController):
         current_phase_name = None
         current_stage_role_code = None
         current_stage_role_name = None
+        current_stage_action_code = "NO_ACTION"
+        current_stage_action_name = "No action"
 
         if current_stage:
             ############################################################################################################
@@ -766,6 +773,15 @@ class CtrApproval(BaseController):
             current_phase_name = current_phase.name
             current_stage_role_code = current_stage_role.code
             current_stage_role_name = current_stage_role.name
+            if current_stage_code != CIF_STAGE_INIT:
+                # Nếu truyền vào Param StageAction giả
+                if not current_stage_action:
+                    return self.response_exception(
+                        loc=f"Stage Action: {action_id}, reject_flag: {reject_flag}, Stage: {current_stage_code}",
+                        msg=ERROR_WRONG_STAGE_ACTION
+                    )
+                current_stage_action_code = current_stage_action.code
+                current_stage_action_name = current_stage_action.name
 
         ################################################################################################################
         # NEXT STAGE
@@ -784,11 +800,12 @@ class CtrApproval(BaseController):
         next_stage_code = next_stage.code
         next_stage_role_code = None
         if next_stage_code != CIF_STAGE_COMPLETED:
-            _, _, _, _, _, _, next_stage_role = self.call_repos(await repos_get_stage_information(
+            _, _, _, _, _, _, next_stage_role, _ = self.call_repos(await repos_get_stage_information(
                 business_type_id=business_type_id,
                 stage_id=next_stage_code,
                 session=self.oracle_session,
-                reject_flag=reject_flag
+                reject_flag=reject_flag,
+                stage_action_id=action_id
             ))
             next_stage_role_code = next_stage_role.code
 
@@ -822,6 +839,13 @@ class CtrApproval(BaseController):
             code=current_stage_role_code,
             name=current_stage_role_name
         )
+
+        saving_transaction_stage_action = dict(
+            id=generate_uuid(),
+            code=current_stage_action_code,
+            name=current_stage_action_name
+        )
+        print(saving_transaction_stage_action)
 
         saving_transaction_stage = dict(
             id=saving_transaction_stage_id,
@@ -932,6 +956,7 @@ class CtrApproval(BaseController):
         approval_process = self.call_repos((await repos_approve(
             cif_id=cif_id,
             saving_transaction_stage_status=saving_transaction_stage_status,
+            saving_transaction_stage_action=saving_transaction_stage_action,
             saving_transaction_stage=saving_transaction_stage,
             saving_transaction_stage_lane=saving_transaction_stage_lane,
             saving_transaction_stage_phase=saving_transaction_stage_phase,

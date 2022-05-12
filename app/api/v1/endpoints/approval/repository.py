@@ -13,8 +13,8 @@ from app.third_parties.oracle.models.cif.form.model import (
     TransactionSender
 )
 from app.third_parties.oracle.models.master_data.others import (
-    TransactionStage, TransactionStageLane, TransactionStagePhase,
-    TransactionStageRole, TransactionStageStatus
+    TransactionStage, TransactionStageAction, TransactionStageLane,
+    TransactionStagePhase, TransactionStageRole, TransactionStageStatus
 )
 from app.utils.constant.cif import IMAGE_TYPE_FACE
 from app.utils.error_messages import ERROR_CIF_ID_NOT_EXIST
@@ -52,6 +52,7 @@ async def repos_get_approval_process(cif_id: str, session: Session) -> ReposRetu
 async def repos_approve(
         cif_id: str,
         saving_transaction_stage_status: dict,
+        saving_transaction_stage_action: dict,
         saving_transaction_stage: dict,
         saving_transaction_daily: dict,
         saving_transaction_stage_lane: dict,
@@ -88,6 +89,7 @@ async def repos_approve(
 
     session.add_all([
         TransactionStageStatus(**saving_transaction_stage_status),
+        TransactionStageAction(**saving_transaction_stage_action),
         TransactionStage(**saving_transaction_stage),
         TransactionDaily(**saving_transaction_daily),
         TransactionStageLane(**saving_transaction_stage_lane),
