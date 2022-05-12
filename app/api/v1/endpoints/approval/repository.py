@@ -250,3 +250,37 @@ async def repos_get_approval_identity_images(
     ).all()
 
     return ReposReturn(data=customer_identities)
+
+
+async def repos_get_transaction_daily(
+    cif_id: str,
+    session: Session
+):
+    transaction_daily = session.execute(
+        select(
+            TransactionDaily,
+            BookingCustomer,
+            Booking
+        )
+        .join(Booking, BookingCustomer.booking_id == Booking.id)
+        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
+        .filter(BookingCustomer.customer_id == cif_id)
+    ).scalar()
+    if not transaction_daily:
+        return ReposReturn(is_error=True, msg="No transaction daily")
+    transaction_root_id = transaction_daily.transaction_root_id
+    transaction_daily = session.execute(
+        select(
+            TransactionSender,
+            TransactionDaily,
+            TransactionStage
+        )
+        .join(TransactionStage, and_(
+            TransactionDaily.transaction_stage_id == TransactionStage.id,
+            TransactionStage.transaction_stage_phase_code == "KHOI_TAO_HO_SO"
+        ))
+        .join(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
+        .filter(TransactionDaily.transaction_root_id == transaction_root_id)
+        .order_by(desc(TransactionDaily.created_at))
+    ).scalars().first()
+    return ReposReturn(data=transaction_daily)

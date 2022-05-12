@@ -4,12 +4,14 @@ from app.api.base.controller import BaseController
 from app.api.v1.controller import PermissionController
 from app.api.v1.endpoints.approval.common_repository import (
     repos_get_next_receiver, repos_get_next_stage, repos_get_previous_stage,
-    repos_get_previous_transaction_daily, repos_get_stage_information
+    repos_get_previous_transaction_daily, repos_get_stage_information,
+    repos_get_stage_teller
 )
 from app.api.v1.endpoints.approval.repository import (
     repos_approval_get_face_authentication, repos_approve,
     repos_get_approval_identity_faces, repos_get_approval_identity_images,
-    repos_get_approval_process, repos_get_compare_image_transactions
+    repos_get_approval_process, repos_get_compare_image_transactions,
+    repos_get_transaction_daily
 )
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
@@ -675,7 +677,8 @@ class CtrApproval(BaseController):
             current_stage = self.call_repos(await repos_get_next_stage(
                 business_type_id=business_type_id,
                 current_stage_code=previous_stage_code,
-                session=self.oracle_session
+                session=self.oracle_session,
+                reject_flag=reject_flag
             ))
             current_stage_code = current_stage.code
 
@@ -693,7 +696,8 @@ class CtrApproval(BaseController):
             await repos_get_stage_information(
                 business_type_id=business_type_id,
                 stage_id=current_stage_code,
-                session=self.oracle_session
+                session=self.oracle_session,
+                reject_flag=reject_flag
             ))
 
         current_stage_status_code = None
@@ -755,15 +759,21 @@ class CtrApproval(BaseController):
         ################################################################################################################
         # NEXT STAGE
         ################################################################################################################
-        next_stage = self.call_repos(await repos_get_next_stage(
-            business_type_id=business_type_id,
-            current_stage_code=current_stage_code,
-            session=self.oracle_session
-        ))
+        if current_stage.is_reject:
+            next_stage = self.call_repos(await repos_get_stage_teller(
+                business_type_id=business_type_id,
+                session=self.oracle_session
+            ))
+        else:
+            next_stage = self.call_repos(await repos_get_next_stage(
+                business_type_id=business_type_id,
+                current_stage_code=current_stage_code,
+                session=self.oracle_session
+            ))
         next_stage_code = next_stage.code
         next_stage_role_code = None
         if next_stage_code != CIF_STAGE_COMPLETED:
-            _, next_stage, _, _, _, _, next_stage_role = self.call_repos(await repos_get_stage_information(
+            _, _, _, _, _, _, next_stage_role = self.call_repos(await repos_get_stage_information(
                 business_type_id=business_type_id,
                 stage_id=next_stage_code,
                 session=self.oracle_session
@@ -868,22 +878,43 @@ class CtrApproval(BaseController):
             #     loc="next_receiver -> department_id"
             # )
 
-        saving_transaction_receiver = dict(
-            transaction_id=transaction_daily_id,
-            user_id=current_user.code,
-            user_name=current_user.username,
-            user_fullname=current_user.name,
-            user_email=current_user.email,
-            branch_id=receiver_branch.id if receiver_lane else None,
-            branch_code=receiver_branch.code if receiver_lane else None,
-            branch_name=receiver_branch.name if receiver_lane else None,
-            department_id=receiver_lane.department_id if receiver_lane else None,
-            department_code=None,  # TODO
-            department_name=None,  # TODO
-            position_id=None,  # TODO
-            position_code=None,  # TODO
-            position_name=None  # TODO
-        )
+        if reject_flag:
+            receiver_user = self.call_repos(
+                await repos_get_transaction_daily(cif_id=cif_id, session=self.oracle_session)
+            )
+            saving_transaction_receiver = dict(
+                transaction_id=transaction_daily_id,
+                user_id=receiver_user.user_id,
+                user_name=receiver_user.user_name,
+                user_fullname=receiver_user.user_fullname,
+                user_email=receiver_user.user_email,
+                branch_id=receiver_user.branch_id,
+                branch_code=receiver_user.branch_code,
+                branch_name=receiver_user.branch_name,
+                department_id=receiver_lane.department_id,
+                department_code=receiver_user.department_code,
+                department_name=receiver_user.department_name,
+                position_id=receiver_user.position_id,
+                position_code=receiver_user.position_code,
+                position_name=receiver_user.position_name,
+            )
+        else:
+            saving_transaction_receiver = dict(
+                transaction_id=transaction_daily_id,
+                user_id=current_user.code,
+                user_name=current_user.username,
+                user_fullname=current_user.name,
+                user_email=current_user.email,
+                branch_id=receiver_branch.id if receiver_lane else None,
+                branch_code=receiver_branch.code if receiver_lane else None,
+                branch_name=receiver_branch.name if receiver_lane else None,
+                department_id=receiver_lane.department_id if receiver_lane else None,
+                department_code=None,
+                department_name=None,
+                position_id=None,
+                position_code=None,
+                position_name=None
+            )
 
         approval_process = self.call_repos((await repos_approve(
             cif_id=cif_id,

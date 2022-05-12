@@ -9,7 +9,9 @@ from app.third_parties.oracle.models.master_data.others import (
     Lane, Phase, Stage, StageLane, StagePhase, StageRole, StageStatus,
     TransactionStage, TransactionStageStatus
 )
-from app.utils.constant.approval import CIF_STAGE_APPROVE_KSS, CIF_STAGE_INIT
+from app.utils.constant.approval import (
+    CIF_STAGE_APPROVE_KSS, CIF_STAGE_BEGIN, CIF_STAGE_INIT
+)
 from app.utils.error_messages import (
     ERROR_BEGIN_STAGE_NOT_EXIST, ERROR_NEXT_RECEIVER_NOT_EXIST,
     ERROR_NEXT_STAGE_NOT_EXIST
@@ -39,10 +41,32 @@ async def repos_get_begin_stage(business_type_id: str, session: Session):
     return ReposReturn(data=begin_stage)
 
 
+async def repos_get_stage_teller(business_type_id: str, session: Session):
+    stage_teller = session.execute(
+        select(
+            Stage
+        )
+        .filter(and_(
+            Stage.id == CIF_STAGE_INIT,
+            Stage.business_type_id == business_type_id
+        ))
+    ).scalar()
+
+    if not stage_teller:
+        return ReposReturn(
+            is_error=True,
+            msg=ERROR_BEGIN_STAGE_NOT_EXIST,
+            detail=f"business_type_id: {business_type_id}"
+        )
+
+    return ReposReturn(data=stage_teller)
+
+
 async def repos_get_next_stage(
-        business_type_id: str,
-        current_stage_code: str,
-        session: Session
+    business_type_id: str,
+    current_stage_code: str,
+    session: Session,
+    reject_flag: bool = False
 ):
     """
     Trả về thông tin Stage tiếp theo
@@ -54,7 +78,8 @@ async def repos_get_next_stage(
         )
         .filter(and_(
             Stage.parent_id == current_stage_code,
-            Stage.business_type_id == business_type_id
+            Stage.business_type_id == business_type_id,
+            Stage.is_reject == reject_flag
         ))
     ).scalar()
 
@@ -149,7 +174,8 @@ async def repos_get_begin_transaction_daily(
 async def repos_get_stage_information(
         business_type_id: str,
         stage_id: str,
-        session: Session
+        session: Session,
+        reject_flag: bool = False
 ):
     """
     Lấy thông tin Stage
@@ -173,7 +199,8 @@ async def repos_get_stage_information(
         .outerjoin(StageRole, Stage.id == StageRole.stage_id)
         .filter(and_(
             Stage.id == stage_id,
-            Stage.business_type_id == business_type_id
+            Stage.business_type_id == business_type_id,
+            Stage.is_reject == reject_flag
         ))
     ).first()
     if not stage_info:
@@ -201,7 +228,7 @@ async def repos_get_next_receiver(
             )
             .join(StageLane, Stage.id == StageLane.stage_id)
             .filter(
-                Stage.parent_id == CIF_STAGE_INIT
+                Stage.parent_id == CIF_STAGE_BEGIN
             )
         ).first()
     else:
