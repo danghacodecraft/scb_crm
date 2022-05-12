@@ -109,8 +109,9 @@ async def repos_get_post_control(query_params) -> ReposReturn:
 
 
 async def repos_save_customer_ekyc(
-    body_request: dict
+    body_request: dict,
+    uuid: str = None
 ):
-    is_success, response = await service_ekyc.save_customer_ekyc(body_data=body_request)
+    is_success, response = await service_ekyc.save_customer_ekyc(body_data=body_request, uuid=uuid)
 
     return ReposReturn(data=response)
