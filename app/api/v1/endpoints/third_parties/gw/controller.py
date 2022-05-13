@@ -10,7 +10,7 @@ from app.utils.functions import dropdown, dropdown_name
 
 class CtrGW(BaseController):
     async def dropdown_mapping_crm_model_or_dropdown_name(
-            self, model: Base, name: str, code: Optional[str] = None) -> dict:
+            self, model: Base, name: Optional[str], code: Optional[str] = None) -> dict:
         """
         Input: code hoặc name
         Output: dropdown object
