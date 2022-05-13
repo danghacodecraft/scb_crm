@@ -6,8 +6,20 @@ from sqlalchemy.orm import Session
 from app.api.base.repository import ReposReturn
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.settings.event import service_gw
+from app.third_parties.oracle.models.cif.basic_information.contact.model import (
+    CustomerAddress, CustomerProfessional
+)
+from app.third_parties.oracle.models.cif.basic_information.identity.model import (
+    CustomerIdentity
+)
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
+)
+from app.third_parties.oracle.models.cif.basic_information.personal.model import (
+    CustomerIndividualInfo
+)
+from app.third_parties.oracle.models.master_data.address import (
+    AddressCountry, AddressDistrict, AddressProvince, AddressWard
 )
 from app.utils.error_messages import ERROR_CALL_SERVICE_GW
 
@@ -103,3 +115,41 @@ async def repos_gw_get_authorized(
         )
 
     return ReposReturn(data=authorized)
+
+
+async def repos_gw_open_cif(cif_id: str, current_user):
+    is_success, response_data = await service_gw.open_cif(
+        cif_id=cif_id, current_user=current_user
+    )
+    return ReposReturn(data=response_data)
+
+
+async def repos_get_customer_open_cif(
+        cif_id: str,
+        session: Session
+):
+
+    customer = session.execute(
+        select(
+            Customer,
+            CustomerIdentity,
+            CustomerIndividualInfo,
+            CustomerAddress,
+            CustomerProfessional,
+            AddressWard,
+            AddressDistrict,
+            AddressProvince,
+            AddressCountry
+        )
+        .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id)
+        .join(CustomerIndividualInfo, Customer.id == CustomerIndividualInfo.customer_id)
+        .join(CustomerAddress, Customer.id == CustomerAddress.customer_id)
+        .join(AddressWard, CustomerAddress.address_ward_id == AddressWard.id)
+        .join(AddressDistrict, CustomerAddress.address_district_id == AddressDistrict.id)
+        .join(AddressProvince, CustomerAddress.address_province_id == AddressProvince.id)
+        .join(AddressCountry, CustomerAddress.address_country_id == AddressCountry.id)
+        .join(CustomerProfessional, Customer.customer_professional_id == CustomerProfessional.id)
+        .filter(Customer.id == cif_id)
+    ).all()
+
+    return ReposReturn(data=customer)

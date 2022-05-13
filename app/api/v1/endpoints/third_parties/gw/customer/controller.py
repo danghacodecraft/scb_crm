@@ -1,9 +1,10 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.controller import CtrGW
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
-    repos_get_customer_ids_from_cif_numbers, repos_gw_get_authorized,
-    repos_gw_get_co_owner, repos_gw_get_customer_info_detail,
-    repos_gw_get_customer_info_list
+    repos_get_customer_ids_from_cif_numbers, repos_get_customer_open_cif,
+    repos_gw_get_authorized, repos_gw_get_co_owner,
+    repos_gw_get_customer_info_detail, repos_gw_get_customer_info_list,
+    repos_gw_open_cif
 )
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
@@ -15,7 +16,10 @@ from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import (
     Branch, Career, MaritalStatus, ResidentStatus
 )
-from app.utils.constant.cif import CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE
+from app.utils.constant.cif import (
+    CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE, EKYC_GENDER_TYPE_FEMALE,
+    EKYC_GENDER_TYPE_MALE, RESIDENT_ADDRESS_CODE
+)
 from app.utils.constant.gw import (
     GW_DATE_FORMAT, GW_DATETIME_FORMAT, GW_GENDER_FEMALE, GW_GENDER_MALE,
     GW_LOC_CHECK_CIF_EXIST, GW_REQUEST_PARAMETER_DEBIT_CARD,
@@ -664,3 +668,145 @@ class CtrGWCustomer(BaseController):
         })
 
         return self.response(data=response_data)
+
+    async def ctr_gw_open_cif(self, cif_id: str):
+        current_user = self.current_user
+        response_customers = self.call_repos(await repos_get_customer_open_cif(
+            cif_id=cif_id, session=self.oracle_session))
+        first_row = response_customers[0]
+        customer = first_row.Customer
+
+        cust_identity = first_row.CustomerIdentity
+        cust_individual = first_row.CustomerIndividualInfo
+        cust_professional = first_row.CustomerProfessional
+
+        cif_info = {
+            "cif_auto": "Y" if customer.self_selected_cif_flag else "N",
+            "cif_num": customer.cif_number if customer.self_selected_cif_flag else ""
+        }
+        # địa chỉ thường trú
+        address_info_i = {
+            "line": "",
+            "ward_name": "",
+            "district_name": "",
+            "city_name": "",
+            "country_name": "",
+            "same_addr": ""
+        }
+        address_contact_info_i = {
+            "contact_address_line": "",
+            "contact_address_ward_name": "",
+            "contact_address_district_name": "",
+            "contact_address_city_name": "",
+            "contact_address_country_name": ""
+        }
+        # địa chỉ đăng ký doanh nghiệp
+        address_info_c = {
+            "line": "",
+            "ward_name": "",
+            "district_name": "",
+            "city_name": "",
+            "country_name": "",
+            "cor_same_addr ": ""
+        }
+        # địa chỉ liên lạc doanh nghiệp
+        address_contact_info_c = {
+            "contact_address_line": "",
+            "contact_address_ward_name": "",
+            "contact_address_district_name": "",
+            "contact_address_city_name": "",
+            "contact_address_country_name": ""
+        }
+        for row in response_customers:
+            if row.CustomerAddress.address_type_id == RESIDENT_ADDRESS_CODE:
+                address_info_i = {
+                    "line": row.CustomerAddress.address,
+                    "ward_name": row.AddressWard.name,
+                    "district_name": row.AddressDistrict.name,
+                    "city_name": row.AddressProvince.name,
+                    "country_name": row.AddressCountry.name,
+                    "same_addr": "Y"
+                }
+            else:
+                address_contact_info_i = {
+                    "contact_address_line": row.CustomerAddress.address,
+                    "contact_address_ward_name": row.AddressWard.name,
+                    "contact_address_district_name": row.AddressDistrict.name,
+                    "contact_address_city_name": row.AddressProvince.name,
+                    "contact_address_country_name": row.AddressCountry.name
+                }
+
+        customer_info = {
+            "customer_category": customer.customer_category_id,
+            "customer_type": customer.customer_type_id if customer.customer_type_id else "",
+            "cus_ekyc": customer.kyc_level_id if customer.kyc_level_id else "",
+            "full_name": customer.full_name_vn,
+            "gender": EKYC_GENDER_TYPE_FEMALE if cust_individual.gender_id == CRM_GENDER_TYPE_FEMALE else EKYC_GENDER_TYPE_MALE,
+            "telephone": customer.telephone_number if customer.telephone_number else "",
+            "mobile_phone": customer.mobile_number if customer.mobile_number else "",
+            "email": customer.email if customer.email else "",
+            "place_of_birth": cust_individual.country_of_birth_id if cust_individual.country_of_birth_id else "",
+            "birthday": cust_individual.date_of_birth if cust_individual.date_of_birth else "",
+            "tax": customer.tax_number if customer.tax_number else "",
+            "resident_status": cust_individual.resident_status_id if cust_individual.resident_status_id else "",
+            "legal_guardian": "",
+            "co_owner": "",
+            "nationality": customer.nationality_id if customer.nationality_id else "",
+            "birth_country": "",
+            "language": "",
+            "local_code": "101",
+            "current_official": "",
+            "biz_license_issue_date": "",
+            "cor_capital": "",
+            "cor_email": "",
+            "cor_fax": "",
+            "cor_tel": "",
+            "cor_mobile": "",
+            "cor_country": "",
+            "cor_desc": "",
+            "coowner_relationship": "",
+            "martial_status": "M",
+            "p_us_res_status": "N",
+            "p_vst_us_prev": "N",
+            "p_field9": "",
+            "p_field10": "",
+            "p_field11": "",
+            "p_field12": "",
+            "p_field13": "",
+            "p_field14": "",
+            "p_field15": "",
+            "p_field16": "",
+            "cif_info": cif_info,
+            "id_info_main": {
+                "id_num": cust_identity.identity_num,
+                "id_issued_date": cust_identity.issued_date,
+                "id_expired_date": cust_identity.expired_date,
+                "id_issued_location": cust_identity.place_of_issue_id,
+                "id_type": cust_identity.identity_type_id
+            },
+            "address_info_i": address_info_i,
+            "address_contact_info_i": address_contact_info_i,
+            "address_info_c": address_info_c,
+            "address_contact_info_c": address_contact_info_c,
+            "id_info_extra": {
+                "id_num": "",
+                "id_issued_date": "",
+                "id_expired_date": "",
+                "id_issued_location": "",
+                "id_type": ""
+            },
+            "branch_info": {
+                "branch_code": current_user.user_info.hrm_branch_code
+            },
+            "job_info": {
+                "professional_code": cust_professional.career_id,
+                "position": cust_professional.position_id if cust_professional.position_id else "",
+                "official_telephone": cust_professional.company_phone if cust_professional.company_phone else "",
+                "address_office_info": {
+                    "address_full": cust_professional.company_address if cust_professional.company_address else ""
+                }
+            }
+        }
+        response_data = self.call_repos(await repos_gw_open_cif(cif_id=cif_id, current_user=current_user)) # noqa
+
+        return self.response(data=customer_info)

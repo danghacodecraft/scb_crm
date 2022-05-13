@@ -153,3 +153,22 @@ async def view_gw_authorized(
         account_number=account_number
     )
     return ResponseData[GWAuthorizedListResponse](**gw_customer_authorized)
+
+
+@router.post(
+    path="/{cif_id}/openCIF/",
+    name="[GW] Khởi tạo cif và tài khoản thanh toán",
+    description="Khởi tạo cif và tài khoản thanh toán",
+    responses=swagger_response(
+        response_model=ResponseData[GWAuthorizedListResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_open_cif(
+        cif_id: str = Path(..., description="Cif_id"),
+        current_user=Depends(get_current_user_from_header())
+):
+    gw_customer_open_cif = await CtrGWCustomer(current_user).ctr_gw_open_cif(
+        cif_id=cif_id
+    )
+    return ResponseData(**gw_customer_open_cif)
