@@ -320,6 +320,7 @@ class CtrKSS(BaseController):
             gender: str,
             date_of_expiry: str,
             phone_number: str,
+            booking_id: Optional[str] = None,
             front_image: Optional[str] = None,
             front_image_name: Optional[str] = None,
             back_image: Optional[str] = None,
@@ -394,7 +395,8 @@ class CtrKSS(BaseController):
                 })
 
         customer = self.call_repos(await repos_save_customer_ekyc(
-            body_request=body
+            body_request=body,
+            uuid=booking_id
         ))
 
         return self.response(data=customer)
