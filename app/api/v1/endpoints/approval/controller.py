@@ -412,6 +412,7 @@ class CtrApproval(BaseController):
                     code=previous_transaction_stage_action.code,
                     session=self.oracle_session
                 )
+                teller_is_disable = False
 
             supervisor_stage_code = previous_stage_code
             supervisor_transaction_daily = previous_transaction_daily
@@ -441,6 +442,7 @@ class CtrApproval(BaseController):
             audit_content = orjson_loads(audit_transaction_daily.data)["content"]
             audit_created_at = audit_transaction_daily.created_at
             audit_created_by = audit_transaction_sender.user_fullname
+
             if previous_transaction_stage_action:
                 dropdown_action_audit = await CtrGW.dropdown_mapping_crm_model_or_dropdown_name(
                     model=StageAction,
@@ -448,6 +450,7 @@ class CtrApproval(BaseController):
                     code=previous_transaction_stage_action.code,
                     session=self.oracle_session
                 )
+                teller_is_disable = False
 
             supervisor_transaction_daily, supervisor_transaction_sender, supervisor_transaction_stage, _ = self.call_repos(
                 await repos_get_previous_transaction_daily(
