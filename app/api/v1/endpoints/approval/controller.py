@@ -848,6 +848,7 @@ class CtrApproval(BaseController):
         saving_transaction_stage_phase_id = generate_uuid()
         saving_transaction_stage_role_id = generate_uuid()
         transaction_daily_id = generate_uuid()
+        transaction_stage_action_id = generate_uuid()
 
         saving_transaction_stage_status = dict(
             id=saving_transaction_stage_status_id,
@@ -874,11 +875,10 @@ class CtrApproval(BaseController):
         )
 
         saving_transaction_stage_action = dict(
-            id=generate_uuid(),
+            id=transaction_stage_action_id,
             code=current_stage_action_code,
             name=current_stage_action_name
         )
-        print(saving_transaction_stage_action)
 
         saving_transaction_stage = dict(
             id=saving_transaction_stage_id,
@@ -906,6 +906,7 @@ class CtrApproval(BaseController):
             transaction_parent_id=None,
             transaction_root_id=None,
             is_reject=False,
+            action_id=transaction_stage_action_id,
             data=orjson_dumps(json_data),
             description=description,
             created_at=now(),
