@@ -40,7 +40,7 @@ class CIFStageResponse(BaseSchema):
     is_disable: bool = Field(..., description="Có disable không")
     is_completed: bool = Field(..., description="Trạng thái phê duyệt")
     content: Optional[str] = Field(..., description="1. Nội dung phản hồi")
-    action: Optional[str] = Field(None, description="2. Hành động")
+    action: OptionalDropdownResponse = Field(..., description="2. Hành động")
     created_at: Optional[datetime] = Field(..., description="Cập nhật lúc")
     created_by: Optional[str] = Field(..., description="Cập nhật bởi")
 

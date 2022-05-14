@@ -7,7 +7,8 @@ from app.third_parties.oracle.models.cif.form.model import (
 )
 from app.third_parties.oracle.models.master_data.others import (
     Lane, Phase, Stage, StageAction, StageLane, StagePhase, StageRole,
-    StageStatus, TransactionStage, TransactionStageStatus
+    StageStatus, TransactionStage, TransactionStageAction,
+    TransactionStageStatus
 )
 from app.utils.constant.approval import (
     CIF_STAGE_APPROVE_KSS, CIF_STAGE_BEGIN, CIF_STAGE_INIT
@@ -108,13 +109,15 @@ async def repos_get_previous_stage(
             TransactionDaily,
             TransactionStage,
             TransactionStageStatus,
-            TransactionSender
+            TransactionSender,
+            TransactionStageAction
         )
         .join(Booking, BookingCustomer.booking_id == Booking.id)
         .outerjoin(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
         .outerjoin(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id)
         .outerjoin(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id)
         .outerjoin(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
+        .outerjoin(TransactionStageAction, TransactionStage.action_id == TransactionStageAction.id)
         .filter(BookingCustomer.customer_id == cif_id)
         .order_by(desc(TransactionDaily.created_at))
     ).first()

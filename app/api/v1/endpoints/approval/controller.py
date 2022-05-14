@@ -15,13 +15,15 @@ from app.api.v1.endpoints.approval.repository import (
 )
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
+from app.api.v1.endpoints.third_parties.gw.controller import CtrGW
+from app.third_parties.oracle.models.master_data.others import StageAction
 from app.utils.constant.approval import (
     CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_BEGIN,
     CIF_STAGE_COMPLETED, CIF_STAGE_INIT
 )
 from app.utils.constant.cif import (
-    BUSINESS_TYPE_INIT_CIF, IMAGE_TYPE_FACE, IMAGE_TYPE_FINGERPRINT,
-    IMAGE_TYPE_SIGNATURE
+    BUSINESS_TYPE_INIT_CIF, DROPDOWN_NONE_DICT, IMAGE_TYPE_FACE,
+    IMAGE_TYPE_FINGERPRINT, IMAGE_TYPE_SIGNATURE
 )
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_APPROVAL, IDM_GROUP_ROLE_CODE_OPEN_CIF,
@@ -293,7 +295,7 @@ class CtrApproval(BaseController):
         ################################################################################################################
 
         # Kiểm tra xem đang ở bước nào của giao dịch
-        _, _, previous_transaction_daily, previous_transaction_stage, _, previous_transaction_sender = self.call_repos(
+        _, _, previous_transaction_daily, previous_transaction_stage, _, previous_transaction_sender, previous_transaction_stage_action = self.call_repos(
             await repos_get_previous_stage(
                 cif_id=cif_id,
                 session=self.oracle_session
@@ -306,6 +308,7 @@ class CtrApproval(BaseController):
         teller_content = None
         teller_created_at = None
         teller_created_by = None
+        dropdown_action_teller = DROPDOWN_NONE_DICT
 
         stage_supervisor = dict()
         supervisor_stage_code = None
@@ -314,6 +317,7 @@ class CtrApproval(BaseController):
         supervisor_content = None
         supervisor_created_at = None
         supervisor_created_by = None
+        dropdown_action_supervisor = DROPDOWN_NONE_DICT
 
         stage_audit = dict()
         audit_stage_code = None
@@ -322,6 +326,7 @@ class CtrApproval(BaseController):
         audit_content = None
         audit_created_at = None
         audit_created_by = None
+        dropdown_action_audit = DROPDOWN_NONE_DICT
 
         if previous_transaction_stage:
             previous_stage_code = previous_transaction_stage.transaction_stage_phase_code
@@ -349,6 +354,15 @@ class CtrApproval(BaseController):
             else:
                 teller_is_disable = False
             teller_stage_code = None
+
+            if previous_transaction_stage_action:
+                dropdown_action_teller = CtrGW.dropdown_mapping_crm_model_or_dropdown_name(
+                    model=StageAction,
+                    name=previous_transaction_stage_action.name,
+                    code=previous_transaction_stage_action.code,
+                    session=self.oracle_session
+                )
+
         # KSV nhận hồ sơ từ GDV
         elif previous_stage_code == CIF_STAGE_INIT:
             teller_stage_code = previous_stage_code
@@ -377,6 +391,14 @@ class CtrApproval(BaseController):
             else:
                 supervisor_is_disable = False
 
+            if previous_transaction_stage_action:
+                dropdown_action_supervisor = CtrGW.dropdown_mapping_crm_model_or_dropdown_name(
+                    model=StageAction,
+                    name=previous_transaction_stage_action.name,
+                    code=previous_transaction_stage_action.code,
+                    session=self.oracle_session
+                )
+
         # KSS nhận hồ sơ từ KSV
         elif previous_stage_code == CIF_STAGE_APPROVE_KSV:
             is_stage_audit = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
@@ -398,6 +420,14 @@ class CtrApproval(BaseController):
                 )
             else:
                 audit_is_disable = False   # TODO: Chưa được mô tả cho KSS tạm thời dùng Role của KSV
+
+            if previous_transaction_stage_action:
+                dropdown_action_audit = CtrGW.dropdown_mapping_crm_model_or_dropdown_name(
+                    model=StageAction,
+                    name=previous_transaction_stage_action.name,
+                    code=previous_transaction_stage_action.code,
+                    session=self.oracle_session
+                )
 
             supervisor_stage_code = previous_stage_code
             supervisor_transaction_daily = previous_transaction_daily
@@ -455,6 +485,7 @@ class CtrApproval(BaseController):
             is_disable=teller_is_disable,
             is_completed=teller_is_completed,
             content=teller_content,
+            action=dropdown_action_teller,
             created_at=teller_created_at,
             created_by=teller_created_by
         ))
@@ -463,6 +494,7 @@ class CtrApproval(BaseController):
             is_disable=supervisor_is_disable,
             is_completed=supervisor_is_completed,
             content=supervisor_content,
+            action=dropdown_action_supervisor,
             created_at=supervisor_created_at,
             created_by=supervisor_created_by
         ))
@@ -471,6 +503,7 @@ class CtrApproval(BaseController):
             is_disable=audit_is_disable,
             is_completed=audit_is_completed,
             content=audit_content,
+            action=dropdown_action_audit,
             created_at=audit_created_at,
             created_by=audit_created_by
         ))
