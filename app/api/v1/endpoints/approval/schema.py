@@ -5,6 +5,7 @@ from pydantic import Field
 
 from app.api.base.schema import BaseSchema
 from app.api.v1.schemas.utils import OptionalDropdownResponse
+from app.utils.constant.approval import CIF_ACTIONS
 
 
 class ProcessInfoResponse(BaseSchema):
@@ -25,7 +26,7 @@ class CifApprovalProcessResponse(BaseSchema):
 class CifApproveRequest(BaseSchema):
     reject_flag: Optional[bool] = Field(None, description="Cờ từ chối phê duyệt")
     content: str = Field(..., description="Nội dung phê duyệt")
-    action_id: str = Field(..., description="Mã hành động")
+    action_id: str = Field(..., description="Mã hành động", example=CIF_ACTIONS)
 
 
 class CifApprovalResponse(BaseSchema):

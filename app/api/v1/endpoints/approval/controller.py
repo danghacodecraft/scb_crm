@@ -603,7 +603,7 @@ class CtrApproval(BaseController):
         action_id = request.approval.action_id
         business_type_id = BUSINESS_TYPE_INIT_CIF
 
-        _, _, _, previous_transaction_stage, _, _ = self.call_repos(
+        _, _, _, previous_transaction_stage, _, _, _ = self.call_repos(
             await repos_get_previous_stage(
                 cif_id=cif_id,
                 session=self.oracle_session
@@ -671,7 +671,7 @@ class CtrApproval(BaseController):
                 return self.response_exception(
                     msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
                     detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FACE],
-                    loc="authentication -> compare_face_image_uuid"
+                    loc="authentication -> face -> compare_face_image_uuid"
                 )
             ############################################################################################################
 
@@ -690,7 +690,7 @@ class CtrApproval(BaseController):
                 return self.response_exception(
                     msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT,
                     detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT],
-                    loc="authentication -> compare_face_image_uuid"
+                    loc="authentication -> fingerprint -> compare_face_image_uuid"
                 )
             ############################################################################################################
 
