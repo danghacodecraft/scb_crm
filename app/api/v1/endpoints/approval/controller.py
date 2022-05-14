@@ -880,7 +880,8 @@ class CtrApproval(BaseController):
             sla_transaction_id=None,  # TODO
             transaction_stage_phase_code=current_stage_code,
             transaction_stage_phase_name=current_stage_name,
-            is_reject=reject_flag
+            is_reject=reject_flag,
+            action_id=transaction_stage_action_id
         )
 
         description = await self.get_description(
@@ -897,7 +898,6 @@ class CtrApproval(BaseController):
             transaction_parent_id=None,
             transaction_root_id=None,
             is_reject=False,
-            action_id=transaction_stage_action_id,
             data=orjson_dumps(json_data),
             description=description,
             created_at=now(),
