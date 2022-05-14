@@ -355,14 +355,6 @@ class CtrApproval(BaseController):
                 teller_is_disable = False
             teller_stage_code = None
 
-            if previous_transaction_stage_action:
-                dropdown_action_teller = CtrGW.dropdown_mapping_crm_model_or_dropdown_name(
-                    model=StageAction,
-                    name=previous_transaction_stage_action.name,
-                    code=previous_transaction_stage_action.code,
-                    session=self.oracle_session
-                )
-
         # KSV nhận hồ sơ từ GDV
         elif previous_stage_code == CIF_STAGE_INIT:
             teller_stage_code = previous_stage_code
@@ -391,14 +383,6 @@ class CtrApproval(BaseController):
             else:
                 supervisor_is_disable = False
 
-            if previous_transaction_stage_action:
-                dropdown_action_supervisor = CtrGW.dropdown_mapping_crm_model_or_dropdown_name(
-                    model=StageAction,
-                    name=previous_transaction_stage_action.name,
-                    code=previous_transaction_stage_action.code,
-                    session=self.oracle_session
-                )
-
         # KSS nhận hồ sơ từ KSV
         elif previous_stage_code == CIF_STAGE_APPROVE_KSV:
             is_stage_audit = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
@@ -422,7 +406,7 @@ class CtrApproval(BaseController):
                 audit_is_disable = False   # TODO: Chưa được mô tả cho KSS tạm thời dùng Role của KSV
 
             if previous_transaction_stage_action:
-                dropdown_action_audit = CtrGW.dropdown_mapping_crm_model_or_dropdown_name(
+                dropdown_action_supervisor = await CtrGW.dropdown_mapping_crm_model_or_dropdown_name(
                     model=StageAction,
                     name=previous_transaction_stage_action.name,
                     code=previous_transaction_stage_action.code,
@@ -457,6 +441,13 @@ class CtrApproval(BaseController):
             audit_content = orjson_loads(audit_transaction_daily.data)["content"]
             audit_created_at = audit_transaction_daily.created_at
             audit_created_by = audit_transaction_sender.user_fullname
+            if previous_transaction_stage_action:
+                dropdown_action_audit = await CtrGW.dropdown_mapping_crm_model_or_dropdown_name(
+                    model=StageAction,
+                    name=previous_transaction_stage_action.name,
+                    code=previous_transaction_stage_action.code,
+                    session=self.oracle_session
+                )
 
             supervisor_transaction_daily, supervisor_transaction_sender, supervisor_transaction_stage, _ = self.call_repos(
                 await repos_get_previous_transaction_daily(
