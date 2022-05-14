@@ -463,6 +463,13 @@ class CtrApproval(BaseController):
             supervisor_created_at = supervisor_transaction_daily.created_at
             supervisor_created_by = supervisor_transaction_sender.user_fullname
 
+            dropdown_action_supervisor = await CtrGW.dropdown_mapping_crm_model_or_dropdown_name(
+                model=StageAction,
+                name=previous_transaction_stage_action.name,
+                code=previous_transaction_stage_action.code,
+                session=self.oracle_session
+            )
+
             teller_transaction_daily, teller_transaction_sender, teller_transaction_stage, _ = self.call_repos(
                 await repos_get_previous_transaction_daily(
                     transaction_daily_id=supervisor_transaction_daily.transaction_id,
