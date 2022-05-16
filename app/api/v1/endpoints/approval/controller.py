@@ -755,8 +755,8 @@ class CtrApproval(BaseController):
         current_phase_name = None
         current_stage_role_code = None
         current_stage_role_name = None
-        current_stage_action_code = "NO_ACTION"
-        current_stage_action_name = "No action"
+        current_stage_action_code = None
+        current_stage_action_name = None
 
         if current_stage:
             ############################################################################################################
