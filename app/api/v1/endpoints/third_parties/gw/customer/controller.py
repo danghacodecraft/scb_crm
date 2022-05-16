@@ -1,5 +1,4 @@
 from app.api.base.controller import BaseController
-from app.api.v1.endpoints.third_parties.gw.controller import CtrGW
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_get_customer_ids_from_cif_numbers, repos_gw_get_authorized,
     repos_gw_get_co_owner, repos_gw_get_customer_info_detail,
@@ -65,7 +64,7 @@ class CtrGWCustomer(BaseController):
 
             martial_status_code_or_name = customer_info['martial_status']
 
-            dropdown_martial_status = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+            dropdown_martial_status = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=MaritalStatus, name=martial_status_code_or_name, code=martial_status_code_or_name)
 
             gender_code_or_name = customer_info["gender"]
@@ -74,17 +73,17 @@ class CtrGWCustomer(BaseController):
             if gender_code_or_name == GW_GENDER_FEMALE:
                 gender_code_or_name = CRM_GENDER_TYPE_FEMALE
 
-            dropdown_gender = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+            dropdown_gender = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=CustomerGender, name=gender_code_or_name, code=gender_code_or_name)
 
             nationality_code_or_name = customer_info["nationality_code"]
 
-            dropdown_nationality = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+            dropdown_nationality = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=AddressCountry, name=nationality_code_or_name, code=nationality_code_or_name)
 
             customer_type_code_or_name = customer_info['customer_type']
 
-            dropdown_customer_type = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+            dropdown_customer_type = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=CustomerType, name=customer_type_code_or_name, code=customer_type_code_or_name)
 
             cif_issued_date = date_string_to_other_date_string_format(
@@ -106,14 +105,14 @@ class CtrGWCustomer(BaseController):
             )
             place_of_issue_code_or_name = id_info["id_issued_location"]
 
-            dropdown_place_of_issue = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+            dropdown_place_of_issue = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=PlaceOfIssue, name=place_of_issue_code_or_name, code=place_of_issue_code_or_name)
 
             branch_info = customer_info['branch_info']
             branch_name = branch_info["branch_name"]
             branch_code = branch_info["branch_code"]
 
-            dropdown_branch = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+            dropdown_branch = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=Branch, name=branch_name, code=branch_code)
 
             customer_list_info.append(dict(
@@ -185,13 +184,13 @@ class CtrGWCustomer(BaseController):
         if gender_code_or_name == GW_GENDER_FEMALE:
             gender_code_or_name = CRM_GENDER_TYPE_FEMALE
 
-        dropdown_gender = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+        dropdown_gender = await self.dropdown_mapping_crm_model_or_dropdown_name(
             model=CustomerGender, name=gender_code_or_name, code=gender_code_or_name
         )
 
         customer_type_code_or_name = customer_info['customer_type']
 
-        dropdown_customer_type = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+        dropdown_customer_type = await self.dropdown_mapping_crm_model_or_dropdown_name(
             model=CustomerType, name=customer_type_code_or_name, code=customer_type_code_or_name
         )
 
@@ -202,14 +201,14 @@ class CtrGWCustomer(BaseController):
 
         nationality_code_or_name = customer_info["nationality_code"]
 
-        dropdown_nationality = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+        dropdown_nationality = await self.dropdown_mapping_crm_model_or_dropdown_name(
             model=AddressCountry, name=nationality_code_or_name, code=nationality_code_or_name
         )
 
         identity_info = customer_info['id_info']
         place_of_issue_code_or_name = identity_info["id_issued_location"]
 
-        dropdown_place_of_issue = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+        dropdown_place_of_issue = await self.dropdown_mapping_crm_model_or_dropdown_name(
             model=PlaceOfIssue, name=place_of_issue_code_or_name, code=place_of_issue_code_or_name
         )
 
@@ -217,21 +216,21 @@ class CtrGWCustomer(BaseController):
 
         resident_address_province_code_or_name = resident_address_info["city_name"]
 
-        dropdown_resident_address_province = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+        dropdown_resident_address_province = await self.dropdown_mapping_crm_model_or_dropdown_name(
             model=AddressProvince, name=resident_address_province_code_or_name,
             code=resident_address_province_code_or_name
         )
 
         resident_address_district_code_or_name = resident_address_info["district_name"]
 
-        dropdown_resident_address_district = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+        dropdown_resident_address_district = await self.dropdown_mapping_crm_model_or_dropdown_name(
             model=AddressDistrict, name=resident_address_district_code_or_name,
             code=resident_address_district_code_or_name
         )
 
         resident_address_ward_code_or_name = resident_address_info["ward_name"]
 
-        dropdown_resident_address_ward = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+        dropdown_resident_address_ward = await self.dropdown_mapping_crm_model_or_dropdown_name(
             model=AddressWard, name=resident_address_ward_code_or_name, code=resident_address_ward_code_or_name
         )
 
@@ -251,21 +250,21 @@ class CtrGWCustomer(BaseController):
 
         contact_address_province_code_or_name = contact_address_info["contact_address_city_name"]
 
-        dropdown_contact_address_province = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+        dropdown_contact_address_province = await self.dropdown_mapping_crm_model_or_dropdown_name(
             model=AddressProvince, name=contact_address_province_code_or_name,
             code=contact_address_province_code_or_name
         )
 
         contact_address_district_code_or_name = contact_address_info["contact_address_district_name"]
 
-        dropdown_contact_address_district = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+        dropdown_contact_address_district = await self.dropdown_mapping_crm_model_or_dropdown_name(
             model=AddressDistrict, name=contact_address_district_code_or_name,
             code=contact_address_district_code_or_name
         )
 
         contact_address_ward_code_or_name = contact_address_info["contact_address_ward_name"]
 
-        dropdown_contact_address_ward = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+        dropdown_contact_address_ward = await self.dropdown_mapping_crm_model_or_dropdown_name(
             model=AddressWard, name=contact_address_ward_code_or_name, code=contact_address_ward_code_or_name
         )
 
@@ -286,7 +285,7 @@ class CtrGWCustomer(BaseController):
         branch_name = branch_info["branch_name"]
         branch_code = branch_info["branch_code"]
 
-        dropdown_branch = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+        dropdown_branch = await self.dropdown_mapping_crm_model_or_dropdown_name(
             model=Branch, name=branch_name, code=branch_code
         )
 
@@ -371,13 +370,13 @@ class CtrGWCustomer(BaseController):
 
             martial_status_code_or_name = customer_info['martial_status']
 
-            dropdown_martial_status = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+            dropdown_martial_status = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=MaritalStatus, name=martial_status_code_or_name, code=martial_status_code_or_name
             )
 
             resident_status_code_or_name = customer_info['resident_status']
 
-            dropdown_resident_status = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+            dropdown_resident_status = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=ResidentStatus, name=resident_status_code_or_name, code=resident_status_code_or_name
             )
 
@@ -396,7 +395,7 @@ class CtrGWCustomer(BaseController):
             job_name = job_info["professional_name"]
             job_code = job_info["professional_code"]
 
-            dropdown_job = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+            dropdown_job = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=Career, name=job_name, code=job_code
             )
 
@@ -488,24 +487,24 @@ class CtrGWCustomer(BaseController):
             if gender_code_or_name == GW_GENDER_FEMALE:
                 gender_code_or_name = CRM_GENDER_TYPE_FEMALE
 
-            dropdown_gender = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+            dropdown_gender = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=CustomerGender, name=gender_code_or_name, code=gender_code_or_name)
 
             nationality_code_or_name = co_owner_info["nationality_code"]
 
-            dropdown_nationality = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+            dropdown_nationality = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=AddressCountry, name=nationality_code_or_name, code=nationality_code_or_name
             )
 
             customer_type_code_or_name = co_owner_info['customer_type']
 
-            dropdown_customer_type = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+            dropdown_customer_type = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=CustomerType, name=customer_type_code_or_name, code=customer_type_code_or_name
             )
 
             customer_relationship_code_or_name = co_owner_info['coowner_relationship']
 
-            dropdown_customer_relationship = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+            dropdown_customer_relationship = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=CustomerRelationshipType, name=customer_relationship_code_or_name,
                 code=customer_relationship_code_or_name
             )
@@ -530,7 +529,7 @@ class CtrGWCustomer(BaseController):
 
             place_of_issue_code_or_name = identity_info["id_issued_location"]
 
-            dropdown_place_of_issue = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+            dropdown_place_of_issue = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=PlaceOfIssue, name=place_of_issue_code_or_name, code=place_of_issue_code_or_name
             )
             date_of_birth = date_string_to_other_date_string_format(
@@ -599,13 +598,13 @@ class CtrGWCustomer(BaseController):
             if gender_code == GW_GENDER_FEMALE:
                 gender_code = CRM_GENDER_TYPE_FEMALE
 
-            dropdown_gender = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+            dropdown_gender = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=CustomerGender, name=gender_code, code=gender_code
             )
 
             nationality_code = authorized_info['nationality_code']
 
-            dropdown_nationality = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+            dropdown_nationality = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=AddressCountry, name=nationality_code, code=nationality_code)
 
             cif_issued_date = cif_info['cif_issued_date']
@@ -629,7 +628,7 @@ class CtrGWCustomer(BaseController):
 
             place_of_issue_code_or_name = id_info['id_issued_location']
 
-            dropdown_place_of_issue = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+            dropdown_place_of_issue = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=PlaceOfIssue, name=place_of_issue_code_or_name, code=place_of_issue_code_or_name
             )
             data_response.append(dict(
