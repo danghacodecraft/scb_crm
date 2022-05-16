@@ -33,8 +33,7 @@ from app.utils.constant.cif import (
 from app.utils.constant.ekyc import EKYC_FLAG
 from app.utils.error_messages import ERROR_CALL_SERVICE_EKYC
 from app.utils.functions import (
-    calculate_age, date_to_string, datetime_to_string, gen_qr_code, now,
-    orjson_dumps
+    calculate_age, date_to_string, gen_qr_code, now, orjson_dumps
 )
 from app.utils.vietnamese_converter import (
     convert_to_unsigned_vietnamese, make_short_name, split_name
@@ -423,20 +422,11 @@ class CtrIdentityMobile(BaseController):
             "maker_at": now()
         }
 
-        history_datas = [dict(
+        history_datas = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_INIT_CIF,
-            completed_at=datetime_to_string(now()),
-            created_at=datetime_to_string(now()),
-            status=PROFILE_HISTORY_STATUS_INIT,
-            branch_id=current_user.user_info.hrm_branch_id,
-            branch_code=current_user.user_info.hrm_branch_code,
-            branch_name=current_user.user_info.hrm_branch_name,
-            user_id=current_user.user_info.code,
-            user_name=current_user.user_info.name,
-            position_id=current_user.user_info.hrm_position_id,
-            position_code=current_user.user_info.hrm_position_code,
-            position_name=current_user.user_info.hrm_position_name
-        )]
+            history_status=PROFILE_HISTORY_STATUS_INIT,
+            current_user=current_user.user_info
+        )
 
         # Validate history data
         is_success, history_response = validate_history_data(history_datas)
