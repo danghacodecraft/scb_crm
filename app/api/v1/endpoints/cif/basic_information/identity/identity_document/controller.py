@@ -758,7 +758,7 @@ class CtrIdentityDocument(BaseController):
 
         history_datas = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_INIT_CIF,
-            status=PROFILE_HISTORY_STATUS_INIT,
+            history_status=PROFILE_HISTORY_STATUS_INIT,
             current_user=current_user
         )
 
