@@ -3,24 +3,27 @@ from starlette import status
 from app.api.base.controller import BaseController
 from app.api.v1.controller import PermissionController
 from app.api.v1.endpoints.approval.common_repository import (
-    repos_get_next_receiver, repos_get_next_stage, repos_get_previous_stage,
-    repos_get_previous_transaction_daily, repos_get_stage_information
+    repos_get_next_stage, repos_get_previous_stage,
+    repos_get_previous_transaction_daily, repos_get_stage_information,
+    repos_get_stage_teller
 )
 from app.api.v1.endpoints.approval.repository import (
     repos_approval_get_face_authentication, repos_approve,
     repos_get_approval_identity_faces, repos_get_approval_identity_images,
-    repos_get_approval_process, repos_get_compare_image_transactions
+    repos_get_approval_process, repos_get_compare_image_transactions,
+    repos_get_transaction_daily
 )
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
-from app.third_parties.oracle.models.master_data.others import Branch
+from app.api.v1.endpoints.third_parties.gw.controller import CtrGW
+from app.third_parties.oracle.models.master_data.others import StageAction
 from app.utils.constant.approval import (
     CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_BEGIN,
     CIF_STAGE_COMPLETED, CIF_STAGE_INIT
 )
 from app.utils.constant.cif import (
-    BUSINESS_TYPE_INIT_CIF, IMAGE_TYPE_FACE, IMAGE_TYPE_FINGERPRINT,
-    IMAGE_TYPE_SIGNATURE
+    BUSINESS_TYPE_INIT_CIF, DROPDOWN_NONE_DICT, IMAGE_TYPE_FACE,
+    IMAGE_TYPE_FINGERPRINT, IMAGE_TYPE_SIGNATURE
 )
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_APPROVAL, IDM_GROUP_ROLE_CODE_OPEN_CIF,
@@ -37,7 +40,7 @@ from app.utils.error_messages import (
     ERROR_APPROVAL_NO_SIGNATURE_IN_IDENTITY_STEP, ERROR_APPROVAL_UPLOAD_FACE,
     ERROR_APPROVAL_UPLOAD_FINGERPRINT, ERROR_APPROVAL_UPLOAD_SIGNATURE,
     ERROR_CONTENT_NOT_NULL, ERROR_PERMISSION, ERROR_STAGE_COMPLETED,
-    ERROR_VALIDATE, MESSAGE_STATUS
+    ERROR_VALIDATE, ERROR_WRONG_STAGE_ACTION, MESSAGE_STATUS
 )
 from app.utils.functions import generate_uuid, now, orjson_dumps, orjson_loads
 
@@ -292,7 +295,7 @@ class CtrApproval(BaseController):
         ################################################################################################################
 
         # Kiểm tra xem đang ở bước nào của giao dịch
-        _, _, previous_transaction_daily, previous_transaction_stage, _, previous_transaction_sender = self.call_repos(
+        _, _, previous_transaction_daily, previous_transaction_stage, _, previous_transaction_sender, previous_transaction_stage_action = self.call_repos(
             await repos_get_previous_stage(
                 cif_id=cif_id,
                 session=self.oracle_session
@@ -305,6 +308,7 @@ class CtrApproval(BaseController):
         teller_content = None
         teller_created_at = None
         teller_created_by = None
+        dropdown_action_teller = DROPDOWN_NONE_DICT
 
         stage_supervisor = dict()
         supervisor_stage_code = None
@@ -313,6 +317,7 @@ class CtrApproval(BaseController):
         supervisor_content = None
         supervisor_created_at = None
         supervisor_created_by = None
+        dropdown_action_supervisor = DROPDOWN_NONE_DICT
 
         stage_audit = dict()
         audit_stage_code = None
@@ -321,6 +326,7 @@ class CtrApproval(BaseController):
         audit_content = None
         audit_created_at = None
         audit_created_by = None
+        dropdown_action_audit = DROPDOWN_NONE_DICT
 
         if previous_transaction_stage:
             previous_stage_code = previous_transaction_stage.transaction_stage_phase_code
@@ -348,6 +354,7 @@ class CtrApproval(BaseController):
             else:
                 teller_is_disable = False
             teller_stage_code = None
+
         # KSV nhận hồ sơ từ GDV
         elif previous_stage_code == CIF_STAGE_INIT:
             teller_stage_code = previous_stage_code
@@ -398,6 +405,15 @@ class CtrApproval(BaseController):
             else:
                 audit_is_disable = False   # TODO: Chưa được mô tả cho KSS tạm thời dùng Role của KSV
 
+            if previous_transaction_stage_action:
+                dropdown_action_supervisor = await CtrGW.dropdown_mapping_crm_model_or_dropdown_name(
+                    model=StageAction,
+                    name=previous_transaction_stage_action.name,
+                    code=previous_transaction_stage_action.code,
+                    session=self.oracle_session
+                )
+                teller_is_disable = False
+
             supervisor_stage_code = previous_stage_code
             supervisor_transaction_daily = previous_transaction_daily
             supervisor_transaction_sender = previous_transaction_sender
@@ -427,6 +443,15 @@ class CtrApproval(BaseController):
             audit_created_at = audit_transaction_daily.created_at
             audit_created_by = audit_transaction_sender.user_fullname
 
+            if previous_transaction_stage_action:
+                dropdown_action_audit = await CtrGW.dropdown_mapping_crm_model_or_dropdown_name(
+                    model=StageAction,
+                    name=previous_transaction_stage_action.name,
+                    code=previous_transaction_stage_action.code,
+                    session=self.oracle_session
+                )
+                teller_is_disable = False
+
             supervisor_transaction_daily, supervisor_transaction_sender, supervisor_transaction_stage, _ = self.call_repos(
                 await repos_get_previous_transaction_daily(
                     transaction_daily_id=audit_transaction_daily.transaction_id,
@@ -437,6 +462,13 @@ class CtrApproval(BaseController):
             supervisor_content = orjson_loads(supervisor_transaction_daily.data)["content"]
             supervisor_created_at = supervisor_transaction_daily.created_at
             supervisor_created_by = supervisor_transaction_sender.user_fullname
+
+            dropdown_action_supervisor = await CtrGW.dropdown_mapping_crm_model_or_dropdown_name(
+                model=StageAction,
+                name=previous_transaction_stage_action.name,
+                code=previous_transaction_stage_action.code,
+                session=self.oracle_session
+            )
 
             teller_transaction_daily, teller_transaction_sender, teller_transaction_stage, _ = self.call_repos(
                 await repos_get_previous_transaction_daily(
@@ -454,6 +486,7 @@ class CtrApproval(BaseController):
             is_disable=teller_is_disable,
             is_completed=teller_is_completed,
             content=teller_content,
+            action=dropdown_action_teller,
             created_at=teller_created_at,
             created_by=teller_created_by
         ))
@@ -462,6 +495,7 @@ class CtrApproval(BaseController):
             is_disable=supervisor_is_disable,
             is_completed=supervisor_is_completed,
             content=supervisor_content,
+            action=dropdown_action_supervisor,
             created_at=supervisor_created_at,
             created_by=supervisor_created_by
         ))
@@ -470,6 +504,7 @@ class CtrApproval(BaseController):
             is_disable=audit_is_disable,
             is_completed=audit_is_completed,
             content=audit_content,
+            action=dropdown_action_audit,
             created_at=audit_created_at,
             created_by=audit_created_by
         ))
@@ -566,9 +601,10 @@ class CtrApproval(BaseController):
         ################################################################################################################
         content = request.approval.content
         reject_flag = request.approval.reject_flag
+        action_id = request.approval.action_id
         business_type_id = BUSINESS_TYPE_INIT_CIF
 
-        _, _, _, previous_transaction_stage, _, _ = self.call_repos(
+        _, _, _, previous_transaction_stage, _, _, _ = self.call_repos(
             await repos_get_previous_stage(
                 cif_id=cif_id,
                 session=self.oracle_session
@@ -579,15 +615,20 @@ class CtrApproval(BaseController):
         ################################################################################################################
         is_stage_init = True
         previous_stage_code = None
+        previous_stage_is_reject = False
+        is_give_back = False
         if previous_transaction_stage:
             is_stage_init = False
-            _, previous_stage, _, _, _, _, _ = self.call_repos(
+            _, previous_stage, _, _, _, _, _, _ = self.call_repos(
                 await repos_get_stage_information(
                     business_type_id=business_type_id,
                     stage_id=previous_transaction_stage.transaction_stage_phase_code,
-                    session=self.oracle_session
+                    session=self.oracle_session,
+                    reject_flag=previous_transaction_stage.is_reject,
+                    stage_action_id=action_id
                 ))
             previous_stage_code = previous_stage.code
+            previous_stage_is_reject = previous_stage.is_reject
 
         ################################################################################################################
         # CURRENT STAGE
@@ -631,7 +672,7 @@ class CtrApproval(BaseController):
                 return self.response_exception(
                     msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
                     detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FACE],
-                    loc="authentication -> compare_face_image_uuid"
+                    loc="authentication -> face -> compare_face_image_uuid"
                 )
             ############################################################################################################
 
@@ -650,7 +691,7 @@ class CtrApproval(BaseController):
                 return self.response_exception(
                     msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT,
                     detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT],
-                    loc="authentication -> compare_face_image_uuid"
+                    loc="authentication -> fingerprint -> compare_face_image_uuid"
                 )
             ############################################################################################################
 
@@ -672,11 +713,19 @@ class CtrApproval(BaseController):
                     loc="authentication -> signature -> compare_face_image_uuid"
                 )
             ############################################################################################################
-            current_stage = self.call_repos(await repos_get_next_stage(
-                business_type_id=business_type_id,
-                current_stage_code=previous_stage_code,
-                session=self.oracle_session
-            ))
+            if previous_stage_is_reject or previous_stage_code == CIF_STAGE_BEGIN:
+                current_stage = self.call_repos(await repos_get_stage_teller(
+                    business_type_id=business_type_id,
+                    session=self.oracle_session
+                ))
+                is_give_back = True
+            else:
+                current_stage = self.call_repos(await repos_get_next_stage(
+                    business_type_id=business_type_id,
+                    current_stage_code=previous_stage_code,
+                    session=self.oracle_session,
+                    reject_flag=reject_flag,
+                ))
             current_stage_code = current_stage.code
 
         if current_stage_code == CIF_STAGE_COMPLETED:
@@ -689,12 +738,17 @@ class CtrApproval(BaseController):
                 )
             )
 
-        current_stage_status, current_stage, _, current_lane, _, current_phase, current_stage_role = self.call_repos(
-            await repos_get_stage_information(
-                business_type_id=business_type_id,
-                stage_id=current_stage_code,
-                session=self.oracle_session
-            ))
+        (
+            current_stage_status, current_stage, _, current_lane, _, current_phase, current_stage_role,
+            current_stage_action
+        ) = self.call_repos(await repos_get_stage_information(
+            business_type_id=business_type_id,
+            stage_id=current_stage_code,
+            session=self.oracle_session,
+            reject_flag=reject_flag,
+            stage_action_id=action_id,
+            is_give_back=is_give_back
+        ))
 
         current_stage_status_code = None
         current_stage_status_name = None
@@ -705,6 +759,8 @@ class CtrApproval(BaseController):
         current_phase_name = None
         current_stage_role_code = None
         current_stage_role_name = None
+        current_stage_action_code = "NO_ACTION"
+        current_stage_action_name = "No action"
 
         if current_stage:
             ############################################################################################################
@@ -751,22 +807,39 @@ class CtrApproval(BaseController):
             current_phase_name = current_phase.name
             current_stage_role_code = current_stage_role.code
             current_stage_role_name = current_stage_role.name
+            if current_stage_code != CIF_STAGE_INIT:
+                # Nếu truyền vào Param StageAction giả
+                if not current_stage_action:
+                    return self.response_exception(
+                        loc=f"Stage Action: {action_id}, reject_flag: {reject_flag}, Stage: {current_stage_code}",
+                        msg=ERROR_WRONG_STAGE_ACTION
+                    )
+                current_stage_action_code = current_stage_action.code
+                current_stage_action_name = current_stage_action.name
 
         ################################################################################################################
         # NEXT STAGE
         ################################################################################################################
-        next_stage = self.call_repos(await repos_get_next_stage(
-            business_type_id=business_type_id,
-            current_stage_code=current_stage_code,
-            session=self.oracle_session
-        ))
+        if current_stage.is_reject:
+            next_stage = self.call_repos(await repos_get_stage_teller(
+                business_type_id=business_type_id,
+                session=self.oracle_session
+            ))
+        else:
+            next_stage = self.call_repos(await repos_get_next_stage(
+                business_type_id=business_type_id,
+                current_stage_code=current_stage_code,
+                session=self.oracle_session
+            ))
         next_stage_code = next_stage.code
         next_stage_role_code = None
         if next_stage_code != CIF_STAGE_COMPLETED:
-            _, next_stage, _, _, _, _, next_stage_role = self.call_repos(await repos_get_stage_information(
+            _, _, _, _, _, _, next_stage_role, _ = self.call_repos(await repos_get_stage_information(
                 business_type_id=business_type_id,
                 stage_id=next_stage_code,
-                session=self.oracle_session
+                session=self.oracle_session,
+                reject_flag=reject_flag,
+                stage_action_id=action_id
             ))
             next_stage_role_code = next_stage_role.code
 
@@ -776,6 +849,7 @@ class CtrApproval(BaseController):
         saving_transaction_stage_phase_id = generate_uuid()
         saving_transaction_stage_role_id = generate_uuid()
         transaction_daily_id = generate_uuid()
+        transaction_stage_action_id = generate_uuid()
 
         saving_transaction_stage_status = dict(
             id=saving_transaction_stage_status_id,
@@ -801,6 +875,12 @@ class CtrApproval(BaseController):
             name=current_stage_role_name
         )
 
+        saving_transaction_stage_action = dict(
+            id=transaction_stage_action_id,
+            code=current_stage_action_code,
+            name=current_stage_action_name
+        )
+
         saving_transaction_stage = dict(
             id=saving_transaction_stage_id,
             status_id=saving_transaction_stage_status_id,
@@ -809,7 +889,9 @@ class CtrApproval(BaseController):
             business_type_id=business_type_id,
             sla_transaction_id=None,  # TODO
             transaction_stage_phase_code=current_stage_code,
-            transaction_stage_phase_name=current_stage_name
+            transaction_stage_phase_name=current_stage_name,
+            is_reject=reject_flag,
+            action_id=transaction_stage_action_id
         )
 
         description = await self.get_description(
@@ -849,45 +931,67 @@ class CtrApproval(BaseController):
             position_name=current_user.hrm_position_name
         )
 
-        receiver_branch = None
-        receiver_lane = self.call_repos(await repos_get_next_receiver(
-            business_type_id=business_type_id,
-            current_stage_id=current_stage_code,
-            reject_flag=reject_flag,
-            session=self.oracle_session
-        ))
-        if receiver_lane:
-            receiver_branch = await self.get_model_object_by_id(
-                model_id=receiver_lane.branch_id,
-                model=Branch,
-                loc="next_receiver -> branch_id"
-            )
-            # receiver_department = await self.get_model_object_by_id(
-            #     model_id=next_receiver.department_id,
-            #     model=Department,
-            #     loc="next_receiver -> department_id"
-            # )
+        # receiver_branch = None
+        # receiver_lane = self.call_repos(await repos_get_next_receiver(
+        #     business_type_id=business_type_id,
+        #     current_stage_id=current_stage_code,
+        #     reject_flag=reject_flag,
+        #     session=self.oracle_session
+        # ))
+        # if receiver_lane:
+        #     receiver_branch = await self.get_model_object_by_id(
+        #         model_id=receiver_lane.branch_id,
+        #         model=Branch,
+        #         loc="next_receiver -> branch_id"
+        #     )
+        #     # receiver_department = await self.get_model_object_by_id(
+        #     #     model_id=next_receiver.department_id,
+        #     #     model=Department,
+        #     #     loc="next_receiver -> department_id"
+        #     # )
 
-        saving_transaction_receiver = dict(
-            transaction_id=transaction_daily_id,
-            user_id=current_user.code,
-            user_name=current_user.username,
-            user_fullname=current_user.name,
-            user_email=current_user.email,
-            branch_id=receiver_branch.id if receiver_lane else None,
-            branch_code=receiver_branch.code if receiver_lane else None,
-            branch_name=receiver_branch.name if receiver_lane else None,
-            department_id=receiver_lane.department_id if receiver_lane else None,
-            department_code=None,  # TODO
-            department_name=None,  # TODO
-            position_id=None,  # TODO
-            position_code=None,  # TODO
-            position_name=None  # TODO
-        )
+        if reject_flag and current_stage_code != CIF_STAGE_INIT:
+            receiver_user = self.call_repos(
+                await repos_get_transaction_daily(cif_id=cif_id, session=self.oracle_session)
+            )
+            saving_transaction_receiver = dict(
+                transaction_id=transaction_daily_id,
+                user_id=receiver_user.user_id,
+                user_name=receiver_user.user_name,
+                user_fullname=receiver_user.user_fullname,
+                user_email=receiver_user.user_email,
+                branch_id=receiver_user.branch_id,
+                branch_code=receiver_user.branch_code,
+                branch_name=receiver_user.branch_name,
+                department_id=receiver_user.department_id,
+                department_code=receiver_user.department_code,
+                department_name=receiver_user.department_name,
+                position_id=receiver_user.position_id,
+                position_code=receiver_user.position_code,
+                position_name=receiver_user.position_name,
+            )
+        else:
+            saving_transaction_receiver = dict(
+                transaction_id=transaction_daily_id,
+                user_id=None,
+                user_name=None,
+                user_fullname=None,
+                user_email=None,
+                branch_id=None,
+                branch_code=None,
+                branch_name=None,
+                department_id=None,
+                department_code=None,
+                department_name=None,
+                position_id=None,
+                position_code=None,
+                position_name=None
+            )
 
         approval_process = self.call_repos((await repos_approve(
             cif_id=cif_id,
             saving_transaction_stage_status=saving_transaction_stage_status,
+            saving_transaction_stage_action=saving_transaction_stage_action,
             saving_transaction_stage=saving_transaction_stage,
             saving_transaction_stage_lane=saving_transaction_stage_lane,
             saving_transaction_stage_phase=saving_transaction_stage_phase,
