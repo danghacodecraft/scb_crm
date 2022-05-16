@@ -98,13 +98,26 @@ class CtrCustomer(BaseController):
                 session=self.oracle_session
             )
         )
+        list_employee = []
+        for employee in employees:
+            employee = orjson_loads(employee)
+            list_employee.extend(employee)
+
         list_distinct_employee = []
-        for (
-                user_id, user_fullname, user_name, user_email, position_id, position_code, position_name, department_id,
-                department_code, department_name, branch_id, branch_code, branch_name, _
-        ) in employees:
+        list_distinct_user_id = []
+        for employee in list_employee:
+            user_id = employee['user_id']
+            if user_id in list_distinct_user_id:
+                continue
+
+            list_distinct_user_id.append(user_id)
+            user_fullname = employee['user_name']
+            position_id = employee['position_id']
+            position_code = employee['position_code']
+            position_name = employee['position_name']
+
             hrm_user_data = self.call_repos(await repo_contact(
-                code=user_id,
+                code=employee['user_id'],
                 session=self.oracle_session_task
             ))
 
@@ -112,23 +125,23 @@ class CtrCustomer(BaseController):
                 id=user_id,
                 full_name_vn=user_fullname,
                 avatar_url=hrm_user_data[-1],  # TODO: Tạm thời lấy từ HRM - User Contact
-                user_name=user_name,
-                email=user_email,
+                # user_name=user_name,
+                # email=user_email,
                 position=dict(
                     id=position_id,
                     code=position_code,
                     name=position_name
                 ),
-                department=dict(
-                    id=department_id,
-                    code=department_code,
-                    name=department_name
-                ),
-                branch=dict(
-                    id=branch_id,
-                    code=branch_code,
-                    name=branch_name
-                )
+                # department=dict(
+                #     id=department_id,
+                #     code=department_code,
+                #     name=department_name
+                # ),
+                # branch=dict(
+                #     id=branch_id,
+                #     code=branch_code,
+                #     name=branch_name
+                # )
             ))
         # gọi đến service file để lấy link download
         uuid__link_downloads = await self.get_link_download_multi_file(uuids=[first_row.Customer.avatar_url])
