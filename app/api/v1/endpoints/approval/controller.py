@@ -300,6 +300,9 @@ class CtrApproval(BaseController):
                 session=self.oracle_session
             ))
 
+        previous_transaction_stage_is_reject = previous_transaction_stage.is_reject
+        is_open_cif = False
+
         previous_stage_code = None
         stage_teller = dict()
         teller_is_disable = True
@@ -331,7 +334,7 @@ class CtrApproval(BaseController):
             previous_stage_code = previous_transaction_stage.transaction_stage_phase_code
 
         stages = []
-        # GDV chưa gửi hồ sơ
+        # Chưa có hồ sơ nào trước đó, GDV gửi hồ sơ đi
         if previous_stage_code == CIF_STAGE_BEGIN:
             is_stage_teller = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
                 auth_response=auth_response,
@@ -354,7 +357,7 @@ class CtrApproval(BaseController):
                 teller_is_disable = False
             teller_stage_code = None
 
-        # KSV nhận hồ sơ từ GDV
+        # Hồ sơ GDV đã gửi
         elif previous_stage_code == CIF_STAGE_INIT:
             teller_stage_code = previous_stage_code
             teller_is_completed = True
@@ -382,7 +385,7 @@ class CtrApproval(BaseController):
             else:
                 supervisor_is_disable = False
 
-        # KSS nhận hồ sơ từ KSV
+        # KSV đã xử lý hồ sơ
         elif previous_stage_code == CIF_STAGE_APPROVE_KSV:
             is_stage_audit = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
                 auth_response=auth_response,
@@ -401,8 +404,6 @@ class CtrApproval(BaseController):
                     msg=ERROR_PERMISSION,
                     error_status_code=status.HTTP_403_FORBIDDEN
                 )
-            else:
-                audit_is_disable = False   # TODO: Chưa được mô tả cho KSS tạm thời dùng Role của KSV
 
             if previous_transaction_stage_action:
                 dropdown_action_supervisor = await self.dropdown_mapping_crm_model_or_dropdown_name(
@@ -410,7 +411,6 @@ class CtrApproval(BaseController):
                     name=previous_transaction_stage_action.name,
                     code=previous_transaction_stage_action.code
                 )
-                teller_is_disable = False
 
             supervisor_stage_code = previous_stage_code
             supervisor_transaction_daily = previous_transaction_daily
@@ -431,7 +431,11 @@ class CtrApproval(BaseController):
             teller_created_at = teller_transaction_daily.created_at
             teller_created_by = teller_transaction_sender.user_fullname
 
-        # KSS đã duyệt hồ sơ
+            supervisor_is_reject = previous_transaction_stage_is_reject
+            if supervisor_is_reject:
+                teller_is_disable = False
+
+        # KSS đã xử lý hồ sơ
         else:
             audit_stage_code = previous_stage_code
             audit_transaction_daily = previous_transaction_daily
@@ -511,7 +515,8 @@ class CtrApproval(BaseController):
         return self.response(data=dict(
             cif_id=cif_id,
             stages=stages,
-            authentication=authentication
+            authentication=authentication,
+            is_open_cif=is_open_cif
         ))
 
     async def ctr_approve(

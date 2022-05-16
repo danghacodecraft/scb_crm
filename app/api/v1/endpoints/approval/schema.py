@@ -69,6 +69,7 @@ class CifApprovalSuccessResponse(BaseSchema):
     cif_id: str = Field(..., description="Cif ID")
     authentication: AuthenticationResponse = Field(..., description="Thông tin xác thực")
     stages: List[CIFStageResponse] = Field(..., description="Thông tin các bước phê duyệt")
+    is_open_cif: bool = Field(..., description="Được phép mở CIF không?")
 
 
 class FaceAuthenticationRequest(BaseSchema):
