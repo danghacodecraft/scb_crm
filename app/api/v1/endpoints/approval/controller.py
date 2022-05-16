@@ -15,7 +15,6 @@ from app.api.v1.endpoints.approval.repository import (
 )
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
-from app.api.v1.endpoints.third_parties.gw.controller import CtrGW
 from app.third_parties.oracle.models.master_data.others import StageAction
 from app.utils.constant.approval import (
     CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_BEGIN,
@@ -406,11 +405,10 @@ class CtrApproval(BaseController):
                 audit_is_disable = False   # TODO: Chưa được mô tả cho KSS tạm thời dùng Role của KSV
 
             if previous_transaction_stage_action:
-                dropdown_action_supervisor = await CtrGW.dropdown_mapping_crm_model_or_dropdown_name(
+                dropdown_action_supervisor = await self.dropdown_mapping_crm_model_or_dropdown_name(
                     model=StageAction,
                     name=previous_transaction_stage_action.name,
-                    code=previous_transaction_stage_action.code,
-                    session=self.oracle_session
+                    code=previous_transaction_stage_action.code
                 )
                 teller_is_disable = False
 
@@ -444,11 +442,10 @@ class CtrApproval(BaseController):
             audit_created_by = audit_transaction_sender.user_fullname
 
             if previous_transaction_stage_action:
-                dropdown_action_audit = await CtrGW.dropdown_mapping_crm_model_or_dropdown_name(
+                dropdown_action_audit = await self.dropdown_mapping_crm_model_or_dropdown_name(
                     model=StageAction,
                     name=previous_transaction_stage_action.name,
-                    code=previous_transaction_stage_action.code,
-                    session=self.oracle_session
+                    code=previous_transaction_stage_action.code
                 )
                 teller_is_disable = False
 
@@ -463,11 +460,10 @@ class CtrApproval(BaseController):
             supervisor_created_at = supervisor_transaction_daily.created_at
             supervisor_created_by = supervisor_transaction_sender.user_fullname
 
-            dropdown_action_supervisor = await CtrGW.dropdown_mapping_crm_model_or_dropdown_name(
+            dropdown_action_supervisor = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=StageAction,
                 name=previous_transaction_stage_action.name,
-                code=previous_transaction_stage_action.code,
-                session=self.oracle_session
+                code=previous_transaction_stage_action.code
             )
 
             teller_transaction_daily, teller_transaction_sender, teller_transaction_stage, _ = self.call_repos(

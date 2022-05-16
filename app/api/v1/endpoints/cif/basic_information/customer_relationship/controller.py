@@ -14,7 +14,6 @@ from app.api.v1.endpoints.cif.repository import (
     repos_check_exist_cif, repos_get_booking_code,
     repos_get_initializing_customer
 )
-from app.api.v1.endpoints.third_parties.gw.controller import CtrGW
 from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.settings.event import service_gw
 from app.third_parties.oracle.models.master_data.address import (
@@ -68,13 +67,13 @@ class CtrCustomerRelationship(BaseController):
             if gender_code == GW_GENDER_FEMALE:
                 gender_code = CRM_GENDER_TYPE_FEMALE
 
-            dropdown_gender = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+            dropdown_gender = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=CustomerGender, name=None, code=gender_code
             )
 
             nationality_code = customer_relationship_data["nationality_code"]
 
-            dropdown_nationality = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+            dropdown_nationality = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=AddressCountry, name=None, code=nationality_code
             )
 
@@ -83,37 +82,37 @@ class CtrCustomerRelationship(BaseController):
 
             resident_city_name = resident_address["city_name"]
 
-            resident_dropdown_city = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+            resident_dropdown_city = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=AddressProvince, name=resident_city_name, code=resident_city_name
             )
 
             resident_district_name = resident_address["district_name"]
 
-            resident_dropdown_district = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+            resident_dropdown_district = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=AddressDistrict, name=resident_district_name, code=resident_district_name
             )
 
             resident_ward_name = resident_address["ward_name"]
 
-            resident_dropdown_ward = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+            resident_dropdown_ward = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=AddressWard, name=resident_ward_name, code=resident_ward_name
             )
 
             contact_city_name = contact_address["contact_address_city_name"]
 
-            contact_dropdown_city = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+            contact_dropdown_city = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=AddressProvince, name=contact_city_name, code=contact_city_name
             )
 
             contact_district_name = contact_address["contact_address_district_name"]
 
-            contact_dropdown_district = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+            contact_dropdown_district = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=AddressDistrict, name=contact_district_name, code=contact_district_name
             )
 
             contact_address_ward = contact_address["contact_address_ward_name"]
 
-            contact_dropdown_ward = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+            contact_dropdown_ward = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=AddressWard, name=contact_address_ward, code=contact_address_ward
             )
 
@@ -121,7 +120,7 @@ class CtrCustomerRelationship(BaseController):
 
             place_of_issue = identity_document['id_issued_location']
 
-            dropdown_place_of_issue = await CtrGW().dropdown_mapping_crm_model_or_dropdown_name(
+            dropdown_place_of_issue = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=PlaceOfIssue, name=place_of_issue, code=place_of_issue
             )
 
