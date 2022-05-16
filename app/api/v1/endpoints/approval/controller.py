@@ -597,7 +597,6 @@ class CtrApproval(BaseController):
         _, _, _, previous_transaction_stage, _, _, _ = self.call_repos(
             await repos_get_previous_stage(
                 cif_id=cif_id,
-                reject_flag=reject_flag,
                 session=self.oracle_session
             ))
 
