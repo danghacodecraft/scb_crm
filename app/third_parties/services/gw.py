@@ -12,7 +12,7 @@ from app.utils.constant.gw import (
     GW_CURRENT_ACCOUNT_CASA, GW_CURRENT_ACCOUNT_FROM_CIF,
     GW_CUSTOMER_REF_DATA_MGMT_CIF_NUM, GW_DEPOSIT_ACCOUNT_FROM_CIF,
     GW_DEPOSIT_ACCOUNT_TD, GW_EMPLOYEE_FROM_CODE, GW_EMPLOYEE_FROM_NAME,
-    GW_ENDPOINT_URL_RETRIEVE_AUTHORIZED_ACCOUNT_NUM,
+    GW_EMPLOYEES, GW_ENDPOINT_URL_RETRIEVE_AUTHORIZED_ACCOUNT_NUM,
     GW_ENDPOINT_URL_RETRIEVE_CO_OWNER_ACCOUNT_NUM,
     GW_ENDPOINT_URL_RETRIEVE_CURRENT_ACCOUNT_CASA,
     GW_ENDPOINT_URL_RETRIEVE_CURRENT_ACCOUNT_CASA_FROM_CIF,
@@ -22,10 +22,14 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_RETRIEVE_DEPOSIT_ACCOUNT_TD,
     GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_CODE,
     GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_USER_NAME,
+    GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_LIST_FROM_ORG_ID,
     GW_ENDPOINT_URL_RETRIEVE_REPORT_CASA_ACCOUNT,
     GW_ENDPOINT_URL_RETRIEVE_REPORT_HIS_CASA_ACCOUNT,
     GW_ENDPOINT_URL_RETRIEVE_REPORT_STATEMENT_CASA_ACCOUNT,
-    GW_ENDPOINT_URL_RETRIEVE_REPORT_STATEMENT_TD_ACCOUNT
+    GW_ENDPOINT_URL_RETRIEVE_REPORT_STATEMENT_TD_ACCOUNT,
+    GW_ENDPOINT_URL_RETRIEVE_REWARD_INFO_FROM_CODE,
+    GW_ENDPOINT_URL_RETRIEVE_WORKING_PROCESS_INFO_FROM_CODE,
+    GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE
 )
 from app.utils.functions import date_to_string
 
@@ -760,7 +764,7 @@ class ServiceGW:
                 }
             }
         }
-        api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_CODE}"
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE}"
 
         return_errors = dict(
             loc="SERVICE GW",
@@ -816,6 +820,229 @@ class ServiceGW:
             }
         }
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_USER_NAME}"
+
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data
+                else:
+                    return_data = await response.json()
+                    return True, return_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data
+
+    async def get_employee_list_from_org_id(self, current_user: UserInfoResponse, org_id):
+        request_data = {
+            "selectEmployeeListFromOrgId_in": {
+                "transaction_info": {
+                    "client_code": "CRM",
+                    "client_ref_num": "20190702091907_4232781",
+                    "client_ip": "10.4.4.x",
+                    "server_ref_num": "string",
+                    "branch_info": {
+                        "branch_name": current_user.hrm_branch_name,
+                        "branch_code": current_user.hrm_branch_code
+                    }
+                },
+                "data_input": {
+                    "transaction_info": {
+                        "transaction_name": GW_EMPLOYEES,
+                        "transaction_value": {
+                            "org_id": org_id
+                        }
+                    }
+                }
+            }
+        }
+        api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_LIST_FROM_ORG_ID}"
+
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data
+                else:
+                    return_data = await response.json()
+                    return True, return_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data
+
+    async def get_retrieve_employee_info_from_code(
+            self, current_user: UserInfoResponse, staff_code, staff_type, department_code, org_id
+    ):
+        request_data = {
+            "retrieveEmployeeInfoFromCode_in": {
+                "transaction_info": {
+                    "client_code": "CRM",
+                    "client_ref_num": "20190702091907_4232781",
+                    "client_ip": "10.4.4.x",
+                    "server_ref_num": "string",
+                    "branch_info": {
+                        "branch_name": current_user.hrm_branch_name,
+                        "branch_code": current_user.hrm_branch_code
+                    }
+                },
+                "data_input": {
+                    "employee_info": {
+                        "staff_code": staff_code,
+                        "staff_type": staff_type,
+                        "department_info": {
+                            "department_code": department_code
+                        },
+                        "branch_org": {
+                            "org_id": org_id
+                        }
+                    }
+                }
+            }
+        }
+        api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_CODE}"
+
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data
+                else:
+                    return_data = await response.json()
+                    return True, return_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data
+
+    async def get_working_process_info_from_code(self, current_user: UserInfoResponse, staff_code):
+        request_data = {
+            "selectWorkingProcessInfoFromCode_in": {
+                "transaction_info": {
+                    "client_code": "CRM",
+                    "client_ref_num": "20190702091907_4232781",
+                    "client_ip": "10.4.4.x",
+                    "server_ref_num": "string",
+                    "branch_info": {
+                        "branch_name": current_user.hrm_branch_name,
+                        "branch_code": current_user.hrm_branch_code
+                    }
+                },
+                "data_input": {
+                    "employee_info": {
+                        "staff_code": staff_code
+                    }
+                }
+            }
+        }
+        api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_WORKING_PROCESS_INFO_FROM_CODE}"
+
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data
+                else:
+                    return_data = await response.json()
+                    return True, return_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data
+
+    async def get_reward_info_from_code(self, current_user: UserInfoResponse, staff_code):
+        request_data = {
+            "selectRewardInfoFromCode_in": {
+                "transaction_info": {
+                    "client_code": "CRM",
+                    "client_ref_num": "20190702091907_4232781",
+                    "client_ip": "10.4.4.x",
+                    "server_ref_num": "string",
+                    "branch_info": {
+                        "branch_name": current_user.hrm_branch_name,
+                        "branch_code": current_user.hrm_branch_code
+                    }
+                },
+                "data_input": {
+                    "employee_info": {
+                        "staff_code": staff_code,
+                        "staff_type": "KHEN_THUONG",
+                        "department_info": {
+                            "department_code": "ALL"
+                        },
+                        "branch_org": {
+                            "org_id": "ALL"
+                        }
+                    }
+                }
+            }
+        }
+        api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_REWARD_INFO_FROM_CODE}"
 
         return_errors = dict(
             loc="SERVICE GW",
