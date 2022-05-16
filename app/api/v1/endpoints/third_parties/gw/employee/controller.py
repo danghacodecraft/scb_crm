@@ -3,9 +3,16 @@ from app.api.v1.endpoints.third_parties.gw.employee.repository import (
     repos_gw_get_employee_info_from_code,
     repos_gw_get_employee_info_from_user_name,
     repos_gw_get_employee_list_from_org_id,
+    repos_gw_get_retrieve_discipline_info_from_code,
     repos_gw_get_retrieve_employee_info_from_code,
+    repos_gw_get_retrieve_kpis_info_from_code,
     repos_gw_get_retrieve_reward_info_from_code,
+    repos_gw_get_retrieve_staff_other_info_from_code,
+    repos_gw_get_retrieve_topic_info_from_code,
     repos_gw_get_retrieve_working_process_info_from_code
+)
+from app.third_parties.oracle.models.master_data.address import (
+    AddressCountry, AddressDistrict, AddressProvince, AddressWard
 )
 from app.third_parties.oracle.models.master_data.customer import CustomerGender
 from app.utils.constant.cif import CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE
@@ -100,16 +107,11 @@ class CtrGWEmployee(BaseController):
         ))
 
     async def ctr_gw_get_retrieve_employee_info_from_code(
-            self,
-            staff_code: str, staff_type: str, department_code: str, org_id: str
+            self, staff_code: str
     ):
         current_user = self.current_user
         gw_employee_info = self.call_repos(await repos_gw_get_retrieve_employee_info_from_code(
-            staff_code=staff_code,
-            staff_type=staff_type,
-            department_code=department_code,
-            org_id=org_id,
-            current_user=current_user
+            staff_code=staff_code, current_user=current_user
         ))
 
         employee_info = gw_employee_info["retrieveEmployeeInfoFromCode_out"]["data_output"]["employee_info"]
@@ -137,7 +139,7 @@ class CtrGWEmployee(BaseController):
         if gender_code_or_name == GW_GENDER_FEMALE:
             gender_code_or_name = CRM_GENDER_TYPE_FEMALE
 
-        dropdown_gender = self.dropdown_mapping_crm_model_or_dropdown_name(
+        dropdown_gender = await self.dropdown_mapping_crm_model_or_dropdown_name(
             model=CustomerGender, name=gender_code_or_name, code=gender_code_or_name
         )
 
@@ -239,16 +241,75 @@ class CtrGWEmployee(BaseController):
             department_info=dict(
                 id=department_info['department_code'],
                 code=department_info['department_code'],
-                name=department_info['department_name']
-            ),
+                name=department_info['department_name']),
             identity_info=dict(
                 number=identity_info['id_num'],
                 issued_date=identity_issued_date,
                 expired_date=identity_expired_date,
-                place_of_issue=identity_info['id_issued_location'],
+                place_of_issue=identity_info['id_issued_location']),
+            original_address=dict(
+                number_and_street=address_info['original_address_line'],
+                country=await self.dropdown_mapping_crm_model_or_dropdown_name(
+                    name=address_info['original_country'],
+                    code=address_info['original_country'],
+                    model=AddressCountry),
+                province=await self.dropdown_mapping_crm_model_or_dropdown_name(
+                    name=address_info['original_city_name'],
+                    code=address_info['original_city_name'],
+                    model=AddressProvince),
+                district=await self.dropdown_mapping_crm_model_or_dropdown_name(
+                    name=address_info['original_district_name'],
+                    code=address_info['original_district_name'],
+                    model=AddressDistrict),
+                ward=await self.dropdown_mapping_crm_model_or_dropdown_name(
+                    name=address_info['original_ward_name'],
+                    code=address_info['original_ward_name'],
+                    model=AddressWard)
             ),
-            address_info=dict(
-                original_address_line=address_info['original_address_line']
+            resident_address=dict(
+                number_and_street=address_info['line'],
+                country=await self.dropdown_mapping_crm_model_or_dropdown_name(
+                    name=address_info['country_name'],
+                    code=address_info['country_name'],
+                    model=AddressCountry
+                ),
+                province=await self.dropdown_mapping_crm_model_or_dropdown_name(
+                    name=address_info['city_name'],
+                    code=address_info['city_name'],
+                    model=AddressProvince
+                ),
+                district=await self.dropdown_mapping_crm_model_or_dropdown_name(
+                    name=address_info['district_name'],
+                    code=address_info['district_name'],
+                    model=AddressDistrict
+                ),
+                ward=await self.dropdown_mapping_crm_model_or_dropdown_name(
+                    name=address_info['ward_name'],
+                    code=address_info['ward_name'],
+                    model=AddressWard)
+            ),
+            contact_address=dict(
+                number_and_street=address_info['contact_address_line'],
+                country=await self.dropdown_mapping_crm_model_or_dropdown_name(
+                    name=address_info['contact_address_country_name'],
+                    code=address_info['contact_address_country_name'],
+                    model=AddressCountry
+                ),
+                province=await self.dropdown_mapping_crm_model_or_dropdown_name(
+                    name=address_info['contact_address_city_name'],
+                    code=address_info['contact_address_city_name'],
+                    model=AddressProvince
+                ),
+                district=await self.dropdown_mapping_crm_model_or_dropdown_name(
+                    name=address_info['contact_address_district_name'],
+                    code=address_info['contact_address_district_name'],
+                    model=AddressDistrict
+                ),
+                ward=await self.dropdown_mapping_crm_model_or_dropdown_name(
+                    name=address_info['contact_address_ward_name'],
+                    code=address_info['contact_address_ward_name'],
+                    model=AddressWard
+                ),
             ),
             education_info=dict(
                 academy=education_info["academy"],
@@ -296,7 +357,7 @@ class CtrGWEmployee(BaseController):
             )
         ))
 
-    async def ctr_gw_get_retrieve_working_process_info_from_code(self, staff_code: str):
+    async def ctr_gw_get_working_process_info_from_code(self, staff_code: str):
         current_user = self.current_user
         gw_working_process_info = self.call_repos(await repos_gw_get_retrieve_working_process_info_from_code(
             staff_code=staff_code,
@@ -321,7 +382,7 @@ class CtrGWEmployee(BaseController):
                      position=working_process_info['position'], )
                 for working_process_info in working_process_infos]))
 
-    async def ctr_gw_get_retrieve_reward_info_from_code(self, staff_code: str):
+    async def ctr_gw_get_reward_info_from_code(self, staff_code: str):
         current_user = self.current_user
         gw_reward_info = self.call_repos(await repos_gw_get_retrieve_reward_info_from_code(
             staff_code=staff_code,
@@ -333,13 +394,13 @@ class CtrGWEmployee(BaseController):
 
         return self.response(data=dict(
             total_items=len(reward_infos),
-            working_process_infos=[
+            reward_infos=[
                 dict(effect_date=date_string_to_other_date_string_format(
                     date_input=reward_info['reward_effect_date'],
                     from_format=GW_DATETIME_FORMAT,
                     to_format=GW_DATE_FORMAT
                 ),
-                    reward_num=reward_info['reward_num'],
+                    number=reward_info['reward_num'],
                     title=reward_info['reward_title'],
                     level=reward_info['reward_level'],
                     jobtitle=reward_info['reward_jobtitle'],
@@ -353,3 +414,102 @@ class CtrGWEmployee(BaseController):
                         to_format=GW_DATE_FORMAT),
                     signer=reward_info['reward_signer'])
                 for reward_info in reward_infos]))
+
+    async def ctr_gw_get_discipline_info_from_code(self, staff_code: str):
+        current_user = self.current_user
+        gw_discipline_info = self.call_repos(await repos_gw_get_retrieve_discipline_info_from_code(
+            staff_code=staff_code,
+            current_user=current_user
+        ))
+
+        discipline_infos = gw_discipline_info['selectDisciplineInfoFromCode_out']['data_output'][
+            'discipline_info_list']['discipline_info_item']
+
+        return self.response(data=dict(
+            total_items=len(discipline_infos),
+            reward_infos=[dict(
+                effect_date=date_string_to_other_date_string_format(
+                    date_input=discipline_info['discipline_effect_date'],
+                    from_format=GW_DATETIME_FORMAT,
+                    to_format=GW_DATE_FORMAT),
+                expire_date=date_string_to_other_date_string_format(
+                    date_input=discipline_info['discipline_expire_date'],
+                    from_format=GW_DATETIME_FORMAT,
+                    to_format=GW_DATE_FORMAT),
+
+                jobtitle=discipline_info['discipline_jobtitle'],
+                department=discipline_info['discipline_department'],
+                reason=discipline_info['discipline_reason'],
+                description=discipline_info['discipline_description'])
+                for discipline_info in discipline_infos]))
+
+    async def ctr_gw_get_topic_info_from_code(self, staff_code: str):
+        current_user = self.current_user
+        gw_topic_info = self.call_repos(await repos_gw_get_retrieve_topic_info_from_code(
+            staff_code=staff_code,
+            current_user=current_user
+        ))
+
+        topic_infos = gw_topic_info['selectTopicInfoFromCode_out']['data_output'][
+            'topic_info_list']['topic_info_item']
+
+        return self.response(data=dict(
+            total_items=len(topic_infos),
+            topic_infos=[dict(
+                code=topic_info['topic_code'],
+                name=topic_info['topic_name'],
+                from_date=date_string_to_other_date_string_format(
+                    date_input=topic_info['from_date'],
+                    from_format=GW_DATETIME_FORMAT,
+                    to_format=GW_DATE_FORMAT
+                ),
+                to_date=date_string_to_other_date_string_format(
+                    date_input=topic_info['to_date'],
+                    from_format=GW_DATETIME_FORMAT,
+                    to_format=GW_DATE_FORMAT
+                ),
+                result=topic_info['topic_result'],
+                description=topic_info['topic_description'])
+                for topic_info in topic_infos]))
+
+    async def ctr_gw_get_kpis_info_from_code(self, staff_code: str):
+        current_user = self.current_user
+        gw_kpis_info = self.call_repos(await repos_gw_get_retrieve_kpis_info_from_code(
+            staff_code=staff_code,
+            current_user=current_user
+        ))
+
+        kpis_infos = gw_kpis_info['selectKpisInfoFromCode_out']['data_output'][
+            'kpi_info_list']['kpi_info_item']
+
+        return self.response(data=dict(
+            total_items=len(kpis_infos),
+            kpis_infos=[dict(
+                period_name=kpis_info['period_name'],
+                total_point=kpis_info['total_point'],
+                completed=kpis_info['kpi_completed'],
+                grade_name=kpis_info['grade_name'],
+                note=kpis_info['kpi_note'])
+                for kpis_info in kpis_infos]))
+
+    async def ctr_gw_get_staff_other_info_from_code(self, staff_code: str):
+        current_user = self.current_user
+        gw_staff_other_info = self.call_repos(await repos_gw_get_retrieve_staff_other_info_from_code(
+            staff_code=staff_code,
+            current_user=current_user
+        ))
+
+        staff_other_info = gw_staff_other_info['selectStaffOtherInfoFromCode_out']['data_output']['staff_other']
+        recruitment_info = staff_other_info['recruitment_info']
+
+        return self.response(data=dict(
+            seniority_month=staff_other_info['seniority_month'],
+            annual_number=staff_other_info['annual_number'],
+            recruitment_info=dict(
+                code=recruitment_info['recruitment_code'],
+                reason=recruitment_info['recruitment_reason'],
+                presenter=recruitment_info['recruitment_presenter'],
+                replace_staff=recruitment_info['replace_staff'],
+                note=recruitment_info['recruitment_note'],
+                other=recruitment_info['recruitment_other']
+            )))

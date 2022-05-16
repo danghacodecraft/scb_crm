@@ -58,11 +58,11 @@ async def repos_gw_get_employee_list_from_org_id(
 
 
 async def repos_gw_get_retrieve_employee_info_from_code(
-        staff_code: str, staff_type: str, department_code: str, org_id: str, current_user
+        staff_code: str, current_user
 ):
     current_user = current_user.user_info
     is_success, employee_info = await service_gw.get_retrieve_employee_info_from_code(
-        staff_code=staff_code, staff_type=staff_type, department_code=department_code, org_id=org_id,
+        staff_code=staff_code,
         current_user=current_user
     )
     if not is_success:
@@ -101,6 +101,70 @@ async def repos_gw_get_retrieve_reward_info_from_code(staff_code: str, current_u
         return ReposReturn(
             is_error=True,
             loc="get_retrieve_reward_info_from_code",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(employee_info)
+        )
+
+    return ReposReturn(data=employee_info)
+
+
+async def repos_gw_get_retrieve_discipline_info_from_code(staff_code: str, current_user):
+    current_user = current_user.user_info
+    is_success, employee_info = await service_gw.get_discipline_info_from_code(
+        staff_code=staff_code, current_user=current_user
+    )
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="get_retrieve_discipline_info_from_code",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(employee_info)
+        )
+
+    return ReposReturn(data=employee_info)
+
+
+async def repos_gw_get_retrieve_topic_info_from_code(staff_code: str, current_user):
+    current_user = current_user.user_info
+    is_success, employee_info = await service_gw.get_topic_info_from_code(
+        staff_code=staff_code, current_user=current_user
+    )
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="get_retrieve_topic_info_from_code",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(employee_info)
+        )
+
+    return ReposReturn(data=employee_info)
+
+
+async def repos_gw_get_retrieve_kpis_info_from_code(staff_code: str, current_user):
+    current_user = current_user.user_info
+    is_success, employee_info = await service_gw.get_kpis_info_from_code(
+        staff_code=staff_code, current_user=current_user
+    )
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="get_retrieve_kpis_info_from_code",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(employee_info)
+        )
+
+    return ReposReturn(data=employee_info)
+
+
+async def repos_gw_get_retrieve_staff_other_info_from_code(staff_code: str, current_user):
+    current_user = current_user.user_info
+    is_success, employee_info = await service_gw.get_staff_other_info_from_code(
+        staff_code=staff_code, current_user=current_user
+    )
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="get_retrieve_staff_other_info_from_code",
             msg=ERROR_CALL_SERVICE_GW,
             detail=str(employee_info)
         )
