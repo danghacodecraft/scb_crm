@@ -1,15 +1,13 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.employee.repository import (
+    repos_gw_get_discipline_info_from_code,
     repos_gw_get_employee_info_from_code,
     repos_gw_get_employee_info_from_user_name,
-    repos_gw_get_employee_list_from_org_id,
-    repos_gw_get_retrieve_discipline_info_from_code,
+    repos_gw_get_employee_list_from_org_id, repos_gw_get_kpis_info_from_code,
     repos_gw_get_retrieve_employee_info_from_code,
-    repos_gw_get_retrieve_kpis_info_from_code,
-    repos_gw_get_retrieve_reward_info_from_code,
-    repos_gw_get_retrieve_staff_other_info_from_code,
-    repos_gw_get_retrieve_topic_info_from_code,
-    repos_gw_get_retrieve_working_process_info_from_code
+    repos_gw_get_reward_info_from_code,
+    repos_gw_get_staff_other_info_from_code, repos_gw_get_topic_info_from_code,
+    repos_gw_get_working_process_info_from_code
 )
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
@@ -359,7 +357,7 @@ class CtrGWEmployee(BaseController):
 
     async def ctr_gw_get_working_process_info_from_code(self, staff_code: str):
         current_user = self.current_user
-        gw_working_process_info = self.call_repos(await repos_gw_get_retrieve_working_process_info_from_code(
+        gw_working_process_info = self.call_repos(await repos_gw_get_working_process_info_from_code(
             staff_code=staff_code,
             current_user=current_user
         ))
@@ -384,7 +382,7 @@ class CtrGWEmployee(BaseController):
 
     async def ctr_gw_get_reward_info_from_code(self, staff_code: str):
         current_user = self.current_user
-        gw_reward_info = self.call_repos(await repos_gw_get_retrieve_reward_info_from_code(
+        gw_reward_info = self.call_repos(await repos_gw_get_reward_info_from_code(
             staff_code=staff_code,
             current_user=current_user
         ))
@@ -417,7 +415,7 @@ class CtrGWEmployee(BaseController):
 
     async def ctr_gw_get_discipline_info_from_code(self, staff_code: str):
         current_user = self.current_user
-        gw_discipline_info = self.call_repos(await repos_gw_get_retrieve_discipline_info_from_code(
+        gw_discipline_info = self.call_repos(await repos_gw_get_discipline_info_from_code(
             staff_code=staff_code,
             current_user=current_user
         ))
@@ -445,7 +443,7 @@ class CtrGWEmployee(BaseController):
 
     async def ctr_gw_get_topic_info_from_code(self, staff_code: str):
         current_user = self.current_user
-        gw_topic_info = self.call_repos(await repos_gw_get_retrieve_topic_info_from_code(
+        gw_topic_info = self.call_repos(await repos_gw_get_topic_info_from_code(
             staff_code=staff_code,
             current_user=current_user
         ))
@@ -474,7 +472,7 @@ class CtrGWEmployee(BaseController):
 
     async def ctr_gw_get_kpis_info_from_code(self, staff_code: str):
         current_user = self.current_user
-        gw_kpis_info = self.call_repos(await repos_gw_get_retrieve_kpis_info_from_code(
+        gw_kpis_info = self.call_repos(await repos_gw_get_kpis_info_from_code(
             staff_code=staff_code,
             current_user=current_user
         ))
@@ -494,7 +492,7 @@ class CtrGWEmployee(BaseController):
 
     async def ctr_gw_get_staff_other_info_from_code(self, staff_code: str):
         current_user = self.current_user
-        gw_staff_other_info = self.call_repos(await repos_gw_get_retrieve_staff_other_info_from_code(
+        gw_staff_other_info = self.call_repos(await repos_gw_get_staff_other_info_from_code(
             staff_code=staff_code,
             current_user=current_user
         ))

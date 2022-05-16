@@ -76,7 +76,7 @@ async def repos_gw_get_retrieve_employee_info_from_code(
     return ReposReturn(data=employee_info)
 
 
-async def repos_gw_get_retrieve_working_process_info_from_code(staff_code: str, current_user):
+async def repos_gw_get_working_process_info_from_code(staff_code: str, current_user):
     current_user = current_user.user_info
     is_success, employee_info = await service_gw.get_working_process_info_from_code(
         staff_code=staff_code, current_user=current_user
@@ -92,7 +92,7 @@ async def repos_gw_get_retrieve_working_process_info_from_code(staff_code: str, 
     return ReposReturn(data=employee_info)
 
 
-async def repos_gw_get_retrieve_reward_info_from_code(staff_code: str, current_user):
+async def repos_gw_get_reward_info_from_code(staff_code: str, current_user):
     current_user = current_user.user_info
     is_success, employee_info = await service_gw.get_reward_info_from_code(
         staff_code=staff_code, current_user=current_user
@@ -108,7 +108,7 @@ async def repos_gw_get_retrieve_reward_info_from_code(staff_code: str, current_u
     return ReposReturn(data=employee_info)
 
 
-async def repos_gw_get_retrieve_discipline_info_from_code(staff_code: str, current_user):
+async def repos_gw_get_discipline_info_from_code(staff_code: str, current_user):
     current_user = current_user.user_info
     is_success, employee_info = await service_gw.get_discipline_info_from_code(
         staff_code=staff_code, current_user=current_user
@@ -124,7 +124,7 @@ async def repos_gw_get_retrieve_discipline_info_from_code(staff_code: str, curre
     return ReposReturn(data=employee_info)
 
 
-async def repos_gw_get_retrieve_topic_info_from_code(staff_code: str, current_user):
+async def repos_gw_get_topic_info_from_code(staff_code: str, current_user):
     current_user = current_user.user_info
     is_success, employee_info = await service_gw.get_topic_info_from_code(
         staff_code=staff_code, current_user=current_user
@@ -140,7 +140,7 @@ async def repos_gw_get_retrieve_topic_info_from_code(staff_code: str, current_us
     return ReposReturn(data=employee_info)
 
 
-async def repos_gw_get_retrieve_kpis_info_from_code(staff_code: str, current_user):
+async def repos_gw_get_kpis_info_from_code(staff_code: str, current_user):
     current_user = current_user.user_info
     is_success, employee_info = await service_gw.get_kpis_info_from_code(
         staff_code=staff_code, current_user=current_user
@@ -156,7 +156,7 @@ async def repos_gw_get_retrieve_kpis_info_from_code(staff_code: str, current_use
     return ReposReturn(data=employee_info)
 
 
-async def repos_gw_get_retrieve_staff_other_info_from_code(staff_code: str, current_user):
+async def repos_gw_get_staff_other_info_from_code(staff_code: str, current_user):
     current_user = current_user.user_info
     is_success, employee_info = await service_gw.get_staff_other_info_from_code(
         staff_code=staff_code, current_user=current_user
