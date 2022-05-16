@@ -115,23 +115,13 @@ async def repos_get_previous_stage(
         )
         .join(Booking, BookingCustomer.booking_id == Booking.id)
         .outerjoin(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
-        .join(TransactionStage, (and_(
-            TransactionDaily.transaction_stage_id == TransactionStage.id,
-            TransactionStage.is_reject == reject_flag
-        )))
+        .join(TransactionStage, (TransactionDaily.transaction_stage_id == TransactionStage.id))
         .outerjoin(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id)
         .outerjoin(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
         .outerjoin(TransactionStageAction, TransactionStage.action_id == TransactionStageAction.id)
         .filter(BookingCustomer.customer_id == cif_id)
         .order_by(desc(TransactionDaily.created_at))
     ).first()
-
-    if not previous_stage_info:
-        return ReposReturn(
-            is_error=True,
-            msg="reject_flag in this stage can not True",
-            loc=f"reject_flag: {reject_flag}"
-        )
 
     return ReposReturn(data=previous_stage_info)
 
