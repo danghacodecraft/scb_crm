@@ -25,3 +25,8 @@ CIF_ACTIONS = {
     CIF_ACTION_BSTTXTL_KSV: "KSV Bổ sung thông tin và xác thực lại",
     CIF_ACTION_XTL_KSV: "KSV Yêu cầu xác thực lại khách hàng."
 }
+
+CIF_APPROVE_STAGES = {
+    CIF_STAGE_APPROVE_KSV: "Phê duyệt KSV",
+    CIF_STAGE_APPROVE_KSS: "Phê duyệt KSS"
+}
