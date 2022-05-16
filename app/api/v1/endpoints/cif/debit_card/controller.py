@@ -20,9 +20,7 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_INIT_DEBIT_CARD, PROFILE_HISTORY_STATUS_INIT
 )
 from app.utils.error_messages import ERROR_NOT_REGISTER, VALIDATE_ERROR
-from app.utils.functions import (
-    datetime_to_string, generate_uuid, now, orjson_dumps
-)
+from app.utils.functions import generate_uuid, now, orjson_dumps
 from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese
 
 
@@ -402,20 +400,12 @@ class CtrDebitCard(BaseController):
             }
             list_debit_card_type.append(debit_card_type)
 
-        history_datas = [dict(
+        history_datas = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_INIT_DEBIT_CARD,
-            completed_at=datetime_to_string(now()),
-            created_at=datetime_to_string(now()),
-            status=PROFILE_HISTORY_STATUS_INIT,
-            branch_id=current_user.hrm_branch_id,
-            branch_code=current_user.hrm_branch_code,
-            branch_name=current_user.hrm_branch_name,
-            user_id=current_user.code,
-            user_name=current_user.name,
-            position_id=current_user.hrm_position_id,
-            position_code=current_user.hrm_position_code,
-            position_name=current_user.hrm_position_name
-        )]
+            history_status=PROFILE_HISTORY_STATUS_INIT,
+            current_user=current_user
+        )
+
         # Validate history data
         is_success, history_response = validate_history_data(history_datas)
         if not is_success:
