@@ -96,8 +96,7 @@ async def repos_get_next_stage(
 
 async def repos_get_previous_stage(
         cif_id: str,
-        session: Session,
-        reject_flag: bool = False
+        session: Session
 ):
     """
     Trả về thông tin Stage đã lưu trong DB trước đó
