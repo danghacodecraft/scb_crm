@@ -61,13 +61,15 @@ class StatusResponse(DropdownResponse):
 
 class EmployeeResponse(BaseSchema):
     id: str = Field(..., description="Mã định danh")
-    full_name_vn: str = Field(..., description="Tên tiếng việt")
+    full_name_vn: Optional[str] = Field(..., description="Tên tiếng việt")
     avatar_url: Optional[str] = Field(..., description="Đường dẫn hình ảnh")
-    user_name: str = Field(..., description="Tên")
+    user_name: Optional[str] = Field(..., description="Tên")
     email: Optional[str] = Field(..., description="Địa chỉ email")
-    position: DropdownResponse = Field(..., description="Chức danh")
-    department: DropdownResponse = Field(..., description="Phòng")
-    branch: DropdownResponse = Field(..., description="Đơn vị")
+    avatar: Optional[str] = Field(..., description="Avatar")
+    position: OptionalDropdownResponse = Field(..., description="Chức danh")
+    department: OptionalDropdownResponse = Field(..., description="Phòng")
+    branch: OptionalDropdownResponse = Field(..., description="Đơn vị")
+    title: OptionalDropdownResponse = Field(..., description="Đơn vị")
 
 
 class CifCustomerInformationResponse(BaseSchema):
