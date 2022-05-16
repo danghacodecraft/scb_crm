@@ -2,6 +2,7 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.category.repository import (
     repos_gw_select_category
 )
+from app.utils.constant.gw import TRANSACTION_FORMS
 from app.utils.error_messages import INVALID_TRANSACTION_FORM
 
 
@@ -18,10 +19,7 @@ class CtrSelectCategory(BaseController):
                 current_user=self.current_user
             )
         )
-        TRANSACTION_FORMS = {
-            "D": "Trực tiếp",
-            "I": "Gián tiếp"
-        }
+
         if transaction_form not in TRANSACTION_FORMS:
             return self.response_exception(
                 loc="get_select_category",
