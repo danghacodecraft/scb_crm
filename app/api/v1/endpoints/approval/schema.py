@@ -25,7 +25,7 @@ class CifApprovalProcessResponse(BaseSchema):
 
 
 class CifApproveRequest(BaseSchema):
-    reject_flag: Optional[bool] = Field(None, description="Cờ từ chối phê duyệt")
+    reject_flag: bool = Field(..., description="Cờ từ chối phê duyệt")
     content: str = Field(..., description="Nội dung phê duyệt")
     action_id: Optional[str] = Field(..., description=f"Mã Hành Động: {make_description_from_dict(CIF_ACTIONS)}")
 

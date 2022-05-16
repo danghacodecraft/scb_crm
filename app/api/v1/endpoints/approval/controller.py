@@ -597,6 +597,7 @@ class CtrApproval(BaseController):
         _, _, _, previous_transaction_stage, _, _, _ = self.call_repos(
             await repos_get_previous_stage(
                 cif_id=cif_id,
+                reject_flag=reject_flag,
                 session=self.oracle_session
             ))
 
@@ -605,6 +606,7 @@ class CtrApproval(BaseController):
         ################################################################################################################
         is_stage_init = True
         previous_stage_code = None
+        previous_transaction_stage_is_reject = previous_transaction_stage.is_reject
         previous_stage_is_reject = False
         is_give_back = False
         if previous_transaction_stage:
@@ -614,7 +616,7 @@ class CtrApproval(BaseController):
                     business_type_id=business_type_id,
                     stage_id=previous_transaction_stage.transaction_stage_phase_code,
                     session=self.oracle_session,
-                    reject_flag=previous_transaction_stage.is_reject,
+                    reject_flag=previous_transaction_stage_is_reject,
                     stage_action_id=action_id
                 ))
             previous_stage_code = previous_stage.code
@@ -988,6 +990,16 @@ class CtrApproval(BaseController):
                 position_name=None
             )
 
+        print("saving_transaction_stage_status", saving_transaction_stage_status)
+        print("saving_transaction_stage_action", saving_transaction_stage_action)
+        print("saving_transaction_stage", saving_transaction_stage)
+        print("saving_transaction_stage_lane", saving_transaction_stage_lane)
+        print("saving_transaction_stage_phase", saving_transaction_stage_phase)
+        print("saving_transaction_stage_role", saving_transaction_stage_role)
+        print("saving_transaction_daily", saving_transaction_daily)
+        print("saving_transaction_sender", saving_transaction_sender)
+        print("saving_transaction_receiver", saving_transaction_receiver)
+
         approval_process = self.call_repos((await repos_approve(
             cif_id=cif_id,
             saving_transaction_stage_status=saving_transaction_stage_status,
@@ -998,7 +1010,7 @@ class CtrApproval(BaseController):
             saving_transaction_stage_role=saving_transaction_stage_role,
             saving_transaction_daily=saving_transaction_daily,
             saving_transaction_sender=saving_transaction_sender,
-            saving_transaction_receiver=saving_transaction_receiver,
+            # saving_transaction_receiver=saving_transaction_receiver,
             is_stage_init=is_stage_init,
             session=self.oracle_session
         )))
