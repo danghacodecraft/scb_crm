@@ -781,7 +781,7 @@ class CtrGWCustomer(BaseController):
                 "id_issued_date": cust_identity.issued_date,
                 "id_expired_date": cust_identity.expired_date,
                 "id_issued_location": cust_identity.place_of_issue_id,
-                "id_type": cust_identity.identity_type_id
+                "id_type": "P" if cust_identity.identity_type_id == "HO_CHIEU" else "C"
             },
             "address_info_i": address_info_i,
             "address_contact_info_i": address_contact_info_i,
@@ -804,6 +804,16 @@ class CtrGWCustomer(BaseController):
                 "address_office_info": {
                     "address_full": cust_professional.company_address if cust_professional.company_address else ""
                 }
+            },
+            "staff_info_checker": {
+                "staff_name": "HOANT2"
+            },
+            "staff_info_maker": {
+                "staff_name": "KHANHLQ"
+            },
+            "udf_info": {
+                "udf_name": "CN_00_CUNG_CAP_TT_FATCA~THU_NHAP_BQ_03_THANG~NGHE_NGHIEP~NHAN_SMS_EMAIL_TIEP_THI_QUANG_CAO~CUNG_CAP_DOANH_THU_THUAN~THOA_THUAN_PHAP_LY~KHTC_DOI_TUONG",
+                "udf_value": "CO~TNBQ_001~BAC_SI~DONG_Y~KHONG~KHONG~THONG THUONG"
             }
         }
         response_data = self.call_repos(await repos_gw_open_cif(cif_id=cif_id, current_user=current_user)) # noqa
