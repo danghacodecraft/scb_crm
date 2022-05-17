@@ -262,9 +262,9 @@ class ServiceDWH:
             logger.error(str(ex))
             return False, ERROR_CALL_SERVICE_DWH
 
-    async def area(self):
+    async def get_region(self):
         method = "GET"
-        path = "/api/v1/gis/area"
+        path = "/api/v1/gis/region"
         url = f"{self.url}{path}"
         try:
             async with aiohttp.ClientSession() as session:
