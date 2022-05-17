@@ -453,6 +453,8 @@ class CtrApproval(BaseController):
             supervisor_is_reject = previous_transaction_stage_is_reject
             if supervisor_is_reject:
                 teller_is_disable = False
+            else:
+                is_open_cif = True
 
         # KSS đã xử lý hồ sơ
         else:
