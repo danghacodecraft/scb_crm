@@ -33,7 +33,8 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_RETRIEVE_STAFF_OTHER_INFO_FROM_CODE,
     GW_ENDPOINT_URL_RETRIEVE_TOPIC_INFO_FROM_CODE,
     GW_ENDPOINT_URL_RETRIEVE_WORKING_PROCESS_INFO_FROM_CODE,
-    GW_SELECT_CATEGORY, GW_SELECT_CATEGORY_TYPE
+    GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE, GW_SELECT_CATEGORY,
+    GW_SELECT_CATEGORY_TYPE
 )
 from app.utils.functions import date_to_string
 
@@ -768,7 +769,7 @@ class ServiceGW:
                 }
             }
         }
-        api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_CODE}"
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE}"
 
         return_errors = dict(
             loc="SERVICE GW",
