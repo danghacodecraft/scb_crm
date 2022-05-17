@@ -245,9 +245,9 @@ async def repos_accounting_entry(
     return ReposReturn(data=data_response)
 
 
-async def repos_area(
+async def repos_region(
         session: Session
 ) -> ReposReturn:
-    data_response = await service_dwh.area()
+    data_response = await service_dwh.get_region()
 
     return ReposReturn(data=data_response)

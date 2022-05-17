@@ -47,18 +47,18 @@ class AccountingEntryResponse(BaseSchema):
     unit: str = Field(..., description="Đơn vị bút toán")
 
 
-class ListBranchesResponse(BaseSchema):
-    branch_id: str = Field(..., description="Mã khu vực")
-    branch_name: str = Field(..., description="Mã khu vực")
+class ListRegionResponse(BaseSchema):
+    branch_id: str = Field(..., description="Mã vùng")
+    branch_name: str = Field(..., description="Tên vùng")
     longitude: float = Field(..., description="Kinh độ")
     latitude: float = Field(..., description="Vĩ độ")
     type: str = Field(..., description="Loại")
 
 
-class AreaResponse(BaseSchema):
-    ID: str = Field(..., description="Mã vùng")
-    NAME: str = Field(..., description="Tên vùng")
-    branches: List[ListBranchesResponse] = Field(..., description="Chi nhánh")
+class RegionResponse(BaseSchema):
+    region_id: str = Field(..., description="ID Mã vùng")
+    region_name: str = Field(..., description="Tên vùng")
+    branches: List[ListRegionResponse] = Field(..., description="Chi nhánh")
     left: float = Field(..., description="Left")
     right: float = Field(..., description="Right")
     top: float = Field(..., description="Top")
