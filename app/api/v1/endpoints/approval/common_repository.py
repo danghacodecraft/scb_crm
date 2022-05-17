@@ -138,11 +138,13 @@ async def repos_get_previous_transaction_daily(
             previous_transaction_daily,
             TransactionSender,
             TransactionStage,
-            TransactionDaily
+            TransactionDaily,
+            TransactionStageAction
         )
         .join(previous_transaction_daily, TransactionDaily.transaction_parent_id == previous_transaction_daily.transaction_id)
         .join(TransactionSender, previous_transaction_daily.transaction_id == TransactionSender.transaction_id)
         .join(TransactionStage, previous_transaction_daily.transaction_stage_id == TransactionStage.id)
+        .join(TransactionStageAction, TransactionStage.action_id == TransactionStageAction.id)
         .filter(TransactionDaily.transaction_id == transaction_daily_id)
     ).first()
 
