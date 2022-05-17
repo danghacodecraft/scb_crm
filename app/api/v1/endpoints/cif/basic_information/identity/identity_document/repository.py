@@ -413,7 +413,8 @@ async def repos_save_identity(
         booking = await repos_create_booking(
             transaction_id=saving_transaction_daily['transaction_id'],
             session=session,
-            current_user=current_user
+            current_user=current_user,
+            booking_code_flag=True
         )
         if booking.is_error:
             return ReposReturn(is_error=True, msg=booking.msg, detail=booking.detail)
