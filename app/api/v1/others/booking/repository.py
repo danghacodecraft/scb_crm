@@ -45,6 +45,10 @@ async def repos_create_booking(
     current_user: UserInfoResponse,
     booking_code_flag: bool = False
 ):
+    """
+    Input:
+        booking_code_flag: cần trả ra booking code thì truyền vào
+    """
     booking_id = generate_uuid()
     current_user_branch_code = current_user.hrm_branch_code
     booking_code = None
