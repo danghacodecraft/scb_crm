@@ -1,7 +1,6 @@
 from starlette import status
 
 from app.api.base.controller import BaseController
-from app.api.v1.controller import PermissionController
 from app.api.v1.endpoints.approval.common_repository import (
     repos_get_next_stage, repos_get_previous_stage,
     repos_get_previous_transaction_daily, repos_get_stage_information,
@@ -14,14 +13,16 @@ from app.api.v1.endpoints.approval.repository import (
 )
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
+from app.api.v1.others.permission.controller import PermissionController
 from app.third_parties.oracle.models.master_data.others import StageAction
 from app.utils.constant.approval import (
     CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_BEGIN,
     CIF_STAGE_COMPLETED, CIF_STAGE_INIT
 )
+from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import (
-    BUSINESS_TYPE_INIT_CIF, DROPDOWN_NONE_DICT, IMAGE_TYPE_FACE,
-    IMAGE_TYPE_FINGERPRINT, IMAGE_TYPE_SIGNATURE
+    DROPDOWN_NONE_DICT, IMAGE_TYPE_FACE, IMAGE_TYPE_FINGERPRINT,
+    IMAGE_TYPE_SIGNATURE
 )
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_APPROVAL, IDM_GROUP_ROLE_CODE_OPEN_CIF,

@@ -11,15 +11,16 @@ from app.api.v1.endpoints.mobile.repository import (
     repos_get_mobile_identity, repos_get_total_item
 )
 from app.api.v1.endpoints.mobile.schema import IdentityMobileRequest
-from app.api.v1.endpoints.repository import repos_create_booking
+from app.api.v1.others.booking.repository import repos_create_booking
 from app.api.v1.validator import validate_history_data
 from app.settings.config import DATE_INPUT_OUTPUT_EKYC_FORMAT
 from app.settings.event import service_ekyc
 from app.third_parties.oracle.models.master_data.address import AddressCountry
 from app.third_parties.oracle.models.master_data.customer import CustomerGender
+from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import (
-    ADDRESS_COUNTRY_CODE_VN, BUSINESS_TYPE_INIT_CIF, CHANNEL_AT_THE_MOBILE,
-    CLASSIFICATION_PERSONAL, CONTACT_ADDRESS_CODE, CUSTOMER_UNCOMPLETED_FLAG,
+    ADDRESS_COUNTRY_CODE_VN, CHANNEL_AT_THE_MOBILE, CLASSIFICATION_PERSONAL,
+    CONTACT_ADDRESS_CODE, CUSTOMER_UNCOMPLETED_FLAG,
     EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_BACK_SIDE_IDENTITY_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_CITIZEN_CARD,

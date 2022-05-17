@@ -6,11 +6,12 @@ from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn, auto_commit
 from app.api.v1.endpoints.repository import (
-    get_optional_model_object_by_code_or_name, repos_create_booking,
+    get_optional_model_object_by_code_or_name,
     repos_get_model_object_by_id_or_code,
     write_transaction_log_and_update_booking
 )
 from app.api.v1.endpoints.user.schema import UserInfoResponse
+from app.api.v1.others.booking.repository import repos_create_booking
 from app.settings.event import service_ekyc, service_file
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
     CustomerAddress
