@@ -473,6 +473,7 @@ class CtrApproval(BaseController):
 
         # KSS đã xử lý hồ sơ
         else:
+            audit_transaction_stage = previous_transaction_stage
             audit_stage_code = previous_stage_code
             audit_transaction_daily = previous_transaction_daily
             audit_transaction_sender = previous_transaction_sender
@@ -508,6 +509,9 @@ class CtrApproval(BaseController):
             teller_created_at = teller_transaction_daily.created_at
             teller_created_by = teller_transaction_sender.user_fullname
             dropdown_action_teller = dropdown(teller_transaction_stage_action)
+            if not audit_transaction_stage.is_reject:
+                print("================")
+                teller_is_disable = True
 
         stage_teller.update(dict(
             stage_code=teller_stage_code,
