@@ -10,8 +10,7 @@ from app.api.v1.endpoints.approval.common_repository import (
 from app.api.v1.endpoints.approval.repository import (
     repos_approval_get_face_authentication, repos_approve,
     repos_get_approval_identity_faces, repos_get_approval_identity_images,
-    repos_get_approval_process, repos_get_compare_image_transactions,
-    repos_get_transaction_daily
+    repos_get_approval_process, repos_get_compare_image_transactions
 )
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
@@ -510,7 +509,6 @@ class CtrApproval(BaseController):
             teller_created_by = teller_transaction_sender.user_fullname
             dropdown_action_teller = dropdown(teller_transaction_stage_action)
             if not audit_transaction_stage.is_reject:
-                print("================")
                 teller_is_disable = True
 
         stage_teller.update(dict(
@@ -988,53 +986,43 @@ class CtrApproval(BaseController):
         #     #     loc="next_receiver -> department_id"
         #     # )
 
-        if reject_flag and current_stage_code != CIF_STAGE_INIT:
-            receiver_user = self.call_repos(
-                await repos_get_transaction_daily(cif_id=cif_id, session=self.oracle_session)
-            )
-            saving_transaction_receiver = dict(
-                transaction_id=transaction_daily_id,
-                user_id=receiver_user.user_id,
-                user_name=receiver_user.user_name,
-                user_fullname=receiver_user.user_fullname,
-                user_email=receiver_user.user_email,
-                branch_id=receiver_user.branch_id,
-                branch_code=receiver_user.branch_code,
-                branch_name=receiver_user.branch_name,
-                department_id=receiver_user.department_id,
-                department_code=receiver_user.department_code,
-                department_name=receiver_user.department_name,
-                position_id=receiver_user.position_id,
-                position_code=receiver_user.position_code,
-                position_name=receiver_user.position_name,
-            )
-        else:
-            saving_transaction_receiver = dict(
-                transaction_id=transaction_daily_id,
-                user_id=None,
-                user_name=None,
-                user_fullname=None,
-                user_email=None,
-                branch_id=None,
-                branch_code=None,
-                branch_name=None,
-                department_id=None,
-                department_code=None,
-                department_name=None,
-                position_id=None,
-                position_code=None,
-                position_name=None
-            )
-
-        print("saving_transaction_stage_status", saving_transaction_stage_status)
-        print("saving_transaction_stage_action", saving_transaction_stage_action)
-        print("saving_transaction_stage", saving_transaction_stage)
-        print("saving_transaction_stage_lane", saving_transaction_stage_lane)
-        print("saving_transaction_stage_phase", saving_transaction_stage_phase)
-        print("saving_transaction_stage_role", saving_transaction_stage_role)
-        print("saving_transaction_daily", saving_transaction_daily)
-        print("saving_transaction_sender", saving_transaction_sender)
-        print("saving_transaction_receiver", saving_transaction_receiver)
+        # if reject_flag and current_stage_code != CIF_STAGE_INIT:
+        #     receiver_user = self.call_repos(
+        #         await repos_get_transaction_daily(cif_id=cif_id, session=self.oracle_session)
+        #     )
+        #     saving_transaction_receiver = dict(
+        #         transaction_id=transaction_daily_id,
+        #         user_id=receiver_user.user_id,
+        #         user_name=receiver_user.user_name,
+        #         user_fullname=receiver_user.user_fullname,
+        #         user_email=receiver_user.user_email,
+        #         branch_id=receiver_user.branch_id,
+        #         branch_code=receiver_user.branch_code,
+        #         branch_name=receiver_user.branch_name,
+        #         department_id=receiver_user.department_id,
+        #         department_code=receiver_user.department_code,
+        #         department_name=receiver_user.department_name,
+        #         position_id=receiver_user.position_id,
+        #         position_code=receiver_user.position_code,
+        #         position_name=receiver_user.position_name,
+        #     )
+        # else:
+        #     saving_transaction_receiver = dict(
+        #         transaction_id=transaction_daily_id,
+        #         user_id=None,
+        #         user_name=None,
+        #         user_fullname=None,
+        #         user_email=None,
+        #         branch_id=None,
+        #         branch_code=None,
+        #         branch_name=None,
+        #         department_id=None,
+        #         department_code=None,
+        #         department_name=None,
+        #         position_id=None,
+        #         position_code=None,
+        #         position_name=None
+        #     )
 
         approval_process = self.call_repos((await repos_approve(
             cif_id=cif_id,
