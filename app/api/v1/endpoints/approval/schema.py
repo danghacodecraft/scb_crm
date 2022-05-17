@@ -25,7 +25,7 @@ class CifApprovalProcessResponse(BaseSchema):
 
 
 class CifApproveRequest(BaseSchema):
-    reject_flag: Optional[bool] = Field(None, description="Cờ từ chối phê duyệt")
+    reject_flag: bool = Field(..., description="Cờ từ chối phê duyệt")
     content: str = Field(..., description="Nội dung phê duyệt")
     action_id: Optional[str] = Field(..., description=f"Mã Hành Động: {make_description_from_dict(CIF_ACTIONS)}")
 
@@ -69,6 +69,7 @@ class CifApprovalSuccessResponse(BaseSchema):
     cif_id: str = Field(..., description="Cif ID")
     authentication: AuthenticationResponse = Field(..., description="Thông tin xác thực")
     stages: List[CIFStageResponse] = Field(..., description="Thông tin các bước phê duyệt")
+    is_open_cif: bool = Field(..., description="Được phép mở CIF không?")
 
 
 class FaceAuthenticationRequest(BaseSchema):

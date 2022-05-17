@@ -114,7 +114,7 @@ async def repos_get_previous_stage(
         )
         .join(Booking, BookingCustomer.booking_id == Booking.id)
         .outerjoin(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
-        .outerjoin(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id)
+        .join(TransactionStage, (TransactionDaily.transaction_stage_id == TransactionStage.id))
         .outerjoin(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id)
         .outerjoin(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
         .outerjoin(TransactionStageAction, TransactionStage.action_id == TransactionStageAction.id)
@@ -138,11 +138,13 @@ async def repos_get_previous_transaction_daily(
             previous_transaction_daily,
             TransactionSender,
             TransactionStage,
-            TransactionDaily
+            TransactionDaily,
+            TransactionStageAction
         )
         .join(previous_transaction_daily, TransactionDaily.transaction_parent_id == previous_transaction_daily.transaction_id)
         .join(TransactionSender, previous_transaction_daily.transaction_id == TransactionSender.transaction_id)
         .join(TransactionStage, previous_transaction_daily.transaction_stage_id == TransactionStage.id)
+        .join(TransactionStageAction, TransactionStage.action_id == TransactionStageAction.id)
         .filter(TransactionDaily.transaction_id == transaction_daily_id)
     ).first()
 
@@ -222,7 +224,7 @@ async def repos_get_stage_information(
     ).first()
     if not stage_info:
         return ReposReturn(is_error=True, msg="Stage is None",
-                           loc=f"stage_id: {stage_id}, business_type_id: {business_type_id}")
+                           loc=f"stage_id: {stage_id}, business_type_id: {business_type_id}, reject_flag: {reject_flag}")
 
     return ReposReturn(data=stage_info)
 
