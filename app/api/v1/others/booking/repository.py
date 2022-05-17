@@ -42,22 +42,25 @@ async def repos_create_booking(
     transaction_id: Optional[str],
     business_type_code: str,
     session: Session,
-    current_user: UserInfoResponse
+    current_user: UserInfoResponse,
+    booking_code_flag: bool = False
 ):
     booking_id = generate_uuid()
     current_user_branch_code = current_user.hrm_branch_code
-    is_existed, booking_code = await generate_booking_code(
-        branch_code=current_user_branch_code,
-        business_type_code=business_type_code,
-        session=session
-    )
-
-    if is_existed:
-        return ReposReturn(
-            is_error=True,
-            msg=ERROR_BOOKING_CODE_EXISTED + f", booking_code: {booking_code}",
-            detail=MESSAGE_STATUS[ERROR_BOOKING_CODE_EXISTED]
+    booking_code = None
+    if booking_code_flag:
+        is_existed, booking_code = await generate_booking_code(
+            branch_code=current_user_branch_code,
+            business_type_code=business_type_code,
+            session=session
         )
+
+        if is_existed:
+            return ReposReturn(
+                is_error=True,
+                msg=ERROR_BOOKING_CODE_EXISTED + f", booking_code: {booking_code}",
+                detail=MESSAGE_STATUS[ERROR_BOOKING_CODE_EXISTED]
+            )
     session.add(
         Booking(
             id=booking_id,
@@ -69,5 +72,5 @@ async def repos_create_booking(
             updated_at=now()
         )
     )
-    # session.commit()
-    return ReposReturn(data=(booking_id, booking_code))
+    session.commit()
+    return ReposReturn(data=booking_id)
