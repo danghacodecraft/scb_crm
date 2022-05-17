@@ -89,7 +89,8 @@ class CtrIdentityMobile(BaseController):
             transaction_id=saving_transaction_daily['transaction_id'],
             session=self.oracle_session,
             current_user=current_user.user_info,
-            booking_code_flag=True
+            booking_code_flag=True,
+            business_type_code=BUSINESS_TYPE_INIT_CIF
         ))
         new_booking_id, booking_code = booking
 
