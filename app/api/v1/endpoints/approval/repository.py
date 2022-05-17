@@ -9,8 +9,7 @@ from app.third_parties.oracle.models.cif.basic_information.identity.model import
     CustomerIdentityImage, CustomerIdentityImageTransaction
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingCustomer, TransactionDaily, TransactionReceiver,
-    TransactionSender
+    Booking, BookingCustomer, TransactionDaily, TransactionSender
 )
 from app.third_parties.oracle.models.master_data.others import (
     TransactionStage, TransactionStageAction, TransactionStageLane,
@@ -59,7 +58,7 @@ async def repos_approve(
         saving_transaction_stage_phase: dict,
         saving_transaction_stage_role: dict,
         saving_transaction_sender: dict,
-        saving_transaction_receiver: dict,
+        # saving_transaction_receiver: dict,
         is_stage_init: bool,
         session: Session
 ):
@@ -96,7 +95,7 @@ async def repos_approve(
         TransactionStagePhase(**saving_transaction_stage_phase),
         TransactionStageRole(**saving_transaction_stage_role),
         TransactionSender(**saving_transaction_sender),
-        TransactionReceiver(**saving_transaction_receiver)
+        # TransactionReceiver(**saving_transaction_receiver)
     ])
 
     # Cập nhật lại TransactionDaily mới cho Booking

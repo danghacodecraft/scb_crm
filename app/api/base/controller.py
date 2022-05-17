@@ -422,7 +422,8 @@ class BaseController:
             sla_transaction_id=None,  # TODO
             transaction_stage_phase_code=begin_stage.code,
             transaction_stage_phase_name=begin_stage.name,
-            action_id=None
+            action_id=None,
+            reject_flag=False
         )
 
         saving_transaction_daily = dict(
