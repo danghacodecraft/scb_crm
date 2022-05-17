@@ -88,7 +88,8 @@ class CtrIdentityMobile(BaseController):
         booking = self.call_repos(await repos_create_booking(
             transaction_id=saving_transaction_daily['transaction_id'],
             session=self.oracle_session,
-            current_user=current_user.user_info
+            current_user=current_user.user_info,
+            booking_code_flag=True
         ))
         new_booking_id, booking_code = booking
 
