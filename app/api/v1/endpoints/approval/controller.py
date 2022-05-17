@@ -387,21 +387,6 @@ class CtrApproval(BaseController):
             else:
                 supervisor_is_disable = False
 
-            supervisor_transaction = self.call_repos(await repos_get_previous_transaction_daily(
-                transaction_daily_id=previous_transaction_daily.transaction_id,
-                session=self.oracle_session
-            ))
-            if supervisor_transaction:
-                (
-                    supervisor_transaction_daily, supervisor_transaction_sender, supervisor_transaction_stage, _,
-                    supervisor_transaction_stage_action
-                ) = supervisor_transaction
-                supervisor_stage_code = supervisor_transaction_stage.transaction_stage_phase_code
-                supervisor_content = orjson_loads(supervisor_transaction_daily.data)["content"]
-                supervisor_created_at = supervisor_transaction_daily.created_at
-                supervisor_created_by = supervisor_transaction_sender.user_fullname
-                dropdown_action_supervisor = dropdown(supervisor_transaction_stage_action)
-
             audit_transaction = self.call_repos(await repos_get_previous_transaction_daily(
                 transaction_daily_id=previous_transaction_daily.transaction_id,
                 session=self.oracle_session
@@ -416,6 +401,21 @@ class CtrApproval(BaseController):
                 audit_created_at = audit_transaction_daily.created_at
                 audit_created_by = audit_transaction_sender.user_fullname
                 dropdown_action_audit = dropdown(audit_transaction_stage_action)
+
+                supervisor_transaction = self.call_repos(await repos_get_previous_transaction_daily(
+                    transaction_daily_id=audit_transaction_daily.transaction_id,
+                    session=self.oracle_session
+                ))
+                if supervisor_transaction:
+                    (
+                        supervisor_transaction_daily, supervisor_transaction_sender, supervisor_transaction_stage, _,
+                        supervisor_transaction_stage_action
+                    ) = supervisor_transaction
+                    supervisor_stage_code = supervisor_transaction_stage.transaction_stage_phase_code
+                    supervisor_content = orjson_loads(supervisor_transaction_daily.data)["content"]
+                    supervisor_created_at = supervisor_transaction_daily.created_at
+                    supervisor_created_by = supervisor_transaction_sender.user_fullname
+                    dropdown_action_supervisor = dropdown(supervisor_transaction_stage_action)
 
         # KSV đã xử lý hồ sơ
         elif previous_stage_code == CIF_STAGE_APPROVE_KSV:
