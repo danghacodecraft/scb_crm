@@ -15,16 +15,20 @@ from app.api.v1.endpoints.file.repository import (
     repos_check_is_exist_multi_file, repos_download_multi_file
 )
 from app.api.v1.endpoints.repository import (
+    get_optional_model_object_by_code_or_name,
     repos_get_model_object_by_id_or_code, repos_get_model_objects_by_ids
 )
-from app.api.v1.endpoints.user.schema import AuthResponse
+from app.api.v1.endpoints.user.schema import AuthResponse, UserInfoResponse
 from app.third_parties.oracle.base import Base, SessionLocal, SessionLocal_Task
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.ekyc import is_success
 from app.utils.error_messages import (
     ERROR_GROUP_ROLE_CODE, ERROR_MENU_CODE, MESSAGE_STATUS
 )
-from app.utils.functions import generate_uuid, now, orjson_dumps
+from app.utils.functions import (
+    datetime_to_string, dropdown, dropdown_name, generate_uuid, now,
+    orjson_dumps
+)
 
 
 class BaseController:
@@ -523,3 +527,45 @@ class BaseController:
             return False, {'msg': MESSAGE_STATUS[ERROR_GROUP_ROLE_CODE]}
 
         return True, {"msg": is_success}
+
+    async def dropdown_mapping_crm_model_or_dropdown_name(
+            self, model: Base, name: Optional[str], code: Optional[str] = None) -> dict:
+        """
+        Input: code hoặc name
+        Output: dropdown object
+        """
+        obj_mapping_crm = await get_optional_model_object_by_code_or_name(
+            model=model,
+            model_code=code,
+            model_name=name,
+            session=self.oracle_session
+        )
+
+        return dropdown(obj_mapping_crm) if obj_mapping_crm else dropdown_name(name=name)
+
+    @staticmethod
+    def make_history_log_data(description: str, history_status: int, current_user: UserInfoResponse):
+        history_log_data = [dict(
+            description=description,
+            completed_at=datetime_to_string(now()),
+            created_at=datetime_to_string(now()),
+            status=history_status,
+            branch_id=current_user.hrm_branch_id,
+            branch_code=current_user.hrm_branch_code,
+            branch_name=current_user.hrm_branch_name,
+            user_id=current_user.code,
+            user_name=current_user.name,
+            user_username=current_user.username,
+            user_avatar=current_user.avatar_url,
+            user_email=current_user.email,
+            position_id=current_user.hrm_position_id,
+            position_code=current_user.hrm_position_code,
+            position_name=current_user.hrm_position_name,
+            department_id=current_user.hrm_department_id,
+            department_code=current_user.hrm_department_code,
+            department_name=current_user.hrm_department_name,
+            title_id=current_user.hrm_title_id,
+            title_code=current_user.hrm_title_code,
+            title_name=current_user.hrm_title_name
+        )]
+        return history_log_data

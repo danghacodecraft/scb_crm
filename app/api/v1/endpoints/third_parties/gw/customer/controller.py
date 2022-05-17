@@ -1,14 +1,11 @@
 from app.api.base.controller import BaseController
-from app.api.v1.endpoints.repository import (
-    get_optional_model_object_by_code_or_name
-)
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_get_customer_ids_from_cif_numbers, repos_gw_get_authorized,
     repos_gw_get_co_owner, repos_gw_get_customer_info_detail,
     repos_gw_get_customer_info_list
 )
 from app.third_parties.oracle.models.master_data.address import (
-    AddressCountry, AddressDistrict, AddressProvince
+    AddressCountry, AddressDistrict, AddressProvince, AddressWard
 )
 from app.third_parties.oracle.models.master_data.customer import (
     CustomerGender, CustomerRelationshipType, CustomerType
@@ -23,10 +20,7 @@ from app.utils.constant.gw import (
     GW_LOC_CHECK_CIF_EXIST, GW_REQUEST_PARAMETER_DEBIT_CARD,
     GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP
 )
-from app.utils.functions import (
-    date_string_to_other_date_string_format, dropdown, dropdown_name,
-    optional_dropdown
-)
+from app.utils.functions import date_string_to_other_date_string_format
 from app.utils.vietnamese_converter import (
     convert_to_unsigned_vietnamese, split_name
 )
@@ -69,46 +63,28 @@ class CtrGWCustomer(BaseController):
             )
 
             martial_status_code_or_name = customer_info['martial_status']
-            martial_status = await get_optional_model_object_by_code_or_name(
-                model=MaritalStatus,
-                model_code=martial_status_code_or_name,
-                model_name=martial_status_code_or_name,
-                session=self.oracle_session
-            )
-            dropdown_martial_status = optional_dropdown(obj=martial_status, obj_name=martial_status_code_or_name)
+
+            dropdown_martial_status = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=MaritalStatus, name=martial_status_code_or_name, code=martial_status_code_or_name)
 
             gender_code_or_name = customer_info["gender"]
             if gender_code_or_name == GW_GENDER_MALE:
                 gender_code_or_name = CRM_GENDER_TYPE_MALE
             if gender_code_or_name == GW_GENDER_FEMALE:
                 gender_code_or_name = CRM_GENDER_TYPE_FEMALE
-            gender = await get_optional_model_object_by_code_or_name(
-                model=CustomerGender,
-                model_code=gender_code_or_name,
-                model_name=gender_code_or_name,
-                session=self.oracle_session
-            )
-            dropdown_gender = dropdown(gender) if gender else dropdown_name(gender_code_or_name)
+
+            dropdown_gender = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=CustomerGender, name=gender_code_or_name, code=gender_code_or_name)
 
             nationality_code_or_name = customer_info["nationality_code"]
 
-            nationality = await get_optional_model_object_by_code_or_name(
-                model=AddressCountry,
-                model_code=nationality_code_or_name,
-                model_name=nationality_code_or_name,
-                session=self.oracle_session
-            )
-            dropdown_nationality = dropdown(nationality) if nationality else dropdown_name(nationality_code_or_name)
+            dropdown_nationality = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=AddressCountry, name=nationality_code_or_name, code=nationality_code_or_name)
 
             customer_type_code_or_name = customer_info['customer_type']
-            customer_type = await get_optional_model_object_by_code_or_name(
-                model=CustomerType,
-                model_code=customer_type_code_or_name,
-                model_name=customer_type_code_or_name,
-                session=self.oracle_session
-            )
-            dropdown_customer_type = dropdown(customer_type) if customer_type else dropdown_name(
-                customer_type_code_or_name)
+
+            dropdown_customer_type = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=CustomerType, name=customer_type_code_or_name, code=customer_type_code_or_name)
 
             cif_issued_date = date_string_to_other_date_string_format(
                 date_input=cif_info['cif_issued_date'],
@@ -128,25 +104,16 @@ class CtrGWCustomer(BaseController):
                 to_format=GW_DATE_FORMAT
             )
             place_of_issue_code_or_name = id_info["id_issued_location"]
-            place_of_issue = await get_optional_model_object_by_code_or_name(
-                model=PlaceOfIssue,
-                model_code=place_of_issue_code_or_name,
-                model_name=place_of_issue_code_or_name,
-                session=self.oracle_session
-            )
-            dropdown_place_of_issue = dropdown(place_of_issue) if place_of_issue else dropdown_name(
-                place_of_issue_code_or_name)
+
+            dropdown_place_of_issue = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=PlaceOfIssue, name=place_of_issue_code_or_name, code=place_of_issue_code_or_name)
 
             branch_info = customer_info['branch_info']
             branch_name = branch_info["branch_name"]
             branch_code = branch_info["branch_code"]
-            branch = await get_optional_model_object_by_code_or_name(
-                model=Branch,
-                model_code=branch_code,
-                model_name=branch_name,
-                session=self.oracle_session
-            )
-            dropdown_branch = optional_dropdown(obj=branch, obj_name=branch_name, obj_code=branch_code)
+
+            dropdown_branch = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=Branch, name=branch_name, code=branch_code)
 
             customer_list_info.append(dict(
                 fullname_vn=customer_info['full_name'],
@@ -216,22 +183,16 @@ class CtrGWCustomer(BaseController):
             gender_code_or_name = CRM_GENDER_TYPE_MALE
         if gender_code_or_name == GW_GENDER_FEMALE:
             gender_code_or_name = CRM_GENDER_TYPE_FEMALE
-        gender = await get_optional_model_object_by_code_or_name(
-            model=CustomerGender,
-            model_code=gender_code_or_name,
-            model_name=gender_code_or_name,
-            session=self.oracle_session
+
+        dropdown_gender = await self.dropdown_mapping_crm_model_or_dropdown_name(
+            model=CustomerGender, name=gender_code_or_name, code=gender_code_or_name
         )
-        dropdown_gender = dropdown(gender) if gender else dropdown_name(gender_code_or_name)
 
         customer_type_code_or_name = customer_info['customer_type']
-        customer_type = await get_optional_model_object_by_code_or_name(
-            model=CustomerType,
-            model_code=customer_type_code_or_name,
-            model_name=customer_type_code_or_name,
-            session=self.oracle_session
+
+        dropdown_customer_type = await self.dropdown_mapping_crm_model_or_dropdown_name(
+            model=CustomerType, name=customer_type_code_or_name, code=customer_type_code_or_name
         )
-        dropdown_customer_type = dropdown(customer_type) if customer_type else dropdown_name(customer_type_code_or_name)
 
         full_name_vn = customer_info['full_name']
         full_name = convert_to_unsigned_vietnamese(full_name_vn)
@@ -239,58 +200,39 @@ class CtrGWCustomer(BaseController):
         last_name, middle_name, first_name = split_name(full_name_vn)
 
         nationality_code_or_name = customer_info["nationality_code"]
-        nationality = await get_optional_model_object_by_code_or_name(
-            model=AddressCountry,
-            model_code=nationality_code_or_name,
-            model_name=nationality_code_or_name,
-            session=self.oracle_session
+
+        dropdown_nationality = await self.dropdown_mapping_crm_model_or_dropdown_name(
+            model=AddressCountry, name=nationality_code_or_name, code=nationality_code_or_name
         )
-        dropdown_nationality = dropdown(nationality) if nationality else dropdown_name(nationality_code_or_name)
 
         identity_info = customer_info['id_info']
         place_of_issue_code_or_name = identity_info["id_issued_location"]
-        place_of_issue = await get_optional_model_object_by_code_or_name(
-            model=PlaceOfIssue,
-            model_code=place_of_issue_code_or_name,
-            model_name=place_of_issue_code_or_name,
-            session=self.oracle_session
+
+        dropdown_place_of_issue = await self.dropdown_mapping_crm_model_or_dropdown_name(
+            model=PlaceOfIssue, name=place_of_issue_code_or_name, code=place_of_issue_code_or_name
         )
-        dropdown_place_of_issue = dropdown(place_of_issue) if place_of_issue else dropdown_name(
-            place_of_issue_code_or_name)
 
         resident_address_info = customer_info['p_address_info']
 
         resident_address_province_code_or_name = resident_address_info["city_name"]
-        resident_address_province = await get_optional_model_object_by_code_or_name(
-            model=AddressProvince,
-            model_code=resident_address_province_code_or_name,
-            model_name=resident_address_province_code_or_name,
-            session=self.oracle_session
+
+        dropdown_resident_address_province = await self.dropdown_mapping_crm_model_or_dropdown_name(
+            model=AddressProvince, name=resident_address_province_code_or_name,
+            code=resident_address_province_code_or_name
         )
-        dropdown_resident_address_province = dropdown(
-            resident_address_province) if resident_address_province else dropdown_name(
-            resident_address_province_code_or_name)
 
         resident_address_district_code_or_name = resident_address_info["district_name"]
-        resident_address_district = await get_optional_model_object_by_code_or_name(
-            model=AddressDistrict,
-            model_code=resident_address_district_code_or_name,
-            model_name=resident_address_district_code_or_name,
-            session=self.oracle_session
+
+        dropdown_resident_address_district = await self.dropdown_mapping_crm_model_or_dropdown_name(
+            model=AddressDistrict, name=resident_address_district_code_or_name,
+            code=resident_address_district_code_or_name
         )
-        dropdown_resident_address_district = dropdown(
-            resident_address_district) if resident_address_district else dropdown_name(
-            resident_address_district_code_or_name)
 
         resident_address_ward_code_or_name = resident_address_info["ward_name"]
-        resident_address_ward = await get_optional_model_object_by_code_or_name(
-            model=AddressDistrict,
-            model_code=resident_address_ward_code_or_name,
-            model_name=resident_address_ward_code_or_name,
-            session=self.oracle_session
+
+        dropdown_resident_address_ward = await self.dropdown_mapping_crm_model_or_dropdown_name(
+            model=AddressWard, name=resident_address_ward_code_or_name, code=resident_address_ward_code_or_name
         )
-        dropdown_resident_address_ward = dropdown(
-            resident_address_ward) if resident_address_ward else dropdown_name(resident_address_ward_code_or_name)
 
         resident_address_number_and_street = resident_address_info["line"]
 
@@ -307,36 +249,24 @@ class CtrGWCustomer(BaseController):
         contact_address_info = customer_info['t_address_info']
 
         contact_address_province_code_or_name = contact_address_info["contact_address_city_name"]
-        contact_address_province = await get_optional_model_object_by_code_or_name(
-            model=AddressProvince,
-            model_code=contact_address_province_code_or_name,
-            model_name=contact_address_province_code_or_name,
-            session=self.oracle_session
+
+        dropdown_contact_address_province = await self.dropdown_mapping_crm_model_or_dropdown_name(
+            model=AddressProvince, name=contact_address_province_code_or_name,
+            code=contact_address_province_code_or_name
         )
-        dropdown_contact_address_province = dropdown(
-            contact_address_province) if contact_address_province else dropdown_name(
-            contact_address_province_code_or_name)
 
         contact_address_district_code_or_name = contact_address_info["contact_address_district_name"]
-        contact_address_district = await get_optional_model_object_by_code_or_name(
-            model=AddressDistrict,
-            model_code=contact_address_district_code_or_name,
-            model_name=contact_address_district_code_or_name,
-            session=self.oracle_session
+
+        dropdown_contact_address_district = await self.dropdown_mapping_crm_model_or_dropdown_name(
+            model=AddressDistrict, name=contact_address_district_code_or_name,
+            code=contact_address_district_code_or_name
         )
-        dropdown_contact_address_district = dropdown(
-            contact_address_district) if contact_address_district else dropdown_name(
-            contact_address_district_code_or_name)
 
         contact_address_ward_code_or_name = contact_address_info["contact_address_ward_name"]
-        contact_address_ward = await get_optional_model_object_by_code_or_name(
-            model=AddressDistrict,
-            model_code=contact_address_ward_code_or_name,
-            model_name=contact_address_ward_code_or_name,
-            session=self.oracle_session
+
+        dropdown_contact_address_ward = await self.dropdown_mapping_crm_model_or_dropdown_name(
+            model=AddressWard, name=contact_address_ward_code_or_name, code=contact_address_ward_code_or_name
         )
-        dropdown_contact_address_ward = dropdown(
-            contact_address_ward) if contact_address_ward else dropdown_name(contact_address_ward_code_or_name)
 
         contact_address_number_and_street = contact_address_info["contact_address_line"]
 
@@ -354,13 +284,10 @@ class CtrGWCustomer(BaseController):
         branch_info = customer_info['branch_info']
         branch_name = branch_info["branch_name"]
         branch_code = branch_info["branch_code"]
-        branch = await get_optional_model_object_by_code_or_name(
-            model=Branch,
-            model_code=branch_code,
-            model_name=branch_name,
-            session=self.oracle_session
+
+        dropdown_branch = await self.dropdown_mapping_crm_model_or_dropdown_name(
+            model=Branch, name=branch_name, code=branch_code
         )
-        dropdown_branch = optional_dropdown(obj=branch, obj_name=branch_name, obj_code=branch_code)
 
         delivery_address_response = dict(
             province=dropdown_resident_address_province,
@@ -442,22 +369,16 @@ class CtrGWCustomer(BaseController):
             short_name = customer_info['short_name']
 
             martial_status_code_or_name = customer_info['martial_status']
-            martial_status = await get_optional_model_object_by_code_or_name(
-                model=MaritalStatus,
-                model_code=martial_status_code_or_name,
-                model_name=martial_status_code_or_name,
-                session=self.oracle_session
+
+            dropdown_martial_status = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=MaritalStatus, name=martial_status_code_or_name, code=martial_status_code_or_name
             )
-            dropdown_martial_status = optional_dropdown(obj=martial_status, obj_name=martial_status_code_or_name)
 
             resident_status_code_or_name = customer_info['resident_status']
-            resident_status = await get_optional_model_object_by_code_or_name(
-                model=ResidentStatus,
-                model_code=resident_status_code_or_name,
-                model_name=resident_status_code_or_name,
-                session=self.oracle_session
+
+            dropdown_resident_status = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=ResidentStatus, name=resident_status_code_or_name, code=resident_status_code_or_name
             )
-            dropdown_resident_status = optional_dropdown(obj=resident_status, obj_name=resident_status_code_or_name)
 
             identity_expired_date = date_string_to_other_date_string_format(
                 date_input=identity_info['id_expired_date'],
@@ -473,13 +394,10 @@ class CtrGWCustomer(BaseController):
 
             job_name = job_info["professional_name"]
             job_code = job_info["professional_code"]
-            job = await get_optional_model_object_by_code_or_name(
-                model=Career,
-                model_code=job_code,
-                model_name=job_name,
-                session=self.oracle_session
+
+            dropdown_job = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=Career, name=job_name, code=job_code
             )
-            dropdown_job = optional_dropdown(obj=job, obj_name=job_name, obj_code=job_code)
 
             return self.response(data=dict(
                 fullname_vn=full_name_vn,
@@ -568,45 +486,27 @@ class CtrGWCustomer(BaseController):
                 gender_code_or_name = CRM_GENDER_TYPE_MALE
             if gender_code_or_name == GW_GENDER_FEMALE:
                 gender_code_or_name = CRM_GENDER_TYPE_FEMALE
-            gender = await get_optional_model_object_by_code_or_name(
-                model=CustomerGender,
-                model_code=gender_code_or_name,
-                model_name=None,
-                session=self.oracle_session
-            )
-            dropdown_gender = optional_dropdown(obj=gender, obj_name=gender_code_or_name)
+
+            dropdown_gender = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=CustomerGender, name=gender_code_or_name, code=gender_code_or_name)
 
             nationality_code_or_name = co_owner_info["nationality_code"]
-            nationality = await get_optional_model_object_by_code_or_name(
-                model=AddressCountry,
-                model_code=nationality_code_or_name,
-                model_name=nationality_code_or_name,
-                session=self.oracle_session
+
+            dropdown_nationality = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=AddressCountry, name=nationality_code_or_name, code=nationality_code_or_name
             )
-            dropdown_nationality = optional_dropdown(obj=nationality, obj_name=nationality_code_or_name)
 
             customer_type_code_or_name = co_owner_info['customer_type']
-            customer_type = await get_optional_model_object_by_code_or_name(
-                model=CustomerType,
-                model_code=customer_type_code_or_name,
-                model_name=None,
-                session=self.oracle_session
-            )
-            dropdown_customer_type = optional_dropdown(
-                obj=customer_type,
-                obj_name=customer_type_code_or_name
+
+            dropdown_customer_type = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=CustomerType, name=customer_type_code_or_name, code=customer_type_code_or_name
             )
 
             customer_relationship_code_or_name = co_owner_info['coowner_relationship']
-            customer_relationship = await get_optional_model_object_by_code_or_name(
-                model=CustomerRelationshipType,
-                model_code=customer_relationship_code_or_name,
-                model_name=None,
-                session=self.oracle_session
-            )
-            dropdown_customer_relationship = optional_dropdown(
-                obj=customer_relationship,
-                obj_name=customer_relationship_code_or_name
+
+            dropdown_customer_relationship = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=CustomerRelationshipType, name=customer_relationship_code_or_name,
+                code=customer_relationship_code_or_name
             )
 
             cif_issued_date = date_string_to_other_date_string_format(
@@ -628,14 +528,10 @@ class CtrGWCustomer(BaseController):
             )
 
             place_of_issue_code_or_name = identity_info["id_issued_location"]
-            place_of_issue = await get_optional_model_object_by_code_or_name(
-                model=PlaceOfIssue,
-                model_code=None,
-                model_name=place_of_issue_code_or_name,
-                session=self.oracle_session
-            )
-            dropdown_place_of_issue = optional_dropdown(obj=place_of_issue, obj_name=place_of_issue_code_or_name)
 
+            dropdown_place_of_issue = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=PlaceOfIssue, name=place_of_issue_code_or_name, code=place_of_issue_code_or_name
+            )
             date_of_birth = date_string_to_other_date_string_format(
                 date_input=co_owner_info['birthday'],
                 from_format=GW_DATETIME_FORMAT,
@@ -702,23 +598,14 @@ class CtrGWCustomer(BaseController):
             if gender_code == GW_GENDER_FEMALE:
                 gender_code = CRM_GENDER_TYPE_FEMALE
 
-            gender = await get_optional_model_object_by_code_or_name(
-                model=CustomerGender,
-                model_code=gender_code,
-                model_name=gender_code,
-                session=self.oracle_session
+            dropdown_gender = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=CustomerGender, name=gender_code, code=gender_code
             )
-            dropdown_gender = dropdown(gender) if gender else dropdown_name(gender_code)
 
             nationality_code = authorized_info['nationality_code']
 
-            nationality = await get_optional_model_object_by_code_or_name(
-                model=AddressCountry,
-                model_code=nationality_code,
-                model_name=nationality_code,
-                session=self.oracle_session
-            )
-            dropdown_nationality = dropdown(nationality) if nationality else dropdown_name(nationality)
+            dropdown_nationality = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=AddressCountry, name=nationality_code, code=nationality_code)
 
             cif_issued_date = cif_info['cif_issued_date']
             cif_issued_date = date_string_to_other_date_string_format(
@@ -740,15 +627,10 @@ class CtrGWCustomer(BaseController):
             )
 
             place_of_issue_code_or_name = id_info['id_issued_location']
-            place_of_issue = await get_optional_model_object_by_code_or_name(
-                model=PlaceOfIssue,
-                model_code=place_of_issue_code_or_name,
-                model_name=place_of_issue_code_or_name,
-                session=self.oracle_session
-            )
-            dropdown_place_of_issue = dropdown(place_of_issue) if place_of_issue else dropdown_name(
-                place_of_issue_code_or_name)
 
+            dropdown_place_of_issue = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=PlaceOfIssue, name=place_of_issue_code_or_name, code=place_of_issue_code_or_name
+            )
             data_response.append(dict(
                 full_name_vn=authorized_info['full_name'],
                 date_of_birth=date_of_birth,

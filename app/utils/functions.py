@@ -243,3 +243,7 @@ def gen_qr_code(data: dict):
         return None
 
     return identity + "||" + name + "|" + dob + "|" + gender + "|" + address + "|" + date_of_issue
+
+
+def make_description_from_dict(dictionary: dict):
+    return "<br/>" + "<br/>".join(f'`{k}`: {v}' for k, v in dictionary.items())
