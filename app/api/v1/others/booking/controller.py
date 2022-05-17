@@ -1,3 +1,5 @@
+from typing import Optional
+
 from starlette import status
 
 from app.api.base.controller import BaseController
@@ -17,7 +19,12 @@ from app.utils.error_messages import (
 
 
 class CtrBooking(BaseController):
-    async def ctr_create_booking(self, business_type_code: str, booking_code_flag: bool = False):
+    async def ctr_create_booking(
+            self,
+            business_type_code: Optional[str] = None,
+            booking_code_flag: bool = False,
+            transaction_id: Optional[str] = None
+    ):
         is_stage_teller = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
             auth_response=self.current_user,
             menu_code=IDM_MENU_CODE_OPEN_CIF,
@@ -39,7 +46,7 @@ class CtrBooking(BaseController):
 
         booking = self.call_repos(await repos_create_booking(
             business_type_code=business_type_code,
-            transaction_id=None,
+            transaction_id=transaction_id,
             current_user=self.current_user.user_info,
             session=self.oracle_session,
             booking_code_flag=booking_code_flag
