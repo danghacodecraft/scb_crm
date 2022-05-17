@@ -224,7 +224,7 @@ async def repos_get_stage_information(
     ).first()
     if not stage_info:
         return ReposReturn(is_error=True, msg="Stage is None",
-                           loc=f"stage_id: {stage_id}, business_type_id: {business_type_id}")
+                           loc=f"stage_id: {stage_id}, business_type_id: {business_type_id}, reject_flag: {reject_flag}")
 
     return ReposReturn(data=stage_info)
 
