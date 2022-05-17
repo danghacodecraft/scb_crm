@@ -467,14 +467,10 @@ class CtrApproval(BaseController):
             audit_created_by = audit_transaction_sender.user_fullname
 
             if previous_transaction_stage_action:
-                dropdown_action_audit = await self.dropdown_mapping_crm_model_or_dropdown_name(
-                    model=StageAction,
-                    name=previous_transaction_stage_action.name,
-                    code=previous_transaction_stage_action.code
-                )
+                dropdown_action_audit = dropdown(previous_transaction_stage_action)
                 teller_is_disable = False
 
-            supervisor_transaction_daily, supervisor_transaction_sender, supervisor_transaction_stage, _ = self.call_repos(
+            supervisor_transaction_daily, supervisor_transaction_sender, supervisor_transaction_stage, _, supervisor_transaction_stage_action = self.call_repos(
                 await repos_get_previous_transaction_daily(
                     transaction_daily_id=audit_transaction_daily.transaction_id,
                     session=self.oracle_session
@@ -484,14 +480,9 @@ class CtrApproval(BaseController):
             supervisor_content = orjson_loads(supervisor_transaction_daily.data)["content"]
             supervisor_created_at = supervisor_transaction_daily.created_at
             supervisor_created_by = supervisor_transaction_sender.user_fullname
+            dropdown_action_supervisor = dropdown(supervisor_transaction_stage_action)
 
-            dropdown_action_supervisor = await self.dropdown_mapping_crm_model_or_dropdown_name(
-                model=StageAction,
-                name=previous_transaction_stage_action.name,
-                code=previous_transaction_stage_action.code
-            )
-
-            teller_transaction_daily, teller_transaction_sender, teller_transaction_stage, _ = self.call_repos(
+            teller_transaction_daily, teller_transaction_sender, teller_transaction_stage, _, teller_transaction_stage_action = self.call_repos(
                 await repos_get_previous_transaction_daily(
                     transaction_daily_id=supervisor_transaction_daily.transaction_id,
                     session=self.oracle_session
@@ -501,6 +492,7 @@ class CtrApproval(BaseController):
             teller_content = orjson_loads(teller_transaction_daily.data)["content"]
             teller_created_at = teller_transaction_daily.created_at
             teller_created_by = teller_transaction_sender.user_fullname
+            dropdown_action_teller = dropdown(teller_transaction_stage_action)
 
         stage_teller.update(dict(
             stage_code=teller_stage_code,
