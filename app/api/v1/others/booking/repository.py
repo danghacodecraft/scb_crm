@@ -73,4 +73,4 @@ async def repos_create_booking(
         )
     )
     session.commit()
-    return ReposReturn(data=booking_id)
+    return ReposReturn(data=(booking_id, booking_code))
