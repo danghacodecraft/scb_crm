@@ -437,11 +437,13 @@ class CtrApproval(BaseController):
             supervisor_created_at = supervisor_transaction_daily.created_at
             supervisor_created_by = supervisor_transaction_sender.user_fullname
 
-            teller_transaction_daily, teller_transaction_sender, teller_transaction_stage, _ = self.call_repos(
-                await repos_get_previous_transaction_daily(
-                    transaction_daily_id=supervisor_transaction_daily.transaction_id,
-                    session=self.oracle_session
-                ))
+            (
+                teller_transaction_daily, teller_transaction_sender, teller_transaction_stage, _,
+                teller_transaction_stage_action
+            ) = self.call_repos(await repos_get_previous_transaction_daily(
+                transaction_daily_id=supervisor_transaction_daily.transaction_id,
+                session=self.oracle_session
+            ))
             teller_stage_code = teller_transaction_stage.transaction_stage_phase_code
             teller_is_completed = True
             teller_content = orjson_loads(teller_transaction_daily.data)["content"]
