@@ -18,6 +18,7 @@ from app.api.v1.endpoints.cif.repository import (
 )
 from app.api.v1.endpoints.file.controller import CtrFile
 from app.api.v1.endpoints.file.validator import file_validator
+from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
 from app.api.v1.validator import validate_history_data
 from app.settings.config import DATE_INPUT_OUTPUT_EKYC_FORMAT
@@ -799,7 +800,9 @@ class CtrIdentityDocument(BaseController):
         )
         return self.response(data=info_save_document)
 
-    async def upload_identity_document_and_ocr(self, identity_type: int, image_file: UploadFile):
+    async def upload_identity_document_and_ocr(self, identity_type: int, image_file: UploadFile, booking_id: str):
+
+        await CtrBooking().ctr_check_exist_booking(booking_id=booking_id, loc="header -> booking-id")
 
         if identity_type not in EKYC_IDENTITY_TYPE:
             return self.response_exception(msg='', detail='identity_type is not exist', loc='identity_type')

@@ -78,3 +78,15 @@ async def repos_create_booking(
     )
     session.commit()
     return ReposReturn(data=(booking_id, booking_code))
+
+
+async def repos_check_exist_booking(booking_id: str, session: Session):
+
+    is_existed = session.execute(
+        select(
+            Booking
+        )
+        .filter(Booking.id == booking_id)
+    ).scalar()
+
+    return ReposReturn(data=is_existed)

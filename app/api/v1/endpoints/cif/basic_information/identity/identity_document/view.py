@@ -1,7 +1,9 @@
 from typing import List, Union
 
 import pydantic
-from fastapi import APIRouter, Body, Depends, File, Form, Path, UploadFile
+from fastapi import (
+    APIRouter, Body, Depends, File, Form, Header, Path, UploadFile
+)
 from fastapi.exceptions import RequestValidationError
 from starlette import status
 from starlette.requests import Request
@@ -156,11 +158,13 @@ async def view_upload_identity_document_image(
             \n`4` : CCCD mặt sau
         """),
         image_file: UploadFile = File(..., description='File hình ảnh giấy tờ định danh'),
+        booking_id: str = Header(..., description="booking_id"),
         current_user=Depends(get_current_user_from_header())
 ):
     upload_info = await CtrIdentityDocument(current_user).upload_identity_document_and_ocr(
         image_file=image_file,
-        identity_type=identity_type
+        identity_type=identity_type,
+        booking_id=booking_id
     )
 
     if identity_type == EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD:

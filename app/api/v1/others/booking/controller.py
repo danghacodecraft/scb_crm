@@ -1,7 +1,9 @@
 from starlette import status
 
 from app.api.base.controller import BaseController
-from app.api.v1.others.booking.repository import repos_create_booking
+from app.api.v1.others.booking.repository import (
+    repos_check_exist_booking, repos_create_booking
+)
 from app.api.v1.others.permission.controller import PermissionController
 from app.utils.constant.approval import CIF_STAGE_INIT
 from app.utils.constant.business_type import BUSINESS_TYPES
@@ -10,7 +12,7 @@ from app.utils.constant.idm import (
     IDM_PERMISSION_CODE_OPEN_CIF
 )
 from app.utils.error_messages import (
-    ERROR_BUSINESS_TYPE_NOT_EXIST, ERROR_PERMISSION
+    ERROR_BOOKING_ID_NOT_EXIST, ERROR_BUSINESS_TYPE_NOT_EXIST, ERROR_PERMISSION
 )
 
 
@@ -47,3 +49,14 @@ class CtrBooking(BaseController):
         return self.response(data=dict(
             booking_id=booking_id
         ))
+
+    async def ctr_check_exist_booking(self, booking_id: str, loc: str):
+        is_existed = self.call_repos(await repos_check_exist_booking(
+            booking_id=booking_id,
+            session=self.oracle_session
+        ))
+
+        if not is_existed:
+            return self.response_exception(msg=ERROR_BOOKING_ID_NOT_EXIST, loc=loc)
+
+        return self.response(data=is_existed)
