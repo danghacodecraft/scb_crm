@@ -402,6 +402,21 @@ class CtrApproval(BaseController):
                 supervisor_created_by = supervisor_transaction_sender.user_fullname
                 dropdown_action_supervisor = dropdown(supervisor_transaction_stage_action)
 
+            audit_transaction = self.call_repos(await repos_get_previous_transaction_daily(
+                transaction_daily_id=previous_transaction_daily.transaction_id,
+                session=self.oracle_session
+            ))
+            if audit_transaction:
+                (
+                    audit_transaction_daily, audit_transaction_sender, audit_transaction_stage, _,
+                    audit_transaction_stage_action
+                ) = audit_transaction
+                audit_stage_code = audit_transaction_stage.transaction_stage_phase_code
+                audit_content = orjson_loads(audit_transaction_daily.data)["content"]
+                audit_created_at = audit_transaction_daily.created_at
+                audit_created_by = audit_transaction_sender.user_fullname
+                dropdown_action_audit = dropdown(audit_transaction_stage_action)
+
         # KSV đã xử lý hồ sơ
         elif previous_stage_code == CIF_STAGE_APPROVE_KSV:
             is_stage_audit = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
