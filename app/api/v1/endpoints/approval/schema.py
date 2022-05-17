@@ -5,6 +5,8 @@ from pydantic import Field
 
 from app.api.base.schema import BaseSchema
 from app.api.v1.schemas.utils import OptionalDropdownResponse
+from app.utils.constant.approval import CIF_ACTIONS
+from app.utils.functions import make_description_from_dict
 
 
 class ProcessInfoResponse(BaseSchema):
@@ -25,6 +27,7 @@ class CifApprovalProcessResponse(BaseSchema):
 class CifApproveRequest(BaseSchema):
     reject_flag: Optional[bool] = Field(None, description="Cờ từ chối phê duyệt")
     content: str = Field(..., description="Nội dung phê duyệt")
+    action_id: Optional[str] = Field(..., description=f"Mã Hành Động: {make_description_from_dict(CIF_ACTIONS)}")
 
 
 class CifApprovalResponse(BaseSchema):
@@ -39,7 +42,7 @@ class CIFStageResponse(BaseSchema):
     is_disable: bool = Field(..., description="Có disable không")
     is_completed: bool = Field(..., description="Trạng thái phê duyệt")
     content: Optional[str] = Field(..., description="1. Nội dung phản hồi")
-    action: Optional[str] = Field(None, description="2. Hành động")
+    action: OptionalDropdownResponse = Field(..., description="2. Hành động")
     created_at: Optional[datetime] = Field(..., description="Cập nhật lúc")
     created_by: Optional[str] = Field(..., description="Cập nhật bởi")
 
@@ -80,4 +83,4 @@ class AuthenticationRequest(BaseSchema):
 
 class ApprovalRequest(BaseSchema):
     approval: CifApproveRequest = Field(..., description="Thông tin các TAB phê duyệt")
-    authentication: AuthenticationRequest = Field(..., description="Thông tin xác thực")
+    authentication: Optional[AuthenticationRequest] = Field(None, description="Thông tin xác thực")

@@ -14,11 +14,20 @@ GW_ENDPOINT_URL_RETRIEVE_DEPOSIT_ACCOUNT_TD = "/depositaccount/v1.0/rest/retriev
 GW_ENDPOINT_URL_RETRIEVE_REPORT_TD_FROM_CIF = "/report/v1.0/rest/selectReportTDFromCif"
 GW_ENDPOINT_URL_RETRIEVE_AUTHORIZED_ACCOUNT_NUM = "/customer/v1.0/rest/selectAuthorizedRefDataMgmtAccNum"
 GW_ENDPOINT_URL_RETRIEVE_CO_OWNER_ACCOUNT_NUM = "/customer/v1.0/rest/selectCoownerRefDataMgmtAccNum"
-GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_CODE = "/employee/v1.0/rest/selectEmployeeInfoFromCode"
+GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE = "/employee/v1.0/rest/selectEmployeeInfoFromCode"
 GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_USER_NAME = "/employee/v1.0/rest/selectEmployeeInfoFromUserName"
+GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_LIST_FROM_ORG_ID = "/employee/v1.0/rest/selectEmployeeListFromOrgId"
+GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_CODE = "/employee/v1.0/rest/retrieveEmployeeInfoFromCode"
+GW_ENDPOINT_URL_RETRIEVE_WORKING_PROCESS_INFO_FROM_CODE = "/employee/v1.0/rest/selectWorkingProcessInfoFromCode"
+GW_ENDPOINT_URL_RETRIEVE_REWARD_INFO_FROM_CODE = "/employee/v1.0/rest/selectRewardInfoFromCode"
+GW_ENDPOINT_URL_RETRIEVE_DISCIPLINE_INFO_FROM_CODE = "/employee/v1.0/rest/selectDisciplineInfoFromCode"
+GW_ENDPOINT_URL_RETRIEVE_TOPIC_INFO_FROM_CODE = "/employee/v1.0/rest/selectTopicInfoFromCode"
+GW_ENDPOINT_URL_RETRIEVE_KPIS_INFO_FROM_CODE = "/employee/v1.0/rest/selectKpisInfoFromCode"
+GW_ENDPOINT_URL_RETRIEVE_STAFF_OTHER_INFO_FROM_CODE = "/employee/v1.0/rest/selectStaffOtherInfoFromCode"
 GW_ENDPOINT_URL_RETRIEVE_ORGANIZATION_INFO = "/organization/v1.0/rest/selectOrgInfo"
 GW_ENDPOINT_URL_RETRIEVE_ORGANIZATION_INFO_FROM_PARENT = "/organization/v1.0/rest/selectOrgInfoFromParent"
 GW_ENDPOINT_URL_RETRIEVE_ORGANIZATION_INFO_FROM_CHILD = "/organization/v1.0/rest/selectOrgInfoFromChild"
+GW_SELECT_CATEGORY = "/category/v1.0/rest/selectCategory"
 
 GW_ENDPOINT_URL_RETRIEVE_CUS_OPEN_CIF = '/customer/v1.0/rest/openCIFAuthorise'
 
@@ -27,6 +36,7 @@ GW_DATE_FORMAT = '%Y-%m-%d'
 
 GW_CURRENT_ACCOUNT_FROM_CIF = "CurrentAccountFromCIF"
 GW_CURRENT_ACCOUNT_CASA = "CurrentAccountCASA"
+GW_SELECT_CATEGORY_TYPE = "DS_NV_DIRECT_INDIRECT"
 
 GW_DEPOSIT_ACCOUNT_FROM_CIF = "DepositAccountFromCIF"
 GW_DEPOSIT_ACCOUNT_TD = "DepositAccountTD"
@@ -51,6 +61,7 @@ GW_CO_OWNER_REF_DATA_MGM_ACC_NUM = "CoownerRefDataMgmAccNum"
 
 GW_EMPLOYEE_FROM_CODE = "EmployeeFromCode"
 GW_EMPLOYEE_FROM_NAME = "EmployeeFromName"
+GW_EMPLOYEES = "Employees"
 
 GW_ORGANIZATION_INFO_FROM_PARENT_NAME = "selectOrgInfoFromParent_in"
 GW_ORGANIZATION_INFO_FROM_CHILD_NAME = "selectOrgInfoFromChild_in"
@@ -66,6 +77,11 @@ GW_GENDER_FEMALE = 'F'
 GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP = "GUARDIAN_OR_CUSTOMER_RELATIONSHIP"
 GW_REQUEST_PARAMETER_DEBIT_CARD = "DEBIT_CARD"
 GW_REQUEST_PARAMETER_DEFAULT = "DEFAULT"
+
+TRANSACTION_FORMS = {
+    "D": "Trực tiếp",
+    "I": "Gián tiếp"
+}
 
 GW_REQUEST_PARAMETER = {
     GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP: "Người giám hộ/Mối quan hệ khách hàng",

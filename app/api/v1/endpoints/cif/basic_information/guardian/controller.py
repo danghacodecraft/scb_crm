@@ -14,26 +14,23 @@ from app.api.v1.endpoints.cif.basic_information.repository import (
 from app.api.v1.endpoints.cif.repository import (
     repos_get_booking_code, repos_get_initializing_customer
 )
-from app.api.v1.endpoints.repository import (
-    get_optional_model_object_by_code_or_name
-)
 from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.settings.event import service_gw
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
 )
 from app.third_parties.oracle.models.master_data.customer import CustomerGender
+from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.utils.constant.cif import (
-    BUSINESS_FORM_TTCN_NGH, CUSTOMER_RELATIONSHIP_TYPE_GUARDIAN,
-    DROPDOWN_NONE_DICT
+    BUSINESS_FORM_TTCN_NGH, CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE,
+    CUSTOMER_RELATIONSHIP_TYPE_GUARDIAN
 )
+from app.utils.constant.gw import GW_GENDER_FEMALE, GW_GENDER_MALE
 from app.utils.error_messages import (
     ERROR_CIF_NUMBER_DUPLICATED, ERROR_RELATION_CUSTOMER_SELF_RELATED,
     ERROR_RELATIONSHIP_NOT_GUARDIAN
 )
-from app.utils.functions import (
-    dropdown, dropdown_name, orjson_dumps, string_to_date
-)
+from app.utils.functions import dropdown, orjson_dumps, string_to_date
 
 
 class CtrGuardian(BaseController):
@@ -63,90 +60,67 @@ class CtrGuardian(BaseController):
 
             identity_document = guardian_detail_data['id_info']
 
-            gender_info = guardian_detail_data["gender"]
-            gender = await get_optional_model_object_by_code_or_name(
-                model=CustomerGender,
-                model_code=gender_info,
-                model_name=gender_info,
-                session=self.oracle_session
-            )
+            gender_code = guardian_detail_data["gender"]
+            if gender_code == GW_GENDER_MALE:
+                gender_code = CRM_GENDER_TYPE_MALE
+            if gender_code == GW_GENDER_FEMALE:
+                gender_code = CRM_GENDER_TYPE_FEMALE
 
-            dropdown_gender = dropdown(gender) if gender else dropdown_name(gender)
+            dropdown_gender = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=CustomerGender, name=None, code=gender_code
+            )
 
             nationality_code = guardian_detail_data["nationality_code"]
-            nationality = await get_optional_model_object_by_code_or_name(
-                model=AddressCountry,
-                model_code=nationality_code,
-                model_name=nationality_code,
-                session=self.oracle_session
-            )
+            print(nationality_code)
 
-            dropdown_nationality = dropdown(nationality) if nationality else dropdown_name(nationality)
+            dropdown_nationality = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=AddressCountry, name=None, code=nationality_code
+            )
 
             resident_address = guardian_detail_data["p_address_info"]
             contact_address = guardian_detail_data["t_address_info"]
 
             resident_city_name = resident_address["city_name"]
-            resident_city = await get_optional_model_object_by_code_or_name(
-                model=AddressProvince,
-                model_code=resident_city_name,
-                model_name=resident_city_name,
-                session=self.oracle_session
-            )
 
-            resident_dropdown_city = dropdown(resident_city) if resident_city else dropdown_name(resident_city)
+            resident_dropdown_city = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=AddressProvince, name=resident_city_name, code=resident_city_name
+            )
 
             resident_district_name = resident_address["district_name"]
-            resident_district = await get_optional_model_object_by_code_or_name(
-                model=AddressDistrict,
-                model_code=resident_district_name,
-                model_name=resident_district_name,
-                session=self.oracle_session
+
+            resident_dropdown_district = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=AddressDistrict, name=resident_district_name, code=resident_district_name
             )
 
-            resident_dropdown_district = dropdown(resident_district) if resident_district \
-                else dropdown_name(resident_district)
+            resident_ward_name = resident_address["ward_name"]
 
-            resident_address_ward = resident_address["ward_name"]
-            resident_ward = await get_optional_model_object_by_code_or_name(
-                model=AddressWard,
-                model_code=resident_address_ward,
-                model_name=resident_address_ward,
-                session=self.oracle_session
+            resident_dropdown_ward = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=AddressWard, name=resident_ward_name, code=resident_ward_name
             )
-
-            resident_dropdown_ward = dropdown(resident_ward) if resident_ward else dropdown_name(resident_ward)
 
             contact_city_name = contact_address["contact_address_city_name"]
-            contact_city = await get_optional_model_object_by_code_or_name(
-                model=AddressProvince,
-                model_code=contact_city_name,
-                model_name=contact_city_name,
-                session=self.oracle_session
-            )
 
-            contact_dropdown_city = dropdown(contact_city) if contact_city else dropdown_name(contact_city)
+            contact_dropdown_city = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=AddressProvince, name=contact_city_name, code=contact_city_name
+            )
 
             contact_district_name = contact_address["contact_address_district_name"]
-            contact_district = await get_optional_model_object_by_code_or_name(
-                model=AddressDistrict,
-                model_code=contact_district_name,
-                model_name=contact_district_name,
-                session=self.oracle_session
-            )
 
-            contact_dropdown_district = dropdown(contact_district) if contact_district \
-                else dropdown_name(contact_district)
+            contact_dropdown_district = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=AddressDistrict, name=contact_district_name, code=contact_district_name
+            )
 
             contact_address_ward = contact_address["contact_address_ward_name"]
-            contact_ward = await get_optional_model_object_by_code_or_name(
-                model=AddressWard,
-                model_code=contact_address_ward,
-                model_name=contact_address_ward,
-                session=self.oracle_session
+
+            contact_dropdown_ward = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=AddressWard, name=contact_address_ward, code=contact_address_ward
             )
 
-            contact_dropdown_ward = dropdown(contact_ward) if contact_ward else dropdown_name(contact_ward)
+            place_of_issue = identity_document['id_issued_location']
+
+            dropdown_place_of_issue = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=PlaceOfIssue, name=place_of_issue, code=place_of_issue
+            )
 
             guardian_item.update(
                 id=guardian.customer_personal_relationship_cif_number,
@@ -168,8 +142,7 @@ class CtrGuardian(BaseController):
                                                _format=DATETIME_INPUT_OUTPUT_FORMAT),
                     expired_date=string_to_date(identity_document['id_expired_date'],
                                                 _format=DATETIME_INPUT_OUTPUT_FORMAT),
-                    place_of_issue=dropdown_name(identity_document['id_issued_location'])
-                    if identity_document['id_issued_location'] else DROPDOWN_NONE_DICT
+                    place_of_issue=dropdown_place_of_issue
                 ),
                 address_information=dict(
                     resident_address=dict(
