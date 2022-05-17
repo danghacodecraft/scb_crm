@@ -41,6 +41,7 @@ from app.third_parties.oracle.models.master_data.identity import (
 from app.third_parties.oracle.models.master_data.others import (
     Nation, Religion, TransactionStage, TransactionStageStatus
 )
+from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import (
     ACTIVE_FLAG_ACTIVED, ADDRESS_COUNTRY_CODE_VN, BUSINESS_FORM_TTCN_GTDD_GTDD,
     BUSINESS_FORM_TTCN_GTDD_KM, CONTACT_ADDRESS_CODE, CRM_GENDER_TYPE_FEMALE,
@@ -414,7 +415,8 @@ async def repos_save_identity(
             transaction_id=saving_transaction_daily['transaction_id'],
             session=session,
             current_user=current_user,
-            booking_code_flag=True
+            booking_code_flag=True,
+            business_type_code=BUSINESS_TYPE_INIT_CIF
         )
         if booking.is_error:
             return ReposReturn(is_error=True, msg=booking.msg, detail=booking.detail)
