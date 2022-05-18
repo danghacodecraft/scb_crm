@@ -994,7 +994,10 @@ class CtrApproval(BaseController):
             department_name=current_user.hrm_department_name,
             position_id=current_user.hrm_position_id,
             position_code=current_user.hrm_position_code,
-            position_name=current_user.hrm_position_name
+            position_name=current_user.hrm_position_name,
+            title_id=current_user.hrm_title_id,
+            title_code=current_user.hrm_title_code,
+            title_name=current_user.hrm_title_name
         )
 
         # receiver_branch = None
@@ -1035,6 +1038,9 @@ class CtrApproval(BaseController):
         #         position_id=receiver_user.position_id,
         #         position_code=receiver_user.position_code,
         #         position_name=receiver_user.position_name,
+        #         title_id=current_user.hrm_title_id,
+        #         title_code=current_user.hrm_title_code,
+        #         title_name=current_user.hrm_title_name
         #     )
         # else:
         #     saving_transaction_receiver = dict(
@@ -1051,7 +1057,10 @@ class CtrApproval(BaseController):
         #         department_name=None,
         #         position_id=None,
         #         position_code=None,
-        #         position_name=None
+        #         position_name=None,
+        #         title_id=current_user.hrm_title_id,
+        #         title_code=current_user.hrm_title_code,
+        #         title_name=current_user.hrm_title_name
         #     )
 
         approval_process = self.call_repos((await repos_approve(
