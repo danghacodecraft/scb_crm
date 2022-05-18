@@ -425,7 +425,15 @@ class CtrApproval(BaseController):
                 permission_code=IDM_PERMISSION_CODE_KSS,
                 stage_code=CIF_STAGE_APPROVE_KSS
             ))
-            if not is_stage_audit:
+            is_stage_teller = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
+                auth_response=auth_response,
+                menu_code=IDM_MENU_CODE_OPEN_CIF,
+                group_role_code=IDM_GROUP_ROLE_CODE_OPEN_CIF,
+                permission_code=IDM_PERMISSION_CODE_OPEN_CIF,
+                stage_code=CIF_STAGE_INIT
+            ))
+
+            if not (is_stage_audit or is_stage_teller):
                 return self.response_exception(
                     loc=f"Stage: {previous_stage_code}, "
                         f"User: {current_user.username}, "
@@ -465,7 +473,8 @@ class CtrApproval(BaseController):
             teller_created_by = teller_transaction_sender.user_fullname
 
             supervisor_is_reject = previous_transaction_stage_is_reject
-            if supervisor_is_reject:
+
+            if supervisor_is_reject and is_stage_teller:
                 teller_is_disable = False
             else:
                 is_open_cif = True
