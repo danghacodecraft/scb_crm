@@ -482,7 +482,6 @@ class CtrApproval(BaseController):
 
             if previous_transaction_stage_action:
                 dropdown_action_audit = dropdown(previous_transaction_stage_action)
-                teller_is_disable = False
 
             supervisor_transaction_daily, supervisor_transaction_sender, supervisor_transaction_stage, _, supervisor_transaction_stage_action = self.call_repos(
                 await repos_get_previous_transaction_daily(
@@ -507,8 +506,9 @@ class CtrApproval(BaseController):
             teller_created_at = teller_transaction_daily.created_at
             teller_created_by = teller_transaction_sender.user_fullname
             dropdown_action_teller = dropdown(teller_transaction_stage_action)
-            if not audit_transaction_stage.is_reject:
-                teller_is_disable = True
+
+            if is_stage_teller and audit_transaction_stage.is_reject:
+                teller_is_disable = False
 
         stage_teller.update(dict(
             stage_code=teller_stage_code,
