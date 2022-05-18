@@ -57,6 +57,7 @@ class CtrApproval(BaseController):
             childs = []
 
             for booking_customer, _, transaction_daily, transaction_sender, transaction_root_daily in transactions:
+                print(transaction_sender.user_fullname)
                 content = orjson_loads(transaction_root_daily.data)
                 if parent_key == transaction_root_daily.created_at.date():
                     childs.append({
