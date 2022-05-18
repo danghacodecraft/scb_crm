@@ -465,12 +465,12 @@ class CtrApproval(BaseController):
 
             if supervisor_is_reject and is_stage_teller:
                 teller_is_disable = False
-            else:
+            if not supervisor_is_reject:
                 audit_is_disable = False
                 is_open_cif = True
 
         # KSS đã xử lý hồ sơ
-        else:
+        elif previous_stage_code == CIF_STAGE_APPROVE_KSS:
             audit_transaction_stage = previous_transaction_stage
             audit_stage_code = previous_stage_code
             audit_transaction_daily = previous_transaction_daily
@@ -806,7 +806,7 @@ class CtrApproval(BaseController):
                     menu_code=IDM_MENU_CODE_OPEN_CIF,
                     group_role_code=IDM_GROUP_ROLE_CODE_OPEN_CIF,
                     permission_code=IDM_PERMISSION_CODE_OPEN_CIF,
-                    stage_code=CIF_STAGE_APPROVE_KSV
+                    stage_code=CIF_STAGE_INIT
                 ))
             elif current_stage_code == CIF_STAGE_APPROVE_KSV:
                 self.call_repos(await PermissionController.ctr_approval_check_permission(
