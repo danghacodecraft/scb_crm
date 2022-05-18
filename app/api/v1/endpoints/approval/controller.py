@@ -334,7 +334,9 @@ class CtrApproval(BaseController):
         is_open_cif = False
 
         previous_stage_code = None
+
         stage_teller = dict()
+        teller_stage_code = None
         teller_is_disable = True
         teller_is_completed = False
         teller_content = None
@@ -412,7 +414,6 @@ class CtrApproval(BaseController):
             #     )
             if is_stage_teller:
                 teller_is_disable = False
-            teller_stage_code = None
 
         # Hồ sơ GDV đã gửi
         elif previous_stage_code == CIF_STAGE_INIT:
