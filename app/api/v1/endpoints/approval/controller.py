@@ -942,7 +942,7 @@ class CtrApproval(BaseController):
             transaction_stage_id=saving_transaction_stage_id,
             transaction_parent_id=None,
             transaction_root_id=None,
-            is_reject=False,
+            is_reject=reject_flag,
             data=orjson_dumps(json_data),
             description=description,
             created_at=now(),
