@@ -21,6 +21,9 @@ from app.third_parties.oracle.models.cif.basic_information.personal.model import
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
 )
+from app.third_parties.oracle.models.master_data.others import (
+    AverageIncomeAmount
+)
 from app.utils.error_messages import ERROR_CALL_SERVICE_GW
 
 
@@ -117,9 +120,15 @@ async def repos_gw_get_authorized(
     return ReposReturn(data=authorized)
 
 
-async def repos_gw_open_cif(cif_id: str, current_user):
+async def repos_gw_open_cif(
+        cif_id: str,
+        customer_info: dict,
+        current_user
+):
     is_success, response_data = await service_gw.open_cif(
-        cif_id=cif_id, current_user=current_user
+        cif_id=cif_id,
+        customer_info=customer_info,
+        current_user=current_user
     )
     return ReposReturn(data=response_data)
 
@@ -139,7 +148,8 @@ async def repos_get_customer_open_cif(
             AddressWard,
             AddressDistrict,
             AddressProvince,
-            AddressCountry
+            AddressCountry,
+            AverageIncomeAmount
         )
         .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id)
         .join(CustomerIndividualInfo, Customer.id == CustomerIndividualInfo.customer_id)
@@ -149,6 +159,7 @@ async def repos_get_customer_open_cif(
         .join(AddressProvince, CustomerAddress.address_province_id == AddressProvince.id)
         .join(AddressCountry, CustomerAddress.address_country_id == AddressCountry.id)
         .join(CustomerProfessional, Customer.customer_professional_id == CustomerProfessional.id)
+        .join(AverageIncomeAmount, CustomerProfessional.average_income_amount_id == AverageIncomeAmount.id)
         .filter(Customer.id == cif_id)
     ).all()
 

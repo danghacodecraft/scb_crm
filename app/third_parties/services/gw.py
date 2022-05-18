@@ -1477,7 +1477,7 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
-    async def open_cif(self, cif_id: str, current_user):
+    async def open_cif(self, cif_id: str, customer_info: dict, current_user):
 
         request_data = {
             "openCIFAuthorise_in": {
@@ -1492,117 +1492,8 @@ class ServiceGW:
                     }
                 },
                 "data_input": {
-                    "customer_info": {
-                        "customer_type": "I",
-                        "customer_category": "I_11",
-                        "cus_ekyc": "EKYC_3",
-                        "full_name": "Đỗ Văn Thạnh",
-                        "gender": "F",
-                        "telephone": "0904741808",
-                        "mobile_phone": "0904741808",
-                        "email": "",
-                        "place_of_birth": "VN",
-                        "birthday": "1998-11-11",
-                        "tax": "",
-                        "resident_status": "N",
-                        "legal_guardian": "",
-                        "co_owner": "",
-                        "nationality": "VN",
-                        "birth_country": "",
-                        "language": "ENG",
-                        "local_code": "101",
-                        "current_official": "",
-                        "biz_license_issue_date": "",
-                        "cor_capital": "",
-                        "cor_email": "",
-                        "cor_fax": "",
-                        "cor_tel": "",
-                        "cor_mobile": "",
-                        "cor_country": "",
-                        "cor_desc": "",
-                        "coowner_relationship": "",
-                        "martial_status": "M",
-                        "p_us_res_status": "N",
-                        "p_vst_us_prev": "N",
-                        "p_field9": "",
-                        "p_field10": "",
-                        "p_field11": "",
-                        "p_field12": "",
-                        "p_field13": "",
-                        "p_field14": "",
-                        "p_field15": "",
-                        "p_field16": "",
-                        "cif_info": {
-                            "cif_auto": "Y",
-                            "cif_num": ""
-                        },
-                        "id_info_main": {
-                            "id_num": "187690394",
-                            "id_issued_date": "2019-11-04",
-                            "id_expired_date": "2023-11-04",
-                            "id_issued_location": "HCM",
-                            "id_type": "ID CARD/PASSPORT"
-                        },
-                        "address_info_i": {
-                            "line": "P TRÚC BẠCH Q BA ĐÌNH TP HÀ NỘI",
-                            "ward_name": "P TRÚC BẠCH",
-                            "district_name": "Q BA ĐÌNH",
-                            "city_name": "TP HÀ NỘI",
-                            "country_name": "VN",
-                            "same_addr": "Y"
-                        },
-                        "address_contact_info_i": {
-                            "contact_address_line": "",
-                            "contact_address_ward_name": "",
-                            "contact_address_district_name": "",
-                            "contact_address_city_name": "",
-                            "contact_address_country_name": ""
-                        },
-                        "address_info_c": {
-                            "line": "ABC",
-                            "ward_name": "P PHÚC XÁ",
-                            "district_name": "Q BA ĐÌNH",
-                            "city_name": "TP HÀ NỘI",
-                            "country_name": "VN",
-                            "cor_same_addr ": "Y"
-                        },
-                        "address_contact_info_c": {
-                            "contact_address_line": "P PHÚC XÁ",
-                            "contact_address_ward_name": "P PHÚC XÁ",
-                            "contact_address_district_name": "Q BA ĐÌNH",
-                            "contact_address_city_name": "TP HÀ NỘI",
-                            "contact_address_country_name": "VN"
-                        },
-                        "id_info_extra": {
-                            "id_num": "",
-                            "id_issued_date": "",
-                            "id_expired_date": "",
-                            "id_issued_location": "",
-                            "id_type": ""
-                        },
-                        "branch_info": {
-                            "branch_code": "000"
-                        },
-                        "job_info": {
-                            "professional_code": "T_0806",
-                            "position": "",
-                            "official_telephone": "",
-                            "address_office_info": {
-                                "address_full": ""
-                            }
-                        },
-                        "staff_info_checker": {
-                            "staff_name": "HOANT2"
-                        },
-                        "staff_info_maker": {
-                            "staff_name": "KHANHLQ"
-                        },
-                        "udf_info": {
-                            "udf_name": "CN_00_CUNG_CAP_TT_FATCA~THU_NHAP_BQ_03_THANG~NGHE_NGHIEP~NHAN_SMS_EMAIL_TIEP_THI_QUANG_CAO~CUNG_CAP_DOANH_THU_THUAN~THOA_THUAN_PHAP_LY~KHTC_DOI_TUONG",
-                            "udf_value": "CO~TNBQ_001~BAC_SI~DONG_Y~KHONG~KHONG~THONG THUONG"
-                        }
-                    },
-                    "acccount_info": {
+                    "customer_info": customer_info,
+                    "account_info": {
                         "account_class_code": "",
                         "account_auto_create_cif": "",
                         "account_currency": "",
@@ -1614,7 +1505,6 @@ class ServiceGW:
 
         }
 
-        print('request', request_data)
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_CUS_OPEN_CIF}"
 
         return_errors = dict(
@@ -1642,6 +1532,6 @@ class ServiceGW:
                 else:
                     return_data = await response.json()
                     return True, return_data
-        except aiohttp.ClientConnectorError as ex:
+        except Exception as ex:
             logger.error(str(ex))
-            return False, return_data
+            return False, {'message': str(ex)}

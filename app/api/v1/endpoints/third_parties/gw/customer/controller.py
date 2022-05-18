@@ -16,15 +16,19 @@ from app.third_parties.oracle.models.master_data.others import (
     Branch, Career, MaritalStatus, ResidentStatus
 )
 from app.utils.constant.cif import (
-    CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE, EKYC_GENDER_TYPE_FEMALE,
-    EKYC_GENDER_TYPE_MALE, RESIDENT_ADDRESS_CODE
+    CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE, RESIDENT_ADDRESS_CODE
 )
 from app.utils.constant.gw import (
-    GW_DATE_FORMAT, GW_DATETIME_FORMAT, GW_GENDER_FEMALE, GW_GENDER_MALE,
-    GW_LOC_CHECK_CIF_EXIST, GW_REQUEST_PARAMETER_DEBIT_CARD,
-    GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP
+    GW_AUTO, GW_DATE_FORMAT, GW_DATETIME_FORMAT, GW_DEFAULT_KHTC_DOI_TUONG,
+    GW_DEFAULT_VALUE, GW_GENDER_FEMALE, GW_GENDER_MALE, GW_LOC_CHECK_CIF_EXIST,
+    GW_NO_AGREEMENT_FLAG, GW_NO_MARKETING_FLAG,
+    GW_REQUEST_PARAMETER_DEBIT_CARD,
+    GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP, GW_SELECT,
+    GW_UDF_NAME, GW_YES
 )
-from app.utils.functions import date_string_to_other_date_string_format
+from app.utils.functions import (
+    date_string_to_other_date_string_format, date_to_string
+)
 from app.utils.vietnamese_converter import (
     convert_to_unsigned_vietnamese, split_name
 )
@@ -680,41 +684,42 @@ class CtrGWCustomer(BaseController):
         cust_professional = first_row.CustomerProfessional
 
         cif_info = {
-            "cif_auto": "Y" if customer.self_selected_cif_flag else "N",
-            "cif_num": customer.cif_number if customer.self_selected_cif_flag else ""
+            "cif_auto": GW_SELECT if customer.self_selected_cif_flag else GW_AUTO,
+            "cif_num": customer.cif_number if customer.self_selected_cif_flag else GW_DEFAULT_VALUE
         }
+
         # địa chỉ thường trú
         address_info_i = {
-            "line": "",
-            "ward_name": "",
-            "district_name": "",
-            "city_name": "",
-            "country_name": "",
-            "same_addr": ""
+            "line": GW_DEFAULT_VALUE,
+            "ward_name": GW_DEFAULT_VALUE,
+            "district_name": GW_DEFAULT_VALUE,
+            "city_name": GW_DEFAULT_VALUE,
+            "country_name": GW_DEFAULT_VALUE,
+            "same_addr": GW_DEFAULT_VALUE
         }
         address_contact_info_i = {
-            "contact_address_line": "",
-            "contact_address_ward_name": "",
-            "contact_address_district_name": "",
-            "contact_address_city_name": "",
-            "contact_address_country_name": ""
+            "contact_address_line": GW_DEFAULT_VALUE,
+            "contact_address_ward_name": GW_DEFAULT_VALUE,
+            "contact_address_district_name": GW_DEFAULT_VALUE,
+            "contact_address_city_name": GW_DEFAULT_VALUE,
+            "contact_address_country_name": GW_DEFAULT_VALUE
         }
         # địa chỉ đăng ký doanh nghiệp
         address_info_c = {
-            "line": "",
-            "ward_name": "",
-            "district_name": "",
-            "city_name": "",
-            "country_name": "",
-            "cor_same_addr ": ""
+            "line": GW_DEFAULT_VALUE,
+            "ward_name": GW_DEFAULT_VALUE,
+            "district_name": GW_DEFAULT_VALUE,
+            "city_name": GW_DEFAULT_VALUE,
+            "country_name": GW_DEFAULT_VALUE,
+            "cor_same_addr": GW_DEFAULT_VALUE
         }
         # địa chỉ liên lạc doanh nghiệp
         address_contact_info_c = {
-            "contact_address_line": "",
-            "contact_address_ward_name": "",
-            "contact_address_district_name": "",
-            "contact_address_city_name": "",
-            "contact_address_country_name": ""
+            "contact_address_line": GW_DEFAULT_VALUE,
+            "contact_address_ward_name": GW_DEFAULT_VALUE,
+            "contact_address_district_name": GW_DEFAULT_VALUE,
+            "contact_address_city_name": GW_DEFAULT_VALUE,
+            "contact_address_country_name": GW_DEFAULT_VALUE
         }
         for row in response_customers:
             if row.CustomerAddress.address_type_id == RESIDENT_ADDRESS_CODE:
@@ -723,7 +728,7 @@ class CtrGWCustomer(BaseController):
                     "ward_name": row.AddressWard.name,
                     "district_name": row.AddressDistrict.name,
                     "city_name": row.AddressProvince.name,
-                    "country_name": row.AddressCountry.name,
+                    "country_name": row.AddressCountry.id,
                     "same_addr": "Y"
                 }
             else:
@@ -732,73 +737,82 @@ class CtrGWCustomer(BaseController):
                     "contact_address_ward_name": row.AddressWard.name,
                     "contact_address_district_name": row.AddressDistrict.name,
                     "contact_address_city_name": row.AddressProvince.name,
-                    "contact_address_country_name": row.AddressCountry.name
+                    "contact_address_country_name": row.AddressCountry.id
                 }
 
+        marketing_flag = GW_YES if customer.advertising_marketing_flag else GW_NO_MARKETING_FLAG
+        agreement_flag = GW_YES if customer.legal_agreement_flag else GW_NO_AGREEMENT_FLAG
+
+        # TODO hard core CN_00_CUNG_CAP_TT_FATCA, KHTC_DOI_TUONG, CUNG_CAP_DOANH_THU_THUAN
+        udf_value = f"KHONG~{first_row.AverageIncomeAmount.id}~{cust_professional.career_id}~{marketing_flag}~KHONG~{agreement_flag}~{GW_DEFAULT_KHTC_DOI_TUONG}"
+
         customer_info = {
-            "customer_category": customer.customer_category_id,
-            "customer_type": customer.customer_type_id if customer.customer_type_id else "",
-            "cus_ekyc": customer.kyc_level_id if customer.kyc_level_id else "",
+            # TODO hard core tình trạng hôn nhân (resident_status)
+            "customer_category": "I_11",
+            "customer_type": "B" if customer.customer_type_id == "TO_CHUC" else "I",
+            "cus_ekyc": f"E{customer.kyc_level_id}" if customer.kyc_level_id else GW_DEFAULT_VALUE,
             "full_name": customer.full_name_vn,
-            "gender": EKYC_GENDER_TYPE_FEMALE if cust_individual.gender_id == CRM_GENDER_TYPE_FEMALE else EKYC_GENDER_TYPE_MALE,
-            "telephone": customer.telephone_number if customer.telephone_number else "",
-            "mobile_phone": customer.mobile_number if customer.mobile_number else "",
-            "email": customer.email if customer.email else "",
-            "place_of_birth": cust_individual.country_of_birth_id if cust_individual.country_of_birth_id else "",
-            "birthday": cust_individual.date_of_birth if cust_individual.date_of_birth else "",
-            "tax": customer.tax_number if customer.tax_number else "",
-            "resident_status": cust_individual.resident_status_id if cust_individual.resident_status_id else "",
-            "legal_guardian": "",
-            "co_owner": "",
-            "nationality": customer.nationality_id if customer.nationality_id else "",
-            "birth_country": "",
-            "language": "",
+            "gender": GW_GENDER_FEMALE if cust_individual.gender_id == CRM_GENDER_TYPE_FEMALE else GW_GENDER_MALE,
+            "telephone": customer.telephone_number if customer.telephone_number else GW_DEFAULT_VALUE,
+            "mobile_phone": customer.mobile_number if customer.mobile_number else GW_DEFAULT_VALUE,
+            "email": customer.email if customer.email else GW_DEFAULT_VALUE,
+            "place_of_birth": cust_individual.country_of_birth_id if cust_individual.country_of_birth_id else GW_DEFAULT_VALUE,
+            "birthday": date_to_string(cust_individual.date_of_birth, _format=GW_DATE_FORMAT) if cust_individual.date_of_birth else GW_DEFAULT_VALUE,
+            "tax": customer.tax_number if customer.tax_number else GW_DEFAULT_VALUE,
+            # TODO hard core tình trạng hôn nhân (resident_status)
+            "resident_status": "N",
+            "legal_guardian": GW_DEFAULT_VALUE,
+            "co_owner": GW_DEFAULT_VALUE,
+            "nationality": customer.nationality_id if customer.nationality_id else GW_DEFAULT_VALUE,
+            "birth_country": GW_DEFAULT_VALUE,
+            "language": "ENG",
             "local_code": "101",
-            "current_official": "",
-            "biz_license_issue_date": "",
-            "cor_capital": "",
-            "cor_email": "",
-            "cor_fax": "",
-            "cor_tel": "",
-            "cor_mobile": "",
-            "cor_country": "",
-            "cor_desc": "",
-            "coowner_relationship": "",
+            "current_official": GW_DEFAULT_VALUE,
+            "biz_license_issue_date": GW_DEFAULT_VALUE,
+            "cor_capital": GW_DEFAULT_VALUE,
+            "cor_email": GW_DEFAULT_VALUE,
+            "cor_fax": GW_DEFAULT_VALUE,
+            "cor_tel": GW_DEFAULT_VALUE,
+            "cor_mobile": GW_DEFAULT_VALUE,
+            "cor_country": GW_DEFAULT_VALUE,
+            "cor_desc": GW_DEFAULT_VALUE,
+            "coowner_relationship": GW_DEFAULT_VALUE,
             "martial_status": "M",
             "p_us_res_status": "N",
             "p_vst_us_prev": "N",
-            "p_field9": "",
-            "p_field10": "",
-            "p_field11": "",
-            "p_field12": "",
-            "p_field13": "",
-            "p_field14": "",
-            "p_field15": "",
-            "p_field16": "",
+            "p_field9": GW_DEFAULT_VALUE,
+            "p_field10": GW_DEFAULT_VALUE,
+            "p_field11": GW_DEFAULT_VALUE,
+            "p_field12": GW_DEFAULT_VALUE,
+            "p_field13": GW_DEFAULT_VALUE,
+            "p_field14": GW_DEFAULT_VALUE,
+            "p_field15": GW_DEFAULT_VALUE,
+            "p_field16": GW_DEFAULT_VALUE,
             "cif_info": cif_info,
             "id_info_main": {
                 "id_num": cust_identity.identity_num,
-                "id_issued_date": cust_identity.issued_date,
-                "id_expired_date": cust_identity.expired_date,
+                "id_issued_date": date_to_string(cust_identity.issued_date, _format=GW_DATE_FORMAT),
+                "id_expired_date": date_to_string(cust_identity.expired_date, _format=GW_DATE_FORMAT),
                 "id_issued_location": cust_identity.place_of_issue_id,
-                "id_type": "P" if cust_identity.identity_type_id == "HO_CHIEU" else "C"
+                "id_type": "ID CARD/PASSPORT"
             },
             "address_info_i": address_info_i,
             "address_contact_info_i": address_contact_info_i,
             "address_info_c": address_info_c,
             "address_contact_info_c": address_contact_info_c,
             "id_info_extra": {
-                "id_num": "",
-                "id_issued_date": "",
-                "id_expired_date": "",
-                "id_issued_location": "",
-                "id_type": ""
+                "id_num": GW_DEFAULT_VALUE,
+                "id_issued_date": GW_DEFAULT_VALUE,
+                "id_expired_date": GW_DEFAULT_VALUE,
+                "id_issued_location": GW_DEFAULT_VALUE,
+                "id_type": GW_DEFAULT_VALUE
             },
             "branch_info": {
                 "branch_code": current_user.user_info.hrm_branch_code
             },
             "job_info": {
-                "professional_code": cust_professional.career_id,
+                # TODO chưa đồng bộ data giữa core và crm
+                "professional_code": "T_0806",
                 "position": cust_professional.position_id if cust_professional.position_id else "",
                 "official_telephone": cust_professional.company_phone if cust_professional.company_phone else "",
                 "address_office_info": {
@@ -812,10 +826,14 @@ class CtrGWCustomer(BaseController):
                 "staff_name": "KHANHLQ"
             },
             "udf_info": {
-                "udf_name": "CN_00_CUNG_CAP_TT_FATCA~THU_NHAP_BQ_03_THANG~NGHE_NGHIEP~NHAN_SMS_EMAIL_TIEP_THI_QUANG_CAO~CUNG_CAP_DOANH_THU_THUAN~THOA_THUAN_PHAP_LY~KHTC_DOI_TUONG",
-                "udf_value": "CO~TNBQ_001~BAC_SI~DONG_Y~KHONG~KHONG~THONG THUONG"
+                "udf_name": GW_UDF_NAME,
+                "udf_value": udf_value
             }
         }
-        response_data = self.call_repos(await repos_gw_open_cif(cif_id=cif_id, current_user=current_user)) # noqa
 
-        return self.response(data=customer_info)
+        response_data = self.call_repos(await repos_gw_open_cif(
+            cif_id=cif_id,
+            customer_info=customer_info,
+            current_user=current_user))
+
+        return self.response(data=response_data)
