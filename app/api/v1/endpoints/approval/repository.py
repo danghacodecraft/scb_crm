@@ -85,6 +85,7 @@ async def repos_approve(
         transaction_parent_id=saving_transaction_daily_parent_id,
         transaction_root_id=saving_transaction_daily_root_id,
     ))
+    session.commit()
 
     session.add_all([
         TransactionStageStatus(**saving_transaction_stage_status),
