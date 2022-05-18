@@ -10,8 +10,8 @@ from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.dependencies.paging import PaginationParams
 from app.api.v1.endpoints.dashboard.controller import CtrDashboard
 from app.api.v1.endpoints.dashboard.schema import (
-    AccountingEntryResponse, AreaResponse, BranchResponse,
-    CustomerInfoResponse, TransactionListResponse
+    AccountingEntryResponse, BranchResponse, CustomerInfoResponse,
+    RegionResponse, TransactionListResponse
 )
 
 router = APIRouter()
@@ -110,16 +110,16 @@ async def view_accounting_entry(
 
 
 @router.get(
-    path="/area/",
-    name="Area",
-    description="Khu vực",
+    path="/region/",
+    name="Region",
+    description="Vùng",
     responses=swagger_response(
-        response_model=ResponseData[AreaResponse],
+        response_model=ResponseData[RegionResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
-async def view_area(
+async def view_region(
         current_user=Depends(get_current_user_from_header())
 ):
-    area = await CtrDashboard(current_user).ctr_area()
-    return ResponseData[List[AreaResponse]](**area)
+    region = await CtrDashboard(current_user).ctr_region()
+    return ResponseData[List[RegionResponse]](**region)

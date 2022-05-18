@@ -9,8 +9,7 @@ from app.third_parties.oracle.models.cif.basic_information.identity.model import
     CustomerIdentityImage, CustomerIdentityImageTransaction
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingCustomer, TransactionDaily, TransactionReceiver,
-    TransactionSender
+    Booking, BookingCustomer, TransactionDaily, TransactionSender
 )
 from app.third_parties.oracle.models.master_data.others import (
     TransactionStage, TransactionStageAction, TransactionStageLane,
@@ -33,11 +32,11 @@ async def repos_get_approval_process(cif_id: str, session: Session) -> ReposRetu
         )
         .join(Booking, BookingCustomer.booking_id == Booking.id)
         .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
-        .join(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
         .join(
             trans_root_daily,
             trans_root_daily.transaction_root_id == TransactionDaily.transaction_root_id
         )
+        .join(TransactionSender, trans_root_daily.transaction_id == TransactionSender.transaction_id)
         .filter(BookingCustomer.customer_id == cif_id)
         .order_by(desc(trans_root_daily.created_at))
     ).all()
@@ -59,7 +58,7 @@ async def repos_approve(
         saving_transaction_stage_phase: dict,
         saving_transaction_stage_role: dict,
         saving_transaction_sender: dict,
-        saving_transaction_receiver: dict,
+        # saving_transaction_receiver: dict,
         is_stage_init: bool,
         session: Session
 ):
@@ -86,6 +85,7 @@ async def repos_approve(
         transaction_parent_id=saving_transaction_daily_parent_id,
         transaction_root_id=saving_transaction_daily_root_id,
     ))
+    session.commit()
 
     session.add_all([
         TransactionStageStatus(**saving_transaction_stage_status),
@@ -96,7 +96,7 @@ async def repos_approve(
         TransactionStagePhase(**saving_transaction_stage_phase),
         TransactionStageRole(**saving_transaction_stage_role),
         TransactionSender(**saving_transaction_sender),
-        TransactionReceiver(**saving_transaction_receiver)
+        # TransactionReceiver(**saving_transaction_receiver)
     ])
 
     # Cập nhật lại TransactionDaily mới cho Booking
