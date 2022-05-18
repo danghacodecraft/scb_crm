@@ -75,6 +75,9 @@ class TransactionReceiver(Base):
     position_id = Column(VARCHAR(36), comment='Mã khối')
     position_code = Column(VARCHAR(10), comment='Mã code khối')
     position_name = Column(VARCHAR(100), comment='Tên khối')
+    title_id = Column(VARCHAR(36), comment='Mã chức danh')
+    title_code = Column(VARCHAR(10), comment='Mã code chức danh')
+    title_name = Column(VARCHAR(100), comment='Tên chức danh')
 
     # transaction = relationship('TransactionDaily', uselist=False)
 
@@ -99,6 +102,9 @@ class TransactionSender(Base):
     position_id = Column(VARCHAR(36), comment='Mã khối')
     position_code = Column(VARCHAR(10), comment='Mã code khối')
     position_name = Column(VARCHAR(100), comment='Tên khối')
+    title_id = Column(VARCHAR(36), comment='Mã chức danh')
+    title_code = Column(VARCHAR(10), comment='Mã code chức danh')
+    title_name = Column(VARCHAR(100), comment='Tên chức danh')
 
     # transaction = relationship('TransactionDaily', uselist=False)
 

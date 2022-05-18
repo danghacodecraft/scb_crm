@@ -93,6 +93,11 @@ class CtrApproval(BaseController):
                             "code": transaction_sender.branch_code,
                             "name": transaction_sender.branch_name
                         },
+                        "title": {
+                            "id": transaction_sender.title_id,
+                            "code": transaction_sender.title_code,
+                            "name": transaction_sender.title_name
+                        },
                         "created_at": transaction_root_daily.created_at,
                         "content": content['content'] if content else ""
                     })

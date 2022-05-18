@@ -16,6 +16,7 @@ class ProcessInfoResponse(BaseSchema):
     position: OptionalDropdownResponse = Field(..., description="Chức vụ")
     department: OptionalDropdownResponse = Field(..., description="Phòng bạn")
     branch: OptionalDropdownResponse = Field(..., description="Chi nhánh")
+    title: OptionalDropdownResponse = Field(..., description="Chức danh")
     # id: str = Field(..., description="Id log")
     created_at: datetime = Field(..., description="Thời gian tạo")
     content: Optional[str] = Field(..., description="Nội dung log ")
