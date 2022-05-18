@@ -83,6 +83,21 @@ class CtrApproval(BaseController):
                             "code": transaction_sender.position_code,
                             "name": transaction_sender.position_name
                         },
+                        "department": {
+                            "id": transaction_sender.department_id,
+                            "code": transaction_sender.department_code,
+                            "name": transaction_sender.department_name
+                        },
+                        "branch": {
+                            "id": transaction_sender.branch_id,
+                            "code": transaction_sender.branch_code,
+                            "name": transaction_sender.branch_name
+                        },
+                        "title": {
+                            "id": transaction_sender.title_id,
+                            "code": transaction_sender.title_code,
+                            "name": transaction_sender.title_name
+                        },
                         "created_at": transaction_root_daily.created_at,
                         "content": content['content'] if content else ""
                     })
@@ -319,7 +334,9 @@ class CtrApproval(BaseController):
         is_open_cif = False
 
         previous_stage_code = None
+
         stage_teller = dict()
+        teller_stage_code = None
         teller_is_disable = True
         teller_is_completed = False
         teller_content = None
@@ -397,7 +414,6 @@ class CtrApproval(BaseController):
             #     )
             if is_stage_teller:
                 teller_is_disable = False
-            teller_stage_code = None
 
         # Hồ sơ GDV đã gửi
         elif previous_stage_code == CIF_STAGE_INIT:
@@ -978,7 +994,10 @@ class CtrApproval(BaseController):
             department_name=current_user.hrm_department_name,
             position_id=current_user.hrm_position_id,
             position_code=current_user.hrm_position_code,
-            position_name=current_user.hrm_position_name
+            position_name=current_user.hrm_position_name,
+            title_id=current_user.hrm_title_id,
+            title_code=current_user.hrm_title_code,
+            title_name=current_user.hrm_title_name
         )
 
         # receiver_branch = None
@@ -1019,6 +1038,9 @@ class CtrApproval(BaseController):
         #         position_id=receiver_user.position_id,
         #         position_code=receiver_user.position_code,
         #         position_name=receiver_user.position_name,
+        #         title_id=current_user.hrm_title_id,
+        #         title_code=current_user.hrm_title_code,
+        #         title_name=current_user.hrm_title_name
         #     )
         # else:
         #     saving_transaction_receiver = dict(
@@ -1035,7 +1057,10 @@ class CtrApproval(BaseController):
         #         department_name=None,
         #         position_id=None,
         #         position_code=None,
-        #         position_name=None
+        #         position_name=None,
+        #         title_id=current_user.hrm_title_id,
+        #         title_code=current_user.hrm_title_code,
+        #         title_name=current_user.hrm_title_name
         #     )
 
         approval_process = self.call_repos((await repos_approve(
