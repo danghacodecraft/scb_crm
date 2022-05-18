@@ -14,6 +14,8 @@ class ProcessInfoResponse(BaseSchema):
     full_name_vn: str = Field(..., description="Tên đầy đủ của người dùng ")
     avatar_url: Optional[str] = Field(None, description="Url ảnh đại diện của người dùng")
     position: OptionalDropdownResponse = Field(..., description="Chức vụ")
+    department: OptionalDropdownResponse = Field(..., description="Phòng bạn")
+    branch: OptionalDropdownResponse = Field(..., description="Chi nhánh")
     # id: str = Field(..., description="Id log")
     created_at: datetime = Field(..., description="Thời gian tạo")
     content: Optional[str] = Field(..., description="Nội dung log ")
