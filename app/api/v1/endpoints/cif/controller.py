@@ -1,17 +1,18 @@
 from app.api.base.controller import BaseController
+from app.api.v1.endpoints.approval.repository import repos_get_approval_process
 from app.api.v1.endpoints.cif.repository import (
     repos_customer_information, repos_get_cif_info,
-    repos_get_initializing_customer, repos_get_total_participants,
-    repos_profile_history, repos_validate_cif_number
+    repos_get_initializing_customer, repos_profile_history,
+    repos_validate_cif_number
 )
 from app.api.v1.endpoints.cif.schema import CustomerByCIFNumberRequest
+from app.api.v1.endpoints.news.repository import repo_get_users_contact
 from app.api.v1.endpoints.repository import (
     get_optional_model_object_by_code_or_name
 )
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_gw_get_customer_info_detail
 )
-from app.api.v1.endpoints.user.contact.repository import repo_contact
 from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.third_parties.oracle.models.master_data.address import (
     AddressDistrict, AddressProvince
@@ -92,75 +93,127 @@ class CtrCustomer(BaseController):
             await repos_customer_information(cif_id=cif_id, session=self.oracle_session))
         first_row = customer_information[0]
 
-        employees = self.call_repos(
-            await repos_get_total_participants(
-                cif_id=cif_id,
-                session=self.oracle_session
+        # employees = self.call_repos(
+        #     await repos_get_total_participants(
+        #         cif_id=cif_id,
+        #         session=self.oracle_session
+        #     )
+        # )
+
+        transactions = self.call_repos((await repos_get_approval_process(cif_id=cif_id, session=self.oracle_session)))
+        user_codes = set()
+
+        for _, _, _, transaction_sender, transaction_root_daily in transactions:
+            user_codes.add(transaction_sender.user_id)
+
+        user_codes = tuple(user_codes)
+        user_infos = self.call_repos(
+            await repo_get_users_contact(
+                codes=user_codes,
+                session=self.oracle_session_task
             )
         )
-        list_employee = []
-        for employee in employees:
-            employee = orjson_loads(employee)
-            list_employee.extend(employee)
+        avatar_urls = {}
+        for user_info in user_infos:
+            # user_info[1]: user_code,  user_info[-1]: avatar_url
+            avatar_urls.update({user_info[1]: user_info[-1]})  # TODO: lấy từ HRM nên hard cứng data
 
         list_distinct_employee = []
-        list_distinct_user_id = []
-        for employee in list_employee:
-            user_id = employee['user_id']
-            if user_id in list_distinct_user_id:
-                continue
+        list_distinct_user_code = []
+        for _, _, _, transaction_sender, transaction_root_daily in transactions:
+            if transaction_sender.user_id not in list_distinct_user_code:
+                list_distinct_employee.append(dict(
+                    id=transaction_sender.user_id,
+                    full_name_vn=transaction_sender.user_fullname,
+                    avatar_url=avatar_urls[transaction_sender.user_id],
+                    user_name=transaction_sender.user_name,
+                    email=transaction_sender.user_email,
+                    position=dict(
+                        id=transaction_sender.position_id,
+                        code=transaction_sender.position_code,
+                        name=transaction_sender.position_name
+                    ),
+                    department=dict(
+                        id=transaction_sender.department_id,
+                        code=transaction_sender.department_code,
+                        name=transaction_sender.department_name
+                    ),
+                    branch=dict(
+                        id=transaction_sender.branch_id,
+                        code=transaction_sender.branch_code,
+                        name=transaction_sender.branch_name
+                    ),
+                    title=dict(
+                        id=transaction_sender.title_id,
+                        code=transaction_sender.title_code,
+                        name=transaction_sender.title_name
+                    )
+                ))
+                list_distinct_user_code.append(transaction_sender.user_id)
 
-            list_distinct_user_id.append(user_id)
-            user_fullname = employee['user_name']
-            user_name = employee['user_username']
-            user_email = employee['user_email']
-            user_avatar = employee['user_avatar']
-            position_id = employee['position_id']
-            position_code = employee['position_code']
-            position_name = employee['position_name']
-            department_id = employee['department_id']
-            department_code = employee['department_code']
-            department_name = employee['department_name']
-            branch_id = employee['branch_id']
-            branch_code = employee['branch_code']
-            branch_name = employee['branch_name']
-            title_id = employee['title_id']
-            title_code = employee['title_code']
-            title_name = employee['title_name']
+        # list_employee = []
+        # for employee in employees:
+        #     employee = orjson_loads(employee)
+        #     list_employee.extend(employee)
+        #
+        # list_distinct_user_id = []
+        # for employee in list_employee:
+        #     user_id = employee['user_id']
+        #     if user_id in list_distinct_user_id:
+        #         continue
+        #
+        #     list_distinct_user_id.append(user_id)
+        #     user_fullname = employee['user_name']
+        #     user_name = employee['user_username']
+        #     user_email = employee['user_email']
+        #     user_avatar = employee['user_avatar']
+        #     position_id = employee['position_id']
+        #     position_code = employee['position_code']
+        #     position_name = employee['position_name']
+        #     department_id = employee['department_id']
+        #     department_code = employee['department_code']
+        #     department_name = employee['department_name']
+        #     branch_id = employee['branch_id']
+        #     branch_code = employee['branch_code']
+        #     branch_name = employee['branch_name']
+        #     title_id = employee['title_id']
+        #     title_code = employee['title_code']
+        #     title_name = employee['title_name']
+        #
+        #     hrm_user_data = self.call_repos(await repo_contact(
+        #         code=employee['user_id'],
+        #         session=self.oracle_session_task
+        #     ))
+        #
+        #     list_distinct_employee.append(dict(
+        #         id=user_id,
+        #         full_name_vn=user_fullname,
+        #         avatar_url=hrm_user_data[-1],  # TODO: Tạm thời lấy từ HRM - User Contact
+        #         user_name=user_name,
+        #         email=user_email,
+        #         avatar=user_avatar,
+        #         position=dict(
+        #             id=position_id,
+        #             code=position_code,
+        #             name=position_name
+        #         ),
+        #         department=dict(
+        #             id=department_id,
+        #             code=department_code,
+        #             name=department_name
+        #         ),
+        #         branch=dict(
+        #             id=branch_id,
+        #             code=branch_code,
+        #             name=branch_name
+        #         ),
+        #         title=dict(
+        #             id=title_id,
+        #             code=title_code,
+        #             name=title_name
+        #         )
+        #     ))
 
-            hrm_user_data = self.call_repos(await repo_contact(
-                code=employee['user_id'],
-                session=self.oracle_session_task
-            ))
-
-            list_distinct_employee.append(dict(
-                id=user_id,
-                full_name_vn=user_fullname,
-                avatar_url=hrm_user_data[-1],  # TODO: Tạm thời lấy từ HRM - User Contact
-                user_name=user_name,
-                email=user_email,
-                avatar=user_avatar,
-                position=dict(
-                    id=position_id,
-                    code=position_code,
-                    name=position_name
-                ),
-                department=dict(
-                    id=department_id,
-                    code=department_code,
-                    name=department_name
-                ),
-                branch=dict(
-                    id=branch_id,
-                    code=branch_code,
-                    name=branch_name
-                ),
-                title=dict(
-                    id=title_id,
-                    code=title_code,
-                    name=title_name
-                )
-            ))
         # gọi đến service file để lấy link download
         uuid__link_downloads = await self.get_link_download_multi_file(uuids=[first_row.Customer.avatar_url])
         data_response = {
