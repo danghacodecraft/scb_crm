@@ -14,7 +14,6 @@ from app.api.v1.endpoints.approval.repository import (
 )
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
-from app.third_parties.oracle.models.master_data.others import StageAction
 from app.utils.constant.approval import (
     CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_BEGIN,
     CIF_STAGE_COMPLETED, CIF_STAGE_INIT
@@ -437,13 +436,9 @@ class CtrApproval(BaseController):
 
         # KSV đã xử lý hồ sơ
         elif previous_stage_code == CIF_STAGE_APPROVE_KSV:
-
+            supervisor_transaction_stage_action = previous_transaction_stage_action
             if previous_transaction_stage_action:
-                dropdown_action_supervisor = await self.dropdown_mapping_crm_model_or_dropdown_name(
-                    model=StageAction,
-                    name=previous_transaction_stage_action.name,
-                    code=previous_transaction_stage_action.code
-                )
+                dropdown_action_supervisor = dropdown(supervisor_transaction_stage_action)
 
             supervisor_stage_code = previous_stage_code
             supervisor_transaction_daily = previous_transaction_daily
