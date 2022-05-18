@@ -471,6 +471,7 @@ class CtrApproval(BaseController):
             if supervisor_is_reject and is_stage_teller:
                 teller_is_disable = False
             else:
+                audit_is_disable = False
                 is_open_cif = True
 
         # KSS đã xử lý hồ sơ
