@@ -14,6 +14,7 @@ from app.api.v1.endpoints.approval.repository import (
 )
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
+from app.api.v1.endpoints.news.repository import repo_get_users_contact
 from app.utils.constant.approval import (
     CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_BEGIN,
     CIF_STAGE_COMPLETED, CIF_STAGE_INIT
@@ -50,8 +51,22 @@ class CtrApproval(BaseController):
         response_data = []
         lst_parent = {}
 
-        for _, _, _, _, transaction_root_daily in transactions:
+        user_codes = set()
+        for _, _, _, transaction_sender, transaction_root_daily in transactions:
             lst_parent.update({transaction_root_daily.created_at.date(): []})
+            user_codes.add(transaction_sender.user_id)
+
+        user_codes = tuple(user_codes)
+        user_infos = self.call_repos(
+            await repo_get_users_contact(
+                codes=user_codes,
+                session=self.oracle_session_task
+            )
+        )
+        avatar_urls = {}
+        for user_info in user_infos:
+            # user_info[1]: user_code,  user_info[-1]: avatar_url
+            avatar_urls.update({user_info[1]: user_info[-1]})  # TODO: lấy từ HRM nên hard cứng data
 
         for parent_key, parent_value in lst_parent.items():
             childs = []
@@ -62,7 +77,7 @@ class CtrApproval(BaseController):
                     childs.append({
                         "user_id": transaction_sender.user_id,
                         "full_name_vn": transaction_sender.user_fullname,
-                        "avatar_url": None,
+                        "avatar_url": avatar_urls[transaction_sender.user_id],
                         "position": {
                             "id": transaction_sender.position_id,
                             "code": transaction_sender.position_code,
