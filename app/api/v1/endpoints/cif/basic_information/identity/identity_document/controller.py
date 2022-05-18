@@ -66,8 +66,9 @@ from app.utils.constant.idm import (
 )
 from app.utils.error_messages import (  # noqa
     ERROR_CALL_SERVICE_EKYC, ERROR_IDENTITY_DOCUMENT_NOT_EXIST,
-    ERROR_IDENTITY_DOCUMENT_TYPE_TYPE_NOT_EXIST, ERROR_INVALID_URL,
-    ERROR_NO_DATA, ERROR_NOT_NULL, ERROR_WRONG_TYPE_IDENTITY, MESSAGE_STATUS
+    ERROR_IDENTITY_DOCUMENT_TYPE_TYPE_NOT_EXIST, ERROR_IDENTITY_TYPE_NOT_EXIST,
+    ERROR_INVALID_URL, ERROR_NO_DATA, ERROR_NOT_NULL,
+    ERROR_WRONG_TYPE_IDENTITY, MESSAGE_STATUS
 )
 from app.utils.functions import (  # noqa
     calculate_age, date_to_string, datetime_to_string, dropdown, now,
@@ -805,7 +806,7 @@ class CtrIdentityDocument(BaseController):
         await CtrBooking().ctr_check_exist_booking(booking_id=booking_id, loc="header -> booking-id")
 
         if identity_type not in EKYC_IDENTITY_TYPE:
-            return self.response_exception(msg='', detail='identity_type is not exist', loc='identity_type')
+            return self.response_exception(msg=ERROR_IDENTITY_TYPE_NOT_EXIST, loc='identity_type')
 
         image_file_name = image_file.filename
         image_data = await image_file.read()

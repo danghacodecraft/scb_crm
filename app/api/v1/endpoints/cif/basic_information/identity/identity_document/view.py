@@ -32,12 +32,13 @@ from app.api.v1.endpoints.cif.basic_information.identity.identity_document.schem
 )
 from app.api.v1.schemas.utils import SaveSuccessResponse
 from app.utils.constant.cif import (
-    EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
+    EKYC_IDENTITY_TYPE, EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_BACK_SIDE_IDENTITY_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD,
     IDENTITY_DOCUMENT_TYPE_CITIZEN_CARD, IDENTITY_DOCUMENT_TYPE_IDENTITY_CARD
 )
+from app.utils.functions import make_description_from_dict
 
 router = APIRouter()
 
@@ -150,13 +151,9 @@ async def view_save(
     tags=['[CIF] I. TTCN']
 )
 async def view_upload_identity_document_image(
-        identity_type: int = Form(..., description="""Loại giấy tờ định danh
-            \n`0` : Hộ chiếu
-            \n`1` : CMND mặt trước
-            \n`2` : CMND mặt sau
-            \n`3` : CCCD mặt trước
-            \n`4` : CCCD mặt sau
-        """),
+        identity_type: int = Form(
+            ..., description=f"Loại giấy tờ định danh: {make_description_from_dict(EKYC_IDENTITY_TYPE)}"
+        ),
         image_file: UploadFile = File(..., description='File hình ảnh giấy tờ định danh'),
         booking_id: str = Header(..., description="booking_id"),
         current_user=Depends(get_current_user_from_header())
