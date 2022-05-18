@@ -806,7 +806,7 @@ class CtrApproval(BaseController):
                     menu_code=IDM_MENU_CODE_OPEN_CIF,
                     group_role_code=IDM_GROUP_ROLE_CODE_OPEN_CIF,
                     permission_code=IDM_PERMISSION_CODE_OPEN_CIF,
-                    stage_code=CIF_STAGE_APPROVE_KSV
+                    stage_code=CIF_STAGE_INIT
                 ))
             elif current_stage_code == CIF_STAGE_APPROVE_KSV:
                 self.call_repos(await PermissionController.ctr_approval_check_permission(

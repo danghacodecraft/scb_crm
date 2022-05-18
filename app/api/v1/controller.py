@@ -42,7 +42,11 @@ class PermissionController(BaseController):
         if not filter_permission_code or not filter_group_code.is_permission:
             return ReposReturn(
                 is_error=True,
-                loc=f"Stage: {stage_code}, User: {current_user.code} - {current_user.username}",
+                loc=f"Stage: {stage_code}, "
+                    f"User: {current_user.code} - {current_user.username}, "
+                    f"Menu Code: {menu_code}, "
+                    f"Group Role Code: {group_role_code}, "
+                    f"Permission Code: {permission_code}",
                 msg=ERROR_PERMISSION,
                 detail=MESSAGE_STATUS[ERROR_PERMISSION],
                 error_status_code=status.HTTP_403_FORBIDDEN
