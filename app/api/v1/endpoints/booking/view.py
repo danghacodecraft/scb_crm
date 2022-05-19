@@ -25,5 +25,5 @@ async def view_create_booking(
         request: CreateBookingRequest = Body(...),
         current_user=Depends(get_current_user_from_header())
 ):
-    check_exist_data = await CtrBooking(current_user).ctr_create_booking(business_type_code=request.business_type_code)
-    return ResponseData[CreateBookingResponse](**check_exist_data)
+    create_booking_data = await CtrBooking(current_user).ctr_create_booking(business_type_code=request.business_type_code)
+    return ResponseData[CreateBookingResponse](**create_booking_data)
