@@ -381,7 +381,7 @@ class CtrIdentityMobile(BaseController):
         is_success_add_face, add_face_info = await service_ekyc.add_face_ekyc(
             file=avatar_image,
             filename=avatar_image_name,
-            uuid=new_booking_id
+            booking_id=new_booking_id
         )
         if not is_success_add_face:
             return self.response_exception(msg=ERROR_CALL_SERVICE_EKYC, detail=add_face_info.get('message', ''))

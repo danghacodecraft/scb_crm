@@ -377,7 +377,7 @@ class CtrKSS(BaseController):
             back_image: Optional[str] = None,
             back_image_name: Optional[str] = None,
             avatar_image: Optional[str] = None,
-            avatar_image_name: Optional[str] = None
+            avatar_image_name: Optional[str] = None,
     ):
 
         gender = EKYC_GENDER_TYPE_FEMALE if gender == CRM_GENDER_TYPE_FEMALE else EKYC_GENDER_TYPE_MALE
@@ -447,7 +447,7 @@ class CtrKSS(BaseController):
 
         customer = self.call_repos(await repos_save_customer_ekyc(
             body_request=body,
-            uuid=booking_id
+            booking_id=booking_id
         ))
 
         return self.response(data=customer)

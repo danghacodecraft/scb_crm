@@ -124,8 +124,13 @@ async def repos_get_post_control(query_params, booking_id: Optional[str] = None)
 
 async def repos_save_customer_ekyc(
     body_request: dict,
-    uuid: str = None
+    uuid: str = None,
+    booking_id: Optional[str] = None
 ):
-    is_success, response = await service_ekyc.save_customer_ekyc(body_data=body_request, uuid=uuid)
+    is_success, response = await service_ekyc.save_customer_ekyc(
+        body_data=body_request,
+        uuid=uuid,
+        booking_id=booking_id
+    )
 
     return ReposReturn(data=response)
