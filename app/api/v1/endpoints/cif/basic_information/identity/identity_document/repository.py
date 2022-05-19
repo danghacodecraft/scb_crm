@@ -1152,7 +1152,6 @@ async def mapping_ekyc_back_side_citizen_card_ocr_data(image_url: str, ocr_data:
 async def repos_compare_face(
         face_image_data: bytes,
         identity_image_uuid: str,
-        session: Session,
         booking_id: str = None
 ):
     is_success_add_face, add_face_info = await service_ekyc.add_face(file=face_image_data, uuid=booking_id)

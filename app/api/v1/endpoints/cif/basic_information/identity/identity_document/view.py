@@ -191,11 +191,13 @@ async def view_compare_face(
         identity_image_uuid: str = File(...,
                                         description='ID hình ảnh giấy tờ định danh có được sau khi gọi API '
                                         '`Upload ảnh giấy tờ tùy thân + Lấy thông tin OCR của giấy tờ tùy thân`'),
+        BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
         current_user=Depends(get_current_user_from_header())
 ):
     face_compare_info = await CtrIdentityDocument(current_user).compare_face(
         face_image=face_image,
-        identity_image_uuid=identity_image_uuid
+        identity_image_uuid=identity_image_uuid,
+        booking_id=BOOKING_ID
     )
     return ResponseData[CompareSuccessResponse](**face_compare_info)
 

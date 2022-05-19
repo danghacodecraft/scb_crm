@@ -830,7 +830,14 @@ class CtrIdentityDocument(BaseController):
 
         return self.response(data=upload_info)
 
-    async def compare_face(self, face_image: UploadFile, identity_image_uuid: str):
+    async def compare_face(self, face_image: UploadFile, identity_image_uuid: str, booking_id: Optional[str]):
+
+        # # Check exist Booking
+        # await CtrBooking().ctr_get_booking(
+        #     business_type_code=BUSINESS_TYPE_INIT_CIF,
+        #     booking_id=booking_id,
+        #     loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        # )
 
         face_image_data = await face_image.read()
         self.call_validator(await file_validator(face_image_data))
@@ -839,6 +846,7 @@ class CtrIdentityDocument(BaseController):
             await repos_compare_face(
                 face_image_data=face_image_data,
                 identity_image_uuid=identity_image_uuid,
+                booking_id=booking_id,
                 session=self.oracle_session
             )
         )
