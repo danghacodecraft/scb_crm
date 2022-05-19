@@ -4,7 +4,7 @@ from fastapi import UploadFile
 
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.file.repository import (
-    repos_dowload_ekyc_file, repos_download_file, repos_download_multi_file,
+    repos_download_ekyc_file, repos_download_file, repos_download_multi_file,
     repos_upload_file, repos_upload_multi_file
 )
 from app.api.v1.endpoints.file.validator import (
@@ -58,7 +58,7 @@ class CtrFile(BaseController):
         return self.response(data=info)
 
     async def upload_ekyc_file(self, uuid_ekyc: str, booking_id: Optional[str] = None):
-        info = self.call_repos(await repos_dowload_ekyc_file(uuid=uuid_ekyc))
+        info = self.call_repos(await repos_download_ekyc_file(uuid=uuid_ekyc))
 
         service = ServiceEKYC()
         info_file = await service.upload_file_ekyc(info=info, booking_id=booking_id)

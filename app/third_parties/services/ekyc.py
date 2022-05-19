@@ -565,7 +565,7 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def dowload_file(self, uuid: str, booking_id: Optional[str] = None):
+    async def download_file(self, uuid: str, booking_id: Optional[str] = None):
         api_url = f"{self.url}/api/v1/file-service/{uuid}/"
         headers = self.create_header(booking_id=booking_id)
 
