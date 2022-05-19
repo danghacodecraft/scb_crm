@@ -208,7 +208,10 @@ def is_valid_number(casa_account_number: str):
 
 
 def convert_string_to_uuidv4(customer_uuid: str) -> str:
-    return f"{uuid.UUID(customer_uuid)}"
+    try:
+        return f"{uuid.UUID(customer_uuid)}"
+    except ValueError:
+        return None
 
 
 def replace_with_cdn(cdn, file_url: str) -> str:

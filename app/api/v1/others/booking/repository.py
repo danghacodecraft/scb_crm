@@ -80,13 +80,20 @@ async def repos_create_booking(
     return ReposReturn(data=(booking_id, booking_code))
 
 
-async def repos_check_exist_booking(booking_id: str, session: Session):
+async def repos_check_exist_booking(
+        booking_id: str,
+        business_type_code: str,
+        session: Session
+):
 
-    is_existed = session.execute(
+    booking = session.execute(
         select(
             Booking
         )
-        .filter(Booking.id == booking_id)
+        .filter(
+            Booking.id == booking_id,
+            Booking.business_type_id == business_type_code
+        )
     ).scalar()
 
-    return ReposReturn(data=is_existed)
+    return ReposReturn(data=booking)

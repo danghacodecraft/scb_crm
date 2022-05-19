@@ -155,13 +155,13 @@ async def view_upload_identity_document_image(
             ..., description=f"Loại giấy tờ định danh: {make_description_from_dict(EKYC_IDENTITY_TYPE)}"
         ),
         image_file: UploadFile = File(..., description='File hình ảnh giấy tờ định danh'),
-        booking_id: str = Header(..., description="Mã phiên giao dịch"),
+        BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
         current_user=Depends(get_current_user_from_header())
 ):
     upload_info = await CtrIdentityDocument(current_user).upload_identity_document_and_ocr(
         image_file=image_file,
         identity_type=identity_type,
-        booking_id=booking_id
+        booking_id=BOOKING_ID
     )
 
     if identity_type == EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD:

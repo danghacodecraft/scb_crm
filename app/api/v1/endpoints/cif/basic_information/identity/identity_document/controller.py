@@ -18,7 +18,6 @@ from app.api.v1.endpoints.cif.repository import (
 )
 from app.api.v1.endpoints.file.controller import CtrFile
 from app.api.v1.endpoints.file.validator import file_validator
-from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
 from app.api.v1.validator import validate_history_data
 from app.settings.config import DATE_INPUT_OUTPUT_EKYC_FORMAT
@@ -801,9 +800,15 @@ class CtrIdentityDocument(BaseController):
         )
         return self.response(data=info_save_document)
 
-    async def upload_identity_document_and_ocr(self, identity_type: int, image_file: UploadFile, booking_id: str):
+    async def upload_identity_document_and_ocr(self, identity_type: int, image_file: UploadFile,
+                                               booking_id: Optional[str] = None):
 
-        await CtrBooking().ctr_check_exist_booking(booking_id=booking_id, loc="header -> booking-id")
+        # # Check exist Booking
+        # await CtrBooking().ctr_get_booking(
+        #     business_type_code=BUSINESS_TYPE_INIT_CIF,
+        #     booking_id=booking_id,
+        #     loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        # )
 
         if identity_type not in EKYC_IDENTITY_TYPE:
             return self.response_exception(msg=ERROR_IDENTITY_TYPE_NOT_EXIST, loc='identity_type')
@@ -818,6 +823,7 @@ class CtrIdentityDocument(BaseController):
                 image_file=image_data,
                 image_file_name=image_file_name,
                 identity_type=identity_type,
+                booking_id=booking_id,
                 session=self.oracle_session
             )
         )

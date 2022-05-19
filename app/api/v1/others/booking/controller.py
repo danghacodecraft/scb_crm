@@ -57,13 +57,14 @@ class CtrBooking(BaseController):
             booking_id=booking_id
         ))
 
-    async def ctr_check_exist_booking(self, booking_id: str, loc: str):
-        is_existed = self.call_repos(await repos_check_exist_booking(
+    async def ctr_get_booking(self, booking_id: str, loc: str, business_type_code: str):
+        booking = self.call_repos(await repos_check_exist_booking(
             booking_id=booking_id,
+            business_type_code=business_type_code,
             session=self.oracle_session
         ))
 
-        if not is_existed:
+        if not booking:
             return self.response_exception(msg=ERROR_BOOKING_ID_NOT_EXIST, loc=loc)
 
-        return self.response(data=is_existed)
+        return self.response(data=booking)
