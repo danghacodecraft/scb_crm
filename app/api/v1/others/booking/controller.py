@@ -65,7 +65,10 @@ class CtrBooking(BaseController):
                 session=self.oracle_session
             ))
 
-            if not booking:
-                return self.response_exception(msg=ERROR_BOOKING_ID_NOT_EXIST, loc=loc)
+        if not booking:
+            return self.response_exception(msg=ERROR_BOOKING_ID_NOT_EXIST, loc=loc)
+
+        if booking.business_type_id != business_type_code:
+            return self.response_exception(msg="Business Type Code is incorrect", loc="booking -> business_type_code")
 
         return self.response(data=booking)

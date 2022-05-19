@@ -162,11 +162,9 @@ class CtrIdentityDocument(BaseController):
 
         return self.response(data=identity_log_infos)
 
-    async def save_identity(
-        self,
-        identity_document_request: Union[IdentityCardSaveRequest, CitizenCardSaveRequest, PassportSaveRequest],
-        booking_id: Optional[str]
-    ):
+    async def save_identity(self, identity_document_request: Union[IdentityCardSaveRequest,
+                                                                   CitizenCardSaveRequest,
+                                                                   PassportSaveRequest]):
         # check quyền user
         self.call_repos(await PermissionController.ctr_approval_check_permission(
             auth_response=self.current_user,
@@ -175,13 +173,6 @@ class CtrIdentityDocument(BaseController):
             permission_code=IDM_PERMISSION_CODE_OPEN_CIF,
             stage_code=CIF_STAGE_BEGIN
         ))
-
-        # Check exist Booking
-        await CtrBooking().ctr_get_booking(
-            business_type_code=BUSINESS_TYPE_INIT_CIF,
-            booking_id=booking_id,
-            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
-        )
 
         current_user = self.current_user.user_info
         current_user_code = current_user.code
@@ -726,8 +717,7 @@ class CtrIdentityDocument(BaseController):
 
         is_success, compare_response = await service_ekyc.compare_face(
             face_uuid=compare_face_uuid_ekyc,
-            avatar_image_uuid=identity_avatar_image_uuid,
-            booking_id=booking_id
+            avatar_image_uuid=identity_avatar_image_uuid
         )
 
         if not is_success:
@@ -754,7 +744,7 @@ class CtrIdentityDocument(BaseController):
         ################################################################################################################
         # Thêm avatar thành Hình ảnh định danh Khuôn mặt
         ################################################################################################################
-        avatar_image_uuid_service = await CtrFile().upload_ekyc_file(uuid_ekyc=identity_avatar_image_uuid, booking_id=booking_id)
+        avatar_image_uuid_service = await CtrFile().upload_ekyc_file(uuid_ekyc=identity_avatar_image_uuid)
         ################################################################################################################
         # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CIF
         transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
@@ -811,12 +801,7 @@ class CtrIdentityDocument(BaseController):
         )
         return self.response(data=info_save_document)
 
-    async def upload_identity_document_and_ocr(
-        self,
-        identity_type: int,
-        image_file: UploadFile,
-        booking_id: Optional[str]
-    ):
+    async def upload_identity_document_and_ocr(self, identity_type: int, image_file: UploadFile, booking_id: str):
 
         # Check exist Booking
         await CtrBooking().ctr_get_booking(
@@ -838,21 +823,13 @@ class CtrIdentityDocument(BaseController):
                 image_file=image_data,
                 image_file_name=image_file_name,
                 identity_type=identity_type,
-                booking_id=booking_id,
                 session=self.oracle_session
             )
         )
 
         return self.response(data=upload_info)
 
-    async def compare_face(self, face_image: UploadFile, identity_image_uuid: str, booking_id: Optional[str]):
-
-        # Check exist Booking
-        await CtrBooking().ctr_get_booking(
-            business_type_code=BUSINESS_TYPE_INIT_CIF,
-            booking_id=booking_id,
-            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
-        )
+    async def compare_face(self, face_image: UploadFile, identity_image_uuid: str):
 
         face_image_data = await face_image.read()
         self.call_validator(await file_validator(face_image_data))
@@ -861,20 +838,13 @@ class CtrIdentityDocument(BaseController):
             await repos_compare_face(
                 face_image_data=face_image_data,
                 identity_image_uuid=identity_image_uuid,
-                booking_id=booking_id
+                session=self.oracle_session
             )
         )
 
         return self.response(data=face_compare_info)
 
-    async def validate_ekyc(self, ocr_ekyc_request: OcrEkycRequest, booking_id: Optional[str]):
-
-        # Check exist Booking
-        await CtrBooking().ctr_get_booking(
-            business_type_code=BUSINESS_TYPE_INIT_CIF,
-            booking_id=booking_id,
-            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
-        )
+    async def validate_ekyc(self, ocr_ekyc_request: OcrEkycRequest):
 
         qc_code = ocr_ekyc_request.qr_code
 
@@ -890,10 +860,7 @@ class CtrIdentityDocument(BaseController):
             request_body['data'].update({
                 'qr_code': qc_code
             })
-        response = self.call_repos(await repos_validate_ekyc(
-            request_body=request_body,
-            booking_id=booking_id
-        ))
+        response = self.call_repos(await repos_validate_ekyc(request_body=request_body))
 
         return self.response(data=response)
 

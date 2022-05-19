@@ -90,10 +90,7 @@ async def repos_check_exist_booking(
         select(
             Booking
         )
-        .filter(
-            Booking.id == booking_id,
-            Booking.business_type_id == business_type_code
-        )
+        .filter(Booking.id == booking_id)
     ).scalar()
 
     return ReposReturn(data=booking)
