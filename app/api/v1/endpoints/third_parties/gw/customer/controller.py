@@ -1,9 +1,10 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
-    repos_get_customer_ids_from_cif_numbers, repos_get_customer_open_cif,
-    repos_gw_get_authorized, repos_gw_get_co_owner,
-    repos_gw_get_customer_info_detail, repos_gw_get_customer_info_list,
-    repos_gw_open_cif, repos_update_cif_number_customer
+    repos_get_casa_account, repos_get_customer_ids_from_cif_numbers,
+    repos_get_customer_open_cif, repos_gw_get_authorized,
+    repos_gw_get_co_owner, repos_gw_get_customer_info_detail,
+    repos_gw_get_customer_info_list, repos_gw_open_cif,
+    repos_update_cif_number_customer
 )
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
@@ -20,10 +21,12 @@ from app.utils.constant.cif import (
     RESIDENT_ADDRESS_CODE
 )
 from app.utils.constant.gw import (
-    GW_AUTO, GW_DATE_FORMAT, GW_DATETIME_FORMAT, GW_DEFAULT_KHTC_DOI_TUONG,
-    GW_DEFAULT_VALUE, GW_GENDER_FEMALE, GW_GENDER_MALE, GW_LOC_CHECK_CIF_EXIST,
-    GW_NO_AGREEMENT_FLAG, GW_NO_MARKETING_FLAG,
-    GW_REQUEST_PARAMETER_DEBIT_CARD,
+    GW_ACCOUNT_AUTO_CREATE_CIF_Y, GW_ACCOUNT_CLASS_CODE, GW_AUTO,
+    GW_DATE_FORMAT, GW_DATETIME_FORMAT, GW_DEFAULT_CUSTOMER_CATEGORY,
+    GW_DEFAULT_KHTC_DOI_TUONG, GW_DEFAULT_TYPE_ID, GW_DEFAULT_VALUE,
+    GW_GENDER_FEMALE, GW_GENDER_MALE, GW_LOC_CHECK_CIF_EXIST,
+    GW_MARTIAL_STATUS_MARRIED, GW_MARTIAL_STATUS_SINGLE, GW_NO_AGREEMENT_FLAG,
+    GW_NO_MARKETING_FLAG, GW_REQUEST_PARAMETER_DEBIT_CARD,
     GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP, GW_SELECT,
     GW_UDF_NAME, GW_YES
 )
@@ -677,6 +680,25 @@ class CtrGWCustomer(BaseController):
         current_user = self.current_user
         response_customers = self.call_repos(await repos_get_customer_open_cif(
             cif_id=cif_id, session=self.oracle_session))
+
+        response_casa_account = self.call_repos(await repos_get_casa_account(
+            cif_id=cif_id, session=self.oracle_session
+        ))
+        account_info = {
+            "account_class_code": GW_DEFAULT_VALUE,
+            "account_auto_create_cif": GW_DEFAULT_VALUE,
+            "account_currency": GW_DEFAULT_VALUE,
+            "acc_auto": GW_DEFAULT_VALUE,
+            "account_num": GW_DEFAULT_VALUE
+        }
+        if response_casa_account:
+            account_info = {
+                "account_class_code": GW_ACCOUNT_CLASS_CODE,
+                "account_auto_create_cif": GW_ACCOUNT_AUTO_CREATE_CIF_Y,
+                "account_currency": response_casa_account.currency_id,
+                "acc_auto": GW_SELECT if response_casa_account.self_selected_account_flag else GW_AUTO,
+                "account_num": response_casa_account.casa_account_number if response_casa_account.self_selected_account_flag else ""
+            }
         first_row = response_customers[0]
         customer = first_row.Customer
 
@@ -740,15 +762,16 @@ class CtrGWCustomer(BaseController):
                     "contact_address_city_name": row.AddressProvince.name,
                     "contact_address_country_name": row.AddressCountry.id
                 }
-
+        # quảng cáo từ scb
         marketing_flag = GW_YES if customer.advertising_marketing_flag else GW_NO_MARKETING_FLAG
+        # thỏa thuận pháo lý
         agreement_flag = GW_YES if customer.legal_agreement_flag else GW_NO_AGREEMENT_FLAG
 
         # TODO hard core CN_00_CUNG_CAP_TT_FATCA, KHTC_DOI_TUONG, CUNG_CAP_DOANH_THU_THUAN
         udf_value = f"KHONG~{first_row.AverageIncomeAmount.id}~{cust_professional.career_id}~{marketing_flag}~KHONG~{agreement_flag}~{GW_DEFAULT_KHTC_DOI_TUONG}"
 
         customer_info = {
-            "customer_category": "I_11",
+            "customer_category": GW_DEFAULT_CUSTOMER_CATEGORY,
             "customer_type": "B" if customer.customer_type_id == "TO_CHUC" else "I",
             "cus_ekyc": f"E{customer.kyc_level_id}" if customer.kyc_level_id else GW_DEFAULT_VALUE,
             "full_name": customer.full_name_vn,
@@ -778,7 +801,7 @@ class CtrGWCustomer(BaseController):
             "cor_desc": GW_DEFAULT_VALUE,
             "coowner_relationship": GW_DEFAULT_VALUE,
             # TODO hard core tình trạng hôn nhân (resident_status)
-            "martial_status": "M" if cust_individual.marital_status_id == "DOC_THAN" else "S",
+            "martial_status": GW_MARTIAL_STATUS_MARRIED if cust_individual.marital_status_id == "DOC_THAN" else GW_MARTIAL_STATUS_SINGLE,
             "p_us_res_status": "N",
             "p_vst_us_prev": "N",
             "p_field9": GW_DEFAULT_VALUE,
@@ -795,7 +818,7 @@ class CtrGWCustomer(BaseController):
                 "id_issued_date": date_to_string(cust_identity.issued_date, _format=GW_DATE_FORMAT),
                 "id_expired_date": date_to_string(cust_identity.expired_date, _format=GW_DATE_FORMAT),
                 "id_issued_location": cust_identity.place_of_issue_id,
-                "id_type": "ID CARD/PASSPORT"
+                "id_type": GW_DEFAULT_TYPE_ID
             },
             "address_info_i": address_info_i,
             "address_contact_info_i": address_contact_info_i,
@@ -814,10 +837,10 @@ class CtrGWCustomer(BaseController):
             "job_info": {
                 # TODO chưa đồng bộ data giữa core và crm
                 "professional_code": "T_0806",
-                "position": cust_professional.position_id if cust_professional.position_id else "",
-                "official_telephone": cust_professional.company_phone if cust_professional.company_phone else "",
+                "position": cust_professional.position_id if cust_professional.position_id else GW_DEFAULT_VALUE,
+                "official_telephone": cust_professional.company_phone if cust_professional.company_phone else GW_DEFAULT_VALUE,
                 "address_office_info": {
-                    "address_full": cust_professional.company_address if cust_professional.company_address else ""
+                    "address_full": cust_professional.company_address if cust_professional.company_address else GW_DEFAULT_VALUE
                 }
             },
             "staff_info_checker": {
@@ -832,21 +855,31 @@ class CtrGWCustomer(BaseController):
             }
         }
 
-        response_data = self.call_repos(await repos_gw_open_cif(
-            cif_id=cif_id,
-            customer_info=customer_info,
-            current_user=current_user))
+        response_data = self.call_repos(
+            await repos_gw_open_cif(
+                cif_id=cif_id,
+                customer_info=customer_info,
+                account_info=account_info,
+                current_user=current_user
+            )
+        )
 
         cif_number = response_data['openCIFAuthorise_out']['data_output']['customner_info']['cif_info']['cif_num']
-        account_number = response_data['openCIFAuthorise_out']['data_output']['account_info']['account_num']
+        # TODO chưa thể mở tài khoản thanh toán
+        # account_number = response_data['openCIFAuthorise_out']['data_output']['account_info']['account_num']
 
         data_update_customer = {
             "cif_number": cif_number,
             "complete_flag": CUSTOMER_COMPLETED_FLAG
         }
-        data_update_casa_account = {
-            "casa_account_number": account_number
-        }
+
+        data_update_casa_account = {}
+
+        # if account_number:
+        #     data_update_casa_account = {
+        #         "casa_account_number": account_number
+        #     }
+
         # call repos update cif_number and account_number
         await repos_update_cif_number_customer(
             cif_id=cif_id,
@@ -854,8 +887,8 @@ class CtrGWCustomer(BaseController):
             data_update_casa_account=data_update_casa_account,
             session=self.oracle_session
         )
-        response_data = {
+        response = {
             "cif_id": cif_id,
             "cif_number": cif_number
         }
-        return self.response(data=response_data)
+        return self.response(data=response)
