@@ -718,7 +718,7 @@ async def repos_upload_identity_document_and_ocr(
         file=image_file,
         filename=image_file_name,
         identity_type=identity_type,
-        uuid=booking_id
+        booking_id=booking_id
     )
     if not is_success:
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_EKYC, detail=ocr_response.get('message', ''))
