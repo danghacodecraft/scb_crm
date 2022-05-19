@@ -174,7 +174,7 @@ class BaseController:
     def response_exception(self, msg, loc="", detail="", params="", error_status_code=status.HTTP_400_BAD_REQUEST):
         self._close_oracle_session()
 
-        self.append_error(msg=msg, loc=loc, detail=detail, params=params)
+        self.append_error(msg=msg, loc=loc, detail=detail)
         self._raise_exception(error_status_code=error_status_code)
 
     def response(self, data, error_status_code=status.HTTP_400_BAD_REQUEST):
