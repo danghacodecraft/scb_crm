@@ -6,9 +6,14 @@ from app.utils.error_messages import ERROR_CALL_SERVICE_EKYC
 
 
 async def repos_get_list_kss(
-        query_data: dict
+    query_data: dict,
+    booking_id: Optional[str] = None
 ) -> ReposReturn:
-    is_success, response = await service_ekyc.get_list_kss(query_data=query_data)
+
+    is_success, response = await service_ekyc.get_list_kss(
+        query_data=query_data,
+        booking_id=booking_id
+    )
 
     return ReposReturn(data={
         'detail': response.get('detail'),

@@ -27,11 +27,13 @@ router = APIRouter()
     )
 )
 async def view_list_kss(
-        query_params: QueryParamsKSSRequest = Depends(),
-        current_user=Depends(get_current_user_from_header())
+    BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
+    query_params: QueryParamsKSSRequest = Depends(),
+    current_user=Depends(get_current_user_from_header())
 ):
     kss_response = await CtrKSS(current_user).ctr_get_list_kss(
-        query_params=query_params
+        query_params=query_params,
+        booking_id=BOOKING_ID
     )
 
     return ResponseData[KSSResponse](**kss_response)

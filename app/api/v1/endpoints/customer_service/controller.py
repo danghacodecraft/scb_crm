@@ -28,7 +28,18 @@ from app.utils.functions import gen_qr_code
 
 class CtrKSS(BaseController):
 
-    async def ctr_get_list_kss(self, query_params: QueryParamsKSSRequest):
+    async def ctr_get_list_kss(
+        self,
+        query_params: QueryParamsKSSRequest,
+        booking_id: Optional[str] = None
+    ):
+        # # Check exist Booking
+        # await CtrBooking().ctr_get_booking(
+        #     business_type_code=BUSINESS_TYPE_INIT_CIF,
+        #     booking_id=booking_id,
+        #     loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        # )
+
         current_user = self.current_user
         is_success, response = self.check_permission(
             current_user=current_user,
@@ -71,7 +82,7 @@ class CtrKSS(BaseController):
         query_data.update({'record_per_page': query_params.record_per_page}) if query_params.record_per_page else None
         query_data.update({'step_status': query_params.step_status}) if query_params.step_status else None
 
-        list_kss = self.call_repos(await repos_get_list_kss(query_data=query_data))
+        list_kss = self.call_repos(await repos_get_list_kss(query_data=query_data, booking_id=booking_id))
 
         return self.response(data=list_kss)
 
