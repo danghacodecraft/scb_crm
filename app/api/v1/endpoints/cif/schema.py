@@ -209,8 +209,3 @@ class CustomerByCIFNumberRequest(BaseSchema):
 
 class GWCustomerDetailRequest(BaseSchema):
     parameter: str = Field(GW_REQUEST_PARAMETER_DEFAULT, description=f"""Tham số truyền vào `{GW_REQUEST_PARAMETER}`""")
-
-
-class EKYCHeaderRequest(BaseSchema):
-    BOOKING_ID: str = Field(None, description="Mã phiên giao dịch")
-    DEVICE_INFO: str = Field(None, description="Thông tin thiết bị")

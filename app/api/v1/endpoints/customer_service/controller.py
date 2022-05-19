@@ -3,7 +3,6 @@ from typing import Optional
 from starlette import status
 
 from app.api.base.controller import BaseController
-from app.api.v1.endpoints.cif.schema import EKYCHeaderRequest
 from app.api.v1.endpoints.customer_service.repository import (
     repos_create_post_check, repos_get_customer_detail,
     repos_get_history_post_post_check, repos_get_list_branch,
@@ -76,9 +75,8 @@ class CtrKSS(BaseController):
 
         return self.response(data=list_kss)
 
-    async def ctr_get_list_branch(self, zone_id: int, request_headers: EKYCHeaderRequest):
+    async def ctr_get_list_branch(self, zone_id: int, booking_id: Optional[str] = None):
 
-        booking_id = request_headers.BOOKING_ID
         # # Check exist Booking
         # await CtrBooking().ctr_get_booking(
         #     business_type_code=BUSINESS_TYPE_INIT_CIF,

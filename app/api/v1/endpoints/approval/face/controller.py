@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import UploadFile
 
 from app.api.base.controller import BaseController
@@ -8,7 +10,6 @@ from app.api.v1.endpoints.approval.repository import (
     repos_get_approval_identity_images_by_image_type_id
 )
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
-from app.api.v1.endpoints.cif.schema import EKYCHeaderRequest
 from app.api.v1.endpoints.file.repository import repos_upload_file
 from app.api.v1.endpoints.file.validator import file_validator
 from app.settings.event import service_ekyc
@@ -23,13 +24,12 @@ class CtrApproveFace(BaseController):
             cif_id: str,
             amount: int,  # Số lượng hình ảnh so sánh
             image_file: UploadFile,
-            request_headers: EKYCHeaderRequest
+            booking_id: Optional[str] = None
     ):
         current_user = self.current_user.user_info
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
 
-        booking_id = request_headers.BOOKING_ID
         # # Check exist Booking
         # await CtrBooking().ctr_get_booking(
         #     business_type_code=BUSINESS_TYPE_INIT_CIF,

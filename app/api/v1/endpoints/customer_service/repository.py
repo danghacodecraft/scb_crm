@@ -27,8 +27,8 @@ async def repos_get_list_branch(query_param: dict, booking_id: Optional[str] = N
     return ReposReturn(data=response)
 
 
-async def repos_get_list_zone() -> ReposReturn:
-    is_success, response = await service_ekyc.get_list_zone()
+async def repos_get_list_zone(booking_id: Optional[str] = None) -> ReposReturn:
+    is_success, response = await service_ekyc.get_list_zone(booking_id=booking_id)
 
     return ReposReturn(data=response)
 

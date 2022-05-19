@@ -16,7 +16,6 @@ from app.api.v1.endpoints.cif.basic_information.identity.identity_document.schem
 from app.api.v1.endpoints.cif.repository import (
     repos_check_not_exist_cif_number
 )
-from app.api.v1.endpoints.cif.schema import EKYCHeaderRequest
 from app.api.v1.endpoints.file.controller import CtrFile
 from app.api.v1.endpoints.file.validator import file_validator
 from app.api.v1.others.permission.controller import PermissionController
@@ -165,7 +164,7 @@ class CtrIdentityDocument(BaseController):
     async def save_identity(
         self,
         identity_document_request: Union[IdentityCardSaveRequest, CitizenCardSaveRequest, PassportSaveRequest],
-        header_request: EKYCHeaderRequest
+        booking_id: Optional[str]
     ):
         # check quyền user
         self.call_repos(await PermissionController.ctr_approval_check_permission(
@@ -176,7 +175,6 @@ class CtrIdentityDocument(BaseController):
             stage_code=CIF_STAGE_BEGIN
         ))
 
-        booking_id = header_request.BOOKING_ID
         # # Check exist Booking
         # await CtrBooking().ctr_get_booking(
         #     business_type_code=BUSINESS_TYPE_INIT_CIF,
@@ -812,8 +810,12 @@ class CtrIdentityDocument(BaseController):
         )
         return self.response(data=info_save_document)
 
-    async def upload_identity_document_and_ocr(self, identity_type: int, image_file: UploadFile,
-                                               booking_id: Optional[str] = None):
+    async def upload_identity_document_and_ocr(
+        self,
+        identity_type: int,
+        image_file: UploadFile,
+        booking_id: Optional[str] = None
+    ):
 
         # # Check exist Booking
         # await CtrBooking().ctr_get_booking(

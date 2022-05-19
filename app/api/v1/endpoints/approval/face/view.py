@@ -7,7 +7,6 @@ from app.api.v1.endpoints.approval.face.controller import CtrApproveFace
 from app.api.v1.endpoints.approval.face.schema import (
     ApprovalFaceRequest, ApprovalFaceSuccessResponse
 )
-from app.api.v1.endpoints.cif.schema import EKYCHeaderRequest
 
 router = APIRouter()
 
@@ -22,7 +21,7 @@ router = APIRouter()
     )
 )
 async def view_upload_face(
-        request_headers: EKYCHeaderRequest = Header(...),
+        BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
         request: ApprovalFaceRequest = Depends(ApprovalFaceRequest.get_upload_request),
 ):
     cif_id, image_file, amount, current_user = request
@@ -30,7 +29,7 @@ async def view_upload_face(
         cif_id=cif_id,
         image_file=image_file,
         amount=amount,
-        request_headers=request_headers
+        booking_id=BOOKING_ID
     )
 
     return ResponseData[ApprovalFaceSuccessResponse](**approve_info)
