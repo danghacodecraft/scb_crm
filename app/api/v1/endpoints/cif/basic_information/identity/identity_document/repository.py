@@ -1157,7 +1157,7 @@ async def repos_compare_face(
         identity_image_uuid: str,
         booking_id: str = None
 ):
-    is_success_add_face, add_face_info = await service_ekyc.add_face(file=face_image_data, uuid=booking_id)
+    is_success_add_face, add_face_info = await service_ekyc.add_face(file=face_image_data, booking_id=booking_id)
 
     if not is_success_add_face:
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_EKYC, detail=add_face_info.get('message', ''))
