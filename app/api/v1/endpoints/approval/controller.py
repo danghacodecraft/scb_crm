@@ -415,7 +415,6 @@ class CtrApproval(BaseController):
             #     )
             if is_stage_teller:
                 teller_is_disable = False
-            teller_stage_code = None
 
         # Hồ sơ GDV đã gửi
         elif previous_stage_code == CIF_STAGE_INIT:
@@ -1059,7 +1058,7 @@ class CtrApproval(BaseController):
         #         department_name=None,
         #         position_id=None,
         #         position_code=None,
-        #         position_name = None,
+        #         position_name=None,
         #         title_id=current_user.hrm_title_id,
         #         title_code=current_user.hrm_title_code,
         #         title_name=current_user.hrm_title_name
