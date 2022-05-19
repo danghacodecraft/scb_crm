@@ -240,7 +240,7 @@ class CtrKSS(BaseController):
 
         return self.response(data=statistics_profiles)
 
-    async def ctr_get_statistics(self, search_type: int, selected_date: str):
+    async def ctr_get_statistics(self, search_type: int, selected_date: str, booking_id: Optional[str] = None):
         current_user = self.current_user
 
         is_success, response = self.check_permission(
@@ -261,7 +261,7 @@ class CtrKSS(BaseController):
         query_param.update({'search_type': search_type}) if search_type else None
         query_param.update({'selected_date': selected_date}) if selected_date else None
 
-        statistics = self.call_repos(await repos_get_statistics(query_param=query_param))
+        statistics = self.call_repos(await repos_get_statistics(query_param=query_param, booking_id=booking_id))
 
         return self.response(data=statistics)
 

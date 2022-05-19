@@ -73,8 +73,8 @@ async def repos_update_post_check(request_data: dict, booking_id: Optional[str] 
     return ReposReturn(data=response)
 
 
-async def repos_get_statistics(query_param: dict) -> ReposReturn:
-    is_success, response = await service_ekyc.get_statistics(query_param)
+async def repos_get_statistics(query_param: dict, booking_id: Optional[str] = None) -> ReposReturn:
+    is_success, response = await service_ekyc.get_statistics(query_param, booking_id=booking_id)
 
     if not is_success and response['detail']:
         return ReposReturn(

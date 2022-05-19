@@ -178,16 +178,21 @@ async def view_list_statistics_profiles(
     )
 )
 async def view_list_statistics(
-        search_type: int = Query(None, description="""Loại tìm kiếm
-            \n `search_type` = 1, hiển thị theo ngày
-            \n `search_type` = 2, hiển thị theo tuần
-            \n `search_type` = 3, hiển thị theo tháng
-            \n `search_type` = 4, hiển thị theo năm
-            """),
-        selected_date: str = Query(None, description='Chọn ngày `DD/MM/YYYY`'),
-        current_user=Depends(get_current_user_from_header())
+    search_type: int = Query(None, description="""Loại tìm kiếm
+        \n `search_type` = 1, hiển thị theo ngày
+        \n `search_type` = 2, hiển thị theo tuần
+        \n `search_type` = 3, hiển thị theo tháng
+        \n `search_type` = 4, hiển thị theo năm
+        """),
+    selected_date: str = Query(None, description='Chọn ngày `DD/MM/YYYY`'),
+    BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
+    current_user=Depends(get_current_user_from_header())
 ):
-    statistics = await CtrKSS(current_user).ctr_get_statistics(search_type=search_type, selected_date=selected_date)
+    statistics = await CtrKSS(current_user).ctr_get_statistics(
+        search_type=search_type,
+        selected_date=selected_date,
+        booking_id=BOOKING_ID
+    )
 
     return ResponseData[List[StatisticsResponse]](**statistics)
 
