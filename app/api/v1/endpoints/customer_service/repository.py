@@ -87,8 +87,8 @@ async def repos_get_statistics(query_param: dict, booking_id: Optional[str] = No
     return ReposReturn(data=response)
 
 
-async def repos_get_customer_detail(postcheck_uuid: str) -> ReposReturn:
-    is_success, response = await service_ekyc.get_customer_detail(postcheck_uuid=postcheck_uuid)
+async def repos_get_customer_detail(postcheck_uuid: str, booking_id: Optional[str] = None) -> ReposReturn:
+    is_success, response = await service_ekyc.get_customer_detail(postcheck_uuid=postcheck_uuid, booking_id=booking_id)
 
     if not is_success:
         return ReposReturn(

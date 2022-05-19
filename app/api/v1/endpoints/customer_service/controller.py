@@ -333,7 +333,7 @@ class CtrKSS(BaseController):
 
         return self.response(data=update_post_check)
 
-    async def ctr_get_customer_detail(self, postcheck_uuid: str):
+    async def ctr_get_customer_detail(self, postcheck_uuid: str, booking_id: Optional[str] = None):
         current_user = self.current_user
 
         is_success, response = self.check_permission(
@@ -349,7 +349,10 @@ class CtrKSS(BaseController):
                 error_status_code=status.HTTP_404_NOT_FOUND
             )
 
-        customer_detail = self.call_repos(await repos_get_customer_detail(postcheck_uuid=postcheck_uuid))
+        customer_detail = self.call_repos(await repos_get_customer_detail(
+            postcheck_uuid=postcheck_uuid,
+            booking_id=booking_id
+        ))
 
         return self.response(data=customer_detail)
 

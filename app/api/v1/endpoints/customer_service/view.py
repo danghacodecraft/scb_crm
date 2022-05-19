@@ -247,10 +247,14 @@ async def update_post_check(
     )
 )
 async def view_customer(
-        postcheck_uuid: str = Path(..., description='ID của khách hàng'),
-        current_user=Depends(get_current_user_from_header())
+    BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
+    postcheck_uuid: str = Path(..., description='ID của khách hàng'),
+    current_user=Depends(get_current_user_from_header())
 ):
-    customer_detail_information = await CtrKSS(current_user).ctr_get_customer_detail(postcheck_uuid=postcheck_uuid)
+    customer_detail_information = await CtrKSS(current_user).ctr_get_customer_detail(
+        postcheck_uuid=postcheck_uuid,
+        booking_id=BOOKING_ID
+    )
 
     return ResponseData[CustomerDetailResponse](**customer_detail_information)
 
