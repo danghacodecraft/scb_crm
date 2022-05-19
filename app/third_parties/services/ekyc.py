@@ -220,7 +220,7 @@ class ServiceEKYC:
         try:
             async with self.session.get(url=api_url, headers=headers, params=query_param,
                                         ssl=False) as response:
-                logger.log("SERVICE", f"[EKYC LIST BRACNH] {response.status} : {api_url}")
+                logger.log("SERVICE", f"[EKYC LIST BRANCH] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
                 elif response.status == status.HTTP_400_BAD_REQUEST:
