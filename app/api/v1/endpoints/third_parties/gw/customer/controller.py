@@ -3,7 +3,7 @@ from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_get_customer_ids_from_cif_numbers, repos_get_customer_open_cif,
     repos_gw_get_authorized, repos_gw_get_co_owner,
     repos_gw_get_customer_info_detail, repos_gw_get_customer_info_list,
-    repos_gw_open_cif
+    repos_gw_open_cif, repos_update_cif_number_customer
 )
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
@@ -16,7 +16,8 @@ from app.third_parties.oracle.models.master_data.others import (
     Branch, Career, MaritalStatus, ResidentStatus
 )
 from app.utils.constant.cif import (
-    CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE, RESIDENT_ADDRESS_CODE
+    CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE, CUSTOMER_COMPLETED_FLAG,
+    RESIDENT_ADDRESS_CODE
 )
 from app.utils.constant.gw import (
     GW_AUTO, GW_DATE_FORMAT, GW_DATETIME_FORMAT, GW_DEFAULT_KHTC_DOI_TUONG,
@@ -747,7 +748,6 @@ class CtrGWCustomer(BaseController):
         udf_value = f"KHONG~{first_row.AverageIncomeAmount.id}~{cust_professional.career_id}~{marketing_flag}~KHONG~{agreement_flag}~{GW_DEFAULT_KHTC_DOI_TUONG}"
 
         customer_info = {
-            # TODO hard core tình trạng hôn nhân (resident_status)
             "customer_category": "I_11",
             "customer_type": "B" if customer.customer_type_id == "TO_CHUC" else "I",
             "cus_ekyc": f"E{customer.kyc_level_id}" if customer.kyc_level_id else GW_DEFAULT_VALUE,
@@ -759,7 +759,7 @@ class CtrGWCustomer(BaseController):
             "place_of_birth": cust_individual.country_of_birth_id if cust_individual.country_of_birth_id else GW_DEFAULT_VALUE,
             "birthday": date_to_string(cust_individual.date_of_birth, _format=GW_DATE_FORMAT) if cust_individual.date_of_birth else GW_DEFAULT_VALUE,
             "tax": customer.tax_number if customer.tax_number else GW_DEFAULT_VALUE,
-            # TODO hard core tình trạng hôn nhân (resident_status)
+            # TODO hard core tình trạng cư trú (resident_status)
             "resident_status": "N",
             "legal_guardian": GW_DEFAULT_VALUE,
             "co_owner": GW_DEFAULT_VALUE,
@@ -777,7 +777,8 @@ class CtrGWCustomer(BaseController):
             "cor_country": GW_DEFAULT_VALUE,
             "cor_desc": GW_DEFAULT_VALUE,
             "coowner_relationship": GW_DEFAULT_VALUE,
-            "martial_status": "M",
+            # TODO hard core tình trạng hôn nhân (resident_status)
+            "martial_status": "M" if cust_individual.marital_status_id == "DOC_THAN" else "S",
             "p_us_res_status": "N",
             "p_vst_us_prev": "N",
             "p_field9": GW_DEFAULT_VALUE,
@@ -836,4 +837,25 @@ class CtrGWCustomer(BaseController):
             customer_info=customer_info,
             current_user=current_user))
 
+        cif_number = response_data['openCIFAuthorise_out']['data_output']['customner_info']['cif_info']['cif_num']
+        account_number = response_data['openCIFAuthorise_out']['data_output']['account_info']['account_num']
+
+        data_update_customer = {
+            "cif_number": cif_number,
+            "complete_flag": CUSTOMER_COMPLETED_FLAG
+        }
+        data_update_casa_account = {
+            "casa_account_number": account_number
+        }
+        # call repos update cif_number and account_number
+        await repos_update_cif_number_customer(
+            cif_id=cif_id,
+            data_update_customer=data_update_customer,
+            data_update_casa_account=data_update_casa_account,
+            session=self.oracle_session
+        )
+        response_data = {
+            "cif_id": cif_id,
+            "cif_number": cif_number
+        }
         return self.response(data=response_data)

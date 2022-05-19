@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn
@@ -130,7 +130,26 @@ async def repos_gw_open_cif(
         customer_info=customer_info,
         current_user=current_user
     )
+    if not is_success:
+        return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_GW)
+
     return ReposReturn(data=response_data)
+
+
+async def repos_update_cif_number_customer(
+        cif_id: str,
+        data_update_customer: dict,
+        data_update_casa_account: dict,
+        session: Session
+):
+    session.execute(
+        update(
+            Customer
+        ).filter(Customer.id == cif_id)
+        .values(data_update_customer)
+    )
+    session.commit()
+    return ReposReturn(data=cif_id)
 
 
 async def repos_get_customer_open_cif(
