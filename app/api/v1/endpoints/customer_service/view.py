@@ -89,13 +89,15 @@ async def view_list_zone(
     )
 )
 async def view_list_post_control(
-        postcheck_uuid: str = Path(..., description='Id của khách hàng'),
-        post_control_his_id: int = Query(None, description='ID lịch sử hậu kiểm'),
-        current_user=Depends(get_current_user_from_header())
+    BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
+    postcheck_uuid: str = Path(..., description='Id của khách hàng'),
+    post_control_his_id: int = Query(None, description='ID lịch sử hậu kiểm'),
+    current_user=Depends(get_current_user_from_header())
 ):
     post_control_response = await CtrKSS(current_user).ctr_get_post_control(
         postcheck_uuid=postcheck_uuid,
-        post_control_his_id=post_control_his_id
+        post_control_his_id=post_control_his_id,
+        booking_id=BOOKING_ID
     )
 
     return ResponseData[PostControlResponse](**post_control_response)
@@ -111,11 +113,13 @@ async def view_list_post_control(
     )
 )
 async def view_list_history_post_check(
-        postcheck_uuid: str = Path(..., description='Id của khách hàng'),
-        current_user=Depends(get_current_user_from_header())
+    BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
+    postcheck_uuid: str = Path(..., description='Id của khách hàng'),
+    current_user=Depends(get_current_user_from_header())
 ):
     history_post_check = await CtrKSS(current_user).ctr_history_post_check(
-        postcheck_uuid=postcheck_uuid
+        postcheck_uuid=postcheck_uuid,
+        booking_id=BOOKING_ID
     )
 
     return ResponseData[List[HistoryPostCheckResponse]](**history_post_check)
@@ -131,11 +135,13 @@ async def view_list_history_post_check(
     )
 )
 async def view_list_statistics_month(
-        months: int = Query(..., description='Số tháng để thống kê'),
-        current_user=Depends(get_current_user_from_header())
+    BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
+    months: int = Query(..., description='Số tháng để thống kê'),
+    current_user=Depends(get_current_user_from_header())
 ):
     statistics_month_response = await CtrKSS(current_user).ctr_statistics_month(
-        months=months
+        months=months,
+
     )
 
     return ResponseData[List[StatisticsMonth]](**statistics_month_response)

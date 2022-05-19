@@ -44,14 +44,17 @@ async def repos_get_statistics_profiles(booking_id: Optional[str] = None) -> Rep
     return ReposReturn(data=response)
 
 
-async def repos_get_statistics_month(months: int) -> ReposReturn:
-    is_success, response = await service_ekyc.get_statistics_months(months=months)
+async def repos_get_statistics_month(months: int, booking_id: Optional[str] = None) -> ReposReturn:
+    is_success, response = await service_ekyc.get_statistics_months(months=months, booking_id=booking_id)
 
     return ReposReturn(data=response)
 
 
-async def repos_get_history_post_post_check(postcheck_uuid: str) -> ReposReturn:
-    is_success, response = await service_ekyc.get_history_post_check(postcheck_uuid=postcheck_uuid)
+async def repos_get_history_post_post_check(postcheck_uuid: str, booking_id: Optional[str] = None) -> ReposReturn:
+    is_success, response = await service_ekyc.get_history_post_check(
+        postcheck_uuid=postcheck_uuid,
+        booking_id=booking_id
+    )
 
     if not is_success:
         return ReposReturn(

@@ -177,7 +177,7 @@ class CtrKSS(BaseController):
 
         return self.response(data=post_control_response)
 
-    async def ctr_history_post_check(self, postcheck_uuid: str):
+    async def ctr_history_post_check(self, postcheck_uuid: str, booking_id: Optional[str] = None):
         current_user = self.current_user
 
         is_success, response = self.check_permission(
@@ -193,11 +193,14 @@ class CtrKSS(BaseController):
                 error_status_code=status.HTTP_404_NOT_FOUND
             )
 
-        history_post_check = self.call_repos(await repos_get_history_post_post_check(postcheck_uuid=postcheck_uuid))
+        history_post_check = self.call_repos(await repos_get_history_post_post_check(
+            postcheck_uuid=postcheck_uuid,
+            booking_id=booking_id
+        ))
 
         return self.response(data=history_post_check)
 
-    async def ctr_statistics_month(self, months: int):
+    async def ctr_statistics_month(self, months: int, booking_id: Optional[str] = None):
         current_user = self.current_user
 
         is_success, response = self.check_permission(
@@ -213,7 +216,7 @@ class CtrKSS(BaseController):
                 error_status_code=status.HTTP_404_NOT_FOUND
             )
 
-        statistics_months = self.call_repos(await repos_get_statistics_month(months=months))
+        statistics_months = self.call_repos(await repos_get_statistics_month(months=months, booking_id=booking_id))
 
         return self.response(statistics_months)
 
