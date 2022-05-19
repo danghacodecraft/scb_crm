@@ -587,7 +587,7 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def upload_file_ekyc(self, info: dict):
+    async def upload_file_ekyc(self, info: dict, booking_id: Optional[str] = None):
         async with aiohttp.ClientSession() as session:
             uri = info["uri"]
             url = replace_with_cdn(
@@ -598,7 +598,11 @@ class ServiceEKYC:
             async with session.get(url, ssl=False) as resp:
                 if resp.status == status.HTTP_200_OK:
                     file = resp.content
-                    info_file = await event.service_file.upload_file(file=file, name=info["file_name"])
+                    info_file = await event.service_file.upload_file(
+                        file=file,
+                        name=info["file_name"],
+                        booking_id=booking_id
+                    )
                     if not info_file:
                         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_FILE)
 

@@ -400,7 +400,9 @@ class CtrIdentityMobile(BaseController):
         # Thêm avatar thành Hình ảnh định danh Khuôn mặt
         ################################################################################################################
             avatar_image_uuid_service = await CtrFile().upload_ekyc_file(
-                uuid_ekyc=ocr_data_front_side['front_side_information']['identity_avatar_image_uuid'])
+                uuid_ekyc=ocr_data_front_side['front_side_information']['identity_avatar_image_uuid'],
+                booking_id=new_booking_id
+            )
         ################################################################################################################
 
         else:
@@ -413,7 +415,9 @@ class CtrIdentityMobile(BaseController):
             identity_avatar_image_uuid = ocr_data_front_side['passport_information']['identity_avatar_image_uuid']
 
             avatar_image_uuid_service = await CtrFile().upload_ekyc_file(
-                uuid_ekyc=ocr_data_front_side['passport_information']['identity_avatar_image_uuid'])
+                uuid_ekyc=ocr_data_front_side['passport_information']['identity_avatar_image_uuid'],
+                booking_id=new_booking_id
+            )
 
         # lưu CustomerCompareImage
         # if not is_success:

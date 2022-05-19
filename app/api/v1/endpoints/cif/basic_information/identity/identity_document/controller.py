@@ -753,7 +753,7 @@ class CtrIdentityDocument(BaseController):
         ################################################################################################################
         # Thêm avatar thành Hình ảnh định danh Khuôn mặt
         ################################################################################################################
-        avatar_image_uuid_service = await CtrFile().upload_ekyc_file(uuid_ekyc=identity_avatar_image_uuid)
+        avatar_image_uuid_service = await CtrFile().upload_ekyc_file(uuid_ekyc=identity_avatar_image_uuid, booking_id=booking_id)
         ################################################################################################################
         # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CIF
         transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
