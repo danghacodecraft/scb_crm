@@ -846,8 +846,7 @@ class CtrIdentityDocument(BaseController):
             await repos_compare_face(
                 face_image_data=face_image_data,
                 identity_image_uuid=identity_image_uuid,
-                booking_id=booking_id,
-                session=self.oracle_session
+                booking_id=booking_id
             )
         )
 
