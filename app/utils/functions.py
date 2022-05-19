@@ -211,7 +211,7 @@ def convert_string_to_uuidv4(customer_uuid: str) -> str:
     try:
         return f"{uuid.UUID(customer_uuid)}"
     except ValueError:
-        return None
+        return ""
 
 
 def replace_with_cdn(cdn, file_url: str) -> str:

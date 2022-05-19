@@ -24,7 +24,7 @@ class ServiceEKYC:
         "X-TRANSACTION-ID": SERVICE["ekyc"]['x-transaction-id'],
         "AUTHORIZATION": SERVICE["ekyc"]['authorization'],
         "X-DEVICE-INFO": "eyJkZXZpY2VOYW1lIjoibWluaOKAmXMgaVBob25lIiwib3MiOiJJT1MiLCJtb2RlbCI6ImlQaG9uZSBYUiIsInBob25lX"
-                         "251bWJlciI6IjA5MDI0MDk2NjQiLCJtYW51ZmFjdHVyZXIiOiJBcHBsZSIsIm9zVmVyc2lvbiI6IjE0LjEifQ",  # TODO
+                         "251bWJlciI6IjA5MDI0MDk2NjQiLCJtYW51ZmFjdHVyZXIiOiJBcHBsZSIsIm9zVmVyc2lvbiI6IjE0LjEifQ",
         "OTP": SERVICE["ekyc"]['otp']
     }
 
@@ -196,12 +196,12 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"errors": {"message": "eKYC error please try again later"}}
 
-    async def validate_ekyc(self, request_body: dict):
+    async def validate_ekyc(self, request_body: dict, booking_id: Optional[str] = None):
         api_url = f"{self.url}/api/v1/card-service/validate/"
 
         headers = self.headers
         # thay đổi giá trị x-transaction-id
-        headers['X-TRANSACTION-ID'] = "CRM_"
+        headers['X-TRANSACTION-ID'] = self.create_header_x_transaction_id(booking_id=booking_id)
         try:
             async with self.session.post(url=api_url, json=request_body, headers=headers, ssl=False) as response:
                 logger.log("SERVICE", f"[VALIDATE_EKYC] {response.status} : {api_url}")
@@ -736,3 +736,11 @@ class ServiceEKYC:
                     "res": str(ex)
                 }),
             }
+
+    @staticmethod
+    def create_header_x_transaction_id(booking_id: Optional[str] = None):
+        # thay đổi giá trị x-transaction-id
+        if booking_id:
+            UUIDV4 = convert_string_to_uuidv4(booking_id)
+            return f"CRM_{UUIDV4}"
+        return "CRM_"

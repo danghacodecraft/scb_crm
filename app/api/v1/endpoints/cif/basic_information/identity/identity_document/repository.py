@@ -779,8 +779,11 @@ async def repos_upload_identity_document_and_ocr(
     return ReposReturn(data=ocr_response_data)
 
 
-async def repos_validate_ekyc(request_body: dict):
-    is_success, response = await service_ekyc.validate_ekyc(request_body=request_body)
+async def repos_validate_ekyc(request_body: dict, booking_id: Optional[str] = None):
+    is_success, response = await service_ekyc.validate_ekyc(
+        request_body=request_body,
+        booking_id=booking_id
+    )
 
     if not is_success:
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_EKYC, detail=response.get('errors', '').get('message'))

@@ -852,7 +852,14 @@ class CtrIdentityDocument(BaseController):
 
         return self.response(data=face_compare_info)
 
-    async def validate_ekyc(self, ocr_ekyc_request: OcrEkycRequest):
+    async def validate_ekyc(self, ocr_ekyc_request: OcrEkycRequest, booking_id: Optional[str] = None):
+
+        # # Check exist Booking
+        # await CtrBooking().ctr_get_booking(
+        #     business_type_code=BUSINESS_TYPE_INIT_CIF,
+        #     booking_id=booking_id,
+        #     loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        # )
 
         qc_code = ocr_ekyc_request.qr_code
 
@@ -868,7 +875,10 @@ class CtrIdentityDocument(BaseController):
             request_body['data'].update({
                 'qr_code': qc_code
             })
-        response = self.call_repos(await repos_validate_ekyc(request_body=request_body))
+        response = self.call_repos(await repos_validate_ekyc(
+            request_body=request_body,
+            booking_id=booking_id
+        ))
 
         return self.response(data=response)
 

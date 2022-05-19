@@ -214,7 +214,11 @@ async def view_compare_face(
 )
 async def validate_ekyc(
         ocr_ekyc_request: OcrEkycRequest,
+        BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
         current_user=Depends(get_current_user_from_header())
 ):
-    data = await CtrIdentityDocument(current_user).validate_ekyc(ocr_ekyc_request=ocr_ekyc_request)
+    data = await CtrIdentityDocument(current_user).validate_ekyc(
+        ocr_ekyc_request=ocr_ekyc_request,
+        booking_id=BOOKING_ID
+    )
     return ResponseData[ValidateResponse](**data)
