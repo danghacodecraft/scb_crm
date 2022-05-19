@@ -1,4 +1,5 @@
 from operator import itemgetter
+from typing import Optional
 
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.finger.repository import (
@@ -40,7 +41,12 @@ class CtrFingers(BaseController):
             'right_hand': right_hand
         })
 
-    async def ctr_compare_fingerprint(self, cif_id: str, finger_img):
+    async def ctr_compare_fingerprint(
+        self,
+        cif_id: str,
+        finger_img,
+        booking_id: Optional[str] = None
+    ):
         current_user = self.current_user.user_info
         finger_id_ekycs = self.call_repos(await repos_get_id_finger_ekyc(cif_id=cif_id, session=self.oracle_session))
 
@@ -48,7 +54,9 @@ class CtrFingers(BaseController):
         info_finger_img = self.call_repos(await repos_upload_file(
             file=data_finger_img,
             name=finger_img.filename,
-            ekyc_flag=True))
+            ekyc_flag=True,
+            booking_id=booking_id
+        ))
 
         id_fingers = []
         image_uuids = []

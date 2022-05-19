@@ -1,12 +1,16 @@
-from typing import List
+from typing import List, Optional
 
 from app.api.base.repository import ReposReturn
 from app.settings.event import service_ekyc, service_file
 from app.utils.error_messages import ERROR_CALL_SERVICE_FILE
 
 
-async def repos_upload_file(file: bytes, name: str, ekyc_flag: bool) -> ReposReturn:
-    response = await service_file.upload_file(file=file, name=name)
+async def repos_upload_file(file: bytes, name: str, ekyc_flag: bool, booking_id: Optional[str] = None) -> ReposReturn:
+    response = await service_file.upload_file(
+        file=file,
+        name=name,
+        booking_id=booking_id
+    )
 
     if ekyc_flag:
         is_success, uuid_ekyc = await service_ekyc.upload_file(file=file, name=name)

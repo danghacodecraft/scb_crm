@@ -46,7 +46,8 @@ class CtrApproveFace(BaseController):
         face_info = self.call_repos(await repos_upload_file(
             file=image_data,
             name=image_file.filename,
-            ekyc_flag=True
+            ekyc_flag=True,
+            booking_id=booking_id
         ))
         compare_face_uuid_ekyc = face_info['uuid_ekyc']
         compare_face_uuid = face_info['uuid']

@@ -41,9 +41,14 @@ async def view_retrieve_fingers(
     )
 )
 async def view_compare_fingerprint(
-        finger_img: UploadFile = File(..., description="Hình ảnh vân tay"),
-        cif_id: str = Path(..., description="cif_id"),
-        current_user=Depends(get_current_user_from_header())
+    finger_img: UploadFile = File(..., description="Hình ảnh vân tay"),
+    cif_id: str = Path(..., description="cif_id"),
+    BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
+    current_user=Depends(get_current_user_from_header())
 ):
-    finger = await CtrFingers(current_user).ctr_compare_fingerprint(cif_id=cif_id, finger_img=finger_img)
+    finger = await CtrFingers(current_user).ctr_compare_fingerprint(
+        cif_id=cif_id,
+        finger_img=finger_img,
+        booking_id=BOOKING_ID
+    )
     return ResponseData[List[CompareFingerPrintResponse]](**finger)

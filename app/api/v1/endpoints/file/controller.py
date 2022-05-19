@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import UploadFile
 
@@ -15,7 +15,7 @@ from app.utils.functions import now
 
 
 class CtrFile(BaseController):
-    async def upload_file(self, file_upload: UploadFile, ekyc_flag: bool):
+    async def upload_file(self, file_upload: UploadFile, ekyc_flag: bool, booking_id: Optional[str] = None):
         data_file_upload = await file_upload.read()
 
         self.call_validator(await file_validator(data_file_upload))
@@ -23,7 +23,8 @@ class CtrFile(BaseController):
         info_file = self.call_repos(await repos_upload_file(
             file=data_file_upload,
             name=file_upload.filename,
-            ekyc_flag=ekyc_flag
+            ekyc_flag=ekyc_flag,
+            booking_id=booking_id
         ))
 
         info_file['created_at'] = now()

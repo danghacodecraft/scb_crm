@@ -102,6 +102,7 @@ class CtrIdentityMobile(BaseController):
                 image_file=front_side_image,
                 image_file_name=front_side_image_name,
                 identity_type=EKYC_IDENTITY_TYPE_PASSPORT,
+                booking_id=new_booking_id,
                 session=self.oracle_session
             ))
 

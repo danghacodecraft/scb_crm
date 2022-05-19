@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import UploadFile
 
@@ -165,16 +165,26 @@ class CtrFingerPrint(BaseController):
             'fingerprint_2': fingerprint_2
         })
 
-    async def ctr_add_fingerprint(self, cif_id: str, file: UploadFile, ids_finger: List):
+    async def ctr_add_fingerprint(
+        self,
+        cif_id: str,
+        file: UploadFile,
+        ids_finger: List,
+        booking_id: Optional[str] = None
+    ):
 
         response_data = {}
 
         file_upload = await file.read()
         # upload service file
-        response = await service_file.upload_file(file=file_upload, name=file.filename)
+        response = await service_file.upload_file(file=file_upload, name=file.filename, booking_id=booking_id)
 
         # upload file ekyc
-        is_success, uuid_ekyc = await service_ekyc.upload_file(file=file_upload, name=file.filename)
+        is_success, uuid_ekyc = await service_ekyc.upload_file(
+            file=file_upload,
+            name=file.filename,
+            booking_id=booking_id
+        )
 
         # body add finger call ekyc
         json_body_add_finger = {
