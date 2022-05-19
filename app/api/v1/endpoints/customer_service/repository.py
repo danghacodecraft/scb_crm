@@ -1,3 +1,5 @@
+from typing import Optional
+
 from app.api.base.repository import ReposReturn
 from app.settings.event import service_ekyc
 from app.utils.error_messages import ERROR_CALL_SERVICE_EKYC
@@ -16,8 +18,11 @@ async def repos_get_list_kss(
     })
 
 
-async def repos_get_list_branch(query_param: dict) -> ReposReturn:
-    is_success, response = await service_ekyc.get_list_branch(query_param=query_param)
+async def repos_get_list_branch(query_param: dict, booking_id: Optional[str] = None) -> ReposReturn:
+    is_success, response = await service_ekyc.get_list_branch(
+        query_param=query_param,
+        booking_id=booking_id
+    )
 
     return ReposReturn(data=response)
 

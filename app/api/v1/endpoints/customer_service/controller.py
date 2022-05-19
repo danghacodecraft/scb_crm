@@ -3,6 +3,7 @@ from typing import Optional
 from starlette import status
 
 from app.api.base.controller import BaseController
+from app.api.v1.endpoints.cif.schema import EKYCHeaderRequest
 from app.api.v1.endpoints.customer_service.repository import (
     repos_create_post_check, repos_get_customer_detail,
     repos_get_history_post_post_check, repos_get_list_branch,
@@ -75,7 +76,16 @@ class CtrKSS(BaseController):
 
         return self.response(data=list_kss)
 
-    async def ctr_get_list_branch(self, zone_id: int):
+    async def ctr_get_list_branch(self, zone_id: int, request_headers: EKYCHeaderRequest):
+
+        booking_id = request_headers.BOOKING_ID
+        # # Check exist Booking
+        # await CtrBooking().ctr_get_booking(
+        #     business_type_code=BUSINESS_TYPE_INIT_CIF,
+        #     booking_id=booking_id,
+        #     loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        # )
+
         current_user = self.current_user
 
         is_success, response = self.check_permission(
@@ -94,7 +104,10 @@ class CtrKSS(BaseController):
             'zone_id': zone_id
         } if zone_id else None
 
-        list_branch = self.call_repos(await repos_get_list_branch(query_param=query_param))
+        list_branch = self.call_repos(await repos_get_list_branch(
+            query_param=query_param,
+            booking_id=booking_id
+        ))
 
         branchs = [{
             'id': branch['zone_id'],

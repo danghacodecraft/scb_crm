@@ -1,11 +1,12 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, Path, Query
+from fastapi import APIRouter, Depends, Header, Path, Query
 from starlette import status
 
 from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
+from app.api.v1.endpoints.cif.schema import EKYCHeaderRequest
 from app.api.v1.endpoints.customer_service.controller import CtrKSS
 from app.api.v1.endpoints.customer_service.schema import (
     BranchResponse, CreatePostCheckRequest, CustomerDetailResponse,
@@ -47,10 +48,14 @@ async def view_list_kss(
     )
 )
 async def view_list_branch(
+        request_headers: EKYCHeaderRequest = Header(...),
         zone_id: int = Query(None, description='Zone ID', nullable=True),
         current_user=Depends(get_current_user_from_header())
 ):
-    branch_response = await CtrKSS(current_user).ctr_get_list_branch(zone_id=zone_id)
+    branch_response = await CtrKSS(current_user).ctr_get_list_branch(
+        zone_id=zone_id,
+        request_headers=request_headers
+    )
 
     return ResponseData[List[BranchResponse]](**branch_response)
 
