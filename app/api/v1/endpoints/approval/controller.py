@@ -306,6 +306,7 @@ class CtrApproval(BaseController):
 
         previous_stage_code = None
         stage_teller = dict()
+        teller_stage_code = None
         teller_is_disable = True
         teller_is_completed = False
         teller_content = None
