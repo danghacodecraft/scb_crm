@@ -30,9 +30,14 @@ router = APIRouter()
 async def view_create_fingerprint(
         finger_request: TwoFingerPrintRequest,  # TODO: Thêm example
         cif_id: str = Path(..., description='Id CIF ảo'),
+        BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
         current_user=Depends(get_current_user_from_header())
 ):
-    data = await CtrFingerPrint(current_user).ctr_save_fingerprint(cif_id, finger_request)
+    data = await CtrFingerPrint(current_user).ctr_save_fingerprint(
+        cif_id=cif_id,
+        finger_request=finger_request,
+        booking_id=BOOKING_ID
+    )
     return ResponseData[SaveSuccessResponse](**data)
 
 
