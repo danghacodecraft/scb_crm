@@ -32,11 +32,11 @@ async def repos_get_approval_process(cif_id: str, session: Session) -> ReposRetu
         )
         .join(Booking, BookingCustomer.booking_id == Booking.id)
         .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
-        .join(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
         .join(
             trans_root_daily,
             trans_root_daily.transaction_root_id == TransactionDaily.transaction_root_id
         )
+        .join(TransactionSender, trans_root_daily.transaction_id == TransactionSender.transaction_id)
         .filter(BookingCustomer.customer_id == cif_id)
         .order_by(desc(trans_root_daily.created_at))
     ).all()
@@ -85,6 +85,7 @@ async def repos_approve(
         transaction_parent_id=saving_transaction_daily_parent_id,
         transaction_root_id=saving_transaction_daily_root_id,
     ))
+    session.commit()
 
     session.add_all([
         TransactionStageStatus(**saving_transaction_stage_status),

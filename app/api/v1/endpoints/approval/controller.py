@@ -14,7 +14,6 @@ from app.api.v1.endpoints.approval.repository import (
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.api.v1.others.permission.controller import PermissionController
-from app.third_parties.oracle.models.master_data.others import StageAction
 from app.utils.constant.approval import (
     CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_BEGIN,
     CIF_STAGE_COMPLETED, CIF_STAGE_INIT
@@ -438,13 +437,9 @@ class CtrApproval(BaseController):
 
         # KSV đã xử lý hồ sơ
         elif previous_stage_code == CIF_STAGE_APPROVE_KSV:
-
+            supervisor_transaction_stage_action = previous_transaction_stage_action
             if previous_transaction_stage_action:
-                dropdown_action_supervisor = await self.dropdown_mapping_crm_model_or_dropdown_name(
-                    model=StageAction,
-                    name=previous_transaction_stage_action.name,
-                    code=previous_transaction_stage_action.code
-                )
+                dropdown_action_supervisor = dropdown(supervisor_transaction_stage_action)
 
             supervisor_stage_code = previous_stage_code
             supervisor_transaction_daily = previous_transaction_daily
@@ -471,12 +466,12 @@ class CtrApproval(BaseController):
 
             if supervisor_is_reject and is_stage_teller:
                 teller_is_disable = False
-            else:
+            if not supervisor_is_reject:
                 audit_is_disable = False
                 is_open_cif = True
 
         # KSS đã xử lý hồ sơ
-        else:
+        elif previous_stage_code == CIF_STAGE_APPROVE_KSS:
             audit_transaction_stage = previous_transaction_stage
             audit_stage_code = previous_stage_code
             audit_transaction_daily = previous_transaction_daily
@@ -488,7 +483,6 @@ class CtrApproval(BaseController):
 
             if previous_transaction_stage_action:
                 dropdown_action_audit = dropdown(previous_transaction_stage_action)
-                teller_is_disable = False
 
             supervisor_transaction_daily, supervisor_transaction_sender, supervisor_transaction_stage, _, supervisor_transaction_stage_action = self.call_repos(
                 await repos_get_previous_transaction_daily(
@@ -513,8 +507,9 @@ class CtrApproval(BaseController):
             teller_created_at = teller_transaction_daily.created_at
             teller_created_by = teller_transaction_sender.user_fullname
             dropdown_action_teller = dropdown(teller_transaction_stage_action)
-            if not audit_transaction_stage.is_reject:
-                teller_is_disable = True
+
+            if is_stage_teller and audit_transaction_stage.is_reject:
+                teller_is_disable = False
 
         stage_teller.update(dict(
             stage_code=teller_stage_code,
@@ -812,7 +807,7 @@ class CtrApproval(BaseController):
                     menu_code=IDM_MENU_CODE_OPEN_CIF,
                     group_role_code=IDM_GROUP_ROLE_CODE_OPEN_CIF,
                     permission_code=IDM_PERMISSION_CODE_OPEN_CIF,
-                    stage_code=CIF_STAGE_APPROVE_KSV
+                    stage_code=CIF_STAGE_INIT
                 ))
             elif current_stage_code == CIF_STAGE_APPROVE_KSV:
                 self.call_repos(await PermissionController.ctr_approval_check_permission(
@@ -948,7 +943,7 @@ class CtrApproval(BaseController):
             transaction_stage_id=saving_transaction_stage_id,
             transaction_parent_id=None,
             transaction_root_id=None,
-            is_reject=False,
+            is_reject=reject_flag,
             data=orjson_dumps(json_data),
             description=description,
             created_at=now(),

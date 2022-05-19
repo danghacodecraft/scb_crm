@@ -65,7 +65,6 @@ class EmployeeResponse(BaseSchema):
     avatar_url: Optional[str] = Field(..., description="Đường dẫn hình ảnh")
     user_name: Optional[str] = Field(..., description="Tên")
     email: Optional[str] = Field(..., description="Địa chỉ email")
-    avatar: Optional[str] = Field(..., description="Avatar")
     position: OptionalDropdownResponse = Field(..., description="Chức danh")
     department: OptionalDropdownResponse = Field(..., description="Phòng")
     branch: OptionalDropdownResponse = Field(..., description="Đơn vị")
