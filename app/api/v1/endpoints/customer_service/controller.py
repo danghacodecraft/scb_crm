@@ -126,7 +126,15 @@ class CtrKSS(BaseController):
 
         return self.response(data=branchs)
 
-    async def ctr_get_list_zone(self):
+    async def ctr_get_list_zone(self, booking_id: Optional[str] = None):
+
+        # # Check exist Booking
+        # await CtrBooking().ctr_get_booking(
+        #     business_type_code=BUSINESS_TYPE_INIT_CIF,
+        #     booking_id=booking_id,
+        #     loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        # )
+
         current_user = self.current_user
 
         is_success, response = self.check_permission(
@@ -141,7 +149,7 @@ class CtrKSS(BaseController):
                 detail=MESSAGE_STATUS[ERROR_PERMISSION],
                 error_status_code=status.HTTP_404_NOT_FOUND)
 
-        list_zone = self.call_repos(await repos_get_list_zone())
+        list_zone = self.call_repos(await repos_get_list_zone(booking_id=booking_id))
 
         return self.response(data=list_zone)
 

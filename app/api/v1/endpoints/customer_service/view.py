@@ -71,9 +71,10 @@ async def view_list_branch(
     )
 )
 async def view_list_zone(
-        current_user=Depends(get_current_user_from_header())
+    BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
+    current_user=Depends(get_current_user_from_header())
 ):
-    zone_response = await CtrKSS(current_user).ctr_get_list_zone()
+    zone_response = await CtrKSS(current_user).ctr_get_list_zone(booking_id=BOOKING_ID)
 
     return ResponseData[List[ZoneRequest]](**zone_response)
 
