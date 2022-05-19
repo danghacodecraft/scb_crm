@@ -220,10 +220,14 @@ async def create_post_check(
     )
 )
 async def update_post_check(
-        postcheck_update_request: UpdatePostCheckRequest,
-        current_user=Depends(get_current_user_from_header())
+    postcheck_update_request: UpdatePostCheckRequest,
+    BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
+    current_user=Depends(get_current_user_from_header())
 ):
-    update_postcheck = await CtrKSS(current_user).ctr_update_post_check(postcheck_update_request=postcheck_update_request)
+    update_postcheck = await CtrKSS(current_user).ctr_update_post_check(
+        postcheck_update_request=postcheck_update_request,
+        booking_id=BOOKING_ID
+    )
 
     return ResponseData[UpdatePostCheckRequest](**update_postcheck)
 

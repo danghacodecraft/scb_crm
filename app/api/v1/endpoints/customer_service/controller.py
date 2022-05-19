@@ -299,7 +299,11 @@ class CtrKSS(BaseController):
 
         return self.response(data=post_check_response)
 
-    async def ctr_update_post_check(self, postcheck_update_request: UpdatePostCheckRequest):
+    async def ctr_update_post_check(
+        self,
+        postcheck_update_request: UpdatePostCheckRequest,
+        booking_id: Optional[str] = None
+    ):
 
         current_user = self.current_user
         # role duyệt
@@ -322,7 +326,10 @@ class CtrKSS(BaseController):
             "username": postcheck_update_request.username,
             "is_approve": postcheck_update_request.is_approve
         }
-        update_post_check = self.call_repos(await repos_update_post_check(request_data=request_data))
+        update_post_check = self.call_repos(await repos_update_post_check(
+            request_data=request_data,
+            booking_id=booking_id
+        ))
 
         return self.response(data=update_post_check)
 

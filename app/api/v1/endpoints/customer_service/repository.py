@@ -67,8 +67,8 @@ async def repos_get_history_post_post_check(postcheck_uuid: str, booking_id: Opt
     return ReposReturn(data=response)
 
 
-async def repos_update_post_check(request_data: dict) -> ReposReturn:
-    is_success, response = await service_ekyc.update_post_check(request_data=request_data)
+async def repos_update_post_check(request_data: dict, booking_id: Optional[str] = None) -> ReposReturn:
+    is_success, response = await service_ekyc.update_post_check(request_data=request_data, booking_id=booking_id)
 
     return ReposReturn(data=response)
 
