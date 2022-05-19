@@ -155,7 +155,7 @@ class BaseController:
             for info in self.call_repos(await repos_download_multi_file(uuids=uuids))
         }
 
-    def append_error(self, msg: str, loc: str = "", detail: str = "", params: str = ""):
+    def append_error(self, msg: str, loc: str = "", detail: str = ""):
         """
         Hàm add exception để trả về
         :param msg: code exception
@@ -163,7 +163,7 @@ class BaseController:
         :param detail: Thông tin thông báo
         :return:
         """
-        self.errors.append(Error(msg=msg, detail=detail, loc=loc, params=params))
+        self.errors.append(Error(msg=msg, detail=detail, loc=loc))
 
     def _raise_exception(self, error_status_code=status.HTTP_400_BAD_REQUEST):
         errors = []
