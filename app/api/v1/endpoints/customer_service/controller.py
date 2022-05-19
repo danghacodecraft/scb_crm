@@ -153,7 +153,12 @@ class CtrKSS(BaseController):
 
         return self.response(data=list_zone)
 
-    async def ctr_get_post_control(self, postcheck_uuid: str, post_control_his_id: int):
+    async def ctr_get_post_control(
+        self,
+        postcheck_uuid: str,
+        post_control_his_id: int,
+        booking_id: Optional[str] = None
+    ):
         current_user = self.current_user
 
         is_success, response = self.check_permission(
@@ -173,7 +178,10 @@ class CtrKSS(BaseController):
             'customer_id': postcheck_uuid
         }
         query_params.update({'post_control_his_id': post_control_his_id}) if post_control_his_id else None
-        post_control_response = self.call_repos(await repos_get_post_control(query_params=query_params))
+        post_control_response = self.call_repos(await repos_get_post_control(
+            query_params=query_params,
+            booking_id=booking_id
+        ))
 
         return self.response(data=post_control_response)
 
