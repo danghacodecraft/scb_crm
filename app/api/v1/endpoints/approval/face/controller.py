@@ -8,6 +8,7 @@ from app.api.v1.endpoints.approval.repository import (
     repos_get_approval_identity_images_by_image_type_id
 )
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
+from app.api.v1.endpoints.cif.schema import EKYCHeaderRequest
 from app.api.v1.endpoints.file.repository import repos_upload_file
 from app.api.v1.endpoints.file.validator import file_validator
 from app.settings.event import service_ekyc
@@ -21,11 +22,20 @@ class CtrApproveFace(BaseController):
             self,
             cif_id: str,
             amount: int,  # Số lượng hình ảnh so sánh
-            image_file: UploadFile
+            image_file: UploadFile,
+            request_headers: EKYCHeaderRequest
     ):
         current_user = self.current_user.user_info
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
+
+        booking_id = request_headers.BOOKING_ID
+        # # Check exist Booking
+        # await CtrBooking().ctr_get_booking(
+        #     business_type_code=BUSINESS_TYPE_INIT_CIF,
+        #     booking_id=booking_id,
+        #     loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        # )
 
         image_data = await image_file.read()
 
@@ -88,7 +98,11 @@ class CtrApproveFace(BaseController):
         for index, (face_uuid_ekyc, compare_face_image) in enumerate(face_images.items()):
             compare_face_image_uuid = compare_face_image['uuid']
             identity_image_id = compare_face_image['identity_image_id']
-            is_success, compare_face_info = await service_ekyc.compare_face(compare_face_uuid_ekyc, face_uuid_ekyc)
+            is_success, compare_face_info = await service_ekyc.compare_face(
+                face_uuid_ekyc=compare_face_uuid_ekyc,
+                avatar_image_uuid=face_uuid_ekyc,
+                booking_id=booking_id
+            )
             if not is_success:
                 return self.response_exception(
                     msg=ERROR_CALL_SERVICE_EKYC,
