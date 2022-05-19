@@ -12,7 +12,9 @@ from app.api.v1.endpoints.approval.repository import (
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.api.v1.endpoints.file.repository import repos_upload_file
 from app.api.v1.endpoints.file.validator import file_validator
+from app.api.v1.others.booking.controller import CtrBooking
 from app.settings.event import service_ekyc
+from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import IMAGE_TYPE_FACE
 from app.utils.error_messages import ERROR_CALL_SERVICE_EKYC
 from app.utils.functions import now
@@ -30,12 +32,12 @@ class CtrApproveFace(BaseController):
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
 
-        # # Check exist Booking
-        # await CtrBooking().ctr_get_booking(
-        #     business_type_code=BUSINESS_TYPE_INIT_CIF,
-        #     booking_id=booking_id,
-        #     loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
-        # )
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking(
+            business_type_code=BUSINESS_TYPE_INIT_CIF,
+            booking_id=booking_id,
+            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        )
 
         image_data = await image_file.read()
 

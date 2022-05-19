@@ -18,6 +18,7 @@ from app.api.v1.endpoints.cif.repository import (
 )
 from app.api.v1.endpoints.file.controller import CtrFile
 from app.api.v1.endpoints.file.validator import file_validator
+from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
 from app.api.v1.validator import validate_history_data
 from app.settings.config import DATE_INPUT_OUTPUT_EKYC_FORMAT
@@ -175,12 +176,12 @@ class CtrIdentityDocument(BaseController):
             stage_code=CIF_STAGE_BEGIN
         ))
 
-        # # Check exist Booking
-        # await CtrBooking().ctr_get_booking(
-        #     business_type_code=BUSINESS_TYPE_INIT_CIF,
-        #     booking_id=booking_id,
-        #     loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
-        # )
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking(
+            business_type_code=BUSINESS_TYPE_INIT_CIF,
+            booking_id=booking_id,
+            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        )
 
         current_user = self.current_user.user_info
         current_user_code = current_user.code
@@ -817,12 +818,12 @@ class CtrIdentityDocument(BaseController):
         booking_id: Optional[str] = None
     ):
 
-        # # Check exist Booking
-        # await CtrBooking().ctr_get_booking(
-        #     business_type_code=BUSINESS_TYPE_INIT_CIF,
-        #     booking_id=booking_id,
-        #     loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
-        # )
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking(
+            business_type_code=BUSINESS_TYPE_INIT_CIF,
+            booking_id=booking_id,
+            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        )
 
         if identity_type not in EKYC_IDENTITY_TYPE:
             return self.response_exception(msg=ERROR_IDENTITY_TYPE_NOT_EXIST, loc='identity_type')
@@ -846,12 +847,12 @@ class CtrIdentityDocument(BaseController):
 
     async def compare_face(self, face_image: UploadFile, identity_image_uuid: str, booking_id: Optional[str]):
 
-        # # Check exist Booking
-        # await CtrBooking().ctr_get_booking(
-        #     business_type_code=BUSINESS_TYPE_INIT_CIF,
-        #     booking_id=booking_id,
-        #     loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
-        # )
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking(
+            business_type_code=BUSINESS_TYPE_INIT_CIF,
+            booking_id=booking_id,
+            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        )
 
         face_image_data = await face_image.read()
         self.call_validator(await file_validator(face_image_data))
@@ -868,12 +869,12 @@ class CtrIdentityDocument(BaseController):
 
     async def validate_ekyc(self, ocr_ekyc_request: OcrEkycRequest, booking_id: Optional[str] = None):
 
-        # # Check exist Booking
-        # await CtrBooking().ctr_get_booking(
-        #     business_type_code=BUSINESS_TYPE_INIT_CIF,
-        #     booking_id=booking_id,
-        #     loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
-        # )
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking(
+            business_type_code=BUSINESS_TYPE_INIT_CIF,
+            booking_id=booking_id,
+            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        )
 
         qc_code = ocr_ekyc_request.qr_code
 

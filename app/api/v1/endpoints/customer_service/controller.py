@@ -14,6 +14,8 @@ from app.api.v1.endpoints.customer_service.repository import (
 from app.api.v1.endpoints.customer_service.schema import (
     CreatePostCheckRequest, QueryParamsKSSRequest, UpdatePostCheckRequest
 )
+from app.api.v1.others.booking.controller import CtrBooking
+from app.utils.constant.business_type import BUSINESS_TYPE_EKYC_AUDIT
 from app.utils.constant.cif import (
     CRM_GENDER_TYPE_FEMALE, EKYC_DOCUMENT_TYPE_NEW_CITIZEN,
     EKYC_DOCUMENT_TYPE_OLD_CITIZEN, EKYC_DOCUMENT_TYPE_PASSPORT,
@@ -33,12 +35,12 @@ class CtrKSS(BaseController):
         query_params: QueryParamsKSSRequest,
         booking_id: Optional[str] = None
     ):
-        # # Check exist Booking
-        # await CtrBooking().ctr_get_booking(
-        #     business_type_code=BUSINESS_TYPE_INIT_CIF,
-        #     booking_id=booking_id,
-        #     loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
-        # )
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking(
+            business_type_code=BUSINESS_TYPE_EKYC_AUDIT,
+            booking_id=booking_id,
+            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_EKYC_AUDIT}"
+        )
 
         current_user = self.current_user
         is_success, response = self.check_permission(
@@ -88,12 +90,12 @@ class CtrKSS(BaseController):
 
     async def ctr_get_list_branch(self, zone_id: int, booking_id: Optional[str] = None):
 
-        # # Check exist Booking
-        # await CtrBooking().ctr_get_booking(
-        #     business_type_code=BUSINESS_TYPE_INIT_CIF,
-        #     booking_id=booking_id,
-        #     loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
-        # )
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking(
+            business_type_code=BUSINESS_TYPE_EKYC_AUDIT,
+            booking_id=booking_id,
+            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_EKYC_AUDIT}"
+        )
 
         current_user = self.current_user
 
@@ -128,12 +130,12 @@ class CtrKSS(BaseController):
 
     async def ctr_get_list_zone(self, booking_id: Optional[str] = None):
 
-        # # Check exist Booking
-        # await CtrBooking().ctr_get_booking(
-        #     business_type_code=BUSINESS_TYPE_INIT_CIF,
-        #     booking_id=booking_id,
-        #     loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
-        # )
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking(
+            business_type_code=BUSINESS_TYPE_EKYC_AUDIT,
+            booking_id=booking_id,
+            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_EKYC_AUDIT}"
+        )
 
         current_user = self.current_user
 
