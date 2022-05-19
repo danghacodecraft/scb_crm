@@ -1155,7 +1155,7 @@ async def mapping_ekyc_back_side_citizen_card_ocr_data(image_url: str, ocr_data:
 async def repos_compare_face(
         face_image_data: bytes,
         identity_image_uuid: str,
-        booking_id: str = None
+        booking_id: Optional[str] = None
 ):
     is_success_add_face, add_face_info = await service_ekyc.add_face(file=face_image_data, booking_id=booking_id)
 
@@ -1163,7 +1163,11 @@ async def repos_compare_face(
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_EKYC, detail=add_face_info.get('message', ''))
 
     face_uuid = add_face_info.get('data').get('uuid')
-    is_success, compare_face_info = await service_ekyc.compare_face(face_uuid, identity_image_uuid, uuid=booking_id)
+    is_success, compare_face_info = await service_ekyc.compare_face(
+        face_uuid=face_uuid,
+        avatar_image_uuid=identity_image_uuid,
+        booking_id=booking_id
+    )
 
     if not is_success:
         return ReposReturn(
