@@ -207,10 +207,14 @@ async def view_list_statistics(
     )
 )
 async def create_post_check(
-        post_check_request: CreatePostCheckRequest,
-        current_user=Depends(get_current_user_from_header())
+    post_check_request: CreatePostCheckRequest,
+    BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
+    current_user=Depends(get_current_user_from_header())
 ):
-    post_check = await CtrKSS(current_user).ctr_create_post_check(post_check_request=post_check_request)
+    post_check = await CtrKSS(current_user).ctr_create_post_check(
+        post_check_request=post_check_request,
+        booking_id=BOOKING_ID
+    )
 
     return ResponseData[CreatePostCheckRequest](**post_check)
 

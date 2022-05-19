@@ -101,8 +101,8 @@ async def repos_get_customer_detail(postcheck_uuid: str, booking_id: Optional[st
     return ReposReturn(data=response)
 
 
-async def repos_create_post_check(payload_data: dict) -> ReposReturn:
-    is_success, response = await service_ekyc.create_post_check(payload_data=payload_data)
+async def repos_create_post_check(payload_data: dict, booking_id: Optional[str]) -> ReposReturn:
+    is_success, response = await service_ekyc.create_post_check(payload_data=payload_data, booking_id=booking_id)
     return ReposReturn(data=response)
 
 
