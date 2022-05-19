@@ -151,12 +151,13 @@ async def view_list_statistics_month(
     )
 )
 async def view_list_statistics_profiles(
-        selected_date: str = Query(None, description='Chọn ngày kết thúc DD/MM/YYYY'),
-        start_date: str = Query(None, description='Chọn ngày'),
-        end_date: str = Query(None, description='Chọn ngày bắt đầu DD/MM/YYYY'),
-        current_user=Depends(get_current_user_from_header())
+    selected_date: str = Query(None, description='Chọn ngày kết thúc DD/MM/YYYY'),
+    start_date: str = Query(None, description='Chọn ngày'),
+    end_date: str = Query(None, description='Chọn ngày bắt đầu DD/MM/YYYY'),
+    BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
+    current_user=Depends(get_current_user_from_header())
 ):
-    statistics_profiles = await CtrKSS(current_user).ctr_get_statistics_profiles()
+    statistics_profiles = await CtrKSS(current_user).ctr_get_statistics_profiles(booking_id=BOOKING_ID)
 
     return ResponseData[StatisticsProfilesResponse](**statistics_profiles)
 

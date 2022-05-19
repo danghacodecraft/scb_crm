@@ -217,7 +217,7 @@ class CtrKSS(BaseController):
 
         return self.response(statistics_months)
 
-    async def ctr_get_statistics_profiles(self):
+    async def ctr_get_statistics_profiles(self, booking_id: Optional[str] = None):
         current_user = self.current_user
 
         is_success, response = self.check_permission(
@@ -233,7 +233,7 @@ class CtrKSS(BaseController):
                 error_status_code=status.HTTP_404_NOT_FOUND
             )
 
-        statistics_profiles = self.call_repos(await repos_get_statistics_profiles())
+        statistics_profiles = self.call_repos(await repos_get_statistics_profiles(booking_id=booking_id))
 
         return self.response(data=statistics_profiles)
 

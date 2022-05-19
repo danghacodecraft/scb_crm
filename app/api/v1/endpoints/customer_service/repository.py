@@ -38,8 +38,8 @@ async def repos_get_list_zone(booking_id: Optional[str] = None) -> ReposReturn:
     return ReposReturn(data=response)
 
 
-async def repos_get_statistics_profiles() -> ReposReturn:
-    is_success, response = await service_ekyc.get_statistics_profiles()
+async def repos_get_statistics_profiles(booking_id: Optional[str] = None) -> ReposReturn:
+    is_success, response = await service_ekyc.get_statistics_profiles(booking_id=booking_id)
 
     return ReposReturn(data=response)
 
