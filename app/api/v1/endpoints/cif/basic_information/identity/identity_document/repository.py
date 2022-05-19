@@ -783,7 +783,7 @@ async def repos_upload_identity_document_and_ocr(
     return ReposReturn(data=ocr_response_data)
 
 
-async def repos_validate_ekyc(request_body: dict, booking_id: Optional[str] = None):
+async def repos_validate_ekyc(request_body: dict, booking_id: Optional[str]):
     is_success, response = await service_ekyc.validate_ekyc(
         request_body=request_body,
         booking_id=booking_id
@@ -1159,7 +1159,7 @@ async def mapping_ekyc_back_side_citizen_card_ocr_data(image_url: str, ocr_data:
 async def repos_compare_face(
         face_image_data: bytes,
         identity_image_uuid: str,
-        booking_id: Optional[str] = None
+        booking_id: Optional[str]
 ):
     is_success_add_face, add_face_info = await service_ekyc.add_face(file=face_image_data, booking_id=booking_id)
 

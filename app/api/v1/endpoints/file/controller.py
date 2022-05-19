@@ -15,7 +15,7 @@ from app.utils.functions import now
 
 
 class CtrFile(BaseController):
-    async def upload_file(self, file_upload: UploadFile, ekyc_flag: bool, booking_id: Optional[str] = None):
+    async def upload_file(self, file_upload: UploadFile, ekyc_flag: bool, booking_id: Optional[str]):
         data_file_upload = await file_upload.read()
 
         self.call_validator(await file_validator(data_file_upload))
@@ -57,8 +57,11 @@ class CtrFile(BaseController):
         info = self.call_repos(await repos_download_multi_file(uuids=uuids))
         return self.response(data=info)
 
-    async def upload_ekyc_file(self, uuid_ekyc: str, booking_id: Optional[str] = None):
-        info = self.call_repos(await repos_download_ekyc_file(uuid=uuid_ekyc))
+    async def upload_ekyc_file(self, uuid_ekyc: str, booking_id: Optional[str]):
+        info = self.call_repos(await repos_download_ekyc_file(
+            uuid=uuid_ekyc,
+            booking_id=booking_id
+        ))
 
         service = ServiceEKYC()
         info_file = await service.upload_file_ekyc(info=info, booking_id=booking_id)

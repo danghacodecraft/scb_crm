@@ -815,7 +815,7 @@ class CtrIdentityDocument(BaseController):
         self,
         identity_type: int,
         image_file: UploadFile,
-        booking_id: Optional[str] = None
+        booking_id: Optional[str]
     ):
 
         # Check exist Booking
@@ -867,7 +867,7 @@ class CtrIdentityDocument(BaseController):
 
         return self.response(data=face_compare_info)
 
-    async def validate_ekyc(self, ocr_ekyc_request: OcrEkycRequest, booking_id: Optional[str] = None):
+    async def validate_ekyc(self, ocr_ekyc_request: OcrEkycRequest, booking_id: Optional[str]):
 
         # Check exist Booking
         await CtrBooking().ctr_get_booking(

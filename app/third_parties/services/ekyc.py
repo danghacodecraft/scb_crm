@@ -37,7 +37,7 @@ class ServiceEKYC:
             file: bytes,
             filename: str,
             identity_type: int,
-            booking_id: Optional[str] = None,
+            booking_id: Optional[str],
     ) -> Tuple[bool, dict]:
         api_url = f"{self.url}/api/v1/card-service/ocr/"
 
@@ -104,7 +104,7 @@ class ServiceEKYC:
             self,
             face_uuid: str,
             avatar_image_uuid: str,
-            booking_id: Optional[str] = None
+            booking_id: Optional[str]
     ):
         """
         So sánh khuôn mặt trong 2 ảnh
@@ -142,7 +142,7 @@ class ServiceEKYC:
                 }),
             }
 
-    async def validate(self, data, document_type, booking_id: Optional[str] = None):
+    async def validate(self, data, document_type, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/card-service/validate/"
 
         headers = self.create_header(booking_id=booking_id)
@@ -173,7 +173,7 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"errors": {"message": "eKYC error please try again later"}}
 
-    async def validate_ekyc(self, request_body: dict, booking_id: Optional[str] = None):
+    async def validate_ekyc(self, request_body: dict, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/card-service/validate/"
 
         headers = self.create_header(booking_id=booking_id)
@@ -212,7 +212,7 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def get_list_branch(self, query_param: dict, booking_id: Optional[str] = None):
+    async def get_list_branch(self, query_param: dict, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/customer-service/crm/branch"
 
         headers = self.create_header(booking_id=booking_id)
@@ -263,7 +263,7 @@ class ServiceEKYC:
                 }),
             }
 
-    async def get_statistics_profiles(self, booking_id: Optional[str] = None):
+    async def get_statistics_profiles(self, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/customer-service/crm/profilestatistics"
 
         headers = self.create_header(booking_id=booking_id)
@@ -285,7 +285,7 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def get_statistics_months(self, months: int, booking_id: Optional[str] = None):
+    async def get_statistics_months(self, months: int, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/customer-service/crm/statisticsbymonth/"
 
         headers = self.create_header(booking_id=booking_id)
@@ -310,7 +310,7 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def get_history_post_check(self, postcheck_uuid: str, booking_id: Optional[str] = None):
+    async def get_history_post_check(self, postcheck_uuid: str, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/customer-service/crm/postcontrolhistory/"
 
         headers = self.create_header(booking_id=booking_id)
@@ -359,7 +359,7 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def get_statistics(self, query_param: dict, booking_id: Optional[str] = None):
+    async def get_statistics(self, query_param: dict, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/customer-service/crm/statistics/"
 
         headers = self.create_header(booking_id=booking_id)
@@ -381,7 +381,7 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def get_customer_detail(self, postcheck_uuid: str, booking_id: Optional[str] = None):
+    async def get_customer_detail(self, postcheck_uuid: str, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/customer-service/crm/{postcheck_uuid}/"
 
         headers = self.create_header(booking_id=booking_id)
@@ -413,7 +413,7 @@ class ServiceEKYC:
             )
         return True, response_data
 
-    async def create_post_check(self, payload_data: dict, booking_id: Optional[str] = None):
+    async def create_post_check(self, payload_data: dict, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/customer-service/crm/postcontrol/"
 
         headers = self.create_header(booking_id=booking_id)
@@ -437,7 +437,7 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def get_post_control(self, query_params, booking_id: Optional[str] = None):
+    async def get_post_control(self, query_params, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/customer-service/crm/postcontrol/"
 
         headers = self.create_header(booking_id=booking_id)
@@ -462,7 +462,7 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def upload_file(self, file: bytes, name, booking_id: Optional[str] = None):
+    async def upload_file(self, file: bytes, name, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/file-service/"
 
         headers = self.create_header(booking_id=booking_id)
@@ -520,7 +520,7 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def add_finger_ekyc(self, json_body: dict, booking_id: Optional[str] = None):
+    async def add_finger_ekyc(self, json_body: dict, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/finger-service/add/"
 
         headers = self.create_header(booking_id=booking_id)
@@ -542,7 +542,7 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def compare_finger_ekyc(self, json_body: dict, booking_id: Optional[str] = None):
+    async def compare_finger_ekyc(self, json_body: dict, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/finger-service/verify/"
 
         headers = self.create_header(booking_id=booking_id)
@@ -565,7 +565,7 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def download_file(self, uuid: str, booking_id: Optional[str] = None):
+    async def download_file(self, uuid: str, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/file-service/{uuid}/"
         headers = self.create_header(booking_id=booking_id)
 
@@ -587,7 +587,7 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def upload_file_ekyc(self, info: dict, booking_id: Optional[str] = None):
+    async def upload_file_ekyc(self, info: dict, booking_id: Optional[str]):
         async with aiohttp.ClientSession() as session:
             uri = info["uri"]
             url = replace_with_cdn(
@@ -613,7 +613,7 @@ class ServiceEKYC:
                         "detail": f"Invalid: {url}"
                     }
 
-    async def save_customer_ekyc(self, body_data: dict, booking_id: Optional[str] = None):
+    async def save_customer_ekyc(self, body_data: dict, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/customer-service/customers/"
 
         headers = self.create_header(booking_id=booking_id)
@@ -637,7 +637,7 @@ class ServiceEKYC:
             self,
             file: bytes,
             filename: str,
-            booking_id: Optional[str] = None
+            booking_id: Optional[str]
     ):
 
         api_url = f"{self.url}/api/v1/face-service/add/"
@@ -670,7 +670,7 @@ class ServiceEKYC:
                 }),
             }
 
-    def create_header(self, booking_id: Optional[str] = None):
+    def create_header(self, booking_id: Optional[str]):
         # thay đổi giá trị x-transaction-id
         transaction_id = "CRM_"
         if booking_id:

@@ -26,7 +26,7 @@ class CtrApproveFace(BaseController):
             cif_id: str,
             amount: int,  # Số lượng hình ảnh so sánh
             image_file: UploadFile,
-            booking_id: Optional[str] = None
+            booking_id: Optional[str]
     ):
         current_user = self.current_user.user_info
         # check cif đang tạo

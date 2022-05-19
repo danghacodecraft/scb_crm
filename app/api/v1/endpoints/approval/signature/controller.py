@@ -1,3 +1,5 @@
+from typing import Optional
+
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.signature.repository import (
     repos_compare_signature, repos_get_signature_data, repos_save_signature
@@ -108,7 +110,7 @@ class CtrSignature(BaseController):
             'signature': signature
         } for data_str, signature in date__signatures.items()])
 
-    async def ctr_compare_signature(self, cif_id: str, signature_img):
+    async def ctr_compare_signature(self, cif_id: str, signature_img, booking_id: Optional[str]):
         current_user = self.current_user.user_info
         data_signature_img = await signature_img.read()
 
@@ -122,7 +124,8 @@ class CtrSignature(BaseController):
             uuid_ekyc=info_signature_img['uuid_ekyc'],
             uuid=info_signature_img['uuid'],
             session=self.oracle_session,
-            user_id=current_user.code
+            user_id=current_user.code,
+            booking_id=booking_id
         ))
 
         image_uuids = [signature['image_url'] for signature in compare_signatures]

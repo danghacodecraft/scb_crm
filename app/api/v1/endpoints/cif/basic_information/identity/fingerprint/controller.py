@@ -170,7 +170,7 @@ class CtrFingerPrint(BaseController):
         cif_id: str,
         file: UploadFile,
         ids_finger: List,
-        booking_id: Optional[str] = None
+        booking_id: Optional[str]
     ):
 
         response_data = {}

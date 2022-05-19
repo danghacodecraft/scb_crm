@@ -33,7 +33,7 @@ class CtrKSS(BaseController):
     async def ctr_get_list_kss(
         self,
         query_params: QueryParamsKSSRequest,
-        booking_id: Optional[str] = None
+        booking_id: Optional[str]
     ):
         # Check exist Booking
         await CtrBooking().ctr_get_booking(
@@ -88,7 +88,7 @@ class CtrKSS(BaseController):
 
         return self.response(data=list_kss)
 
-    async def ctr_get_list_branch(self, zone_id: int, booking_id: Optional[str] = None):
+    async def ctr_get_list_branch(self, zone_id: int, booking_id: Optional[str]):
 
         # Check exist Booking
         await CtrBooking().ctr_get_booking(
@@ -128,7 +128,7 @@ class CtrKSS(BaseController):
 
         return self.response(data=branchs)
 
-    async def ctr_get_list_zone(self, booking_id: Optional[str] = None):
+    async def ctr_get_list_zone(self, booking_id: Optional[str]):
 
         # Check exist Booking
         await CtrBooking().ctr_get_booking(
@@ -159,7 +159,7 @@ class CtrKSS(BaseController):
         self,
         postcheck_uuid: str,
         post_control_his_id: int,
-        booking_id: Optional[str] = None
+        booking_id: Optional[str]
     ):
         current_user = self.current_user
 
@@ -187,7 +187,7 @@ class CtrKSS(BaseController):
 
         return self.response(data=post_control_response)
 
-    async def ctr_history_post_check(self, postcheck_uuid: str, booking_id: Optional[str] = None):
+    async def ctr_history_post_check(self, postcheck_uuid: str, booking_id: Optional[str]):
         current_user = self.current_user
 
         is_success, response = self.check_permission(
@@ -210,7 +210,7 @@ class CtrKSS(BaseController):
 
         return self.response(data=history_post_check)
 
-    async def ctr_statistics_month(self, months: int, booking_id: Optional[str] = None):
+    async def ctr_statistics_month(self, months: int, booking_id: Optional[str]):
         current_user = self.current_user
 
         is_success, response = self.check_permission(
@@ -230,7 +230,7 @@ class CtrKSS(BaseController):
 
         return self.response(statistics_months)
 
-    async def ctr_get_statistics_profiles(self, booking_id: Optional[str] = None):
+    async def ctr_get_statistics_profiles(self, booking_id: Optional[str]):
         current_user = self.current_user
 
         is_success, response = self.check_permission(
@@ -250,7 +250,7 @@ class CtrKSS(BaseController):
 
         return self.response(data=statistics_profiles)
 
-    async def ctr_get_statistics(self, search_type: int, selected_date: str, booking_id: Optional[str] = None):
+    async def ctr_get_statistics(self, search_type: int, selected_date: str, booking_id: Optional[str]):
         current_user = self.current_user
 
         is_success, response = self.check_permission(
@@ -275,7 +275,7 @@ class CtrKSS(BaseController):
 
         return self.response(data=statistics)
 
-    async def ctr_create_post_check(self, post_check_request: CreatePostCheckRequest, booking_id: Optional[str] = None):
+    async def ctr_create_post_check(self, post_check_request: CreatePostCheckRequest, booking_id: Optional[str]):
         current_user = self.current_user
         # role nhập
         is_success, response = self.check_permission(
@@ -312,7 +312,7 @@ class CtrKSS(BaseController):
     async def ctr_update_post_check(
         self,
         postcheck_update_request: UpdatePostCheckRequest,
-        booking_id: Optional[str] = None
+        booking_id: Optional[str]
     ):
 
         current_user = self.current_user
@@ -343,7 +343,7 @@ class CtrKSS(BaseController):
 
         return self.response(data=update_post_check)
 
-    async def ctr_get_customer_detail(self, postcheck_uuid: str, booking_id: Optional[str] = None):
+    async def ctr_get_customer_detail(self, postcheck_uuid: str, booking_id: Optional[str]):
         current_user = self.current_user
 
         is_success, response = self.check_permission(
@@ -373,7 +373,7 @@ class CtrKSS(BaseController):
             gender: str,
             date_of_expiry: str,
             phone_number: str,
-            booking_id: Optional[str] = None,
+            booking_id: Optional[str],
             front_image: Optional[str] = None,
             front_image_name: Optional[str] = None,
             back_image: Optional[str] = None,

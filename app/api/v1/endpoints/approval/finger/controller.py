@@ -45,7 +45,7 @@ class CtrFingers(BaseController):
         self,
         cif_id: str,
         finger_img,
-        booking_id: Optional[str] = None
+        booking_id: Optional[str]
     ):
         current_user = self.current_user.user_info
         finger_id_ekycs = self.call_repos(await repos_get_id_finger_ekyc(cif_id=cif_id, session=self.oracle_session))
@@ -70,7 +70,8 @@ class CtrFingers(BaseController):
         compare_finger_response = self.call_repos(await repos_compare_finger_ekyc(
             cif_id=cif_id,
             uuid_ekyc=info_finger_img['uuid_ekyc'],
-            id_fingers=id_fingers
+            id_fingers=id_fingers,
+            booking_id=booking_id
         ))
 
         response_data = []
