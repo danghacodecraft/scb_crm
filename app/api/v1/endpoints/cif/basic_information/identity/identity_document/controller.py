@@ -16,6 +16,7 @@ from app.api.v1.endpoints.cif.basic_information.identity.identity_document.schem
 from app.api.v1.endpoints.cif.repository import (
     repos_check_not_exist_cif_number
 )
+from app.api.v1.endpoints.cif.schema import EKYCHeaderRequest
 from app.api.v1.endpoints.file.controller import CtrFile
 from app.api.v1.endpoints.file.validator import file_validator
 from app.api.v1.others.permission.controller import PermissionController
@@ -161,9 +162,11 @@ class CtrIdentityDocument(BaseController):
 
         return self.response(data=identity_log_infos)
 
-    async def save_identity(self, identity_document_request: Union[IdentityCardSaveRequest,
-                                                                   CitizenCardSaveRequest,
-                                                                   PassportSaveRequest]):
+    async def save_identity(
+        self,
+        identity_document_request: Union[IdentityCardSaveRequest, CitizenCardSaveRequest, PassportSaveRequest],
+        header_request: EKYCHeaderRequest
+    ):
         # check quyền user
         self.call_repos(await PermissionController.ctr_approval_check_permission(
             auth_response=self.current_user,
@@ -172,6 +175,14 @@ class CtrIdentityDocument(BaseController):
             permission_code=IDM_PERMISSION_CODE_OPEN_CIF,
             stage_code=CIF_STAGE_BEGIN
         ))
+
+        booking_id = header_request.BOOKING_ID
+        # # Check exist Booking
+        # await CtrBooking().ctr_get_booking(
+        #     business_type_code=BUSINESS_TYPE_INIT_CIF,
+        #     booking_id=booking_id,
+        #     loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        # )
 
         current_user = self.current_user.user_info
         current_user_code = current_user.code
@@ -716,7 +727,8 @@ class CtrIdentityDocument(BaseController):
 
         is_success, compare_response = await service_ekyc.compare_face(
             face_uuid=compare_face_uuid_ekyc,
-            avatar_image_uuid=identity_avatar_image_uuid
+            avatar_image_uuid=identity_avatar_image_uuid,
+            booking_id=booking_id
         )
 
         if not is_success:
