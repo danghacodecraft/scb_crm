@@ -28,6 +28,8 @@ class CtrDebitCard(BaseController):
     async def ctr_debit_card(self, cif_id: str):
 
         debit_card = self.call_repos(await repos_debit_card(cif_id, self.oracle_session))
+
+        # Lấy Booking Code
         booking = self.call_repos(await repos_get_booking(
             cif_id=cif_id, session=self.oracle_session
         ))
