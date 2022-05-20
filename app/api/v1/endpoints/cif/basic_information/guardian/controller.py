@@ -71,7 +71,6 @@ class CtrGuardian(BaseController):
             )
 
             nationality_code = guardian_detail_data["nationality_code"]
-            print(nationality_code)
 
             dropdown_nationality = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=AddressCountry, name=None, code=nationality_code
@@ -159,11 +158,20 @@ class CtrGuardian(BaseController):
                     )))
 
             guardian_details.append(guardian_item)
-        data_response = {
-            "guardian_flag": True if guardians else False,
-            "number_of_guardian": len(guardians),
-            "guardians": guardian_details
-        }
+
+        # Lấy Booking Code
+        booking = self.call_repos(await repos_get_booking(
+            cif_id=cif_id, session=self.oracle_session
+        ))
+        data_response = dict(
+            guardian_flag=True if guardians else False,
+            number_of_guardian=len(guardians),
+            guardians=guardian_details,
+            booking=dict(
+                id=booking.id,
+                code=booking.code,
+            )
+        )
 
         return self.response(data=data_response)
 
@@ -261,7 +269,7 @@ class CtrGuardian(BaseController):
         ))
         save_guardian_info.update(booking=dict(
             id=booking.id,
-            code=booking.code
+            code=booking.code,
         ))
 
         return self.response(data=save_guardian_info)
