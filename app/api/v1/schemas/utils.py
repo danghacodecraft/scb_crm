@@ -37,7 +37,7 @@ class OptionalDropdownRequest(BaseSchema):
 ########################################################################################################################
 class SaveSuccessResponse(BaseSchema):
     cif_id: str = Field(..., min_length=1, description='Id CIF ảo')
-    booking: OptionalDropdownResponse = Field(..., description='Booking')
+    booking: OptionalDropdownResponse = Field(None, description='Booking')
 
 
 class HistoryData(BaseSchema):

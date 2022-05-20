@@ -59,6 +59,7 @@ class DetailCustomerRelationshipResponse(BaseSchema):
     customer_relationship_flag: bool = Field(..., description="Cờ có người mối quan hệ khách hàng không")
     number_of_customer_relationship: int = Field(..., description="Số mối quan hệ khách hàng")
     relationships: List[CustomerRelationshipResponse] = Field(..., description="Danh sách mối quan hệ khách hàng")
+    booking: OptionalDropdownResponse = Field(..., description="Booking")
 
 
 ########################################################################################################################
