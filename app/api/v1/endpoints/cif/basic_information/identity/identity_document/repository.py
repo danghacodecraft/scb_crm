@@ -43,9 +43,9 @@ from app.third_parties.oracle.models.master_data.others import (
 from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import (
     ACTIVE_FLAG_ACTIVED, ADDRESS_COUNTRY_CODE_VN, BUSINESS_FORM_TTCN_GTDD_GTDD,
-    BUSINESS_FORM_TTCN_GTDD_KM, CONTACT_ADDRESS_CODE, CRM_GENDER_TYPE_FEMALE,
-    CRM_GENDER_TYPE_MALE, DROPDOWN_NONE_DICT, EKYC_DOCUMENT_TYPE,
-    EKYC_GENDER_TYPE_FEMALE, EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
+    CONTACT_ADDRESS_CODE, CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE,
+    DROPDOWN_NONE_DICT, EKYC_DOCUMENT_TYPE, EKYC_GENDER_TYPE_FEMALE,
+    EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_BACK_SIDE_IDENTITY_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD,
@@ -59,8 +59,7 @@ from app.utils.error_messages import (
     ERROR_COMPARE_IMAGE_IS_EXISTED
 )
 from app.utils.functions import (
-    date_string_to_other_date_string_format, dropdown, generate_uuid, now,
-    orjson_dumps
+    date_string_to_other_date_string_format, dropdown, generate_uuid, now
 )
 from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese
 
@@ -428,7 +427,27 @@ async def repos_save_identity(
         if booking.is_error:
             return ReposReturn(is_error=True, msg=booking.msg, detail=booking.detail)
 
-        new_booking_id, booking_code = booking.data
+        booking_id, booking_code = booking.data
+        session.bulk_update_mappings(
+            BookingCustomer,
+            dict(
+                booking_id=booking_id,
+                customer_id=new_customer_id
+            )
+        )
+
+        session.bulk_update_mappings(
+            BookingBusinessForm,
+            dict(
+                booking_id=booking_id,
+                business_form_id=BUSINESS_FORM_TTCN_GTDD_GTDD,
+                save_flag=True,  # Save_flag đổi lại thành True do Business Form giờ là những Tab nhỏ nhiều cấp
+                form_data=request_data,
+                log_data=history_datas,
+                created_at=now(),
+                updated_at=now()
+            )
+        )
 
         # create log
         session.add_all([
@@ -436,31 +455,10 @@ async def repos_save_identity(
             TransactionStageStatus(**saving_transaction_stage_status),
             TransactionStage(**saving_transaction_stage),
             TransactionDaily(**saving_transaction_daily),
-            TransactionSender(**saving_transaction_sender),
+            TransactionSender(**saving_transaction_sender)
             # TransactionReceiver(**saving_transaction_receiver),
-            BookingCustomer(
-                booking_id=new_booking_id,
-                customer_id=new_customer_id
-            ),
-            BookingBusinessForm(
-                booking_id=new_booking_id,
-                business_form_id=BUSINESS_FORM_TTCN_GTDD_GTDD,
-                save_flag=True,  # Save_flag đổi lại thành True do Business Form giờ là những Tab nhỏ nhiều cấp
-                form_data=orjson_dumps(request_data),
-                log_data=orjson_dumps(history_datas),
-                created_at=now(),
-                updated_at=now()
-            ),
             # Hiện tại Tab khuôn mặt không có chức năng lưu
             # vì api GTDD đã upload khuôn mặt nên Tab này coi như hoàn thành
-            BookingBusinessForm(
-                booking_id=new_booking_id,
-                business_form_id=BUSINESS_FORM_TTCN_GTDD_KM,
-                save_flag=True,
-                form_data=orjson_dumps(request_data),
-                created_at=now(),
-                updated_at=now()
-            )
         ])
 
     # Update
