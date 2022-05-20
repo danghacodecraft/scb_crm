@@ -11,15 +11,16 @@ from app.api.v1.endpoints.mobile.repository import (
     repos_get_mobile_identity, repos_get_total_item
 )
 from app.api.v1.endpoints.mobile.schema import IdentityMobileRequest
-from app.api.v1.endpoints.repository import repos_create_booking
+from app.api.v1.others.booking.repository import repos_create_booking
 from app.api.v1.validator import validate_history_data
 from app.settings.config import DATE_INPUT_OUTPUT_EKYC_FORMAT
 from app.settings.event import service_ekyc
 from app.third_parties.oracle.models.master_data.address import AddressCountry
 from app.third_parties.oracle.models.master_data.customer import CustomerGender
+from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import (
-    ADDRESS_COUNTRY_CODE_VN, BUSINESS_TYPE_INIT_CIF, CHANNEL_AT_THE_MOBILE,
-    CLASSIFICATION_PERSONAL, CONTACT_ADDRESS_CODE, CUSTOMER_UNCOMPLETED_FLAG,
+    ADDRESS_COUNTRY_CODE_VN, CHANNEL_AT_THE_MOBILE, CLASSIFICATION_PERSONAL,
+    CONTACT_ADDRESS_CODE, CUSTOMER_UNCOMPLETED_FLAG,
     EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_BACK_SIDE_IDENTITY_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_CITIZEN_CARD,
@@ -87,7 +88,9 @@ class CtrIdentityMobile(BaseController):
         booking = self.call_repos(await repos_create_booking(
             transaction_id=saving_transaction_daily['transaction_id'],
             session=self.oracle_session,
-            current_user=current_user.user_info
+            current_user=current_user.user_info,
+            booking_code_flag=True,
+            business_type_code=BUSINESS_TYPE_INIT_CIF
         ))
         new_booking_id, booking_code = booking
 
@@ -99,6 +102,7 @@ class CtrIdentityMobile(BaseController):
                 image_file=front_side_image,
                 image_file_name=front_side_image_name,
                 identity_type=EKYC_IDENTITY_TYPE_PASSPORT,
+                booking_id=new_booking_id,
                 session=self.oracle_session
             ))
 
@@ -377,7 +381,7 @@ class CtrIdentityMobile(BaseController):
         is_success_add_face, add_face_info = await service_ekyc.add_face_ekyc(
             file=avatar_image,
             filename=avatar_image_name,
-            uuid=new_booking_id
+            booking_id=new_booking_id
         )
         if not is_success_add_face:
             return self.response_exception(msg=ERROR_CALL_SERVICE_EKYC, detail=add_face_info.get('message', ''))
@@ -396,7 +400,9 @@ class CtrIdentityMobile(BaseController):
         # Thêm avatar thành Hình ảnh định danh Khuôn mặt
         ################################################################################################################
             avatar_image_uuid_service = await CtrFile().upload_ekyc_file(
-                uuid_ekyc=ocr_data_front_side['front_side_information']['identity_avatar_image_uuid'])
+                uuid_ekyc=ocr_data_front_side['front_side_information']['identity_avatar_image_uuid'],
+                booking_id=new_booking_id
+            )
         ################################################################################################################
 
         else:
@@ -409,7 +415,9 @@ class CtrIdentityMobile(BaseController):
             identity_avatar_image_uuid = ocr_data_front_side['passport_information']['identity_avatar_image_uuid']
 
             avatar_image_uuid_service = await CtrFile().upload_ekyc_file(
-                uuid_ekyc=ocr_data_front_side['passport_information']['identity_avatar_image_uuid'])
+                uuid_ekyc=ocr_data_front_side['passport_information']['identity_avatar_image_uuid'],
+                booking_id=new_booking_id
+            )
 
         # lưu CustomerCompareImage
         # if not is_success:

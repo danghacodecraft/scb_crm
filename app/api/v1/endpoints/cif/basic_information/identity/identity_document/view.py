@@ -1,7 +1,9 @@
 from typing import List, Union
 
 import pydantic
-from fastapi import APIRouter, Body, Depends, File, Form, Path, UploadFile
+from fastapi import (
+    APIRouter, Body, Depends, File, Form, Header, Path, UploadFile
+)
 from fastapi.exceptions import RequestValidationError
 from starlette import status
 from starlette.requests import Request
@@ -30,12 +32,13 @@ from app.api.v1.endpoints.cif.basic_information.identity.identity_document.schem
 )
 from app.api.v1.schemas.utils import SaveSuccessResponse
 from app.utils.constant.cif import (
-    EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
+    EKYC_IDENTITY_TYPE, EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_BACK_SIDE_IDENTITY_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD,
     IDENTITY_DOCUMENT_TYPE_CITIZEN_CARD, IDENTITY_DOCUMENT_TYPE_IDENTITY_CARD
 )
+from app.utils.functions import make_description_from_dict
 
 router = APIRouter()
 
@@ -148,19 +151,17 @@ async def view_save(
     tags=['[CIF] I. TTCN']
 )
 async def view_upload_identity_document_image(
-        identity_type: int = Form(..., description="""Loại giấy tờ định danh
-            \n`0` : Hộ chiếu
-            \n`1` : CMND mặt trước
-            \n`2` : CMND mặt sau
-            \n`3` : CCCD mặt trước
-            \n`4` : CCCD mặt sau
-        """),
+        identity_type: int = Form(
+            ..., description=f"Loại giấy tờ định danh: {make_description_from_dict(EKYC_IDENTITY_TYPE)}"
+        ),
         image_file: UploadFile = File(..., description='File hình ảnh giấy tờ định danh'),
+        BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"), # noqa
         current_user=Depends(get_current_user_from_header())
 ):
     upload_info = await CtrIdentityDocument(current_user).upload_identity_document_and_ocr(
         image_file=image_file,
-        identity_type=identity_type
+        identity_type=identity_type,
+        booking_id=BOOKING_ID
     )
 
     if identity_type == EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD:
@@ -190,11 +191,13 @@ async def view_compare_face(
         identity_image_uuid: str = File(...,
                                         description='ID hình ảnh giấy tờ định danh có được sau khi gọi API '
                                         '`Upload ảnh giấy tờ tùy thân + Lấy thông tin OCR của giấy tờ tùy thân`'),
+        BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
         current_user=Depends(get_current_user_from_header())
 ):
     face_compare_info = await CtrIdentityDocument(current_user).compare_face(
         face_image=face_image,
-        identity_image_uuid=identity_image_uuid
+        identity_image_uuid=identity_image_uuid,
+        booking_id=BOOKING_ID
     )
     return ResponseData[CompareSuccessResponse](**face_compare_info)
 
@@ -211,7 +214,11 @@ async def view_compare_face(
 )
 async def validate_ekyc(
         ocr_ekyc_request: OcrEkycRequest,
+        BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
         current_user=Depends(get_current_user_from_header())
 ):
-    data = await CtrIdentityDocument(current_user).validate_ekyc(ocr_ekyc_request=ocr_ekyc_request)
+    data = await CtrIdentityDocument(current_user).validate_ekyc(
+        ocr_ekyc_request=ocr_ekyc_request,
+        booking_id=BOOKING_ID
+    )
     return ResponseData[ValidateResponse](**data)

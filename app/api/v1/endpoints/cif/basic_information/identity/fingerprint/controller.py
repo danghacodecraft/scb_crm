@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import UploadFile
 
@@ -13,10 +13,12 @@ from app.api.v1.endpoints.cif.repository import (
     repos_get_booking_code, repos_get_customer_identity,
     repos_get_initializing_customer
 )
+from app.api.v1.others.booking.controller import CtrBooking
 from app.settings.event import service_ekyc, service_file
 from app.third_parties.oracle.models.master_data.identity import (
     FingerType, HandSide
 )
+from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import (
     ACTIVE_FLAG_ACTIVED, ACTIVE_FLAG_CREATE_FINGERPRINT,
     ACTIVE_FLAG_DISACTIVED, FRONT_FLAG_CREATE_FINGERPRINT, HAND_SIDE_LEFT_CODE,
@@ -165,16 +167,33 @@ class CtrFingerPrint(BaseController):
             'fingerprint_2': fingerprint_2
         })
 
-    async def ctr_add_fingerprint(self, cif_id: str, file: UploadFile, ids_finger: List):
+    async def ctr_add_fingerprint(
+        self,
+        cif_id: str,
+        file: UploadFile,
+        ids_finger: List,
+        booking_id: Optional[str]
+    ):
+
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking(
+            business_type_code=BUSINESS_TYPE_INIT_CIF,
+            booking_id=booking_id,
+            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        )
 
         response_data = {}
 
         file_upload = await file.read()
         # upload service file
-        response = await service_file.upload_file(file=file_upload, name=file.filename)
+        response = await service_file.upload_file(file=file_upload, name=file.filename, booking_id=booking_id)
 
         # upload file ekyc
-        is_success, uuid_ekyc = await service_ekyc.upload_file(file=file_upload, name=file.filename)
+        is_success, uuid_ekyc = await service_ekyc.upload_file(
+            file=file_upload,
+            name=file.filename,
+            booking_id=booking_id
+        )
 
         # body add finger call ekyc
         json_body_add_finger = {
