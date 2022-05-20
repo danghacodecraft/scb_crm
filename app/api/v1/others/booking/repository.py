@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.elements import and_
 from sqlalchemy.sql.functions import count
@@ -80,9 +80,49 @@ async def repos_create_booking(
     return ReposReturn(data=(booking_id, booking_code))
 
 
+async def repos_update_booking(
+    booking_id: str,
+    transaction_id: Optional[str],
+    business_type_code: str,
+    session: Session,
+    current_user: UserInfoResponse,
+):
+    """
+    Input:
+        booking_code_flag: cần trả ra booking code thì truyền vào
+    """
+    current_user_branch_code = current_user.hrm_branch_code
+
+    is_existed, booking_code = await generate_booking_code(
+        branch_code=current_user_branch_code,
+        business_type_code=business_type_code,
+        session=session
+    )
+
+    if is_existed:
+        return ReposReturn(
+            is_error=True,
+            msg=ERROR_BOOKING_CODE_EXISTED + f", booking_code: {booking_code}",
+            detail=MESSAGE_STATUS[ERROR_BOOKING_CODE_EXISTED]
+        )
+
+    session.execute(
+        update(Booking)
+        .filter(Booking.id == booking_id)
+        .values(
+            transaction_id=transaction_id,
+            code=booking_code,
+            business_type_id=business_type_code,
+            branch_id=current_user_branch_code,
+            updated_at=now()
+        )
+    )
+    session.commit()
+    return ReposReturn(data=(booking_id, booking_code))
+
+
 async def repos_check_exist_booking(
         booking_id: str,
-        business_type_code: str,
         session: Session
 ):
 
