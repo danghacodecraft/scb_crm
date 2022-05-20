@@ -11,7 +11,6 @@ from app.api.v1.endpoints.repository import (
     write_transaction_log_and_update_booking
 )
 from app.api.v1.endpoints.user.schema import UserInfoResponse
-from app.api.v1.others.booking.repository import repos_update_booking
 from app.settings.event import service_ekyc, service_file
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
     CustomerAddress
@@ -40,7 +39,6 @@ from app.third_parties.oracle.models.master_data.identity import (
 from app.third_parties.oracle.models.master_data.others import (
     Nation, Religion, TransactionStage, TransactionStageStatus
 )
-from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import (
     ACTIVE_FLAG_ACTIVED, ADDRESS_COUNTRY_CODE_VN, BUSINESS_FORM_TTCN_GTDD_GTDD,
     CONTACT_ADDRESS_CODE, CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE,
@@ -417,37 +415,28 @@ async def repos_save_identity(
         #     booking_code_flag=True,
         #     business_type_code=BUSINESS_TYPE_INIT_CIF
         # )
-        booking = await repos_update_booking(
+
+        is_success, booking_response = await write_transaction_log_and_update_booking(
             booking_id=booking_id,
-            transaction_id=saving_transaction_daily['transaction_id'],
+            log_data=request_data,
             session=session,
-            current_user=current_user,
-            business_type_code=BUSINESS_TYPE_INIT_CIF
+            customer_id=customer_id,
+            business_form_id=BUSINESS_FORM_TTCN_GTDD_GTDD
         )
-        if booking.is_error:
-            return ReposReturn(is_error=True, msg=booking.msg, detail=booking.detail)
+        if not is_success:
+            return ReposReturn(is_error=True, msg=booking_response['msg'])
 
-        booking_id, booking_code = booking.data
-        session.bulk_update_mappings(
-            BookingCustomer,
-            dict(
-                booking_id=booking_id,
-                customer_id=new_customer_id
-            )
-        )
+        booking_code = booking_response['booking_code']
 
-        session.bulk_update_mappings(
-            BookingBusinessForm,
-            dict(
-                booking_id=booking_id,
-                business_form_id=BUSINESS_FORM_TTCN_GTDD_GTDD,
-                save_flag=True,  # Save_flag đổi lại thành True do Business Form giờ là những Tab nhỏ nhiều cấp
-                form_data=request_data,
-                log_data=history_datas,
-                created_at=now(),
-                updated_at=now()
-            )
-        )
+        session.execute(update(BookingCustomer).filter(BookingCustomer.booking_id == booking_id).values(customer_id=new_customer_id))
+
+        session.execute(update(BookingBusinessForm).filter(BookingBusinessForm.booking_id == booking_id).values(
+            # business_form_id=BUSINESS_FORM_TTCN_GTDD_GTDD,
+            save_flag=True,  # Save_flag đổi lại thành True do Business Form giờ là những Tab nhỏ nhiều cấp
+            form_data=request_data,
+            log_data=history_datas,
+            updated_at=now()
+        ))
 
         # create log
         session.add_all([

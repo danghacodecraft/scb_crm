@@ -153,7 +153,8 @@ async def write_transaction_log_and_update_booking(
         business_form_id: str,
         history_datas: Optional[List] = None,
         customer_id: Optional[str] = None,
-        account_id: Optional[str] = None
+        account_id: Optional[str] = None,
+        booking_id: Optional[str] = None
 ) -> Tuple[bool, Optional[dict]]:
     if customer_id:
         booking = session.execute(
@@ -181,6 +182,13 @@ async def write_transaction_log_and_update_booking(
         ).scalar()
     else:
         booking = None
+
+    if booking_id:
+        booking = session.execute(
+            select(
+                Booking
+            ).filter(Booking.id == booking_id)
+        ).scalar()
 
     if not booking:
         return False, dict(msg='Can not found booking')
