@@ -591,8 +591,10 @@ async def repos_save_identity(
 
     return ReposReturn(data=dict(
         cif_id=customer_id,
-        booking_id=booking_id,
-        booking_code=booking_code
+        booking=dict(
+            id=booking_id,
+            code=booking_code
+        )
     ))
 
 
