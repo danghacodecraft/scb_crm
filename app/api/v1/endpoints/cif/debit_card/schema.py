@@ -5,7 +5,9 @@ from pydantic import Field
 from app.api.base.schema import BaseSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
 from app.api.v1.schemas.cif import AddressRequest, OptionalAddressResponse
-from app.api.v1.schemas.utils import DropdownRequest, DropdownResponse
+from app.api.v1.schemas.utils import (
+    DropdownRequest, DropdownResponse, OptionalDropdownResponse
+)
 
 
 class CardTypeResponse(BaseSchema):
@@ -79,6 +81,7 @@ class DebitCardResponse(BaseSchema):
     information_debit_card: InformationDebitCardResponse = Field(None, description="Thông tin thẻ ")
     card_delivery_address: CardDeliveryAddressResponse = Field(None, description="Địa chỉ nhân thẻ ")
     information_sub_debit_card: InformationSubDebitCardResponse = Field(None, description="Thông tin thẻ phụ")
+    booking: OptionalDropdownResponse = Field(..., description="Booking")
 
 
 # ######################### request schema ###################################
