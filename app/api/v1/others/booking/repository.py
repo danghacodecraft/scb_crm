@@ -67,7 +67,7 @@ async def repos_create_booking(
                 msg=ERROR_BOOKING_CODE_EXISTED + f", booking_code: {booking_code}",
                 detail=MESSAGE_STATUS[ERROR_BOOKING_CODE_EXISTED]
             )
-    session.add(
+    session.add_all([
         Booking(
             id=booking_id,
             transaction_id=transaction_id,
@@ -80,7 +80,7 @@ async def repos_create_booking(
         BookingCustomer(
             booking_id=booking_id
         )
-    )
+    ])
     session.commit()
     return ReposReturn(data=(booking_id, booking_code))
 
