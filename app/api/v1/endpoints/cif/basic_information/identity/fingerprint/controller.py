@@ -189,7 +189,7 @@ class CtrFingerPrint(BaseController):
 
         file_upload = await file.read()
         # upload service file
-        response = await service_file.upload_file(file=file_upload, name=file.filename, booking_id=booking_id)
+        response = await service_file.upload_file(file=file_upload, name=file.filename)
 
         # upload file ekyc
         is_success, uuid_ekyc = await service_ekyc.upload_file(
