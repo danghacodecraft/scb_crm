@@ -3,7 +3,6 @@ from typing import Optional, Union
 from fastapi import UploadFile
 
 from app.api.base.controller import BaseController
-from app.api.v1.controller import PermissionController
 from app.api.v1.endpoints.cif.basic_information.identity.identity_document.repository import (
     repos_compare_face, repos_get_detail_identity,
     repos_get_identity_image_transactions, repos_get_identity_information,
@@ -19,6 +18,8 @@ from app.api.v1.endpoints.cif.repository import (
 )
 from app.api.v1.endpoints.file.controller import CtrFile
 from app.api.v1.endpoints.file.validator import file_validator
+from app.api.v1.others.booking.controller import CtrBooking
+from app.api.v1.others.permission.controller import PermissionController
 from app.api.v1.validator import validate_history_data
 from app.settings.config import DATE_INPUT_OUTPUT_EKYC_FORMAT
 from app.settings.event import service_ekyc
@@ -45,9 +46,10 @@ from app.third_parties.oracle.models.master_data.identity import (
 )
 from app.third_parties.oracle.models.master_data.others import Nation, Religion
 from app.utils.constant.approval import CIF_STAGE_BEGIN
+from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import (
-    ADDRESS_COUNTRY_CODE_VN, BUSINESS_TYPE_INIT_CIF, CHANNEL_AT_THE_COUNTER,
-    CONTACT_ADDRESS_CODE, CRM_GENDER_TYPE_MALE, CUSTOMER_UNCOMPLETED_FLAG,
+    ADDRESS_COUNTRY_CODE_VN, CHANNEL_AT_THE_COUNTER, CONTACT_ADDRESS_CODE,
+    CRM_GENDER_TYPE_MALE, CUSTOMER_UNCOMPLETED_FLAG,
     EKYC_DOCUMENT_TYPE_NEW_CITIZEN, EKYC_DOCUMENT_TYPE_NEW_IDENTITY,
     EKYC_DOCUMENT_TYPE_OLD_CITIZEN, EKYC_DOCUMENT_TYPE_OLD_IDENTITY,
     EKYC_DOCUMENT_TYPE_PASSPORT, EKYC_GENDER_TYPE_FEMALE,
@@ -64,8 +66,9 @@ from app.utils.constant.idm import (
 )
 from app.utils.error_messages import (  # noqa
     ERROR_CALL_SERVICE_EKYC, ERROR_IDENTITY_DOCUMENT_NOT_EXIST,
-    ERROR_IDENTITY_DOCUMENT_TYPE_TYPE_NOT_EXIST, ERROR_INVALID_URL,
-    ERROR_NO_DATA, ERROR_NOT_NULL, ERROR_WRONG_TYPE_IDENTITY, MESSAGE_STATUS
+    ERROR_IDENTITY_DOCUMENT_TYPE_TYPE_NOT_EXIST, ERROR_IDENTITY_TYPE_NOT_EXIST,
+    ERROR_INVALID_URL, ERROR_NO_DATA, ERROR_NOT_NULL,
+    ERROR_WRONG_TYPE_IDENTITY, MESSAGE_STATUS
 )
 from app.utils.functions import (  # noqa
     calculate_age, date_to_string, datetime_to_string, dropdown, now,
@@ -798,10 +801,17 @@ class CtrIdentityDocument(BaseController):
         )
         return self.response(data=info_save_document)
 
-    async def upload_identity_document_and_ocr(self, identity_type: int, image_file: UploadFile):
+    async def upload_identity_document_and_ocr(self, identity_type: int, image_file: UploadFile, booking_id: str):
+
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking(
+            business_type_code=BUSINESS_TYPE_INIT_CIF,
+            booking_id=booking_id,
+            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        )
 
         if identity_type not in EKYC_IDENTITY_TYPE:
-            return self.response_exception(msg='', detail='identity_type is not exist', loc='identity_type')
+            return self.response_exception(msg=ERROR_IDENTITY_TYPE_NOT_EXIST, loc='identity_type')
 
         image_file_name = image_file.filename
         image_data = await image_file.read()

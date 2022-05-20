@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 
 from sqlalchemy import and_, desc, select
 from sqlalchemy.orm import Session
@@ -78,7 +79,8 @@ async def repos_compare_signature(
         uuid_ekyc: str,
         uuid: str,
         session: Session,
-        user_id: str
+        user_id: str,
+        booking_id: Optional[str]
 ) -> ReposReturn:
     signature_query = session.execute(
         select(
@@ -103,7 +105,8 @@ async def repos_compare_signature(
         is_success, response = await service_ekyc.compare_signature(
             cif_id=cif_id,
             uuid_ekyc=uuid_ekyc,
-            sign_uuid=signature.ekyc_uuid
+            sign_uuid=signature.ekyc_uuid,
+            booking_id=booking_id
         )
 
         if is_success:

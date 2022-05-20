@@ -6,11 +6,12 @@ from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn, auto_commit
 from app.api.v1.endpoints.repository import (
-    get_optional_model_object_by_code_or_name, repos_create_booking,
+    get_optional_model_object_by_code_or_name,
     repos_get_model_object_by_id_or_code,
     write_transaction_log_and_update_booking
 )
 from app.api.v1.endpoints.user.schema import UserInfoResponse
+from app.api.v1.others.booking.repository import repos_create_booking
 from app.settings.event import service_ekyc, service_file
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
     CustomerAddress
@@ -40,6 +41,7 @@ from app.third_parties.oracle.models.master_data.identity import (
 from app.third_parties.oracle.models.master_data.others import (
     Nation, Religion, TransactionStage, TransactionStageStatus
 )
+from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import (
     ACTIVE_FLAG_ACTIVED, ADDRESS_COUNTRY_CODE_VN, BUSINESS_FORM_TTCN_GTDD_GTDD,
     BUSINESS_FORM_TTCN_GTDD_KM, CONTACT_ADDRESS_CODE, CRM_GENDER_TYPE_FEMALE,
@@ -412,7 +414,9 @@ async def repos_save_identity(
         booking = await repos_create_booking(
             transaction_id=saving_transaction_daily['transaction_id'],
             session=session,
-            current_user=current_user
+            current_user=current_user,
+            booking_code_flag=True,
+            business_type_code=BUSINESS_TYPE_INIT_CIF
         )
         if booking.is_error:
             return ReposReturn(is_error=True, msg=booking.msg, detail=booking.detail)
@@ -714,12 +718,16 @@ async def repos_upload_identity_document_and_ocr(
         file=image_file,
         filename=image_file_name,
         identity_type=identity_type,
-        uuid=booking_id
+        booking_id=booking_id
     )
     if not is_success:
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_EKYC, detail=ocr_response.get('message', ''))
 
-    file_response = await service_file.upload_file(file=image_file, name=image_file_name)
+    file_response = await service_file.upload_file(
+        file=image_file,
+        name=image_file_name,
+        booking_id=booking_id
+    )
 
     if not file_response:
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_FILE)
@@ -775,8 +783,11 @@ async def repos_upload_identity_document_and_ocr(
     return ReposReturn(data=ocr_response_data)
 
 
-async def repos_validate_ekyc(request_body: dict):
-    is_success, response = await service_ekyc.validate_ekyc(request_body=request_body)
+async def repos_validate_ekyc(request_body: dict, booking_id: Optional[str]):
+    is_success, response = await service_ekyc.validate_ekyc(
+        request_body=request_body,
+        booking_id=booking_id
+    )
 
     if not is_success:
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_EKYC, detail=response.get('errors', '').get('message'))
@@ -1148,16 +1159,19 @@ async def mapping_ekyc_back_side_citizen_card_ocr_data(image_url: str, ocr_data:
 async def repos_compare_face(
         face_image_data: bytes,
         identity_image_uuid: str,
-        session: Session,
-        booking_id: str = None
+        booking_id: Optional[str]
 ):
-    is_success_add_face, add_face_info = await service_ekyc.add_face(file=face_image_data, uuid=booking_id)
+    is_success_add_face, add_face_info = await service_ekyc.add_face(file=face_image_data, booking_id=booking_id)
 
     if not is_success_add_face:
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_EKYC, detail=add_face_info.get('message', ''))
 
     face_uuid = add_face_info.get('data').get('uuid')
-    is_success, compare_face_info = await service_ekyc.compare_face(face_uuid, identity_image_uuid, uuid=booking_id)
+    is_success, compare_face_info = await service_ekyc.compare_face(
+        face_uuid=face_uuid,
+        avatar_image_uuid=identity_image_uuid,
+        booking_id=booking_id
+    )
 
     if not is_success:
         return ReposReturn(

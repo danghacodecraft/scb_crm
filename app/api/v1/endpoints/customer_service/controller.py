@@ -14,6 +14,8 @@ from app.api.v1.endpoints.customer_service.repository import (
 from app.api.v1.endpoints.customer_service.schema import (
     CreatePostCheckRequest, QueryParamsKSSRequest, UpdatePostCheckRequest
 )
+from app.api.v1.others.booking.controller import CtrBooking
+from app.utils.constant.business_type import BUSINESS_TYPE_EKYC_AUDIT
 from app.utils.constant.cif import (
     CRM_GENDER_TYPE_FEMALE, EKYC_DOCUMENT_TYPE_NEW_CITIZEN,
     EKYC_DOCUMENT_TYPE_OLD_CITIZEN, EKYC_DOCUMENT_TYPE_PASSPORT,
@@ -28,7 +30,18 @@ from app.utils.functions import gen_qr_code
 
 class CtrKSS(BaseController):
 
-    async def ctr_get_list_kss(self, query_params: QueryParamsKSSRequest):
+    async def ctr_get_list_kss(
+        self,
+        query_params: QueryParamsKSSRequest,
+        booking_id: Optional[str]
+    ):
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking(
+            business_type_code=BUSINESS_TYPE_EKYC_AUDIT,
+            booking_id=booking_id,
+            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_EKYC_AUDIT}"
+        )
+
         current_user = self.current_user
         is_success, response = self.check_permission(
             current_user=current_user,
@@ -71,11 +84,19 @@ class CtrKSS(BaseController):
         query_data.update({'record_per_page': query_params.record_per_page}) if query_params.record_per_page else None
         query_data.update({'step_status': query_params.step_status}) if query_params.step_status else None
 
-        list_kss = self.call_repos(await repos_get_list_kss(query_data=query_data))
+        list_kss = self.call_repos(await repos_get_list_kss(query_data=query_data, booking_id=booking_id))
 
         return self.response(data=list_kss)
 
-    async def ctr_get_list_branch(self, zone_id: int):
+    async def ctr_get_list_branch(self, zone_id: int, booking_id: Optional[str]):
+
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking(
+            business_type_code=BUSINESS_TYPE_EKYC_AUDIT,
+            booking_id=booking_id,
+            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_EKYC_AUDIT}"
+        )
+
         current_user = self.current_user
 
         is_success, response = self.check_permission(
@@ -94,7 +115,10 @@ class CtrKSS(BaseController):
             'zone_id': zone_id
         } if zone_id else None
 
-        list_branch = self.call_repos(await repos_get_list_branch(query_param=query_param))
+        list_branch = self.call_repos(await repos_get_list_branch(
+            query_param=query_param,
+            booking_id=booking_id
+        ))
 
         branchs = [{
             'id': branch['zone_id'],
@@ -104,7 +128,15 @@ class CtrKSS(BaseController):
 
         return self.response(data=branchs)
 
-    async def ctr_get_list_zone(self):
+    async def ctr_get_list_zone(self, booking_id: Optional[str]):
+
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking(
+            business_type_code=BUSINESS_TYPE_EKYC_AUDIT,
+            booking_id=booking_id,
+            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_EKYC_AUDIT}"
+        )
+
         current_user = self.current_user
 
         is_success, response = self.check_permission(
@@ -119,11 +151,16 @@ class CtrKSS(BaseController):
                 detail=MESSAGE_STATUS[ERROR_PERMISSION],
                 error_status_code=status.HTTP_404_NOT_FOUND)
 
-        list_zone = self.call_repos(await repos_get_list_zone())
+        list_zone = self.call_repos(await repos_get_list_zone(booking_id=booking_id))
 
         return self.response(data=list_zone)
 
-    async def ctr_get_post_control(self, postcheck_uuid: str, post_control_his_id: int):
+    async def ctr_get_post_control(
+        self,
+        postcheck_uuid: str,
+        post_control_his_id: int,
+        booking_id: Optional[str]
+    ):
         current_user = self.current_user
 
         is_success, response = self.check_permission(
@@ -143,11 +180,14 @@ class CtrKSS(BaseController):
             'customer_id': postcheck_uuid
         }
         query_params.update({'post_control_his_id': post_control_his_id}) if post_control_his_id else None
-        post_control_response = self.call_repos(await repos_get_post_control(query_params=query_params))
+        post_control_response = self.call_repos(await repos_get_post_control(
+            query_params=query_params,
+            booking_id=booking_id
+        ))
 
         return self.response(data=post_control_response)
 
-    async def ctr_history_post_check(self, postcheck_uuid: str):
+    async def ctr_history_post_check(self, postcheck_uuid: str, booking_id: Optional[str]):
         current_user = self.current_user
 
         is_success, response = self.check_permission(
@@ -163,11 +203,14 @@ class CtrKSS(BaseController):
                 error_status_code=status.HTTP_404_NOT_FOUND
             )
 
-        history_post_check = self.call_repos(await repos_get_history_post_post_check(postcheck_uuid=postcheck_uuid))
+        history_post_check = self.call_repos(await repos_get_history_post_post_check(
+            postcheck_uuid=postcheck_uuid,
+            booking_id=booking_id
+        ))
 
         return self.response(data=history_post_check)
 
-    async def ctr_statistics_month(self, months: int):
+    async def ctr_statistics_month(self, months: int, booking_id: Optional[str]):
         current_user = self.current_user
 
         is_success, response = self.check_permission(
@@ -183,11 +226,11 @@ class CtrKSS(BaseController):
                 error_status_code=status.HTTP_404_NOT_FOUND
             )
 
-        statistics_months = self.call_repos(await repos_get_statistics_month(months=months))
+        statistics_months = self.call_repos(await repos_get_statistics_month(months=months, booking_id=booking_id))
 
         return self.response(statistics_months)
 
-    async def ctr_get_statistics_profiles(self):
+    async def ctr_get_statistics_profiles(self, booking_id: Optional[str]):
         current_user = self.current_user
 
         is_success, response = self.check_permission(
@@ -203,11 +246,11 @@ class CtrKSS(BaseController):
                 error_status_code=status.HTTP_404_NOT_FOUND
             )
 
-        statistics_profiles = self.call_repos(await repos_get_statistics_profiles())
+        statistics_profiles = self.call_repos(await repos_get_statistics_profiles(booking_id=booking_id))
 
         return self.response(data=statistics_profiles)
 
-    async def ctr_get_statistics(self, search_type: int, selected_date: str):
+    async def ctr_get_statistics(self, search_type: int, selected_date: str, booking_id: Optional[str]):
         current_user = self.current_user
 
         is_success, response = self.check_permission(
@@ -228,11 +271,11 @@ class CtrKSS(BaseController):
         query_param.update({'search_type': search_type}) if search_type else None
         query_param.update({'selected_date': selected_date}) if selected_date else None
 
-        statistics = self.call_repos(await repos_get_statistics(query_param=query_param))
+        statistics = self.call_repos(await repos_get_statistics(query_param=query_param, booking_id=booking_id))
 
         return self.response(data=statistics)
 
-    async def ctr_create_post_check(self, post_check_request: CreatePostCheckRequest):
+    async def ctr_create_post_check(self, post_check_request: CreatePostCheckRequest, booking_id: Optional[str]):
         current_user = self.current_user
         # role nhập
         is_success, response = self.check_permission(
@@ -262,11 +305,15 @@ class CtrKSS(BaseController):
             "post_control": post_control_request
         }
 
-        post_check_response = self.call_repos(await repos_create_post_check(payload_data=payload_data))
+        post_check_response = self.call_repos(await repos_create_post_check(payload_data=payload_data, booking_id=booking_id))
 
         return self.response(data=post_check_response)
 
-    async def ctr_update_post_check(self, postcheck_update_request: UpdatePostCheckRequest):
+    async def ctr_update_post_check(
+        self,
+        postcheck_update_request: UpdatePostCheckRequest,
+        booking_id: Optional[str]
+    ):
 
         current_user = self.current_user
         # role duyệt
@@ -289,11 +336,14 @@ class CtrKSS(BaseController):
             "username": postcheck_update_request.username,
             "is_approve": postcheck_update_request.is_approve
         }
-        update_post_check = self.call_repos(await repos_update_post_check(request_data=request_data))
+        update_post_check = self.call_repos(await repos_update_post_check(
+            request_data=request_data,
+            booking_id=booking_id
+        ))
 
         return self.response(data=update_post_check)
 
-    async def ctr_get_customer_detail(self, postcheck_uuid: str):
+    async def ctr_get_customer_detail(self, postcheck_uuid: str, booking_id: Optional[str]):
         current_user = self.current_user
 
         is_success, response = self.check_permission(
@@ -309,7 +359,10 @@ class CtrKSS(BaseController):
                 error_status_code=status.HTTP_404_NOT_FOUND
             )
 
-        customer_detail = self.call_repos(await repos_get_customer_detail(postcheck_uuid=postcheck_uuid))
+        customer_detail = self.call_repos(await repos_get_customer_detail(
+            postcheck_uuid=postcheck_uuid,
+            booking_id=booking_id
+        ))
 
         return self.response(data=customer_detail)
 
@@ -320,13 +373,13 @@ class CtrKSS(BaseController):
             gender: str,
             date_of_expiry: str,
             phone_number: str,
-            booking_id: Optional[str] = None,
+            booking_id: Optional[str],
             front_image: Optional[str] = None,
             front_image_name: Optional[str] = None,
             back_image: Optional[str] = None,
             back_image_name: Optional[str] = None,
             avatar_image: Optional[str] = None,
-            avatar_image_name: Optional[str] = None
+            avatar_image_name: Optional[str] = None,
     ):
 
         gender = EKYC_GENDER_TYPE_FEMALE if gender == CRM_GENDER_TYPE_FEMALE else EKYC_GENDER_TYPE_MALE
@@ -396,7 +449,7 @@ class CtrKSS(BaseController):
 
         customer = self.call_repos(await repos_save_customer_ekyc(
             body_request=body,
-            uuid=booking_id
+            booking_id=booking_id
         ))
 
         return self.response(data=customer)
