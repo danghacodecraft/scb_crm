@@ -11,7 +11,7 @@ from app.api.v1.endpoints.repository import (
     write_transaction_log_and_update_booking
 )
 from app.api.v1.endpoints.user.schema import UserInfoResponse
-from app.api.v1.others.booking.repository import repos_create_booking
+from app.api.v1.others.booking.repository import repos_update_booking
 from app.settings.event import service_ekyc, service_file
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
     CustomerAddress
@@ -339,6 +339,7 @@ async def repos_save_identity(
         avatar_image_uuid_service,
         identity_avatar_image_uuid_ekyc: str,
         request_data: dict,
+        booking_id: str,
         history_datas: List,
         current_user: UserInfoResponse,
         session: Session
@@ -410,18 +411,24 @@ async def repos_save_identity(
                 CustomerAddress(**saving_customer_contact_address)
             )
 
-        booking = await repos_create_booking(
+        # booking = await repos_create_booking(
+        #     transaction_id=saving_transaction_daily['transaction_id'],
+        #     session=session,
+        #     current_user=current_user,
+        #     booking_code_flag=True,
+        #     business_type_code=BUSINESS_TYPE_INIT_CIF
+        # )
+        booking = await repos_update_booking(
+            booking_id=booking_id,
             transaction_id=saving_transaction_daily['transaction_id'],
             session=session,
             current_user=current_user,
-            booking_code_flag=True,
             business_type_code=BUSINESS_TYPE_INIT_CIF
         )
         if booking.is_error:
             return ReposReturn(is_error=True, msg=booking.msg, detail=booking.detail)
 
         new_booking_id, booking_code = booking.data
-        booking_id = new_booking_id
 
         # create log
         session.add_all([
@@ -518,7 +525,6 @@ async def repos_save_identity(
         if not is_success:
             return ReposReturn(is_error=True, msg=booking_response['msg'])
 
-        booking_id = booking_response['booking_id']
         booking_code = booking_response['booking_code']
 
         # Tìm CustomerCompareImageTransaction trước đó
@@ -727,8 +733,7 @@ async def repos_upload_identity_document_and_ocr(
 
     file_response = await service_file.upload_file(
         file=image_file,
-        name=image_file_name,
-        booking_id=booking_id
+        name=image_file_name
     )
 
     if not file_response:

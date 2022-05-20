@@ -7,7 +7,7 @@ from app.api.v1.endpoints.cif.basic_information.personal.schema import (
     PersonalRequest
 )
 from app.api.v1.endpoints.cif.repository import (
-    repos_get_booking_code, repos_get_initializing_customer
+    repos_get_booking, repos_get_initializing_customer
 )
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressProvince
@@ -143,10 +143,13 @@ class CtrPersonal(BaseController):
         )
 
         # Lấy Booking Code
-        booking_code = self.call_repos(await repos_get_booking_code(
+        booking = self.call_repos(await repos_get_booking(
             cif_id=cif_id, session=self.oracle_session
         ))
-        personal_data.update(booking_code=booking_code)
+        personal_data.update(booking=dict(
+            id=booking.id,
+            code=booking.code
+        ))
 
         return self.response(data=personal_data)
 

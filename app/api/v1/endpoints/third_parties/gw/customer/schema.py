@@ -156,6 +156,11 @@ class GWAuthorizedListResponse(BaseSchema):
     authorized_info_list: List[GWAuthorizedResponse] = Field(..., description="Danh sách khách hàng")
 
 
+class GWOpenCIFResponse(BaseSchema):
+    cif_id: str = Field(..., description="CIF_ID Customer")
+    cif_number: str = Field(..., description="CIF_NUMBER Customer")
+
+
 ########################################################################################################################
 # GW
 ########################################################################################################################

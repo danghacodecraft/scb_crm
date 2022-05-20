@@ -14,7 +14,7 @@ from app.api.v1.endpoints.cif.basic_information.identity.identity_document.schem
     PassportSaveRequest
 )
 from app.api.v1.endpoints.cif.repository import (
-    repos_check_not_exist_cif_number
+    repos_check_not_exist_cif_number, repos_get_booking
 )
 from app.api.v1.endpoints.file.controller import CtrFile
 from app.api.v1.endpoints.file.validator import file_validator
@@ -122,6 +122,17 @@ class CtrIdentityDocument(BaseController):
         for fingerprint in fingerprints:
             fingerprint['image_url'] = uuid__link_downloads[fingerprint['image_url']]
 
+        # Lấy Booking Code
+        booking = self.call_repos(await repos_get_booking(
+            cif_id=cif_id, session=self.oracle_session
+        ))
+        detail_data.update(
+            booking=dict(
+                id=booking.id,
+                code=booking.code
+            )
+        )
+
         return detail_data['identity_document_type']['code'], self.response(data=detail_data)
 
     async def get_identity_log_list(self, cif_id: str):
@@ -167,6 +178,14 @@ class CtrIdentityDocument(BaseController):
             booking_id: Optional[str],
             identity_document_request: Union[IdentityCardSaveRequest, CitizenCardSaveRequest, PassportSaveRequest]
     ):
+
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking(
+            business_type_code=BUSINESS_TYPE_INIT_CIF,
+            booking_id=booking_id,
+            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        )
+
         # check quyền user
         self.call_repos(await PermissionController.ctr_approval_check_permission(
             auth_response=self.current_user,
@@ -801,8 +820,9 @@ class CtrIdentityDocument(BaseController):
                 # saving_transaction_receiver=saving_transaction_receiver,
                 avatar_image_uuid_service=avatar_image_uuid_service,
                 identity_avatar_image_uuid_ekyc=identity_avatar_image_uuid,
-                request_data=request_data,
-                history_datas=history_datas,
+                booking_id=booking_id,
+                request_data=orjson_dumps(request_data),
+                history_datas=orjson_dumps(history_datas),
                 current_user=current_user,
                 session=self.oracle_session
             )
@@ -837,7 +857,7 @@ class CtrIdentityDocument(BaseController):
 
         return self.response(data=upload_info)
 
-    async def compare_face(self, face_image: UploadFile, identity_image_uuid: str):
+    async def compare_face(self, face_image: UploadFile, identity_image_uuid: str, booking_id: Optional[str]):
 
         face_image_data = await face_image.read()
         self.call_validator(await file_validator(face_image_data))
@@ -846,13 +866,13 @@ class CtrIdentityDocument(BaseController):
             await repos_compare_face(
                 face_image_data=face_image_data,
                 identity_image_uuid=identity_image_uuid,
-                session=self.oracle_session
+                booking_id=booking_id
             )
         )
 
         return self.response(data=face_compare_info)
 
-    async def validate_ekyc(self, ocr_ekyc_request: OcrEkycRequest):
+    async def validate_ekyc(self, ocr_ekyc_request: OcrEkycRequest, booking_id: Optional[str]):
 
         qc_code = ocr_ekyc_request.qr_code
 
@@ -868,7 +888,10 @@ class CtrIdentityDocument(BaseController):
             request_body['data'].update({
                 'qr_code': qc_code
             })
-        response = self.call_repos(await repos_validate_ekyc(request_body=request_body))
+        response = self.call_repos(await repos_validate_ekyc(
+            request_body=request_body,
+            booking_id=booking_id
+        ))
 
         return self.response(data=response)
 
