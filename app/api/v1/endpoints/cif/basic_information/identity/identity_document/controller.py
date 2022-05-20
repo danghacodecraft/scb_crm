@@ -167,6 +167,14 @@ class CtrIdentityDocument(BaseController):
             booking_id: Optional[str],
             identity_document_request: Union[IdentityCardSaveRequest, CitizenCardSaveRequest, PassportSaveRequest]
     ):
+
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking(
+            business_type_code=BUSINESS_TYPE_INIT_CIF,
+            booking_id=booking_id,
+            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        )
+
         # check quyền user
         self.call_repos(await PermissionController.ctr_approval_check_permission(
             auth_response=self.current_user,
@@ -837,7 +845,7 @@ class CtrIdentityDocument(BaseController):
 
         return self.response(data=upload_info)
 
-    async def compare_face(self, face_image: UploadFile, identity_image_uuid: str):
+    async def compare_face(self, face_image: UploadFile, identity_image_uuid: str, booking_id: Optional[str]):
 
         face_image_data = await face_image.read()
         self.call_validator(await file_validator(face_image_data))
@@ -846,13 +854,13 @@ class CtrIdentityDocument(BaseController):
             await repos_compare_face(
                 face_image_data=face_image_data,
                 identity_image_uuid=identity_image_uuid,
-                session=self.oracle_session
+                booking_id=booking_id
             )
         )
 
         return self.response(data=face_compare_info)
 
-    async def validate_ekyc(self, ocr_ekyc_request: OcrEkycRequest):
+    async def validate_ekyc(self, ocr_ekyc_request: OcrEkycRequest, booking_id: Optional[str]):
 
         qc_code = ocr_ekyc_request.qr_code
 
@@ -868,7 +876,10 @@ class CtrIdentityDocument(BaseController):
             request_body['data'].update({
                 'qr_code': qc_code
             })
-        response = self.call_repos(await repos_validate_ekyc(request_body=request_body))
+        response = self.call_repos(await repos_validate_ekyc(
+            request_body=request_body,
+            booking_id=booking_id
+        ))
 
         return self.response(data=response)
 
