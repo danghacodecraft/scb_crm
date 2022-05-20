@@ -59,6 +59,7 @@ class DetailGuardianResponse(BaseSchema):
     guardian_flag: bool = Field(..., description="Cờ có người giám hộ không")
     number_of_guardian: int = Field(..., description="Số người giám hộ")
     guardians: List[GuardianResponse] = Field(..., description="Danh sách người giám hộ")
+    booking: OptionalDropdownResponse = Field(..., description="Booking")
 
 
 ########################################################################################################################
