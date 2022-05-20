@@ -8,8 +8,7 @@ from app.utils.error_messages import ERROR_CALL_SERVICE_FILE
 async def repos_upload_file(file: bytes, name: str, ekyc_flag: bool, booking_id: Optional[str]) -> ReposReturn:
     response = await service_file.upload_file(
         file=file,
-        name=name,
-        booking_id=booking_id
+        name=name
     )
 
     if ekyc_flag:
