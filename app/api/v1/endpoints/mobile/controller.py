@@ -62,20 +62,6 @@ class CtrIdentityMobile(BaseController):
         await self.get_model_object_by_id(model_id=gender_id, model=CustomerGender, loc='identity_mobile -> gender_id')
         await self.get_model_object_by_id(model_id=nationality_id, model=AddressCountry, loc='nationality_id')
 
-        front_side_image_name = front_side_image.filename
-        front_side_image = await front_side_image.read()
-
-        # upload file front_side to service
-        upload_front_side = self.call_repos(await repos_upload_file(
-            file=front_side_image,
-            name=front_side_image_name,
-            ekyc_flag=EKYC_FLAG
-        ))
-
-        ocr_data_front_side = None
-        ocr_data_back_side = None
-        upload_back_side = None
-
         ###############################################################################################################
         # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CIF
         transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
@@ -101,6 +87,21 @@ class CtrIdentityMobile(BaseController):
         # if booking.is_error:
         #     return self.response_exception(msg=booking.msg, detail=booking.detail)
 
+        front_side_image_name = front_side_image.filename
+        front_side_image = await front_side_image.read()
+
+        # upload file front_side to service
+        upload_front_side = self.call_repos(await repos_upload_file(
+            file=front_side_image,
+            name=front_side_image_name,
+            ekyc_flag=EKYC_FLAG,
+            booking_id=new_booking_id
+        ))
+
+        ocr_data_front_side = None
+        ocr_data_back_side = None
+        upload_back_side = None
+
         if identity_type == IDENTITY_DOCUMENT_TYPE_PASSPORT:
             ocr_data_front_side = self.call_repos(await repos_upload_identity_document_and_ocr(
                 image_file=front_side_image,
@@ -118,7 +119,8 @@ class CtrIdentityMobile(BaseController):
             upload_back_side = self.call_repos(await repos_upload_file(
                 file=back_side_image,
                 name=back_side_image_name,
-                ekyc_flag=EKYC_FLAG
+                ekyc_flag=EKYC_FLAG,
+                booking_id=new_booking_id
             ))
 
             # ocr giấy tờ định danh
@@ -378,7 +380,8 @@ class CtrIdentityMobile(BaseController):
         upload_avatar = self.call_repos(await repos_upload_file(
             file=avatar_image,
             name=avatar_image_name,
-            ekyc_flag=EKYC_FLAG
+            ekyc_flag=EKYC_FLAG,
+            booking_id=new_booking_id
         ))
 
         # thêm chân dung vào ekyc
