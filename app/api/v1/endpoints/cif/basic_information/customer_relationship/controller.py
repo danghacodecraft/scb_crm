@@ -11,8 +11,7 @@ from app.api.v1.endpoints.cif.basic_information.guardian.repository import (
     repos_save_guardians
 )
 from app.api.v1.endpoints.cif.repository import (
-    repos_check_exist_cif, repos_get_booking_code,
-    repos_get_initializing_customer
+    repos_check_exist_cif, repos_get_booking, repos_get_initializing_customer
 )
 from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.settings.event import service_gw
@@ -234,9 +233,12 @@ class CtrCustomerRelationship(BaseController):
             ))
 
         # Lấy Booking Code
-        booking_code = self.call_repos(await repos_get_booking_code(
+        booking = self.call_repos(await repos_get_booking(
             cif_id=cif_id, session=self.oracle_session
         ))
-        save_customer_relationship_info.update(booking_code=booking_code)
+        save_customer_relationship_info.update(booking=dict(
+            id=booking.id,
+            code=booking.code
+        ))
 
         return self.response(data=save_customer_relationship_info)

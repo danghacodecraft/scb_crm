@@ -244,18 +244,18 @@ async def repos_get_total_participants(
     return ReposReturn(data=total_participants)
 
 
-async def repos_get_booking_code(
+async def repos_get_booking(
     cif_id: str,
     session: Session
 ):
-    booking_code = session.execute(
+    booking = session.execute(
         select(
-            Booking.code,
+            Booking,
             BookingCustomer
         )
         .join(Booking, BookingCustomer.booking_id == Booking.id)
         .filter(BookingCustomer.customer_id == cif_id)
     ).scalar()
-    if not booking_code:
+    if not booking:
         return ReposReturn(is_error=True, msg=ERROR_BOOKING_CODE_NOT_EXIST)
-    return ReposReturn(data=booking_code)
+    return ReposReturn(data=booking)

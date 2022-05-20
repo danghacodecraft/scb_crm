@@ -14,7 +14,7 @@ from app.api.v1.endpoints.cif.basic_information.identity.identity_document.schem
     PassportSaveRequest
 )
 from app.api.v1.endpoints.cif.repository import (
-    repos_check_not_exist_cif_number
+    repos_check_not_exist_cif_number, repos_get_booking
 )
 from app.api.v1.endpoints.file.controller import CtrFile
 from app.api.v1.endpoints.file.validator import file_validator
@@ -121,6 +121,17 @@ class CtrIdentityDocument(BaseController):
 
         for fingerprint in fingerprints:
             fingerprint['image_url'] = uuid__link_downloads[fingerprint['image_url']]
+
+        # Lấy Booking Code
+        booking = self.call_repos(await repos_get_booking(
+            cif_id=cif_id, session=self.oracle_session
+        ))
+        detail_data.update(
+            booking=dict(
+                id=booking.id,
+                code=booking.code
+            )
+        )
 
         return detail_data['identity_document_type']['code'], self.response(data=detail_data)
 

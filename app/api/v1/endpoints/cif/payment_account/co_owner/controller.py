@@ -8,7 +8,7 @@ from app.api.v1.endpoints.cif.payment_account.co_owner.schema import (
     AccountHolderRequest
 )
 from app.api.v1.endpoints.cif.repository import (
-    repos_check_exist_cif, repos_get_booking_code, repos_validate_cif_number
+    repos_check_exist_cif, repos_get_booking, repos_validate_cif_number
 )
 from app.settings.event import service_soa
 from app.utils.functions import generate_uuid
@@ -79,10 +79,13 @@ class CtrCoOwner(BaseController):
         )
 
         # Lấy Booking Code
-        booking_code = self.call_repos(await repos_get_booking_code(
+        booking = self.call_repos(await repos_get_booking(
             cif_id=cif_id, session=self.oracle_session
         ))
-        co_owner_data.update(booking_code=booking_code)
+        co_owner_data.update(booking=dict(
+            id=booking.id,
+            code=booking.code
+        ))
 
         return self.response(data=co_owner_data)
 
