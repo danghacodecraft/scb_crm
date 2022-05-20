@@ -18,13 +18,16 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
 from app.third_parties.oracle.models.cif.basic_information.personal.model import (
     CustomerIndividualInfo
 )
+from app.third_parties.oracle.models.cif.payment_account.model import (
+    CasaAccount
+)
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
 )
 from app.third_parties.oracle.models.master_data.others import (
     AverageIncomeAmount
 )
-from app.utils.error_messages import ERROR_CALL_SERVICE_GW
+from app.utils.error_messages import ERROR_CALL_SERVICE_GW, ERROR_NO_DATA
 
 
 async def repos_gw_get_customer_info_list(
@@ -123,13 +126,23 @@ async def repos_gw_get_authorized(
 async def repos_gw_open_cif(
         cif_id: str,
         customer_info: dict,
+        account_info: dict,
         current_user
 ):
     is_success, response_data = await service_gw.open_cif(
         cif_id=cif_id,
         customer_info=customer_info,
+        account_info=account_info,
         current_user=current_user
     )
+
+    if not response_data['openCIFAuthorise_out']['data_output']:
+        return ReposReturn(
+            is_error=True,
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=response_data['openCIFAuthorise_out']['transaction_info']['transaction_error_msg']
+        )
+
     if not is_success:
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_GW)
 
@@ -148,8 +161,29 @@ async def repos_update_cif_number_customer(
         ).filter(Customer.id == cif_id)
         .values(data_update_customer)
     )
-    session.commit()
+    print('data_update_casa_account', data_update_customer, data_update_casa_account)
+    if data_update_casa_account:
+        session.execute(
+            update(
+                CasaAccount
+            ).filter(CasaAccount.customer_id == cif_id)
+            .values(data_update_casa_account)
+        )
+
     return ReposReturn(data=cif_id)
+
+
+async def repos_get_casa_account(
+        cif_id: str,
+        session: Session
+):
+    casa_account = session.execute(
+        select(
+            CasaAccount
+        ).filter(CasaAccount.customer_id == cif_id)
+    ).scalar()
+
+    return ReposReturn(data=casa_account)
 
 
 async def repos_get_customer_open_cif(
@@ -181,5 +215,8 @@ async def repos_get_customer_open_cif(
         .join(AverageIncomeAmount, CustomerProfessional.average_income_amount_id == AverageIncomeAmount.id)
         .filter(Customer.id == cif_id)
     ).all()
+
+    if not customer:
+        return ReposReturn(is_error=True, msg=ERROR_NO_DATA)
 
     return ReposReturn(data=customer)

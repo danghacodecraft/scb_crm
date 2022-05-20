@@ -1478,7 +1478,13 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
-    async def open_cif(self, cif_id: str, customer_info: dict, current_user):
+    async def open_cif(
+        self,
+        cif_id: str,
+        customer_info: dict,
+        account_info: dict,
+        current_user
+    ):
 
         request_data = {
             "openCIFAuthorise_in": {
@@ -1494,17 +1500,11 @@ class ServiceGW:
                 },
                 "data_input": {
                     "customer_info": customer_info,
-                    "account_info": {
-                        "account_class_code": "",
-                        "account_auto_create_cif": "",
-                        "account_currency": "",
-                        "acc_auto": "",
-                        "account_num": ""
-                    }
+                    "account_info": account_info
                 }
             }
-
         }
+        print('request_data', request_data)
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_CUS_OPEN_CIF}"
 
