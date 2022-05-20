@@ -600,8 +600,7 @@ class ServiceEKYC:
                     file = resp.content
                     info_file = await event.service_file.upload_file(
                         file=file,
-                        name=info["file_name"],
-                        booking_id=booking_id
+                        name=info["file_name"]
                     )
                     if not info_file:
                         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_FILE)

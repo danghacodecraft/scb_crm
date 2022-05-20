@@ -9,7 +9,7 @@ from app.api.base.repository import ReposReturn
 from app.api.base.schema import Error
 from app.api.base.validator import ValidatorReturn
 from app.api.v1.endpoints.approval.common_repository import (
-    repos_get_begin_stage, repos_get_next_receiver
+    repos_get_begin_stage
 )
 from app.api.v1.endpoints.file.repository import (
     repos_check_is_exist_multi_file, repos_download_multi_file
@@ -20,7 +20,6 @@ from app.api.v1.endpoints.repository import (
 )
 from app.api.v1.endpoints.user.schema import AuthResponse, UserInfoResponse
 from app.third_parties.oracle.base import Base, SessionLocal, SessionLocal_Task
-from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.ekyc import is_success
 from app.utils.error_messages import (
     ERROR_GROUP_ROLE_CODE, ERROR_MENU_CODE, MESSAGE_STATUS
@@ -472,43 +471,43 @@ class BaseController:
             title_name=current_user.hrm_title_name
         )
 
-        receiver = self.call_repos(await repos_get_next_receiver(
-            business_type_id=business_type_id,
-            current_stage_id=begin_stage.id,
-            reject_flag=False,
-            session=self.oracle_session
-        ))
-
-        receiver_branch = await self.get_model_object_by_id(
-            model_id=receiver.branch_id,
-            model=Branch,
-            loc="next_receiver -> branch_id"
-        )
+        # receiver = self.call_repos(await repos_get_next_receiver(
+        #     business_type_id=business_type_id,
+        #     current_stage_id=begin_stage.id,
+        #     reject_flag=False,
+        #     session=self.oracle_session
+        # ))
+        #
+        # receiver_branch = await self.get_model_object_by_id(
+        #     model_id=receiver.branch_id,
+        #     model=Branch,
+        #     loc="next_receiver -> branch_id"
+        # )
         # receiver_department = await self.get_model_object_by_id(
         #     model_id=next_receiver.department_id,
         #     model=Department,
         #     loc="next_receiver -> department_id"
         # )
 
-        saving_transaction_receiver = dict(
-            transaction_id=transaction_daily_id,
-            user_id=current_user.code,
-            user_name=current_user.username,
-            user_fullname=current_user.name,
-            user_email=current_user.email,
-            branch_id=receiver_branch.id,
-            branch_code=receiver_branch.code,
-            branch_name=receiver_branch.name,
-            department_id=receiver.department_id,
-            department_code=current_user.hrm_department_code,
-            department_name=current_user.hrm_department_name,
-            position_id=current_user.hrm_position_id,
-            position_code=current_user.hrm_position_code,
-            position_name=current_user.hrm_position_name
-        )
+        # saving_transaction_receiver = dict(
+        #     transaction_id=transaction_daily_id,
+        #     user_id=current_user.code,
+        #     user_name=current_user.username,
+        #     user_fullname=current_user.name,
+        #     user_email=current_user.email,
+        #     branch_id=receiver_branch.id,
+        #     branch_code=receiver_branch.code,
+        #     branch_name=receiver_branch.name,
+        #     department_id=receiver.department_id,
+        #     department_code=current_user.hrm_department_code,
+        #     department_name=current_user.hrm_department_name,
+        #     position_id=current_user.hrm_position_id,
+        #     position_code=current_user.hrm_position_code,
+        #     position_name=current_user.hrm_position_name
+        # )
 
         return (saving_transaction_stage_status, saving_transaction_stage, saving_transaction_daily,
-                saving_transaction_sender, saving_transaction_receiver)
+                saving_transaction_sender)
 
     @staticmethod
     def check_permission(current_user: AuthResponse, menu_code: str, group_role_code: str):
