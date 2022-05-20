@@ -809,8 +809,9 @@ class CtrIdentityDocument(BaseController):
                 # saving_transaction_receiver=saving_transaction_receiver,
                 avatar_image_uuid_service=avatar_image_uuid_service,
                 identity_avatar_image_uuid_ekyc=identity_avatar_image_uuid,
-                request_data=request_data,
-                history_datas=history_datas,
+                booking_id=booking_id,
+                request_data=orjson_dumps(request_data),
+                history_datas=orjson_dumps(history_datas),
                 current_user=current_user,
                 session=self.oracle_session
             )

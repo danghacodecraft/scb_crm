@@ -61,7 +61,6 @@ class CtrBooking(BaseController):
         if booking_id:
             booking = self.call_repos(await repos_check_exist_booking(
                 booking_id=booking_id,
-                business_type_code=business_type_code,
                 session=self.oracle_session
             ))
 
