@@ -119,7 +119,8 @@ class CtrIdentityMobile(BaseController):
             upload_back_side = self.call_repos(await repos_upload_file(
                 file=back_side_image,
                 name=back_side_image_name,
-                ekyc_flag=EKYC_FLAG
+                ekyc_flag=EKYC_FLAG,
+                booking_id=new_booking_id
             ))
 
             # ocr giấy tờ định danh
