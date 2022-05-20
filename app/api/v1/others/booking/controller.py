@@ -58,6 +58,7 @@ class CtrBooking(BaseController):
         ))
 
     async def ctr_get_booking(self, booking_id: Optional[str], loc: str, business_type_code: str):
+        booking = None
         if booking_id:
             booking = self.call_repos(await repos_check_exist_booking(
                 booking_id=booking_id,
