@@ -23,14 +23,14 @@ from app.third_parties.oracle.models.master_data.card import (
 from app.third_parties.oracle.models.master_data.customer import CustomerType
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.cif import BUSINESS_FORM_TGN
-from app.utils.error_messages import ERROR_CIF_ID_NOT_EXIST
+from app.utils.error_messages import ERROR_CIF_ID_NOT_EXIST, ERROR_NO_DATA
 from app.utils.functions import dropdown, now
 
 
 async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
     parent_id = session.execute(select(DebitCard.id).filter(DebitCard.customer_id == cif_id)).scalar()
     if not parent_id:
-        return ReposReturn(is_error=True, msg=ERROR_CIF_ID_NOT_EXIST,
+        return ReposReturn(is_error=True, msg=ERROR_NO_DATA,
                            loc="cif_id")
     list_debit_card_info_engine = session.execute(
         select(
@@ -216,7 +216,6 @@ async def repos_add_debit_card(
         log_data: json,
         history_datas: json,
         session: Session) -> ReposReturn:
-
     # Xóa dữ liệu cũ
     if main_card_id:
 
@@ -303,6 +302,7 @@ async def get_data_debit_card_by_cif_num(session: Session, cif_id: str) -> Repos
 async def get_data_customer_id(session: Session, cif_id: str) -> ReposReturn:
     objs = session.execute(select(Customer.id).filter(Customer.cif_number == cif_id)).scalars().all()
     if not objs:
-        return ReposReturn(is_error=True, msg=ERROR_CIF_ID_NOT_EXIST, loc="information_sub_debit_card -> sub_debit_cards -> cif_number")
+        return ReposReturn(is_error=True, msg=ERROR_CIF_ID_NOT_EXIST,
+                           loc="information_sub_debit_card -> sub_debit_cards -> cif_number")
 
     return ReposReturn(data=objs)
