@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import UploadFile
 
 from app.api.base.controller import BaseController
@@ -10,7 +12,9 @@ from app.api.v1.endpoints.approval.repository import (
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.api.v1.endpoints.file.repository import repos_upload_file
 from app.api.v1.endpoints.file.validator import file_validator
+from app.api.v1.others.booking.controller import CtrBooking
 from app.settings.event import service_ekyc
+from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import IMAGE_TYPE_FACE
 from app.utils.error_messages import ERROR_CALL_SERVICE_EKYC
 from app.utils.functions import now
@@ -21,11 +25,19 @@ class CtrApproveFace(BaseController):
             self,
             cif_id: str,
             amount: int,  # Số lượng hình ảnh so sánh
-            image_file: UploadFile
+            image_file: UploadFile,
+            booking_id: Optional[str]
     ):
         current_user = self.current_user.user_info
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
+
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking(
+            business_type_code=BUSINESS_TYPE_INIT_CIF,
+            booking_id=booking_id,
+            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        )
 
         image_data = await image_file.read()
 
@@ -36,7 +48,8 @@ class CtrApproveFace(BaseController):
         face_info = self.call_repos(await repos_upload_file(
             file=image_data,
             name=image_file.filename,
-            ekyc_flag=True
+            ekyc_flag=True,
+            booking_id=booking_id
         ))
         compare_face_uuid_ekyc = face_info['uuid_ekyc']
         compare_face_uuid = face_info['uuid']
@@ -88,7 +101,11 @@ class CtrApproveFace(BaseController):
         for index, (face_uuid_ekyc, compare_face_image) in enumerate(face_images.items()):
             compare_face_image_uuid = compare_face_image['uuid']
             identity_image_id = compare_face_image['identity_image_id']
-            is_success, compare_face_info = await service_ekyc.compare_face(compare_face_uuid_ekyc, face_uuid_ekyc)
+            is_success, compare_face_info = await service_ekyc.compare_face(
+                face_uuid_ekyc=compare_face_uuid_ekyc,
+                avatar_image_uuid=face_uuid_ekyc,
+                booking_id=booking_id
+            )
             if not is_success:
                 return self.response_exception(
                     msg=ERROR_CALL_SERVICE_EKYC,

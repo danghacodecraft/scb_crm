@@ -20,13 +20,10 @@ class ServiceEKYC:
 
     url = SERVICE["ekyc"]['url']
     proxy: Optional[StrOrURL] = None
-    headers = {
-        "X-TRANSACTION-ID": SERVICE["ekyc"]['x-transaction-id'],
-        "AUTHORIZATION": SERVICE["ekyc"]['authorization'],
-        "X-DEVICE-INFO": "eyJkZXZpY2VOYW1lIjoibWluaOKAmXMgaVBob25lIiwib3MiOiJJT1MiLCJtb2RlbCI6ImlQaG9uZSBYUiIsInBob25lX"
-                         "251bWJlciI6IjA5MDI0MDk2NjQiLCJtYW51ZmFjdHVyZXIiOiJBcHBsZSIsIm9zVmVyc2lvbiI6IjE0LjEifQ",  # TODO
-        "OTP": SERVICE["ekyc"]['otp']
-    }
+    authorization = SERVICE["ekyc"]['authorization']
+    device_info = "eyJkZXZpY2VOYW1lIjoibWluaOKAmXMgaVBob25lIiwib3MiOiJJT1MiLCJtb2RlbCI6ImlQaG9uZSBYUiIsInBob25lX" \
+                  "251bWJlciI6IjA5MDI0MDk2NjQiLCJtYW51ZmFjdHVyZXIiOiJBcHBsZSIsIm9zVmVyc2lvbiI6IjE0LjEifQ"
+    otp = SERVICE["ekyc"]['otp']
 
     def start(self):
         self.session = aiohttp.ClientSession()
@@ -40,17 +37,11 @@ class ServiceEKYC:
             file: bytes,
             filename: str,
             identity_type: int,
-            uuid: str = None
+            booking_id: Optional[str],
     ) -> Tuple[bool, dict]:
         api_url = f"{self.url}/api/v1/card-service/ocr/"
 
-        headers = self.headers
-        # thay đổi giá trị x-transaction-id uuid = None
-        headers['X-TRANSACTION-ID'] = "CRM_"
-
-        if uuid:
-            UUIDV4 = convert_string_to_uuidv4(uuid)
-            headers['X-TRANSACTION-ID'] = f"CRM_{UUIDV4}"
+        headers = self.create_header(booking_id=booking_id)
 
         form_data = aiohttp.FormData()
         form_data.add_field("file", value=file, filename=filename)
@@ -74,7 +65,7 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def add_face(self, file: bytes, uuid: str = None):
+    async def add_face(self, file: bytes, booking_id: str = None):
         """
         Thêm 1 ảnh người vào trong eKYC
         """
@@ -82,13 +73,7 @@ class ServiceEKYC:
         form_data = aiohttp.FormData()
         form_data.add_field("file", value=file, filename='abc.jpg')
 
-        headers = self.headers
-        # thay đổi giá trị x-transaction-id
-        headers['X-TRANSACTION-ID'] = "CRM_"
-
-        if uuid:
-            UUIDV4 = convert_string_to_uuidv4(uuid)
-            headers['X-TRANSACTION-ID'] = f"CRM_{UUIDV4}"
+        headers = self.create_header(booking_id=booking_id)
 
         try:
             async with self.session.post(url=api_url, data=form_data, headers=headers,
@@ -119,25 +104,19 @@ class ServiceEKYC:
             self,
             face_uuid: str,
             avatar_image_uuid: str,
-            uuid: str = None
+            booking_id: Optional[str]
     ):
         """
         So sánh khuôn mặt trong 2 ảnh
         """
         api_url = f"{self.url}/api/v1/face-service/compare/"
 
-        headers = self.headers
-        # thay đổi giá trị x-transaction-id
-        headers['X-TRANSACTION-ID'] = "CRM_"
+        headers = self.create_header(booking_id=booking_id)
 
         data = {
             "image_face_1_uuid": face_uuid,
             "image_face_2_uuid": avatar_image_uuid
         }
-
-        if uuid:
-            UUIDV4 = convert_string_to_uuidv4(uuid)
-            headers['X-TRANSACTION-ID'] = f"CRM_{UUIDV4}"
 
         try:
             async with self.session.post(url=api_url, json=data, headers=headers, ssl=False) as response:
@@ -163,12 +142,10 @@ class ServiceEKYC:
                 }),
             }
 
-    async def validate(self, data, document_type):
+    async def validate(self, data, document_type, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/card-service/validate/"
 
-        headers = self.headers
-        # thay đổi giá trị x-transaction-id
-        headers['X-TRANSACTION-ID'] = "CRM_"
+        headers = self.create_header(booking_id=booking_id)
 
         is_success = True
         request_body = {
@@ -196,12 +173,11 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"errors": {"message": "eKYC error please try again later"}}
 
-    async def validate_ekyc(self, request_body: dict):
+    async def validate_ekyc(self, request_body: dict, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/card-service/validate/"
 
-        headers = self.headers
-        # thay đổi giá trị x-transaction-id
-        headers['X-TRANSACTION-ID'] = "CRM_"
+        headers = self.create_header(booking_id=booking_id)
+
         try:
             async with self.session.post(url=api_url, json=request_body, headers=headers, ssl=False) as response:
                 logger.log("SERVICE", f"[VALIDATE_EKYC] {response.status} : {api_url}")
@@ -213,12 +189,10 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"errors": {"message": "eKYC error please try again later"}}
 
-    async def get_list_kss(self, query_data):
+    async def get_list_kss(self, query_data, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/customer-service/crm/"
 
-        headers = self.headers
-        # thay đổi giá trị x-transaction-id
-        headers['X-TRANSACTION-ID'] = "CRM_"
+        headers = self.create_header(booking_id=booking_id)
 
         try:
             async with self.session.get(url=api_url, headers=headers, params=query_data,
@@ -238,17 +212,15 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def get_list_branch(self, query_param: dict):
+    async def get_list_branch(self, query_param: dict, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/customer-service/crm/branch"
 
-        headers = self.headers
-        # thay đổi giá trị x-transaction-id
-        headers['X-TRANSACTION-ID'] = "CRM_"
+        headers = self.create_header(booking_id=booking_id)
 
         try:
             async with self.session.get(url=api_url, headers=headers, params=query_param,
                                         ssl=False) as response:
-                logger.log("SERVICE", f"[EKYC LIST BRACNH] {response.status} : {api_url}")
+                logger.log("SERVICE", f"[EKYC LIST BRANCH] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
                 elif response.status == status.HTTP_400_BAD_REQUEST:
@@ -262,12 +234,10 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def get_list_zone(self):
+    async def get_list_zone(self, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/customer-service/crm/zone/"
 
-        headers = self.headers
-        # thay đổi giá trị x-transaction-id
-        headers['X-TRANSACTION-ID'] = "CRM_"
+        headers = self.create_header(booking_id=booking_id)
 
         try:
             async with self.session.get(url=api_url, headers=headers, ssl=False) as response:
@@ -293,12 +263,10 @@ class ServiceEKYC:
                 }),
             }
 
-    async def get_statistics_profiles(self):
+    async def get_statistics_profiles(self, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/customer-service/crm/profilestatistics"
 
-        headers = self.headers
-        # thay đổi giá trị x-transaction-id
-        headers['X-TRANSACTION-ID'] = "CRM_"
+        headers = self.create_header(booking_id=booking_id)
 
         try:
             async with self.session.get(url=api_url, headers=headers, ssl=False) as response:
@@ -317,12 +285,10 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def get_statistics_months(self, months: int):
+    async def get_statistics_months(self, months: int, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/customer-service/crm/statisticsbymonth/"
 
-        headers = self.headers
-        # thay đổi giá trị x-transaction-id
-        headers['X-TRANSACTION-ID'] = "CRM_"
+        headers = self.create_header(booking_id=booking_id)
 
         query = {
             'month': months
@@ -344,12 +310,10 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def get_history_post_check(self, postcheck_uuid: str):
+    async def get_history_post_check(self, postcheck_uuid: str, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/customer-service/crm/postcontrolhistory/"
 
-        headers = self.headers
-        # thay đổi giá trị x-transaction-id
-        headers['X-TRANSACTION-ID'] = "CRM_"
+        headers = self.create_header(booking_id=booking_id)
 
         query = {
             'customer_id': postcheck_uuid
@@ -371,12 +335,10 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def update_post_check(self, request_data):
+    async def update_post_check(self, request_data, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/customer-service/crm/postcontrol/"
 
-        headers = self.headers
-        # thay đổi giá trị x-transaction-id
-        headers['X-TRANSACTION-ID'] = "CRM_"
+        headers = self.create_header(booking_id=booking_id)
 
         try:
             async with self.session.put(url=api_url, json=request_data, headers=headers, ssl=False) as response:
@@ -397,12 +359,10 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def get_statistics(self, query_param: dict):
+    async def get_statistics(self, query_param: dict, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/customer-service/crm/statistics/"
 
-        headers = self.headers
-        # thay đổi giá trị x-transaction-id
-        headers['X-TRANSACTION-ID'] = "CRM_"
+        headers = self.create_header(booking_id=booking_id)
 
         try:
             async with self.session.get(url=api_url, headers=headers, params=query_param, ssl=False) as response:
@@ -421,12 +381,10 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def get_customer_detail(self, postcheck_uuid: str):
+    async def get_customer_detail(self, postcheck_uuid: str, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/customer-service/crm/{postcheck_uuid}/"
 
-        headers = self.headers
-        # thay đổi giá trị x-transaction-id
-        headers['X-TRANSACTION-ID'] = "CRM_"
+        headers = self.create_header(booking_id=booking_id)
 
         try:
             async with self.session.get(url=api_url, headers=headers, ssl=False) as response:
@@ -455,12 +413,10 @@ class ServiceEKYC:
             )
         return True, response_data
 
-    async def create_post_check(self, payload_data: dict):
+    async def create_post_check(self, payload_data: dict, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/customer-service/crm/postcontrol/"
 
-        headers = self.headers
-        # thay đổi giá trị x-transaction-id
-        headers['X-TRANSACTION-ID'] = "CRM_"
+        headers = self.create_header(booking_id=booking_id)
 
         try:
             async with self.session.post(url=api_url, headers=headers, json=payload_data, ssl=False) as response:
@@ -481,12 +437,10 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def get_post_control(self, query_params):
+    async def get_post_control(self, query_params, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/customer-service/crm/postcontrol/"
 
-        headers = self.headers
-        # thay đổi giá trị x-transaction-id
-        headers['X-TRANSACTION-ID'] = "CRM_"
+        headers = self.create_header(booking_id=booking_id)
 
         try:
             async with self.session.get(url=api_url, params=query_params, headers=headers, ssl=False) as response:
@@ -508,12 +462,10 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def upload_file(self, file: bytes, name):
+    async def upload_file(self, file: bytes, name, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/file-service/"
 
-        headers = self.headers
-        # thay đổi giá trị x-transaction-id
-        headers['X-TRANSACTION-ID'] = "CRM_"
+        headers = self.create_header(booking_id=booking_id)
 
         form_data = aiohttp.FormData()
         form_data.add_field('file', value=file, filename=name)
@@ -541,13 +493,10 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def compare_signature(self, cif_id: str, uuid_ekyc: str, sign_uuid: str):
+    async def compare_signature(self, uuid_ekyc: str, sign_uuid: str, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/face-service/compare_signature/"
 
-        headers = self.headers
-        # thay đổi giá trị x-transaction-id
-        UUIDV4 = convert_string_to_uuidv4(cif_id)
-        headers['X-TRANSACTION-ID'] = f"CRM_{UUIDV4}"
+        headers = self.create_header(booking_id=booking_id)
 
         json_body = {
             "image_sign_1_uuid": uuid_ekyc,
@@ -571,13 +520,10 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def add_finger_ekyc(self, cif_id: str, json_body: dict):
+    async def add_finger_ekyc(self, json_body: dict, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/finger-service/add/"
 
-        headers = self.headers
-        # thay đổi giá trị x-transaction-id
-        UUIDV4 = convert_string_to_uuidv4(cif_id)
-        headers['X-TRANSACTION-ID'] = f"CRM_{UUIDV4}"
+        headers = self.create_header(booking_id=booking_id)
 
         try:
             async with self.session.post(url=api_url, json=json_body, headers=headers, ssl=False) as response:
@@ -596,13 +542,10 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def compare_finger_ekyc(self, cif_id: str, json_body: dict):
+    async def compare_finger_ekyc(self, json_body: dict, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/finger-service/verify/"
 
-        headers = self.headers
-        # thay đổi giá trị x-transaction-id
-        UUIDV4 = convert_string_to_uuidv4(cif_id)
-        headers['X-TRANSACTION-ID'] = f"CRM_{UUIDV4}"
+        headers = self.create_header(booking_id=booking_id)
 
         try:
             async with self.session.post(url=api_url, json=json_body, headers=headers, ssl=False) as response:
@@ -622,11 +565,9 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def dowload_file(self, uuid: str, ):
+    async def download_file(self, uuid: str, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/file-service/{uuid}/"
-        headers = self.headers
-        # thay đổi giá trị x-transaction-id+
-        headers['X-TRANSACTION-ID'] = "CRM_"
+        headers = self.create_header(booking_id=booking_id)
 
         try:
             async with self.session.get(url=api_url, headers=headers, ssl=False) as response:
@@ -646,7 +587,7 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def upload_file_ekyc(self, info: dict):
+    async def upload_file_ekyc(self, info: dict, booking_id: Optional[str]):
         async with aiohttp.ClientSession() as session:
             uri = info["uri"]
             url = replace_with_cdn(
@@ -657,7 +598,11 @@ class ServiceEKYC:
             async with session.get(url, ssl=False) as resp:
                 if resp.status == status.HTTP_200_OK:
                     file = resp.content
-                    info_file = await event.service_file.upload_file(file=file, name=info["file_name"])
+                    info_file = await event.service_file.upload_file(
+                        file=file,
+                        name=info["file_name"],
+                        booking_id=booking_id
+                    )
                     if not info_file:
                         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_FILE)
 
@@ -668,15 +613,10 @@ class ServiceEKYC:
                         "detail": f"Invalid: {url}"
                     }
 
-    async def save_customer_ekyc(self, body_data: dict, uuid: str = None):
+    async def save_customer_ekyc(self, body_data: dict, booking_id: Optional[str]):
         api_url = f"{self.url}/api/v1/customer-service/customers/"
 
-        headers = self.headers
-        # thay đổi giá trị x-transaction-id+
-        headers['X-TRANSACTION-ID'] = "CRM_"
-        if uuid:
-            UUIDV4 = convert_string_to_uuidv4(uuid)
-            headers['X-TRANSACTION-ID'] = f"CRM_{UUIDV4}"
+        headers = self.create_header(booking_id=booking_id)
 
         try:
             async with self.session.post(url=api_url, json=body_data, headers=headers, ssl=False) as response:
@@ -697,7 +637,7 @@ class ServiceEKYC:
             self,
             file: bytes,
             filename: str,
-            uuid: str = None
+            booking_id: Optional[str]
     ):
 
         api_url = f"{self.url}/api/v1/face-service/add/"
@@ -705,14 +645,7 @@ class ServiceEKYC:
         form_data = aiohttp.FormData()
         form_data.add_field("file", value=file, filename=filename)
 
-        headers = self.headers
-
-        # thay đổi giá trị x-transaction-id
-        headers['X-TRANSACTION-ID'] = "CRM_"
-
-        if uuid:
-            UUIDV4 = convert_string_to_uuidv4(uuid)
-            headers['X-TRANSACTION-ID'] = f"CRM_{UUIDV4}"
+        headers = self.create_header(booking_id=booking_id)
 
         try:
             async with self.session.post(url=api_url, data=form_data, headers=headers,
@@ -736,3 +669,18 @@ class ServiceEKYC:
                     "res": str(ex)
                 }),
             }
+
+    def create_header(self, booking_id: Optional[str]):
+        # thay đổi giá trị x-transaction-id
+        transaction_id = "CRM_"
+        if booking_id:
+            booking_id = convert_string_to_uuidv4(booking_id)
+            transaction_id = f"CRM_{booking_id}"
+
+        headers = {
+            "AUTHORIZATION": self.authorization,
+            "X-DEVICE-INFO": self.device_info,
+            "OTP": self.otp,
+            "X-TRANSACTION-ID": transaction_id
+        }
+        return headers
