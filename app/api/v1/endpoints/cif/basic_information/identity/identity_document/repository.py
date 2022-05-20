@@ -11,7 +11,7 @@ from app.api.v1.endpoints.repository import (
     write_transaction_log_and_update_booking
 )
 from app.api.v1.endpoints.user.schema import UserInfoResponse
-from app.api.v1.others.booking.repository import repos_create_booking
+from app.api.v1.others.booking.repository import repos_update_booking
 from app.settings.event import service_ekyc, service_file
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
     CustomerAddress
@@ -27,8 +27,7 @@ from app.third_parties.oracle.models.cif.basic_information.personal.model import
     CustomerIndividualInfo
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    BookingBusinessForm, BookingCustomer, TransactionDaily,
-    TransactionReceiver, TransactionSender
+    BookingBusinessForm, BookingCustomer, TransactionDaily, TransactionSender
 )
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
@@ -336,10 +335,11 @@ async def repos_save_identity(
         saving_transaction_stage: dict,
         saving_transaction_daily: dict,
         saving_transaction_sender: dict,
-        saving_transaction_receiver: dict,
+        # saving_transaction_receiver: dict,
         avatar_image_uuid_service,
         identity_avatar_image_uuid_ekyc: str,
         request_data: dict,
+        booking_id: str,
         history_datas: List,
         current_user: UserInfoResponse,
         session: Session
@@ -411,11 +411,18 @@ async def repos_save_identity(
                 CustomerAddress(**saving_customer_contact_address)
             )
 
-        booking = await repos_create_booking(
+        # booking = await repos_create_booking(
+        #     transaction_id=saving_transaction_daily['transaction_id'],
+        #     session=session,
+        #     current_user=current_user,
+        #     booking_code_flag=True,
+        #     business_type_code=BUSINESS_TYPE_INIT_CIF
+        # )
+        booking = await repos_update_booking(
+            booking_id=booking_id,
             transaction_id=saving_transaction_daily['transaction_id'],
             session=session,
             current_user=current_user,
-            booking_code_flag=True,
             business_type_code=BUSINESS_TYPE_INIT_CIF
         )
         if booking.is_error:
@@ -425,12 +432,12 @@ async def repos_save_identity(
 
         # create log
         session.add_all([
-            # Tạo BOOKING, CRM_TRANSACTION_DAILY -> CRM_BOOKING -> BOOKING_CUSTOMER -> BOOKING_BUSSINESS_FORM
+            # Tạo BOOKING, CRM_TRANSACTION_DAILY -> CRM_BOOKING -> BOOKING_CUSTOMER -> BOOKING_BUSINESS_FORM
             TransactionStageStatus(**saving_transaction_stage_status),
             TransactionStage(**saving_transaction_stage),
             TransactionDaily(**saving_transaction_daily),
             TransactionSender(**saving_transaction_sender),
-            TransactionReceiver(**saving_transaction_receiver),
+            # TransactionReceiver(**saving_transaction_receiver),
             BookingCustomer(
                 booking_id=new_booking_id,
                 customer_id=new_customer_id
@@ -597,6 +604,7 @@ async def repos_save_identity(
 
     return ReposReturn(data=dict(
         cif_id=customer_id,
+        booking_id=booking_id,
         booking_code=booking_code
     ))
 
@@ -725,8 +733,7 @@ async def repos_upload_identity_document_and_ocr(
 
     file_response = await service_file.upload_file(
         file=image_file,
-        name=image_file_name,
-        booking_id=booking_id
+        name=image_file_name
     )
 
     if not file_response:

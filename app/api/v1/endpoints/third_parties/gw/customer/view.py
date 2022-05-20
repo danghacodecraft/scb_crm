@@ -24,7 +24,7 @@ from app.api.v1.endpoints.third_parties.gw.customer.schema import (
     GuardianOrCustomerRelationshipByCIFNumberResponse,
     GWAuthorizedListResponse, GWCoOwnerListResponse,
     GWCustomerCheckExistRequest, GWCustomerCheckExistResponse,
-    GWCustomerInfoDetailResponse, GWCustomerInfoListResponse
+    GWCustomerInfoDetailResponse, GWCustomerInfoListResponse, GWOpenCIFResponse
 )
 from app.utils.constant.gw import (
     GW_REQUEST_PARAMETER_DEBIT_CARD,
@@ -160,7 +160,7 @@ async def view_gw_authorized(
     name="[GW] Khởi tạo cif và tài khoản thanh toán",
     description="Khởi tạo cif và tài khoản thanh toán",
     responses=swagger_response(
-        response_model=ResponseData[GWAuthorizedListResponse],
+        response_model=ResponseData[GWOpenCIFResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -171,4 +171,4 @@ async def view_gw_open_cif(
     gw_customer_open_cif = await CtrGWCustomer(current_user).ctr_gw_open_cif(
         cif_id=cif_id
     )
-    return ResponseData(**gw_customer_open_cif)
+    return ResponseData[GWOpenCIFResponse](**gw_customer_open_cif)

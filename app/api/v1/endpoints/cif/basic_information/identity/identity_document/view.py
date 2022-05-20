@@ -114,6 +114,7 @@ router_special = APIRouter()
 )
 async def view_save(
         request: Request,
+        BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
         identity_document_request: Union[PassportSaveRequest, IdentityCardSaveRequest, CitizenCardSaveRequest] = Body(
             ...,
             examples=save_identity_examples
@@ -130,7 +131,10 @@ async def view_save(
             except pydantic.error_wrappers.ValidationError as ex:
                 raise RequestValidationError(ex.raw_errors)
 
-    save_info = await CtrIdentityDocument(current_user).save_identity(identity_document_request)
+    save_info = await CtrIdentityDocument(current_user).save_identity(
+        booking_id=BOOKING_ID,
+        identity_document_request=identity_document_request
+    )
     return ResponseData[SaveSuccessResponse](**save_info)
 
 

@@ -462,7 +462,7 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def upload_file(self, file: bytes, name, booking_id: Optional[str]):
+    async def upload_file(self, file: bytes, name, booking_id: Optional[str] = None):
         api_url = f"{self.url}/api/v1/file-service/"
 
         headers = self.create_header(booking_id=booking_id)
@@ -600,8 +600,7 @@ class ServiceEKYC:
                     file = resp.content
                     info_file = await event.service_file.upload_file(
                         file=file,
-                        name=info["file_name"],
-                        booking_id=booking_id
+                        name=info["file_name"]
                     )
                     if not info_file:
                         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_FILE)
