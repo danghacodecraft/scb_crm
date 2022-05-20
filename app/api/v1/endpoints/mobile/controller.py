@@ -82,8 +82,12 @@ class CtrIdentityMobile(BaseController):
             business_type_id=BUSINESS_TYPE_INIT_CIF
         )
 
-        (saving_transaction_stage_status, saving_transaction_stage, saving_transaction_daily, saving_transaction_sender,
-         saving_transaction_receiver) = transaction_datas
+        (
+            saving_transaction_stage_status,
+            saving_transaction_stage,
+            saving_transaction_daily,
+            saving_transaction_sender
+        ) = transaction_datas
 
         booking = self.call_repos(await repos_create_booking(
             transaction_id=saving_transaction_daily['transaction_id'],
@@ -393,8 +397,7 @@ class CtrIdentityMobile(BaseController):
             face_compare_mobile = self.call_repos(await repos_compare_face(
                 face_image_data=avatar_image,
                 identity_image_uuid=ocr_data_front_side['front_side_information']['identity_avatar_image_uuid'],
-                booking_id=new_booking_id,
-                session=self.oracle_session
+                booking_id=new_booking_id
             ))
             identity_avatar_image_uuid = ocr_data_front_side['front_side_information']['identity_avatar_image_uuid']
         # Thêm avatar thành Hình ảnh định danh Khuôn mặt
@@ -409,8 +412,7 @@ class CtrIdentityMobile(BaseController):
             face_compare_mobile = self.call_repos(await repos_compare_face(
                 face_image_data=avatar_image,
                 identity_image_uuid=ocr_data_front_side['passport_information']['identity_avatar_image_uuid'],
-                booking_id=new_booking_id,
-                session=self.oracle_session
+                booking_id=new_booking_id
             ))
             identity_avatar_image_uuid = ocr_data_front_side['passport_information']['identity_avatar_image_uuid']
 
@@ -600,7 +602,7 @@ class CtrIdentityMobile(BaseController):
                 saving_transaction_stage=saving_transaction_stage,
                 saving_transaction_daily=saving_transaction_daily,
                 saving_transaction_sender=saving_transaction_sender,
-                saving_transaction_receiver=saving_transaction_receiver,
+                # saving_transaction_receiver=saving_transaction_receiver,
                 avatar_image_uuid_service=avatar_image_uuid_service,
                 identity_avatar_image_uuid_ekyc=identity_avatar_image_uuid,
                 request_data=request_data,
