@@ -606,6 +606,7 @@ class CtrIdentityMobile(BaseController):
                 avatar_image_uuid_service=avatar_image_uuid_service,
                 identity_avatar_image_uuid_ekyc=identity_avatar_image_uuid,
                 request_data=request_data,
+                booking_id=new_booking_id,
                 history_datas=history_datas,
                 current_user=current_user.user_info,
                 session=self.oracle_session
