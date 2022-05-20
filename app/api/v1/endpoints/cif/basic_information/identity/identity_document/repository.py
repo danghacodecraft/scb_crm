@@ -27,8 +27,7 @@ from app.third_parties.oracle.models.cif.basic_information.personal.model import
     CustomerIndividualInfo
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    BookingBusinessForm, BookingCustomer, TransactionDaily,
-    TransactionReceiver, TransactionSender
+    BookingBusinessForm, BookingCustomer, TransactionDaily, TransactionSender
 )
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
@@ -336,7 +335,7 @@ async def repos_save_identity(
         saving_transaction_stage: dict,
         saving_transaction_daily: dict,
         saving_transaction_sender: dict,
-        saving_transaction_receiver: dict,
+        # saving_transaction_receiver: dict,
         avatar_image_uuid_service,
         identity_avatar_image_uuid_ekyc: str,
         request_data: dict,
@@ -422,15 +421,16 @@ async def repos_save_identity(
             return ReposReturn(is_error=True, msg=booking.msg, detail=booking.detail)
 
         new_booking_id, booking_code = booking.data
+        booking_id = new_booking_id
 
         # create log
         session.add_all([
-            # Tạo BOOKING, CRM_TRANSACTION_DAILY -> CRM_BOOKING -> BOOKING_CUSTOMER -> BOOKING_BUSSINESS_FORM
+            # Tạo BOOKING, CRM_TRANSACTION_DAILY -> CRM_BOOKING -> BOOKING_CUSTOMER -> BOOKING_BUSINESS_FORM
             TransactionStageStatus(**saving_transaction_stage_status),
             TransactionStage(**saving_transaction_stage),
             TransactionDaily(**saving_transaction_daily),
             TransactionSender(**saving_transaction_sender),
-            TransactionReceiver(**saving_transaction_receiver),
+            # TransactionReceiver(**saving_transaction_receiver),
             BookingCustomer(
                 booking_id=new_booking_id,
                 customer_id=new_customer_id
@@ -518,6 +518,7 @@ async def repos_save_identity(
         if not is_success:
             return ReposReturn(is_error=True, msg=booking_response['msg'])
 
+        booking_id = booking_response['booking_id']
         booking_code = booking_response['booking_code']
 
         # Tìm CustomerCompareImageTransaction trước đó
@@ -597,6 +598,7 @@ async def repos_save_identity(
 
     return ReposReturn(data=dict(
         cif_id=customer_id,
+        booking_id=booking_id,
         booking_code=booking_code
     ))
 

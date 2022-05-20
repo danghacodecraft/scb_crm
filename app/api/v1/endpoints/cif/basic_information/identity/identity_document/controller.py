@@ -162,9 +162,11 @@ class CtrIdentityDocument(BaseController):
 
         return self.response(data=identity_log_infos)
 
-    async def save_identity(self, identity_document_request: Union[IdentityCardSaveRequest,
-                                                                   CitizenCardSaveRequest,
-                                                                   PassportSaveRequest]):
+    async def save_identity(
+            self,
+            booking_id: Optional[str],
+            identity_document_request: Union[IdentityCardSaveRequest, CitizenCardSaveRequest, PassportSaveRequest]
+    ):
         # check quyền user
         self.call_repos(await PermissionController.ctr_approval_check_permission(
             auth_response=self.current_user,
@@ -717,7 +719,8 @@ class CtrIdentityDocument(BaseController):
 
         is_success, compare_response = await service_ekyc.compare_face(
             face_uuid=compare_face_uuid_ekyc,
-            avatar_image_uuid=identity_avatar_image_uuid
+            avatar_image_uuid=identity_avatar_image_uuid,
+            booking_id=booking_id
         )
 
         if not is_success:
@@ -744,15 +747,20 @@ class CtrIdentityDocument(BaseController):
         ################################################################################################################
         # Thêm avatar thành Hình ảnh định danh Khuôn mặt
         ################################################################################################################
-        avatar_image_uuid_service = await CtrFile().upload_ekyc_file(uuid_ekyc=identity_avatar_image_uuid)
+        avatar_image_uuid_service = await CtrFile().upload_ekyc_file(
+            uuid_ekyc=identity_avatar_image_uuid,
+            booking_id=booking_id
+        )
         ################################################################################################################
         # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CIF
         transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
             business_type_id=BUSINESS_TYPE_INIT_CIF
         )
 
-        (saving_transaction_stage_status, saving_transaction_stage, saving_transaction_daily, saving_transaction_sender,
-         saving_transaction_receiver) = transaction_datas
+        (
+            saving_transaction_stage_status, saving_transaction_stage, saving_transaction_daily,
+            saving_transaction_sender
+        ) = transaction_datas
 
         request_data = await parse_identity_model_to_dict(
             request=identity_document_request,
@@ -790,7 +798,7 @@ class CtrIdentityDocument(BaseController):
                 saving_transaction_stage=saving_transaction_stage,
                 saving_transaction_daily=saving_transaction_daily,
                 saving_transaction_sender=saving_transaction_sender,
-                saving_transaction_receiver=saving_transaction_receiver,
+                # saving_transaction_receiver=saving_transaction_receiver,
                 avatar_image_uuid_service=avatar_image_uuid_service,
                 identity_avatar_image_uuid_ekyc=identity_avatar_image_uuid,
                 request_data=request_data,
