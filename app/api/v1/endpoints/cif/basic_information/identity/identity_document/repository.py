@@ -11,7 +11,6 @@ from app.api.v1.endpoints.repository import (
     write_transaction_log_and_update_booking
 )
 from app.api.v1.endpoints.user.schema import UserInfoResponse
-from app.api.v1.others.booking.repository import repos_update_booking
 from app.settings.event import service_ekyc, service_file
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
     CustomerAddress
@@ -40,12 +39,11 @@ from app.third_parties.oracle.models.master_data.identity import (
 from app.third_parties.oracle.models.master_data.others import (
     Nation, Religion, TransactionStage, TransactionStageStatus
 )
-from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import (
     ACTIVE_FLAG_ACTIVED, ADDRESS_COUNTRY_CODE_VN, BUSINESS_FORM_TTCN_GTDD_GTDD,
-    BUSINESS_FORM_TTCN_GTDD_KM, CONTACT_ADDRESS_CODE, CRM_GENDER_TYPE_FEMALE,
-    CRM_GENDER_TYPE_MALE, DROPDOWN_NONE_DICT, EKYC_DOCUMENT_TYPE,
-    EKYC_GENDER_TYPE_FEMALE, EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
+    CONTACT_ADDRESS_CODE, CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE,
+    DROPDOWN_NONE_DICT, EKYC_DOCUMENT_TYPE, EKYC_GENDER_TYPE_FEMALE,
+    EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_BACK_SIDE_IDENTITY_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD,
@@ -59,8 +57,7 @@ from app.utils.error_messages import (
     ERROR_COMPARE_IMAGE_IS_EXISTED
 )
 from app.utils.functions import (
-    date_string_to_other_date_string_format, dropdown, generate_uuid, now,
-    orjson_dumps
+    date_string_to_other_date_string_format, dropdown, generate_uuid, now
 )
 from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese
 
@@ -418,17 +415,28 @@ async def repos_save_identity(
         #     booking_code_flag=True,
         #     business_type_code=BUSINESS_TYPE_INIT_CIF
         # )
-        booking = await repos_update_booking(
-            booking_id=booking_id,
-            transaction_id=saving_transaction_daily['transaction_id'],
-            session=session,
-            current_user=current_user,
-            business_type_code=BUSINESS_TYPE_INIT_CIF
-        )
-        if booking.is_error:
-            return ReposReturn(is_error=True, msg=booking.msg, detail=booking.detail)
 
-        new_booking_id, booking_code = booking.data
+        is_success, booking_response = await write_transaction_log_and_update_booking(
+            booking_id=booking_id,
+            log_data=request_data,
+            session=session,
+            customer_id=customer_id,
+            business_form_id=BUSINESS_FORM_TTCN_GTDD_GTDD
+        )
+        if not is_success:
+            return ReposReturn(is_error=True, msg=booking_response['msg'])
+
+        booking_code = booking_response['booking_code']
+
+        session.execute(update(BookingCustomer).filter(BookingCustomer.booking_id == booking_id).values(customer_id=new_customer_id))
+
+        session.execute(update(BookingBusinessForm).filter(BookingBusinessForm.booking_id == booking_id).values(
+            # business_form_id=BUSINESS_FORM_TTCN_GTDD_GTDD,
+            save_flag=True,  # Save_flag đổi lại thành True do Business Form giờ là những Tab nhỏ nhiều cấp
+            form_data=request_data,
+            log_data=history_datas,
+            updated_at=now()
+        ))
 
         # create log
         session.add_all([
@@ -436,31 +444,10 @@ async def repos_save_identity(
             TransactionStageStatus(**saving_transaction_stage_status),
             TransactionStage(**saving_transaction_stage),
             TransactionDaily(**saving_transaction_daily),
-            TransactionSender(**saving_transaction_sender),
+            TransactionSender(**saving_transaction_sender)
             # TransactionReceiver(**saving_transaction_receiver),
-            BookingCustomer(
-                booking_id=new_booking_id,
-                customer_id=new_customer_id
-            ),
-            BookingBusinessForm(
-                booking_id=new_booking_id,
-                business_form_id=BUSINESS_FORM_TTCN_GTDD_GTDD,
-                save_flag=True,  # Save_flag đổi lại thành True do Business Form giờ là những Tab nhỏ nhiều cấp
-                form_data=orjson_dumps(request_data),
-                log_data=orjson_dumps(history_datas),
-                created_at=now(),
-                updated_at=now()
-            ),
             # Hiện tại Tab khuôn mặt không có chức năng lưu
             # vì api GTDD đã upload khuôn mặt nên Tab này coi như hoàn thành
-            BookingBusinessForm(
-                booking_id=new_booking_id,
-                business_form_id=BUSINESS_FORM_TTCN_GTDD_KM,
-                save_flag=True,
-                form_data=orjson_dumps(request_data),
-                created_at=now(),
-                updated_at=now()
-            )
         ])
 
     # Update
@@ -604,8 +591,10 @@ async def repos_save_identity(
 
     return ReposReturn(data=dict(
         cif_id=customer_id,
-        booking_id=booking_id,
-        booking_code=booking_code
+        booking=dict(
+            id=booking_id,
+            code=booking_code
+        )
     ))
 
 

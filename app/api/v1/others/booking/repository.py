@@ -7,7 +7,10 @@ from sqlalchemy.sql.functions import count
 
 from app.api.base.repository import ReposReturn
 from app.api.v1.endpoints.user.schema import UserInfoResponse
-from app.third_parties.oracle.models.cif.form.model import Booking
+from app.third_parties.oracle.models.cif.form.model import (
+    Booking, BookingBusinessForm, BookingCustomer
+)
+from app.utils.constant.cif import BUSINESS_FORM_TTCN_GTDD_GTDD
 from app.utils.error_messages import ERROR_BOOKING_CODE_EXISTED, MESSAGE_STATUS
 from app.utils.functions import (
     date_to_datetime, datetime_to_string, end_time_of_day, generate_uuid, now,
@@ -65,7 +68,7 @@ async def repos_create_booking(
                 msg=ERROR_BOOKING_CODE_EXISTED + f", booking_code: {booking_code}",
                 detail=MESSAGE_STATUS[ERROR_BOOKING_CODE_EXISTED]
             )
-    session.add(
+    session.add_all([
         Booking(
             id=booking_id,
             transaction_id=transaction_id,
@@ -74,8 +77,17 @@ async def repos_create_booking(
             branch_id=current_user_branch_code,
             created_at=now(),
             updated_at=now()
+        ),
+        BookingCustomer(
+            booking_id=booking_id
+        ),
+        BookingBusinessForm(
+            booking_id=booking_id,
+            business_form_id=BUSINESS_FORM_TTCN_GTDD_GTDD,
+            save_flag=False,
+            created_at=now()
         )
-    )
+    ])
     session.commit()
     return ReposReturn(data=(booking_id, booking_code))
 
@@ -86,38 +98,36 @@ async def repos_update_booking(
     business_type_code: str,
     session: Session,
     current_user: UserInfoResponse,
+    booking_code_flag: bool = False
 ):
-    """
-    Input:
-        booking_code_flag: cần trả ra booking code thì truyền vào
-    """
     current_user_branch_code = current_user.hrm_branch_code
 
-    is_existed, booking_code = await generate_booking_code(
-        branch_code=current_user_branch_code,
-        business_type_code=business_type_code,
-        session=session
-    )
-
-    if is_existed:
-        return ReposReturn(
-            is_error=True,
-            msg=ERROR_BOOKING_CODE_EXISTED + f", booking_code: {booking_code}",
-            detail=MESSAGE_STATUS[ERROR_BOOKING_CODE_EXISTED]
+    booking_code = None
+    if booking_code_flag:
+        is_existed, booking_code = await generate_booking_code(
+            branch_code=current_user_branch_code,
+            business_type_code=business_type_code,
+            session=session
         )
+
+        if is_existed:
+            return ReposReturn(
+                is_error=True,
+                msg=ERROR_BOOKING_CODE_EXISTED + f", booking_code: {booking_code}",
+                detail=MESSAGE_STATUS[ERROR_BOOKING_CODE_EXISTED]
+            )
 
     session.execute(
         update(Booking)
         .filter(Booking.id == booking_id)
         .values(
             transaction_id=transaction_id,
-            code=booking_code,
+            # code=booking_code,
             business_type_id=business_type_code,
             branch_id=current_user_branch_code,
             updated_at=now()
         )
     )
-    session.commit()
     return ReposReturn(data=(booking_id, booking_code))
 
 
