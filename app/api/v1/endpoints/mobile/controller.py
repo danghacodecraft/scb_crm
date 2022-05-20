@@ -379,7 +379,8 @@ class CtrIdentityMobile(BaseController):
         upload_avatar = self.call_repos(await repos_upload_file(
             file=avatar_image,
             name=avatar_image_name,
-            ekyc_flag=EKYC_FLAG
+            ekyc_flag=EKYC_FLAG,
+            booking_id=new_booking_id
         ))
 
         # thêm chân dung vào ekyc
