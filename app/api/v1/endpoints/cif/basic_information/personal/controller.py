@@ -146,10 +146,10 @@ class CtrPersonal(BaseController):
         booking = self.call_repos(await repos_get_booking(
             cif_id=cif_id, session=self.oracle_session
         ))
-        personal_data.update({
-            "booking_id": booking.id,
-            "booking_code": booking.code
-        })
+        personal_data.update(booking=dict(
+            id=booking.id,
+            code=booking.code
+        ))
 
         return self.response(data=personal_data)
 
