@@ -18,13 +18,14 @@ from app.third_parties.oracle.models.master_data.others import (
 )
 from app.utils.constant.cif import (
     CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE, CUSTOMER_COMPLETED_FLAG,
-    RESIDENT_ADDRESS_CODE
+    CUSTOMER_TYPE_ORGANIZE, RESIDENT_ADDRESS_CODE
 )
 from app.utils.constant.gw import (
-    GW_ACCOUNT_AUTO_CREATE_CIF_Y, GW_ACCOUNT_CLASS_CODE, GW_AUTO,
-    GW_DATE_FORMAT, GW_DATETIME_FORMAT, GW_DEFAULT_CUSTOMER_CATEGORY,
-    GW_DEFAULT_KHTC_DOI_TUONG, GW_DEFAULT_TYPE_ID, GW_DEFAULT_VALUE,
-    GW_GENDER_FEMALE, GW_GENDER_MALE, GW_LOC_CHECK_CIF_EXIST,
+    GW_ACCOUNT_AUTO_CREATE_CIF_N, GW_ACCOUNT_CLASS_CODE, GW_AUTO,
+    GW_CUSTOMER_TYPE_B, GW_CUSTOMER_TYPE_I, GW_DATE_FORMAT, GW_DATETIME_FORMAT,
+    GW_DEFAULT_CUSTOMER_CATEGORY, GW_DEFAULT_KHTC_DOI_TUONG,
+    GW_DEFAULT_TYPE_ID, GW_DEFAULT_VALUE, GW_GENDER_FEMALE, GW_GENDER_MALE,
+    GW_LANGUAGE, GW_LOC_CHECK_CIF_EXIST, GW_LOCAL_CODE,
     GW_MARTIAL_STATUS_MARRIED, GW_MARTIAL_STATUS_SINGLE, GW_NO_AGREEMENT_FLAG,
     GW_NO_MARKETING_FLAG, GW_REQUEST_PARAMETER_DEBIT_CARD,
     GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP, GW_SELECT,
@@ -694,7 +695,8 @@ class CtrGWCustomer(BaseController):
         if response_casa_account:
             account_info = {
                 "account_class_code": GW_ACCOUNT_CLASS_CODE,
-                "account_auto_create_cif": GW_ACCOUNT_AUTO_CREATE_CIF_Y,
+                # TODO hard core auto_create
+                "account_auto_create_cif": GW_ACCOUNT_AUTO_CREATE_CIF_N,
                 "account_currency": response_casa_account.currency_id,
                 "acc_auto": GW_SELECT if response_casa_account.self_selected_account_flag else GW_AUTO,
                 "account_num": response_casa_account.casa_account_number if response_casa_account.self_selected_account_flag else ""
@@ -771,8 +773,9 @@ class CtrGWCustomer(BaseController):
         udf_value = f"KHONG~{first_row.AverageIncomeAmount.id}~{cust_professional.career_id}~{marketing_flag}~KHONG~{agreement_flag}~{GW_DEFAULT_KHTC_DOI_TUONG}"
 
         customer_info = {
+            # TODO hard core customer category
             "customer_category": GW_DEFAULT_CUSTOMER_CATEGORY,
-            "customer_type": "B" if customer.customer_type_id == "TO_CHUC" else "I",
+            "customer_type": GW_CUSTOMER_TYPE_B if customer.customer_type_id == CUSTOMER_TYPE_ORGANIZE else GW_CUSTOMER_TYPE_I,
             "cus_ekyc": f"E{customer.kyc_level_id}" if customer.kyc_level_id else GW_DEFAULT_VALUE,
             "full_name": customer.full_name_vn,
             "gender": GW_GENDER_FEMALE if cust_individual.gender_id == CRM_GENDER_TYPE_FEMALE else GW_GENDER_MALE,
@@ -788,8 +791,9 @@ class CtrGWCustomer(BaseController):
             "co_owner": GW_DEFAULT_VALUE,
             "nationality": customer.nationality_id if customer.nationality_id else GW_DEFAULT_VALUE,
             "birth_country": GW_DEFAULT_VALUE,
-            "language": "ENG",
-            "local_code": "101",
+            # TODO hard core language
+            "language": GW_LANGUAGE,
+            "local_code": GW_LOCAL_CODE,
             "current_official": GW_DEFAULT_VALUE,
             "biz_license_issue_date": GW_DEFAULT_VALUE,
             "cor_capital": GW_DEFAULT_VALUE,
@@ -874,7 +878,7 @@ class CtrGWCustomer(BaseController):
         }
 
         data_update_casa_account = {}
-
+        # TODO data update casa_account
         # if account_number:
         #     data_update_casa_account = {
         #         "casa_account_number": account_number

@@ -3,7 +3,7 @@ from typing import List
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
-from app.api.base.repository import ReposReturn
+from app.api.base.repository import ReposReturn, auto_commit
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.settings.event import service_gw
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
@@ -149,6 +149,7 @@ async def repos_gw_open_cif(
     return ReposReturn(data=response_data)
 
 
+@auto_commit
 async def repos_update_cif_number_customer(
         cif_id: str,
         data_update_customer: dict,
@@ -161,7 +162,7 @@ async def repos_update_cif_number_customer(
         ).filter(Customer.id == cif_id)
         .values(data_update_customer)
     )
-    print('data_update_casa_account', data_update_customer, data_update_casa_account)
+
     if data_update_casa_account:
         session.execute(
             update(
