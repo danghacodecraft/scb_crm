@@ -7,7 +7,9 @@ from sqlalchemy.sql.functions import count
 
 from app.api.base.repository import ReposReturn
 from app.api.v1.endpoints.user.schema import UserInfoResponse
-from app.third_parties.oracle.models.cif.form.model import Booking
+from app.third_parties.oracle.models.cif.form.model import (
+    Booking, BookingCustomer
+)
 from app.utils.error_messages import ERROR_BOOKING_CODE_EXISTED, MESSAGE_STATUS
 from app.utils.functions import (
     date_to_datetime, datetime_to_string, end_time_of_day, generate_uuid, now,
@@ -74,6 +76,9 @@ async def repos_create_booking(
             branch_id=current_user_branch_code,
             created_at=now(),
             updated_at=now()
+        ),
+        BookingCustomer(
+            booking_id=booking_id
         )
     )
     session.commit()
