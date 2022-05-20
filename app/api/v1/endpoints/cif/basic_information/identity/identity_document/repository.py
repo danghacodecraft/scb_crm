@@ -727,8 +727,7 @@ async def repos_upload_identity_document_and_ocr(
 
     file_response = await service_file.upload_file(
         file=image_file,
-        name=image_file_name,
-        booking_id=booking_id
+        name=image_file_name
     )
 
     if not file_response:
