@@ -514,7 +514,7 @@ class BaseController:
         permissions = []
         list_role_code = []
         for item in current_user.menu_list:
-            if item.menu_name == menu_code:
+            if item.menu_code == menu_code:
                 permissions.extend(item.group_role_list)
 
         if not permissions:
