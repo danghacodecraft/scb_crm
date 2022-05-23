@@ -20,7 +20,8 @@ from app.utils.constant.cif import (
     EKYC_GENDER_TYPE_FEMALE, EKYC_GENDER_TYPE_MALE
 )
 from app.utils.constant.ekyc import (
-    GROUP_ROLE_CODE_AP, GROUP_ROLE_CODE_IN, GROUP_ROLE_CODE_VIEW, MENU_CODE
+    GROUP_ROLE_CODE_AP, GROUP_ROLE_CODE_IN, GROUP_ROLE_CODE_VIEW, MENU_CODE,
+    MENU_CODE_VIEW
 )
 from app.utils.error_messages import ERROR_PERMISSION, MESSAGE_STATUS
 from app.utils.functions import gen_qr_code
@@ -43,7 +44,7 @@ class CtrKSS(BaseController):
                 msg=MESSAGE_STATUS[ERROR_PERMISSION],
                 loc='LIST KSS',
                 detail=MESSAGE_STATUS[ERROR_PERMISSION],
-                error_status_code=status.HTTP_404_NOT_FOUND)
+                error_status_code=status.HTTP_403_FORBIDDEN)
 
         query_data = {}
 
@@ -76,7 +77,7 @@ class CtrKSS(BaseController):
                 msg=MESSAGE_STATUS[ERROR_PERMISSION],
                 loc='LIST BRANCH',
                 detail=MESSAGE_STATUS[ERROR_PERMISSION],
-                error_status_code=status.HTTP_404_NOT_FOUND)
+                error_status_code=status.HTTP_403_FORBIDDEN)
 
         query_param = {
             'zone_id': zone_id
@@ -108,7 +109,7 @@ class CtrKSS(BaseController):
                 msg=MESSAGE_STATUS[ERROR_PERMISSION],
                 loc='LIST ZONE',
                 detail=MESSAGE_STATUS[ERROR_PERMISSION],
-                error_status_code=status.HTTP_404_NOT_FOUND)
+                error_status_code=status.HTTP_403_FORBIDDEN)
 
         list_zone = self.call_repos(await repos_get_list_zone())
 
@@ -131,7 +132,7 @@ class CtrKSS(BaseController):
                 msg=MESSAGE_STATUS[ERROR_PERMISSION],
                 loc='LIST GET POST CONTROL',
                 detail=MESSAGE_STATUS[ERROR_PERMISSION],
-                error_status_code=status.HTTP_404_NOT_FOUND
+                error_status_code=status.HTTP_403_FORBIDDEN
             )
 
         query_params = {
@@ -157,7 +158,7 @@ class CtrKSS(BaseController):
                 msg=MESSAGE_STATUS[ERROR_PERMISSION],
                 loc='LIST GET POST CONTROL',
                 detail=MESSAGE_STATUS[ERROR_PERMISSION],
-                error_status_code=status.HTTP_404_NOT_FOUND
+                error_status_code=status.HTTP_403_FORBIDDEN
             )
 
         history_post_check = self.call_repos(await repos_get_history_post_post_check(
@@ -180,7 +181,7 @@ class CtrKSS(BaseController):
                 msg=MESSAGE_STATUS[ERROR_PERMISSION],
                 loc='LIST GET POST CONTROL',
                 detail=MESSAGE_STATUS[ERROR_PERMISSION],
-                error_status_code=status.HTTP_404_NOT_FOUND
+                error_status_code=status.HTTP_403_FORBIDDEN
             )
 
         statistics_months = self.call_repos(await repos_get_statistics_month(months=months))
@@ -200,7 +201,7 @@ class CtrKSS(BaseController):
                 msg=MESSAGE_STATUS[ERROR_PERMISSION],
                 loc='LIST GET POST CONTROL',
                 detail=MESSAGE_STATUS[ERROR_PERMISSION],
-                error_status_code=status.HTTP_404_NOT_FOUND
+                error_status_code=status.HTTP_403_FORBIDDEN
             )
 
         statistics_profiles = self.call_repos(await repos_get_statistics_profiles())
@@ -220,7 +221,7 @@ class CtrKSS(BaseController):
                 msg=MESSAGE_STATUS[ERROR_PERMISSION],
                 loc='LIST GET POST CONTROL',
                 detail=MESSAGE_STATUS[ERROR_PERMISSION],
-                error_status_code=status.HTTP_404_NOT_FOUND
+                error_status_code=status.HTTP_403_FORBIDDEN
             )
 
         query_param = {}
@@ -237,15 +238,15 @@ class CtrKSS(BaseController):
         # role nhập
         is_success, response = self.check_permission(
             current_user=current_user,
-            menu_code=MENU_CODE,
+            menu_code=MENU_CODE_VIEW,
             group_role_code=GROUP_ROLE_CODE_IN)
 
         if not is_success:
             return self.response_exception(
                 msg=MESSAGE_STATUS[ERROR_PERMISSION],
-                loc='LIST KSS',
+                loc='CREATE_POST_CHECK',
                 detail=MESSAGE_STATUS[ERROR_PERMISSION],
-                error_status_code=status.HTTP_404_NOT_FOUND
+                error_status_code=status.HTTP_403_FORBIDDEN
             )
 
         post_control_request = [{
@@ -269,14 +270,13 @@ class CtrKSS(BaseController):
     async def ctr_update_post_check(
         self,
         postcheck_update_request: UpdatePostCheckRequest
-
     ):
 
         current_user = self.current_user
         # role duyệt
         is_success, response = self.check_permission(
             current_user=current_user,
-            menu_code=MENU_CODE,
+            menu_code=MENU_CODE_VIEW,
             group_role_code=GROUP_ROLE_CODE_AP)
 
         if not is_success:
@@ -284,7 +284,7 @@ class CtrKSS(BaseController):
                 msg=MESSAGE_STATUS[ERROR_PERMISSION],
                 loc='UPDATE POST CHECK',
                 detail=MESSAGE_STATUS[ERROR_PERMISSION],
-                error_status_code=status.HTTP_404_NOT_FOUND
+                error_status_code=status.HTTP_403_FORBIDDEN
             )
 
         request_data = {
@@ -312,7 +312,7 @@ class CtrKSS(BaseController):
                 msg=MESSAGE_STATUS[ERROR_PERMISSION],
                 loc='CUSTOMER_DETAIL',
                 detail=MESSAGE_STATUS[ERROR_PERMISSION],
-                error_status_code=status.HTTP_404_NOT_FOUND
+                error_status_code=status.HTTP_403_FORBIDDEN
             )
 
         customer_detail = self.call_repos(await repos_get_customer_detail(
