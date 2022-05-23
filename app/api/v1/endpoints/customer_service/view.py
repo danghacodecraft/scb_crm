@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, Header, Path, Query
+from fastapi import APIRouter, Depends, Path, Query
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -27,13 +27,12 @@ router = APIRouter()
     )
 )
 async def view_list_kss(
-    BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
     query_params: QueryParamsKSSRequest = Depends(),
     current_user=Depends(get_current_user_from_header())
 ):
     kss_response = await CtrKSS(current_user).ctr_get_list_kss(
         query_params=query_params,
-        booking_id=BOOKING_ID
+
     )
 
     return ResponseData[KSSResponse](**kss_response)
@@ -50,12 +49,10 @@ async def view_list_kss(
 )
 async def view_list_branch(
     zone_id: int = Query(None, description='Zone ID', nullable=True),
-    BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"), # noqa
     current_user=Depends(get_current_user_from_header())
 ):
     branch_response = await CtrKSS(current_user).ctr_get_list_branch(
-        zone_id=zone_id,
-        booking_id=BOOKING_ID
+        zone_id=zone_id
     )
 
     return ResponseData[List[BranchResponse]](**branch_response)
@@ -71,10 +68,9 @@ async def view_list_branch(
     )
 )
 async def view_list_zone(
-    BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
     current_user=Depends(get_current_user_from_header())
 ):
-    zone_response = await CtrKSS(current_user).ctr_get_list_zone(booking_id=BOOKING_ID)
+    zone_response = await CtrKSS(current_user).ctr_get_list_zone()
 
     return ResponseData[List[ZoneRequest]](**zone_response)
 
@@ -89,15 +85,13 @@ async def view_list_zone(
     )
 )
 async def view_list_post_control(
-    BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
     postcheck_uuid: str = Path(..., description='Id của khách hàng'),
     post_control_his_id: int = Query(None, description='ID lịch sử hậu kiểm'),
     current_user=Depends(get_current_user_from_header())
 ):
     post_control_response = await CtrKSS(current_user).ctr_get_post_control(
         postcheck_uuid=postcheck_uuid,
-        post_control_his_id=post_control_his_id,
-        booking_id=BOOKING_ID
+        post_control_his_id=post_control_his_id
     )
 
     return ResponseData[PostControlResponse](**post_control_response)
@@ -113,13 +107,11 @@ async def view_list_post_control(
     )
 )
 async def view_list_history_post_check(
-    BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
     postcheck_uuid: str = Path(..., description='Id của khách hàng'),
     current_user=Depends(get_current_user_from_header())
 ):
     history_post_check = await CtrKSS(current_user).ctr_history_post_check(
-        postcheck_uuid=postcheck_uuid,
-        booking_id=BOOKING_ID
+        postcheck_uuid=postcheck_uuid
     )
 
     return ResponseData[List[HistoryPostCheckResponse]](**history_post_check)
@@ -135,13 +127,11 @@ async def view_list_history_post_check(
     )
 )
 async def view_list_statistics_month(
-    BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
     months: int = Query(..., description='Số tháng để thống kê'),
     current_user=Depends(get_current_user_from_header())
 ):
     statistics_month_response = await CtrKSS(current_user).ctr_statistics_month(
-        months=months,
-        booking_id=BOOKING_ID
+        months=months
     )
 
     return ResponseData[List[StatisticsMonth]](**statistics_month_response)
@@ -160,10 +150,9 @@ async def view_list_statistics_profiles(
     selected_date: str = Query(None, description='Chọn ngày kết thúc DD/MM/YYYY'),
     start_date: str = Query(None, description='Chọn ngày'),
     end_date: str = Query(None, description='Chọn ngày bắt đầu DD/MM/YYYY'),
-    BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
     current_user=Depends(get_current_user_from_header())
 ):
-    statistics_profiles = await CtrKSS(current_user).ctr_get_statistics_profiles(booking_id=BOOKING_ID)
+    statistics_profiles = await CtrKSS(current_user).ctr_get_statistics_profiles()
 
     return ResponseData[StatisticsProfilesResponse](**statistics_profiles)
 
@@ -185,13 +174,11 @@ async def view_list_statistics(
         \n `search_type` = 4, hiển thị theo năm
         """),
     selected_date: str = Query(None, description='Chọn ngày `DD/MM/YYYY`'),
-    BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
     current_user=Depends(get_current_user_from_header())
 ):
     statistics = await CtrKSS(current_user).ctr_get_statistics(
         search_type=search_type,
-        selected_date=selected_date,
-        booking_id=BOOKING_ID
+        selected_date=selected_date
     )
 
     return ResponseData[List[StatisticsResponse]](**statistics)
@@ -208,15 +195,13 @@ async def view_list_statistics(
 )
 async def create_post_check(
     post_check_request: CreatePostCheckRequest,
-    BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
     current_user=Depends(get_current_user_from_header())
 ):
     post_check = await CtrKSS(current_user).ctr_create_post_check(
-        post_check_request=post_check_request,
-        booking_id=BOOKING_ID
+        post_check_request=post_check_request
     )
 
-    return ResponseData[CreatePostCheckRequest](**post_check)
+    return ResponseData(**post_check)
 
 
 @router.put(
@@ -230,12 +215,10 @@ async def create_post_check(
 )
 async def update_post_check(
     postcheck_update_request: UpdatePostCheckRequest,
-    BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
     current_user=Depends(get_current_user_from_header())
 ):
     update_postcheck = await CtrKSS(current_user).ctr_update_post_check(
-        postcheck_update_request=postcheck_update_request,
-        booking_id=BOOKING_ID
+        postcheck_update_request=postcheck_update_request
     )
 
     return ResponseData[UpdatePostCheckRequest](**update_postcheck)
@@ -251,13 +234,11 @@ async def update_post_check(
     )
 )
 async def view_customer(
-    BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
     postcheck_uuid: str = Path(..., description='ID của khách hàng'),
     current_user=Depends(get_current_user_from_header())
 ):
     customer_detail_information = await CtrKSS(current_user).ctr_get_customer_detail(
-        postcheck_uuid=postcheck_uuid,
-        booking_id=BOOKING_ID
+        postcheck_uuid=postcheck_uuid
     )
 
     return ResponseData[CustomerDetailResponse](**customer_detail_information)
