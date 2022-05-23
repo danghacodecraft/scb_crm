@@ -141,7 +141,7 @@ async def view_list_statistics_month(
 ):
     statistics_month_response = await CtrKSS(current_user).ctr_statistics_month(
         months=months,
-
+        booking_id=BOOKING_ID
     )
 
     return ResponseData[List[StatisticsMonth]](**statistics_month_response)
