@@ -35,12 +35,13 @@ class CtrKSS(BaseController):
         query_params: QueryParamsKSSRequest,
         booking_id: Optional[str]
     ):
-        # Check exist Booking
-        await CtrBooking().ctr_get_booking(
-            business_type_code=BUSINESS_TYPE_EKYC_AUDIT,
-            booking_id=booking_id,
-            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_EKYC_AUDIT}"
-        )
+        if booking_id:
+            # Check exist Booking
+            await CtrBooking().ctr_get_booking(
+                business_type_code=BUSINESS_TYPE_EKYC_AUDIT,
+                booking_id=booking_id,
+                loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_EKYC_AUDIT}"
+            )
 
         current_user = self.current_user
         is_success, response = self.check_permission(
@@ -90,12 +91,13 @@ class CtrKSS(BaseController):
 
     async def ctr_get_list_branch(self, zone_id: int, booking_id: Optional[str]):
 
-        # Check exist Booking
-        await CtrBooking().ctr_get_booking(
-            business_type_code=BUSINESS_TYPE_EKYC_AUDIT,
-            booking_id=booking_id,
-            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_EKYC_AUDIT}"
-        )
+        if booking_id:
+            # Check exist Booking
+            await CtrBooking().ctr_get_booking(
+                business_type_code=BUSINESS_TYPE_EKYC_AUDIT,
+                booking_id=booking_id,
+                loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_EKYC_AUDIT}"
+            )
 
         current_user = self.current_user
 
@@ -130,12 +132,13 @@ class CtrKSS(BaseController):
 
     async def ctr_get_list_zone(self, booking_id: Optional[str]):
 
-        # Check exist Booking
-        await CtrBooking().ctr_get_booking(
-            business_type_code=BUSINESS_TYPE_EKYC_AUDIT,
-            booking_id=booking_id,
-            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_EKYC_AUDIT}"
-        )
+        if booking_id:
+            # Check exist Booking
+            await CtrBooking().ctr_get_booking(
+                business_type_code=BUSINESS_TYPE_EKYC_AUDIT,
+                booking_id=booking_id,
+                loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_EKYC_AUDIT}"
+            )
 
         current_user = self.current_user
 
