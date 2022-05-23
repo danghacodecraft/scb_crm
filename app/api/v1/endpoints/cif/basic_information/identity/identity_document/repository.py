@@ -11,6 +11,7 @@ from app.api.v1.endpoints.repository import (
     write_transaction_log_and_update_booking
 )
 from app.api.v1.endpoints.user.schema import UserInfoResponse
+from app.api.v1.others.booking.repository import generate_booking_code
 from app.settings.event import service_ekyc, service_file
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
     CustomerAddress
@@ -42,9 +43,9 @@ from app.third_parties.oracle.models.master_data.others import (
 )
 from app.utils.constant.cif import (
     ACTIVE_FLAG_ACTIVED, ADDRESS_COUNTRY_CODE_VN, BUSINESS_FORM_TTCN_GTDD_GTDD,
-    CONTACT_ADDRESS_CODE, CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE,
-    DROPDOWN_NONE_DICT, EKYC_DOCUMENT_TYPE, EKYC_GENDER_TYPE_FEMALE,
-    EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
+    BUSINESS_TYPE_CODE_CIF, CONTACT_ADDRESS_CODE, CRM_GENDER_TYPE_FEMALE,
+    CRM_GENDER_TYPE_MALE, DROPDOWN_NONE_DICT, EKYC_DOCUMENT_TYPE,
+    EKYC_GENDER_TYPE_FEMALE, EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_BACK_SIDE_IDENTITY_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD,
@@ -430,7 +431,13 @@ async def repos_save_identity(
         booking_code = booking_response['booking_code']
 
         session.execute(update(BookingCustomer).filter(BookingCustomer.booking_id == booking_id).values(customer_id=new_customer_id))
-
+        # tạo booking code
+        if not booking_code:
+            is_existed, booking_code = await generate_booking_code(
+                branch_code=current_user.hrm_branch_code,
+                business_type_code=BUSINESS_TYPE_CODE_CIF,
+                session=session
+            )
         # update booking
         session.execute(update(Booking).filter(Booking.id == booking_id).values(
             code=booking_code,
