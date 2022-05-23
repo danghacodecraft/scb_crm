@@ -26,7 +26,8 @@ from app.third_parties.oracle.models.cif.basic_information.personal.model import
     CustomerIndividualInfo
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    BookingBusinessForm, BookingCustomer, TransactionDaily, TransactionSender
+    Booking, BookingBusinessForm, BookingCustomer, TransactionDaily,
+    TransactionSender
 )
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
@@ -430,6 +431,11 @@ async def repos_save_identity(
 
         session.execute(update(BookingCustomer).filter(BookingCustomer.booking_id == booking_id).values(customer_id=new_customer_id))
 
+        # update booking
+        session.execute(update(Booking).filter(Booking.id == booking_id).values(
+            code=booking_code,
+            transaction_id=saving_transaction_daily.get('transaction_id')
+        ))
         session.execute(update(BookingBusinessForm).filter(BookingBusinessForm.booking_id == booking_id).values(
             # business_form_id=BUSINESS_FORM_TTCN_GTDD_GTDD,
             save_flag=True,  # Save_flag đổi lại thành True do Business Form giờ là những Tab nhỏ nhiều cấp
