@@ -189,10 +189,10 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"errors": {"message": "eKYC error please try again later"}}
 
-    async def get_list_kss(self, query_data, booking_id: Optional[str]):
+    async def get_list_kss(self, query_data):
         api_url = f"{self.url}/api/v1/customer-service/crm/"
 
-        headers = self.create_header(booking_id=booking_id)
+        headers = self.create_header(booking_id=None)
 
         try:
             async with self.session.get(url=api_url, headers=headers, params=query_data,
@@ -212,10 +212,10 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def get_list_branch(self, query_param: dict, booking_id: Optional[str]):
+    async def get_list_branch(self, query_param: dict):
         api_url = f"{self.url}/api/v1/customer-service/crm/branch"
 
-        headers = self.create_header(booking_id=booking_id)
+        headers = self.create_header(booking_id=None)
 
         try:
             async with self.session.get(url=api_url, headers=headers, params=query_param,
@@ -234,10 +234,10 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def get_list_zone(self, booking_id: Optional[str]):
+    async def get_list_zone(self):
         api_url = f"{self.url}/api/v1/customer-service/crm/zone/"
 
-        headers = self.create_header(booking_id=booking_id)
+        headers = self.create_header(booking_id=None)
 
         try:
             async with self.session.get(url=api_url, headers=headers, ssl=False) as response:
@@ -263,10 +263,10 @@ class ServiceEKYC:
                 }),
             }
 
-    async def get_statistics_profiles(self, booking_id: Optional[str]):
+    async def get_statistics_profiles(self):
         api_url = f"{self.url}/api/v1/customer-service/crm/profilestatistics"
 
-        headers = self.create_header(booking_id=booking_id)
+        headers = self.create_header(booking_id=None)
 
         try:
             async with self.session.get(url=api_url, headers=headers, ssl=False) as response:
@@ -285,10 +285,10 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def get_statistics_months(self, months: int, booking_id: Optional[str]):
+    async def get_statistics_months(self, months: int):
         api_url = f"{self.url}/api/v1/customer-service/crm/statisticsbymonth/"
 
-        headers = self.create_header(booking_id=booking_id)
+        headers = self.create_header(booking_id=None)
 
         query = {
             'month': months
@@ -310,10 +310,10 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def get_history_post_check(self, postcheck_uuid: str, booking_id: Optional[str]):
+    async def get_history_post_check(self, postcheck_uuid: str):
         api_url = f"{self.url}/api/v1/customer-service/crm/postcontrolhistory/"
 
-        headers = self.create_header(booking_id=booking_id)
+        headers = self.create_header(booking_id=None)
 
         query = {
             'customer_id': postcheck_uuid
@@ -335,10 +335,10 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def update_post_check(self, request_data, booking_id: Optional[str]):
+    async def update_post_check(self, request_data):
         api_url = f"{self.url}/api/v1/customer-service/crm/postcontrol/"
 
-        headers = self.create_header(booking_id=booking_id)
+        headers = self.create_header(booking_id=None)
 
         try:
             async with self.session.put(url=api_url, json=request_data, headers=headers, ssl=False) as response:
@@ -359,10 +359,10 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def get_statistics(self, query_param: dict, booking_id: Optional[str]):
+    async def get_statistics(self, query_param: dict):
         api_url = f"{self.url}/api/v1/customer-service/crm/statistics/"
 
-        headers = self.create_header(booking_id=booking_id)
+        headers = self.create_header(booking_id=None)
 
         try:
             async with self.session.get(url=api_url, headers=headers, params=query_param, ssl=False) as response:
@@ -381,10 +381,10 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def get_customer_detail(self, postcheck_uuid: str, booking_id: Optional[str]):
+    async def get_customer_detail(self, postcheck_uuid: str):
         api_url = f"{self.url}/api/v1/customer-service/crm/{postcheck_uuid}/"
 
-        headers = self.create_header(booking_id=booking_id)
+        headers = self.create_header(booking_id=None)
 
         try:
             async with self.session.get(url=api_url, headers=headers, ssl=False) as response:
@@ -413,10 +413,10 @@ class ServiceEKYC:
             )
         return True, response_data
 
-    async def create_post_check(self, payload_data: dict, booking_id: Optional[str]):
+    async def create_post_check(self, payload_data: dict):
         api_url = f"{self.url}/api/v1/customer-service/crm/postcontrol/"
 
-        headers = self.create_header(booking_id=booking_id)
+        headers = self.create_header(booking_id=None)
 
         try:
             async with self.session.post(url=api_url, headers=headers, json=payload_data, ssl=False) as response:
@@ -437,10 +437,10 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def get_post_control(self, query_params, booking_id: Optional[str]):
+    async def get_post_control(self, query_params):
         api_url = f"{self.url}/api/v1/customer-service/crm/postcontrol/"
 
-        headers = self.create_header(booking_id=booking_id)
+        headers = self.create_header(booking_id=None)
 
         try:
             async with self.session.get(url=api_url, params=query_params, headers=headers, ssl=False) as response:
