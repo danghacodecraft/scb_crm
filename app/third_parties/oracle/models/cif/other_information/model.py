@@ -23,3 +23,16 @@ class CustomerEmployee(Base):
 
     customer = relationship('Customer')
     employee = relationship('HrmEmployee')
+
+
+class Comment(Base):
+    __tablename__ = 'crm_comment'
+    __table_args__ = {'comment': 'Bình luận'}
+
+    id = Column('comment_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "))
+
+    username = Column('created_user_username', VARCHAR(100), nullable=False,
+                      comment='Tên nick name tạo comment')
+    created_at = Column('created_at', DateTime, nullable=False, comment='Ngày tạo')
+    content = Column(VARCHAR(36), comment='Nội dung bình luận')
+    url = Column(VARCHAR(200), comment='URL file đính kèm')
