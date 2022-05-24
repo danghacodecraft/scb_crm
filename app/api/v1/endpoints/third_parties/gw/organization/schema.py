@@ -2,12 +2,12 @@ from typing import ForwardRef, List
 
 from pydantic import Field
 
-from app.api.base.schema import BaseSchema
+from app.api.base.schema import BaseGWSchema
 
 GWOrgInfo = ForwardRef('GWOrgInfoResponse')
 
 
-class GWOrgInfoResponse(BaseSchema):
+class GWOrgInfoResponse(BaseGWSchema):
     id: str = Field(..., description="Mã nhân viên")
     parent_id: str = Field(..., description="Tên nhân viên")
     name: str = Field(..., description="Tên đầy đủ")
@@ -21,7 +21,7 @@ class GWOrgInfoResponse(BaseSchema):
 GWOrgInfoResponse.update_forward_refs()
 
 
-class GWOrgInfoFromParentResponse(BaseSchema):
+class GWOrgInfoFromParentResponse(BaseGWSchema):
     id: str = Field(..., description="Mã nhân viên")
     parent_id: str = Field(..., description="Tên nhân viên")
     name: str = Field(..., description="Tên đầy đủ")
@@ -31,7 +31,7 @@ class GWOrgInfoFromParentResponse(BaseSchema):
     order_by: str = Field(..., description="Điện thoại nội bộ")
 
 
-class GWOrgInfoFromChildResponse(BaseSchema):
+class GWOrgInfoFromChildResponse(BaseGWSchema):
     id: str = Field(..., description="Mã nhân viên")
     parent_id: str = Field(..., description="Tên nhân viên")
     name: str = Field(..., description="Tên đầy đủ")

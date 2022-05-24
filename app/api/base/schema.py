@@ -35,6 +35,17 @@ class BaseSchema(BaseModel):
         object.__setattr__(self, 'uuid', uuid)
 
 
+class BaseGWSchema(BaseModel):
+    @validator('*', pre=True)
+    def check_blank_str(string):
+        if string == '':
+            return None
+        return string
+
+    def set_uuid(self, uuid: [str, UUID]):
+        object.__setattr__(self, 'uuid', uuid)
+
+
 class BaseGenericSchema(BaseSchema, GenericModel):
     pass
 
