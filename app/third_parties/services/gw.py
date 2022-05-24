@@ -34,8 +34,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_RETRIEVE_STAFF_OTHER_INFO_FROM_CODE,
     GW_ENDPOINT_URL_RETRIEVE_TOPIC_INFO_FROM_CODE,
     GW_ENDPOINT_URL_RETRIEVE_WORKING_PROCESS_INFO_FROM_CODE,
-    GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE, GW_SELECT_CATEGORY,
-    GW_SELECT_CATEGORY_TYPE
+    GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE, GW_SELECT_CATEGORY
 )
 from app.utils.functions import date_to_string
 
@@ -1179,16 +1178,11 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
-    async def get_select_category(self, current_user: UserInfoResponse, transaction_form: str, branch_code: str):
+    async def get_select_category(self, current_user: UserInfoResponse, transaction_name: str, transaction_value: str):
         data_input = {
             "transaction_info": {
-                "transaction_name": GW_SELECT_CATEGORY_TYPE,
-                "transaction_value": [
-                    {
-                        "param1": transaction_form,
-                        "param2": branch_code
-                    }
-                ]
+                "transaction_name": transaction_name,
+                "transaction_value": transaction_value
             }
         }
 
