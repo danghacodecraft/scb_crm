@@ -14,9 +14,9 @@ class CustomerInfoCIFResponse(BaseGWSchema):
 
 class CustomerInfoListCIFRequest(BaseGWSchema):
     cif_number: str = Field("", description="Số CIF")
-    identity_number: str = Field("", description="Số CMND/CCCD/HC")
-    mobile_number: str = Field("", description="Số điện thoại")
-    full_name: str = Field("", description="Họ tên")
+    identity_number: Optional[str] = Field("", description="Số CMND/CCCD/HC")
+    mobile_number: Optional[str] = Field("", description="Số điện thoại")
+    full_name: Optional[str] = Field("", description="Họ tên")
 
 
 class GWCustomerCheckExistResponse(BaseGWSchema):
