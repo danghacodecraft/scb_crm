@@ -13,10 +13,9 @@ async def repos_get_list_kss(
     )
     if not is_success:
         return ReposReturn(is_error=True, loc="LIST KSS", detail=response.get('message'))
-    new_list = sorted(response.get('detail'), key=lambda x: x['trans_date'], reverse=True)
 
     return ReposReturn(data={
-        'detail': new_list,
+        'detail': response.get('detail'),
         'total_page': response.get('total_page'),
         'total_record': response.get('total_record'),
         'page': response.get('page')
@@ -49,10 +48,9 @@ async def repos_get_statistics_month(months: int) -> ReposReturn:
     return ReposReturn(data=response)
 
 
-async def repos_get_history_post_post_check(postcheck_uuid: str, booking_id: Optional[str]) -> ReposReturn:
+async def repos_get_history_post_post_check(postcheck_uuid: str) -> ReposReturn:
     is_success, response = await service_ekyc.get_history_post_check(
-        postcheck_uuid=postcheck_uuid,
-        booking_id=booking_id
+        postcheck_uuid=postcheck_uuid
     )
 
     if not is_success:
