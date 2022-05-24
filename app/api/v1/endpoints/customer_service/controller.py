@@ -21,8 +21,8 @@ from app.utils.constant.cif import (
     EKYC_GENDER_TYPE_FEMALE, EKYC_GENDER_TYPE_MALE
 )
 from app.utils.constant.ekyc import (
-    EKYC_DATE_FORMAT, GROUP_ROLE_CODE_AP, GROUP_ROLE_CODE_IN,
-    GROUP_ROLE_CODE_VIEW, MENU_CODE, MENU_CODE_VIEW
+    EKYC_DATE_FORMAT, EKYC_DEFAULT_VALUE, GROUP_ROLE_CODE_AP,
+    GROUP_ROLE_CODE_IN, GROUP_ROLE_CODE_VIEW, MENU_CODE, MENU_CODE_VIEW
 )
 from app.utils.error_messages import ERROR_PERMISSION, MESSAGE_STATUS
 from app.utils.functions import (
@@ -272,7 +272,7 @@ class CtrKSS(BaseController):
             "check_list_id": post_control.check_list_id,
             "check_list_desc": post_control.check_list_desc,
             "answer": post_control.answer,
-            "note": post_control.note
+            "note": post_control.note if post_control.note else EKYC_DEFAULT_VALUE
         } for post_control in post_check_request.post_control]
 
         payload_data = {

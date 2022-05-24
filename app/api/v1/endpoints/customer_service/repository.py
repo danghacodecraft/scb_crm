@@ -13,10 +13,9 @@ async def repos_get_list_kss(
     )
     if not is_success:
         return ReposReturn(is_error=True, loc="LIST KSS", detail=response.get('message'))
-    new_list = sorted(response.get('detail'), key=lambda x: x['trans_date'], reverse=True)
 
     return ReposReturn(data={
-        'detail': new_list,
+        'detail': response.get('detail'),
         'total_page': response.get('total_page'),
         'total_record': response.get('total_record'),
         'page': response.get('page')
