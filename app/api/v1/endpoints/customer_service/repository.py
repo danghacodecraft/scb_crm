@@ -11,9 +11,12 @@ async def repos_get_list_kss(
     is_success, response = await service_ekyc.get_list_kss(
         query_data=query_data
     )
+    if not is_success:
+        return ReposReturn(is_error=True, loc="LIST KSS", detail=response.get('message'))
+    new_list = sorted(response.get('detail'), key=lambda x: x['trans_date'], reverse=True)
 
     return ReposReturn(data={
-        'detail': response.get('detail'),
+        'detail': new_list,
         'total_page': response.get('total_page'),
         'total_record': response.get('total_record'),
         'page': response.get('page')
