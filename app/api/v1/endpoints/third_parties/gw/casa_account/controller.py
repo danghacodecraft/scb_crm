@@ -111,7 +111,7 @@ class CtrGWCasaAccount(BaseController):
             type=account_info['account_type'],
             type_name=account_info['account_type_name'],
             currency=account_info['account_currency'],
-            balance=account_info['account_balance'] if account_info['account_balance'] == '' else None,
+            balance=account_info['account_balance'],
             balance_available=account_info['account_balance_available'],
             balance_available_vnd=account_info['account_balance_available_vnd'],
             balance_lock=account_info['account_balance_lock'],
