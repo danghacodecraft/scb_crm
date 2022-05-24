@@ -48,10 +48,9 @@ async def repos_get_statistics_month(months: int) -> ReposReturn:
     return ReposReturn(data=response)
 
 
-async def repos_get_history_post_post_check(postcheck_uuid: str, booking_id: Optional[str]) -> ReposReturn:
+async def repos_get_history_post_post_check(postcheck_uuid: str) -> ReposReturn:
     is_success, response = await service_ekyc.get_history_post_check(
-        postcheck_uuid=postcheck_uuid,
-        booking_id=booking_id
+        postcheck_uuid=postcheck_uuid
     )
 
     if not is_success:
