@@ -160,11 +160,20 @@ class CtrCustomerRelationship(BaseController):
                     )))
             relationship_details.append(customer_relationship_item)
 
-        data = {
-            'customer_relationship_flag': True if detail_customer_relationship_info else False,
-            'number_of_customer_relationship': len(detail_customer_relationship_info),
-            "relationships": relationship_details
-        }
+        # Lấy Booking Code
+        booking = self.call_repos(await repos_get_booking(
+            cif_id=cif_id, session=self.oracle_session
+        ))
+
+        data = dict(
+            customer_relationship_flag=True if detail_customer_relationship_info else False,
+            number_of_customer_relationship=len(detail_customer_relationship_info),
+            relationships=relationship_details,
+            booking=dict(
+                id=booking.id,
+                code=booking.code,
+            )
+        )
 
         return self.response(data=data)
 

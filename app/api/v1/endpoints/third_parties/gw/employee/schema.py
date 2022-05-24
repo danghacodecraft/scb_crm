@@ -3,11 +3,11 @@ from typing import List, Optional
 
 from pydantic import Field
 
-from app.api.base.schema import BaseSchema
+from app.api.base.schema import BaseGWSchema
 from app.api.v1.schemas.utils import OptionalDropdownResponse
 
 
-class GWEmployeeInfoResponse(BaseSchema):
+class GWEmployeeInfoResponse(BaseGWSchema):
     staff_code: str = Field(..., description="Mã nhân viên")
     staff_name: str = Field(..., description="Tên nhân viên")
     fullname_vn: str = Field(..., description="Tên đầy đủ")
@@ -21,12 +21,12 @@ class GWEmployeeInfoResponse(BaseSchema):
     avatar: str = Field(..., description="Hình ảnh đại diện nhân viên")
 
 
-class GWEmployeeListResponse(BaseSchema):
+class GWEmployeeListResponse(BaseGWSchema):
     total_items: int = Field(..., description="Tổng số nhân viên")
     employee_infos: List[GWEmployeeInfoResponse] = Field(..., description="Thông tin danh sách nhân viên")
 
 
-class GWRetrieveEmployeeInfoResponse(BaseSchema):
+class GWRetrieveEmployeeInfoResponse(BaseGWSchema):
     staff_code: str = Field(..., description="Mã nhân viên")
     staff_name: str = Field(..., description="Tên nhân viên")
     fullname_vn: str = Field(..., description="Tên đầy đủ")
@@ -46,14 +46,14 @@ class GWRetrieveEmployeeInfoResponse(BaseSchema):
     marital_status: Optional[str] = Field(..., description="Tình trạng hôn nhân")
 
 
-class GWRetrieveEmployeeIdentityInfo(BaseSchema):
+class GWRetrieveEmployeeIdentityInfo(BaseGWSchema):
     number: str = Field(..., description="CMND/Hộ chiếu, số đăng ký kinh doanh nếu là khách hàng doanh nghiệp")
     issued_date: Optional[date] = Field(..., description="Ngày cấp chứng minh nhân dân hoặc hộ chiếu")
     expired_date: Optional[date] = Field(..., description="Ngày hết hạn chứng minh nhân dân hoặc hộ chiếu")
     place_of_issue: str = Field(..., description="Nơi cấp chứng minh nhân dân hoặc hộ chiếu")
 
 
-class GWRetrieveEmployeeAddressInfo(BaseSchema):
+class GWRetrieveEmployeeAddressInfo(BaseGWSchema):
     number_and_street: Optional[str] = Field(..., description="tên đường, số nhà")
     country: OptionalDropdownResponse = Field(..., description="tên quốc gia")
     province: OptionalDropdownResponse = Field(..., description="tên thành phố")
@@ -61,7 +61,7 @@ class GWRetrieveEmployeeAddressInfo(BaseSchema):
     ward: OptionalDropdownResponse = Field(..., description="tên phường")
 
 
-class GWRetrieveEmployeeEducationInfo(BaseSchema):
+class GWRetrieveEmployeeEducationInfo(BaseGWSchema):
     academy: Optional[str] = Field(..., description="Trình độ văn hóa")
     education_level: Optional[str] = Field(..., description="Trình độ học vấn")
     education_skill: Optional[str] = Field(..., description="Trình độ chuyên môn")
@@ -72,14 +72,14 @@ class GWRetrieveEmployeeEducationInfo(BaseSchema):
     gpa: Optional[str] = Field(..., description="Điểm tốt nghiệp")
 
 
-class GWRetrieveEmployeeLanguageInfo(BaseSchema):
+class GWRetrieveEmployeeLanguageInfo(BaseGWSchema):
     english: Optional[str] = Field(..., description="Ngoại ngữ")
     english_level: Optional[str] = Field(..., description="Trình độ")
     english_mark: Optional[str] = Field(..., description="Điểm tốt nghiệp")
     english_issue_date: Optional[date] = Field(..., description="Ngày nhận chứng chỉ")
 
 
-class GWRetrieveEmployeeProfileInfo(BaseSchema):
+class GWRetrieveEmployeeProfileInfo(BaseGWSchema):
     join_date: Optional[date] = Field(..., description="Ngày vào làm việc")
     probation_date: Optional[date] = Field(..., description="Ngày vào thử việc")
     official_date: Optional[date] = Field(..., description="Ngày vào chính thức")
@@ -92,7 +92,7 @@ class GWRetrieveEmployeeProfileInfo(BaseSchema):
     temp_department_info: OptionalDropdownResponse = Field(..., description="Thông tin Đơn vị/Phòng ban")
 
 
-class GWRetrieveEmployeeContractInfo(BaseSchema):
+class GWRetrieveEmployeeContractInfo(BaseGWSchema):
     contract_type: str = Field(..., description="Loại hợp đồng")
     contract_name: str = Field(..., description="Số hợp đồng")
     contract_effected_date: Optional[date] = Field(..., description="Ngày bắt đầu HĐ")
@@ -103,7 +103,7 @@ class GWRetrieveEmployeeContractInfo(BaseSchema):
     stop_job_date: Optional[date] = Field(..., description="Ngày nghỉ việc")
 
 
-class GWRetrieveEmployeeResponse(BaseSchema):
+class GWRetrieveEmployeeResponse(BaseGWSchema):
     employee_info: GWRetrieveEmployeeInfoResponse = Field(..., description="Thông tin nhân viên")
     department_info: OptionalDropdownResponse = Field(..., description="Thông tin Đơn vị/Phòng ban")
     identity_info: GWRetrieveEmployeeIdentityInfo = Field(..., description="Thông tin giấy tờ định danh")
@@ -117,20 +117,20 @@ class GWRetrieveEmployeeResponse(BaseSchema):
     contract_info: GWRetrieveEmployeeContractInfo = Field(..., description="Thông tin hợp đồng")
 
 
-class GWEmployeeWorkingProcessItemResponse(BaseSchema):
+class GWEmployeeWorkingProcessItemResponse(BaseGWSchema):
     company: Optional[str] = Field(..., description="Tên công ty")
     from_date: Optional[date] = Field(..., description="Từ ngày")
     to_date: Optional[date] = Field(..., description="Đến ngày")
     position: Optional[str] = Field(..., description="Vị trí")
 
 
-class GWEmployeeWorkingProcessResponse(BaseSchema):
+class GWEmployeeWorkingProcessResponse(BaseGWSchema):
     total_items: int = Field(..., description="Tổng số quá trình công tác của nhân viên")
     working_process_infos: List[GWEmployeeWorkingProcessItemResponse] = Field(
         ..., description="Thông tin quá trình công tác của nhân viên")
 
 
-class GWEmployeeRewardItemResponse(BaseSchema):
+class GWEmployeeRewardItemResponse(BaseGWSchema):
     effect_date: Optional[date] = Field(..., description="Ngày hiệu lực")
     number: Optional[str] = Field(..., description="Số quyết định")
     title: Optional[str] = Field(..., description="Danh hiệu")
@@ -144,12 +144,12 @@ class GWEmployeeRewardItemResponse(BaseSchema):
     signer: Optional[str] = Field(..., description="Người ký")
 
 
-class GWEmployeeRewardResponse(BaseSchema):
+class GWEmployeeRewardResponse(BaseGWSchema):
     total_items: int = Field(..., description="Tổng số khen thưởng của nhân viên")
     reward_infos: List[GWEmployeeRewardItemResponse] = Field(..., description="Thông tin khen thưởng của nhân viên")
 
 
-class GWEmployeeDisciplineItemResponse(BaseSchema):
+class GWEmployeeDisciplineItemResponse(BaseGWSchema):
     effect_date: Optional[date] = Field(..., description="Ngày hiệu lực")
     expire_date: Optional[date] = Field(..., description="Ngày kết thúc")
     jobtitle: Optional[str] = Field(..., description="Chức danh")
@@ -158,13 +158,13 @@ class GWEmployeeDisciplineItemResponse(BaseSchema):
     description: Optional[str] = Field(..., description="Lý do chi tiết")
 
 
-class GWEmployeeDisciplineResponse(BaseSchema):
+class GWEmployeeDisciplineResponse(BaseGWSchema):
     total_items: int = Field(..., description="Tổng số vi phạm kỷ luật của nhân viên")
     reward_infos: List[GWEmployeeDisciplineItemResponse] = Field(...,
                                                                  description="Thông tin vi phạm kỷ luật của nhân viên")
 
 
-class GWEmployeeTopicItemResponse(BaseSchema):
+class GWEmployeeTopicItemResponse(BaseGWSchema):
     code: Optional[str] = Field(..., description="Mã khóa học")
     name: Optional[str] = Field(..., description="Tên khóa học")
     from_date: Optional[date] = Field(..., description="Từ ngày")
@@ -173,12 +173,12 @@ class GWEmployeeTopicItemResponse(BaseSchema):
     description: Optional[str] = Field(..., description="Chủ đề")
 
 
-class GWEmployeeTopicResponse(BaseSchema):
+class GWEmployeeTopicResponse(BaseGWSchema):
     total_items: int = Field(..., description="Tổng số khóa học của nhân viên")
     topic_infos: List[GWEmployeeTopicItemResponse] = Field(..., description="Thông tin khóa học của nhân viên")
 
 
-class GWEmployeeKpisItemResponse(BaseSchema):
+class GWEmployeeKpisItemResponse(BaseGWSchema):
     period_name: Optional[str] = Field(..., description="Kỳ đánh giá")
     total_point: Optional[str] = Field(..., description="Tổng điểm kpis")
     completed: Optional[str] = Field(..., description="Tỷ lệ hoàn thành")
@@ -186,12 +186,12 @@ class GWEmployeeKpisItemResponse(BaseSchema):
     note: Optional[str] = Field(..., description="Ghi chú")
 
 
-class GWEmployeeKpisResponse(BaseSchema):
+class GWEmployeeKpisResponse(BaseGWSchema):
     total_items: int = Field(..., description="Tổng số khóa học của nhân viên")
     kpis_infos: List[GWEmployeeKpisItemResponse] = Field(..., description="Thông tin khóa học của nhân viên")
 
 
-class GWEmployeeRecruitmentInfoResponse(BaseSchema):
+class GWEmployeeRecruitmentInfoResponse(BaseGWSchema):
     code: Optional[str] = Field(..., description="Mã yêu cầu tuyển dụng")
     reason: Optional[str] = Field(..., description="Lý do tuyển dụng")
     presenter: Optional[str] = Field(..., description="Người giới thiệu")
@@ -200,7 +200,7 @@ class GWEmployeeRecruitmentInfoResponse(BaseSchema):
     other: Optional[str] = Field(..., description="Thông tin khác")
 
 
-class GWEmployeeStaffOtherResponse(BaseSchema):
+class GWEmployeeStaffOtherResponse(BaseGWSchema):
     seniority_month: Optional[str] = Field(..., description="Tháng thâm niên cộng thêm")
     annual_number: Optional[str] = Field(..., description="Số phép năm ưu đãi")
     recruitment_info: GWEmployeeRecruitmentInfoResponse = Field(..., description="Thông tin tuyển dụng")

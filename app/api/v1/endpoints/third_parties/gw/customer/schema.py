@@ -3,37 +3,37 @@ from typing import List, Optional
 
 from pydantic import Field
 
-from app.api.base.schema import BaseSchema
+from app.api.base.schema import BaseGWSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
 from app.api.v1.schemas.utils import DropdownResponse, OptionalDropdownResponse
 
 
-class CustomerInfoCIFResponse(BaseSchema):
+class CustomerInfoCIFResponse(BaseGWSchema):
     cif_number: str = CustomField().CIFNumberField
 
 
-class CustomerInfoListCIFRequest(BaseSchema):
+class CustomerInfoListCIFRequest(BaseGWSchema):
     cif_number: str = Field("", description="Số CIF")
-    identity_number: str = Field("", description="Số CMND/CCCD/HC")
-    mobile_number: str = Field("", description="Số điện thoại")
-    full_name: str = Field("", description="Họ tên")
+    identity_number: Optional[str] = Field("", description="Số CMND/CCCD/HC")
+    mobile_number: Optional[str] = Field("", description="Số điện thoại")
+    full_name: Optional[str] = Field("", description="Họ tên")
 
 
-class GWCustomerCheckExistResponse(BaseSchema):
+class GWCustomerCheckExistResponse(BaseGWSchema):
     is_existed: bool = Field(..., description="Cờ có tồn tại không")
 
 
-class GWCustomerCheckExistRequest(BaseSchema):
+class GWCustomerCheckExistRequest(BaseGWSchema):
     cif_number: str = CustomField().CIFNumberField
 
 
-class GWCustomerCIFInfoResponse(BaseSchema):
+class GWCustomerCIFInfoResponse(BaseGWSchema):
     customer_id: Optional[str] = Field(None, description="Mã khách hàng")
     cif_number: Optional[str] = Field(..., description="Số CIF")
     issued_date: Optional[str] = Field(..., description="Ngày cấp số CIF")
 
 
-class GWCustomerIDInfoResponse(BaseSchema):
+class GWCustomerIDInfoResponse(BaseGWSchema):
     number: Optional[str] = Field(
         ..., description="CMND/Hộ chiếu, số đăng ký kinh doanh nếu là khách hàng doanh nghiệp"
     )
@@ -43,16 +43,16 @@ class GWCustomerIDInfoResponse(BaseSchema):
     place_of_issue: OptionalDropdownResponse = Field(..., description="Nơi cấp chứng minh nhân dân hoặc hộ chiếu")
 
 
-class GWCustomerListAddressInfo(BaseSchema):
+class GWCustomerListAddressInfo(BaseGWSchema):
     address_full: Optional[str] = Field(..., description="Địa chỉ đầy đủ")
 
 
-class GWCustomerListAddress(BaseSchema):
+class GWCustomerListAddress(BaseGWSchema):
     contact_address_full: Optional[str] = Field(..., description="Địa chỉ liên lạc đầy đủ")
     address_full: Optional[str] = Field(..., description="Địa chỉ đầy đủ")
 
 
-class GWCustomerDetailAddressInfo(BaseSchema):
+class GWCustomerDetailAddressInfo(BaseGWSchema):
     address_full: Optional[str] = Field(..., description="Địa chỉ đầy đủ")
     number_and_street: Optional[str] = Field(..., description="Địa chỉ liên lạc - tên đường, số nhà")
     ward: OptionalDropdownResponse = Field(..., description="Tên Địa chỉ liên lạc - phường/xã")
@@ -60,7 +60,7 @@ class GWCustomerDetailAddressInfo(BaseSchema):
     province: OptionalDropdownResponse = Field(..., description="Tên Địa chỉ liên lạc - tỉnh/thành")
 
 
-class GWCustomerInfoItemResponse(BaseSchema):
+class GWCustomerInfoItemResponse(BaseGWSchema):
     fullname_vn: Optional[str] = Field(..., description="Họ và tên")
     date_of_birth: Optional[date] = Field(..., description="Ngày sinh")
     martial_status: OptionalDropdownResponse = Field(..., description="Tình trạng hôn nhân")
@@ -77,17 +77,17 @@ class GWCustomerInfoItemResponse(BaseSchema):
     address_info: GWCustomerListAddressInfo = Field(..., description="Thông tin địa chỉ")
 
 
-class GWCustomerInfoListResponse(BaseSchema):
+class GWCustomerInfoListResponse(BaseGWSchema):
     total_items: int = Field(..., description="Số lượng khách hàng")
     customer_info_list: List[GWCustomerInfoItemResponse] = Field(..., description="Danh sách khách hàng")
 
 
-class GWCustomerJobInfo(BaseSchema):
+class GWCustomerJobInfo(BaseGWSchema):
     name: Optional[str] = Field(..., description="Tên nghề nghiệp")
     code: Optional[str] = Field(..., description="Mã nghề nghiệp")
 
 
-class GWCustomerInfoDetailResponse(BaseSchema):
+class GWCustomerInfoDetailResponse(BaseGWSchema):
     fullname_vn: Optional[str] = Field(..., description="Họ và tên")
     short_name: Optional[str] = Field(..., description="Tên viết tắt")
     date_of_birth: Optional[date] = Field(..., description="Ngày sinh")
@@ -118,7 +118,7 @@ class GWCustomerInfoDetailResponse(BaseSchema):
     branch_info: OptionalDropdownResponse = Field(..., description="Thông tin đơn vị")
 
 
-class GWCoOwnerResponse(BaseSchema):
+class GWCoOwnerResponse(BaseGWSchema):
     full_name_vn: Optional[str] = Field(..., description="Họ và tên")
     date_of_birth: Optional[str] = Field(..., description="Ngày sinh")
     gender: OptionalDropdownResponse = Field(..., description="Giới tính")
@@ -132,12 +132,12 @@ class GWCoOwnerResponse(BaseSchema):
     address_info: GWCustomerListAddress = Field(..., description="Thông tin địa chỉ")
 
 
-class GWCoOwnerListResponse(BaseSchema):
+class GWCoOwnerListResponse(BaseGWSchema):
     total_items: int = Field(..., description="Số lượng khách hàng")
     co_owner_info_list: List[GWCoOwnerResponse] = Field(..., description="Danh sách khách hàng")
 
 
-class GWAuthorizedResponse(BaseSchema):
+class GWAuthorizedResponse(BaseGWSchema):
     full_name_vn: Optional[str] = Field(..., description="Họ và tên")
     date_of_birth: Optional[str] = Field(..., description="Ngày sinh")
     gender: OptionalDropdownResponse = Field(..., description="Giới tính")
@@ -151,12 +151,12 @@ class GWAuthorizedResponse(BaseSchema):
     address_info: GWCustomerListAddress = Field(..., description="Thông tin địa chỉ")
 
 
-class GWAuthorizedListResponse(BaseSchema):
+class GWAuthorizedListResponse(BaseGWSchema):
     total_items: int = Field(..., description="Số lượng khách hàng")
     authorized_info_list: List[GWAuthorizedResponse] = Field(..., description="Danh sách khách hàng")
 
 
-class GWOpenCIFResponse(BaseSchema):
+class GWOpenCIFResponse(BaseGWSchema):
     cif_id: str = Field(..., description="CIF_ID Customer")
     cif_number: str = Field(..., description="CIF_NUMBER Customer")
 
@@ -164,13 +164,13 @@ class GWOpenCIFResponse(BaseSchema):
 ########################################################################################################################
 # GW
 ########################################################################################################################
-class GWCIFInformation(BaseSchema):
+class GWCIFInformation(BaseGWSchema):
     cif_number: str = CustomField().CIFNumberField
     issued_date: Optional[date] = Field(..., description="Ngày cấp số CIF")
     customer_type: OptionalDropdownResponse = Field(..., description="Loại khách hàng")
 
 
-class GWCustomerInformation(BaseSchema):
+class GWCustomerInformation(BaseGWSchema):
     full_name: Optional[str] = Field(..., description="Họ và tên không dấu")
     full_name_vn: Optional[str] = Field(..., description="Họ và tên có dấu")
     first_name: Optional[str] = Field(..., description="Họ có dấu")
@@ -184,14 +184,14 @@ class GWCustomerInformation(BaseSchema):
     email: Optional[str] = Field(..., description="Email")
 
 
-class GWCustomerIdentityInformation(BaseSchema):
+class GWCustomerIdentityInformation(BaseGWSchema):
     identity_number: Optional[str] = Field(..., description="Số CMND/CCCD/Hộ chiếu")
     issued_date: Optional[date] = Field(..., description="Ngày cấp")
     expired_date: Optional[date] = Field(..., description="Ngày hết hạn")
     place_of_issue: OptionalDropdownResponse = Field(..., description="Nơi cấp")
 
 
-class GWAddressInfo(BaseSchema):
+class GWAddressInfo(BaseGWSchema):
     province: OptionalDropdownResponse = Field(..., description="Tỉnh/Thành phố")
     district: OptionalDropdownResponse = Field(..., description="Quận/Huyện")
     ward: OptionalDropdownResponse = Field(..., description="Phường/Xã")
@@ -199,12 +199,12 @@ class GWAddressInfo(BaseSchema):
     address_full: Optional[str] = Field(..., description="Địa chỉ đầy đủ")
 
 
-class GWCustomerAddressInfoRes(BaseSchema):
+class GWCustomerAddressInfoRes(BaseGWSchema):
     resident_address: GWAddressInfo = Field(..., description="Địa chỉ thường trú")
     contact_address: GWAddressInfo = Field(..., description="Địa chỉ liên lạc")
 
 
-class GuardianOrCustomerRelationshipByCIFNumberResponse(BaseSchema):
+class GuardianOrCustomerRelationshipByCIFNumberResponse(BaseGWSchema):
     cif_information: GWCIFInformation = Field(..., description="Thông tin CIF")
     customer_information: GWCustomerInformation = Field(..., description="Thông tin khách hàng")
     identity_information: GWCustomerIdentityInformation = Field(
@@ -214,18 +214,18 @@ class GuardianOrCustomerRelationshipByCIFNumberResponse(BaseSchema):
     address_info: GWCustomerAddressInfoRes = Field(..., description="Thông tin địa chỉ khách hàng")
 
 
-class NameOnCardResponse(BaseSchema):
+class NameOnCardResponse(BaseGWSchema):
     last_name_on_card: Optional[str] = Field(..., description="Tên")
     middle_name_on_card: Optional[str] = Field(..., description="tên lót")
     first_name_on_card: Optional[str] = Field(..., description="Họ")
 
 
-class CardDeliveryAddressResponse(BaseSchema):
+class CardDeliveryAddressResponse(BaseGWSchema):
     branch: Optional[DropdownResponse] = Field(..., description=" chi nhánh scb nhận thẻ")
     delivery_address: Optional[GWAddressInfo] = Field(..., descripion="Địa chỉ nhân thẻ")
 
 
-class DebitCardByCIFNumberResponse(BaseSchema):
+class DebitCardByCIFNumberResponse(BaseGWSchema):
     cif_number: str = Field(..., description="Số CIF")
     name_on_card: NameOnCardResponse = Field(..., description="Tên trên thẻ")
     card_delivery_address: CardDeliveryAddressResponse = Field(..., description="Địa chỉ giao nhận thẻ")

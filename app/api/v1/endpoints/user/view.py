@@ -2,10 +2,9 @@ from fastapi import APIRouter, Body, Depends
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from starlette import status
 
-from app.api.base.schema import PagingResponse, ResponseData
+from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
-from app.api.v1.dependencies.paging import PaginationParams
 from app.api.v1.endpoints.user.controller import CtrUser
 from app.api.v1.endpoints.user.schema import (
     EXAMPLE_REQ_UPDATE_USER, EXAMPLE_RES_FAIL_LOGIN,
@@ -18,22 +17,22 @@ router = APIRouter()
 security = HTTPBasic()
 
 
-@router.get(
-    path="/",
-    name="List user",
-    description="Danh sách các người dùng",
-    responses=swagger_response(
-        response_model=PagingResponse[UserInfoResponse],
-        success_status_code=status.HTTP_200_OK
-    ),
-    deprecated=True
-)
-async def view_list_user(
-        current_user=Depends(get_current_user_from_header()),  # noqa
-        pagination_params: PaginationParams = Depends()
-):
-    paging_users = await CtrUser(is_init_oracle_session=False, pagination_params=pagination_params).ctr_get_list_user()
-    return PagingResponse[UserInfoResponse](**paging_users)
+# @router.get(
+#     path="/",
+#     name="List user",
+#     description="Danh sách các người dùng",
+#     responses=swagger_response(
+#         response_model=PagingResponse[UserInfoResponse],
+#         success_status_code=status.HTTP_200_OK
+#     ),
+#     deprecated=True
+# )
+# async def view_list_user(
+#         current_user=Depends(get_current_user_from_header()),  # noqa
+#         pagination_params: PaginationParams = Depends()
+# ):
+#     paging_users = await CtrUser(is_init_oracle_session=False, pagination_params=pagination_params).ctr_get_list_user()
+#     return PagingResponse[UserInfoResponse](**paging_users)
 
 
 @router.post(

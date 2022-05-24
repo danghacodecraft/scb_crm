@@ -151,7 +151,8 @@ class CtrFingerPrint(BaseController):
         uuid__link_downloads = await self.get_link_download_multi_file(uuids=image_uuids)
 
         for row in fingerprint_data:
-            row.CustomerIdentityImageTransaction.image_url = uuid__link_downloads[row.CustomerIdentityImageTransaction.image_url]
+            row.CustomerIdentityImageTransaction.image_url = uuid__link_downloads[
+                row.CustomerIdentityImageTransaction.image_url]
 
             fingerprint = {
                 'image_url': row.CustomerIdentityImageTransaction.image_url,
@@ -171,11 +172,11 @@ class CtrFingerPrint(BaseController):
         })
 
     async def ctr_add_fingerprint(
-        self,
-        cif_id: str,
-        file: UploadFile,
-        ids_finger: List,
-        booking_id: Optional[str]
+            self,
+            cif_id: str,
+            file: UploadFile,
+            ids_finger: List,
+            booking_id: Optional[str]
     ):
 
         # Check exist Booking
@@ -189,7 +190,7 @@ class CtrFingerPrint(BaseController):
 
         file_upload = await file.read()
         # upload service file
-        response = await service_file.upload_file(file=file_upload, name=file.filename, booking_id=booking_id)
+        response = await service_file.upload_file(file=file_upload, name=file.filename)
 
         # upload file ekyc
         is_success, uuid_ekyc = await service_ekyc.upload_file(
@@ -203,8 +204,10 @@ class CtrFingerPrint(BaseController):
             "uuid": uuid_ekyc['uuid']
         }
 
-        is_success_add_finger, id_finger = await service_ekyc.add_finger_ekyc(cif_id=cif_id,
-                                                                              json_body=json_body_add_finger)
+        is_success_add_finger, id_finger = await service_ekyc.add_finger_ekyc(
+            booking_id=booking_id,
+            json_body=json_body_add_finger
+        )
         if not is_success_add_finger:
             return self.response_exception(msg=ERROR_CALL_SERVICE_EKYC, loc="ADD_FINGERPRINT", detail=str(id_finger))
 
@@ -221,7 +224,10 @@ class CtrFingerPrint(BaseController):
                 "limit": len(ids_finger)
             }
 
-            is_success_compare, compare = await service_ekyc.compare_finger_ekyc(cif_id=cif_id, json_body=json_compare)
+            is_success_compare, compare = await service_ekyc.compare_finger_ekyc(
+                booking_id=booking_id,
+                json_body=json_compare
+            )
 
             if not is_success_compare:
                 return self.response_exception(msg=ERROR_CALL_SERVICE_EKYC, loc="ADD_FINGERPRINT", detail=str(compare))

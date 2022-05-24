@@ -14,7 +14,7 @@ from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.utils.constant.gw import (
     GW_TRANSACTION_TYPE_SEND, GW_TRANSACTION_TYPE_WITHDRAW
 )
-from app.utils.functions import orjson_loads, string_to_date
+from app.utils.functions import string_to_date
 
 
 class CtrGWCasaAccount(BaseController):
@@ -99,13 +99,13 @@ class CtrGWCasaAccount(BaseController):
         branch_info = account_info['branch_info']
         status_info = []
         if account_info['account_status']:
-            list_account_status = orjson_loads(account_info['account_status'])[0]
-            for key, value in list_account_status.items():
+            for key, value in account_info['account_status'][0].items():
                 status_info.append(dict(
                     id=key,
                     code=key,
                     name=value
                 ))
+
         gw_casa_account_info_response = dict(
             number=account_info['account_num'],
             type=account_info['account_type'],
