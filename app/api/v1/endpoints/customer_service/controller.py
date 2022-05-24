@@ -164,7 +164,7 @@ class CtrKSS(BaseController):
 
         return self.response(data=post_control_response)
 
-    async def ctr_history_post_check(self, postcheck_uuid: str, booking_id: Optional[str]):
+    async def ctr_history_post_check(self, postcheck_uuid: str):
         current_user = self.current_user
 
         is_success, response = self.check_permission(
@@ -181,8 +181,7 @@ class CtrKSS(BaseController):
             )
 
         history_post_check = self.call_repos(await repos_get_history_post_post_check(
-            postcheck_uuid=postcheck_uuid,
-            booking_id=booking_id
+            postcheck_uuid=postcheck_uuid
         ))
 
         return self.response(data=history_post_check)
