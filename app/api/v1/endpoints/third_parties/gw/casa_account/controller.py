@@ -98,19 +98,20 @@ class CtrGWCasaAccount(BaseController):
         account_info = customer_info['account_info']
         branch_info = account_info['branch_info']
         status_info = []
-        for key, value in account_info['account_status'][0].items():
-            status_info.append(dict(
-                id=key,
-                code=key,
-                name=value
-            ))
+        if account_info['account_status']:
+            for key, value in account_info['account_status'][0].items():
+                status_info.append(dict(
+                    id=key,
+                    code=key,
+                    name=value
+                ))
 
         gw_casa_account_info_response = dict(
             number=account_info['account_num'],
             type=account_info['account_type'],
             type_name=account_info['account_type_name'],
             currency=account_info['account_currency'],
-            balance=account_info['account_balance'],
+            balance=account_info['account_balance'] if account_info['account_balance'] == '' else None,
             balance_available=account_info['account_balance_available'],
             balance_available_vnd=account_info['account_balance_available_vnd'],
             balance_lock=account_info['account_balance_lock'],

@@ -1,7 +1,7 @@
 from datetime import date
 from typing import List, Optional
 
-from pydantic import Field
+from pydantic import Field, validator
 
 from app.api.base.schema import BaseSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
@@ -85,6 +85,12 @@ class GWAccountInfoResponse(BaseSchema):
     service_escrow_ex_date: Optional[date] = Field(..., description="Ngày đáo hạn ký quỹ")
     branch_info: GWBranchDropdownResponse = Field(..., description="Thông tin đơn vị")
     product_package: Optional[str] = Field(..., description="Gói sản phẩm")
+
+    @validator('*', pre=True)
+    def check_blank_str(string):
+        if string == '':
+            return None
+        return string
 
 
 class GWCasaAccountResponse(BaseSchema):
