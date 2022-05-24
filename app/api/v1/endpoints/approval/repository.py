@@ -8,12 +8,16 @@ from app.third_parties.oracle.models.cif.basic_information.identity.model import
     CustomerCompareImage, CustomerCompareImageTransaction, CustomerIdentity,
     CustomerIdentityImage, CustomerIdentityImageTransaction
 )
+from app.third_parties.oracle.models.cif.basic_information.model import (
+    Customer
+)
 from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingCustomer, TransactionDaily, TransactionSender
 )
 from app.third_parties.oracle.models.master_data.others import (
-    TransactionStage, TransactionStageAction, TransactionStageLane,
-    TransactionStagePhase, TransactionStageRole, TransactionStageStatus
+    BusinessType, TransactionStage, TransactionStageAction,
+    TransactionStageLane, TransactionStagePhase, TransactionStageRole,
+    TransactionStageStatus
 )
 from app.utils.constant.cif import IMAGE_TYPE_FACE
 from app.utils.error_messages import ERROR_CIF_ID_NOT_EXIST
@@ -286,3 +290,68 @@ async def repos_get_transaction_daily(
         .order_by(desc(TransactionDaily.created_at))
     ).scalars().first()
     return ReposReturn(data=transaction_daily)
+
+
+async def repos_get_list_audit(session: Session):
+    list_supervisor = session.execute(
+        select(
+            Booking.code,
+            BusinessType,
+            Customer.cif_number,
+            Customer.full_name_vn,
+            Customer.mobile_number,
+            CustomerIdentity.id,
+            CustomerIdentity.identity_type_id,
+            TransactionDaily.transaction_id,
+            TransactionStage.id,
+            TransactionStage.transaction_stage_phase_code,
+            TransactionStage.transaction_stage_phase_name,
+            TransactionStageStatus.id,
+            TransactionStageStatus.code,
+            TransactionStageStatus.name,
+            BookingCustomer
+        )
+        .join(BusinessType, Booking.business_type_id == BusinessType.id)
+        .join(BookingCustomer, Booking.id == BookingCustomer.booking_id)
+        .join(Customer, BookingCustomer.customer_id == Customer.id)
+        .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id)
+        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
+        .join(TransactionStage, and_(
+            TransactionDaily.transaction_stage_id == TransactionStage.id,
+            TransactionStage.transaction_stage_phase_code == "PHE_DUYET_KSV",
+            TransactionStage.is_reject is False
+        ))
+        .join(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id)
+    ).all()
+
+    list_audit = session.execute(
+        select(
+            Booking.code,
+            BusinessType,
+            Customer.cif_number,
+            Customer.full_name_vn,
+            Customer.mobile_number,
+            CustomerIdentity.id,
+            CustomerIdentity.identity_type_id,
+            TransactionDaily.transaction_id,
+            TransactionStage.id,
+            TransactionStage.transaction_stage_phase_code,
+            TransactionStage.transaction_stage_phase_name,
+            TransactionStageStatus.id,
+            TransactionStageStatus.code,
+            TransactionStageStatus.name,
+            BookingCustomer
+        )
+        .join(BusinessType, Booking.business_type_id == BusinessType.id)
+        .join(BookingCustomer, Booking.id == BookingCustomer.booking_id)
+        .join(Customer, BookingCustomer.customer_id == Customer.id)
+        .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id)
+        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
+        .join(TransactionStage, and_(
+            TransactionDaily.transaction_stage_id == TransactionStage.id,
+            TransactionStage.transaction_stage_phase_code == "PHE_DUYET_KSS"
+        ))
+        .join(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id)
+        .distinct()
+    ).all()
+    return ReposReturn(data=list_audit + list_supervisor)
