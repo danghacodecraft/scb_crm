@@ -14,17 +14,20 @@ from app.api.v1.endpoints.customer_service.repository import (
 from app.api.v1.endpoints.customer_service.schema import (
     CreatePostCheckRequest, QueryParamsKSSRequest, UpdatePostCheckRequest
 )
+from app.settings.config import DATE_INPUT_OUTPUT_FORMAT
 from app.utils.constant.cif import (
     CRM_GENDER_TYPE_FEMALE, EKYC_DOCUMENT_TYPE_NEW_CITIZEN,
     EKYC_DOCUMENT_TYPE_OLD_CITIZEN, EKYC_DOCUMENT_TYPE_PASSPORT,
     EKYC_GENDER_TYPE_FEMALE, EKYC_GENDER_TYPE_MALE
 )
 from app.utils.constant.ekyc import (
-    GROUP_ROLE_CODE_AP, GROUP_ROLE_CODE_IN, GROUP_ROLE_CODE_VIEW, MENU_CODE,
-    MENU_CODE_VIEW
+    EKYC_DATE_FORMAT, GROUP_ROLE_CODE_AP, GROUP_ROLE_CODE_IN,
+    GROUP_ROLE_CODE_VIEW, MENU_CODE, MENU_CODE_VIEW
 )
 from app.utils.error_messages import ERROR_PERMISSION, MESSAGE_STATUS
-from app.utils.functions import gen_qr_code
+from app.utils.functions import (
+    date_string_to_other_date_string_format, gen_qr_code
+)
 
 
 class CtrKSS(BaseController):
@@ -53,8 +56,24 @@ class CtrKSS(BaseController):
         query_data.update({'approve_status': query_params.approve_status}) if query_params.approve_status else None
         query_data.update({'branch_id': query_params.branch_id}) if query_params.branch_id else None
         query_data.update({'zone_id': query_params.zone_id}) if query_params.zone_id else None
-        query_data.update({'start_date': query_params.start_date}) if query_params.start_date else None
-        query_data.update({'end_date': query_params.end_date}) if query_params.end_date else None
+        query_data.update(
+            {
+                'start_date': date_string_to_other_date_string_format(
+                    query_params.start_date,
+                    from_format=DATE_INPUT_OUTPUT_FORMAT,
+                    to_format=EKYC_DATE_FORMAT
+                )
+            }
+        ) if query_params.start_date else None
+        query_data.update(
+            {
+                'end_date': date_string_to_other_date_string_format(
+                    query_params.end_date,
+                    from_format=DATE_INPUT_OUTPUT_FORMAT,
+                    to_format=EKYC_DATE_FORMAT
+                )
+            }
+        ) if query_params.end_date else None
         query_data.update({'page_num': query_params.page_num}) if query_params.page_num else None
         query_data.update({'record_per_page': query_params.record_per_page}) if query_params.record_per_page else None
         query_data.update({'step_status': query_params.step_status}) if query_params.step_status else None
