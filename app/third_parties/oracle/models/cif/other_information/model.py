@@ -34,37 +34,39 @@ class Comment(Base):
 
     username = Column('user_username', VARCHAR(255), nullable=False,
                       comment='Username người tạo comment')
-    name = Column('user_username', VARCHAR(255), nullable=False,
+    name = Column('name', VARCHAR(255), nullable=False,
                   comment='Tên người tạo comment')
-    code = Column('user_username', VARCHAR(255), nullable=False,
+    code = Column('code', VARCHAR(36), nullable=False,
                   comment='Mã nhân viên người tạo comment')
-    email = Column('user_username', VARCHAR(255), nullable=False,
+    email = Column('email', VARCHAR(255), nullable=False,
                    comment='Email người tạo comment')
-    hrm_department_id = Column('user_username', VARCHAR(255), nullable=False,
+    hrm_department_id = Column('hrm_department_id', VARCHAR(36), nullable=True,
                                comment='ID Phòng ban người tạo comment')
-    hrm_department_code = Column('user_username', VARCHAR(255), nullable=False,
+    hrm_department_code = Column('hrm_department_code', VARCHAR(10), nullable=True,
                                  comment='Mã Phòng ban người tạo comment')
-    hrm_department_name = Column('user_username', VARCHAR(255), nullable=False,
+    hrm_department_name = Column('hrm_department_name', VARCHAR(100), nullable=True,
                                  comment='Tên Phòng ban người tạo comment')
-    hrm_branch_id = Column('user_username', VARCHAR(255), nullable=False,
+    hrm_branch_id = Column('hrm_branch_id', VARCHAR(36), nullable=True,
                            comment='ID Chi nhánh/Hội sở người tạo comment')
-    hrm_branch_code = Column('user_username', VARCHAR(255), nullable=False,
+    hrm_branch_code = Column('hrm_branch_code', VARCHAR(10), nullable=True,
                              comment='Mã Chi nhánh/Hội sở người tạo comment')
-    hrm_branch_name = Column('user_username', VARCHAR(255), nullable=False,
+    hrm_branch_name = Column('hrm_branch_name', VARCHAR(100), nullable=True,
                              comment='Tên Chi nhánh/Hội sở người tạo comment')
-    hrm_title_id = Column('user_username', VARCHAR(255), nullable=False,
+    hrm_title_id = Column('hrm_title_id', VARCHAR(36), nullable=False,
                           comment='ID Chức danh người tạo comment')
-    hrm_title_code = Column('user_username', VARCHAR(255), nullable=False,
+    hrm_title_code = Column('hrm_title_code', VARCHAR(10), nullable=False,
                             comment='Mã Chức danh người tạo comment')
-    hrm_title_name = Column('user_username', VARCHAR(255), nullable=False,
+    hrm_title_name = Column('hrm_title_name', VARCHAR(100), nullable=False,
                             comment='Tên Chức danh người tạo comment')
-    hrm_position_id = Column('user_username', VARCHAR(255), nullable=False,
+    hrm_position_id = Column('hrm_position_id', VARCHAR(36), nullable=True,
                              comment='ID Chức vụ người tạo comment')
-    hrm_position_code = Column('user_username', VARCHAR(255), nullable=False,
+    hrm_position_code = Column('hrm_position_code', VARCHAR(10), nullable=True,
                                comment='Mã chức vụ người tạo comment')
-    hrm_position_name = Column('user_username', VARCHAR(255), nullable=False,
+    hrm_position_name = Column('hrm_position_name', VARCHAR(100), nullable=True,
                                comment='Tên chức vụ người tạo comment')
-    content = Column(VARCHAR(500), comment='Nội dung bình luận')
+    content = Column('content', VARCHAR(500), nullable=False, comment='Nội dung bình luận')
     created_at = Column('created_at', DateTime, nullable=False, comment='Ngày tạo')
-    updated_at = Column('updated_at', DateTime, comment='Ngày cập nhật')
-    url = Column(VARCHAR(200), comment='URL file đính kèm')
+    updated_at = Column('updated_at', DateTime, nullable=True, comment='Ngày cập nhật')
+    url = Column('url', VARCHAR(200), nullable=True, comment='URL file đính kèm')
+
+    booking = relationship('Booking')
