@@ -116,7 +116,7 @@ class CtrApproval(BaseController):
     async def ctr_get_approval(self, cif_id: str, amount: int): # noqa
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
-        current_user = self.current_user.user_info
+        # current_user = self.current_user.user_info
         auth_response = self.current_user
 
         ################################################################################################################
@@ -372,13 +372,13 @@ class CtrApproval(BaseController):
 
         stages = []
 
-        is_stage_audit = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
-            auth_response=auth_response,
-            menu_code=IDM_MENU_CODE_OPEN_CIF,
-            group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
-            permission_code=IDM_PERMISSION_CODE_KSS,
-            stage_code=CIF_STAGE_APPROVE_KSS
-        ))
+        # is_stage_audit = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
+        #     auth_response=auth_response,
+        #     menu_code=IDM_MENU_CODE_OPEN_CIF,
+        #     group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
+        #     permission_code=IDM_PERMISSION_CODE_KSS,
+        #     stage_code=CIF_STAGE_APPROVE_KSS
+        # ))
         is_stage_supervisor = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
             auth_response=auth_response,
             menu_code=IDM_MENU_CODE_OPEN_CIF,
@@ -394,16 +394,17 @@ class CtrApproval(BaseController):
             stage_code=CIF_STAGE_INIT
         ))
 
-        if not (is_stage_audit or is_stage_supervisor or is_stage_teller):
-            return self.response_exception(
-                loc=f"Stage: {previous_stage_code}, "
-                    f"User: {current_user.username}, "
-                    f"IDM_MENU_CODE: {IDM_MENU_CODE_OPEN_CIF}, "
-                    f"IDM_GROUP_ROLE_CODE: {IDM_GROUP_ROLE_CODE_APPROVAL}, "
-                    f"IDM_PERMISSION_CODE: {IDM_PERMISSION_CODE_KSS}",
-                msg=ERROR_PERMISSION,
-                error_status_code=status.HTTP_403_FORBIDDEN
-            )
+        # Chỉ những người có rule mới được xem phê duyệt
+        # if not (is_stage_audit or is_stage_supervisor or is_stage_teller):
+        #     return self.response_exception(
+        #         loc=f"Stage: {previous_stage_code}, "
+        #             f"User: {current_user.username}, "
+        #             f"IDM_MENU_CODE: {IDM_MENU_CODE_OPEN_CIF}, "
+        #             f"IDM_GROUP_ROLE_CODE: {IDM_GROUP_ROLE_CODE_APPROVAL}, "
+        #             f"IDM_PERMISSION_CODE: {IDM_PERMISSION_CODE_KSS}",
+        #         msg=ERROR_PERMISSION,
+        #         error_status_code=status.HTTP_403_FORBIDDEN
+        #     )
 
         # Chưa có hồ sơ nào trước đó, GDV gửi hồ sơ đi
         if previous_stage_code == CIF_STAGE_BEGIN:
