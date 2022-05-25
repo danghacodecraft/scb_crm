@@ -88,3 +88,9 @@ class AuthenticationRequest(BaseSchema):
 class ApprovalRequest(BaseSchema):
     approval: CifApproveRequest = Field(..., description="Thông tin các TAB phê duyệt")
     authentication: Optional[AuthenticationRequest] = Field(None, description="Thông tin xác thực")
+
+
+########################################################################################################################
+# KSS
+########################################################################################################################
+# class AuditResponse(BaseSchema):

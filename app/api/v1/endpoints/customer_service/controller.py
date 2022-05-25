@@ -4,10 +4,10 @@ from starlette import status
 
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.customer_service.repository import (
-    repos_create_post_check, repos_get_customer_detail,
-    repos_get_history_post_post_check, repos_get_list_branch,
-    repos_get_list_kss, repos_get_list_zone, repos_get_post_control,
-    repos_get_statistics, repos_get_statistics_month,
+    repos_create_booking_kss, repos_create_post_check,
+    repos_get_customer_detail, repos_get_history_post_post_check,
+    repos_get_list_branch, repos_get_list_kss, repos_get_list_zone,
+    repos_get_post_control, repos_get_statistics, repos_get_statistics_month,
     repos_get_statistics_profiles, repos_save_customer_ekyc,
     repos_update_post_check
 )
@@ -15,14 +15,15 @@ from app.api.v1.endpoints.customer_service.schema import (
     CreatePostCheckRequest, QueryParamsKSSRequest, UpdatePostCheckRequest
 )
 from app.settings.config import DATE_INPUT_OUTPUT_FORMAT
+from app.utils.constant.business_type import BUSINESS_TYPE_EKYC_AUDIT
 from app.utils.constant.cif import (
     CRM_GENDER_TYPE_FEMALE, EKYC_DOCUMENT_TYPE_NEW_CITIZEN,
     EKYC_DOCUMENT_TYPE_OLD_CITIZEN, EKYC_DOCUMENT_TYPE_PASSPORT,
     EKYC_GENDER_TYPE_FEMALE, EKYC_GENDER_TYPE_MALE
 )
 from app.utils.constant.ekyc import (
-    EKYC_DATE_FORMAT, GROUP_ROLE_CODE_AP, GROUP_ROLE_CODE_IN,
-    GROUP_ROLE_CODE_VIEW, MENU_CODE, MENU_CODE_VIEW
+    EKYC_DATE_FORMAT, EKYC_DEFAULT_VALUE, GROUP_ROLE_CODE_AP,
+    GROUP_ROLE_CODE_IN, GROUP_ROLE_CODE_VIEW, MENU_CODE, MENU_CODE_VIEW
 )
 from app.utils.error_messages import ERROR_PERMISSION, MESSAGE_STATUS
 from app.utils.functions import (
@@ -164,7 +165,7 @@ class CtrKSS(BaseController):
 
         return self.response(data=post_control_response)
 
-    async def ctr_history_post_check(self, postcheck_uuid: str, booking_id: Optional[str]):
+    async def ctr_history_post_check(self, postcheck_uuid: str):
         current_user = self.current_user
 
         is_success, response = self.check_permission(
@@ -181,8 +182,7 @@ class CtrKSS(BaseController):
             )
 
         history_post_check = self.call_repos(await repos_get_history_post_post_check(
-            postcheck_uuid=postcheck_uuid,
-            booking_id=booking_id
+            postcheck_uuid=postcheck_uuid
         ))
 
         return self.response(data=history_post_check)
@@ -272,7 +272,7 @@ class CtrKSS(BaseController):
             "check_list_id": post_control.check_list_id,
             "check_list_desc": post_control.check_list_desc,
             "answer": post_control.answer,
-            "note": post_control.note
+            "note": post_control.note if post_control.note else EKYC_DEFAULT_VALUE
         } for post_control in post_check_request.post_control]
 
         payload_data = {
@@ -284,6 +284,13 @@ class CtrKSS(BaseController):
 
         post_check_response = self.call_repos(await repos_create_post_check(payload_data=payload_data))
 
+        # TODO
+        booking_id, booking_code = self.call_repos(await repos_create_booking_kss( # noqa
+            business_type_code=BUSINESS_TYPE_EKYC_AUDIT,
+            current_user=current_user.user_info,
+            payload_data=payload_data,
+            session=self.oracle_session
+        ))
         return self.response(data=post_check_response)
 
     async def ctr_update_post_check(
