@@ -11,8 +11,8 @@ class GWCategoryRequest(BaseSchema):
     transaction_value: List = Field([])
 
 
-class CategoryRequest(BaseSchema):
+class CategoryResponse(BaseSchema):
     employee_code: str = Field(..., description="Mã nhân viên")
     employee_name: str = Field(..., description="Tên nhân viên")
     department: OptionalDropdownResponse = Field(..., description="Phòng ban")
-    unit_code: OptionalDropdownResponse = Field(..., description="Mã đơn vị")
+    branch: OptionalDropdownResponse = Field(..., description="Mã đơn vị")

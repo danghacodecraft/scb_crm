@@ -30,7 +30,7 @@ class CtrSelectCategory(BaseController):
                     employee_code=category['MA_NV'],
                     employee_name=category['TEN_NV'],
                     department=optional_dropdown(obj=None, obj_name=category['PHONG_BAN']),
-                    unit_code=await self.dropdown_mapping_crm_model_or_dropdown_name(
+                    branch=await self.dropdown_mapping_crm_model_or_dropdown_name(
                         model=Branch,
                         name=None,
                         code=category['MA_DON_VI'],

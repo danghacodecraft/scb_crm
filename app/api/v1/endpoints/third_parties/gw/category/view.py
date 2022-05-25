@@ -13,7 +13,7 @@ from app.api.v1.endpoints.third_parties.gw.category.example import (
     GW_CATEGORY_EXAMPLES
 )
 from app.api.v1.endpoints.third_parties.gw.category.schema import (
-    CategoryRequest, GWCategoryRequest
+    CategoryResponse, GWCategoryRequest
 )
 from app.api.v1.schemas.utils import DropdownResponse
 from app.utils.constant.gw import GW_REQUEST_DIRECT_INDIRECT
@@ -28,7 +28,7 @@ router = APIRouter()
     responses=swagger_response(
         response_model=Union[
             ResponseData[DropdownResponse],
-            ResponseData[CategoryRequest],
+            ResponseData[CategoryResponse],
         ],
         success_status_code=status.HTTP_200_OK
     )
@@ -42,6 +42,6 @@ async def view_gw_select_category(
         transaction_value=request.transaction_value
     )
     if request.transaction_name == GW_REQUEST_DIRECT_INDIRECT:
-        return ResponseData[List[CategoryRequest]](**select_category)
+        return ResponseData[List[CategoryResponse]](**select_category)
     else:
         return ResponseData[List[DropdownResponse]](**select_category)
