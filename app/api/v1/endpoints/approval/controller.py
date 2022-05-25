@@ -341,6 +341,7 @@ class CtrApproval(BaseController):
         previous_stage_code = None
 
         stage_teller = dict()
+        teller_is_reject = False
         teller_stage_code = None
         teller_is_disable = True
         teller_is_completed = False
@@ -350,6 +351,7 @@ class CtrApproval(BaseController):
         dropdown_action_teller = DROPDOWN_NONE_DICT
 
         stage_supervisor = dict()
+        supervisor_is_reject = False
         supervisor_stage_code = None
         supervisor_is_disable = True
         supervisor_is_completed = False
@@ -359,6 +361,7 @@ class CtrApproval(BaseController):
         dropdown_action_supervisor = DROPDOWN_NONE_DICT
 
         stage_audit = dict()
+        audit_is_reject = False
         audit_stage_code = None
         audit_is_disable = True
         audit_is_completed = False
@@ -423,6 +426,7 @@ class CtrApproval(BaseController):
 
         # Hồ sơ GDV đã gửi
         elif previous_stage_code == CIF_STAGE_INIT:
+            teller_is_reject = previous_transaction_stage_is_reject
             teller_stage_code = previous_stage_code
             teller_is_completed = True
             teller_content = orjson_loads(previous_transaction_daily.data)["content"]
@@ -492,6 +496,7 @@ class CtrApproval(BaseController):
                 transaction_daily_id=supervisor_transaction_daily.transaction_id,
                 session=self.oracle_session
             ))
+            teller_is_reject = teller_transaction_stage.is_reject
             teller_stage_code = teller_transaction_stage.transaction_stage_phase_code
             teller_is_completed = True
             teller_content = orjson_loads(teller_transaction_daily.data)["content"]
@@ -509,6 +514,7 @@ class CtrApproval(BaseController):
         # KSS đã xử lý hồ sơ
         elif previous_stage_code == CIF_STAGE_APPROVE_KSS:
             audit_transaction_stage = previous_transaction_stage
+            audit_is_reject = previous_transaction_stage.is_reject
             audit_stage_code = previous_stage_code
             audit_transaction_daily = previous_transaction_daily
             audit_transaction_sender = previous_transaction_sender
@@ -525,6 +531,7 @@ class CtrApproval(BaseController):
                     transaction_daily_id=audit_transaction_daily.transaction_id,
                     session=self.oracle_session
                 ))
+            supervisor_is_reject = supervisor_transaction_stage.is_reject
             supervisor_stage_code = supervisor_transaction_stage.transaction_stage_phase_code
             supervisor_is_completed = True
             supervisor_content = orjson_loads(supervisor_transaction_daily.data)["content"]
@@ -549,6 +556,7 @@ class CtrApproval(BaseController):
 
         stage_teller.update(dict(
             stage_code=teller_stage_code,
+            is_reject=teller_is_reject,
             is_disable=teller_is_disable,
             is_completed=teller_is_completed,
             content=teller_content,
@@ -558,6 +566,7 @@ class CtrApproval(BaseController):
         ))
         stage_supervisor.update(dict(
             stage_code=supervisor_stage_code,
+            is_reject=supervisor_is_reject,
             is_disable=supervisor_is_disable,
             is_completed=supervisor_is_completed,
             content=supervisor_content,
@@ -567,6 +576,7 @@ class CtrApproval(BaseController):
         ))
         stage_audit.update(dict(
             stage_code=audit_stage_code,
+            is_reject=audit_is_reject,
             is_disable=audit_is_disable,
             is_completed=audit_is_completed,
             content=audit_content,
