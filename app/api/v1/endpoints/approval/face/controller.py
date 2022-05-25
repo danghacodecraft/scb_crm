@@ -102,7 +102,7 @@ class CtrApproveFace(BaseController):
             compare_face_image_uuid = compare_face_image['uuid']
             identity_image_id = compare_face_image['identity_image_id']
             is_success, compare_face_info = await service_ekyc.compare_face(
-                face_uuid_ekyc=compare_face_uuid_ekyc,
+                face_uuid=compare_face_uuid_ekyc,
                 avatar_image_uuid=face_uuid_ekyc,
                 booking_id=booking_id
             )
