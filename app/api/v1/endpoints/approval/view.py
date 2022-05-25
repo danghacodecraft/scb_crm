@@ -9,10 +9,28 @@ from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.approval.controller import CtrApproval
 from app.api.v1.endpoints.approval.schema import (
     ApprovalRequest, CifApprovalProcessResponse, CifApprovalResponse,
-    CifApprovalSuccessResponse
+    CifApprovalSuccessResponse, ApprovalBusinessJob
 )
 
 router = APIRouter()
+
+
+@router.get(
+    path="/job/",
+    description="Tổng số nghiệp vụ hoàn thành",
+    name="Tổng số nghiệp vụ hoàn thành",
+    responses=swagger_response(
+        response_model=ResponseData[List[ApprovalBusinessJob]],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_get_business_jobs(
+        cif_id: str = Path(..., description='Id CIF ảo'),
+        current_user=Depends(get_current_user_from_header())
+):
+    business_jobs = await CtrApproval(current_user).ctr_get_business_jobs(cif_id=cif_id)
+
+    return ResponseData[List[ApprovalBusinessJob]](**business_jobs)
 
 
 @router.get(
