@@ -1,4 +1,5 @@
 from app.api.base.controller import BaseController
+from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_get_casa_account, repos_get_customer_ids_from_cif_numbers,
     repos_get_customer_open_cif, repos_gw_get_authorized,
@@ -679,6 +680,10 @@ class CtrGWCustomer(BaseController):
 
     async def ctr_gw_open_cif(self, cif_id: str):
         current_user = self.current_user
+
+        # check cif đang tạo
+        self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
+
         response_customers = self.call_repos(await repos_get_customer_open_cif(
             cif_id=cif_id, session=self.oracle_session))
 
@@ -701,6 +706,7 @@ class CtrGWCustomer(BaseController):
                 "acc_auto": GW_SELECT if response_casa_account.self_selected_account_flag else GW_AUTO,
                 "account_num": response_casa_account.casa_account_number if response_casa_account.self_selected_account_flag else ""
             }
+
         first_row = response_customers[0]
         customer = first_row.Customer
 
@@ -804,7 +810,7 @@ class CtrGWCustomer(BaseController):
             "cor_country": GW_DEFAULT_VALUE,
             "cor_desc": GW_DEFAULT_VALUE,
             "coowner_relationship": GW_DEFAULT_VALUE,
-            # TODO hard core tình trạng hôn nhân (resident_status)
+            # TODO hard core tình trạng hôn nhân (MARITAL_STATUS)
             "martial_status": GW_MARTIAL_STATUS_MARRIED if cust_individual.marital_status_id == "DOC_THAN" else GW_MARTIAL_STATUS_SINGLE,
             "p_us_res_status": "N",
             "p_vst_us_prev": "N",
@@ -864,13 +870,13 @@ class CtrGWCustomer(BaseController):
                 cif_id=cif_id,
                 customer_info=customer_info,
                 account_info=account_info,
-                current_user=current_user
+                current_user=current_user.user_info
             )
         )
 
         cif_number = response_data['openCIFAuthorise_out']['data_output']['customner_info']['cif_info']['cif_num']
         # TODO chưa thể mở tài khoản thanh toán
-        # account_number = response_data['openCIFAuthorise_out']['data_output']['account_info']['account_num']
+        account_number = response_data['openCIFAuthorise_out']['data_output']['account_info']['account_num']
 
         data_update_customer = {
             "cif_number": cif_number,
@@ -879,10 +885,10 @@ class CtrGWCustomer(BaseController):
 
         data_update_casa_account = {}
         # TODO data update casa_account
-        # if account_number:
-        #     data_update_casa_account = {
-        #         "casa_account_number": account_number
-        #     }
+        if account_number:
+            data_update_casa_account = {
+                "casa_account_number": account_number
+            }
 
         # call repos update cif_number and account_number
         await repos_update_cif_number_customer(

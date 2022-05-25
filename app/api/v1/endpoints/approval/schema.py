@@ -43,6 +43,7 @@ class CifApprovalResponse(BaseSchema):
 class CIFStageResponse(BaseSchema):
     stage_code: Optional[str] = Field(..., description="Mã bước giao dịch")
     is_disable: bool = Field(..., description="Có disable không")
+    is_reject: bool = Field(..., description="Có từ chối không")
     is_completed: bool = Field(..., description="Trạng thái phê duyệt")
     content: Optional[str] = Field(..., description="1. Nội dung phản hồi")
     action: OptionalDropdownResponse = Field(..., description="2. Hành động")
