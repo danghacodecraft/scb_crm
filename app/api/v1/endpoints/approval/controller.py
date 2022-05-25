@@ -902,7 +902,7 @@ class CtrApproval(BaseController):
         ################################################################################################################
         # NEXT STAGE
         ################################################################################################################
-        if current_stage.is_reject:
+        if current_stage.is_reject and current_stage_code == CIF_STAGE_APPROVE_KSV:
             next_stage = self.call_repos(await repos_get_stage_teller(
                 business_type_id=business_type_id,
                 session=self.oracle_session
@@ -1030,6 +1030,7 @@ class CtrApproval(BaseController):
         #         loc="next_receiver -> branch_id"
         #     )
         #     # receiver_department = await self.get_model_object_by_id(
+        #     #     model_id=next_receiver.department_id,
         #     #     model_id=next_receiver.department_id,
         #     #     model=Department,
         #     #     loc="next_receiver -> department_id"
