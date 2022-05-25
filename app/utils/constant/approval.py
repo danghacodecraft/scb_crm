@@ -30,3 +30,17 @@ CIF_APPROVE_STAGES = {
     CIF_STAGE_APPROVE_KSV: "Phê duyệt KSV",
     CIF_STAGE_APPROVE_KSS: "Phê duyệt KSS"
 }
+
+BUSINESS_JOB_CODE_INIT = "KHOI_TAO"
+BUSINESS_JOB_CODE_CIF_INFO = "TT_CIF"
+BUSINESS_JOB_CODE_CASA_INFO = "TK_TT"
+BUSINESS_JOB_CODE_E_BANKING = "E_BANKING"
+BUSINESS_JOB_CODE_DEBIT_CARD = "TGN"
+
+BUSINESS_JOB_CODES = {
+    BUSINESS_JOB_CODE_INIT: {'status': None, 'error_code': None, 'error_description': None},
+    BUSINESS_JOB_CODE_CIF_INFO: {'status': None, 'error_code': None, 'error_description': None},
+    BUSINESS_JOB_CODE_CASA_INFO: {'status': None, 'error_code': None, 'error_description': None},
+    BUSINESS_JOB_CODE_E_BANKING: {'status': None, 'error_code': None, 'error_description': None},
+    BUSINESS_JOB_CODE_DEBIT_CARD: {'status': None, 'error_code': None, 'error_description': None}
+}
