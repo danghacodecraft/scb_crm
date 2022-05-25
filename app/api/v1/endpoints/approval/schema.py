@@ -4,7 +4,7 @@ from typing import List, Optional
 from pydantic import Field
 
 from app.api.base.schema import BaseSchema
-from app.api.v1.schemas.utils import OptionalDropdownResponse
+from app.api.v1.schemas.utils import OptionalDropdownResponse, DropdownResponse
 from app.utils.constant.approval import CIF_ACTIONS
 from app.utils.functions import make_description_from_dict
 
@@ -90,6 +90,15 @@ class ApprovalRequest(BaseSchema):
     approval: CifApproveRequest = Field(..., description="Thông tin các TAB phê duyệt")
     authentication: Optional[AuthenticationRequest] = Field(None, description="Thông tin xác thực")
 
+
+########################################################################################################################
+# Tổng số nghiệp vụ hoàn thành
+########################################################################################################################
+class ApprovalBusinessJob(BaseSchema):
+    job: DropdownResponse = Field(..., description="Nghiệp vụ")
+    status: Optional[bool] = Field(..., description="Trạng thái nghiệp vụ")
+    code: Optional[str] = Field(..., description="Mã trạng thái nghiệp vụ")
+    description: Optional[str] = Field(..., description="Mô tả trạng thái nghiệp vụ")
 
 ########################################################################################################################
 # KSS

@@ -10,7 +10,7 @@ from app.api.v1.endpoints.approval.repository import (
     repos_approval_get_face_authentication, repos_approve,
     repos_get_approval_identity_faces, repos_get_approval_identity_images,
     repos_get_approval_process, repos_get_compare_image_transactions,
-    repos_get_list_audit
+    repos_get_list_audit, repos_get_business_jobs
 )
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
@@ -19,9 +19,10 @@ from app.api.v1.others.permission.controller import PermissionController
 from app.third_parties.oracle.models.master_data.identity import (
     CustomerIdentityType
 )
+from app.third_parties.oracle.models.master_data.others import BusinessJob
 from app.utils.constant.approval import (
     CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_BEGIN,
-    CIF_STAGE_COMPLETED, CIF_STAGE_INIT
+    CIF_STAGE_COMPLETED, CIF_STAGE_INIT, BUSINESS_JOB_CODES
 )
 from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import (
@@ -1240,3 +1241,32 @@ class CtrApproval(BaseController):
                 error_status_code=status.HTTP_403_FORBIDDEN
             )
         return face_transactions, fingerprint_transactions, signature_transactions
+
+    async def ctr_get_business_jobs(self, cif_id: str):
+        business_jobs = self.call_repos(await repos_get_business_jobs(
+            cif_id=cif_id,
+            session=self.oracle_session
+        ))
+
+        mapping_datas = BUSINESS_JOB_CODES
+        for business_job in business_jobs:
+            mapping_datas[business_job.business_job_id] = dict(
+                error_code=business_job.error_code,
+                error_description=business_job.error_desc,
+                status=business_job.complete_flag
+            )
+
+        response_datas = []
+        for business_job_id, value in mapping_datas.items():
+            response_datas.append(dict(
+                job=dropdown(
+                    await self.get_model_object_by_id(
+                        model=BusinessJob, model_id=business_job_id, loc='business_job_id'
+                    )
+                ),
+                status=value['status'],
+                code=value['error_code'],
+                description=value['error_description']
+            ))
+
+        return self.response(data=response_datas)
