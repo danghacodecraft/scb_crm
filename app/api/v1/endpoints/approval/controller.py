@@ -9,12 +9,16 @@ from app.api.v1.endpoints.approval.common_repository import (
 from app.api.v1.endpoints.approval.repository import (
     repos_approval_get_face_authentication, repos_approve,
     repos_get_approval_identity_faces, repos_get_approval_identity_images,
-    repos_get_approval_process, repos_get_compare_image_transactions
+    repos_get_approval_process, repos_get_compare_image_transactions,
+    repos_get_list_audit
 )
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.api.v1.endpoints.news.repository import repo_get_users_contact
 from app.api.v1.others.permission.controller import PermissionController
+from app.third_parties.oracle.models.master_data.identity import (
+    CustomerIdentityType
+)
 from app.utils.constant.approval import (
     CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_BEGIN,
     CIF_STAGE_COMPLETED, CIF_STAGE_INIT
@@ -1120,6 +1124,69 @@ class CtrApproval(BaseController):
                 return self.response_exception(msg=ERROR_STAGE_COMPLETED, loc="description")
 
         return description
+
+    async def ctr_get_list_audit(self):
+        list_audit = self.call_repos(await repos_get_list_audit(session=self.oracle_session))
+        case = {
+            "PHE_DUYET_KSV": "Chờ phê duyệt",
+            "PHE_DUYET_KSS": "Đã phê duyệt",
+            "TU_CHOI_PHE_DUYET": "Từ chối",
+        }
+        case2 = {
+            "PHE_DUYET_KSV": "Hợp lệ",
+            "PHE_DUYET_KSS": "Hợp lệ",
+            "TU_CHOI_PHE_DUYET": "Không hợp lệ",
+        }
+
+        response_datas = []
+        for (
+            booking_code,
+            business_type,
+            cif_number,
+            customer_full_name_vn,
+            customer_mobile_number,
+            customer_identity_id,
+            customer_identity_type,
+            transaction_daily_transaction_id,
+            transaction_stage_id,
+            transaction_stage_transaction_stage_phase_code,
+            transaction_stage_transaction_stage_phase_name,
+            transaction_stage_status_id,
+            transaction_stage_status_code,
+            transaction_stage_status_name,
+            _
+        ) in list_audit:
+            customer_identity_type = await self.get_model_object_by_code(
+                model_code=customer_identity_type,
+                model=CustomerIdentityType,
+                loc="identity_type"
+            )
+            customer_identity_type = dropdown(customer_identity_type)
+            response_datas.append(dict(
+                booking_code=booking_code,
+                cif_number=cif_number,
+                full_name_vn=customer_full_name_vn,
+                mobile_number=customer_mobile_number,
+                identity_type=customer_identity_type,
+                business_type=dropdown(business_type),
+                transaction_status=dict(
+                    value="",
+                    created_at=""
+                ),
+                audit_status=dict(
+                    value=case2[transaction_stage_transaction_stage_phase_code],
+                    created_at=""
+                ),
+                approval_status=dict(
+                    value=case[transaction_stage_transaction_stage_phase_code],
+                    created_at=""
+                )
+            ))
+
+        return self.response_paging(
+            total_items=len(response_datas),
+            data=response_datas
+        )
 
     async def check_data_in_identity_step_and_get_faces_fingerprints_signatures(self, transactions):
         """
