@@ -8,8 +8,13 @@ from app.api.v1.schemas.utils import DropdownResponse
 
 class TransactionListResponse(BaseSchema):
     cif_id: str = Field(..., description="CIF ID")
+    cif_number: Optional[str] = Field(..., description="CIF number")
     full_name_vn: str = Field(..., description="Tên khách hàng")
     booking_code: Optional[str] = Field(..., description="Mã booking")
+    status: Optional[str] = Field(..., description="Trạng thái")
+    business_type: Optional[str] = Field(..., description="Loại giao dịch")
+    branch_code: Optional[str] = Field(..., description="Mã đơn vị kinh doanh")
+    branch_name: Optional[str] = Field(..., description="Tên đơn vị kinh doanh")
 
 
 class CustomerInfoResponse(BaseSchema):
