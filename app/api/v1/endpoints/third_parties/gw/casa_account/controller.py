@@ -96,6 +96,9 @@ class CtrGWCasaAccount(BaseController):
         )
 
         account_info = customer_info['account_info']
+
+        lock_infos = account_info['account_lock_info']
+
         branch_info = account_info['branch_info']
         status_info = []
         if account_info['account_status']:
@@ -111,11 +114,14 @@ class CtrGWCasaAccount(BaseController):
             type=account_info['account_type'],
             type_name=account_info['account_type_name'],
             currency=account_info['account_currency'],
+            product_package=account_info["account_product_package"],
             balance=account_info['account_balance'],
             balance_available=account_info['account_balance_available'],
             balance_available_vnd=account_info['account_balance_available_vnd'],
             balance_lock=account_info['account_balance_lock'],
             over_draft_limit=account_info['account_over_draft_limit'],
+            over_draft_used=account_info['account_over_draft_used'],
+            over_draft_remain=account_info['account_over_draft_remain'],
             over_draft_expired_date=string_to_date(account_info['account_over_draft_expired_date'],
                                                    _format=DATETIME_INPUT_OUTPUT_FORMAT),
             latest_transaction_date=string_to_date(account_info['account_latest_trans_date'],
@@ -135,7 +141,14 @@ class CtrGWCasaAccount(BaseController):
             service_escrow=account_info['account_service_escrow'],
             service_escrow_ex_date=string_to_date(account_info['account_service_escrow_ex_date'],
                                                   _format=DATETIME_INPUT_OUTPUT_FORMAT),
-            product_package=account_info["account_product_package"],
+            lock_info=[dict(
+                balance_lock=lock_info['account_balance_lock'],
+                date_lock=lock_info['account_date_lock'],
+                expire_date_lock=lock_info['account_expire_date_lock'],
+                type_code_lock=lock_info['account_type_code_lock'],
+                type_name_lock=lock_info['account_type_name_lock'],
+                reason_lock=lock_info['account_reason_lock'],
+                ref_no=lock_info['account_ref_no']) for lock_info in lock_infos],
             branch_info=dict(
                 code=branch_info['branch_code'],
                 name=branch_info['branch_name']
