@@ -56,16 +56,29 @@ class GWCustomerInfoResponse(BaseGWSchema):
     type: Optional[str] = Field(..., description="Loại khách hàng (cá nhân hoặc doanh nghiệp)")
 
 
+class GWCasaAccountLockInfo(BaseGWSchema):
+    balance_lock: Optional[str] = Field(..., description="Số dư lock")
+    date_lock: Optional[str] = Field(..., description="Ngày lock")
+    expire_date_lock: Optional[str] = Field(..., description="Ngày hết hạn lock")
+    type_code_lock: Optional[str] = Field(..., description="Mã loại lock")
+    type_name_lock: Optional[str] = Field(..., description="Tên loại lock")
+    reason_lock: Optional[str] = Field(..., description="Lý do lock")
+    ref_no: Optional[str] = Field(..., description="Số ref")
+
+
 class GWAccountInfoResponse(BaseGWSchema):
     number: Optional[str] = Field(..., description="Số tài khoản")
     type: Optional[str] = Field(..., description="Loại tài khoản")
     type_name: Optional[str] = Field(..., description="Tên loại tài khoản")
     currency: Optional[str] = Field(..., description="Loại tiền trong tài khoản")
+    product_package: Optional[str] = Field(..., description="Gói sản phẩm")
     balance: Optional[int] = Field(..., description="Số dư tài khoản")
     balance_available: Optional[float] = Field(..., description="Số dư có thể sử dụng")
     balance_available_vnd: Optional[int] = Field(..., description="Số dư tài khoản có thể sử dụng vnd")
     balance_lock: Optional[float] = Field(..., description="Số dư bị phong tỏa")
     over_draft_limit: Optional[str] = Field(..., description="Hạn mức thấu chi")
+    over_draft_used: Optional[str] = Field(..., description="Hạn mức thấu chi đã sử dụng")
+    over_draft_remain: Optional[str] = Field(..., description="Hạn mức thấu chi còn lại")
     over_draft_expired_date: Optional[date] = Field(..., description="Ngày hết hạn")
     latest_transaction_date: Optional[date] = Field(..., description="Ngày giao dịch gần nhất")
     open_date: Optional[date] = Field(..., description="Ngày mở tài khoản")
@@ -83,8 +96,8 @@ class GWAccountInfoResponse(BaseGWSchema):
     company_salary_num: Optional[str] = Field(..., description="STK Công ty chi lương")
     service_escrow: Optional[str] = Field(..., description="Dịch vụ ký quỹ")
     service_escrow_ex_date: Optional[date] = Field(..., description="Ngày đáo hạn ký quỹ")
+    lock_info: List[GWCasaAccountLockInfo] = Field(..., description="Thông tin tài khoản")
     branch_info: GWBranchDropdownResponse = Field(..., description="Thông tin đơn vị")
-    product_package: Optional[str] = Field(..., description="Gói sản phẩm")
 
 
 class GWCasaAccountResponse(BaseGWSchema):
