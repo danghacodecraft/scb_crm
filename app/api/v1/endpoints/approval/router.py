@@ -10,6 +10,10 @@ from app.api.v1.endpoints.approval.template import \
 
 router_module = APIRouter()
 
+# router của Thông tin KSS
+router_module.include_router(router=views_approval_info.router_special, prefix="/audit")
+
+
 # router của thông tin phê duyệt
 router_module.include_router(router=views_approval_info.router, prefix="/{cif_id}")
 
