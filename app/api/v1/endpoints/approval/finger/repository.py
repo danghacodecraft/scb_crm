@@ -57,7 +57,6 @@ async def repos_compare_finger_ekyc(
         "limit": len(id_fingers)
     }
     is_success, response = await service_ekyc.compare_finger_ekyc(
-        cif_id=cif_id,
         json_body=json_body,
         booking_id=booking_id
     )
