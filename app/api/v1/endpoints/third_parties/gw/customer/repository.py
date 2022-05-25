@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlalchemy import select, update
+from sqlalchemy import insert, select, update
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -25,9 +25,11 @@ from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
 )
 from app.third_parties.oracle.models.master_data.others import (
-    AverageIncomeAmount
+    AverageIncomeAmount, TransactionJob
 )
-from app.utils.error_messages import ERROR_CALL_SERVICE_GW, ERROR_NO_DATA
+from app.utils.error_messages import (
+    ERROR_CALL_SERVICE_GW, ERROR_NO_DATA, ERROR_OPEN_CIF
+)
 
 
 async def repos_gw_get_customer_info_list(
@@ -124,10 +126,12 @@ async def repos_gw_get_authorized(
 
 
 async def repos_gw_open_cif(
-        cif_id: str,
-        customer_info: dict,
-        account_info: dict,
-        current_user
+    cif_id: str,
+    customer_info: dict,
+    account_info: dict,
+    current_user,
+    transaction_job: dict,
+    session: Session
 ):
     is_success, response_data = await service_gw.open_cif(
         cif_id=cif_id,
@@ -136,17 +140,21 @@ async def repos_gw_open_cif(
         current_user=current_user
     )
 
-    if not response_data['openCIFAuthorise_out']['data_output']:
-        return ReposReturn(
-            is_error=True,
-            msg=ERROR_CALL_SERVICE_GW,
-            detail=response_data['openCIFAuthorise_out']['transaction_info']['transaction_error_msg']
-        )
+    if not response_data.get('openCIFAuthorise_out', {}).get('data_output') or not is_success:
+        transaction_job.update({
+            "complete_flag": False,
+            "error_code": ERROR_OPEN_CIF,
+            "error_desc": response_data.get('openCIFAuthorise_out', {}).get('transaction_info', {}).get('transaction_error_msg')
+        })
+    # insert transaction_job
+    session.execute(
+        insert(
+            TransactionJob
+        ).values(transaction_job)
+    )
+    session.commit()
 
-    if not is_success:
-        return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_GW)
-
-    return ReposReturn(data=response_data)
+    return ReposReturn(data=(is_success, response_data))
 
 
 @auto_commit
@@ -159,16 +167,14 @@ async def repos_update_cif_number_customer(
     session.execute(
         update(
             Customer
-        ).filter(Customer.id == cif_id)
-        .values(data_update_customer)
+        ).filter(Customer.id == cif_id).values(data_update_customer)
     )
 
     if data_update_casa_account:
         session.execute(
             update(
                 CasaAccount
-            ).filter(CasaAccount.customer_id == cif_id)
-            .values(data_update_casa_account)
+            ).filter(CasaAccount.customer_id == cif_id).values(data_update_casa_account)
         )
 
     return ReposReturn(data=cif_id)
