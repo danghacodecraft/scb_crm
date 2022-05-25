@@ -14,7 +14,7 @@ from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.utils.constant.gw import (
     GW_TRANSACTION_TYPE_SEND, GW_TRANSACTION_TYPE_WITHDRAW
 )
-from app.utils.functions import orjson_loads, string_to_date
+from app.utils.functions import string_to_date
 
 
 class CtrGWCasaAccount(BaseController):
@@ -31,38 +31,35 @@ class CtrGWCasaAccount(BaseController):
         account_info_list = account_info['selectCurrentAccountFromCIF_out']['data_output']['customer_info'][
             'account_info_list']
         account_infos = []
-
         for account in account_info_list:
             account_info_item = account['account_info_item']
-            balance = account_info_item['account_balance']
-            total_balances += int(balance) if balance else 0
-
+            balance = int(account_info_item['account_balance'])
+            total_balances += balance
             branch_info = account_info_item["branch_info"]
-
             account_infos.append(dict(
                 number=account_info_item["account_num"],
                 type=account_info_item["account_type"],
                 type_name=account_info_item["account_type_name"],
                 currency=account_info_item["account_currency"],
-                balance=balance,
+                balance=account_info_item["account_balance"],
                 balance_available=account_info_item["account_balance_available"],
                 balance_available_vnd=account_info_item["account_balance_available_vnd"],
                 balance_lock=account_info_item["account_balance_lock"],
                 over_draft_limit=account_info_item["account_over_draft_limit"],
-                over_draft_expired_date=string_to_date(account_info_item["account_over_draft_expired_date"],
+                over_draft_expired_date=string_to_date(account['account_info_item']["account_over_draft_expired_date"],
                                                        _format=DATETIME_INPUT_OUTPUT_FORMAT),
-                latest_trans_date=string_to_date(account_info_item["account_latest_trans_date"],
+                latest_trans_date=string_to_date(account['account_info_item']["account_latest_trans_date"],
                                                  _format=DATETIME_INPUT_OUTPUT_FORMAT),
-                open_date=string_to_date(account_info_item["account_open_date"],
+                open_date=string_to_date(account['account_info_item']["account_open_date"],
                                          _format=DATETIME_INPUT_OUTPUT_FORMAT),
-                maturity_date=string_to_date(account_info_item["account_maturity_date"],
+                maturity_date=string_to_date(account['account_info_item']["account_maturity_date"],
                                              _format=DATETIME_INPUT_OUTPUT_FORMAT),
                 lock_status=account_info_item["account_lock_status"],
                 class_name=account_info_item["account_class_name"],
                 class_code=account_info_item["account_class_code"],
                 branch_info=dict(
-                    code=branch_info['branch_code'],
-                    name=branch_info['branch_name']
+                    code=branch_info["branch_code"],
+                    name=branch_info["branch_name"]
                 )
             ))
 
@@ -102,8 +99,7 @@ class CtrGWCasaAccount(BaseController):
         branch_info = account_info['branch_info']
         status_info = []
         if account_info['account_status']:
-            list_account_status = orjson_loads(account_info['account_status'])[0]
-            for key, value in list_account_status.items():
+            for key, value in account_info['account_status'][0].items():
                 status_info.append(dict(
                     id=key,
                     code=key,
@@ -128,8 +124,8 @@ class CtrGWCasaAccount(BaseController):
             maturity_date=string_to_date(account_info['account_maturity_date'], _format=DATETIME_INPUT_OUTPUT_FORMAT),
             status=status_info,
             lock_status=account_info['account_lock_status'],
-            class_name=account_info["account_class_name"],
-            class_code=account_info["account_class_code"],
+            class_name=account_info['account_class_name'],
+            class_code=account_info['account_class_code'],
             saving_serials=account_info['account_saving_serials'],
             pre_open_date=string_to_date(account_info['account_pre_open_date'], _format=DATETIME_INPUT_OUTPUT_FORMAT),
             service=account_info['account_service'],
@@ -139,6 +135,7 @@ class CtrGWCasaAccount(BaseController):
             service_escrow=account_info['account_service_escrow'],
             service_escrow_ex_date=string_to_date(account_info['account_service_escrow_ex_date'],
                                                   _format=DATETIME_INPUT_OUTPUT_FORMAT),
+            product_package=account_info["account_product_package"],
             branch_info=dict(
                 code=branch_info['branch_code'],
                 name=branch_info['branch_name']
@@ -289,7 +286,9 @@ class CtrGWCasaAccount(BaseController):
     async def ctr_gw_get_statement_casa_account_info(self, request: GWReportStatementHistoryAccountInfoRequest):
         gw_report_statements_casa_account_info = self.call_repos(await repos_gw_get_statements_casa_account_info(
             account_number=request.account_number,
-            current_user=self.current_user.user_info
+            current_user=self.current_user.user_info,
+            from_date=request.from_date,
+            to_date=request.to_date
         ))
         report_casa_accounts = \
             gw_report_statements_casa_account_info['selectReportStatementCaSaFromAcc_out']['data_output']['report_info']['report_casa_account']

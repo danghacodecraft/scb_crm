@@ -1,15 +1,18 @@
-from typing import List
+from typing import List, Optional
 
 from app.api.base.repository import ReposReturn
 from app.settings.event import service_ekyc, service_file
 from app.utils.error_messages import ERROR_CALL_SERVICE_FILE
 
 
-async def repos_upload_file(file: bytes, name: str, ekyc_flag: bool) -> ReposReturn:
-    response = await service_file.upload_file(file=file, name=name)
+async def repos_upload_file(file: bytes, name: str, ekyc_flag: bool, booking_id: Optional[str] = None) -> ReposReturn:
+    response = await service_file.upload_file(
+        file=file,
+        name=name
+    )
 
     if ekyc_flag:
-        is_success, uuid_ekyc = await service_ekyc.upload_file(file=file, name=name)
+        is_success, uuid_ekyc = await service_ekyc.upload_file(file=file, name=name, booking_id=booking_id)
         if not is_success:
             return ReposReturn(is_error=True, msg=f"{uuid_ekyc['response']['file']}")
         response.update({
@@ -59,8 +62,8 @@ async def repos_check_is_exist_multi_file(uuids: List[str]) -> ReposReturn:
     return ReposReturn(data=result)
 
 
-async def repos_dowload_ekyc_file(uuid: str) -> ReposReturn:
-    is_success, response = await service_ekyc.dowload_file(uuid=uuid)
+async def repos_download_ekyc_file(uuid: str, booking_id: Optional[str]) -> ReposReturn:
+    is_success, response = await service_ekyc.download_file(uuid=uuid, booking_id=booking_id)
     if not is_success:
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_FILE)
 

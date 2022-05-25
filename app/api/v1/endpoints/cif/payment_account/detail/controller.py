@@ -8,7 +8,7 @@ from app.api.v1.endpoints.cif.payment_account.detail.schema import (
     SavePaymentAccountRequest
 )
 from app.api.v1.endpoints.cif.repository import (
-    repos_get_booking_code, repos_get_initializing_customer
+    repos_get_booking, repos_get_initializing_customer
 )
 from app.api.v1.endpoints.repository import repos_get_acc_structure_type
 from app.api.v1.validator import validate_history_data
@@ -25,9 +25,7 @@ from app.utils.error_messages import (
     ERROR_CASA_ACCOUNT_EXIST, ERROR_CASA_ACCOUNT_NOT_EXIST,
     ERROR_INVALID_NUMBER, ERROR_NOT_NULL, MESSAGE_STATUS
 )
-from app.utils.functions import (
-    datetime_to_string, is_valid_number, now, orjson_dumps
-)
+from app.utils.functions import is_valid_number, now, orjson_dumps
 
 
 class CtrPaymentAccount(BaseController):
@@ -165,20 +163,11 @@ class CtrPaymentAccount(BaseController):
             "updated_at": now(),
         }
 
-        history_datas = [dict(
+        history_datas = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_INIT_PAYMENT_ACCOUNT,
-            completed_at=datetime_to_string(now()),
-            created_at=datetime_to_string(now()),
-            status=PROFILE_HISTORY_STATUS_INIT,
-            branch_id=current_user.hrm_branch_id,
-            branch_code=current_user.hrm_branch_code,
-            branch_name=current_user.hrm_branch_name,
-            user_id=current_user.code,
-            user_name=current_user.name,
-            position_id=current_user.hrm_position_id,
-            position_code=current_user.hrm_position_code,
-            position_name=current_user.hrm_position_name
-        )]
+            history_status=PROFILE_HISTORY_STATUS_INIT,
+            current_user=current_user
+        )
         # Validate history data
         is_success, history_response = validate_history_data(history_datas)
         if not is_success:
@@ -200,10 +189,13 @@ class CtrPaymentAccount(BaseController):
             ))
 
         # Lấy Booking Code
-        booking_code = self.call_repos(await repos_get_booking_code(
+        booking = self.call_repos(await repos_get_booking(
             cif_id=cif_id, session=self.oracle_session
         ))
-        save_payment_account_info.update(booking_code=booking_code)
+        save_payment_account_info.update(booking=dict(
+            id=booking.id,
+            code=booking.code
+        ))
 
         return self.response(data=save_payment_account_info)
 

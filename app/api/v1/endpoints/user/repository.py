@@ -30,16 +30,12 @@ async def repos_get_list_user() -> ReposReturn:
 
 async def repos_login(username: str, password: str) -> ReposReturn:
     is_success, data_idm = await service_idm.login(username=username, password=password)
-    detail = None
 
     if not is_success:
-        for key, item in data_idm.items():
-            detail = data_idm[key][0]
-
         return ReposReturn(
             is_error=True,
             msg=ERROR_CALL_SERVICE_IDM,
-            detail=detail
+            detail=str(data_idm)
         )
     data_idm['user_info']['token'] = base64.b64encode(
         zlib.compress(orjson.dumps(data_idm))

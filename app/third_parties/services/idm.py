@@ -11,6 +11,10 @@ from app.utils.error_messages import ERROR_CALL_SERVICE_IDM
 
 class ServiceIDM:
     HOST = SERVICE["idm"]['host']
+    cdn = {
+        'thumb': '/cdn-profile/thumb/',
+        'avatar': '/cdn-profile/',
+    }
 
     def __init__(self):
         self.session = None
@@ -92,3 +96,9 @@ class ServiceIDM:
         except Exception as ex:
             logger.exception(ex)
             return False, {"message": str(ex)}
+
+    def replace_with_cdn(self, file_url: str, avatar_type: str = 'thumb') -> str:
+        if self.cdn:
+            # Thay thế link tải file từ service bằng CDN config theo dự án
+            file_url = self.cdn.get(avatar_type, self.cdn['thumb']) + file_url
+        return file_url

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Header
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -21,13 +21,15 @@ router = APIRouter()
     )
 )
 async def view_upload_face(
+        BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
         request: ApprovalFaceRequest = Depends(ApprovalFaceRequest.get_upload_request),
 ):
     cif_id, image_file, amount, current_user = request
     approve_info = await CtrApproveFace(current_user).ctr_upload_face(
         cif_id=cif_id,
         image_file=image_file,
-        amount=amount
+        amount=amount,
+        booking_id=BOOKING_ID
     )
 
     return ResponseData[ApprovalFaceSuccessResponse](**approve_info)

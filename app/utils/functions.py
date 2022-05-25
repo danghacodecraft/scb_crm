@@ -21,6 +21,18 @@ def dropdown(data) -> dict:
     }
 
 
+def dropdown_name(name: str, code: Optional[str] = None) -> dict:
+    return {
+        'id': code,
+        'code': code,
+        'name': name
+    }
+
+
+def optional_dropdown(obj, obj_name: Optional[str], obj_code: Optional[str] = None) -> dict:
+    return dropdown(obj) if obj else dropdown_name(name=obj_name, code=obj_code)
+
+
 # dropdown trả về content
 def special_dropdown(data) -> dict:
     return {
@@ -196,7 +208,10 @@ def is_valid_number(casa_account_number: str):
 
 
 def convert_string_to_uuidv4(customer_uuid: str) -> str:
-    return f"{uuid.UUID(customer_uuid)}"
+    try:
+        return f"{uuid.UUID(customer_uuid)}"
+    except ValueError:
+        return ""
 
 
 def replace_with_cdn(cdn, file_url: str) -> str:
@@ -207,3 +222,31 @@ def replace_with_cdn(cdn, file_url: str) -> str:
         return file_url.replace(f'{file_url_parse_result.scheme}://{file_url_parse_result.netloc}', cdn)
     else:
         return file_url
+
+
+def gen_qr_code(data: dict):
+    """
+        Data truyền vào là 1 dict gồm nhiều key
+    """
+    identity = data.get('document_id')
+    name = data.get('full_name')
+    gender = data.get('gender')
+    # gender = "Nam" if gender == "M" else "Nu"
+    if gender == "M":
+        gender = "Nam"
+    elif gender == "F":
+        gender = "Nu"
+
+    address = data.get('place_of_residence')
+
+    dob = data.get('date_of_birth').replace("/", "")
+    date_of_issue = data.get('date_of_issue').replace("/", "")
+
+    if None in [identity, name, gender, address, dob, date_of_issue]:
+        return None
+
+    return identity + "||" + name + "|" + dob + "|" + gender + "|" + address + "|" + date_of_issue
+
+
+def make_description_from_dict(dictionary: dict):
+    return "<br/>" + "<br/>".join(f'`{k}`: {v}' for k, v in dictionary.items())

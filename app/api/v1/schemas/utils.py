@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import Field
+from pydantic import Field, validator
 from pydantic.schema import datetime
 
 from app.api.base.schema import BaseSchema
@@ -13,9 +13,15 @@ class DropdownResponse(BaseSchema):
 
 
 class OptionalDropdownResponse(BaseSchema):
-    id: Optional[str] = Field(None, min_length=1, description='`Chuỗi định danh`', nullable=True)
-    code: Optional[str] = Field(None, min_length=1, description='`Mã`', nullable=True)
-    name: Optional[str] = Field(None, min_length=1, description='`Tên`', nullable=True)
+    id: Optional[str] = Field(None, description='`Chuỗi định danh`', nullable=True)
+    code: Optional[str] = Field(None, description='`Mã`', nullable=True)
+    name: Optional[str] = Field(None, description='`Tên`', nullable=True)
+
+    @validator('*')
+    def check_blank_str(string):
+        if string == '':
+            return None
+        return string
 
 
 class DropdownRequest(BaseSchema):
@@ -31,7 +37,7 @@ class OptionalDropdownRequest(BaseSchema):
 ########################################################################################################################
 class SaveSuccessResponse(BaseSchema):
     cif_id: str = Field(..., min_length=1, description='Id CIF ảo')
-    booking_code: str = Field(..., min_length=1, description='Booking Code')
+    booking: OptionalDropdownResponse = Field(None, description='Booking')
 
 
 class HistoryData(BaseSchema):

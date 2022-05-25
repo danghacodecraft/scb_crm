@@ -27,8 +27,8 @@ router = APIRouter()
     )
 )
 async def view_list_kss(
-        query_params: QueryParamsKSSRequest = Depends(),
-        current_user=Depends(get_current_user_from_header())
+    query_params: QueryParamsKSSRequest = Depends(),
+    current_user=Depends(get_current_user_from_header())
 ):
     kss_response = await CtrKSS(current_user).ctr_get_list_kss(
         query_params=query_params
@@ -47,10 +47,12 @@ async def view_list_kss(
     )
 )
 async def view_list_branch(
-        zone_id: int = Query(None, description='Zone ID', nullable=True),
-        current_user=Depends(get_current_user_from_header())
+    zone_id: int = Query(None, description='Zone ID', nullable=True),
+    current_user=Depends(get_current_user_from_header())
 ):
-    branch_response = await CtrKSS(current_user).ctr_get_list_branch(zone_id=zone_id)
+    branch_response = await CtrKSS(current_user).ctr_get_list_branch(
+        zone_id=zone_id
+    )
 
     return ResponseData[List[BranchResponse]](**branch_response)
 
@@ -65,7 +67,7 @@ async def view_list_branch(
     )
 )
 async def view_list_zone(
-        current_user=Depends(get_current_user_from_header())
+    current_user=Depends(get_current_user_from_header())
 ):
     zone_response = await CtrKSS(current_user).ctr_get_list_zone()
 
@@ -82,9 +84,9 @@ async def view_list_zone(
     )
 )
 async def view_list_post_control(
-        postcheck_uuid: str = Path(..., description='Id của khách hàng'),
-        post_control_his_id: int = Query(None, description='ID lịch sử hậu kiểm'),
-        current_user=Depends(get_current_user_from_header())
+    postcheck_uuid: str = Path(..., description='Id của khách hàng'),
+    post_control_his_id: int = Query(None, description='ID lịch sử hậu kiểm'),
+    current_user=Depends(get_current_user_from_header())
 ):
     post_control_response = await CtrKSS(current_user).ctr_get_post_control(
         postcheck_uuid=postcheck_uuid,
@@ -104,8 +106,8 @@ async def view_list_post_control(
     )
 )
 async def view_list_history_post_check(
-        postcheck_uuid: str = Path(..., description='Id của khách hàng'),
-        current_user=Depends(get_current_user_from_header())
+    postcheck_uuid: str = Path(..., description='Id của khách hàng'),
+    current_user=Depends(get_current_user_from_header())
 ):
     history_post_check = await CtrKSS(current_user).ctr_history_post_check(
         postcheck_uuid=postcheck_uuid
@@ -124,8 +126,8 @@ async def view_list_history_post_check(
     )
 )
 async def view_list_statistics_month(
-        months: int = Query(..., description='Số tháng để thống kê'),
-        current_user=Depends(get_current_user_from_header())
+    months: int = Query(..., description='Số tháng để thống kê'),
+    current_user=Depends(get_current_user_from_header())
 ):
     statistics_month_response = await CtrKSS(current_user).ctr_statistics_month(
         months=months
@@ -144,10 +146,10 @@ async def view_list_statistics_month(
     )
 )
 async def view_list_statistics_profiles(
-        selected_date: str = Query(None, description='Chọn ngày kết thúc DD/MM/YYYY'),
-        start_date: str = Query(None, description='Chọn ngày'),
-        end_date: str = Query(None, description='Chọn ngày bắt đầu DD/MM/YYYY'),
-        current_user=Depends(get_current_user_from_header())
+    selected_date: str = Query(None, description='Chọn ngày kết thúc DD/MM/YYYY'),
+    start_date: str = Query(None, description='Chọn ngày'),
+    end_date: str = Query(None, description='Chọn ngày bắt đầu DD/MM/YYYY'),
+    current_user=Depends(get_current_user_from_header())
 ):
     statistics_profiles = await CtrKSS(current_user).ctr_get_statistics_profiles()
 
@@ -164,16 +166,19 @@ async def view_list_statistics_profiles(
     )
 )
 async def view_list_statistics(
-        search_type: int = Query(None, description="""Loại tìm kiếm
-            \n `search_type` = 1, hiển thị theo ngày
-            \n `search_type` = 2, hiển thị theo tuần
-            \n `search_type` = 3, hiển thị theo tháng
-            \n `search_type` = 4, hiển thị theo năm
-            """),
-        selected_date: str = Query(None, description='Chọn ngày `DD/MM/YYYY`'),
-        current_user=Depends(get_current_user_from_header())
+    search_type: int = Query(None, description="""Loại tìm kiếm
+        \n `search_type` = 1, hiển thị theo ngày
+        \n `search_type` = 2, hiển thị theo tuần
+        \n `search_type` = 3, hiển thị theo tháng
+        \n `search_type` = 4, hiển thị theo năm
+        """),
+    selected_date: str = Query(None, description='Chọn ngày `DD/MM/YYYY`'),
+    current_user=Depends(get_current_user_from_header())
 ):
-    statistics = await CtrKSS(current_user).ctr_get_statistics(search_type=search_type, selected_date=selected_date)
+    statistics = await CtrKSS(current_user).ctr_get_statistics(
+        search_type=search_type,
+        selected_date=selected_date
+    )
 
     return ResponseData[List[StatisticsResponse]](**statistics)
 
@@ -188,12 +193,14 @@ async def view_list_statistics(
     )
 )
 async def create_post_check(
-        post_check_request: CreatePostCheckRequest,
-        current_user=Depends(get_current_user_from_header())
+    post_check_request: CreatePostCheckRequest,
+    current_user=Depends(get_current_user_from_header())
 ):
-    post_check = await CtrKSS(current_user).ctr_create_post_check(post_check_request=post_check_request)
+    post_check = await CtrKSS(current_user).ctr_create_post_check(
+        post_check_request=post_check_request
+    )
 
-    return ResponseData[CreatePostCheckRequest](**post_check)
+    return ResponseData(**post_check)
 
 
 @router.put(
@@ -206,10 +213,12 @@ async def create_post_check(
     )
 )
 async def update_post_check(
-        postcheck_update_request: UpdatePostCheckRequest,
-        current_user=Depends(get_current_user_from_header())
+    postcheck_update_request: UpdatePostCheckRequest,
+    current_user=Depends(get_current_user_from_header())
 ):
-    update_postcheck = await CtrKSS(current_user).ctr_update_post_check(postcheck_update_request=postcheck_update_request)
+    update_postcheck = await CtrKSS(current_user).ctr_update_post_check(
+        postcheck_update_request=postcheck_update_request
+    )
 
     return ResponseData[UpdatePostCheckRequest](**update_postcheck)
 
@@ -224,9 +233,28 @@ async def update_post_check(
     )
 )
 async def view_customer(
-        postcheck_uuid: str = Path(..., description='ID của khách hàng'),
-        current_user=Depends(get_current_user_from_header())
+    postcheck_uuid: str = Path(..., description='ID của khách hàng'),
+    current_user=Depends(get_current_user_from_header())
 ):
-    customer_detail_information = await CtrKSS(current_user).ctr_get_customer_detail(postcheck_uuid=postcheck_uuid)
+    customer_detail_information = await CtrKSS(current_user).ctr_get_customer_detail(
+        postcheck_uuid=postcheck_uuid
+    )
 
     return ResponseData[CustomerDetailResponse](**customer_detail_information)
+
+
+# @router.post(
+#     path="/customer/",
+#     name="Tạo khách hàng",
+#     description="Tạo khách hàng",
+#     responses=swagger_response(
+#         response_model=ResponseData[CustomerDetailResponse],
+#         success_status_code=status.HTTP_200_OK
+#     )
+# )
+# async def save_customer_ekyc(
+#     current_user=Depends(get_current_user_from_header())
+# ):
+#     customer = await CtrKSS(current_user).ctr_save_customer()
+#
+#     return ResponseData(**customer)

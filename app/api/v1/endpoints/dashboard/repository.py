@@ -5,6 +5,7 @@ from sqlalchemy import and_, desc, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn
+from app.settings.event import service_dwh
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
     CustomerAddress
 )
@@ -24,6 +25,7 @@ from app.third_parties.oracle.models.master_data.others import (
     Branch, TransactionStage, TransactionStageStatus
 )
 from app.utils.constant.cif import CONTACT_ADDRESS_CODE
+from app.utils.constant.dwh import NAME_ACCOUNTING_ENTRY
 from app.utils.functions import date_to_datetime, end_time_of_day
 from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese
 
@@ -158,7 +160,7 @@ async def repos_get_total_item(
         .outerjoin(AddressCountry, CustomerAddress.address_country_id == AddressCountry.id) \
         .outerjoin(Branch, Customer.open_branch_id == Branch.id)
 
-    customers = customers.filter(Customer.complete_flag == True)   # noqa
+    customers = customers.filter(Customer.complete_flag == True)  # noqa
     if cif_number:
         customers = customers.filter(Customer.cif_number.ilike(f'%{cif_number}%'))
     if identity_number:
@@ -223,3 +225,29 @@ async def repos_get_customer(
     ).all()
 
     return ReposReturn(data=customers)
+
+
+async def repos_branch(
+        branch_code: str,
+        session: Session
+) -> ReposReturn:
+    data_response = await service_dwh.get_branch(branch_code=branch_code)
+
+    return ReposReturn(data=data_response)
+
+
+async def repos_accounting_entry(
+        branch_code: str,
+        session: Session
+) -> ReposReturn:
+    data_response = await service_dwh.accounting_entry(branch_code=branch_code, module=NAME_ACCOUNTING_ENTRY)
+
+    return ReposReturn(data=data_response)
+
+
+async def repos_region(
+        session: Session
+) -> ReposReturn:
+    data_response = await service_dwh.get_region()
+
+    return ReposReturn(data=data_response)

@@ -2,9 +2,11 @@ from datetime import date
 
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.dashboard.repository import (
-    repos_count_total_item, repos_get_customer, repos_get_total_item,
-    repos_get_transaction_list
+    repos_accounting_entry, repos_branch, repos_count_total_item,
+    repos_get_customer, repos_get_total_item, repos_get_transaction_list,
+    repos_region
 )
+from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
 from app.utils.functions import dropdown
 
 
@@ -99,3 +101,66 @@ class CtrDashboard(BaseController):
             total_items=total_item,
             total_page=total_page
         )
+
+    async def ctr_branch(self):
+        current_user = self.current_user.user_info
+        if not current_user:
+            return self.response_exception(
+                msg=USER_NOT_EXIST,
+                detail=MESSAGE_STATUS[USER_NOT_EXIST],
+                loc="current_user"
+            )
+
+        branch_code = current_user.hrm_branch_code
+
+        is_success, contract_info = self.call_repos(
+            await repos_branch(
+                branch_code=branch_code,
+                session=self.oracle_session
+            )
+        )
+        if not is_success:
+            return self.response_exception(msg=str(contract_info))
+
+        return self.response(data=contract_info)
+
+    async def ctr_accounting_entry(self):
+        current_user = self.current_user.user_info
+        if not current_user:
+            return self.response_exception(
+                msg=USER_NOT_EXIST,
+                detail=MESSAGE_STATUS[USER_NOT_EXIST],
+                loc="current_user"
+            )
+
+        branch_code = current_user.hrm_branch_code
+
+        is_success, contract_info = self.call_repos(
+            await repos_accounting_entry(
+                branch_code=branch_code,
+                session=self.oracle_session
+            )
+        )
+        if not is_success:
+            return self.response_exception(msg=str(contract_info))
+
+        return self.response(data=contract_info)
+
+    async def ctr_region(self):
+        current_user = self.current_user.user_info
+        if not current_user:
+            return self.response_exception(
+                msg=USER_NOT_EXIST,
+                detail=MESSAGE_STATUS[USER_NOT_EXIST],
+                loc="current_user"
+            )
+
+        is_success, contract_info = self.call_repos(
+            await repos_region(
+                session=self.oracle_session
+            )
+        )
+        if not is_success:
+            return self.response_exception(msg=str(contract_info))
+
+        return self.response(data=contract_info)

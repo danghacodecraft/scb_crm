@@ -1,9 +1,9 @@
 from datetime import date
 from typing import List, Optional
 
-from pydantic import Field, validator
+from pydantic import Field
 
-from app.api.base.schema import BaseSchema
+from app.api.base.schema import BaseGWSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
 from app.api.v1.endpoints.third_parties.gw.casa_account.example import (
     CASA_ACCOUNT_NUMBER
@@ -14,7 +14,7 @@ from app.api.v1.endpoints.third_parties.gw.schema import (
 from app.api.v1.schemas.utils import DropdownResponse
 
 
-class CasaAccountByCIFNumberResponse(BaseSchema):
+class CasaAccountByCIFNumberResponse(BaseGWSchema):
     number: Optional[str] = Field(..., description="Số tài khoản")
     type: Optional[str] = Field(..., description="Loại tài khoản (thanh toán, tiết kiệm…)")
     type_name: Optional[str] = Field(..., description="Tên loại tài khoản")
@@ -36,24 +36,18 @@ class CasaAccountByCIFNumberResponse(BaseSchema):
     class_code: Optional[str] = Field(..., description="Mã sản phẩm")
     branch_info: GWBranchDropdownResponse = Field(...)
 
-    @validator('*', pre=True)
-    def check_blank_str(string): # noqa
-        if string == '':
-            return None
-        return string
 
-
-class GWCasaAccountByCIFNumberResponse(BaseSchema):
-    total_balances: Optional[int] = Field(..., description="Tổng số dư")
+class GWCasaAccountByCIFNumberResponse(BaseGWSchema):
+    total_balances: int = Field(..., description="Tổng số dư")
     total_items: int = Field(..., description="Số lượng tài khoản")
     account_info_list: List[CasaAccountByCIFNumberResponse] = Field(..., description="Chi tiết tài khoản")
 
 
-class GWCasaAccountByCIFNumberRequest(BaseSchema):
+class GWCasaAccountByCIFNumberRequest(BaseGWSchema):
     cif_number: str = CustomField().CIFNumberField
 
 
-class GWCustomerInfoResponse(BaseSchema):
+class GWCustomerInfoResponse(BaseGWSchema):
     fullname_vn: Optional[str] = Field(..., description="Họ và tên")
     date_of_birth: Optional[str] = Field(..., description="Ngày sinh")
     gender: Optional[str] = Field(..., description="Giới tính")
@@ -61,14 +55,8 @@ class GWCustomerInfoResponse(BaseSchema):
     mobile_phone: Optional[str] = Field(..., description="Điện thoại di động")
     type: Optional[str] = Field(..., description="Loại khách hàng (cá nhân hoặc doanh nghiệp)")
 
-    @validator('*', pre=True)
-    def check_blank_str(string):  # noqa
-        if string == '':
-            return None
-        return string
 
-
-class GWAccountInfoResponse(BaseSchema):
+class GWAccountInfoResponse(BaseGWSchema):
     number: Optional[str] = Field(..., description="Số tài khoản")
     type: Optional[str] = Field(..., description="Loại tài khoản")
     type_name: Optional[str] = Field(..., description="Tên loại tài khoản")
@@ -82,9 +70,10 @@ class GWAccountInfoResponse(BaseSchema):
     latest_transaction_date: Optional[date] = Field(..., description="Ngày giao dịch gần nhất")
     open_date: Optional[date] = Field(..., description="Ngày mở tài khoản")
     maturity_date: Optional[date] = Field(..., description="Ngày đến hạn")
-    status: Optional[List[DropdownResponse]] = Field(..., description="Trạng thái tài khoản (no debits, no credit..)")
+    status: List[DropdownResponse] = Field(..., description="Trạng thái tài khoản (no debits, no credit..)")
     lock_status: Optional[str] = Field(..., description="Trạng thái tài khoản (phong tỏa hoặc không)")
-    class_name: Optional[str] = Field(..., description="Tên sản phẩm. Ví dụ: Tiết kiệm thông thường, phát lộc phát tài…")
+    class_name: Optional[str] = Field(...,
+                                      description="Tên sản phẩm. Ví dụ: Tiết kiệm thông thường, phát lộc phát tài…")
     class_code: Optional[str] = Field(..., description="Mã sản phẩm")
     saving_serials: Optional[str] = Field(..., description="Số Series Sổ tiết kiệm")
     pre_open_date: Optional[date] = Field(..., description="Ngày cấp lại sổ")
@@ -95,25 +84,20 @@ class GWAccountInfoResponse(BaseSchema):
     service_escrow: Optional[str] = Field(..., description="Dịch vụ ký quỹ")
     service_escrow_ex_date: Optional[date] = Field(..., description="Ngày đáo hạn ký quỹ")
     branch_info: GWBranchDropdownResponse = Field(..., description="Thông tin đơn vị")
-
-    @validator('*', pre=True)
-    def check_blank_str(string):  # noqa
-        if string == '':
-            return None
-        return string
+    product_package: Optional[str] = Field(..., description="Gói sản phẩm")
 
 
-class GWCasaAccountResponse(BaseSchema):
+class GWCasaAccountResponse(BaseGWSchema):
     customer_info: GWCustomerInfoResponse = Field(..., description="Thông tin người sỡ hữu tài khoản")
     cif_info: GWCIFInfoResponse = Field(..., description="Thông tin CIF")
     account_info: GWAccountInfoResponse = Field(..., description="Thông tin tài khoản")
 
 
-class GWReportPieChartHistoryAccountInfoRequest(BaseSchema):
+class GWReportPieChartHistoryAccountInfoRequest(BaseGWSchema):
     account_number: str = Field(..., description="Số tài khoản", example=CASA_ACCOUNT_NUMBER)
 
 
-class GWReportPieChartHistoryAccountInfoResponse(BaseSchema):
+class GWReportPieChartHistoryAccountInfoResponse(BaseGWSchema):
     transaction_type: str = Field(
         ..., description="""Loại giao dịch. VD: Chuyển tiền đi, Chi tiêu thẻ,
         Chuyển tiền đến, Rút tiền mặt, Nộp tiền mặt, Thanh toán hóa đơn, Khác"""
@@ -124,26 +108,26 @@ class GWReportPieChartHistoryAccountInfoResponse(BaseSchema):
     count_percent: float = Field(0, description="Phần trăm số lượng giao dịch")
 
 
-class GWCasaAccountCheckExistResponse(BaseSchema):
+class GWCasaAccountCheckExistResponse(BaseGWSchema):
     is_existed: bool = Field(..., description="Cờ có tồn tại không")
 
 
-class GWCasaAccountCheckExistRequest(BaseSchema):
+class GWCasaAccountCheckExistRequest(BaseGWSchema):
     account_number: str = Field(..., description="Số tài khoản")
 
 
-class GWReportColumnResponse(BaseSchema):
+class GWReportColumnResponse(BaseGWSchema):
     transaction_type: str = Field(..., description="Loại giao dịch. VD: Rút, Gửi")
     transaction_value: int = Field(..., description="Giá trị giao dịch")
 
 
-class GWReportColumnChart(BaseSchema):
+class GWReportColumnChart(BaseGWSchema):
     transaction_date: Optional[date] = Field(..., description="Ngày giao dịch")
     withdraw: Optional[GWReportColumnResponse] = Field(description="Giao dịch rút tiền")
     send: Optional[GWReportColumnResponse] = Field(description="Giao dịch gửi tiền")
 
 
-class GWReportColumnChartHistoryAccountInfoResponse(BaseSchema):
+class GWReportColumnChartHistoryAccountInfoResponse(BaseGWSchema):
     fullname_vn: str = Field(..., description="Họ và tên")
     type: str = Field(..., description="Loại tài khoản (thanh toán, tiết kiệm…)")
     type_name: str = Field(..., description="Tên loại tài khoản")
@@ -153,19 +137,19 @@ class GWReportColumnChartHistoryAccountInfoResponse(BaseSchema):
     report_casa_account: List[GWReportColumnChart] = Field(..., escription="Báo cáo tài khoản CASA")
 
 
-class GWReportColumnChartHistoryAccountInfoRequest(BaseSchema):
+class GWReportColumnChartHistoryAccountInfoRequest(BaseGWSchema):
     account_number: str = Field(..., description="Số tài khoản")
     from_date: date = Field(date(year=2020, month=4, day=20), description="Từ ngày")
     to_date: date = Field(date(year=2025, month=7, day=20), description="Đến ngày")
 
 
-class GWReportStatementHistoryAccountInfoRequest(BaseSchema):
+class GWReportStatementHistoryAccountInfoRequest(BaseGWSchema):
     account_number: str = Field(..., description="Số tài khoản")
     from_date: date = Field(date(year=2020, month=4, day=20), description="Từ ngày")
     to_date: date = Field(date(year=2025, month=7, day=20), description="Đến ngày")
 
 
-class GWReportStatementHistoryAccountInfoResponse(BaseSchema):
+class GWReportStatementHistoryAccountInfoResponse(BaseGWSchema):
     code: Optional[str] = Field(..., description="Mã giao dịch")
     transaction_date: Optional[date] = Field(..., description="Ngày giao dịch")
     description: Optional[str] = Field(..., description="Chi tiết giao dịch")
@@ -174,3 +158,13 @@ class GWReportStatementHistoryAccountInfoResponse(BaseSchema):
     credit: Optional[int] = Field(..., description="Ghi có")
     debit: Optional[int] = Field(..., description="Ghi nợ")
     balance: Optional[int] = Field(..., description="Số dư")
+
+
+class GWReportStatementHistoryTDAccountInfoResponse(BaseGWSchema):
+    code: Optional[str] = Field(..., description="Mã giao dịch")
+    transaction_date: Optional[date] = Field(..., description="Ngày giao dịch")
+    description: Optional[str] = Field(..., description="Chi tiết giao dịch")
+    amount: Optional[str] = Field(..., description="Số tiền")
+    rate: Optional[str] = Field(..., description="Lãi suất")
+    balance: Optional[int] = Field(..., description="Số dư cuối giao dịch")
+    expire_date: Optional[date] = Field(..., description='Ngày đến hạn')

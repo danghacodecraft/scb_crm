@@ -150,7 +150,7 @@ class PostCheck(BaseSchema):
     check_list_id: int = Field(..., description='ID của danh mục kiểm tra')
     check_list_desc: str = Field(..., description='Danh mục kiểm tra')
     answer: str = Field(..., description='Đánh giá')
-    note: str = Field(..., description='Mô tả')
+    note: Optional[str] = Field(None, description='Mô tả')
 
 
 class CreatePostCheckRequest(BaseSchema):

@@ -6,11 +6,12 @@ from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn, auto_commit
 from app.api.v1.endpoints.repository import (
-    generate_booking_code, get_optional_model_object_by_code_or_name,
+    get_optional_model_object_by_code_or_name,
     repos_get_model_object_by_id_or_code,
     write_transaction_log_and_update_booking
 )
 from app.api.v1.endpoints.user.schema import UserInfoResponse
+from app.api.v1.others.booking.repository import generate_booking_code
 from app.settings.event import service_ekyc, service_file
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
     CustomerAddress
@@ -27,7 +28,7 @@ from app.third_parties.oracle.models.cif.basic_information.personal.model import
 )
 from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingBusinessForm, BookingCustomer, TransactionDaily,
-    TransactionReceiver, TransactionSender
+    TransactionSender
 )
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
@@ -42,10 +43,9 @@ from app.third_parties.oracle.models.master_data.others import (
 )
 from app.utils.constant.cif import (
     ACTIVE_FLAG_ACTIVED, ADDRESS_COUNTRY_CODE_VN, BUSINESS_FORM_TTCN_GTDD_GTDD,
-    BUSINESS_FORM_TTCN_GTDD_KM, BUSINESS_TYPE_INIT_CIF, CONTACT_ADDRESS_CODE,
-    CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE, DROPDOWN_NONE_DICT,
-    EKYC_DOCUMENT_TYPE, EKYC_GENDER_TYPE_FEMALE,
-    EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
+    BUSINESS_TYPE_CODE_CIF, CONTACT_ADDRESS_CODE, CRM_GENDER_TYPE_FEMALE,
+    CRM_GENDER_TYPE_MALE, DROPDOWN_NONE_DICT, EKYC_DOCUMENT_TYPE,
+    EKYC_GENDER_TYPE_FEMALE, EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_BACK_SIDE_IDENTITY_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_CITIZEN_CARD,
     EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD,
@@ -55,13 +55,11 @@ from app.utils.constant.cif import (
 )
 from app.utils.constant.ekyc import EKYC_DATE_FORMAT
 from app.utils.error_messages import (
-    ERROR_BOOKING_CODE_EXISTED, ERROR_CALL_SERVICE_EKYC,
-    ERROR_CALL_SERVICE_FILE, ERROR_CIF_ID_NOT_EXIST,
-    ERROR_COMPARE_IMAGE_IS_EXISTED, MESSAGE_STATUS
+    ERROR_CALL_SERVICE_EKYC, ERROR_CALL_SERVICE_FILE, ERROR_CIF_ID_NOT_EXIST,
+    ERROR_COMPARE_IMAGE_IS_EXISTED
 )
 from app.utils.functions import (
-    date_string_to_other_date_string_format, dropdown, generate_uuid, now,
-    orjson_dumps
+    date_string_to_other_date_string_format, dropdown, generate_uuid, now
 )
 from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese
 
@@ -336,16 +334,16 @@ async def repos_save_identity(
         saving_transaction_stage: dict,
         saving_transaction_daily: dict,
         saving_transaction_sender: dict,
-        saving_transaction_receiver: dict,
+        # saving_transaction_receiver: dict,
         avatar_image_uuid_service,
         identity_avatar_image_uuid_ekyc: str,
         request_data: dict,
+        booking_id: str,
         history_datas: List,
         current_user: UserInfoResponse,
         session: Session
 ) -> ReposReturn:
     current_user_code = current_user.code
-    current_user_branch_id = current_user.hrm_branch_id
     new_first_identity_image_id = generate_uuid()  # ID ảnh mặt trước hoặc ảnh hộ chiếu
     new_second_identity_image_id = generate_uuid()  # ID ảnh mặt sau
 
@@ -412,60 +410,57 @@ async def repos_save_identity(
                 CustomerAddress(**saving_customer_contact_address)
             )
 
-        new_booking_id = generate_uuid()
-        is_existed, booking_code = await generate_booking_code(
-            branch_code=current_user_branch_id,
-            business_type_code=BUSINESS_TYPE_INIT_CIF,
-            session=session
+        # booking = await repos_create_booking(
+        #     transaction_id=saving_transaction_daily['transaction_id'],
+        #     session=session,
+        #     current_user=current_user,
+        #     booking_code_flag=True,
+        #     business_type_code=BUSINESS_TYPE_INIT_CIF
+        # )
+
+        is_success, booking_response = await write_transaction_log_and_update_booking(
+            booking_id=booking_id,
+            log_data=request_data,
+            session=session,
+            customer_id=customer_id,
+            business_form_id=BUSINESS_FORM_TTCN_GTDD_GTDD
         )
+        if not is_success:
+            return ReposReturn(is_error=True, msg=booking_response['msg'])
 
-        if is_existed:
-            return ReposReturn(
-                is_error=True,
-                msg=ERROR_BOOKING_CODE_EXISTED,
-                detail=MESSAGE_STATUS[ERROR_BOOKING_CODE_EXISTED]
+        booking_code = booking_response['booking_code']
+
+        session.execute(update(BookingCustomer).filter(BookingCustomer.booking_id == booking_id).values(customer_id=new_customer_id))
+        # tạo booking code
+        if not booking_code:
+            is_existed, booking_code = await generate_booking_code(
+                branch_code=current_user.hrm_branch_code,
+                business_type_code=BUSINESS_TYPE_CODE_CIF,
+                session=session
             )
+        # update booking
+        session.execute(update(Booking).filter(Booking.id == booking_id).values(
+            code=booking_code,
+            transaction_id=saving_transaction_daily.get('transaction_id')
+        ))
+        session.execute(update(BookingBusinessForm).filter(BookingBusinessForm.booking_id == booking_id).values(
+            # business_form_id=BUSINESS_FORM_TTCN_GTDD_GTDD,
+            save_flag=True,  # Save_flag đổi lại thành True do Business Form giờ là những Tab nhỏ nhiều cấp
+            form_data=request_data,
+            log_data=history_datas,
+            updated_at=now()
+        ))
 
-        # create booking & log
+        # create log
         session.add_all([
-            # Tạo BOOKING, CRM_TRANSACTION_DAILY -> CRM_BOOKING -> BOOKING_CUSTOMER -> BOOKING_BUSSINESS_FORM
+            # Tạo BOOKING, CRM_TRANSACTION_DAILY -> CRM_BOOKING -> BOOKING_CUSTOMER -> BOOKING_BUSINESS_FORM
             TransactionStageStatus(**saving_transaction_stage_status),
             TransactionStage(**saving_transaction_stage),
             TransactionDaily(**saving_transaction_daily),
-            TransactionSender(**saving_transaction_sender),
-            TransactionReceiver(**saving_transaction_receiver),
-            Booking(
-                id=new_booking_id,
-                code=booking_code,
-                transaction_id=saving_transaction_daily['transaction_id'],
-                business_type_id=BUSINESS_TYPE_INIT_CIF,
-                branch_id=current_user_branch_id,
-                created_at=now(),
-                updated_at=now()
-            ),
-            BookingCustomer(
-                booking_id=new_booking_id,
-                customer_id=new_customer_id
-            ),
-            BookingBusinessForm(
-                booking_id=new_booking_id,
-                business_form_id=BUSINESS_FORM_TTCN_GTDD_GTDD,
-                save_flag=True,  # Save_flag đổi lại thành True do Business Form giờ là những Tab nhỏ nhiều cấp
-                form_data=orjson_dumps(request_data),
-                log_data=orjson_dumps(history_datas),
-                created_at=now(),
-                updated_at=now()
-            ),
+            TransactionSender(**saving_transaction_sender)
+            # TransactionReceiver(**saving_transaction_receiver),
             # Hiện tại Tab khuôn mặt không có chức năng lưu
             # vì api GTDD đã upload khuôn mặt nên Tab này coi như hoàn thành
-            BookingBusinessForm(
-                booking_id=new_booking_id,
-                business_form_id=BUSINESS_FORM_TTCN_GTDD_KM,
-                save_flag=True,
-                form_data=orjson_dumps(request_data),
-                created_at=now(),
-                updated_at=now()
-            )
         ])
 
     # Update
@@ -609,7 +604,10 @@ async def repos_save_identity(
 
     return ReposReturn(data=dict(
         cif_id=customer_id,
-        booking_code=booking_code
+        booking=dict(
+            id=booking_id,
+            code=booking_code
+        )
     ))
 
 
@@ -723,17 +721,22 @@ async def repos_upload_identity_document_and_ocr(
         identity_type: int,
         image_file: bytes,
         image_file_name: str,
-        session: Session
+        session: Session,
+        booking_id: str = None
 ):
     is_success, ocr_response = await service_ekyc.ocr_identity_document(
         file=image_file,
         filename=image_file_name,
-        identity_type=identity_type
+        identity_type=identity_type,
+        booking_id=booking_id
     )
     if not is_success:
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_EKYC, detail=ocr_response.get('message', ''))
 
-    file_response = await service_file.upload_file(file=image_file, name=image_file_name)
+    file_response = await service_file.upload_file(
+        file=image_file,
+        name=image_file_name
+    )
 
     if not file_response:
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_FILE)
@@ -781,14 +784,19 @@ async def repos_upload_identity_document_and_ocr(
     ocr_response_data.update({
         'ocr_result_ekyc': {
             "document_type": ocr_response.get('document_type'),
+            "uuid": ocr_response.get('uuid'),
+            "file_name": ocr_response.get('file_name'),
             "data": ocr_response.get('data')
         }
     })
     return ReposReturn(data=ocr_response_data)
 
 
-async def repos_validate_ekyc(request_body: dict):
-    is_success, response = await service_ekyc.validate_ekyc(request_body=request_body)
+async def repos_validate_ekyc(request_body: dict, booking_id: Optional[str]):
+    is_success, response = await service_ekyc.validate_ekyc(
+        request_body=request_body,
+        booking_id=booking_id
+    )
 
     if not is_success:
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_EKYC, detail=response.get('errors', '').get('message'))
@@ -1157,14 +1165,22 @@ async def mapping_ekyc_back_side_citizen_card_ocr_data(image_url: str, ocr_data:
 ########################################################################################################################
 # So sánh khuôn mặt đối chiếu với khuôn mặt trên giấy tờ định danh
 ########################################################################################################################
-async def repos_compare_face(face_image_data: bytes, identity_image_uuid: str, session: Session):
-    is_success_add_face, add_face_info = await service_ekyc.add_face(file=face_image_data)
+async def repos_compare_face(
+        face_image_data: bytes,
+        identity_image_uuid: str,
+        booking_id: Optional[str]
+):
+    is_success_add_face, add_face_info = await service_ekyc.add_face(file=face_image_data, booking_id=booking_id)
 
     if not is_success_add_face:
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_EKYC, detail=add_face_info.get('message', ''))
 
     face_uuid = add_face_info.get('data').get('uuid')
-    is_success, compare_face_info = await service_ekyc.compare_face(face_uuid, identity_image_uuid)
+    is_success, compare_face_info = await service_ekyc.compare_face(
+        face_uuid=face_uuid,
+        avatar_image_uuid=identity_image_uuid,
+        booking_id=booking_id
+    )
 
     if not is_success:
         return ReposReturn(

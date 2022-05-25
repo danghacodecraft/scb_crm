@@ -186,6 +186,7 @@ class ServiceDWH:
         method = "GET"
         path = f"/api/v1/employee/emp_detail_training/?emp={employee_id}"
         url = f"{self.url}{path}"
+
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.request(
@@ -208,9 +209,36 @@ class ServiceDWH:
             logger.error(str(ex))
             return False, ERROR_CALL_SERVICE_DWH
 
-    async def region(self):
+    async def get_branch(self, branch_code: str):
         method = "GET"
-        path = "/api/v1/gis/region"
+        path = f"/api/v1/dashboard/data/?dv={branch_code}"
+        url = f"{self.url}{path}"
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.request(
+                        method=method,
+                        url=url,
+                        headers=self.headers
+                ) as res:
+                    # handle response
+                    if res.status != status.HTTP_200_OK:
+                        return False, {
+                            "url": url,
+                            "message": await res.json(),
+                        }
+
+                    data = await res.json()
+
+                    return True, data
+
+        except Exception as ex:  # noqa
+            logger.error(str(ex))
+            return False, ERROR_CALL_SERVICE_DWH
+
+    async def accounting_entry(self, branch_code: str, module: str):
+        method = "GET"
+        path = f"/api/v1/dashboard/chart/?dv={branch_code}&module={module}"
         url = f"{self.url}{path}"
         try:
             async with aiohttp.ClientSession() as session:
@@ -234,9 +262,9 @@ class ServiceDWH:
             logger.error(str(ex))
             return False, ERROR_CALL_SERVICE_DWH
 
-    async def area(self):
+    async def get_region(self):
         method = "GET"
-        path = "/api/v1/gis/area"
+        path = "/api/v1/gis/region"
         url = f"{self.url}{path}"
         try:
             async with aiohttp.ClientSession() as session:
@@ -302,6 +330,34 @@ class ServiceDWH:
                         return False, {
                             "url": url,
                             "message": await res.json(),
+                        }
+
+                    data = await res.json()
+
+                    return True, data
+
+        except Exception as ex:  # noqa
+            logger.error(str(ex))
+            return False, ERROR_CALL_SERVICE_DWH
+
+    async def region(self, unit: str):
+        method = "GET"
+        path = f"/api/v1/dashboard/data/?dv={unit}"
+        url = f"{self.url}{path}"
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.request(
+                        method=method,
+                        url=url,
+                        headers=self.headers
+                ) as res:
+                    # handle response
+                    if res.status != status.HTTP_200_OK:
+                        return False, {
+                            "message": ERROR_CALL_SERVICE_DWH,
+                            "detail": "STATUS " + str(res.status),
+                            "api_url": url,
+                            "response": {},
                         }
 
                     data = await res.json()

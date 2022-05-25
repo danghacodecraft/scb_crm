@@ -1,4 +1,5 @@
 from operator import itemgetter
+from typing import Optional
 
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.finger.repository import (
@@ -6,6 +7,8 @@ from app.api.v1.endpoints.approval.finger.repository import (
     repos_save_compare_finger
 )
 from app.api.v1.endpoints.file.repository import repos_upload_file
+from app.api.v1.others.booking.controller import CtrBooking
+from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import ACTIVE_FLAG_DISACTIVED, HAND_SIDE_LEFT_CODE
 from app.utils.functions import dropdown, generate_uuid, now
 
@@ -40,7 +43,19 @@ class CtrFingers(BaseController):
             'right_hand': right_hand
         })
 
-    async def ctr_compare_fingerprint(self, cif_id: str, finger_img):
+    async def ctr_compare_fingerprint(
+            self,
+            cif_id: str,
+            finger_img,
+            booking_id: Optional[str]
+    ):
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking(
+            business_type_code=BUSINESS_TYPE_INIT_CIF,
+            booking_id=booking_id,
+            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        )
+
         current_user = self.current_user.user_info
         finger_id_ekycs = self.call_repos(await repos_get_id_finger_ekyc(cif_id=cif_id, session=self.oracle_session))
 
@@ -48,7 +63,9 @@ class CtrFingers(BaseController):
         info_finger_img = self.call_repos(await repos_upload_file(
             file=data_finger_img,
             name=finger_img.filename,
-            ekyc_flag=True))
+            ekyc_flag=True,
+            booking_id=booking_id
+        ))
 
         id_fingers = []
         image_uuids = []
@@ -62,7 +79,8 @@ class CtrFingers(BaseController):
         compare_finger_response = self.call_repos(await repos_compare_finger_ekyc(
             cif_id=cif_id,
             uuid_ekyc=info_finger_img['uuid_ekyc'],
-            id_fingers=id_fingers
+            id_fingers=id_fingers,
+            booking_id=booking_id
         ))
 
         response_data = []

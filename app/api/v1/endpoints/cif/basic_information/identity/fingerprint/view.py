@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, File, Form, Path, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Header, Path, UploadFile
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -32,7 +32,10 @@ async def view_create_fingerprint(
         cif_id: str = Path(..., description='Id CIF ảo'),
         current_user=Depends(get_current_user_from_header())
 ):
-    data = await CtrFingerPrint(current_user).ctr_save_fingerprint(cif_id, finger_request)
+    data = await CtrFingerPrint(current_user).ctr_save_fingerprint(
+        cif_id=cif_id,
+        finger_request=finger_request
+    )
     return ResponseData[SaveSuccessResponse](**data)
 
 
@@ -63,10 +66,16 @@ async def view_retrieve_fingerprint(
     )
 )
 async def view_add_fingerprint(
-        file: UploadFile = File(..., description='file'),
-        ids_finger: List[int] = Form(None, description="Truyền id_ekyc để so sánh với file upload"),
-        cif_id: str = Path(...),
-        current_user=Depends(get_current_user_from_header())
+    file: UploadFile = File(..., description='file'),
+    ids_finger: List[int] = Form(None, description="Truyền id_ekyc để so sánh với file upload"),
+    BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
+    cif_id: str = Path(...),
+    current_user=Depends(get_current_user_from_header())
 ):
-    add_finger = await CtrFingerPrint(current_user).ctr_add_fingerprint(cif_id=cif_id, file=file, ids_finger=ids_finger)
+    add_finger = await CtrFingerPrint(current_user).ctr_add_fingerprint(
+        cif_id=cif_id,
+        file=file,
+        ids_finger=ids_finger,
+        booking_id=BOOKING_ID
+    )
     return ResponseData[AddCompareFingerResponse](**add_finger)

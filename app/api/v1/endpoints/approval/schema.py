@@ -5,6 +5,8 @@ from pydantic import Field
 
 from app.api.base.schema import BaseSchema
 from app.api.v1.schemas.utils import OptionalDropdownResponse
+from app.utils.constant.approval import CIF_ACTIONS
+from app.utils.functions import make_description_from_dict
 
 
 class ProcessInfoResponse(BaseSchema):
@@ -12,9 +14,12 @@ class ProcessInfoResponse(BaseSchema):
     full_name_vn: str = Field(..., description="Tên đầy đủ của người dùng ")
     avatar_url: Optional[str] = Field(None, description="Url ảnh đại diện của người dùng")
     position: OptionalDropdownResponse = Field(..., description="Chức vụ")
+    department: OptionalDropdownResponse = Field(..., description="Phòng bạn")
+    branch: OptionalDropdownResponse = Field(..., description="Chi nhánh")
+    title: OptionalDropdownResponse = Field(..., description="Chức danh")
     # id: str = Field(..., description="Id log")
     created_at: datetime = Field(..., description="Thời gian tạo")
-    content: str = Field(..., description="Nội dung log ")
+    content: Optional[str] = Field(..., description="Nội dung log ")
 
 
 class CifApprovalProcessResponse(BaseSchema):
@@ -23,8 +28,9 @@ class CifApprovalProcessResponse(BaseSchema):
 
 
 class CifApproveRequest(BaseSchema):
-    reject_flag: Optional[bool] = Field(None, description="Cờ từ chối phê duyệt")
+    reject_flag: bool = Field(..., description="Cờ từ chối phê duyệt")
     content: str = Field(..., description="Nội dung phê duyệt")
+    action_id: Optional[str] = Field(..., description=f"Mã Hành Động: {make_description_from_dict(CIF_ACTIONS)}")
 
 
 class CifApprovalResponse(BaseSchema):
@@ -39,7 +45,7 @@ class CIFStageResponse(BaseSchema):
     is_disable: bool = Field(..., description="Có disable không")
     is_completed: bool = Field(..., description="Trạng thái phê duyệt")
     content: Optional[str] = Field(..., description="1. Nội dung phản hồi")
-    action: Optional[str] = Field(None, description="2. Hành động")
+    action: OptionalDropdownResponse = Field(..., description="2. Hành động")
     created_at: Optional[datetime] = Field(..., description="Cập nhật lúc")
     created_by: Optional[str] = Field(..., description="Cập nhật bởi")
 
@@ -66,6 +72,7 @@ class CifApprovalSuccessResponse(BaseSchema):
     cif_id: str = Field(..., description="Cif ID")
     authentication: AuthenticationResponse = Field(..., description="Thông tin xác thực")
     stages: List[CIFStageResponse] = Field(..., description="Thông tin các bước phê duyệt")
+    is_open_cif: bool = Field(..., description="Được phép mở CIF không?")
 
 
 class FaceAuthenticationRequest(BaseSchema):
@@ -80,4 +87,4 @@ class AuthenticationRequest(BaseSchema):
 
 class ApprovalRequest(BaseSchema):
     approval: CifApproveRequest = Field(..., description="Thông tin các TAB phê duyệt")
-    authentication: AuthenticationRequest = Field(..., description="Thông tin xác thực")
+    authentication: Optional[AuthenticationRequest] = Field(None, description="Thông tin xác thực")

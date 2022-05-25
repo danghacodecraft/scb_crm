@@ -9,12 +9,11 @@ from app.third_parties.oracle.models.cif.basic_information.identity.model import
     CustomerIdentityImage, CustomerIdentityImageTransaction
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingCustomer, TransactionDaily, TransactionReceiver,
-    TransactionSender
+    Booking, BookingCustomer, TransactionDaily, TransactionSender
 )
 from app.third_parties.oracle.models.master_data.others import (
-    TransactionStage, TransactionStageLane, TransactionStagePhase,
-    TransactionStageRole, TransactionStageStatus
+    TransactionStage, TransactionStageAction, TransactionStageLane,
+    TransactionStagePhase, TransactionStageRole, TransactionStageStatus
 )
 from app.utils.constant.cif import IMAGE_TYPE_FACE
 from app.utils.error_messages import ERROR_CIF_ID_NOT_EXIST
@@ -33,11 +32,11 @@ async def repos_get_approval_process(cif_id: str, session: Session) -> ReposRetu
         )
         .join(Booking, BookingCustomer.booking_id == Booking.id)
         .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
-        .join(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
         .join(
             trans_root_daily,
             trans_root_daily.transaction_root_id == TransactionDaily.transaction_root_id
         )
+        .join(TransactionSender, trans_root_daily.transaction_id == TransactionSender.transaction_id)
         .filter(BookingCustomer.customer_id == cif_id)
         .order_by(desc(trans_root_daily.created_at))
     ).all()
@@ -52,13 +51,14 @@ async def repos_get_approval_process(cif_id: str, session: Session) -> ReposRetu
 async def repos_approve(
         cif_id: str,
         saving_transaction_stage_status: dict,
+        saving_transaction_stage_action: dict,
         saving_transaction_stage: dict,
         saving_transaction_daily: dict,
         saving_transaction_stage_lane: dict,
         saving_transaction_stage_phase: dict,
         saving_transaction_stage_role: dict,
         saving_transaction_sender: dict,
-        saving_transaction_receiver: dict,
+        # saving_transaction_receiver: dict,
         is_stage_init: bool,
         session: Session
 ):
@@ -85,16 +85,18 @@ async def repos_approve(
         transaction_parent_id=saving_transaction_daily_parent_id,
         transaction_root_id=saving_transaction_daily_root_id,
     ))
+    session.commit()
 
     session.add_all([
         TransactionStageStatus(**saving_transaction_stage_status),
+        TransactionStageAction(**saving_transaction_stage_action),
         TransactionStage(**saving_transaction_stage),
         TransactionDaily(**saving_transaction_daily),
         TransactionStageLane(**saving_transaction_stage_lane),
         TransactionStagePhase(**saving_transaction_stage_phase),
         TransactionStageRole(**saving_transaction_stage_role),
         TransactionSender(**saving_transaction_sender),
-        TransactionReceiver(**saving_transaction_receiver)
+        # TransactionReceiver(**saving_transaction_receiver)
     ])
 
     # Cập nhật lại TransactionDaily mới cho Booking
@@ -201,14 +203,14 @@ async def repos_get_compare_image_transactions(
     return ReposReturn(data=compare_image_transactions)
 
 
-async def repos_get_approval_identity_image(
+async def repos_get_approval_identity_images_by_image_type_id(
     cif_id: str,
     image_type_id: str,
     identity_type: str,
     session: Session
 ):
     """
-    Lấy tất cả hình ảnh ở bước GTDD
+    Lấy tất cả hình ảnh ở bước GTDD bằng image_type_id
     Output: CustomerIdentity, CustomerIdentityImage
     """
     customer_identities = session.execute(
@@ -227,3 +229,60 @@ async def repos_get_approval_identity_image(
         return ReposReturn(is_error=True, detail=f"No {identity_type} in Identity Step")
 
     return ReposReturn(data=customer_identities)
+
+
+async def repos_get_approval_identity_images(
+    cif_id: str,
+    session: Session
+):
+    """
+    Lấy tất cả hình ảnh ở bước GTDD
+    Output: CustomerIdentity, CustomerIdentityImage
+    """
+    customer_identities = session.execute(
+        select(
+            CustomerIdentity,
+            CustomerIdentityImage
+        )
+        .join(CustomerIdentityImage, and_(
+            CustomerIdentity.id == CustomerIdentityImage.identity_id
+        ))
+        .filter(CustomerIdentity.customer_id == cif_id)
+        .order_by(desc(CustomerIdentity.updater_at))
+    ).all()
+
+    return ReposReturn(data=customer_identities)
+
+
+async def repos_get_transaction_daily(
+    cif_id: str,
+    session: Session
+):
+    transaction_daily = session.execute(
+        select(
+            TransactionDaily,
+            BookingCustomer,
+            Booking
+        )
+        .join(Booking, BookingCustomer.booking_id == Booking.id)
+        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
+        .filter(BookingCustomer.customer_id == cif_id)
+    ).scalar()
+    if not transaction_daily:
+        return ReposReturn(is_error=True, msg="No transaction daily")
+    transaction_root_id = transaction_daily.transaction_root_id
+    transaction_daily = session.execute(
+        select(
+            TransactionSender,
+            TransactionDaily,
+            TransactionStage
+        )
+        .join(TransactionStage, and_(
+            TransactionDaily.transaction_stage_id == TransactionStage.id,
+            TransactionStage.transaction_stage_phase_code == "KHOI_TAO_HO_SO"
+        ))
+        .join(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
+        .filter(TransactionDaily.transaction_root_id == transaction_root_id)
+        .order_by(desc(TransactionDaily.created_at))
+    ).scalars().first()
+    return ReposReturn(data=transaction_daily)

@@ -1,6 +1,12 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.deposit_account.repository import (
+    ctr_gw_get_statement_deposit_account_td,
+    repos_gw_get_column_chart_deposit_account_info,
     repos_gw_get_deposit_account_by_cif_number, repos_gw_get_deposit_account_td
+)
+from app.api.v1.endpoints.third_parties.gw.deposit_account.schema import (
+    GWColumnChartDepositAccountRequest,
+    GWReportStatementHistoryTDAccountInfoRequest
 )
 from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.utils.functions import string_to_date
@@ -93,6 +99,8 @@ class CtrGWDepositAccount(BaseController):
             "balance": account_info["account_balance"],
             "balance_available": account_info["account_balance_available"],
             "balance_available_vnd": account_info["account_balance_available_vnd"],
+            "balance_lock": account_info["account_balance_lock"],
+            "interest_receivable_type": account_info["account_interest_receivable_type"],
             "open_date": string_to_date(account_info["account_open_date"], _format=DATETIME_INPUT_OUTPUT_FORMAT),
             "maturity_date": string_to_date(account_info["account_maturity_date"],
                                             _format=DATETIME_INPUT_OUTPUT_FORMAT),
@@ -136,3 +144,65 @@ class CtrGWDepositAccount(BaseController):
         )
 
         return self.response(data=response_data)
+
+    async def ctr_gw_get_statement_deposit_account_td(self, request: GWReportStatementHistoryTDAccountInfoRequest):
+        gw_report_statements_casa_td_account_info = self.call_repos(await ctr_gw_get_statement_deposit_account_td(
+            account_number=request.account_number,
+            current_user=self.current_user.user_info,
+            from_date=request.from_date,
+            to_date=request.to_date
+        ))
+        report_td_accounts = \
+            gw_report_statements_casa_td_account_info['selectReportStatementTDFromAcc_out']['data_output']['report_info']['report_td_account']
+
+        statements = []
+
+        for report_td_account in report_td_accounts:
+            code = report_td_account['tran_ref_no']
+            transaction_date = report_td_account['tran_date']
+            description = report_td_account['tran_description']
+            amount = report_td_account['tran_amount']
+            rate = report_td_account['tran_rate']
+            balance = report_td_account['tran_balance']
+            expire_date = report_td_account['tran_expire_date']
+
+            statements.append(dict(
+                code=code if code else None,
+                transaction_date=string_to_date(
+                    transaction_date, _format=DATETIME_INPUT_OUTPUT_FORMAT
+                ),
+                description=description,
+                amount=amount,
+                rate=rate,
+                balance=balance,
+                expire_date=string_to_date(
+                    expire_date, _format=DATETIME_INPUT_OUTPUT_FORMAT
+                )
+            ))
+
+        return self.response(data=statements)
+
+    async def ctr_gw_get_column_chart_deposit_account_info(
+        self,
+        request: GWColumnChartDepositAccountRequest
+    ):
+        current_user = self.current_user
+
+        account_number = request.account_number
+        from_date = request.from_date
+        to_date = request.to_date
+
+        gw_column_chart_deposit_account_infos = self.call_repos(await repos_gw_get_column_chart_deposit_account_info(
+            account_number=account_number, current_user=current_user, from_date=from_date, to_date=to_date
+        ))
+        data_output = gw_column_chart_deposit_account_infos['selectReportTDFromCif_out']['data_output']
+        report_td_accounts = data_output['report_info']['report_td_account']
+        columns = []
+        for column in report_td_accounts:
+            columns.append(dict(
+                year=column['tran_year'],
+                month=column['tran_month'],
+                value=column['tran_value']
+            ))
+
+        return self.response(data=columns)
