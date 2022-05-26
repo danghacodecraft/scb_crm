@@ -16,13 +16,13 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingCustomer, TransactionDaily
+    Booking, BookingCustomer, TransactionDaily, TransactionSender
 )
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
 )
 from app.third_parties.oracle.models.master_data.others import (
-    Branch, BusinessType, TransactionStage, TransactionStageStatus
+    Branch, BusinessType, TransactionStage, TransactionStageStatus, TransactionStageRole
 )
 from app.utils.constant.cif import CONTACT_ADDRESS_CODE
 from app.utils.constant.dwh import NAME_ACCOUNTING_ENTRY
@@ -89,13 +89,12 @@ async def repos_get_transaction_list(region_id: Optional[str], branch_id: Option
         Customer.full_name_vn,
         Customer.id.label('cif_id'),
         Customer.cif_number,
+        Booking.id,
         Booking.code.label('booking_code'),
         TransactionStageStatus.name.label('status'),
         BusinessType.name.label('business_type'),
         Branch.code.label('branch_code'),
-        Branch.name.label('branch_name'),
-
-
+        Branch.name.label('branch_name')
     ) \
         .join(BookingCustomer, Customer.id == BookingCustomer.customer_id) \
         .join(Booking, BookingCustomer.booking_id == Booking.id) \
@@ -144,6 +143,29 @@ async def repos_get_transaction_list(region_id: Optional[str], branch_id: Option
 
     transaction_list = session.execute(sql).all()
     return ReposReturn(data=transaction_list)
+
+
+async def repos_get_senders(
+        booking_ids: tuple,
+        session: Session
+):
+    senders = session.execute(
+        select(
+            TransactionStage,
+            TransactionStageRole,
+            TransactionSender,
+            BookingCustomer,
+            Booking,
+            TransactionDaily
+        )
+        .join(Booking, BookingCustomer.booking_id == Booking.id)
+        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
+        .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id)
+        .outerjoin(TransactionStageRole, TransactionStage.id == TransactionStageRole.transaction_stage_id)
+        .join(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
+        .filter(BookingCustomer.booking_id.in_(booking_ids))
+    ).all()
+    return ReposReturn(data=senders)
 
 
 async def repos_get_total_item(

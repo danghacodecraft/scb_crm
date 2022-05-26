@@ -4,7 +4,7 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.dashboard.repository import (
     repos_accounting_entry, repos_branch, repos_count_total_item,
     repos_get_customer, repos_get_total_item, repos_get_transaction_list,
-    repos_region
+    repos_region, repos_get_senders
 )
 from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
 from app.utils.functions import dropdown
@@ -41,6 +41,30 @@ class CtrDashboard(BaseController):
 
         if total_item % limit != 0:
             total_page += 1
+
+        mapping_datas = {}
+        booking_ids = []
+
+        for transaction in transaction_list:
+            full_name_vn, cif_id, cif_number, booking_id, booking_code, status, business_type, branch_code, branch_name = transaction
+            booking_ids.append(booking_id)
+            mapping_datas = {
+                booking_id: dict(
+                    full_name_vn=full_name_vn,
+                    cif_id=cif_id,
+                    cif_number=cif_number,
+                    booking_code=booking_code,
+                    business_type=business_type,
+                    branch_code=branch_code,
+                    branch_name=branch_name,
+                    stage_role=None
+                )
+            }
+
+        senders = self.call_repos(await repos_get_senders(booking_ids=tuple(['25A28FC71D114271A0F11E910CFBAC4D']), session=self.oracle_session))
+        for stage, stage_role, sender, _, booking, _ in senders:
+            if stage_role:
+                mapping_datas[booking.id].update(stage_role=stage_role)
 
         return self.response_paging(
             data=transaction_list,
