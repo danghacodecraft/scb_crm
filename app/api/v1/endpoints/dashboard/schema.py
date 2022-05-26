@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional
 
 from pydantic import Field
@@ -6,15 +7,30 @@ from app.api.base.schema import BaseSchema
 from app.api.v1.schemas.utils import DropdownResponse
 
 
+class TransactionListBusinessTypeResponse(BaseSchema):
+    name: Optional[str] = Field(..., description="Tên loại nghiệp vụ")
+    number: Optional[str] = Field(..., description="Số nghiệp vụ")
+
+
+class TransactionListSenderResponse(BaseSchema):
+    name: Optional[str] = Field(..., description="Tên người gửi")
+    created_at: Optional[datetime] = Field(..., description="Ngày tạo")
+
+
 class TransactionListResponse(BaseSchema):
     cif_id: str = Field(..., description="CIF ID")
     cif_number: Optional[str] = Field(..., description="CIF number")
     full_name_vn: str = Field(..., description="Tên khách hàng")
+    booking_id: str = Field(..., description="Mã booking")
     booking_code: Optional[str] = Field(..., description="Mã booking")
+    stage_role: Optional[str] = Field(..., description="Vai trò")
     status: Optional[str] = Field(..., description="Trạng thái")
-    business_type: Optional[str] = Field(..., description="Loại giao dịch")
+    business_type: TransactionListBusinessTypeResponse = Field(..., description="Loại giao dịch")
     branch_code: Optional[str] = Field(..., description="Mã đơn vị kinh doanh")
     branch_name: Optional[str] = Field(..., description="Tên đơn vị kinh doanh")
+    teller: TransactionListSenderResponse = Field(..., description="GDV")
+    supervisor: TransactionListSenderResponse = Field(..., description="KSV")
+    audit: TransactionListSenderResponse = Field(..., description="KSS")
 
 
 class CustomerInfoResponse(BaseSchema):

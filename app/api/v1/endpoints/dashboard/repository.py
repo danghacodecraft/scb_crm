@@ -22,7 +22,8 @@ from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
 )
 from app.third_parties.oracle.models.master_data.others import (
-    Branch, BusinessType, TransactionStage, TransactionStageStatus, TransactionStageRole
+    Branch, BusinessType, TransactionStage, TransactionStageRole,
+    TransactionStageStatus
 )
 from app.utils.constant.cif import CONTACT_ADDRESS_CODE
 from app.utils.constant.dwh import NAME_ACCOUNTING_ENTRY
@@ -92,7 +93,8 @@ async def repos_get_transaction_list(region_id: Optional[str], branch_id: Option
         Booking.id,
         Booking.code.label('booking_code'),
         TransactionStageStatus.name.label('status'),
-        BusinessType.name.label('business_type'),
+        BusinessType.id.label('business_type_id'),
+        BusinessType.name.label('business_type_name'),
         Branch.code.label('branch_code'),
         Branch.name.label('branch_name')
     ) \
@@ -152,6 +154,7 @@ async def repos_get_senders(
 ):
     senders = session.execute(
         select(
+            Customer,
             TransactionStage,
             TransactionStageRole,
             TransactionSender,
@@ -159,6 +162,7 @@ async def repos_get_senders(
             Booking,
             TransactionDaily
         )
+        .join(Customer, BookingCustomer.customer_id == Customer.id)
         .join(Booking, BookingCustomer.booking_id == Booking.id)
         .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
         .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id)
@@ -166,7 +170,6 @@ async def repos_get_senders(
         .join(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
         .filter(BookingCustomer.booking_id.in_(booking_ids))
     ).all()
-    print(senders)
     return ReposReturn(data=senders)
 
 
@@ -230,9 +233,9 @@ async def repos_get_customer(
     ) \
         .outerjoin(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
         .outerjoin(CustomerAddress, and_(
-        Customer.id == CustomerAddress.customer_id,
-        CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE
-    )) \
+            Customer.id == CustomerAddress.customer_id,
+            CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE
+        )) \
         .outerjoin(AddressWard, CustomerAddress.address_ward_id == AddressWard.id) \
         .outerjoin(AddressDistrict, CustomerAddress.address_district_id == AddressDistrict.id) \
         .outerjoin(AddressProvince, CustomerAddress.address_province_id == AddressProvince.id) \

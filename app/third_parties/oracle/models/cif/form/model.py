@@ -105,6 +105,8 @@ class TransactionSender(Base):
     title_id = Column(VARCHAR(36), comment='Mã chức danh')
     title_code = Column(VARCHAR(10), comment='Mã code chức danh')
     title_name = Column(VARCHAR(100), comment='Tên chức danh')
+    created_at = Column(DateTime, comment='Ngày tạo')
+    updated_at = Column('update_at', DateTime, comment='Ngày chỉnh sửa')
 
     # transaction = relationship('TransactionDaily', uselist=False)
 
