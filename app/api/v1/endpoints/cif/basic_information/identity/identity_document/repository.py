@@ -442,11 +442,6 @@ async def repos_save_identity(
                 business_type_code=BUSINESS_TYPE_CODE_CIF,
                 session=session
             )
-        # update booking
-        session.execute(update(Booking).filter(Booking.id == booking_id).values(
-            code=booking_code,
-            transaction_id=saving_transaction_daily.get('transaction_id')
-        ))
         session.execute(update(BookingBusinessForm).filter(BookingBusinessForm.booking_id == booking_id).values(
             # business_form_id=BUSINESS_FORM_TTCN_GTDD_GTDD,
             save_flag=True,  # Save_flag đổi lại thành True do Business Form giờ là những Tab nhỏ nhiều cấp
@@ -608,6 +603,12 @@ async def repos_save_identity(
             maker_at=now()
         ))
     ])
+
+    # update booking
+    session.execute(update(Booking).filter(Booking.id == booking_id).values(
+        code=booking_code,
+        transaction_id=saving_transaction_daily['transaction_id']
+    ))
 
     return ReposReturn(data=dict(
         cif_id=customer_id,
