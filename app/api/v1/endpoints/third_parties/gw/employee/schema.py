@@ -8,17 +8,17 @@ from app.api.v1.schemas.utils import OptionalDropdownResponse
 
 
 class GWEmployeeInfoResponse(BaseGWSchema):
-    staff_code: str = Field(..., description="Mã nhân viên")
-    staff_name: str = Field(..., description="Tên nhân viên")
-    fullname_vn: str = Field(..., description="Tên đầy đủ")
-    work_location: str = Field(..., description="Địa điểm làm việc")
-    email: str = Field(..., description="Địa chỉ email SCB")
-    contact_mobile: str = Field(..., description="Điện thoại liên lạc")
-    internal_mobile: str = Field(..., description="Điện thoại nội bộ")
-    title_code: str = Field(..., description="Mã chức danh")
-    title_name: str = Field(..., description="Tên chức danh")
-    branch_org: List = Field(..., description="Cây đơn vị")
-    avatar: str = Field(..., description="Hình ảnh đại diện nhân viên")
+    staff_code: Optional[str] = Field(..., description="Mã nhân viên")
+    staff_name: Optional[str] = Field(..., description="Tên nhân viên")
+    fullname_vn: Optional[str] = Field(..., description="Tên đầy đủ")
+    work_location: Optional[str] = Field(..., description="Địa điểm làm việc")
+    email: Optional[str] = Field(..., description="Địa chỉ email SCB")
+    contact_mobile: Optional[str] = Field(..., description="Điện thoại liên lạc")
+    internal_mobile: Optional[str] = Field(..., description="Điện thoại nội bộ")
+    title_code: Optional[str] = Field(..., description="Mã chức danh")
+    title_name: Optional[str] = Field(..., description="Tên chức danh")
+    branch_org: Optional[List] = Field(..., description="Cây đơn vị")
+    avatar: Optional[str] = Field(..., description="Hình ảnh đại diện nhân viên")
 
 
 class GWEmployeeListResponse(BaseGWSchema):
@@ -27,18 +27,18 @@ class GWEmployeeListResponse(BaseGWSchema):
 
 
 class GWRetrieveEmployeeInfoResponse(BaseGWSchema):
-    staff_code: str = Field(..., description="Mã nhân viên")
-    staff_name: str = Field(..., description="Tên nhân viên")
-    fullname_vn: str = Field(..., description="Tên đầy đủ")
-    email: str = Field(..., description="Địa chỉ email SCB")
-    contact_mobile: str = Field(..., description="Điện thoại liên lạc")
-    internal_mobile: str = Field(..., description="Điện thoại nội bộ")
-    title_code: str = Field(..., description="Mã chức danh")
-    title_name: str = Field(..., description="Tên chức danh")
-    avatar: str = Field(..., description="Hình ảnh đại diện nhân viên")
-    direct_management: str = Field(..., description="Cấp quản lý trực tiếp")
+    staff_code: Optional[str] = Field(..., description="Mã nhân viên")
+    staff_name: Optional[str] = Field(..., description="Tên nhân viên")
+    fullname_vn: Optional[str] = Field(..., description="Tên đầy đủ")
+    email: Optional[str] = Field(..., description="Địa chỉ email SCB")
+    contact_mobile: Optional[str] = Field(..., description="Điện thoại liên lạc")
+    internal_mobile: Optional[str] = Field(..., description="Điện thoại nội bộ")
+    title_code: Optional[str] = Field(..., description="Mã chức danh")
+    title_name: Optional[str] = Field(..., description="Tên chức danh")
+    avatar: Optional[str] = Field(..., description="Hình ảnh đại diện nhân viên")
+    direct_management: Optional[str] = Field(..., description="Cấp quản lý trực tiếp")
     date_of_birth: Optional[date] = Field(..., description="Ngày sinh")
-    place_of_birth: str = Field(..., description="Nơi sinh")
+    place_of_birth: Optional[str] = Field(..., description="Nơi sinh")
     gender: OptionalDropdownResponse = Field(..., description="Giới tính")
     ethnic: Optional[str] = Field(..., description="Dân tộc")
     religion: Optional[str] = Field(..., description="Tôn giáo")
@@ -47,10 +47,10 @@ class GWRetrieveEmployeeInfoResponse(BaseGWSchema):
 
 
 class GWRetrieveEmployeeIdentityInfo(BaseGWSchema):
-    number: str = Field(..., description="CMND/Hộ chiếu, số đăng ký kinh doanh nếu là khách hàng doanh nghiệp")
+    number: Optional[str] = Field(..., description="CMND/Hộ chiếu, số đăng ký kinh doanh nếu là khách hàng doanh nghiệp")
     issued_date: Optional[date] = Field(..., description="Ngày cấp chứng minh nhân dân hoặc hộ chiếu")
     expired_date: Optional[date] = Field(..., description="Ngày hết hạn chứng minh nhân dân hoặc hộ chiếu")
-    place_of_issue: str = Field(..., description="Nơi cấp chứng minh nhân dân hoặc hộ chiếu")
+    place_of_issue: Optional[str] = Field(..., description="Nơi cấp chứng minh nhân dân hoặc hộ chiếu")
 
 
 class GWRetrieveEmployeeAddressInfo(BaseGWSchema):
@@ -83,21 +83,21 @@ class GWRetrieveEmployeeProfileInfo(BaseGWSchema):
     join_date: Optional[date] = Field(..., description="Ngày vào làm việc")
     probation_date: Optional[date] = Field(..., description="Ngày vào thử việc")
     official_date: Optional[date] = Field(..., description="Ngày vào chính thức")
-    jobtitle_name: str = Field(..., description="Chức danh hiện tại")
-    temp_jobtitle_name: str = Field(..., description="Chức danh tạm thời")
+    jobtitle_name: Optional[str] = Field(..., description="Chức danh hiện tại")
+    temp_jobtitle_name: Optional[str] = Field(..., description="Chức danh tạm thời")
     seniority_date: Optional[date] = Field(..., description="Ngày thâm niên")
-    resident_status: str = Field(..., description="Đối tượng cư trú ( 1:có , 0:không)")
+    resident_status: Optional[str] = Field(..., description="Đối tượng cư trú ( 1:có , 0:không)")
     department_info: OptionalDropdownResponse = Field(..., description="Thông tin Đơn vị/Phòng ban")
     org_department_info: OptionalDropdownResponse = Field(..., description="Thông tin Đơn vị/Phòng ban")
     temp_department_info: OptionalDropdownResponse = Field(..., description="Thông tin Đơn vị/Phòng ban")
 
 
 class GWRetrieveEmployeeContractInfo(BaseGWSchema):
-    contract_type: str = Field(..., description="Loại hợp đồng")
-    contract_name: str = Field(..., description="Số hợp đồng")
+    contract_type: Optional[str] = Field(..., description="Loại hợp đồng")
+    contract_name: Optional[str] = Field(..., description="Số hợp đồng")
     contract_effected_date: Optional[date] = Field(..., description="Ngày bắt đầu HĐ")
     contract_expired_date: Optional[date] = Field(..., description="Ngày kết thúc HĐ")
-    schedule_of_contract_num: str = Field(..., description="Số phụ lục HĐ")
+    schedule_of_contract_num: Optional[str] = Field(..., description="Số phụ lục HĐ")
     schedule_of_contract_effected_date: Optional[date] = Field(..., description="Ngày bắt đầu PL")
     schedule_of_contract_expired_date: Optional[date] = Field(..., description="Ngày kết thúc PL")
     stop_job_date: Optional[date] = Field(..., description="Ngày nghỉ việc")
