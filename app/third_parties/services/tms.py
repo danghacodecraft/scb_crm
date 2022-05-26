@@ -46,4 +46,8 @@ class ServiceTMS:
                     return True, data
 
         except Exception as ex:  # noqa
-            return False, ex
+            return False, {
+                "url": url,
+                "headers": self.__header,
+                "message": ex,
+            }
