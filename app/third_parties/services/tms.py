@@ -38,7 +38,7 @@ class ServiceTMS:
                         return False, {
                             "url": url,
                             "headers": self.__header,
-                            "message": f"Status: {res.status}" + await res.json(),
+                            "message": f"Status: {res.status}" + str(await res.json()),
                         }
 
                     data = await res.json()
@@ -49,5 +49,5 @@ class ServiceTMS:
             return False, {
                 "url": url,
                 "headers": self.__header,
-                "message": ex,
+                "message": str(ex),
             }

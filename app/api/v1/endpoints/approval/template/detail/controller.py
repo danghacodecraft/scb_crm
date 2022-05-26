@@ -7,7 +7,7 @@ from app.settings.config import DATE_INPUT_OUTPUT_EKYC_FORMAT
 from app.utils.constant.cif import CONTACT_ADDRESS_CODE, RESIDENT_ADDRESS_CODE
 from app.utils.constant.tms_dms import (
     PATH_FORM_1, PATH_FORM_2, PATH_FORM_3, PATH_FORM_4, PATH_FORM_5,
-    PATH_FORM_6
+    PATH_FORM_6, TMS_TRANSLATE_AVERAGE_INCOME_AMOUNT
 )
 from app.utils.functions import datetime_to_string, today
 
@@ -79,7 +79,7 @@ class CtrTemplateDetail(BaseController):
                 "S1.A.1.5.6": ["Đồng ý"] if cust.Customer.advertising_marketing_flag else ["Không đồng ý"],
 
                 "S1.A.1.5.4": cust.Career.name,
-                "S1.A.1.5.3": [cust.AverageIncomeAmount.name],
+                "S1.A.1.5.3": [TMS_TRANSLATE_AVERAGE_INCOME_AMOUNT[cust.AverageIncomeAmount.name]],
                 "S1.A.1.2.9": [cust.MaritalStatus.name],
 
             })
@@ -264,7 +264,7 @@ class CtrTemplateDetail(BaseController):
                     "Không đồng ý/Do not agree"],
 
                 "S1.A.1.5.4": cust.Career.name,
-                "S1.A.1.5.3": [cust.AverageIncomeAmount.name],
+                "S1.A.1.5.3": [TMS_TRANSLATE_AVERAGE_INCOME_AMOUNT[cust.AverageIncomeAmount.name]],
                 "S1.A.1.2.9": ["Độc thân/Single"] if cust.MaritalStatus.name == "Độc thân" else [
                     "Đã có gia đình/Married"],
 
@@ -342,8 +342,7 @@ class CtrTemplateDetail(BaseController):
             e_banking = e_banking[0]
             # TODO
             # "S1.A.1.9.14":
-            if e_banking.EBankingInfo.account_name:
-                data_request.update({"S1.A.1.9.5": [e_banking.EBankingInfo.account_name]})
+            data_request.update({"S1.A.1.9.5": ["Khác/Other:"] if e_banking.EBankingInfo.account_name else False})
             if e_banking.EBankingInfo.method_active_password_id:
                 data_request.update({"S1.A.1.9.7": [e_banking.EBankingInfo.method_active_password_id]})
             if e_banking.EBankingInfo.account_payment_fee:
@@ -382,7 +381,7 @@ class CtrTemplateDetail(BaseController):
                 "S1.A.1.2.38": datetime_to_string(subs_identity[0].sub_identity_expired_date,
                                                   DATE_INPUT_OUTPUT_EKYC_FORMAT),
             })
-
+        print(data_request)
         data_tms = self.call_repos(
             await repo_form(data_request=data_request, path=PATH_FORM_2))
         return self.response(data_tms)
