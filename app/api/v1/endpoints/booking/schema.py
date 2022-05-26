@@ -11,3 +11,11 @@ class CreateBookingRequest(BaseSchema):
 
 class CreateBookingResponse(BaseSchema):
     booking_id: str = Field(..., description="Booking ID")
+
+
+class NewsCommentResponse(BaseSchema):
+    comment_id: str = Field(..., description="id tin tức")
+
+
+class NewsCommentRequest(BaseSchema):
+    content: str = Field(..., description='Nội dung comment')
