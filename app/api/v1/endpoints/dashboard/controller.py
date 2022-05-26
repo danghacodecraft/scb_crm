@@ -54,8 +54,21 @@ class CtrDashboard(BaseController):
         booking_ids = []
 
         for transaction in transaction_list:
-            full_name_vn, cif_id, cif_number, booking_id, booking_code, status, business_type_id, business_type_name, branch_code, branch_name = transaction
+            booking, business_type, branch, customer, status = transaction
+
+            booking_id = booking.id
+            booking_code = booking.code
             booking_ids.append(booking_id)
+
+            business_type_id = business_type.id
+            business_type_name = business_type.name
+
+            branch_code = branch.code
+            branch_name = branch.name
+
+            full_name_vn = customer.full_name
+            cif_id = customer.id
+            cif_number = customer.cif_number
 
             business_type_number = None
             if business_type_id == BUSINESS_TYPE_INIT_CIF:
@@ -94,8 +107,8 @@ class CtrDashboard(BaseController):
             })
 
         senders = self.call_repos(await repos_get_senders(booking_ids=tuple(booking_ids), session=self.oracle_session))
-        for customer, stage, stage_role, sender, _, booking, _ in senders:
-            if stage_role and stage_role.code in CIF_STAGE_ROLE_CODES:
+        for booking, _, stage, stage_role, sender in senders:
+            if stage_role and stage_role.code in CIF_STAGE_ROLE_CODES and booking.id in booking_ids:
                 if stage_role.code == CIF_STAGE_ROLE_CODE_TELLER:
                     mapping_datas[booking.id].update(
                         teller=dict(

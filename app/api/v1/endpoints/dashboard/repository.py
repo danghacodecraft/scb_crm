@@ -87,29 +87,23 @@ async def repos_get_transaction_list(region_id: Optional[str], branch_id: Option
                                      search_box: Optional[str], from_date: Optional[date], to_date: Optional[date],
                                      limit: int, page: int, session: Session):
     sql = select(
-        Customer.full_name_vn,
-        Customer.id.label('cif_id'),
-        Customer.cif_number,
-        Booking.id,
-        Booking.code.label('booking_code'),
-        TransactionStageStatus.name.label('status'),
-        BusinessType.id.label('business_type_id'),
-        BusinessType.name.label('business_type_name'),
-        Branch.code.label('branch_code'),
-        Branch.name.label('branch_name')
+        Booking,
+        BusinessType,
+        Branch,
+        Customer,
+        TransactionStageStatus.name.label('status')
     ) \
+        .join(BusinessType, Booking.business_type_id == BusinessType.id) \
+        .join(Branch, Booking.branch_id == Branch.id) \
         .join(BookingCustomer, Booking.id == BookingCustomer.booking_id) \
-        .outerjoin(Customer, BookingCustomer.customer_id == Customer.id) \
-        .outerjoin(BusinessType, Booking.business_type_id == BusinessType.id) \
-        .outerjoin(Branch, Booking.branch_id == Branch.id) \
+        .join(Customer, BookingCustomer.customer_id == Customer.id) \
         .outerjoin(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
         .outerjoin(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
         .outerjoin(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
         .outerjoin(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
-        .filter(Booking.code.is_not(None)) \
         .limit(limit) \
         .offset(limit * (page - 1)) \
-        .order_by(desc(Customer.open_cif_at))
+        .order_by(desc(Booking.created_at))
 
     if region_id:
         sql = sql.filter(Branch.region_id == region_id)
@@ -154,21 +148,17 @@ async def repos_get_senders(
 ):
     senders = session.execute(
         select(
-            Customer,
+            Booking,
+            TransactionDaily,
             TransactionStage,
             TransactionStageRole,
-            TransactionSender,
-            BookingCustomer,
-            Booking,
-            TransactionDaily
+            TransactionSender
         )
-        .join(Customer, BookingCustomer.customer_id == Customer.id)
-        .join(Booking, BookingCustomer.booking_id == Booking.id)
-        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
-        .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id)
+        .outerjoin(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
+        .outerjoin(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id)
         .outerjoin(TransactionStageRole, TransactionStage.id == TransactionStageRole.transaction_stage_id)
-        .join(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
-        .filter(BookingCustomer.booking_id.in_(booking_ids))
+        .outerjoin(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
+        .filter(Booking.id.in_(booking_ids))
     ).all()
     return ReposReturn(data=senders)
 
