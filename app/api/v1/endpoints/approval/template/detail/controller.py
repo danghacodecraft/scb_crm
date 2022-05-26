@@ -427,15 +427,18 @@ class CtrTemplateDetail(BaseController):
                 "S1.A.1.2.27": resident_address.AddressDistrict.name,
                 "S1.A.1.2.28": resident_address.AddressProvince.name,
                 "S1.A.1.2.29": resident_address.AddressCountry.name,
+                # TODO: Địa chỉ cư trú tại nước ngoài (chưa có)
+                "S1.A.1.2.30": "",
+                "S1.A.1.2.31": "",
+                "S1.A.1.2.32": "",
+                "S1.A.1.2.33": "",
                 "S1.A.1.2.1": cust.Customer.mobile_number,
                 "S1.A.1.5.4": cust.Career.name,
 
             })
             # Những field option
-            if cust.Customer.telephone_number:
-                data_request.update({"S1.A.1.2.2": cust.Customer.telephone_number})
-            if cust.Customer.email:
-                data_request.update({"S1.A.1.2.3": cust.Customer.email})
+            data_request.update({"S1.A.1.2.2": cust.Customer.telephone_number if cust.Customer.telephone_number else ''})
+            data_request.update({"S1.A.1.2.3": cust.Customer.email if cust.Customer.email else ''})
 
         # Cam kết
         time = today()
@@ -443,7 +446,6 @@ class CtrTemplateDetail(BaseController):
             "S1.A.1.16.10": f'{time.day}',
             "S1.A.1.16.11": f'{time.month}',
             "S1.A.1.16.12": f'{time.year}',
-
         })
 
         data_tms = self.call_repos(
