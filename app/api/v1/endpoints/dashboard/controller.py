@@ -6,6 +6,8 @@ from app.api.v1.endpoints.dashboard.repository import (
     repos_get_customer, repos_get_total_item, repos_get_transaction_list,
     repos_region, repos_get_senders
 )
+from app.utils.constant.cif import CIF_STAGE_ROLE_CODE_TELLER, CIF_STAGE_ROLE_CODES, CIF_STAGE_ROLE_CODE_SUPERVISOR, \
+    CIF_STAGE_ROLE_CODE_AUDIT
 from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
 from app.utils.functions import dropdown
 
@@ -48,26 +50,44 @@ class CtrDashboard(BaseController):
         for transaction in transaction_list:
             full_name_vn, cif_id, cif_number, booking_id, booking_code, status, business_type, branch_code, branch_name = transaction
             booking_ids.append(booking_id)
-            mapping_datas = {
+            mapping_datas.update({
                 booking_id: dict(
                     full_name_vn=full_name_vn,
                     cif_id=cif_id,
                     cif_number=cif_number,
+                    booking_id=booking_id,
                     booking_code=booking_code,
                     business_type=business_type,
                     branch_code=branch_code,
                     branch_name=branch_name,
-                    stage_role=None
+                    stage_role=None,
+                    teller=None,
+                    supervisor=None,
+                    audit=None
                 )
-            }
+            })
 
-        senders = self.call_repos(await repos_get_senders(booking_ids=tuple(['25A28FC71D114271A0F11E910CFBAC4D']), session=self.oracle_session))
+        senders = self.call_repos(await repos_get_senders(booking_ids=tuple(booking_ids), session=self.oracle_session))
         for stage, stage_role, sender, _, booking, _ in senders:
-            if stage_role:
-                mapping_datas[booking.id].update(stage_role=stage_role)
+            if stage_role and stage_role.code in CIF_STAGE_ROLE_CODES:
+                if stage_role.code == CIF_STAGE_ROLE_CODE_TELLER:
+                    mapping_datas[booking.id].update(
+                        teller=sender.user_fullname,
+                        stage_role=stage_role.code
+                    )
+                elif stage_role.code == CIF_STAGE_ROLE_CODE_SUPERVISOR:
+                    mapping_datas[booking.id].update(
+                        supervisor=sender.user_fullname,
+                        stage_role=stage_role.code
+                    )
+                elif stage_role.code == CIF_STAGE_ROLE_CODE_AUDIT:
+                    mapping_datas[booking.id].update(
+                        teller=sender.user_fullname,
+                        audit=stage_role.code
+                    )
 
         return self.response_paging(
-            data=transaction_list,
+            data=[mapping_data for _, mapping_data in mapping_datas.items()],
             current_page=current_page,
             total_items=total_item,
             total_page=total_page

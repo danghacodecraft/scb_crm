@@ -96,14 +96,15 @@ async def repos_get_transaction_list(region_id: Optional[str], branch_id: Option
         Branch.code.label('branch_code'),
         Branch.name.label('branch_name')
     ) \
-        .join(BookingCustomer, Customer.id == BookingCustomer.customer_id) \
-        .join(Booking, BookingCustomer.booking_id == Booking.id) \
-        .join(BusinessType, Booking.business_type_id == BusinessType.id) \
-        .join(Branch, Booking.branch_id == Branch.id) \
-        .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
-        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
-        .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
-        .join(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
+        .join(BookingCustomer, Booking.id == BookingCustomer.booking_id) \
+        .outerjoin(Customer, BookingCustomer.customer_id == Customer.id) \
+        .outerjoin(BusinessType, Booking.business_type_id == BusinessType.id) \
+        .outerjoin(Branch, Booking.branch_id == Branch.id) \
+        .outerjoin(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
+        .outerjoin(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
+        .outerjoin(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
+        .outerjoin(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
+        .filter(Booking.code.is_not(None)) \
         .limit(limit) \
         .offset(limit * (page - 1)) \
         .order_by(desc(Customer.open_cif_at))
@@ -165,6 +166,7 @@ async def repos_get_senders(
         .join(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
         .filter(BookingCustomer.booking_id.in_(booking_ids))
     ).all()
+    print(senders)
     return ReposReturn(data=senders)
 
 
@@ -228,16 +230,16 @@ async def repos_get_customer(
     ) \
         .outerjoin(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
         .outerjoin(CustomerAddress, and_(
-            Customer.id == CustomerAddress.customer_id,
-            CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE
-        )) \
+        Customer.id == CustomerAddress.customer_id,
+        CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE
+    )) \
         .outerjoin(AddressWard, CustomerAddress.address_ward_id == AddressWard.id) \
         .outerjoin(AddressDistrict, CustomerAddress.address_district_id == AddressDistrict.id) \
         .outerjoin(AddressProvince, CustomerAddress.address_province_id == AddressProvince.id) \
         .outerjoin(AddressCountry, CustomerAddress.address_country_id == AddressCountry.id) \
         .outerjoin(Branch, Customer.open_branch_id == Branch.id)
 
-    customers = customers.filter(Customer.complete_flag == True) # noqa
+    customers = customers.filter(Customer.complete_flag == True)  # noqa
     if cif_number:
         customers = customers.filter(Customer.cif_number.ilike(f'%{cif_number}%'))
     if identity_number:
