@@ -72,12 +72,17 @@ class CtrFingerPrint(BaseController):
                     "ekyc_id": item.ekyc_id
                 })
         # tạo dữ liệu gửi lên từ request
+        id_ekycs = []
         for fingerprint in fingerprints:
             identity_image_id = generate_uuid()
             uuid = parse_file_uuid(fingerprint.image_url)
 
             fingerprint.image_url = uuid
             image_uuids.append(uuid)
+            # check id_ekyc k được trùng
+            if fingerprint.id_ekyc in id_ekycs:
+                return self.response_exception(msg='ID_EKYC is not exist')
+            id_ekycs.append(fingerprint.id_ekyc)
 
             save_identity_image.append({
                 "id": identity_image_id,
