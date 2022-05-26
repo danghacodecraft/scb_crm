@@ -2,7 +2,6 @@ import aiohttp
 from starlette import status
 
 from app.settings.service import SERVICE
-from app.utils.error_messages import ERROR_CALL_SERVICE_TEMPLATE
 
 
 class ServiceTMS:
@@ -29,17 +28,26 @@ class ServiceTMS:
                         json=body
                 ) as res:
                     # handle response
-                    if res.status != status.HTTP_200_OK:
+                    if res.status == status.HTTP_500_INTERNAL_SERVER_ERROR:
                         return False, {
                             "url": url,
                             "headers": self.__header,
-                            "message": await res.json(),
+                            "message": f"Status: {res.status}",
+                        }
+                    elif res.status != status.HTTP_200_OK:
+                        return False, {
+                            "url": url,
+                            "headers": self.__header,
+                            "message": f"Status: {res.status}" + str(await res.json()),
                         }
 
                     data = await res.json()
 
                     return True, data
 
-        except Exception:  # noqa
-
-            return False, ERROR_CALL_SERVICE_TEMPLATE
+        except Exception as ex:  # noqa
+            return False, {
+                "url": url,
+                "headers": self.__header,
+                "message": str(ex),
+            }

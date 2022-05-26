@@ -102,7 +102,7 @@ class CtrSignature(BaseController):
         date__signatures = {}
         for customer_identity_image in signature_data:
             signature = {
-                'identity_image_id': customer_identity_image.id,
+                'identity_image_id': customer_identity_image.identity_image_id,
                 'image_url': customer_identity_image.image_url,
                 'active_flag': customer_identity_image.active_flag,
                 'maker_at': customer_identity_image.maker_at

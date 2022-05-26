@@ -1,5 +1,7 @@
 from app.api.base.controller import BaseController
-from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
+from app.api.v1.endpoints.cif.repository import (
+    repos_get_booking, repos_get_initializing_customer
+)
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_get_casa_account, repos_get_customer_ids_from_cif_numbers,
     repos_get_customer_open_cif, repos_gw_get_authorized,
@@ -19,7 +21,7 @@ from app.third_parties.oracle.models.master_data.others import (
 )
 from app.utils.constant.cif import (
     CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE, CUSTOMER_COMPLETED_FLAG,
-    CUSTOMER_TYPE_ORGANIZE, RESIDENT_ADDRESS_CODE
+    CUSTOMER_TYPE_ORGANIZE, RESIDENT_ADDRESS_CODE, TRANSACTION_JOB_OPEN_CIF
 )
 from app.utils.constant.gw import (
     GW_ACCOUNT_AUTO_CREATE_CIF_N, GW_ACCOUNT_CLASS_CODE, GW_AUTO,
@@ -32,8 +34,9 @@ from app.utils.constant.gw import (
     GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP, GW_SELECT,
     GW_UDF_NAME, GW_YES
 )
+from app.utils.error_messages import ERROR_CALL_SERVICE_GW
 from app.utils.functions import (
-    date_string_to_other_date_string_format, date_to_string
+    date_string_to_other_date_string_format, date_to_string, now
 )
 from app.utils.vietnamese_converter import (
     convert_to_unsigned_vietnamese, split_name
@@ -864,15 +867,37 @@ class CtrGWCustomer(BaseController):
                 "udf_value": udf_value
             }
         }
+        # get booking by cif
+        booking = self.call_repos(await repos_get_booking(
+            cif_id=cif_id, session=self.oracle_session
+        ))
 
-        response_data = self.call_repos(
+        transaction_job = {
+            "booking_id": booking.id,
+            "business_job_id": TRANSACTION_JOB_OPEN_CIF,
+            "complete_flag": True,
+            "error_code": "",
+            "error_desc": "",
+            "created_at": now(),
+            "updated_at": now()
+        }
+
+        is_success, response_data = self.call_repos(
             await repos_gw_open_cif(
                 cif_id=cif_id,
                 customer_info=customer_info,
                 account_info=account_info,
-                current_user=current_user.user_info
+                current_user=current_user.user_info,
+                transaction_job=transaction_job,
+                session=self.oracle_session
             )
         )
+        # check open_cif success
+        if not response_data.get('openCIFAuthorise_out', {}).get('data_output') or not is_success:
+            return self.response_exception(
+                msg=ERROR_CALL_SERVICE_GW,
+                detail=response_data.get('openCIFAuthorise_out', {}).get("transaction_info", {}).get('transaction_error_msg')
+            )
 
         cif_number = response_data['openCIFAuthorise_out']['data_output']['customner_info']['cif_info']['cif_num']
         # TODO chưa thể mở tài khoản thanh toán

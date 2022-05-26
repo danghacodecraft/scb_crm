@@ -22,7 +22,7 @@ from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
 )
 from app.third_parties.oracle.models.master_data.others import (
-    Branch, TransactionStage, TransactionStageStatus
+    Branch, BusinessType, TransactionStage, TransactionStageStatus
 )
 from app.utils.constant.cif import CONTACT_ADDRESS_CODE
 from app.utils.constant.dwh import NAME_ACCOUNTING_ENTRY
@@ -88,10 +88,18 @@ async def repos_get_transaction_list(region_id: Optional[str], branch_id: Option
     sql = select(
         Customer.full_name_vn,
         Customer.id.label('cif_id'),
-        Booking.code.label('booking_code')
+        Customer.cif_number,
+        Booking.code.label('booking_code'),
+        TransactionStageStatus.name.label('status'),
+        BusinessType.name.label('business_type'),
+        Branch.code.label('branch_code'),
+        Branch.name.label('branch_name'),
+
+
     ) \
         .join(BookingCustomer, Customer.id == BookingCustomer.customer_id) \
         .join(Booking, BookingCustomer.booking_id == Booking.id) \
+        .join(BusinessType, Booking.business_type_id == BusinessType.id) \
         .join(Branch, Booking.branch_id == Branch.id) \
         .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
         .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \

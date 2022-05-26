@@ -104,6 +104,8 @@ ERROR_BUSINESS_TYPE_CODE_INCORRECT = 'ERROR_BUSINESS_TYPE_CODE_INCORRECT'
 
 ERROR_IDENTITY_TYPE_NOT_EXIST = 'ERROR_IDENTITY_TYPE_NOT_EXIST'
 
+ERROR_OPEN_CIF = 'ERROR_OPEN_CIF'
+
 MESSAGE_STATUS = {
     # general error
     PAGING_ERROR: "Can not found page!",
@@ -197,5 +199,7 @@ MESSAGE_STATUS = {
     ERROR_BUSINESS_TYPE_NOT_EXIST: "Business type not exist",
     ERROR_BUSINESS_TYPE_CODE_INCORRECT: "Business type code incorrect",
 
-    ERROR_IDENTITY_TYPE_NOT_EXIST: "Identity type not exist"
+    ERROR_IDENTITY_TYPE_NOT_EXIST: "Identity type not exist",
+
+    ERROR_OPEN_CIF: "Cannot open CIF"
 }
