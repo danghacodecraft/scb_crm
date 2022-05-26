@@ -400,22 +400,19 @@ class ServiceEKYC:
             return False, {"message": str(ex)}
 
         avatar_uri = response_data['avatar_image_uri']
-        #  thay avatar_url thanh avatar uri
-        response_data['avatar_image_url'] = f"/{avatar_uri}"
 
-        # response_data['avatar_image_url'] = replace_with_cdn(
-        #     cdn=avatar_uri if avatar_uri.startswith('/') else self.url + '/cdn/' + avatar_uri,
-        #     file_url=self.url
-        # )
-        #
+        response_data['avatar_image_url'] = replace_with_cdn(
+            cdn=avatar_uri if avatar_uri.startswith('/') else '/cdn-ekyc/' + avatar_uri,
+            file_url=self.url
+        )
 
         for item in response_data['attachment_info']:
-            item['url'] = f"/{item['uri']}"
 
-        #     item['url'] = replace_with_cdn(
-        #         cdn=item['uri'] if item['uri'].startswith('/') else self.url + '/cdn/' + item['uri'],
-        #         file_url=self.url
-        #     )
+            item['url'] = replace_with_cdn(
+                cdn=item['uri'] if item['uri'].startswith('/') else '/cdn-ekyc/' + item['uri'],
+                file_url=self.url
+            )
+
         return True, response_data
 
     async def create_post_check(self, payload_data: dict):
