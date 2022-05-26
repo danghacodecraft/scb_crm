@@ -398,9 +398,12 @@ class BaseController:
 
         saving_transaction_stage_status_id = generate_uuid()
         saving_transaction_stage_id = generate_uuid()
+        saving_transaction_stage_phase_id = generate_uuid()
+        saving_transaction_stage_lane_id = generate_uuid()
+        saving_transaction_stage_role_id = generate_uuid()
         transaction_daily_id = generate_uuid()
 
-        begin_stage_status, begin_stage = self.call_repos(
+        begin_stage_status, begin_stage, _, begin_phase, _, begin_lane, begin_stage_role = self.call_repos(
             await repos_get_begin_stage(
                 business_type_id=business_type_id,
                 session=self.oracle_session
@@ -412,11 +415,30 @@ class BaseController:
             name=begin_stage_status.name
         )
 
+        saving_transaction_stage_phase = dict(
+            id=saving_transaction_stage_phase_id,
+            code=begin_phase.code,
+            name=begin_phase.name
+        )
+
+        saving_transaction_stage_lane = dict(
+            id=saving_transaction_stage_lane_id,
+            code=begin_lane.code,
+            name=begin_lane.name
+        )
+
+        saving_transaction_stage_role = dict(
+            id=saving_transaction_stage_role_id,
+            transaction_stage_id=saving_transaction_stage_id,
+            code=begin_stage_role.code,
+            name=begin_stage_role.name
+        )
+
         saving_transaction_stage = dict(
             id=saving_transaction_stage_id,
             status_id=saving_transaction_stage_status_id,
-            lane_id=None,
-            phase_id=None,
+            lane_id=saving_transaction_stage_lane_id,
+            phase_id=saving_transaction_stage_phase_id,
             business_type_id=business_type_id,
             sla_transaction_id=None,  # TODO
             transaction_stage_phase_code=begin_stage.code,
@@ -506,7 +528,8 @@ class BaseController:
         #     position_name=current_user.hrm_position_name
         # )
 
-        return (saving_transaction_stage_status, saving_transaction_stage, saving_transaction_daily,
+        return (saving_transaction_stage_status, saving_transaction_stage, saving_transaction_stage_phase,
+                saving_transaction_stage_lane, saving_transaction_stage_role, saving_transaction_daily,
                 saving_transaction_sender)
 
     @staticmethod

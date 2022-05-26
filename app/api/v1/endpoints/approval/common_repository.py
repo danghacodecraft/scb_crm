@@ -23,9 +23,18 @@ async def repos_get_begin_stage(business_type_id: str, session: Session):
     begin_stage = session.execute(
         select(
             StageStatus,
-            Stage
+            Stage,
+            StagePhase,
+            Phase,
+            StageLane,
+            Lane,
+            StageRole
         )
         .join(StageStatus, Stage.status_id == StageStatus.id)
+        .join(StageLane, Stage.id == StageLane.stage_id)
+        .join(StagePhase, Stage.id == StagePhase.stage_id)
+        .join(Phase, StagePhase.phase_id == Phase.id)
+        .join(StageRole, Stage.id == StageRole.stage_id)
         .filter(and_(
             Stage.parent_id.is_(None),
             Stage.business_type_id == business_type_id

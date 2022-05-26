@@ -39,7 +39,8 @@ from app.third_parties.oracle.models.master_data.identity import (
     PlaceOfIssue
 )
 from app.third_parties.oracle.models.master_data.others import (
-    Nation, Religion, TransactionStage, TransactionStageStatus
+    Nation, Religion, TransactionStage, TransactionStageStatus, TransactionStageLane, TransactionStagePhase,
+    TransactionStageRole
 )
 from app.utils.constant.cif import (
     ACTIVE_FLAG_ACTIVED, ADDRESS_COUNTRY_CODE_VN, BUSINESS_FORM_TTCN_GTDD_GTDD,
@@ -332,6 +333,9 @@ async def repos_save_identity(
         saving_customer_identity_images: List[dict],
         saving_transaction_stage_status: dict,
         saving_transaction_stage: dict,
+        saving_transaction_stage_phase: dict,
+        saving_transaction_stage_lane: dict,
+        saving_transaction_stage_role: dict,
         saving_transaction_daily: dict,
         saving_transaction_sender: dict,
         # saving_transaction_receiver: dict,
@@ -456,6 +460,9 @@ async def repos_save_identity(
             # Tạo BOOKING, CRM_TRANSACTION_DAILY -> CRM_BOOKING -> BOOKING_CUSTOMER -> BOOKING_BUSINESS_FORM
             TransactionStageStatus(**saving_transaction_stage_status),
             TransactionStage(**saving_transaction_stage),
+            TransactionStageLane(**saving_transaction_stage_lane),
+            TransactionStagePhase(**saving_transaction_stage_phase),
+            TransactionStageRole(**saving_transaction_stage_role),
             TransactionDaily(**saving_transaction_daily),
             TransactionSender(**saving_transaction_sender)
             # TransactionReceiver(**saving_transaction_receiver),
