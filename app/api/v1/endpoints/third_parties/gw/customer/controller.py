@@ -1,5 +1,7 @@
 from app.api.base.controller import BaseController
-from app.api.v1.endpoints.cif.repository import repos_get_booking
+from app.api.v1.endpoints.cif.repository import (
+    repos_get_booking, repos_get_initializing_customer
+)
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_get_casa_account, repos_get_customer_ids_from_cif_numbers,
     repos_get_customer_open_cif, repos_gw_get_authorized,
@@ -683,7 +685,7 @@ class CtrGWCustomer(BaseController):
         current_user = self.current_user
 
         # check cif đang tạo
-        # self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
+        self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
 
         response_customers = self.call_repos(await repos_get_customer_open_cif(
             cif_id=cif_id, session=self.oracle_session))
