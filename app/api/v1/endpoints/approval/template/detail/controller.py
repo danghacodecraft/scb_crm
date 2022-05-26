@@ -200,7 +200,6 @@ class CtrTemplateDetail(BaseController):
     async def ctr_form_2(self, cif_id: str):
         """
             Biểu mẫu 2
-            Hà Đẹp Chai
         """
         data_request = {}
         customer_db = self.call_repos(await repo_customer_info(cif_id=cif_id, session=self.oracle_session))
