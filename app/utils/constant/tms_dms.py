@@ -9,7 +9,15 @@ PATH_FORM_4 = "/api/v2/crm/khach-hang-ca-nhan/cif/mo-cif/crm-bm2-02/fill_data_an
 PATH_FORM_5 = "/api/v2/crm/khach-hang-ca-nhan/cif/mo-cif/crm-bm3-02/fill_data_and_show_list_detail_field/"
 PATH_FORM_6 = "/api/v2/crm/khach-hang-ca-nhan/cif/mo-cif/crm-bm4-02/fill_data_and_show_list_detail_field/"
 
-TMS_TRANSLATE_AVERAGE_INCOME_AMOUNT = {
+TMS_TRANSLATE_AVERAGE_INCOME_AMOUNT_FORM_1 = {
+    "DƯỚI 10 TRIỆU": "Dưới 10 triệu",
+    "TỪ 10 ĐẾN DƯỚI 30 TRIỆU": "10 đến dưới 30 triệu",
+    "TỪ 30 ĐẾN DƯỚI 70 TRIỆU": "30 đến dưới 70 triệu",
+    "TỪ 70 ĐẾN DƯỚI 100 TRIỆU": "70 đến dưới 100 triệu",
+    "TRÊN 100 TRIỆU": "Trên 100 triệu"
+}
+
+TMS_TRANSLATE_AVERAGE_INCOME_AMOUNT_FORM_2 = {
     "DƯỚI 10 TRIỆU": "Dưới 10 triệu/<10 million",
     "TỪ 10 ĐẾN DƯỚI 30 TRIỆU": "10 triệu đến dưới 30 triệu/10 - <30 million",
     "TỪ 30 ĐẾN DƯỚI 70 TRIỆU": "30 triệu đến dưới 70 triệu/30 - <70 million",
