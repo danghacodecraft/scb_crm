@@ -777,7 +777,8 @@ class CtrIdentityDocument(BaseController):
         )
 
         (
-            saving_transaction_stage_status, saving_transaction_stage, saving_transaction_daily,
+            saving_transaction_stage_status, saving_transaction_stage, saving_transaction_stage_phase,
+            saving_transaction_stage_lane, saving_transaction_stage_role, saving_transaction_daily,
             saving_transaction_sender
         ) = transaction_datas
 
@@ -815,6 +816,9 @@ class CtrIdentityDocument(BaseController):
                 saving_customer_identity_images=saving_customer_identity_images,
                 saving_transaction_stage_status=saving_transaction_stage_status,
                 saving_transaction_stage=saving_transaction_stage,
+                saving_transaction_stage_phase=saving_transaction_stage_phase,
+                saving_transaction_stage_lane=saving_transaction_stage_lane,
+                saving_transaction_stage_role=saving_transaction_stage_role,
                 saving_transaction_daily=saving_transaction_daily,
                 saving_transaction_sender=saving_transaction_sender,
                 # saving_transaction_receiver=saving_transaction_receiver,
