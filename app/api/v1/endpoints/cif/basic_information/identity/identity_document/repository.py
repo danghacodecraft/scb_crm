@@ -450,21 +450,6 @@ async def repos_save_identity(
             updated_at=now()
         ))
 
-        # create log
-        session.add_all([
-            # Tạo BOOKING, CRM_TRANSACTION_DAILY -> CRM_BOOKING -> BOOKING_CUSTOMER -> BOOKING_BUSINESS_FORM
-            TransactionStageStatus(**saving_transaction_stage_status),
-            TransactionStage(**saving_transaction_stage),
-            TransactionStageLane(**saving_transaction_stage_lane),
-            TransactionStagePhase(**saving_transaction_stage_phase),
-            TransactionStageRole(**saving_transaction_stage_role),
-            TransactionDaily(**saving_transaction_daily),
-            TransactionSender(**saving_transaction_sender)
-            # TransactionReceiver(**saving_transaction_receiver),
-            # Hiện tại Tab khuôn mặt không có chức năng lưu
-            # vì api GTDD đã upload khuôn mặt nên Tab này coi như hoàn thành
-        ])
-
     # Update
     else:
         # Cập nhật 1 cif_number đã tồn tại
@@ -602,6 +587,21 @@ async def repos_save_identity(
             maker_id=current_user.code,
             maker_at=now()
         ))
+    ])
+
+    # create log
+    session.add_all([
+        # Tạo BOOKING, CRM_TRANSACTION_DAILY -> CRM_BOOKING -> BOOKING_CUSTOMER -> BOOKING_BUSINESS_FORM
+        TransactionStageStatus(**saving_transaction_stage_status),
+        TransactionStage(**saving_transaction_stage),
+        TransactionStageLane(**saving_transaction_stage_lane),
+        TransactionStagePhase(**saving_transaction_stage_phase),
+        TransactionStageRole(**saving_transaction_stage_role),
+        TransactionDaily(**saving_transaction_daily),
+        TransactionSender(**saving_transaction_sender)
+        # TransactionReceiver(**saving_transaction_receiver),
+        # Hiện tại Tab khuôn mặt không có chức năng lưu
+        # vì api GTDD đã upload khuôn mặt nên Tab này coi như hoàn thành
     ])
 
     # update booking
