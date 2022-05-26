@@ -1,6 +1,3 @@
-from datetime import datetime
-from typing import Optional
-
 from pydantic import Field
 
 from app.api.base.schema import BaseSchema
@@ -22,28 +19,3 @@ class NewsCommentResponse(BaseSchema):
 
 class NewsCommentRequest(BaseSchema):
     content: str = Field(..., description='Nội dung comment')
-
-
-class CommentResponse(BaseSchema):
-    id: str = Field(..., description="ID comment")
-    booking_id: str = Field(..., description="Booking ID")
-    username: str = Field(..., description="Username người comment")
-    name: str = Field(..., description="Tên người comment")
-    code: str = Field(..., description="Mã nhân viên người comment")
-    email: str = Field(..., description="Email người comment")
-    hrm_department_id: Optional[str] = Field(..., description="ID Phòng ban")
-    hrm_department_code: Optional[str] = Field(..., description="Mã Phòng ban")
-    hrm_department_name: Optional[str] = Field(..., description="Tên Phòng ban")
-    hrm_branch_id: Optional[str] = Field(..., description="ID Chi nhánh/Hội sở người tạo comment")
-    hrm_branch_code: Optional[str] = Field(..., description="Mã Chi nhánh/Hội sở")
-    hrm_branch_name: Optional[str] = Field(..., description="Tên Chi nhánh/Hội sở")
-    hrm_title_id: str = Field(..., description="ID Chức danh")
-    hrm_title_code: str = Field(..., description="Mã Chức danh")
-    hrm_title_name: str = Field(..., description="Tên Chức danh")
-    hrm_position_id: Optional[str] = Field(..., description="ID Chức vụ")
-    hrm_position_code: Optional[str] = Field(..., description="Mã Chức vụ")
-    hrm_position_name: Optional[str] = Field(..., description="Tên Chức vụ")
-    content: str = Field(..., description="Nội dung comment")
-    created_at: Optional[datetime] = Field(..., description="Ngày tạo")
-    updated_at: Optional[datetime] = Field(..., description="Ngày cập nhập")
-    file_uuid: Optional[str] = Field(..., description="URL file đính kèm")
