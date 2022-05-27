@@ -11,7 +11,7 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.example import (
 from app.api.v1.endpoints.third_parties.gw.schema import (
     GWBranchDropdownResponse, GWCIFInfoResponse
 )
-from app.api.v1.schemas.utils import DropdownResponse
+from app.api.v1.schemas.utils import DropdownResponse, OptionalDropdownResponse
 
 
 class CasaAccountByCIFNumberResponse(BaseGWSchema):
@@ -98,6 +98,8 @@ class GWAccountInfoResponse(BaseGWSchema):
     service_escrow_ex_date: Optional[date] = Field(..., description="Ngày đáo hạn ký quỹ")
     lock_info: List[GWCasaAccountLockInfo] = Field(..., description="Thông tin tài khoản")
     branch_info: GWBranchDropdownResponse = Field(..., description="Thông tin đơn vị")
+    staff_info_direct: OptionalDropdownResponse = Field(..., description="Thông tin nhân viên trực tiếp")
+    staff_info_indirect: OptionalDropdownResponse = Field(..., description="Thông tin nhân viên không trực tiếp")
 
 
 class GWCasaAccountResponse(BaseGWSchema):
