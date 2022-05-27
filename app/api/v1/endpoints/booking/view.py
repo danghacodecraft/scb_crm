@@ -30,7 +30,8 @@ async def view_create_booking(
         current_user=Depends(get_current_user_from_header())
 ):
     create_booking_data = await CtrBooking(current_user).ctr_create_booking(
-        business_type_code=request.business_type_code
+        business_type_code=request.business_type_code,
+        booking_code_flag=True
     )
     return ResponseData[CreateBookingResponse](**create_booking_data)
 

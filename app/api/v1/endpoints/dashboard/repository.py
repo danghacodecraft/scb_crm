@@ -16,13 +16,14 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingCustomer, TransactionDaily
+    Booking, BookingCustomer, TransactionDaily, TransactionSender
 )
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
 )
 from app.third_parties.oracle.models.master_data.others import (
-    Branch, BusinessType, TransactionStage, TransactionStageStatus
+    Branch, BusinessType, TransactionStage, TransactionStageRole,
+    TransactionStageStatus
 )
 from app.utils.constant.cif import CONTACT_ADDRESS_CODE
 from app.utils.constant.dwh import NAME_ACCOUNTING_ENTRY
@@ -86,28 +87,23 @@ async def repos_get_transaction_list(region_id: Optional[str], branch_id: Option
                                      search_box: Optional[str], from_date: Optional[date], to_date: Optional[date],
                                      limit: int, page: int, session: Session):
     sql = select(
-        Customer.full_name_vn,
-        Customer.id.label('cif_id'),
-        Customer.cif_number,
-        Booking.code.label('booking_code'),
-        TransactionStageStatus.name.label('status'),
-        BusinessType.name.label('business_type'),
-        Branch.code.label('branch_code'),
-        Branch.name.label('branch_name'),
-
-
+        Booking,
+        BusinessType,
+        Branch,
+        Customer,
+        TransactionStageStatus.name.label('status')
     ) \
-        .join(BookingCustomer, Customer.id == BookingCustomer.customer_id) \
-        .join(Booking, BookingCustomer.booking_id == Booking.id) \
         .join(BusinessType, Booking.business_type_id == BusinessType.id) \
         .join(Branch, Booking.branch_id == Branch.id) \
-        .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
-        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
-        .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
-        .join(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
+        .join(BookingCustomer, Booking.id == BookingCustomer.booking_id) \
+        .join(Customer, BookingCustomer.customer_id == Customer.id) \
+        .outerjoin(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
+        .outerjoin(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
+        .outerjoin(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
+        .outerjoin(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
         .limit(limit) \
         .offset(limit * (page - 1)) \
-        .order_by(desc(Customer.open_cif_at))
+        .order_by(desc(Booking.created_at))
 
     if region_id:
         sql = sql.filter(Branch.region_id == region_id)
@@ -144,6 +140,27 @@ async def repos_get_transaction_list(region_id: Optional[str], branch_id: Option
 
     transaction_list = session.execute(sql).all()
     return ReposReturn(data=transaction_list)
+
+
+async def repos_get_senders(
+        booking_ids: tuple,
+        session: Session
+):
+    senders = session.execute(
+        select(
+            Booking,
+            TransactionDaily,
+            TransactionStage,
+            TransactionStageRole,
+            TransactionSender
+        )
+        .outerjoin(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
+        .outerjoin(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id)
+        .outerjoin(TransactionStageRole, TransactionStage.id == TransactionStageRole.transaction_stage_id)
+        .outerjoin(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
+        .filter(Booking.id.in_(booking_ids))
+    ).all()
+    return ReposReturn(data=senders)
 
 
 async def repos_get_total_item(
@@ -215,7 +232,7 @@ async def repos_get_customer(
         .outerjoin(AddressCountry, CustomerAddress.address_country_id == AddressCountry.id) \
         .outerjoin(Branch, Customer.open_branch_id == Branch.id)
 
-    customers = customers.filter(Customer.complete_flag == True) # noqa
+    customers = customers.filter(Customer.complete_flag == True)  # noqa
     if cif_number:
         customers = customers.filter(Customer.cif_number.ilike(f'%{cif_number}%'))
     if identity_number:
