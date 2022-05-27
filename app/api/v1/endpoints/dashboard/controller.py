@@ -107,36 +107,38 @@ class CtrDashboard(BaseController):
                 )
             })
 
-        senders = self.call_repos(await repos_get_senders(booking_ids=tuple(booking_ids), session=self.oracle_session))
-        for booking, _, stage, stage_role, sender in senders:
-            if stage_role and stage_role.code in CIF_STAGE_ROLE_CODES and booking.id in booking_ids:
-                if stage_role.code == CIF_STAGE_ROLE_CODE_TELLER:
-                    mapping_datas[booking.id].update(
-                        teller=dict(
-                            name=sender.user_fullname,
-                            created_at=sender.created_at
-                        ),
-                        stage_role=stage_role.code,
-                        status=TRANSACTION_STATUS_LIST[TRANSACTION_STATUS_CODE_INIT]
-                    )
-                elif stage_role.code == CIF_STAGE_ROLE_CODE_SUPERVISOR:
-                    mapping_datas[booking.id].update(
-                        supervisor=dict(
-                            name=sender.user_fullname,
-                            created_at=sender.created_at
-                        ),
-                        stage_role=stage_role.code,
-                        status=TRANSACTION_STATUS_LIST[TRANSACTION_STATUS_CODE_APPROVED]
-                    )
-                elif stage_role.code == CIF_STAGE_ROLE_CODE_AUDIT:
-                    mapping_datas[booking.id].update(
-                        teller=dict(
-                            name=sender.user_fullname,
-                            created_at=sender.created_at
-                        ),
-                        audit=stage_role.code,
-                        status=TRANSACTION_STATUS_LIST[TRANSACTION_STATUS_CODE_APPROVED]
-                    )
+        stage_infos = self.call_repos(await repos_get_senders(booking_ids=tuple(booking_ids), session=self.oracle_session))
+        for booking_id in booking_ids:
+            for _, stage, stage_role, sender in stage_infos:
+                if stage_role and stage_role.code in CIF_STAGE_ROLE_CODES:
+                    print(stage_role.code, sender.user_fullname)
+                    if stage_role.code == CIF_STAGE_ROLE_CODE_TELLER:
+                        mapping_datas[booking_id].update(
+                            teller=dict(
+                                name=sender.user_fullname,
+                                created_at=sender.created_at
+                            ),
+                            stage_role=stage_role.code,
+                            status=TRANSACTION_STATUS_LIST[TRANSACTION_STATUS_CODE_INIT]
+                        )
+                    if stage_role.code == CIF_STAGE_ROLE_CODE_SUPERVISOR:
+                        mapping_datas[booking_id].update(
+                            supervisor=dict(
+                                name=sender.user_fullname,
+                                created_at=sender.created_at
+                            ),
+                            stage_role=stage_role.code,
+                            status=TRANSACTION_STATUS_LIST[TRANSACTION_STATUS_CODE_APPROVED]
+                        )
+                    if stage_role.code == CIF_STAGE_ROLE_CODE_AUDIT:
+                        mapping_datas[booking_id].update(
+                            audit=dict(
+                                name=sender.user_fullname,
+                                created_at=sender.created_at
+                            ),
+                            stage_role=stage_role.code,
+                            status=TRANSACTION_STATUS_LIST[TRANSACTION_STATUS_CODE_APPROVED]
+                        )
 
         return self.response_paging(
             data=[mapping_data for _, mapping_data in mapping_datas.items()],
