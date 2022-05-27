@@ -490,7 +490,8 @@ class BaseController:
             position_name=current_user.hrm_position_name,
             title_id=current_user.hrm_title_id,
             title_code=current_user.hrm_title_code,
-            title_name=current_user.hrm_title_name
+            title_name=current_user.hrm_title_name,
+            created_at=now()
         )
 
         # receiver = self.call_repos(await repos_get_next_receiver(

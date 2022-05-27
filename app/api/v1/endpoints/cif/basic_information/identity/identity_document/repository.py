@@ -442,11 +442,6 @@ async def repos_save_identity(
                 business_type_code=BUSINESS_TYPE_CODE_CIF,
                 session=session
             )
-        # update booking
-        session.execute(update(Booking).filter(Booking.id == booking_id).values(
-            code=booking_code,
-            transaction_id=saving_transaction_daily.get('transaction_id')
-        ))
         session.execute(update(BookingBusinessForm).filter(BookingBusinessForm.booking_id == booking_id).values(
             # business_form_id=BUSINESS_FORM_TTCN_GTDD_GTDD,
             save_flag=True,  # Save_flag đổi lại thành True do Business Form giờ là những Tab nhỏ nhiều cấp
@@ -454,21 +449,6 @@ async def repos_save_identity(
             log_data=history_datas,
             updated_at=now()
         ))
-
-        # create log
-        session.add_all([
-            # Tạo BOOKING, CRM_TRANSACTION_DAILY -> CRM_BOOKING -> BOOKING_CUSTOMER -> BOOKING_BUSINESS_FORM
-            TransactionStageStatus(**saving_transaction_stage_status),
-            TransactionStage(**saving_transaction_stage),
-            TransactionStageLane(**saving_transaction_stage_lane),
-            TransactionStagePhase(**saving_transaction_stage_phase),
-            TransactionStageRole(**saving_transaction_stage_role),
-            TransactionDaily(**saving_transaction_daily),
-            TransactionSender(**saving_transaction_sender)
-            # TransactionReceiver(**saving_transaction_receiver),
-            # Hiện tại Tab khuôn mặt không có chức năng lưu
-            # vì api GTDD đã upload khuôn mặt nên Tab này coi như hoàn thành
-        ])
 
     # Update
     else:
@@ -608,6 +588,27 @@ async def repos_save_identity(
             maker_at=now()
         ))
     ])
+
+    # create log
+    session.add_all([
+        # Tạo BOOKING, CRM_TRANSACTION_DAILY -> CRM_BOOKING -> BOOKING_CUSTOMER -> BOOKING_BUSINESS_FORM
+        TransactionStageStatus(**saving_transaction_stage_status),
+        TransactionStage(**saving_transaction_stage),
+        TransactionStageLane(**saving_transaction_stage_lane),
+        TransactionStagePhase(**saving_transaction_stage_phase),
+        TransactionStageRole(**saving_transaction_stage_role),
+        TransactionDaily(**saving_transaction_daily),
+        TransactionSender(**saving_transaction_sender)
+        # TransactionReceiver(**saving_transaction_receiver),
+        # Hiện tại Tab khuôn mặt không có chức năng lưu
+        # vì api GTDD đã upload khuôn mặt nên Tab này coi như hoàn thành
+    ])
+
+    # update booking
+    session.execute(update(Booking).filter(Booking.id == booking_id).values(
+        code=booking_code,
+        transaction_id=saving_transaction_daily['transaction_id']
+    ))
 
     return ReposReturn(data=dict(
         cif_id=customer_id,
