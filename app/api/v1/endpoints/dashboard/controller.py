@@ -78,6 +78,7 @@ class CtrDashboard(BaseController):
 
             mapping_datas.update({
                 booking_id: dict(
+                    created_at=booking.created_at,
                     full_name_vn=full_name_vn,
                     cif_id=cif_id,
                     cif_number=cif_number,
