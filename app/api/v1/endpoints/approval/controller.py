@@ -960,6 +960,7 @@ class CtrApproval(BaseController):
 
         saving_transaction_stage_role = dict(
             id=saving_transaction_stage_role_id,
+            transaction_stage_id=saving_transaction_stage_id,
             code=current_stage_role_code,
             name=current_stage_role_name,
             created_at=now(),
