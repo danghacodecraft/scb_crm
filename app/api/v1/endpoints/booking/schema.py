@@ -27,6 +27,7 @@ class NewsCommentRequest(BaseSchema):
 class CommentResponse(BaseSchema):
     id: str = Field(..., description="ID comment")
     booking_id: str = Field(..., description="Booking ID")
+    avatar_url: str = Field(..., description="URL ảnh đại diện")
     username: str = Field(..., description="Username người comment")
     name: str = Field(..., description="Tên người comment")
     code: str = Field(..., description="Mã nhân viên người comment")
