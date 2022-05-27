@@ -109,6 +109,9 @@ class CtrGWCasaAccount(BaseController):
                     name=value
                 ))
 
+        staff_info_direct = account_info['staff_info_direct']
+        staff_info_indirect = account_info['staff_info_indirect']
+
         gw_casa_account_info_response = dict(
             number=account_info['account_num'],
             type=account_info['account_type'],
@@ -152,6 +155,14 @@ class CtrGWCasaAccount(BaseController):
             branch_info=dict(
                 code=branch_info['branch_code'],
                 name=branch_info['branch_name']
+            ),
+            staff_info_direct=dict(
+                code=staff_info_direct['staff_code'],
+                name=staff_info_direct['staff_name']
+            ),
+            staff_info_indirect=dict(
+                code=staff_info_indirect['staff_code'],
+                name=staff_info_indirect['staff_name']
             )
         )
 
