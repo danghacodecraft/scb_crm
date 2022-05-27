@@ -4,6 +4,7 @@ from app.api.v1.endpoints.booking.repository import (
 )
 from app.api.v1.endpoints.booking.schema import NewsCommentRequest
 from app.third_parties.oracle.models.cif.form.model import Booking
+from app.third_parties.services.idm import ServiceIDM
 from app.utils.functions import generate_uuid, now
 
 
@@ -17,6 +18,7 @@ class CtrNewsComment(BaseController):
         data_insert = {
             "booking_id": booking_id,
             "username": current_user.username,
+            "avatar_url": ServiceIDM().replace_with_cdn(current_user.avatar_url),
             "name": current_user.name,
             "code": current_user.code,
             "email": current_user.email,

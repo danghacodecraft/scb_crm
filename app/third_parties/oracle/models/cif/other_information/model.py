@@ -40,6 +40,8 @@ class Comment(Base):
                   comment='Mã nhân viên người tạo comment')
     email = Column(VARCHAR(255), nullable=False,
                    comment='Email người tạo comment')
+    avatar_url = Column(VARCHAR(250), nullable=False,
+                        comment='URL ảnh đại diện')
     hrm_department_id = Column(VARCHAR(36), nullable=True,
                                comment='ID Phòng ban người tạo comment')
     hrm_department_code = Column(VARCHAR(10), nullable=True,
