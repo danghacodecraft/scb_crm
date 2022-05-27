@@ -9,8 +9,8 @@ from app.api.v1.endpoints.approval.common_repository import (
 from app.api.v1.endpoints.approval.repository import (
     repos_approval_get_face_authentication, repos_approve,
     repos_get_approval_identity_faces, repos_get_approval_identity_images,
-    repos_get_approval_process, repos_get_compare_image_transactions,
-    repos_get_list_audit, repos_get_business_jobs
+    repos_get_approval_process, repos_get_business_jobs,
+    repos_get_compare_image_transactions, repos_get_list_audit
 )
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
@@ -21,8 +21,8 @@ from app.third_parties.oracle.models.master_data.identity import (
 )
 from app.third_parties.oracle.models.master_data.others import BusinessJob
 from app.utils.constant.approval import (
-    CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_BEGIN,
-    CIF_STAGE_COMPLETED, CIF_STAGE_INIT, BUSINESS_JOB_CODES
+    BUSINESS_JOB_CODES, CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV,
+    CIF_STAGE_BEGIN, CIF_STAGE_COMPLETED, CIF_STAGE_INIT
 )
 from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import (
@@ -937,31 +937,41 @@ class CtrApproval(BaseController):
         saving_transaction_stage_status = dict(
             id=saving_transaction_stage_status_id,
             code=current_stage_status_code,
-            name=current_stage_status_name
+            name=current_stage_status_name,
+            created_at=now(),
+            updated_at=now()
         )
 
         saving_transaction_stage_lane = dict(
             id=saving_transaction_stage_lane_id,
             code=current_lane_code,
-            name=current_lane_name
+            name=current_lane_name,
+            created_at=now(),
+            updated_at=now()
         )
 
         saving_transaction_stage_phase = dict(
             id=saving_transaction_stage_phase_id,
             code=current_phase_code,
-            name=current_phase_name
+            name=current_phase_name,
+            created_at=now(),
+            updated_at=now()
         )
 
         saving_transaction_stage_role = dict(
             id=saving_transaction_stage_role_id,
             code=current_stage_role_code,
-            name=current_stage_role_name
+            name=current_stage_role_name,
+            created_at=now(),
+            updated_at=now()
         )
 
         saving_transaction_stage_action = dict(
             id=transaction_stage_action_id,
             code=current_stage_action_code,
-            name=current_stage_action_name
+            name=current_stage_action_name,
+            created_at=now(),
+            updated_at=now()
         )
 
         saving_transaction_stage = dict(
@@ -974,7 +984,9 @@ class CtrApproval(BaseController):
             transaction_stage_phase_code=current_stage_code,
             transaction_stage_phase_name=current_stage_name,
             is_reject=reject_flag,
-            action_id=transaction_stage_action_id
+            action_id=transaction_stage_action_id,
+            created_at=now(),
+            updated_at=now()
         )
 
         description = await self.get_description(
@@ -1014,7 +1026,9 @@ class CtrApproval(BaseController):
             position_name=current_user.hrm_position_name,
             title_id=current_user.hrm_title_id,
             title_code=current_user.hrm_title_code,
-            title_name=current_user.hrm_title_name
+            title_name=current_user.hrm_title_name,
+            created_at=now(),
+            updated_at=now()
         )
 
         # receiver_branch = None
