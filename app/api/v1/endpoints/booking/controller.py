@@ -58,6 +58,7 @@ class CtrNewsComment(BaseController):
         return self.response(data=[dict(
             id=cmt_item.id,
             booking_id=cmt_item.booking_id,
+            avatar_url=cmt_item.avatar_url,
             username=cmt_item.username,
             name=cmt_item.name,
             code=cmt_item.code,
