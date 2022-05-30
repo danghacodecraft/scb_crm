@@ -24,7 +24,7 @@ router = APIRouter()
     )
 )
 async def view_file_upload(
-        BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         file: UploadFile = File(..., description='File cần upload'),
         ekyc_flag: bool = File(False, description='`true` is call ekyc'),
         current_user=Depends(get_current_user_from_header()),  # noqa

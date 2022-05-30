@@ -68,7 +68,7 @@ async def view_retrieve_fingerprint(
 async def view_add_fingerprint(
     file: UploadFile = File(..., description='file'),
     ids_finger: List[int] = Form(None, description="Truyền id_ekyc để so sánh với file upload"),
-    BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
+    BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
     cif_id: str = Path(...),
     current_user=Depends(get_current_user_from_header())
 ):

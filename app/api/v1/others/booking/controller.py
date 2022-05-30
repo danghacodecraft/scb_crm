@@ -4,7 +4,7 @@ from starlette import status
 
 from app.api.base.controller import BaseController
 from app.api.v1.others.booking.repository import (
-    repos_check_exist_booking, repos_create_booking
+    repos_check_exist_booking, repos_create_booking, repos_is_correct_booking
 )
 from app.api.v1.others.permission.controller import PermissionController
 from app.utils.constant.approval import CIF_STAGE_INIT
@@ -14,7 +14,8 @@ from app.utils.constant.idm import (
     IDM_PERMISSION_CODE_OPEN_CIF
 )
 from app.utils.error_messages import (
-    ERROR_BOOKING_ID_NOT_EXIST, ERROR_BUSINESS_TYPE_NOT_EXIST, ERROR_PERMISSION
+    ERROR_BOOKING_ID_NOT_EXIST, ERROR_BUSINESS_TYPE_NOT_EXIST, ERROR_PERMISSION, ERROR_BOOKING_INCORRECT,
+    ERROR_BUSINESS_TYPE_CODE_INCORRECT, ERROR_CIF_ID_NOT_EXIST
 )
 
 
@@ -58,7 +59,14 @@ class CtrBooking(BaseController):
             booking_code=booking_code
         ))
 
-    async def ctr_get_booking(self, booking_id: Optional[str], loc: str, business_type_code: str):
+    async def ctr_get_booking(
+            self,
+            booking_id: Optional[str],
+            loc: str,
+            business_type_code: str,
+            cif_id: Optional[str] = None,
+            check_correct_booking_flag: bool = True,
+    ):
         booking = None
         if booking_id:
             booking = self.call_repos(await repos_check_exist_booking(
@@ -70,6 +78,18 @@ class CtrBooking(BaseController):
             return self.response_exception(msg=ERROR_BOOKING_ID_NOT_EXIST, loc=loc)
 
         if booking.business_type_id != business_type_code:
-            return self.response_exception(msg="Business Type Code is incorrect", loc="booking -> business_type_code")
+            return self.response_exception(msg=ERROR_BUSINESS_TYPE_CODE_INCORRECT, loc="booking -> business_type_code")
+
+        # Kiểm tra booking bước trước đó có giống với booking bước hiện tại không
+        if check_correct_booking_flag:
+            if not cif_id:
+                return self.response_exception(msg=ERROR_CIF_ID_NOT_EXIST, loc=f"cif_id: {cif_id}")
+            is_correct_booking = self.call_repos(await repos_is_correct_booking(
+                booking_id=booking_id,
+                cif_id=cif_id,
+                session=self.oracle_session
+            ))
+            if not is_correct_booking:
+                return self.response_exception(msg=ERROR_BOOKING_INCORRECT, loc="header -> booking_id")
 
         return self.response(data=booking)
