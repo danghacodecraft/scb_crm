@@ -26,7 +26,7 @@ router = APIRouter()
 async def view_compare_signature(
         signature_img: UploadFile = File(..., description="Hình ảnh chữ ký"),
         cif_id: str = Path(..., description="cif_id"),
-        BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         current_user=Depends(get_current_user_from_header())
 ):
     signature = await CtrSignature(current_user).ctr_compare_signature(
