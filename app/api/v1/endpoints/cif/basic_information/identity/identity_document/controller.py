@@ -183,6 +183,7 @@ class CtrIdentityDocument(BaseController):
         await CtrBooking().ctr_get_booking(
             business_type_code=BUSINESS_TYPE_INIT_CIF,
             booking_id=booking_id,
+            check_correct_booking_flag=False,
             loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
         )
 
@@ -839,6 +840,7 @@ class CtrIdentityDocument(BaseController):
         await CtrBooking().ctr_get_booking(
             business_type_code=BUSINESS_TYPE_INIT_CIF,
             booking_id=booking_id,
+            check_correct_booking_flag=False,
             loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
         )
 

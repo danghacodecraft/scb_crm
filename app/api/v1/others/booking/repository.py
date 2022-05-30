@@ -144,3 +144,21 @@ async def repos_check_exist_booking(
     ).scalar()
 
     return ReposReturn(data=booking)
+
+
+async def repos_is_correct_booking(
+        booking_id: str,
+        cif_id: str,
+        session: Session
+):
+    booking_customer = session.execute(
+        select(
+            BookingCustomer
+        )
+        .filter(and_(
+            BookingCustomer.customer_id == cif_id,
+            BookingCustomer.booking_id == booking_id
+        ))
+    ).scalar()
+
+    return True if booking_customer else None

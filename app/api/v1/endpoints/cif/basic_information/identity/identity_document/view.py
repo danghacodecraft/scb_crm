@@ -114,7 +114,7 @@ router_special = APIRouter()
 )
 async def view_save(
         request: Request,
-        BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         identity_document_request: Union[PassportSaveRequest, IdentityCardSaveRequest, CitizenCardSaveRequest] = Body(
             ...,
             examples=save_identity_examples
@@ -159,7 +159,7 @@ async def view_upload_identity_document_image(
             ..., description=f"Loại giấy tờ định danh: {make_description_from_dict(EKYC_IDENTITY_TYPE)}"
         ),
         image_file: UploadFile = File(..., description='File hình ảnh giấy tờ định danh'),
-        BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"), # noqa
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"), # noqa
         current_user=Depends(get_current_user_from_header())
 ):
     upload_info = await CtrIdentityDocument(current_user).upload_identity_document_and_ocr(
@@ -195,7 +195,7 @@ async def view_compare_face(
         identity_image_uuid: str = File(...,
                                         description='ID hình ảnh giấy tờ định danh có được sau khi gọi API '
                                         '`Upload ảnh giấy tờ tùy thân + Lấy thông tin OCR của giấy tờ tùy thân`'),
-        BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         current_user=Depends(get_current_user_from_header())
 ):
     face_compare_info = await CtrIdentityDocument(current_user).compare_face(
@@ -218,7 +218,7 @@ async def view_compare_face(
 )
 async def validate_ekyc(
         ocr_ekyc_request: OcrEkycRequest,
-        BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         current_user=Depends(get_current_user_from_header())
 ):
     data = await CtrIdentityDocument(current_user).validate_ekyc(

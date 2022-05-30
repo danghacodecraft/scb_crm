@@ -21,7 +21,7 @@ router = APIRouter()
     )
 )
 async def view_upload_face(
-        BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         request: ApprovalFaceRequest = Depends(ApprovalFaceRequest.get_upload_request),
 ):
     cif_id, image_file, amount, current_user = request
