@@ -51,6 +51,10 @@ class ServiceGW:
         await self.session.close()
         self.session = None
 
+    ####################################################################################################################
+    # START --- CASA
+    ####################################################################################################################
+
     async def get_casa_account_from_cif(self, current_user: UserInfoResponse, casa_cif_number: str):
         data_input = {
             "transaction_info": {
@@ -245,6 +249,65 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
+    async def get_report_casa_account(
+            self,
+            current_user: UserInfoResponse,
+            account_number: str,
+            transaction_name: str,
+    ):
+        """
+        Lấy thông tin biểu đồ hình tròn
+        """
+        data_input = {
+            "transaction_info": {
+                "transaction_name": transaction_name,
+                "transaction_value": {
+                    "P_ACC": account_number
+                }
+            }
+        }
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="selectReportCaSaFromAcc_in", data_input=data_input
+        )
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_REPORT_CASA_ACCOUNT}"
+
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW][Report] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data
+                else:
+                    return_data = await response.json()
+                    return True, return_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data
+
+    ####################################################################################################################
+    # END --- CASA
+    ####################################################################################################################
+
+    ####################################################################################################################
+    # START --- DEPOSIT TD
+    ####################################################################################################################
     async def get_report_statement_td_account(
             self,
             current_user: UserInfoResponse,
@@ -298,28 +361,30 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
-    async def get_report_casa_account(
+    async def select_report_td_from_cif_data_input(
             self,
             current_user: UserInfoResponse,
-            account_number: str,
             transaction_name: str,
+            endpoint: str,
+            account_number: str,
+            from_date: Optional[date],
+            to_date: Optional[date]
     ):
-        """
-        Lấy thông tin biểu đồ hình tròn
-        """
         data_input = {
             "transaction_info": {
                 "transaction_name": transaction_name,
                 "transaction_value": {
-                    "P_ACC": account_number
+                    "P_ACC": account_number,
+                    "P_FDATE": date_to_string(from_date),
+                    "P_TDATE": date_to_string(to_date)
                 }
             }
         }
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="selectReportCaSaFromAcc_in", data_input=data_input
+            current_user=current_user, function_name="selectReportTDFromCif_in", data_input=data_input
         )
 
-        api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_REPORT_CASA_ACCOUNT}"
+        api_url = f"{self.url}{endpoint}"
 
         return_errors = dict(
             loc="SERVICE GW",
@@ -334,7 +399,7 @@ class ServiceGW:
 
         try:
             async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW][Report] {response.status} {api_url}")
+                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
                 if response.status != status.HTTP_200_OK:
                     if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
                         return_error = await response.json()
@@ -437,6 +502,14 @@ class ServiceGW:
         except aiohttp.ClientConnectorError as ex:
             logger.error(str(ex))
             return False, return_data
+
+    ####################################################################################################################
+    # END --- DEPOSIT TD
+    ####################################################################################################################
+
+    ####################################################################################################################
+    # START --- CUSTOMER
+    ####################################################################################################################
 
     async def get_customer_info_list(
             self,
@@ -624,6 +697,13 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
+    ####################################################################################################################
+    # END --- CUSTOMER
+    ####################################################################################################################
+
+    ####################################################################################################################
+    # START --- EMPLOYEE
+    ####################################################################################################################
     async def get_employee_info_from_code(self, current_user: UserInfoResponse, employee_code):
         data_input = {
             "transaction_info": {
@@ -1124,60 +1204,13 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
-    async def select_report_td_from_cif_data_input(
-            self,
-            current_user: UserInfoResponse,
-            transaction_name: str,
-            endpoint: str,
-            account_number: str,
-            from_date: Optional[date],
-            to_date: Optional[date]
-    ):
-        data_input = {
-            "transaction_info": {
-                "transaction_name": transaction_name,
-                "transaction_value": {
-                    "P_ACC": account_number,
-                    "P_FDATE": date_to_string(from_date),
-                    "P_TDATE": date_to_string(to_date)
-                }
-            }
-        }
-        request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="selectReportTDFromCif_in", data_input=data_input
-        )
+    ####################################################################################################################
+    # END --- EMPLOYEE
+    ####################################################################################################################
 
-        api_url = f"{self.url}{endpoint}"
-
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
-        )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
-
+    ####################################################################################################################
+    # START --- CATEGORY
+    ####################################################################################################################
     async def get_select_category(self, current_user: UserInfoResponse, transaction_name: str, transaction_value: str):
         data_input = {
             "transaction_info": {
@@ -1221,6 +1254,13 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
+    ####################################################################################################################
+    # END --- CATEGORY
+    ####################################################################################################################
+
+    ####################################################################################################################
+    # START --- CIF
+    ####################################################################################################################
     async def open_cif(
         self,
         cif_id: str,
@@ -1267,6 +1307,13 @@ class ServiceGW:
             logger.error(str(ex))
             return False, {'message': str(ex)}
 
+    ####################################################################################################################
+    # END --- CIF
+    ####################################################################################################################
+
+    ####################################################################################################################
+    # START --- UTILS
+    ####################################################################################################################
     @staticmethod
     def gw_create_request_body(current_user: UserInfoResponse, data_input: dict,
                                function_name: str):
@@ -1285,3 +1332,6 @@ class ServiceGW:
                 "data_input": data_input
             }
         }
+    ####################################################################################################################
+    # END --- UTILS
+    ####################################################################################################################
