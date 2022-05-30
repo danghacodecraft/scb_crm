@@ -9,9 +9,7 @@ from app.api.v1.endpoints.dashboard.repository import (
 from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import (
     CIF_STAGE_ROLE_CODE_AUDIT, CIF_STAGE_ROLE_CODE_SUPERVISOR,
-    CIF_STAGE_ROLE_CODE_TELLER, CIF_STAGE_ROLE_CODES,
-    TRANSACTION_STATUS_CODE_APPROVED, TRANSACTION_STATUS_CODE_INIT,
-    TRANSACTION_STATUS_LIST, TRANSACTION_STATUS_CODE_WAITING
+    CIF_STAGE_ROLE_CODE_TELLER, CIF_STAGE_ROLE_CODES
 )
 from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
 from app.utils.functions import dropdown
@@ -90,7 +88,7 @@ class CtrDashboard(BaseController):
                     branch_code=branch_code,
                     branch_name=branch_name,
                     stage_role=None,
-                    status=None,
+                    status=status,
                     teller=dict(
                         name=None,
                         created_at=None
@@ -121,7 +119,6 @@ class CtrDashboard(BaseController):
                                 created_at=transaction_daily.created_at
                             ),
                             stage_role=stage_role.code,
-                            status=TRANSACTION_STATUS_LIST[TRANSACTION_STATUS_CODE_INIT]
                         )
                     if stage_role.code == CIF_STAGE_ROLE_CODE_SUPERVISOR:
                         mapping_datas[booking_id].update(
@@ -130,7 +127,6 @@ class CtrDashboard(BaseController):
                                 created_at=transaction_daily.created_at
                             ),
                             stage_role=stage_role.code,
-                            status=TRANSACTION_STATUS_LIST[TRANSACTION_STATUS_CODE_WAITING]
                         )
                     if stage_role.code == CIF_STAGE_ROLE_CODE_AUDIT:
                         mapping_datas[booking_id].update(
@@ -139,7 +135,6 @@ class CtrDashboard(BaseController):
                                 created_at=transaction_daily.created_at
                             ),
                             stage_role=stage_role.code,
-                            status=TRANSACTION_STATUS_LIST[TRANSACTION_STATUS_CODE_APPROVED]
                         )
 
         return self.response_paging(
