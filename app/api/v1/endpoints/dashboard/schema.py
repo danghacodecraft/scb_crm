@@ -18,6 +18,7 @@ class TransactionListSenderResponse(BaseSchema):
 
 
 class TransactionListResponse(BaseSchema):
+    created_at: datetime = Field(..., description="Thời gian tạo")
     cif_id: str = Field(..., description="CIF ID")
     cif_number: Optional[str] = Field(..., description="CIF number")
     full_name_vn: str = Field(..., description="Tên khách hàng")
