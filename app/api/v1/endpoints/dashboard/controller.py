@@ -11,7 +11,7 @@ from app.utils.constant.cif import (
     CIF_STAGE_ROLE_CODE_AUDIT, CIF_STAGE_ROLE_CODE_SUPERVISOR,
     CIF_STAGE_ROLE_CODE_TELLER, CIF_STAGE_ROLE_CODES,
     TRANSACTION_STATUS_CODE_APPROVED, TRANSACTION_STATUS_CODE_INIT,
-    TRANSACTION_STATUS_LIST
+    TRANSACTION_STATUS_LIST, TRANSACTION_STATUS_CODE_WAITING
 )
 from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
 from app.utils.functions import dropdown
@@ -25,7 +25,6 @@ class CtrDashboard(BaseController):
         if self.pagination_params.page:
             current_page = self.pagination_params.page
 
-        # TODO: Không join được Customer
         transaction_list = self.call_repos(await repos_get_transaction_list(
             region_id=region_id,
             branch_id=branch_id,
@@ -107,16 +106,19 @@ class CtrDashboard(BaseController):
                 )
             })
 
-        stage_infos = self.call_repos(await repos_get_senders(booking_ids=tuple(booking_ids), session=self.oracle_session))
+        stage_infos = self.call_repos(await repos_get_senders(
+            booking_ids=tuple(booking_ids),
+            session=self.oracle_session
+        ))
+
         for booking_id in booking_ids:
-            for _, stage, stage_role, sender in stage_infos:
+            for transaction_daily, stage, stage_role, sender in stage_infos:
                 if stage_role and stage_role.code in CIF_STAGE_ROLE_CODES:
-                    print(stage_role.code, sender.user_fullname)
                     if stage_role.code == CIF_STAGE_ROLE_CODE_TELLER:
                         mapping_datas[booking_id].update(
                             teller=dict(
                                 name=sender.user_fullname,
-                                created_at=sender.created_at
+                                created_at=transaction_daily.created_at
                             ),
                             stage_role=stage_role.code,
                             status=TRANSACTION_STATUS_LIST[TRANSACTION_STATUS_CODE_INIT]
@@ -125,16 +127,16 @@ class CtrDashboard(BaseController):
                         mapping_datas[booking_id].update(
                             supervisor=dict(
                                 name=sender.user_fullname,
-                                created_at=sender.created_at
+                                created_at=transaction_daily.created_at
                             ),
                             stage_role=stage_role.code,
-                            status=TRANSACTION_STATUS_LIST[TRANSACTION_STATUS_CODE_APPROVED]
+                            status=TRANSACTION_STATUS_LIST[TRANSACTION_STATUS_CODE_WAITING]
                         )
                     if stage_role.code == CIF_STAGE_ROLE_CODE_AUDIT:
                         mapping_datas[booking_id].update(
                             audit=dict(
                                 name=sender.user_fullname,
-                                created_at=sender.created_at
+                                created_at=transaction_daily.created_at
                             ),
                             stage_role=stage_role.code,
                             status=TRANSACTION_STATUS_LIST[TRANSACTION_STATUS_CODE_APPROVED]

@@ -102,7 +102,6 @@ async def repos_get_transaction_list(region_id: Optional[str], branch_id: Option
         .outerjoin(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
         .outerjoin(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
         .limit(limit) \
-        .offset(limit * (page - 1)) \
         .order_by(desc(Booking.created_at))
 
     if region_id:
@@ -174,9 +173,9 @@ async def repos_get_senders(
             TransactionStageRole,
             TransactionSender
         )
-        .join(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
-        .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id)
-        .join(TransactionStageRole, TransactionStage.id == TransactionStageRole.transaction_stage_id)
+        .outerjoin(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
+        .outerjoin(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id)
+        .outerjoin(TransactionStageRole, TransactionStage.id == TransactionStageRole.transaction_stage_id)
         .filter(TransactionDaily.transaction_id.in_(transaction_daily_ids))
     ).all()
     return ReposReturn(data=stage_infos)
