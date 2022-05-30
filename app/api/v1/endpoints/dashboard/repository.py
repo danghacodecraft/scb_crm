@@ -102,6 +102,7 @@ async def repos_get_transaction_list(region_id: Optional[str], branch_id: Option
         .outerjoin(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
         .outerjoin(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
         .limit(limit) \
+        .offset(limit * (page - 1)) \
         .order_by(desc(Booking.created_at))
 
     if region_id:
