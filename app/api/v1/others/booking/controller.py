@@ -54,7 +54,8 @@ class CtrBooking(BaseController):
         booking_id, booking_code = booking
 
         return self.response(data=dict(
-            booking_id=booking_id
+            booking_id=booking_id,
+            booking_code=booking_code
         ))
 
     async def ctr_get_booking(self, booking_id: Optional[str], loc: str, business_type_code: str):

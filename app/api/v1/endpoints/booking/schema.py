@@ -14,6 +14,7 @@ class CreateBookingRequest(BaseSchema):
 
 class CreateBookingResponse(BaseSchema):
     booking_id: str = Field(..., description="Booking ID")
+    booking_code: str = Field(..., description="Booking Code")
 
 
 class NewsCommentResponse(BaseSchema):

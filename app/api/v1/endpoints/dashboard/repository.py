@@ -146,21 +146,40 @@ async def repos_get_senders(
         booking_ids: tuple,
         session: Session
 ):
-    senders = session.execute(
+    # Lấy tất cả các transaction
+    transaction_root_dailies = session.execute(
         select(
-            Booking,
+            TransactionDaily.transaction_root_id,
+            Booking
+        )
+        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
+        .filter(Booking.id.in_(booking_ids))
+    ).scalars().all()
+
+    if not transaction_root_dailies:
+        return ReposReturn(is_error=True, msg="No Transaction Root Daily")
+
+    transaction_daily_ids = session.execute(
+        select(
+            TransactionDaily.transaction_id
+        )
+        .filter(TransactionDaily.transaction_root_id.in_(transaction_root_dailies))
+    ).scalars().all()
+
+    # TODO: Sender với Daily đang confict cần có giải pháp
+    stage_infos = session.execute(
+        select(
             TransactionDaily,
             TransactionStage,
             TransactionStageRole,
             TransactionSender
         )
-        .outerjoin(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
+        .outerjoin(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
         .outerjoin(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id)
         .outerjoin(TransactionStageRole, TransactionStage.id == TransactionStageRole.transaction_stage_id)
-        .outerjoin(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
-        .filter(Booking.id.in_(booking_ids))
+        .filter(TransactionDaily.transaction_id.in_(transaction_daily_ids))
     ).all()
-    return ReposReturn(data=senders)
+    return ReposReturn(data=stage_infos)
 
 
 async def repos_get_total_item(
