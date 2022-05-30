@@ -188,6 +188,7 @@ class CtrFingerPrint(BaseController):
         await CtrBooking().ctr_get_booking(
             business_type_code=BUSINESS_TYPE_INIT_CIF,
             booking_id=booking_id,
+            cif_id=cif_id,
             loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
         )
 

@@ -43,7 +43,7 @@ async def view_retrieve_fingers(
 async def view_compare_fingerprint(
     finger_img: UploadFile = File(..., description="Hình ảnh vân tay"),
     cif_id: str = Path(..., description="cif_id"),
-    BOOKING_ID: str = Header(None, description="Mã phiên giao dịch"),  # noqa
+    BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
     current_user=Depends(get_current_user_from_header())
 ):
     finger = await CtrFingers(current_user).ctr_compare_fingerprint(
