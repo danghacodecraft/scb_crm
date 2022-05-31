@@ -6,9 +6,6 @@ from app.api.v1.endpoints.dashboard.repository import (
     repos_get_customer, repos_get_senders, repos_get_total_item,
     repos_get_transaction_list, repos_region
 )
-from app.api.v1.endpoints.third_parties.gw.category.repository import (
-    repos_gw_select_category
-)
 from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import (
     CIF_STAGE_ROLE_CODE_AUDIT, CIF_STAGE_ROLE_CODE_SUPERVISOR,
@@ -53,13 +50,8 @@ class CtrDashboard(BaseController):
         mapping_datas = {}
         booking_ids = []
 
-        gw_branch_infos = self.call_repos(await repos_gw_select_category(
-            transaction_name="DM_DONVI", transaction_value="", current_user=self.current_user
-        ))
-        branch_infos = gw_branch_infos["selectCategory_out"]["data_output"]
-
         for transaction in transaction_list:
-            booking, business_type, customer, status = transaction
+            booking, business_type, branch, customer, status = transaction
 
             booking_id = booking.id
             booking_code = booking.code
@@ -67,15 +59,9 @@ class CtrDashboard(BaseController):
 
             business_type_id = business_type.id
             business_type_name = business_type.name
-            booking_branch_id = booking.branch_id
-            branch_code = None
-            branch_name = None
-            for branch_info in branch_infos:
-                if branch_info["BRANCH_CODE"] == booking_branch_id:
-                    branch_code = branch_info["BRANCH_CODE"]
-                    branch_name = branch_info["BRANCH_DESC"]
-                    break
 
+            branch_code = branch.code
+            branch_name = branch.name
             full_name_vn = customer.full_name
             cif_id = customer.id
             cif_number = customer.cif_number

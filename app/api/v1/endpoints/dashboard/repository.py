@@ -89,6 +89,7 @@ async def repos_get_transaction_list(region_id: Optional[str], branch_id: Option
     sql = select(
         Booking,
         BusinessType,
+        Branch,
         Customer,
         TransactionStageStatus.name.label('status')
     ) \
