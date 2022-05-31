@@ -2,11 +2,11 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_get_casa_account_by_cif_number, repos_gw_get_casa_account_info,
     repos_gw_get_column_chart_casa_account_info,
-    repos_gw_get_pie_chart_casa_account_info,
+    repos_gw_get_open_casa_account, repos_gw_get_pie_chart_casa_account_info,
     repos_gw_get_statements_casa_account_info
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
-    GWReportColumnChartHistoryAccountInfoRequest,
+    GWOpenCasaAccountRequest, GWReportColumnChartHistoryAccountInfoRequest,
     GWReportPieChartHistoryAccountInfoRequest,
     GWReportStatementHistoryAccountInfoRequest
 )
@@ -306,6 +306,43 @@ class CtrGWCasaAccount(BaseController):
             currency=account_info['account_currency'],
             balance_available_vnd=balance_available_vnd if balance_available_vnd else None,
             report_casa_account=column_chart))
+
+    async def ctr_gw_get_open_casa(self, request: GWOpenCasaAccountRequest):
+        gw_open_casa_account_info = self.call_repos(await repos_gw_get_open_casa_account(
+            cif_info=request.cif_info,
+            account_info=request.account_info,
+            staff_info_checker=request.staff_info_checker,
+            staff_info_maker=request.staff_info_maker,
+            udf_info=request.udf_info
+        ))
+        report_casa_accounts = \
+            gw_open_casa_account_info['openCASA_out']['data_output']['account_info']['account_num']
+        statements = []
+
+        for report_casa_account in report_casa_accounts:
+            code = report_casa_account['tran_ref_no']
+            transaction_date = report_casa_account['tran_date']
+            description = report_casa_account['tran_description']
+            channel = report_casa_account['tran_channel']
+            transaction_type = report_casa_account['tran_type']
+            credit = report_casa_account['tran_credit']
+            debit = report_casa_account['tran_debit']
+            balance = report_casa_account['tran_balance']
+
+            statements.append(dict(
+                code=code if code else None,
+                transaction_date=string_to_date(
+                    transaction_date, _format=DATETIME_INPUT_OUTPUT_FORMAT
+                ) if transaction_date else None,
+                description=description if description else None,
+                channel=channel if channel else None,
+                transaction_type=transaction_type if transaction_type else None,
+                credit=credit if credit else None,
+                debit=debit if debit else None,
+                balance=balance if balance else None
+            ))
+
+        return self.response(data=statements)
 
     async def ctr_gw_get_statement_casa_account_info(self, request: GWReportStatementHistoryAccountInfoRequest):
         gw_report_statements_casa_account_info = self.call_repos(await repos_gw_get_statements_casa_account_info(
