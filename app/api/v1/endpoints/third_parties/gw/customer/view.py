@@ -1,13 +1,15 @@
 from typing import Union
 
-from fastapi import APIRouter, Body, Depends, Path
+from fastapi import APIRouter, Body, Depends, Header, Path
 from starlette import status
 
 from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.cif.base_field import CustomField
-from app.api.v1.endpoints.cif.payment_account.co_owner.schema import DetailCoOwnerResponse
+from app.api.v1.endpoints.cif.payment_account.co_owner.schema import (
+    DetailCoOwnerResponse
+)
 from app.api.v1.endpoints.cif.schema import GWCustomerDetailRequest
 from app.api.v1.endpoints.third_parties.gw.customer.controller import (
     CtrGWCustomer
@@ -28,8 +30,8 @@ from app.api.v1.endpoints.third_parties.gw.customer.schema import (
     GWCustomerInfoDetailResponse, GWCustomerInfoListResponse, GWOpenCIFResponse
 )
 from app.utils.constant.gw import (
-    GW_REQUEST_PARAMETER_DEBIT_CARD,
-    GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP, GW_REQUEST_PARAMETER_CO_OWNER
+    GW_REQUEST_PARAMETER_CO_OWNER, GW_REQUEST_PARAMETER_DEBIT_CARD,
+    GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP
 )
 
 router = APIRouter()
@@ -171,9 +173,11 @@ async def view_gw_authorized(
 )
 async def view_gw_open_cif(
         cif_id: str = Path(..., description="Cif_id"),
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),
         current_user=Depends(get_current_user_from_header())
 ):
     gw_customer_open_cif = await CtrGWCustomer(current_user).ctr_gw_open_cif(
-        cif_id=cif_id
+        cif_id=cif_id,
+        BOOKING_ID=BOOKING_ID
     )
     return ResponseData[GWOpenCIFResponse](**gw_customer_open_cif)
