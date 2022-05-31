@@ -186,7 +186,7 @@ class GWReportStatementHistoryTDAccountInfoResponse(BaseGWSchema):
 
 
 class GWCIFInfoOpenCasaRequest(BaseGWSchema):
-    cif_num: Optional[str] = CustomField().CIFNumberField
+    cif_num: Optional[str] = CustomField().OptionalCIFNumberField
 
 
 class GWAccountInfoOpenCasaRequest(BaseGWSchema):
@@ -205,8 +205,8 @@ class GWStaffInfoMakerOpenCasaRequest(BaseGWSchema):
 
 
 class GWUdfItemJsonArrayOpenCasaRequest(BaseGWSchema):
-    UDF_NAME: str = Field(..., description="Tên UDF")
-    UDF_VALUE: str = Field(..., description="Giá trị UDF")
+    UDF_NAME: Optional[str] = Field(..., description="Tên UDF")
+    UDF_VALUE: Optional[str] = Field(..., description="Giá trị UDF")
 
 
 class GWUdfInfoOpenCasaRequest(BaseGWSchema):
@@ -218,4 +218,8 @@ class GWOpenCasaAccountRequest(BaseGWSchema):
     account_info: GWAccountInfoOpenCasaRequest = Field(..., description="Thông tin tài khoản")
     staff_info_checker: GWStaffInfoCheckerOpenCasaRequest = Field(..., description="Thông tin nhân viên kiểm tra")
     staff_info_maker: GWStaffInfoMakerOpenCasaRequest = Field(..., description="Thông tin nhân viên tạo tài khoản")
-    udf_info: dict = Field(..., description="Thông tin UDF")
+    udf_info: GWUdfInfoOpenCasaRequest = Field(..., description="Thông tin UDF")
+
+
+class GWOpenCasaAccountResponse(BaseGWSchema):
+    number: str = Field(..., description="Số tài khoản thanh toán")

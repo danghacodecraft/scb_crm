@@ -125,11 +125,13 @@ async def repos_gw_get_open_casa_account(
     account_info: GWAccountInfoOpenCasaRequest,
     staff_info_checker: GWStaffInfoCheckerOpenCasaRequest,
     staff_info_maker: GWStaffInfoMakerOpenCasaRequest,
-    udf_info: GWUdfInfoOpenCasaRequest
+    udf_info: GWUdfInfoOpenCasaRequest,
+    current_user: AuthResponse
 ):
+    current_user = current_user.user_info
     is_success, gw_open_casa_account_info = await service_gw.get_open_casa_account(
         cif_info=cif_info, account_info=account_info, staff_info_checker=staff_info_checker,
-        staff_info_maker=staff_info_maker, udf_info=udf_info
+        staff_info_maker=staff_info_maker, udf_info=udf_info, current_user=current_user
     )
     if not is_success:
         return ReposReturn(

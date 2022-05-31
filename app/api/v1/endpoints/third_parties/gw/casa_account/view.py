@@ -19,7 +19,7 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.example import (
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWCasaAccountByCIFNumberRequest, GWCasaAccountByCIFNumberResponse,
     GWCasaAccountCheckExistRequest, GWCasaAccountCheckExistResponse,
-    GWCasaAccountResponse, GWOpenCasaAccountRequest,
+    GWCasaAccountResponse, GWOpenCasaAccountRequest, GWOpenCasaAccountResponse,
     GWReportColumnChartHistoryAccountInfoRequest,
     GWReportColumnChartHistoryAccountInfoResponse,
     GWReportPieChartHistoryAccountInfoRequest,
@@ -134,6 +134,25 @@ async def view_gw_get_statement_casa_account_info(
 
 
 @router.post(
+    path="/open-casa/",
+    name="[GW] Mở tài khoản thanh toán",
+    description="[GW] Mở tài khoản thanh toán",
+    responses=swagger_response(
+        response_model=ResponseData[GWOpenCasaAccountResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_get_open_casa_account(
+        request: GWOpenCasaAccountRequest = Body(..., description="Thông tin khách hàng"),
+        current_user=Depends(get_current_user_from_header())
+):
+    gw_open_casa_account_info = await CtrGWCasaAccount(current_user).ctr_gw_get_open_casa_account(
+        request=request
+    )
+    return ResponseData[GWOpenCasaAccountResponse](**gw_open_casa_account_info)
+
+
+@router.post(
     path="/{account_number}/",
     name="[GW] Chi tiết tài khoản thanh toán",
     description="[GW] Lấy chi tiết tài Khoản thanh toán theo số tài khoản",
@@ -151,23 +170,3 @@ async def view_gw_get_casa_account_info(
         account_number=account_number
     )
     return ResponseData[GWCasaAccountResponse](**gw_casa_account_info)
-
-
-@router.post(
-    path="/open-casa-account/",
-    name="[GW] Mở tài khoản thanh toán",
-    description="[GW] Mở tài khoản thanh toán",
-    responses=swagger_response(
-        response_model=ResponseData[GWCasaAccountResponse],
-        success_examples=CASA_ACCOUNT_INFO_SUCCESS_EXAMPLE,
-        success_status_code=status.HTTP_200_OK
-    )
-)
-async def view_gw_get_open_casa_account(
-        request: GWOpenCasaAccountRequest = Body(..., description="Thông tin khách hàng"),
-        current_user=Depends(get_current_user_from_header())
-):
-    gw_open_casa_account_info = await CtrGWCasaAccount(current_user).ctr_gw_get_open_casa(
-        request=request
-    )
-    return ResponseData[GWCasaAccountResponse](**gw_open_casa_account_info)
