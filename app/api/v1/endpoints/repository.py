@@ -68,7 +68,7 @@ async def repos_get_model_objects_by_ids(model_ids: List[str], model: Base, loc:
         return ReposReturn(
             is_error=True,
             msg=ERROR_ID_NOT_EXIST,
-            loc=f'{str(model.tablename)}_id' if not loc else loc
+            loc=f'{str(model.__tablename__)}_id' if not loc else loc
         )
 
     return ReposReturn(data=objs)

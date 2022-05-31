@@ -74,6 +74,8 @@ class JointAccountHolder(Base):
                              comment='Số tài khoản hiện tại')
     joint_account_holder_flag = Column(NUMBER(1, 2, True), comment='Cờ đồng sở hữu tài khoản')
     joint_account_holder_no = Column(NUMBER(4, 2, True), comment='Số thứ tự tài khoản người đồng sở hữu')
+    relationship_type_id = Column(ForeignKey('crm_cust_relationship_type.cust_relationship_type_id'), nullable=False,
+                                  comment='Mối quan hệ với khách hàng hiện tại')
 
     casa_account = relationship('CasaAccount')
 

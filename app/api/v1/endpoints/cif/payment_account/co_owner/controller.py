@@ -8,9 +8,16 @@ from app.api.v1.endpoints.cif.payment_account.co_owner.schema import (
     AccountHolderRequest
 )
 from app.api.v1.endpoints.cif.repository import (
-    repos_check_exist_cif, repos_get_booking, repos_validate_cif_number
+    repos_get_booking, repos_validate_cif_number
+)
+from app.api.v1.endpoints.third_parties.gw.customer.controller import (
+    CtrGWCustomer
 )
 from app.settings.event import service_soa
+from app.third_parties.oracle.models.master_data.customer import (
+    CustomerRelationshipType
+)
+from app.utils.error_messages import ERROR_CIF_NUMBER_NOT_EXIST
 from app.utils.functions import generate_uuid
 
 
@@ -23,15 +30,35 @@ class CtrCoOwner(BaseController):
         )
 
         # lấy danh sách cif_number account request
-        for cif_number in co_owner.joint_account_holders:
+        customer_relationship_not_exist_list = []
+        for index, joint_account_holder in enumerate(co_owner.joint_account_holders):
             # check số cif_number có tồn tại trong SOA
-            response = self.call_repos(
-                await repos_check_exist_cif(cif_number=cif_number.cif_number)
+            # response = self.call_repos(
+            #     await repos_check_exist_cif(cif_number=joint_account_holder.cif_number)
+            # )
+            # if not response["is_existed"]:
+            #     return self.response_exception(
+            #         msg="cif_number not exits in SOA", loc="AccountHolderRequest"
+            #     )
+
+            # check số cif_number có tồn tại trong GW
+            cif_number = joint_account_holder.cif_number
+            is_existed = CtrGWCustomer().ctr_gw_check_exist_customer_detail_info(
+                cif_number=cif_number
             )
-            if not response["is_existed"]:
+
+            if not is_existed:
                 return self.response_exception(
-                    msg="cif_number not exits in SOA", loc="AccountHolderRequest"
+                    msg=ERROR_CIF_NUMBER_NOT_EXIST, loc=f"joint_account_holders -> cif_number : {cif_number}"
                 )
+            customer_relationship_not_exist_list.append(joint_account_holder.customer_relationship.id)
+
+        # check exist customer relationship
+        await self.get_model_objects_by_ids(
+            model_ids=customer_relationship_not_exist_list,
+            model=CustomerRelationshipType,
+            loc=f"joint_account_holder -> customer_relationship -> id: {customer_relationship_not_exist_list}"
+        )
 
         # # check cif_number có tồn tại
         # self.call_repos(
@@ -47,6 +74,7 @@ class CtrCoOwner(BaseController):
                 {
                     "id": generate_uuid(),
                     "cif_num": account_holder.cif_number,
+                    "relationship_type_id": account_holder.customer_relationship.id,
                     "casa_account_id": casa_account,
                     "joint_account_holder_flag": co_owner.joint_account_holder_flag,
                     "joint_account_holder_no": 1,
