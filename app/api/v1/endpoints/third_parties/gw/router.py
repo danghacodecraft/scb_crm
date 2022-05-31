@@ -10,6 +10,7 @@ from app.api.v1.endpoints.third_parties.gw.deposit_account import \
     view as views_deposit_account
 from app.api.v1.endpoints.third_parties.gw.employee import \
     view as views_employee
+from app.api.v1.endpoints.third_parties.gw.history import view as views_history
 from app.api.v1.endpoints.third_parties.gw.organization import \
     view as views_organization
 
@@ -32,4 +33,7 @@ router_module.include_router(
 )
 router_module.include_router(
     router=views_category.router, prefix="/category", tags=["[Third-Party][GW][Category]"]
+)
+router_module.include_router(
+    router=views_history.router, prefix="/history", tags=["[Third-Party][GW][History]"]
 )
