@@ -34,7 +34,7 @@ from app.utils.constant.gw import (
     GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP, GW_SELECT,
     GW_UDF_NAME, GW_YES
 )
-from app.utils.error_messages import ERROR_CALL_SERVICE_GW
+from app.utils.error_messages import ERROR_CALL_SERVICE_GW, ERROR_VALIDATE_ONE_FIELD_REQUIRED
 from app.utils.functions import (
     date_string_to_other_date_string_format, date_to_string, now
 )
@@ -52,6 +52,13 @@ class CtrGWCustomer(BaseController):
             full_name: str
     ):
         current_user = self.current_user
+        if {cif_number, identity_number, mobile_number, full_name} == {None}:
+            return self.response_exception(
+                msg=ERROR_VALIDATE_ONE_FIELD_REQUIRED,
+                loc=f"cif_number: {cif_number}, identity_number: {identity_number}, mobile_number: {mobile_number}, "
+                    f"full_name: {full_name}"
+            )
+
         customer_info_list = self.call_repos(await repos_gw_get_customer_info_list(
             cif_number=cif_number,
             identity_number=identity_number,
