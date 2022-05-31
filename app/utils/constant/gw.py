@@ -28,6 +28,7 @@ GW_ENDPOINT_URL_RETRIEVE_ORGANIZATION_INFO = "/organization/v1.0/rest/selectOrgI
 GW_ENDPOINT_URL_RETRIEVE_ORGANIZATION_INFO_FROM_PARENT = "/organization/v1.0/rest/selectOrgInfoFromParent"
 GW_ENDPOINT_URL_RETRIEVE_ORGANIZATION_INFO_FROM_CHILD = "/organization/v1.0/rest/selectOrgInfoFromChild"
 GW_SELECT_CATEGORY = "/category/v1.0/rest/selectCategory"
+GW_HISTORY_CHANGE_FIELD_ACCOUNT = "/history/v1.0/rest/historyChangeFieldAccount"
 
 GW_ENDPOINT_URL_RETRIEVE_CUS_OPEN_CIF = '/customer/v1.0/rest/openCIFAuthorise'
 
@@ -79,6 +80,9 @@ GW_CMND_TYPE_ID = "C"
 
 GW_AUTO = "N"
 GW_SELECT = "Y"
+
+GW_HISTOTY_ACOUNT_NUM = "00576400195"
+GW_HISTOTY_CHANGE_FIELD_ACCOUNT = "TD"
 
 GW_YES = "DONG_Y"
 GW_NO_AGREEMENT_FLAG = "KHONG"
