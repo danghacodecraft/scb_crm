@@ -376,21 +376,21 @@ class CtrApproval(BaseController):
 
         stages = []
 
-        # is_stage_audit = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
-        #     auth_response=auth_response,
-        #     menu_code=IDM_MENU_CODE_OPEN_CIF,
-        #     group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
-        #     permission_code=IDM_PERMISSION_CODE_KSS,
-        #     stage_code=CIF_STAGE_APPROVE_KSS
-        # ))
-        is_stage_supervisor = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
+        is_role_audit = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
+            auth_response=auth_response,
+            menu_code=IDM_MENU_CODE_OPEN_CIF,
+            group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
+            permission_code=IDM_PERMISSION_CODE_KSS,
+            stage_code=CIF_STAGE_APPROVE_KSS
+        ))
+        is_role_supervisor = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
             auth_response=auth_response,
             menu_code=IDM_MENU_CODE_OPEN_CIF,
             group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
             permission_code=IDM_PERMISSION_CODE_KSV,
             stage_code=CIF_STAGE_APPROVE_KSV
         ))
-        is_stage_teller = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
+        is_role_teller = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
             auth_response=auth_response,
             menu_code=IDM_MENU_CODE_OPEN_CIF,
             group_role_code=IDM_GROUP_ROLE_CODE_OPEN_CIF,
@@ -422,7 +422,7 @@ class CtrApproval(BaseController):
             #         msg=ERROR_PERMISSION,
             #         error_status_code=status.HTTP_403_FORBIDDEN
             #     )
-            if is_stage_teller:
+            if is_role_teller:
                 teller_is_disable = False
 
         # Hồ sơ GDV đã gửi
@@ -434,7 +434,7 @@ class CtrApproval(BaseController):
             teller_created_at = previous_transaction_daily.created_at
             teller_created_by = previous_transaction_sender.user_fullname
 
-            if is_stage_supervisor:
+            if is_role_supervisor:
                 # return self.response_exception(
                 #     loc=f"Stage: {previous_stage_code}, "
                 #         f"User: {current_user.username}, "
@@ -506,9 +506,9 @@ class CtrApproval(BaseController):
 
             supervisor_is_reject = previous_transaction_stage_is_reject
 
-            if supervisor_is_reject and is_stage_teller:
+            if supervisor_is_reject and is_role_teller:
                 teller_is_disable = False
-            if not supervisor_is_reject:
+            if not supervisor_is_reject and is_role_audit:
                 audit_is_disable = False
                 is_open_cif = True
 
@@ -552,7 +552,7 @@ class CtrApproval(BaseController):
             teller_created_by = teller_transaction_sender.user_fullname
             dropdown_action_teller = dropdown(teller_transaction_stage_action)
 
-            if is_stage_teller and audit_transaction_stage.is_reject:
+            if is_role_teller and audit_transaction_stage.is_reject:
                 teller_is_disable = False
 
         stage_teller.update(dict(
