@@ -52,6 +52,9 @@ class CtrGWCustomer(BaseController):
             full_name: str
     ):
         current_user = self.current_user
+        if {cif_number, identity_number, mobile_number, full_name} == {None}:
+            return self.response_exception(msg="Field ")
+
         customer_info_list = self.call_repos(await repos_gw_get_customer_info_list(
             cif_number=cif_number,
             identity_number=identity_number,
