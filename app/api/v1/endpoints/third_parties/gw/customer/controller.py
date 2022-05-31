@@ -32,7 +32,7 @@ from app.utils.constant.gw import (
     GW_MARTIAL_STATUS_MARRIED, GW_MARTIAL_STATUS_SINGLE, GW_NO_AGREEMENT_FLAG,
     GW_NO_MARKETING_FLAG, GW_REQUEST_PARAMETER_DEBIT_CARD,
     GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP, GW_SELECT,
-    GW_UDF_NAME, GW_YES
+    GW_UDF_NAME, GW_YES, GW_REQUEST_PARAMETER_CO_OWNER
 )
 from app.utils.error_messages import ERROR_CALL_SERVICE_GW, ERROR_VALIDATE_ONE_FIELD_REQUIRED
 from app.utils.functions import (
@@ -301,6 +301,11 @@ class CtrGWCustomer(BaseController):
             from_format=GW_DATETIME_FORMAT,
             to_format=GW_DATE_FORMAT
         )
+        identity_expired_date = date_string_to_other_date_string_format(
+            date_input=identity_info['id_expired_date'],
+            from_format=GW_DATETIME_FORMAT,
+            to_format=GW_DATE_FORMAT
+        )
         mobile = customer_info['mobile_phone']
         telephone = customer_info['telephone']
         email = customer_info['email']
@@ -345,11 +350,7 @@ class CtrGWCustomer(BaseController):
             identity_information = dict(
                 identity_number=identity_info['id_num'],
                 issued_date=identity_issued_date,
-                expired_date=date_string_to_other_date_string_format(
-                    date_input=identity_info['id_expired_date'],
-                    from_format=GW_DATETIME_FORMAT,
-                    to_format=GW_DATE_FORMAT
-                ),
+                expired_date=identity_expired_date,
                 place_of_issue=dropdown_place_of_issue
             )
 
@@ -382,6 +383,30 @@ class CtrGWCustomer(BaseController):
                 card_delivery_address=dict(
                     branch=dropdown_branch,
                     delivery_address=delivery_address_response
+                )
+            )
+        elif parameter == GW_REQUEST_PARAMETER_CO_OWNER:
+            customer_information = dict(
+                id=cif_number,
+                basic_information=dict(
+                    cif_number=cif_number,
+                    customer_relationship=None,     # TODO: Không tìm ra mối qh KH
+                    full_name_vn=full_name_vn,
+                    date_of_birth=date_of_birth,
+                    gender=dropdown_gender,
+                    nationality=dropdown_nationality,
+                    mobile_number=mobile,
+                    signature=None
+                ),
+                identity_document=dict(
+                    identity_number=identity_info['id_num'],
+                    issued_date=identity_issued_date,
+                    expired_date=identity_expired_date,
+                    place_of_issue=dropdown_place_of_issue
+                ),
+                address_information=dict(
+                    resident_address=resident_address_full,
+                    contact_address=contact_address_full
                 )
             )
         else:
