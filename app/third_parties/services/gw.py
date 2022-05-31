@@ -1298,15 +1298,12 @@ class ServiceGW:
                             status=response.status,
                             errors=return_error['errors']
                         )
-                        print('---0')
                     return False, return_data
                 else:
                     return_data = await response.json()
-                    print('---1')
                     return True, return_data
         except aiohttp.ClientConnectorError as ex:
             logger.error(str(ex))
-            print('---2')
             return False, return_data
 
     ####################################################################################################################
