@@ -62,7 +62,6 @@ class CtrDashboard(BaseController):
 
             branch_code = branch.code
             branch_name = branch.name
-
             full_name_vn = customer.full_name
             cif_id = customer.id
             cif_number = customer.cif_number

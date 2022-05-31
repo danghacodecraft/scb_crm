@@ -9,6 +9,7 @@ GW_ENDPOINT_URL_RETRIEVE_REPORT_HIS_CASA_ACCOUNT = '/report/v1.0/rest/selectRepo
 GW_ENDPOINT_URL_RETRIEVE_REPORT_STATEMENT_CASA_ACCOUNT = '/report/v1.0/rest/selectReportStatementCaSaFromAcc'
 GW_ENDPOINT_URL_RETRIEVE_REPORT_STATEMENT_TD_ACCOUNT = '/report/v1.0/rest/selectReportStatementTDFromAcc'
 GW_ENDPOINT_URL_RETRIEVE_REPORT_CASA_ACCOUNT = '/report/v1.0/rest/selectReportCaSaFromAcc'
+GW_ENDPOINT_URL_RETRIEVE_OPEN_CASA_ACCOUNT = '/currentaccount/v1.0/rest/openCASA'
 GW_ENDPOINT_URL_RETRIEVE_DEPOSIT_ACCOUNT_FROM_CIF = '/depositaccount/v1.0/rest/selectDepositAccountFromCIF'
 GW_ENDPOINT_URL_RETRIEVE_DEPOSIT_ACCOUNT_TD = "/depositaccount/v1.0/rest/retrieveDepositAccountTD"
 GW_ENDPOINT_URL_RETRIEVE_REPORT_TD_FROM_CIF = "/report/v1.0/rest/selectReportTDFromCif"
