@@ -7,6 +7,7 @@ from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.cif.base_field import CustomField
+from app.api.v1.endpoints.cif.payment_account.co_owner.schema import DetailCoOwnerResponse
 from app.api.v1.endpoints.cif.schema import GWCustomerDetailRequest
 from app.api.v1.endpoints.third_parties.gw.customer.controller import (
     CtrGWCustomer
@@ -28,7 +29,7 @@ from app.api.v1.endpoints.third_parties.gw.customer.schema import (
 )
 from app.utils.constant.gw import (
     GW_REQUEST_PARAMETER_DEBIT_CARD,
-    GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP
+    GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP, GW_REQUEST_PARAMETER_CO_OWNER
 )
 
 router = APIRouter()
@@ -86,6 +87,7 @@ async def view_gw_check_exist_casa_account_info(
     responses=swagger_response(
         response_model=Union[
             ResponseData[GWCustomerInfoDetailResponse],
+            ResponseData[DetailCoOwnerResponse],
             ResponseData[GuardianOrCustomerRelationshipByCIFNumberResponse],
             ResponseData[DebitCardByCIFNumberResponse]
         ],
@@ -110,6 +112,9 @@ async def view_gw_get_customer_info_detail(
 
     elif parameter == GW_REQUEST_PARAMETER_DEBIT_CARD:
         return ResponseData[DebitCardByCIFNumberResponse](**gw_customer_info_detail)
+
+    elif parameter == GW_REQUEST_PARAMETER_CO_OWNER:
+        return ResponseData[DetailCoOwnerResponse](**gw_customer_info_detail)
 
     else:
         return ResponseData[GWCustomerInfoDetailResponse](**gw_customer_info_detail)

@@ -9,6 +9,7 @@ from app.api.v1.schemas.utils import DropdownResponse, OptionalDropdownResponse
 from app.utils.constant.gw import (
     GW_REQUEST_PARAMETER, GW_REQUEST_PARAMETER_DEFAULT
 )
+from app.utils.functions import make_description_from_dict
 
 
 class CifInformationResponse(BaseSchema):
@@ -208,4 +209,4 @@ class CustomerByCIFNumberRequest(BaseSchema):
 
 
 class GWCustomerDetailRequest(BaseSchema):
-    parameter: str = Field(GW_REQUEST_PARAMETER_DEFAULT, description=f"""Tham số truyền vào `{GW_REQUEST_PARAMETER}`""")
+    parameter: str = Field(GW_REQUEST_PARAMETER_DEFAULT, description=make_description_from_dict(GW_REQUEST_PARAMETER))

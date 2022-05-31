@@ -8,10 +8,9 @@ from app.api.v1.endpoints.cif.payment_account.co_owner.controller import (
     CtrCoOwner
 )
 from app.api.v1.endpoints.cif.payment_account.co_owner.schema import (
-    AccountHolderRequest, AccountHolderSuccessResponse, DetailCoOwnerResponse
+    AccountHolderRequest, AccountHolderSuccessResponse
 )
 from app.api.v1.schemas.utils import SaveSuccessResponse
-from app.utils.constant.cif import CIF_NUMBER_MAX_LENGTH, CIF_NUMBER_MIN_LENGTH
 
 router = APIRouter()
 
@@ -51,27 +50,27 @@ async def view_retrieve_co_owner(
     return ResponseData[AccountHolderSuccessResponse](**co_owner_data)
 
 
-@router.get(
-    path="/detail-co-owner/",
-    name="Lấy thông tin đồng sở hữu qua số CIF",
-    description="Lấy dữ liệu `THÔNG TIN ĐỒNG SỞ HỮU` thông qua số CIF",
-    responses=swagger_response(
-        response_model=ResponseData[DetailCoOwnerResponse],
-        success_status_code=status.HTTP_200_OK
-    ),
-)
-async def view_detail_co_owner(
-        cif_id: str = Path(..., description='Id CIF ảo'),
-        cif_number: str = Query(
-            ..., description='Số CIF cần lấy thông tin',
-            min_length=CIF_NUMBER_MIN_LENGTH,
-            max_length=CIF_NUMBER_MAX_LENGTH
-        ),
-        current_user=Depends(get_current_user_from_header())
-):
-    detail_co_owner = await CtrCoOwner(current_user).detail_co_owner(
-        cif_id=cif_id,
-        cif_number_need_to_find=cif_number
-    )
-
-    return ResponseData[DetailCoOwnerResponse](**detail_co_owner)
+# @router.get(
+#     path="/detail-co-owner/",
+#     name="Lấy thông tin đồng sở hữu qua số CIF",
+#     description="Lấy dữ liệu `THÔNG TIN ĐỒNG SỞ HỮU` thông qua số CIF",
+#     responses=swagger_response(
+#         response_model=ResponseData[DetailCoOwnerResponse],
+#         success_status_code=status.HTTP_200_OK
+#     ),
+# )
+# async def view_detail_co_owner(
+#         cif_id: str = Path(..., description='Id CIF ảo'),
+#         cif_number: str = Query(
+#             ..., description='Số CIF cần lấy thông tin',
+#             min_length=CIF_NUMBER_MIN_LENGTH,
+#             max_length=CIF_NUMBER_MAX_LENGTH
+#         ),
+#         current_user=Depends(get_current_user_from_header())
+# ):
+#     detail_co_owner = await CtrCoOwner(current_user).detail_co_owner(
+#         cif_id=cif_id,
+#         cif_number_need_to_find=cif_number
+#     )
+#
+#     return ResponseData[DetailCoOwnerResponse](**detail_co_owner)
