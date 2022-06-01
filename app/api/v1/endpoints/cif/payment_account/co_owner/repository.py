@@ -87,110 +87,19 @@ async def repos_check_list_relationship_id(
 
 
 async def repos_get_co_owner(cif_id: str, session: Session) -> ReposReturn:
-    customer_relationships = session.execute(
-        select(CustomerPersonalRelationship, CustomerRelationshipType)
-        .join(Customer, CustomerPersonalRelationship.customer_id == Customer.id)
-        .join(
-            CustomerRelationshipType,
-            CustomerPersonalRelationship.customer_relationship_type_id
-            == CustomerRelationshipType.id,
+
+    account_holders = session.execute(
+        select(
+            CasaAccount,
+            JointAccountHolder,
+            CustomerRelationshipType
         )
-        .filter(
-            CustomerPersonalRelationship.customer_id == cif_id,
-            CustomerPersonalRelationship.type
-            == CUSTOMER_RELATIONSHIP_TYPE_CUSTOMER_RELATIONSHIP,
-        )
+        .join(JointAccountHolder, CasaAccount.id == JointAccountHolder.casa_account_id)
+        .join(CustomerRelationshipType, JointAccountHolder.relationship_type_id == CustomerRelationshipType.id)
+        .filter(CasaAccount.customer_id == cif_id)
     ).all()
 
-    account_holders = (
-        session.execute(
-            select(
-                JointAccountHolder
-            )
-            .join(CasaAccount, CasaAccount.id == JointAccountHolder.casa_account_id)
-            .filter(CasaAccount.customer_id == cif_id)
-        )
-        .scalars().all()
-    )
-
-    customer_relationship_detail = []
-    for account in account_holders:
-        (
-            is_success,
-            customer_relationship,
-        ) = await service_soa.retrieve_customer_ref_data_mgmt(
-            cif_number=account.cif_num,
-            flat_address=True,
-        )
-        customer_detail_data = customer_relationship["data"]
-
-        if customer_detail_data["basic_information"]["gender"]:
-            gender = await repos_get_model_object_by_id_or_code(
-                model_id=customer_detail_data["basic_information"]["gender"],
-                model_code=None,
-                loc="[SERVICE][SOA] gender",
-                model=CustomerGender,
-                session=session,
-            )
-            customer_detail_data["basic_information"]["gender"] = (
-                dropdown(gender.data) if gender.data else DROPDOWN_NONE_DICT
-            )
-        if customer_detail_data["basic_information"]["nationality"]:
-            nationality = await repos_get_model_object_by_id_or_code(
-                model_id=customer_detail_data["basic_information"]["nationality"],
-                model_code=None,
-                loc="[SERVICE][SOA] nationality",
-                model=AddressCountry,
-                session=session,
-            )
-            if nationality.data:
-                customer_detail_data["basic_information"]["nationality"] = dropdown(
-                    nationality.data
-                )
-        for relationship, relationship_type in customer_relationships:
-            customer_detail_data["basic_information"].update(
-                {"customer_relationship": dropdown(relationship_type)}
-            )
-        # TODO: place_of_issue query k có trong db crm nên đang để là str
-        if customer_detail_data["identity_document"]["place_of_issue"]:
-            place_of_issue_model = await get_optional_model_object_by_code_or_name(
-                model=PlaceOfIssue,
-                model_code=None,
-                model_name=customer_detail_data["identity_document"]["place_of_issue"],
-                session=session,
-            )
-            if not place_of_issue_model:
-                customer_detail_data["identity_document"]["place_of_issue"] = {
-                    "id": None,
-                    "code": None,
-                    "name": customer_detail_data["identity_document"]["place_of_issue"],
-                }
-
-            else:
-                customer_detail_data["identity_document"]["place_of_issue"] = dropdown(
-                    place_of_issue_model
-                )
-
-        # TODO: pypass chữ ký vì trong SOA không có chữ ký
-        customer_detail_data["basic_information"].update(
-            {
-                "signature": [
-                    {"id": "string", "image_url": "https://example.com"},
-                    {"id": "string", "image_url": "https://example.com"},
-                ]
-            }
-        )
-
-        customer_relationship_detail.append(customer_relationship.get("data"))
-
-    return ReposReturn(
-        data={
-            "joint_account_holder_flag": account_holders[0].joint_account_holder_flag if account_holders else False,
-            "number_of_joint_account_holder": len(account_holders),
-            "joint_account_holders": customer_relationship_detail,
-            "agreement_authorization": None,
-        }
-    )
+    return ReposReturn(data=account_holders)
 
 
 async def repos_get_casa_account(cif_id: str, session: Session) -> ReposReturn:

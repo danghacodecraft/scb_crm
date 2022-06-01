@@ -1,7 +1,6 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.payment_account.co_owner.repository import (
-    repos_detail_co_owner, repos_get_account_holders,
-    repos_get_agreement_authorizations, repos_get_casa_account,
+    repos_detail_co_owner, repos_get_casa_account,
     repos_get_co_owner, repos_save_co_owner
 )
 from app.api.v1.endpoints.cif.payment_account.co_owner.schema import (
@@ -13,12 +12,12 @@ from app.api.v1.endpoints.cif.repository import (
 from app.api.v1.endpoints.third_parties.gw.customer.controller import (
     CtrGWCustomer
 )
-from app.settings.event import service_soa
 from app.third_parties.oracle.models.master_data.customer import (
     CustomerRelationshipType
 )
+from app.utils.constant.gw import GW_REQUEST_PARAMETER_DEFAULT
 from app.utils.error_messages import ERROR_CIF_NUMBER_NOT_EXIST
-from app.utils.functions import generate_uuid
+from app.utils.functions import generate_uuid, dropdown
 
 
 class CtrCoOwner(BaseController):
@@ -124,69 +123,59 @@ class CtrCoOwner(BaseController):
                 session=self.oracle_session,
             )
         )
-        agreement_authorizations = self.call_repos(
-            await repos_get_agreement_authorizations(
-                session=self.oracle_session
+        joint_account_holder_flag = False
+        number_of_joint_account_holder = 0
+        joint_account_holders = []
+
+        for casa_account, joint_account_holder, customer_relationship_type in detail_co_owner:
+            cif_number = joint_account_holder.cif_num
+
+            data = await CtrGWCustomer(current_user=self.current_user).ctr_gw_get_customer_info_detail(
+                cif_number=cif_number,
+                parameter=GW_REQUEST_PARAMETER_DEFAULT
             )
+
+            gw_data = data['data']
+            identity_document = gw_data['id_info']
+            identity_number = identity_document['number']
+            issued_date = identity_document['issued_date']
+            expired_date = identity_document['expired_date']
+            place_of_issue = identity_document['place_of_issue']
+
+            joint_account_holders.append(dict(
+                id=cif_number,
+                basic_information=dict(
+                    cif_number=cif_number,
+                    customer_relationship=dropdown(customer_relationship_type),
+                    full_name_vn=gw_data['fullname_vn'],
+                    date_of_birth=gw_data['date_of_birth'],
+                    gender=gw_data['gender'],
+                    nationality=gw_data['nationality'],
+                    mobile_number=gw_data['mobile_phone'],
+                    signature=None
+                ),
+                identity_document=dict(
+                    identity_number=identity_number,
+                    issued_date=issued_date,
+                    expired_date=expired_date,
+                    place_of_issue=place_of_issue,
+                ),
+                address_information=dict(
+                    contact_address=gw_data['contact_address']['address_full'],
+                    resident_address=gw_data['resident_address']['address_full']
+                ),
+                avatar_url=None
+            ))
+            number_of_joint_account_holder += 1
+
+        response_data = dict(
+            joint_account_holder_flag=joint_account_holder_flag,
+            number_of_joint_account_holder=number_of_joint_account_holder,
+            joint_account_holders=joint_account_holders,
+            # agreement_authorization=agreement_authorization
         )
-        account_holders = self.call_repos(
-            await repos_get_account_holders(
-                cif_id=cif_id,
-                session=self.oracle_session
-            )
-        )
-        signature__data = {}
-        method__sign = {}
 
-        for item in account_holders:
-            is_success, customer = await service_soa.retrieve_customer_ref_data_mgmt(
-                cif_number=item.JointAccountHolder.cif_num
-            )
-            # lấy full_name_vn từ cif_number
-            customer_detail = customer.get('data')
-            agree_author = item.JointAccountHolderAgreementAuthorization.agreement_authorization_id
-            if agree_author not in signature__data:
-
-                signature__data[agree_author] = []
-                # lấy phương thức ký và flag
-                method__sign[agree_author] = {
-                    'method_sign': None,
-                    'agreement_flag': None
-                }
-                # gán lại giá trị cho phương thức ký và flag
-                method__sign[agree_author]['method_sign'] = item.JointAccountHolderAgreementAuthorization.method_sign
-                method__sign[agree_author]['agreement_flag'] = item.JointAccountHolderAgreementAuthorization.agreement_flag
-            # lấy cif_num và full_name_vn
-            signature__data[agree_author].append({
-                'cif_number': item.JointAccountHolder.cif_num,
-                'full_name_vn': customer_detail["basic_information"]["full_name_vn"]
-            })
-
-        agreement_authorization = [
-            {
-                "id": item.id,
-                "code": item.code,
-                "name": item.name,
-                "active_flag": None,
-                "method_sign": None,
-                'signature_list': None
-            }
-            for item in agreement_authorizations
-        ]
-
-        for agreement_author in agreement_authorization:
-            for agree_author, signature_list in signature__data.items():
-                if agreement_author['id'] == agree_author:
-                    agreement_author['signature_list'] = signature_list
-
-            for agreements_author, method_sign in method__sign.items():
-                if agreement_author['id'] == agreements_author:
-                    agreement_author['method_sign'] = method_sign['method_sign']
-                    agreement_author['active_flag'] = method_sign['agreement_flag']
-
-        detail_co_owner.update(agreement_authorization=agreement_authorization)
-
-        return self.response(data=detail_co_owner)
+        return self.response(data=response_data)
 
         # query db crm
         # account_holders, list_cif_number = self.call_repos(
