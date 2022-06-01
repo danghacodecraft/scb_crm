@@ -371,26 +371,21 @@ async def repos_save_identity(
         customer_id = new_customer_id  # Lấy id sau khi create thành công
         # create new Customer
         saving_customer['id'] = new_customer_id
-        session.add(
+        saving_customer_individual_info['customer_id'] = new_customer_id
+        saving_customer_identity['id'] = new_identity_id
+        saving_customer_identity['customer_id'] = new_customer_id
+        session.add_all([
             BookingCustomer(**dict(
                 customer_id=customer_id,
                 booking_id=booking_id
             )),
-            Customer(**saving_customer)
-        )
-
-        # create new CustomerIndividualInfo
-        saving_customer_individual_info['customer_id'] = new_customer_id
-        session.add(
-            CustomerIndividualInfo(**saving_customer_individual_info)
-        )
-
-        # create new CustomerIdentity
-        saving_customer_identity['id'] = new_identity_id
-        saving_customer_identity['customer_id'] = new_customer_id
-        session.add(
+            Customer(**saving_customer),
+            # create new CustomerIndividualInfo
+            CustomerIndividualInfo(**saving_customer_individual_info),
+            # create new CustomerIdentity
             CustomerIdentity(**saving_customer_identity)
-        )
+        ])
+
         is_error, create_response = await create_customer_identity_image_and_customer_compare_image(
             identity_id=new_identity_id,
             new_first_identity_image_id=new_first_identity_image_id,
