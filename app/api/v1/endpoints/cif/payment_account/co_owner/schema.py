@@ -98,9 +98,9 @@ class AccountHolderSuccessResponse(BaseSchema):
     joint_account_holders: List[AccountHolderResponse] = Field(
         ..., description="Thông tin cá nhân"
     )
-    agreement_authorization: Optional[List[AgreementAuthorResponse]] = Field(
-        ..., description="Danh mục thỏa thuận và uỷ quyền"
-    )
+    # agreement_authorization: Optional[List[AgreementAuthorResponse]] = Field(
+    #     ..., description="Danh mục thỏa thuận và uỷ quyền"
+    # )
 
 
 ############################################################
