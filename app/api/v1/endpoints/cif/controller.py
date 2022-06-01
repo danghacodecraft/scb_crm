@@ -23,6 +23,7 @@ from app.third_parties.oracle.models.master_data.customer import (
     CustomerGender, CustomerType
 )
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
+from app.third_parties.services.file import ServiceFile
 from app.utils.constant.cif import (
     CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE, DROPDOWN_NONE_DICT,
     PROFILE_HISTORY_STATUS
@@ -115,7 +116,7 @@ class CtrCustomer(BaseController):
                 list_distinct_employee.append(dict(
                     id=transaction_sender.user_id,
                     full_name_vn=transaction_sender.user_fullname,
-                    avatar_url=avatar.replace("https://192.168.73.151", ""),
+                    avatar_url=avatar.replace("https://192.168.73.151/cdn-profile", "/cdn-profile/thumb"),
                     user_name=transaction_sender.user_name,
                     email=transaction_sender.user_email,
                     position=dict(
@@ -210,7 +211,7 @@ class CtrCustomer(BaseController):
             "customer_id": first_row.Customer.id,
             "status": dropdownflag(first_row.CustomerStatus),
             "cif_number": first_row.Customer.cif_number if first_row.CustomerType else None,
-            "avatar_url": uuid__link_downloads[first_row.Customer.avatar_url].replace("http://192.168.73.130:3030", ""),
+            "avatar_url": ServiceFile().replace_with_cdn(uuid__link_downloads[first_row.Customer.avatar_url]),
             "customer_classification": dropdown(first_row.CustomerClassification),
             "full_name": first_row.Customer.full_name,
             "gender": dropdown(first_row.CustomerGender),
