@@ -125,9 +125,14 @@ GW_CATEGORIES = [
         "transaction_value": [{"param1": p_account_class, "param2": ccy_code}]
     },
     {
-        "category_name": "Lấy danh sách nhân viên kinh doanh của đơn vị	",
+        "category_name": "Lấy danh sách nhân viên kinh doanh trực tiếp của đơn vị	",
         "transaction_name": "DS_NV_DIRECT_INDIRECT",
         "transaction_value": [{"param1": p_type, "param2": branch_code}]
+    },
+    {
+        "category_name": "Lấy danh sách nhân viên kinh doanh gián tiếp của đơn vị	",
+        "transaction_name": "DS_NV_DIRECT_INDIRECT",
+        "transaction_value": [{"param1": "I", "param2": branch_code}]
     },
     {
         "category_name": "Lấy thu nhập bình quân 3 tháng",

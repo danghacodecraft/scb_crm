@@ -12,7 +12,8 @@ from app.utils.constant.gw import (
     GW_CURRENT_ACCOUNT_CASA, GW_CURRENT_ACCOUNT_FROM_CIF,
     GW_CUSTOMER_REF_DATA_MGMT_CIF_NUM, GW_DEPOSIT_ACCOUNT_FROM_CIF,
     GW_DEPOSIT_ACCOUNT_TD, GW_EMPLOYEE_FROM_CODE, GW_EMPLOYEE_FROM_NAME,
-    GW_EMPLOYEES, GW_ENDPOINT_URL_RETRIEVE_AUTHORIZED_ACCOUNT_NUM,
+    GW_EMPLOYEES, GW_ENDPOINT_URL_CHECK_EXITS_ACCOUNT_CASA,
+    GW_ENDPOINT_URL_RETRIEVE_AUTHORIZED_ACCOUNT_NUM,
     GW_ENDPOINT_URL_RETRIEVE_CO_OWNER_ACCOUNT_NUM,
     GW_ENDPOINT_URL_RETRIEVE_CURRENT_ACCOUNT_CASA,
     GW_ENDPOINT_URL_RETRIEVE_CURRENT_ACCOUNT_CASA_FROM_CIF,
@@ -37,7 +38,8 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_RETRIEVE_WORKING_PROCESS_INFO_FROM_CODE,
     GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE,
     GW_HISTORY_CHANGE_FIELD_ACCOUNT, GW_HISTOTY_ACOUNT_NUM,
-    GW_HISTOTY_CHANGE_FIELD_ACCOUNT, GW_SELECT_CATEGORY
+    GW_HISTOTY_CHANGE_FIELD_ACCOUNT, GW_RETRIEVE_CASA_ACCOUNT_DETAIL,
+    GW_SELECT_CATEGORY
 )
 from app.utils.functions import date_to_string
 
@@ -1458,6 +1460,55 @@ class ServiceGW:
                 "data_input": data_input
             }
         }
+
     ####################################################################################################################
     # END --- UTILS
+    ####################################################################################################################
+    # START --- CHECK_EXIST_CASA_ACCOUNT_NUMBER
+    ####################################################################################################################
+    async def check_exist_casa_account_number(self, current_user: UserInfoResponse, casa_account_number):
+        data_input = {
+            "transaction_info": {
+                "transaction_name": GW_RETRIEVE_CASA_ACCOUNT_DETAIL,
+                "transaction_value": {
+                    "account_num": casa_account_number
+                }
+            }
+        }
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="retrieveCurrentAccountCASA_in", data_input=data_input
+        )
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_CHECK_EXITS_ACCOUNT_CASA}"
+
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data
+                else:
+                    return_data = await response.json()
+                    return True, return_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data
+    ####################################################################################################################
+    # END --- CHECK_EXIST_CASA_ACCOUNT_NUMBER
     ####################################################################################################################
