@@ -19,7 +19,8 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.example import (
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWCasaAccountByCIFNumberRequest, GWCasaAccountByCIFNumberResponse,
     GWCasaAccountCheckExistRequest, GWCasaAccountCheckExistResponse,
-    GWCasaAccountResponse, GWReportColumnChartHistoryAccountInfoRequest,
+    GWCasaAccountResponse, GWOpenCasaAccountRequest, GWOpenCasaAccountResponse,
+    GWReportColumnChartHistoryAccountInfoRequest,
     GWReportColumnChartHistoryAccountInfoResponse,
     GWReportPieChartHistoryAccountInfoRequest,
     GWReportPieChartHistoryAccountInfoResponse,
@@ -130,6 +131,25 @@ async def view_gw_get_statement_casa_account_info(
         request=request
     )
     return ResponseData[List[GWReportStatementHistoryAccountInfoResponse]](**gw_statement_casa_account_info)
+
+
+@router.post(
+    path="/open-casa/",
+    name="[GW] Mở tài khoản thanh toán",
+    description="[GW] Mở tài khoản thanh toán",
+    responses=swagger_response(
+        response_model=ResponseData[GWOpenCasaAccountResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_get_open_casa_account(
+        request: GWOpenCasaAccountRequest = Body(..., description="Thông tin khách hàng"),
+        current_user=Depends(get_current_user_from_header())
+):
+    gw_open_casa_account_info = await CtrGWCasaAccount(current_user).ctr_gw_get_open_casa_account(
+        request=request
+    )
+    return ResponseData[GWOpenCasaAccountResponse](**gw_open_casa_account_info)
 
 
 @router.post(

@@ -39,8 +39,8 @@ from app.third_parties.oracle.models.master_data.identity import (
     PlaceOfIssue
 )
 from app.third_parties.oracle.models.master_data.others import (
-    Nation, Religion, TransactionStage, TransactionStageStatus, TransactionStageLane, TransactionStagePhase,
-    TransactionStageRole
+    Nation, Religion, TransactionStage, TransactionStageLane,
+    TransactionStagePhase, TransactionStageRole, TransactionStageStatus
 )
 from app.utils.constant.cif import (
     ACTIVE_FLAG_ACTIVED, ADDRESS_COUNTRY_CODE_VN, BUSINESS_FORM_TTCN_GTDD_GTDD,
@@ -372,6 +372,10 @@ async def repos_save_identity(
         # create new Customer
         saving_customer['id'] = new_customer_id
         session.add(
+            BookingCustomer(**dict(
+                customer_id=customer_id,
+                booking_id=booking_id
+            )),
             Customer(**saving_customer)
         )
 

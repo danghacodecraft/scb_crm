@@ -5,7 +5,7 @@ from pydantic import Field
 
 from app.api.base.schema import BaseSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
-from app.api.v1.schemas.utils import OptionalDropdownResponse
+from app.api.v1.schemas.utils import DropdownRequest, OptionalDropdownResponse
 
 ############################################################
 # Response
@@ -110,6 +110,7 @@ class AccountHolderSuccessResponse(BaseSchema):
 
 class AccountRequest(BaseSchema):
     cif_number: str = CustomField(description="Số CIF của đồng sở hữu").CIFNumberField
+    customer_relationship: DropdownRequest = Field(..., description="Mối quan hệ của khách hàng với đồng sở hữu")
 
 
 class SignatureAgreementAuthorRequest(BaseSchema):

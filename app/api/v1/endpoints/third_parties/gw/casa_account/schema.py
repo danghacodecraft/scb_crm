@@ -183,3 +183,43 @@ class GWReportStatementHistoryTDAccountInfoResponse(BaseGWSchema):
     rate: Optional[str] = Field(..., description="Lãi suất")
     balance: Optional[int] = Field(..., description="Số dư cuối giao dịch")
     expire_date: Optional[date] = Field(..., description='Ngày đến hạn')
+
+
+class GWCIFInfoOpenCasaRequest(BaseGWSchema):
+    cif_num: Optional[str] = CustomField().OptionalCIFNumberField
+
+
+class GWAccountInfoOpenCasaRequest(BaseGWSchema):
+    acc_spl: Optional[str] = Field(..., description="Tùy chọn tài khoản số đẹp Y/N")
+    account_num: Optional[str] = Field(..., description="Số tài khoản")
+    account_currency: Optional[str] = Field(..., description="Loại tiền trong tài khoản")
+    account_class_code: Optional[str] = Field(..., description="Mã sản phẩm")
+
+
+class GWStaffInfoCheckerOpenCasaRequest(BaseGWSchema):
+    staff_name: str = Field(..., description="Tên nhân viên")
+
+
+class GWStaffInfoMakerOpenCasaRequest(BaseGWSchema):
+    staff_name: str = Field(..., description="Tên nhân viên")
+
+
+class GWUdfItemJsonArrayOpenCasaRequest(BaseGWSchema):
+    UDF_NAME: Optional[str] = Field(..., description="Tên UDF")
+    UDF_VALUE: Optional[str] = Field(..., description="Giá trị UDF")
+
+
+class GWUdfInfoOpenCasaRequest(BaseGWSchema):
+    udf_json_array: List[GWUdfItemJsonArrayOpenCasaRequest] = Field(..., description="Giá trị nhập thêm kiểu json arr")
+
+
+class GWOpenCasaAccountRequest(BaseGWSchema):
+    cif_info: GWCIFInfoOpenCasaRequest = Field(..., description="Thông tin CIF")
+    account_info: GWAccountInfoOpenCasaRequest = Field(..., description="Thông tin tài khoản")
+    staff_info_checker: GWStaffInfoCheckerOpenCasaRequest = Field(..., description="Thông tin nhân viên kiểm tra")
+    staff_info_maker: GWStaffInfoMakerOpenCasaRequest = Field(..., description="Thông tin nhân viên tạo tài khoản")
+    udf_info: GWUdfInfoOpenCasaRequest = Field(..., description="Thông tin UDF")
+
+
+class GWOpenCasaAccountResponse(BaseGWSchema):
+    number: str = Field(..., description="Số tài khoản thanh toán")
