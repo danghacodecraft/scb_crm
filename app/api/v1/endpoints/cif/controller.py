@@ -6,12 +6,14 @@ from app.api.v1.endpoints.cif.repository import (
     repos_validate_cif_number
 )
 from app.api.v1.endpoints.cif.schema import CustomerByCIFNumberRequest
-from app.api.v1.endpoints.news.repository import repo_get_users_contact
 from app.api.v1.endpoints.repository import (
     get_optional_model_object_by_code_or_name
 )
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_gw_get_customer_info_detail
+)
+from app.api.v1.endpoints.third_parties.gw.employee.repository import (
+    repos_gw_get_employee_info_from_code
 )
 from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.third_parties.oracle.models.master_data.address import (
@@ -101,31 +103,19 @@ class CtrCustomer(BaseController):
         # )
 
         transactions = self.call_repos((await repos_get_approval_process(cif_id=cif_id, session=self.oracle_session)))
-        user_codes = set()
-
-        for _, _, _, transaction_sender, transaction_root_daily in transactions:
-            user_codes.add(transaction_sender.user_id)
-
-        user_codes = tuple(user_codes)
-        user_infos = self.call_repos(
-            await repo_get_users_contact(
-                codes=user_codes,
-                session=self.oracle_session_task
-            )
-        )
-        avatar_urls = {}
-        for user_info in user_infos:
-            # user_info[1]: user_code,  user_info[-1]: avatar_url
-            avatar_urls.update({user_info[1]: user_info[-1]})  # TODO: lấy từ HRM nên hard cứng data
 
         list_distinct_employee = []
         list_distinct_user_code = []
         for _, _, _, transaction_sender, transaction_root_daily in transactions:
+            employee_info = self.call_repos(await repos_gw_get_employee_info_from_code(
+                employee_code=transaction_sender.user_id, current_user=self.current_user))
+            avatar = employee_info['selectEmployeeInfoFromCode_out']['data_output']['employee_info']['avatar']
+
             if transaction_sender.user_id not in list_distinct_user_code:
                 list_distinct_employee.append(dict(
                     id=transaction_sender.user_id,
                     full_name_vn=transaction_sender.user_fullname,
-                    avatar_url=avatar_urls[transaction_sender.user_id],
+                    avatar_url=avatar.replace("https://192.168.73.151", ""),
                     user_name=transaction_sender.user_name,
                     email=transaction_sender.user_email,
                     position=dict(
@@ -220,7 +210,7 @@ class CtrCustomer(BaseController):
             "customer_id": first_row.Customer.id,
             "status": dropdownflag(first_row.CustomerStatus),
             "cif_number": first_row.Customer.cif_number if first_row.CustomerType else None,
-            "avatar_url": uuid__link_downloads[first_row.Customer.avatar_url],
+            "avatar_url": uuid__link_downloads[first_row.Customer.avatar_url].replace("http://192.168.73.130:3030", ""),
             "customer_classification": dropdown(first_row.CustomerClassification),
             "full_name": first_row.Customer.full_name,
             "gender": dropdown(first_row.CustomerGender),
