@@ -309,7 +309,7 @@ class CtrIdentityDocument(BaseController):
             "active_flag": True,
             "open_cif_at": now(),
             "open_branch_id": current_user.hrm_branch_code,
-            "kyc_level_id": "KYC_1",  # TODO
+            "kyc_level_id": "EKYC_1",  # TODO
             "customer_category_id": "I_11",  # TODO
             "customer_economic_profession_id": customer_economic_profession_id,
             "nationality_id": nationality_id,
