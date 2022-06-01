@@ -22,6 +22,7 @@ from app.third_parties.oracle.models.master_data.identity import (
     CustomerIdentityType
 )
 from app.third_parties.oracle.models.master_data.others import BusinessJob
+from app.third_parties.services.idm import ServiceIDM
 from app.utils.constant.approval import (
     BUSINESS_JOB_CODES, CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV,
     CIF_STAGE_BEGIN, CIF_STAGE_COMPLETED, CIF_STAGE_INIT
@@ -69,12 +70,12 @@ class CtrApproval(BaseController):
                 content = orjson_loads(transaction_root_daily.data)
                 employee_info = self.call_repos(await repos_gw_get_employee_info_from_code(
                     employee_code=transaction_sender.user_id, current_user=self.current_user))
-                avatar = employee_info['selectEmployeeInfoFromCode_out']['data_output']['employee_info']['avatar']
+                avatar = ServiceIDM().replace_with_cdn(employee_info['selectEmployeeInfoFromCode_out']['data_output']['employee_info']['avatar'])
                 if parent_key == transaction_root_daily.created_at.date():
                     childs.append({
                         "user_id": transaction_sender.user_id,
                         "full_name_vn": transaction_sender.user_fullname,
-                        "avatar_url": avatar.replace("https://192.168.73.151/cdn-profile", "/cdn-profile/thumb"),
+                        "avatar_url": avatar,
                         "position": {
                             "id": transaction_sender.position_id,
                             "code": transaction_sender.position_code,

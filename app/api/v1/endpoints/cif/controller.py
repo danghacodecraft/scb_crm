@@ -24,6 +24,7 @@ from app.third_parties.oracle.models.master_data.customer import (
 )
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.services.file import ServiceFile
+from app.third_parties.services.idm import ServiceIDM
 from app.utils.constant.cif import (
     CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE, DROPDOWN_NONE_DICT,
     PROFILE_HISTORY_STATUS
@@ -110,13 +111,13 @@ class CtrCustomer(BaseController):
         for _, _, _, transaction_sender, transaction_root_daily in transactions:
             employee_info = self.call_repos(await repos_gw_get_employee_info_from_code(
                 employee_code=transaction_sender.user_id, current_user=self.current_user))
-            avatar = employee_info['selectEmployeeInfoFromCode_out']['data_output']['employee_info']['avatar']
+            avatar = ServiceIDM().replace_with_cdn(employee_info['selectEmployeeInfoFromCode_out']['data_output']['employee_info']['avatar'])
 
             if transaction_sender.user_id not in list_distinct_user_code:
                 list_distinct_employee.append(dict(
                     id=transaction_sender.user_id,
                     full_name_vn=transaction_sender.user_fullname,
-                    avatar_url=avatar.replace("https://192.168.73.151/cdn-profile", "/cdn-profile/thumb"),
+                    avatar_url=avatar,
                     user_name=transaction_sender.user_name,
                     email=transaction_sender.user_email,
                     position=dict(
