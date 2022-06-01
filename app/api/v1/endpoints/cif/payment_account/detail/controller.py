@@ -2,7 +2,7 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.payment_account.detail.repository import (
     repos_check_casa_account, repos_check_exist_casa_account_number,
     repos_detail_payment_account, repos_get_casa_account_from_soa,
-    repos_save_payment_account
+    repos_gw_check_exist_casa_account_number, repos_save_payment_account
 )
 from app.api.v1.endpoints.cif.payment_account.detail.schema import (
     SavePaymentAccountRequest
@@ -214,3 +214,24 @@ class CtrPaymentAccount(BaseController):
             )
         )
         return self.response(data=casa_account_info)
+
+    async def ctr_gw_check_exist_casa_account_number(self, casa_account_number):
+        current_user = self.current_user
+
+        # VALIDATE: casa_account_number
+        if not is_valid_number(casa_account_number):
+            return self.response_exception(
+                msg=ERROR_INVALID_NUMBER,
+                loc="casa_account_number"
+            )
+
+        data_output = self.call_repos(
+            await repos_gw_check_exist_casa_account_number(
+                casa_account_number=casa_account_number,
+                current_user=current_user
+            )
+        )
+        is_existed = False
+        if data_output['retrieveCurrentAccountCASA_out']['data_output']['customer_info']['account_info']['account_num']:
+            is_existed = True
+        return self.response(data=dict(is_existed=is_existed))

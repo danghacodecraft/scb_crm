@@ -7,7 +7,8 @@ from app.api.base.repository import ReposReturn, auto_commit
 from app.api.v1.endpoints.repository import (
     write_transaction_log_and_update_booking
 )
-from app.settings.event import service_soa
+from app.api.v1.endpoints.user.schema import AuthResponse
+from app.settings.event import service_gw, service_soa
 from app.third_parties.oracle.models.cif.payment_account.model import (
     CasaAccount
 )
@@ -19,7 +20,8 @@ from app.utils.constant.cif import (
     BUSINESS_FORM_TKTT_CTTKTT, DROPDOWN_NONE_DICT
 )
 from app.utils.error_messages import (
-    ERROR_CALL_SERVICE_SOA, ERROR_INVALID_NUMBER, ERROR_NO_DATA, MESSAGE_STATUS
+    ERROR_CALL_SERVICE_GW, ERROR_CALL_SERVICE_SOA, ERROR_INVALID_NUMBER,
+    ERROR_NO_DATA, MESSAGE_STATUS
 )
 from app.utils.functions import dropdown, is_valid_number, now
 
@@ -148,6 +150,22 @@ async def repos_check_exist_casa_account_number(casa_account_number: str, sessio
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_SOA, detail=check_exist_info["message"])
 
     return ReposReturn(data=check_exist_info)
+
+
+async def repos_gw_check_exist_casa_account_number(
+        casa_account_number: str,
+        current_user: AuthResponse):
+    is_success, check_exist_casa_account_number = await service_gw.check_exist_casa_account_number(
+        casa_account_number=casa_account_number, current_user=current_user.user_info
+    )
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc='check_exist_casa_account_number',
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(check_exist_casa_account_number)
+        )
+    return ReposReturn(data=check_exist_casa_account_number)
 
 
 async def repos_get_casa_account_from_soa(casa_account_number: str, loc: str):
