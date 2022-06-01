@@ -14,8 +14,9 @@ from app.utils.constant.idm import (
     IDM_PERMISSION_CODE_OPEN_CIF
 )
 from app.utils.error_messages import (
-    ERROR_BOOKING_ID_NOT_EXIST, ERROR_BUSINESS_TYPE_NOT_EXIST, ERROR_PERMISSION, ERROR_BOOKING_INCORRECT,
-    ERROR_BUSINESS_TYPE_CODE_INCORRECT, ERROR_CIF_ID_NOT_EXIST
+    ERROR_BOOKING_ID_NOT_EXIST, ERROR_BOOKING_INCORRECT,
+    ERROR_BUSINESS_TYPE_CODE_INCORRECT, ERROR_BUSINESS_TYPE_NOT_EXIST,
+    ERROR_CIF_ID_NOT_EXIST, ERROR_PERMISSION
 )
 
 
@@ -65,7 +66,7 @@ class CtrBooking(BaseController):
             loc: str,
             business_type_code: str,
             cif_id: Optional[str] = None,
-            check_correct_booking_flag: bool = True,
+            check_correct_booking_flag: Optional[bool] = True,
     ):
         booking = None
         if booking_id:
@@ -84,11 +85,11 @@ class CtrBooking(BaseController):
         if check_correct_booking_flag:
             if not cif_id:
                 return self.response_exception(msg=ERROR_CIF_ID_NOT_EXIST, loc=f"cif_id: {cif_id}")
-            is_correct_booking = self.call_repos(await repos_is_correct_booking(
+            is_correct_booking = await repos_is_correct_booking(
                 booking_id=booking_id,
                 cif_id=cif_id,
                 session=self.oracle_session
-            ))
+            )
             if not is_correct_booking:
                 return self.response_exception(msg=ERROR_BOOKING_INCORRECT, loc="header -> booking_id")
 
