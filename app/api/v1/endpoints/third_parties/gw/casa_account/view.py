@@ -153,6 +153,25 @@ async def view_gw_get_open_casa_account(
 
 
 @router.post(
+    path="/close-casa/",
+    name="[GW] Đóng tài khoản thanh toán",
+    description="[GW] Đóng tài khoản thanh toán",
+    responses=swagger_response(
+        response_model=ResponseData,
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_get_close_casa_account(
+        request=Body(..., description="Thông tin khách hàng"),
+        current_user=Depends(get_current_user_from_header())
+):
+    gw_close_casa_account_info = await CtrGWCasaAccount(current_user).ctr_gw_get_close_casa_account(
+        request=request
+    )
+    return ResponseData(**gw_close_casa_account_info)
+
+
+@router.post(
     path="/{account_number}/",
     name="[GW] Chi tiết tài khoản thanh toán",
     description="[GW] Lấy chi tiết tài Khoản thanh toán theo số tài khoản",

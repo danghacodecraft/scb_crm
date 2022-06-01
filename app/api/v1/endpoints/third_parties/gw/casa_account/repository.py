@@ -142,3 +142,30 @@ async def repos_gw_get_open_casa_account(
         )
 
     return ReposReturn(data=gw_open_casa_account_info)
+
+
+async def repos_gw_get_close_casa_account(
+    account_info: GWAccountInfoOpenCasaRequest,
+    p_blk_closure,
+    p_blk_charge_main,
+    p_blk_charge_details,
+    p_blk_udf,
+    staff_info_checker: GWStaffInfoCheckerOpenCasaRequest,
+    staff_info_maker: GWStaffInfoMakerOpenCasaRequest,
+    current_user: AuthResponse
+):
+    current_user = current_user.user_info
+    is_success, gw_close_casa_account_info = await service_gw.get_close_casa_account(
+        account_info=account_info, p_blk_closure=p_blk_closure, p_blk_charge_main=p_blk_charge_main,
+        staff_info_checker=staff_info_checker, p_blk_charge_details=p_blk_charge_details, p_blk_udf=p_blk_udf,
+        staff_info_maker=staff_info_maker, current_user=current_user
+    )
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="get_close_casa_account",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(gw_close_casa_account_info)
+        )
+
+    return ReposReturn(data=gw_close_casa_account_info)

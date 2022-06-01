@@ -1,6 +1,7 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_get_casa_account_by_cif_number, repos_gw_get_casa_account_info,
+    repos_gw_get_close_casa_account,
     repos_gw_get_column_chart_casa_account_info,
     repos_gw_get_open_casa_account, repos_gw_get_pie_chart_casa_account_info,
     repos_gw_get_statements_casa_account_info
@@ -315,6 +316,26 @@ class CtrGWCasaAccount(BaseController):
             staff_info_checker=request.staff_info_checker,
             staff_info_maker=request.staff_info_maker,
             udf_info=request.udf_info,
+            current_user=self.current_user
+        ))
+        transaction_info = gw_open_casa_account_info['openCASA_out']['transaction_info']
+        if transaction_info['transaction_error_code']:
+            return self.response_exception(
+                msg=transaction_info['transaction_error_msg'], loc=transaction_info['transaction_error_code'],
+                detail=ERROR_CALL_SERVICE_GW)
+        casa_account_number = gw_open_casa_account_info['openCASA_out']['data_output']['account_info']['account_num']
+
+        return self.response(data=casa_account_number)
+
+    async def ctr_gw_get_close_casa_account(self, request):
+        gw_open_casa_account_info = self.call_repos(await repos_gw_get_close_casa_account(
+            account_info=request.account_info,
+            p_blk_closure=request.p_blk_closure,
+            p_blk_charge_main=request.p_blk_charge_main,
+            p_blk_charge_details=request.p_blk_charge_details,
+            p_blk_udf=request.p_blk_udf,
+            staff_info_checker=request.staff_info_checker,
+            staff_info_maker=request.staff_info_maker,
             current_user=self.current_user
         ))
         transaction_info = gw_open_casa_account_info['openCASA_out']['transaction_info']
