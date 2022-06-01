@@ -261,6 +261,7 @@ class CtrIdentityDocument(BaseController):
         if first_name is None and middle_name is None and last_name is None:
             return self.response_exception(msg='', detail='Can not split name to fist, middle and last name')
 
+        # check customer_economic_profession_id
         customer_economic_profession_id = identity_document_request.cif_information.customer_economic_profession.id
         if is_create or (customer.customer_economic_profession_id != customer_economic_profession_id):
             await self.get_model_object_by_id(model_id=customer_economic_profession_id,
@@ -309,7 +310,7 @@ class CtrIdentityDocument(BaseController):
             "open_cif_at": now(),
             "open_branch_id": current_user.hrm_branch_code,
             "kyc_level_id": "KYC_1",  # TODO
-            "customer_category_id": "D0682B44BEB3830EE0530100007F1DDC",  # TODO
+            "customer_category_id": "I_11",  # TODO
             "customer_economic_profession_id": customer_economic_profession_id,
             "nationality_id": nationality_id,
             "customer_classification_id": customer_classification_id,
