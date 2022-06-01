@@ -2,10 +2,13 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.news.repository import (
     get_comment_by_id, get_comment_like_by_user, get_data_by_id,
     get_like_by_user, get_list_comment, get_list_scb_news, get_parent_comment,
-    repo_add_comment, repo_add_comment_like, repo_get_users_contact,
-    repo_remove_comment_like, repos_add_scb_news, repos_update_scb_news
+    repo_add_comment, repo_add_comment_like, repo_remove_comment_like,
+    repos_add_scb_news, repos_update_scb_news
 )
 from app.api.v1.endpoints.news.schema import NewsCommentRequest
+from app.api.v1.endpoints.third_parties.gw.employee.repository import (
+    repos_gw_get_employee_info_from_code
+)
 from app.settings.event import service_file
 from app.third_parties.oracle.models.master_data.news import NewsCategory
 from app.utils.constant.cif import NEWS_COMMENT_FILTER_PARAMS
@@ -280,23 +283,20 @@ class CtrNews(BaseController):
             else:
                 user_codes = tuple(user_codes)
 
-            users_comment_info = self.call_repos(
-                await repo_get_users_contact(
-                    codes=user_codes,
-                    session=self.oracle_session_task
-                )
-            )
-
             comments_like_by_user = self.call_repos(await get_comment_like_by_user(session=self.oracle_session,
                                                                                    comment_ids=list_comment_id,
                                                                                    user_id=self.current_user.user_info.code))
 
             users_info_cmt = {}
-            for user_info in users_comment_info:
+            for user_code in user_codes:
+                gw_employee_info = self.call_repos(await repos_gw_get_employee_info_from_code(
+                    employee_code=user_code, current_user=self.current_user))
+                user_info = gw_employee_info['selectEmployeeInfoFromCode_out']['data_output']['employee_info']
                 users_info_cmt.update({
-                    user_info.emp_code: {
-                        "title_name": user_info.title_name,
-                        "avatar_link": user_info.avatar_link
+                    user_code: {
+                        "title_name": user_info['title_name'],
+                        "avatar_link": user_info['avatar'].replace(
+                            "https://192.168.73.151/cdn-profile", "/cdn-profile/thumb")
                     }
                 })
 

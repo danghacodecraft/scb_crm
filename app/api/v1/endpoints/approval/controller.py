@@ -14,12 +14,15 @@ from app.api.v1.endpoints.approval.repository import (
 )
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
-from app.api.v1.endpoints.news.repository import repo_get_users_contact
+from app.api.v1.endpoints.third_parties.gw.employee.repository import (
+    repos_gw_get_employee_info_from_code
+)
 from app.api.v1.others.permission.controller import PermissionController
 from app.third_parties.oracle.models.master_data.identity import (
     CustomerIdentityType
 )
 from app.third_parties.oracle.models.master_data.others import BusinessJob
+from app.third_parties.services.idm import ServiceIDM
 from app.utils.constant.approval import (
     BUSINESS_JOB_CODES, CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV,
     CIF_STAGE_BEGIN, CIF_STAGE_COMPLETED, CIF_STAGE_INIT
@@ -57,33 +60,22 @@ class CtrApproval(BaseController):
         response_data = []
         lst_parent = {}
 
-        user_codes = set()
         for _, _, _, transaction_sender, transaction_root_daily in transactions:
             lst_parent.update({transaction_root_daily.created_at.date(): []})
-            user_codes.add(transaction_sender.user_id)
-
-        user_codes = tuple(user_codes)
-        user_infos = self.call_repos(
-            await repo_get_users_contact(
-                codes=user_codes,
-                session=self.oracle_session_task
-            )
-        )
-        avatar_urls = {}
-        for user_info in user_infos:
-            # user_info[1]: user_code,  user_info[-1]: avatar_url
-            avatar_urls.update({user_info[1]: user_info[-1]})  # TODO: lấy từ HRM nên hard cứng data
 
         for parent_key, parent_value in lst_parent.items():
             childs = []
 
             for booking_customer, _, transaction_daily, transaction_sender, transaction_root_daily in transactions:
                 content = orjson_loads(transaction_root_daily.data)
+                employee_info = self.call_repos(await repos_gw_get_employee_info_from_code(
+                    employee_code=transaction_sender.user_id, current_user=self.current_user))
+                avatar = ServiceIDM().replace_with_cdn(employee_info['selectEmployeeInfoFromCode_out']['data_output']['employee_info']['avatar'])
                 if parent_key == transaction_root_daily.created_at.date():
                     childs.append({
                         "user_id": transaction_sender.user_id,
                         "full_name_vn": transaction_sender.user_fullname,
-                        "avatar_url": avatar_urls[transaction_sender.user_id],
+                        "avatar_url": avatar,
                         "position": {
                             "id": transaction_sender.position_id,
                             "code": transaction_sender.position_code,
