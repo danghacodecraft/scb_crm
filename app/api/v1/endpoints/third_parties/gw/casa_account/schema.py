@@ -196,11 +196,11 @@ class GWAccountInfoOpenCasaRequest(BaseGWSchema):
     account_class_code: Optional[str] = Field(..., description="Mã sản phẩm")
 
 
-class GWStaffInfoCheckerOpenCasaRequest(BaseGWSchema):
+class GWStaffInfoCheckerCasaRequest(BaseGWSchema):
     staff_name: str = Field(..., description="Tên nhân viên")
 
 
-class GWStaffInfoMakerOpenCasaRequest(BaseGWSchema):
+class GWStaffInfoMakerCasaRequest(BaseGWSchema):
     staff_name: str = Field(..., description="Tên nhân viên")
 
 
@@ -216,10 +216,33 @@ class GWUdfInfoOpenCasaRequest(BaseGWSchema):
 class GWOpenCasaAccountRequest(BaseGWSchema):
     cif_info: GWCIFInfoOpenCasaRequest = Field(..., description="Thông tin CIF")
     account_info: GWAccountInfoOpenCasaRequest = Field(..., description="Thông tin tài khoản")
-    staff_info_checker: GWStaffInfoCheckerOpenCasaRequest = Field(..., description="Thông tin nhân viên kiểm tra")
-    staff_info_maker: GWStaffInfoMakerOpenCasaRequest = Field(..., description="Thông tin nhân viên tạo tài khoản")
+    staff_info_checker: GWStaffInfoCheckerCasaRequest = Field(..., description="Thông tin nhân viên kiểm tra")
+    staff_info_maker: GWStaffInfoMakerCasaRequest = Field(..., description="Thông tin nhân viên tạo tài khoản")
     udf_info: GWUdfInfoOpenCasaRequest = Field(..., description="Thông tin UDF")
 
 
 class GWOpenCasaAccountResponse(BaseGWSchema):
+    number: str = Field(..., description="Số tài khoản thanh toán")
+
+
+class GWAccountInfoCloseCasaRequest(BaseGWSchema):
+    account_num: Optional[str] = Field(..., description="Số tài khoản")
+
+
+class GWCloseCasaClosureResponse(BaseGWSchema):
+    close_mode: str = Field(..., description="CLOSE_MODE")
+    account_no: str = Field(..., description="Số tài khoản")
+
+
+class GWCloseCasaAccountRequest(BaseGWSchema):
+    account_info: GWAccountInfoCloseCasaRequest = Field(..., description="Thông tin tài khoản")
+    p_blk_closure: List[GWCloseCasaClosureResponse] = Field(..., description="Json Array CLOSE_MODE")
+    p_blk_charge_main: Optional[str] = Field(..., description="P Blk Charge Main")
+    p_blk_charge_details: Optional[str] = Field(..., description="P Blk Charge Details")
+    p_blk_udf: Optional[str] = Field(..., description="P Blk Udf")
+    staff_info_checker: GWStaffInfoCheckerCasaRequest = Field(..., description="Thông tin nhân viên kiểm tra")
+    staff_info_maker: GWStaffInfoMakerCasaRequest = Field(..., description="Thông tin nhân viên đóng tài khoản")
+
+
+class GWCloseCasaAccountResponse(BaseGWSchema):
     number: str = Field(..., description="Số tài khoản thanh toán")

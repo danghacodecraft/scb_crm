@@ -389,9 +389,7 @@ class ServiceGW:
             p_blk_charge_details,
             p_blk_udf,
             staff_info_checker,
-            staff_info_maker,
-            udf_info
-
+            staff_info_maker
     ):
         """
         Mở tài khoản thanh toán
@@ -402,8 +400,8 @@ class ServiceGW:
             },
             "p_blk_closure": [
                 {
-                    "CLOSE_MODE": item.CLOSE_MODE,
-                    "ACCOUNT_NO": item.ACCOUNT_NO
+                    "CLOSE_MODE": item.close_mode,
+                    "ACCOUNT_NO": item.account_no
                 }
                 for item in p_blk_closure],
             "p_blk_charge_main": p_blk_charge_main,

@@ -338,14 +338,13 @@ class CtrGWCasaAccount(BaseController):
             staff_info_maker=request.staff_info_maker,
             current_user=self.current_user
         ))
-        transaction_info = gw_open_casa_account_info['openCASA_out']['transaction_info']
+        transaction_info = gw_open_casa_account_info['closeCASA_out']['transaction_info']
         if transaction_info['transaction_error_code']:
             return self.response_exception(
                 msg=transaction_info['transaction_error_msg'], loc=transaction_info['transaction_error_code'],
                 detail=ERROR_CALL_SERVICE_GW)
-        casa_account_number = gw_open_casa_account_info['openCASA_out']['data_output']['account_info']['account_num']
 
-        return self.response(data=casa_account_number)
+        return self.response(data=dict(number=request.account_info.account_num))
 
     async def ctr_gw_get_statement_casa_account_info(self, request: GWReportStatementHistoryAccountInfoRequest):
         gw_report_statements_casa_account_info = self.call_repos(await repos_gw_get_statements_casa_account_info(
