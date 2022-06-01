@@ -58,7 +58,8 @@ from app.utils.constant.cif import (
     IDENTITY_DOCUMENT_TYPE_PASSPORT, IDENTITY_DOCUMENT_TYPE_TYPE,
     IDENTITY_IMAGE_FLAG_BACKSIDE, IDENTITY_IMAGE_FLAG_FRONT_SIDE,
     IMAGE_TYPE_CODE_IDENTITY, PROFILE_HISTORY_DESCRIPTIONS_INIT_CIF,
-    PROFILE_HISTORY_STATUS_INIT, RESIDENT_ADDRESS_CODE
+    PROFILE_HISTORY_STATUS_INIT, RESIDENT_ADDRESS_CODE, CRM_TITLE_TYPE_MALE, CRM_GENDER_TYPE_FEMALE,
+    CRM_TITLE_TYPE_FEMALE
 )
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_OPEN_CIF, IDM_MENU_CODE_OPEN_CIF,
@@ -260,6 +261,7 @@ class CtrIdentityDocument(BaseController):
         if first_name is None and middle_name is None and last_name is None:
             return self.response_exception(msg='', detail='Can not split name to fist, middle and last name')
 
+        # check customer_economic_profession_id
         customer_economic_profession_id = identity_document_request.cif_information.customer_economic_profession.id
         if is_create or (customer.customer_economic_profession_id != customer_economic_profession_id):
             await self.get_model_object_by_id(model_id=customer_economic_profession_id,
@@ -308,7 +310,7 @@ class CtrIdentityDocument(BaseController):
             "open_cif_at": now(),
             "open_branch_id": current_user.hrm_branch_code,
             "kyc_level_id": "KYC_1",  # TODO
-            "customer_category_id": "D0682B44BEB3830EE0530100007F1DDC",  # TODO
+            "customer_category_id": "I_11",  # TODO
             "customer_economic_profession_id": customer_economic_profession_id,
             "nationality_id": nationality_id,
             "customer_classification_id": customer_classification_id,
@@ -346,6 +348,13 @@ class CtrIdentityDocument(BaseController):
         }
 
         gender_id = basic_information.gender.id
+        title_id = None
+        if gender_id == CRM_GENDER_TYPE_MALE:
+            title_id = CRM_TITLE_TYPE_MALE
+
+        if gender_id == CRM_GENDER_TYPE_FEMALE:
+            title_id = CRM_TITLE_TYPE_FEMALE
+
         # RULE: Trường hợp đặc biệt: dù tạo mới, cập nhật hay không cũng phải dùng để validate field bên EKYC
         # if is_create or (customer_individual_info.gender_id != gender_id):
         validate_gender = await self.get_model_object_by_id(model_id=gender_id, model=CustomerGender,
@@ -401,7 +410,8 @@ class CtrIdentityDocument(BaseController):
             "under_15_year_old_flag": True if calculate_age(basic_information.date_of_birth) < 15 else False,
             "identifying_characteristics": identity_characteristic,
             "father_full_name": father_full_name_vn,
-            "mother_full_name": mother_full_name_vn
+            "mother_full_name": mother_full_name_vn,
+            "title_id": title_id
         }
 
         ################################################################################################################
