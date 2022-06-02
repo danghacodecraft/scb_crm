@@ -67,17 +67,13 @@ class JointAccountHolder(Base):
     __tablename__ = 'crm_joint_account_holder'
     __table_args__ = {'comment': 'Thông tin đồng chủ sở hữu'}
 
-    id = Column('joint_account_holder_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "),
-                comment='Mã Thông tin đồng chủ sở hữu')
+    joint_account_holder_id = Column('joint_account_holder_id', VARCHAR(36), primary_key=True,
+                                     server_default=text("sys_guid() "),
+                                     comment='Mã Thông tin đồng chủ sở hữu')
     cif_num = Column(VARCHAR(9), nullable=False, comment='Mã Khách hàng')
-    casa_account_id = Column(ForeignKey('crm_casa_account.casa_account_id'), nullable=False,
-                             comment='Số tài khoản hiện tại')
-    joint_account_holder_flag = Column(NUMBER(1, 2, True), comment='Cờ đồng sở hữu tài khoản')
-    joint_account_holder_no = Column(NUMBER(4, 2, True), comment='Số thứ tự tài khoản người đồng sở hữu')
     relationship_type_id = Column(ForeignKey('crm_cust_relationship_type.cust_relationship_type_id'), nullable=False,
                                   comment='Mối quan hệ với khách hàng hiện tại')
-
-    casa_account = relationship('CasaAccount')
+    joint_account_holder_no = Column(NUMBER(4, 2, True), comment='Số thứ tự tài khoản người đồng sở hữu')
 
 
 class AgreementAuthorization(Base):
@@ -99,11 +95,24 @@ class JointAccountHolderAgreementAuthorization(Base):
     __tablename__ = 'crm_joint_acc_agree'
     __table_args__ = {'comment': 'Thỏa thuận/ ủy quyền đồng sở hữu'}
 
-    agreement_authorization_id = Column('agreement_author_id',
-                                        ForeignKey('crm_agreement_authorization.agreement_author_id'), primary_key=True,
-                                        server_default=text("sys_guid() "), comment='Mã thỏa thuận - ủy quyền')
+    joint_acc_agree_id = Column(VARCHAR(36), primary_key=True, server_default=text("sys_guid() "))
     joint_account_holder_id = Column('joint_account_holder_id',
-                                     ForeignKey('crm_joint_account_holder.joint_account_holder_id'), primary_key=True,
+                                     ForeignKey('crm_joint_account_holder.joint_account_holder_id', VARCHAR(36)),
+                                     primary_key=True,
                                      comment='Mã Thông tin đồng chủ sở hữu')
-    method_sign = Column(NUMBER(1, 0, False), comment='Phương thức kí')
     agreement_flag = Column(NUMBER(1, 0, False), comment='Cờ ủy quyền')
+    casa_account_id = Column(VARCHAR(36), nullable=False, comment="Số tài khoản hiện tại")
+    document_file_id = Column(ForeignKey('crm_document_file.joint_account_holder_id', VARCHAR(36)), nullable=False,
+                              comment="Id  mã loại thẻ")
+    active_flag = Column(NUMBER(1, 0, False), nullable=False, comment="Trạng thái thỏa thuận/ ủy quyền")
+    created_at = Column(DateTime, comment='Ngày tạo')
+    updated_at = Column(DateTime, comment='Ngày cập nhật')
+
+
+class MethodSign(Base):
+    __tablename__ = 'crm_method_sign'
+    __table_args__ = {'comment': 'Thông tin phương thức ký'}
+
+    id = Column('method_sign_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "))
+    agreement_author_id = Column(VARCHAR(36), comment="Mã thông tin thỏa thuận - ủy quyền")
+    joint_acc_agree_id = Column(VARCHAR(36), comment="Mã thỏa thuận - ủy quyền")
