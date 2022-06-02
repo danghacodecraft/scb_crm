@@ -26,12 +26,11 @@ from app.utils.constant.gw import (
     GW_CUSTOMER_TYPE_B, GW_CUSTOMER_TYPE_I, GW_DATE_FORMAT, GW_DATETIME_FORMAT,
     GW_DEFAULT_CUSTOMER_CATEGORY, GW_DEFAULT_KHTC_DOI_TUONG,
     GW_DEFAULT_TYPE_ID, GW_DEFAULT_VALUE, GW_GENDER_FEMALE, GW_GENDER_MALE,
-    GW_LANGUAGE, GW_LOC_CHECK_CIF_EXIST, GW_LOCAL_CODE,
-    GW_MARTIAL_STATUS_MARRIED, GW_MARTIAL_STATUS_SINGLE, GW_NO_AGREEMENT_FLAG,
+    GW_LANGUAGE, GW_LOC_CHECK_CIF_EXIST, GW_LOCAL_CODE, GW_NO_AGREEMENT_FLAG,
     GW_NO_MARKETING_FLAG, GW_REQUEST_PARAMETER_CO_OWNER,
     GW_REQUEST_PARAMETER_DEBIT_CARD,
     GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP, GW_SELECT,
-    GW_UDF_NAME, GW_YES
+    GW_UDF_NAME, GW_YES, GW_YES_AGREEMENT_FLAG
 )
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_GW, ERROR_VALIDATE_ONE_FIELD_REQUIRED
@@ -813,7 +812,7 @@ class CtrGWCustomer(BaseController):
         # quảng cáo từ scb
         marketing_flag = GW_YES if customer.advertising_marketing_flag else GW_NO_MARKETING_FLAG
         # thỏa thuận pháo lý
-        agreement_flag = GW_YES if customer.legal_agreement_flag else GW_NO_AGREEMENT_FLAG
+        agreement_flag = GW_YES_AGREEMENT_FLAG if customer.legal_agreement_flag else GW_NO_AGREEMENT_FLAG
 
         # TODO hard core CN_00_CUNG_CAP_TT_FATCA, KHTC_DOI_TUONG, CUNG_CAP_DOANH_THU_THUAN
         udf_value = f"KHONG~{first_row.AverageIncomeAmount.id}~{cust_professional.career_id}~{marketing_flag}~KHONG~{agreement_flag}~{GW_DEFAULT_KHTC_DOI_TUONG}"
@@ -850,8 +849,7 @@ class CtrGWCustomer(BaseController):
             "cor_country": GW_DEFAULT_VALUE,
             "cor_desc": GW_DEFAULT_VALUE,
             "coowner_relationship": GW_DEFAULT_VALUE,
-            # TODO hard core tình trạng hôn nhân (MARITAL_STATUS)
-            "martial_status": GW_MARTIAL_STATUS_MARRIED if cust_individual.marital_status_id == "DOC_THAN" else GW_MARTIAL_STATUS_SINGLE,
+            "martial_status": cust_individual.marital_status_id,
             "p_us_res_status": "N",
             "p_vst_us_prev": "N",
             "p_field9": GW_DEFAULT_VALUE,
