@@ -115,7 +115,7 @@ class GWCustomerInfoDetailResponse(BaseGWSchema):
     resident_address: GWCustomerDetailAddressInfo = Field(..., description="Thông tin địa chỉ thường trú")
     contact_address: GWCustomerDetailAddressInfo = Field(..., description="Thông tin địa chỉ liên hệ")
     job_info: OptionalDropdownResponse = Field(..., description="Thông tin việc làm")
-    branch_info: OptionalDropdownResponse = Field(..., description="Thông tin đơn vị"),
+    branch_info: OptionalDropdownResponse = Field(..., description="Thông tin đơn vị")
     avatar_url: Optional[str] = Field(..., description="URL hình ảnh đại diện của người dùng")
 
 
