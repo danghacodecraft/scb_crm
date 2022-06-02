@@ -49,14 +49,25 @@ class CtrTemplateDetail(BaseController):
         # Thông tin khách hàng
         if customer_db:
             cust = customer_db[0]
+            if cust.CustomerGender.name == "Male":
+                data_request.update({
+                    "S1.A.1.2.4": ["Nam"]
+                })
+            elif cust.CustomerGender.name == "Female":
+                data_request.update({
+                    "S1.A.1.2.4": ["Nữ"]
+                })
+            else:
+                data_request.update({
+                    "S1.A.1.2.4": ["Other"]
+                })
             data_request.update({
                 "S1.A.1.1.3": cust.Customer.full_name_vn,
-                "S1.A.1.2.4": [cust.CustomerGender.name],
                 "S1.A.1.2.8": datetime_to_string(cust.CustomerIndividualInfo.date_of_birth,
                                                  DATE_INPUT_OUTPUT_EKYC_FORMAT),
                 "S1.A.1.2.6": cust.AddressProvince.name,
                 "S1.A.1.2.20": cust.AddressCountry.name,
-                "S1.A.1.2.23": [cust.ResidentStatus.name],
+                "S1.A.1.2.23": ["Cư trú"] if cust.ResidentStatus.name == "Resident" else ["Không cư trú"],
                 "S1.A.1.3.2": cust.CustomerIdentity.identity_num,
                 "S1.A.1.3.3": datetime_to_string(cust.CustomerIdentity.issued_date, DATE_INPUT_OUTPUT_EKYC_FORMAT),
                 "S1.A.1.3.4": cust.PlaceOfIssue.name,
@@ -233,14 +244,26 @@ class CtrTemplateDetail(BaseController):
         # Thông tin khách hàng
         if customer_db:
             cust = customer_db[0]
+            if cust.CustomerGender.name == "Male":
+                data_request.update({
+                    "S1.A.1.2.4": ["Nam/Male"]
+                })
+            elif cust.CustomerGender.name == "Female":
+                data_request.update({
+                    "S1.A.1.2.4": ["Nữ/Female"]
+                })
+            else:
+                data_request.update({
+                    "S1.A.1.2.4": ["Khác/Other"]
+                })
             data_request.update({
                 "S1.A.1.1.3": cust.Customer.full_name_vn,
-                "S1.A.1.2.4": [cust.CustomerGender.name],
                 "S1.A.1.2.8": datetime_to_string(cust.CustomerIndividualInfo.date_of_birth,
                                                  DATE_INPUT_OUTPUT_EKYC_FORMAT),
                 "S1.A.1.2.6": cust.AddressProvince.name,
                 "S1.A.1.2.20": cust.AddressCountry.name,
-                "S1.A.1.2.23": [cust.ResidentStatus.name],
+                "S1.A.1.2.23": ["Cư trú/Resident"]
+                if cust.ResidentStatus.name == "Resident" else ["Không cư trú/Non-resident"],
                 "S1.A.1.3.2": cust.CustomerIdentity.identity_num,
                 "S1.A.1.3.3": datetime_to_string(cust.CustomerIdentity.issued_date, DATE_INPUT_OUTPUT_EKYC_FORMAT),
                 "S1.A.1.3.4": cust.PlaceOfIssue.name,
