@@ -1,5 +1,5 @@
 import asyncio
-from typing import List, Optional
+from typing import List, Optional, Any
 from urllib.parse import urlparse
 
 import aiohttp
@@ -7,10 +7,15 @@ from loguru import logger
 from starlette import status
 
 from app.settings.service import SERVICE
+from app.third_parties.oracle.base import SessionLocal
+from app.third_parties.oracle.models.document_file.model import DocumentFile
+from app.utils.constant.document_file import DOCUMENT_FILE_TYPE_CODE_FILE, DOCUMENT_FILE_FOLDER_CODE_DEFAULT
+from app.utils.functions import generate_uuid
 
 
 class ServiceFile:
     session: Optional[aiohttp.ClientSession] = None
+    oracle_session: Optional[SessionLocal] = None
 
     url = SERVICE["file"]['url']
     cdn = SERVICE["file"]['service_file_cdn']
@@ -21,12 +26,25 @@ class ServiceFile:
 
     def start(self):
         self.session = aiohttp.ClientSession()
+        self.oracle_session = SessionLocal()
 
     async def stop(self):
         await self.session.close()
         self.session = None
 
-    async def __call_upload_file(self, file: bytes, name: str, return_download_file_url_flag: bool) -> Optional[dict]:
+    async def __call_upload_file(
+            self,
+            file: bytes,
+            name: str,
+            return_download_file_url_flag: bool,
+            save_to_db_flag: bool = False,
+            booking_id: Optional[str] = None,
+            **kwargs
+    ) -> tuple[bool, Any]:
+        """
+            Upload file lưu vào DB -> current_user
+            Upload file không lưu vào DB -> current_user=None
+        """
         api_url = f'{self.url}/api/v1/files/'
 
         form_data = aiohttp.FormData()
@@ -48,16 +66,57 @@ class ServiceFile:
                 if upload_file_response_body['file_url']:
                     upload_file_response_body['file_url'] = self.replace_with_cdn(upload_file_response_body['file_url'])
 
-                return upload_file_response_body
+                # Lưu vào DB
+                document_file_id = None
+                if save_to_db_flag:
+                    document_file_id = generate_uuid()
+                    document_file = dict(
+                        id=document_file_id,
+                        file_uuid=upload_file_response_body['uuid'],
+                        root_id=document_file_id,
+                        booking_id=booking_id,
+                        document_file_type_id=DOCUMENT_FILE_TYPE_CODE_FILE
+                        if 'document_file_type_id' not in kwargs.keys()
+                        else kwargs.get('document_file_type_id'),
+                        document_file_folder_id=DOCUMENT_FILE_FOLDER_CODE_DEFAULT
+                        if 'document_file_folder_id' not in kwargs.keys()
+                        else kwargs.get('document_file_folder_id'),
+                    )
+
+                    {document_file.update({key: value}) for key, value in kwargs.items()}
+
+                    self.oracle_session.add(DocumentFile(**document_file))
+                    self.oracle_session.commit()
+
+                upload_file_response_body.update(
+                    document_file_id=document_file_id
+                )
+
+                return True, upload_file_response_body
         except Exception as ex:
             logger.error(str(ex))
-            return await response.json()
+            return False, str(ex)
 
-    async def upload_file(self, file: bytes, name: str, return_download_file_url_flag: bool = True) -> Optional[dict]:
+    async def upload_file(
+            self,
+            file: bytes,
+            name: str,
+            booking_id: Optional[str] = None,
+            return_download_file_url_flag: bool = True,
+            save_to_db_flag: bool = False,
+            **kwargs
+    ) -> tuple[bool, Any]:
+        """
+        Upload file lưu vào DB -> current_user
+        Upload file không lưu vào DB -> current_user=None
+        """
         return await self.__call_upload_file(
+            booking_id=booking_id,
+            save_to_db_flag=save_to_db_flag,
             file=file,
             name=name,
-            return_download_file_url_flag=return_download_file_url_flag
+            return_download_file_url_flag=return_download_file_url_flag,
+            **kwargs
         )
 
     async def upload_multi_file(self, files: List[bytes], names: List[str],

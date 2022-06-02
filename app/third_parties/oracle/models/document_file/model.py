@@ -1,6 +1,5 @@
-from sqlalchemy import DATE, VARCHAR, ForeignKey, text
+from sqlalchemy import DATE, VARCHAR, ForeignKey, text, Column
 from sqlalchemy.orm import relationship
-from sqlalchemy.testing.schema import Column
 
 from app.third_parties.oracle.base import Base
 
@@ -9,7 +8,13 @@ class DocumentFileFolder(Base):
     __tablename__ = 'crm_document_file_folder'
     __table_args__ = {'comment': 'Thư mục tệp tài liệu'}
 
-    id = Column('document_file_folder_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "))
+    id = Column(
+        'document_file_folder_id',
+        VARCHAR(36),
+        primary_key=True,
+        server_default=text("sys_guid() "),
+        comment='Mã thư mục file'
+    )
     code = Column('document_file_folder_code', VARCHAR(50), nullable=False, comment='Mã thư mục file')
     name = Column('document_file_folder_name', VARCHAR(250), nullable=False, comment='Tên thư mục file')
     level = Column('document_file_folder_level', VARCHAR(250), nullable=False, comment='Cấp độ thư mục')
@@ -29,14 +34,12 @@ class DocumentFile(Base):
     __tablename__ = 'crm_document_file'
     __table_args__ = {'comment': 'Tập tin tài liệu'}
 
-    id = Column('document_file_id', VARCHAR(36), primary_key=True,
-                server_default=text("sys_guid() "))
-    booking_id = Column(ForeignKey('crm_booking.booking_id'))
-    document_file_type_id = Column(ForeignKey('crm_document_file_type.document_file_type_id'))
-    document_file_folder_id = Column(ForeignKey('crm_document_file_folder.document_file_folder_id'))
-    file_number = Column(VARCHAR(255), nullable=True, comment='Số văn bản')
-    parent_id = Column('document_file_parent_id', VARCHAR(36), nullable=True, comment='Mã thư mục cấp cha')
-    root_id = Column('document_file_root_id', VARCHAR(36), nullable=True, comment='Mã thư mục gốc')
+    id = Column('document_file_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "))
+    booking_id = Column(ForeignKey('crm_booking.booking_id'), nullable=True)
+    document_file_type_id = Column(ForeignKey('crm_document_file_type.document_file_type_id'), nullable=True)
+    document_file_folder_id = Column(ForeignKey('crm_document_file_folder.document_file_folder_id'), nullable=True)
+    parent_id = Column(VARCHAR(36), nullable=True, comment='Mã thư mục cấp cha')
+    root_id = Column(VARCHAR(36), nullable=True, comment='Mã thư mục gốc')
     file_uuid = Column(VARCHAR(255), nullable=True, comment='UUID của file')
     expired_date = Column(DATE, nullable=True, comment='Ngày hết hiệu lực')
     created_by_branch_name = Column(VARCHAR(255), nullable=True, comment='Tên nơi khởi tạo')
