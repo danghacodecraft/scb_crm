@@ -10,7 +10,7 @@ from app.third_parties.oracle.models.cif.basic_information.contact.model import 
     CustomerAddress, CustomerProfessional
 )
 from app.third_parties.oracle.models.cif.basic_information.identity.model import (
-    CustomerIdentity
+    CustomerIdentity, CustomerIdentityImage
 )
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
@@ -30,6 +30,7 @@ from app.third_parties.oracle.models.master_data.address import (
 from app.third_parties.oracle.models.master_data.others import (
     AverageIncomeAmount, TransactionJob
 )
+from app.utils.constant.cif import IMAGE_TYPE_FACE
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_GW, ERROR_NO_DATA, ERROR_OPEN_CIF
 )
@@ -249,3 +250,19 @@ async def repos_get_teller_info(booking_id: str, session: Session):
     ).scalar()
 
     return ReposReturn(data=teller)
+
+
+async def repos_get_customer_avatar_url_from_cif(cif_number: str, session: Session):
+    avatar_url = session.execute(
+        select(
+            CustomerIdentityImage.image_url
+        )
+        .join(CustomerIdentity, CustomerIdentityImage.identity_id == CustomerIdentity.id)
+        .join(Customer, CustomerIdentity.customer_id == Customer.id)
+        .filter(
+            Customer.cif_number == cif_number,
+            CustomerIdentityImage.image_type_id == IMAGE_TYPE_FACE
+        )
+    ).scalar()
+
+    return ReposReturn(data=avatar_url)
