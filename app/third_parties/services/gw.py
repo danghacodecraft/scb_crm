@@ -14,6 +14,7 @@ from app.utils.constant.gw import (
     GW_DEPOSIT_ACCOUNT_TD, GW_EMPLOYEE_FROM_CODE, GW_EMPLOYEE_FROM_NAME,
     GW_EMPLOYEES, GW_ENDPOINT_URL_CHECK_EXITS_ACCOUNT_CASA,
     GW_ENDPOINT_URL_RETRIEVE_AUTHORIZED_ACCOUNT_NUM,
+    GW_ENDPOINT_URL_RETRIEVE_CLOSE_CASA_ACCOUNT,
     GW_ENDPOINT_URL_RETRIEVE_CO_OWNER_ACCOUNT_NUM,
     GW_ENDPOINT_URL_RETRIEVE_CURRENT_ACCOUNT_CASA,
     GW_ENDPOINT_URL_RETRIEVE_CURRENT_ACCOUNT_CASA_FROM_CIF,
@@ -351,6 +352,75 @@ class ServiceGW:
         )
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_OPEN_CASA_ACCOUNT}"
+
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW][Report] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data
+                else:
+                    return_data = await response.json()
+                    return True, return_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data
+
+    async def get_close_casa_account(
+            self,
+            current_user: UserInfoResponse,
+            account_info,
+            p_blk_closure,
+            p_blk_charge_main,
+            p_blk_charge_details,
+            p_blk_udf,
+            staff_info_checker,
+            staff_info_maker
+    ):
+        """
+        Mở tài khoản thanh toán
+        """
+        data_input = {
+            "account_info": {
+                "account_num": account_info.account_num
+            },
+            "p_blk_closure": [
+                {
+                    "CLOSE_MODE": item.close_mode,
+                    "ACCOUNT_NO": item.account_no
+                }
+                for item in p_blk_closure],
+            "p_blk_charge_main": p_blk_charge_main,
+            "p_blk_charge_details": p_blk_charge_details,
+            "p_blk_udf": p_blk_udf,
+            "staff_info_checker": {
+                "staff_name": staff_info_checker.staff_name
+            },
+            "staff_info_maker": {
+                "staff_name": staff_info_maker.staff_name
+            }
+        }
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="closeCASA_in", data_input=data_input
+        )
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_CLOSE_CASA_ACCOUNT}"
 
         return_errors = dict(
             loc="SERVICE GW",

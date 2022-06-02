@@ -19,8 +19,9 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.example import (
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWCasaAccountByCIFNumberRequest, GWCasaAccountByCIFNumberResponse,
     GWCasaAccountCheckExistRequest, GWCasaAccountCheckExistResponse,
-    GWCasaAccountResponse, GWOpenCasaAccountRequest, GWOpenCasaAccountResponse,
-    GWReportColumnChartHistoryAccountInfoRequest,
+    GWCasaAccountResponse, GWCloseCasaAccountRequest,
+    GWCloseCasaAccountResponse, GWOpenCasaAccountRequest,
+    GWOpenCasaAccountResponse, GWReportColumnChartHistoryAccountInfoRequest,
     GWReportColumnChartHistoryAccountInfoResponse,
     GWReportPieChartHistoryAccountInfoRequest,
     GWReportPieChartHistoryAccountInfoResponse,
@@ -150,6 +151,25 @@ async def view_gw_get_open_casa_account(
         request=request
     )
     return ResponseData[GWOpenCasaAccountResponse](**gw_open_casa_account_info)
+
+
+@router.post(
+    path="/close-casa/",
+    name="[GW] Đóng tài khoản thanh toán",
+    description="[GW] Đóng tài khoản thanh toán",
+    responses=swagger_response(
+        response_model=ResponseData[GWCloseCasaAccountResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_get_close_casa_account(
+        request: GWCloseCasaAccountRequest = Body(..., description="Thông tin tài khoản"),
+        current_user=Depends(get_current_user_from_header())
+):
+    gw_close_casa_account_info = await CtrGWCasaAccount(current_user).ctr_gw_get_close_casa_account(
+        request=request
+    )
+    return ResponseData[GWCloseCasaAccountResponse](**gw_close_casa_account_info)
 
 
 @router.post(
