@@ -230,7 +230,7 @@ class GWAccountInfoCloseCasaRequest(BaseGWSchema):
 
 
 class GWCloseCasaClosureResponse(BaseGWSchema):
-    close_mode: str = Field(..., description="CLOSE_MODE")
+    close_mode: str = Field(..., description="Loại khóa tài khoản")
     account_no: str = Field(..., description="Số tài khoản")
 
 
