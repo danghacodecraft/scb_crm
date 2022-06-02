@@ -1,17 +1,23 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.payment_account.co_owner.repository import (
-    repos_detail_co_owner, repos_get_account_holders,
-    repos_get_agreement_authorizations, repos_get_casa_account,
+    repos_detail_co_owner, repos_get_casa_account,
     repos_get_co_owner, repos_save_co_owner
 )
 from app.api.v1.endpoints.cif.payment_account.co_owner.schema import (
     AccountHolderRequest
 )
 from app.api.v1.endpoints.cif.repository import (
-    repos_check_exist_cif, repos_get_booking, repos_validate_cif_number
+    repos_get_booking, repos_validate_cif_number
 )
-from app.settings.event import service_soa
-from app.utils.functions import generate_uuid
+from app.api.v1.endpoints.third_parties.gw.customer.controller import (
+    CtrGWCustomer
+)
+from app.third_parties.oracle.models.master_data.customer import (
+    CustomerRelationshipType
+)
+from app.utils.constant.gw import GW_REQUEST_PARAMETER_DEFAULT
+from app.utils.error_messages import ERROR_CIF_NUMBER_NOT_EXIST
+from app.utils.functions import generate_uuid, dropdown
 
 
 class CtrCoOwner(BaseController):
@@ -23,15 +29,35 @@ class CtrCoOwner(BaseController):
         )
 
         # lấy danh sách cif_number account request
-        for cif_number in co_owner.joint_account_holders:
+        customer_relationship_not_exist_list = []
+        for index, joint_account_holder in enumerate(co_owner.joint_account_holders):
             # check số cif_number có tồn tại trong SOA
-            response = self.call_repos(
-                await repos_check_exist_cif(cif_number=cif_number.cif_number)
+            # response = self.call_repos(
+            #     await repos_check_exist_cif(cif_number=joint_account_holder.cif_number)
+            # )
+            # if not response["is_existed"]:
+            #     return self.response_exception(
+            #         msg="cif_number not exits in SOA", loc="AccountHolderRequest"
+            #     )
+
+            # check số cif_number có tồn tại trong GW
+            cif_number = joint_account_holder.cif_number
+            is_existed = CtrGWCustomer().ctr_gw_check_exist_customer_detail_info(
+                cif_number=cif_number
             )
-            if not response["is_existed"]:
+
+            if not is_existed:
                 return self.response_exception(
-                    msg="cif_number not exits in SOA", loc="AccountHolderRequest"
+                    msg=ERROR_CIF_NUMBER_NOT_EXIST, loc=f"joint_account_holders -> cif_number : {cif_number}"
                 )
+            customer_relationship_not_exist_list.append(joint_account_holder.customer_relationship.id)
+
+        # check exist customer relationship
+        await self.get_model_objects_by_ids(
+            model_ids=customer_relationship_not_exist_list,
+            model=CustomerRelationshipType,
+            loc=f"joint_account_holder -> customer_relationship -> id: {customer_relationship_not_exist_list}"
+        )
 
         # # check cif_number có tồn tại
         # self.call_repos(
@@ -47,6 +73,7 @@ class CtrCoOwner(BaseController):
                 {
                     "id": generate_uuid(),
                     "cif_num": account_holder.cif_number,
+                    "relationship_type_id": account_holder.customer_relationship.id,
                     "casa_account_id": casa_account,
                     "joint_account_holder_flag": co_owner.joint_account_holder_flag,
                     "joint_account_holder_no": 1,
@@ -96,69 +123,59 @@ class CtrCoOwner(BaseController):
                 session=self.oracle_session,
             )
         )
-        agreement_authorizations = self.call_repos(
-            await repos_get_agreement_authorizations(
-                session=self.oracle_session
+        joint_account_holder_flag = False
+        number_of_joint_account_holder = 0
+        joint_account_holders = []
+
+        for casa_account, joint_account_holder, customer_relationship_type in detail_co_owner:
+            cif_number = joint_account_holder.cif_num
+
+            data = await CtrGWCustomer(current_user=self.current_user).ctr_gw_get_customer_info_detail(
+                cif_number=cif_number,
+                parameter=GW_REQUEST_PARAMETER_DEFAULT
             )
+
+            gw_data = data['data']
+            identity_document = gw_data['id_info']
+            identity_number = identity_document['number']
+            issued_date = identity_document['issued_date']
+            expired_date = identity_document['expired_date']
+            place_of_issue = identity_document['place_of_issue']
+
+            joint_account_holders.append(dict(
+                id=cif_number,
+                basic_information=dict(
+                    cif_number=cif_number,
+                    customer_relationship=dropdown(customer_relationship_type),
+                    full_name_vn=gw_data['fullname_vn'],
+                    date_of_birth=gw_data['date_of_birth'],
+                    gender=gw_data['gender'],
+                    nationality=gw_data['nationality'],
+                    mobile_number=gw_data['mobile_phone'],
+                    signature=None
+                ),
+                identity_document=dict(
+                    identity_number=identity_number,
+                    issued_date=issued_date,
+                    expired_date=expired_date,
+                    place_of_issue=place_of_issue,
+                ),
+                address_information=dict(
+                    contact_address=gw_data['contact_address']['address_full'],
+                    resident_address=gw_data['resident_address']['address_full']
+                ),
+                avatar_url=None
+            ))
+            number_of_joint_account_holder += 1
+
+        response_data = dict(
+            joint_account_holder_flag=joint_account_holder_flag,
+            number_of_joint_account_holder=number_of_joint_account_holder,
+            joint_account_holders=joint_account_holders,
+            # agreement_authorization=agreement_authorization
         )
-        account_holders = self.call_repos(
-            await repos_get_account_holders(
-                cif_id=cif_id,
-                session=self.oracle_session
-            )
-        )
-        signature__data = {}
-        method__sign = {}
 
-        for item in account_holders:
-            is_success, customer = await service_soa.retrieve_customer_ref_data_mgmt(
-                cif_number=item.JointAccountHolder.cif_num
-            )
-            # lấy full_name_vn từ cif_number
-            customer_detail = customer.get('data')
-            agree_author = item.JointAccountHolderAgreementAuthorization.agreement_authorization_id
-            if agree_author not in signature__data:
-
-                signature__data[agree_author] = []
-                # lấy phương thức ký và flag
-                method__sign[agree_author] = {
-                    'method_sign': None,
-                    'agreement_flag': None
-                }
-                # gán lại giá trị cho phương thức ký và flag
-                method__sign[agree_author]['method_sign'] = item.JointAccountHolderAgreementAuthorization.method_sign
-                method__sign[agree_author]['agreement_flag'] = item.JointAccountHolderAgreementAuthorization.agreement_flag
-            # lấy cif_num và full_name_vn
-            signature__data[agree_author].append({
-                'cif_number': item.JointAccountHolder.cif_num,
-                'full_name_vn': customer_detail["basic_information"]["full_name_vn"]
-            })
-
-        agreement_authorization = [
-            {
-                "id": item.id,
-                "code": item.code,
-                "name": item.name,
-                "active_flag": None,
-                "method_sign": None,
-                'signature_list': None
-            }
-            for item in agreement_authorizations
-        ]
-
-        for agreement_author in agreement_authorization:
-            for agree_author, signature_list in signature__data.items():
-                if agreement_author['id'] == agree_author:
-                    agreement_author['signature_list'] = signature_list
-
-            for agreements_author, method_sign in method__sign.items():
-                if agreement_author['id'] == agreements_author:
-                    agreement_author['method_sign'] = method_sign['method_sign']
-                    agreement_author['active_flag'] = method_sign['agreement_flag']
-
-        detail_co_owner.update(agreement_authorization=agreement_authorization)
-
-        return self.response(data=detail_co_owner)
+        return self.response(data=response_data)
 
         # query db crm
         # account_holders, list_cif_number = self.call_repos(

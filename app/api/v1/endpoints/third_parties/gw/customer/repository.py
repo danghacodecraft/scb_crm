@@ -1,7 +1,7 @@
 from typing import List
 
 from sqlalchemy import insert, select, update
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn, auto_commit
 from app.api.v1.endpoints.user.schema import AuthResponse
@@ -17,6 +17,9 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
 )
 from app.third_parties.oracle.models.cif.basic_information.personal.model import (
     CustomerIndividualInfo
+)
+from app.third_parties.oracle.models.cif.form.model import (
+    Booking, TransactionDaily, TransactionSender
 )
 from app.third_parties.oracle.models.cif.payment_account.model import (
     CasaAccount
@@ -227,3 +230,22 @@ async def repos_get_customer_open_cif(
         return ReposReturn(is_error=True, msg=ERROR_NO_DATA)
 
     return ReposReturn(data=customer)
+
+
+async def repos_get_teller_info(booking_id: str, session: Session):
+
+    transaction_daily = aliased(TransactionDaily, name="TransactionDailyRoot")
+
+    teller = session.execute(
+        select(
+            TransactionSender,
+            TransactionDaily,
+            transaction_daily
+        )
+        .join(Booking, Booking.transaction_id == TransactionDaily.transaction_id)
+        .join(transaction_daily, TransactionDaily.transaction_root_id == transaction_daily.transaction_id)
+        .join(TransactionSender, transaction_daily.transaction_id == TransactionSender.transaction_id)
+        .filter(Booking.id == booking_id)
+    ).scalar()
+
+    return ReposReturn(data=teller)

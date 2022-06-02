@@ -1,13 +1,11 @@
 from app.api.base.controller import BaseController
-from app.api.v1.endpoints.cif.repository import (
-    repos_get_booking, repos_get_initializing_customer
-)
+from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_get_casa_account, repos_get_customer_ids_from_cif_numbers,
-    repos_get_customer_open_cif, repos_gw_get_authorized,
-    repos_gw_get_co_owner, repos_gw_get_customer_info_detail,
-    repos_gw_get_customer_info_list, repos_gw_open_cif,
-    repos_update_cif_number_customer
+    repos_get_customer_open_cif, repos_get_teller_info,
+    repos_gw_get_authorized, repos_gw_get_co_owner,
+    repos_gw_get_customer_info_detail, repos_gw_get_customer_info_list,
+    repos_gw_open_cif, repos_update_cif_number_customer
 )
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
@@ -30,11 +28,14 @@ from app.utils.constant.gw import (
     GW_DEFAULT_TYPE_ID, GW_DEFAULT_VALUE, GW_GENDER_FEMALE, GW_GENDER_MALE,
     GW_LANGUAGE, GW_LOC_CHECK_CIF_EXIST, GW_LOCAL_CODE,
     GW_MARTIAL_STATUS_MARRIED, GW_MARTIAL_STATUS_SINGLE, GW_NO_AGREEMENT_FLAG,
-    GW_NO_MARKETING_FLAG, GW_REQUEST_PARAMETER_DEBIT_CARD,
+    GW_NO_MARKETING_FLAG, GW_REQUEST_PARAMETER_CO_OWNER,
+    GW_REQUEST_PARAMETER_DEBIT_CARD,
     GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP, GW_SELECT,
-    GW_UDF_NAME, GW_YES, GW_REQUEST_PARAMETER_CO_OWNER
+    GW_UDF_NAME, GW_YES
 )
-from app.utils.error_messages import ERROR_CALL_SERVICE_GW, ERROR_VALIDATE_ONE_FIELD_REQUIRED
+from app.utils.error_messages import (
+    ERROR_CALL_SERVICE_GW, ERROR_VALIDATE_ONE_FIELD_REQUIRED
+)
 from app.utils.functions import (
     date_string_to_other_date_string_format, date_to_string, now
 )
@@ -713,7 +714,7 @@ class CtrGWCustomer(BaseController):
 
         return self.response(data=response_data)
 
-    async def ctr_gw_open_cif(self, cif_id: str):
+    async def ctr_gw_open_cif(self, cif_id: str, BOOKING_ID: str):
         current_user = self.current_user
 
         # check cif đang tạo
@@ -725,6 +726,10 @@ class CtrGWCustomer(BaseController):
         response_casa_account = self.call_repos(await repos_get_casa_account(
             cif_id=cif_id, session=self.oracle_session
         ))
+
+        # TODO get gdv
+        teller = self.call_repos(await repos_get_teller_info(booking_id=BOOKING_ID, session=self.oracle_session)) # noqa
+
         account_info = {
             "account_class_code": GW_DEFAULT_VALUE,
             "account_auto_create_cif": GW_DEFAULT_VALUE,
@@ -817,9 +822,9 @@ class CtrGWCustomer(BaseController):
             # TODO hard core customer category
             "customer_category": GW_DEFAULT_CUSTOMER_CATEGORY,
             "customer_type": GW_CUSTOMER_TYPE_B if customer.customer_type_id == CUSTOMER_TYPE_ORGANIZE else GW_CUSTOMER_TYPE_I,
-            "cus_ekyc": f"E{customer.kyc_level_id}" if customer.kyc_level_id else GW_DEFAULT_VALUE,
+            "cus_ekyc": customer.kyc_level_id,
             "full_name": customer.full_name_vn,
-            "gender": GW_GENDER_FEMALE if cust_individual.gender_id == CRM_GENDER_TYPE_FEMALE else GW_GENDER_MALE,
+            "gender": cust_individual.gender_id,
             "telephone": customer.telephone_number if customer.telephone_number else GW_DEFAULT_VALUE,
             "mobile_phone": customer.mobile_number if customer.mobile_number else GW_DEFAULT_VALUE,
             "email": customer.email if customer.email else GW_DEFAULT_VALUE,
@@ -889,9 +894,13 @@ class CtrGWCustomer(BaseController):
                 }
             },
             "staff_info_checker": {
+                # "staff_name": teller.user_name
+                # TODO hard core phân quyền core
                 "staff_name": "HOANT2"
             },
             "staff_info_maker": {
+                # "staff_name": current_user.user_info.username
+                # TODO hard core phân quyền core
                 "staff_name": "KHANHLQ"
             },
             "udf_info": {
@@ -899,13 +908,14 @@ class CtrGWCustomer(BaseController):
                 "udf_value": udf_value
             }
         }
-        # get booking by cif
-        booking = self.call_repos(await repos_get_booking(
-            cif_id=cif_id, session=self.oracle_session
-        ))
+
+        # # get booking by cif
+        # booking = self.call_repos(await repos_get_booking(
+        #     cif_id=cif_id, session=self.oracle_session
+        # ))
 
         transaction_job = {
-            "booking_id": booking.id,
+            "booking_id": BOOKING_ID,
             "business_job_id": TRANSACTION_JOB_OPEN_CIF,
             "complete_flag": True,
             "error_code": "",

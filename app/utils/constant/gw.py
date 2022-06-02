@@ -17,6 +17,7 @@ GW_ENDPOINT_URL_RETRIEVE_REPORT_TD_FROM_CIF = "/report/v1.0/rest/selectReportTDF
 GW_ENDPOINT_URL_RETRIEVE_AUTHORIZED_ACCOUNT_NUM = "/customer/v1.0/rest/selectAuthorizedRefDataMgmtAccNum"
 GW_ENDPOINT_URL_RETRIEVE_CO_OWNER_ACCOUNT_NUM = "/customer/v1.0/rest/selectCoownerRefDataMgmtAccNum"
 GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE = "/employee/v1.0/rest/selectEmployeeInfoFromCode"
+GW_ENDPOINT_URL_CHECK_EXITS_ACCOUNT_CASA = "/currentaccount/v1.0/rest/retrieveCurrentAccountCASA"
 GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_USER_NAME = "/employee/v1.0/rest/selectEmployeeInfoFromUserName"
 GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_LIST_FROM_ORG_ID = "/employee/v1.0/rest/selectEmployeeListFromOrgId"
 GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_CODE = "/employee/v1.0/rest/retrieveEmployeeInfoFromCode"
@@ -62,6 +63,7 @@ GW_AUTHORIZED_REF_DATA_MGM_ACC_NUM = "AuthorizedRefDataMgmAccNum"
 
 GW_CO_OWNER_REF_DATA_MGM_ACC_NUM = "CoownerRefDataMgmAccNum"
 
+GW_RETRIEVE_CASA_ACCOUNT_DETAIL = "CurrentAccountCASA"
 GW_EMPLOYEE_FROM_CODE = "EmployeeFromCode"
 GW_EMPLOYEE_FROM_NAME = "EmployeeFromName"
 GW_EMPLOYEES = "Employees"
