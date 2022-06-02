@@ -817,6 +817,10 @@ class CtrGWCustomer(BaseController):
         # TODO hard core CN_00_CUNG_CAP_TT_FATCA, KHTC_DOI_TUONG, CUNG_CAP_DOANH_THU_THUAN
         udf_value = f"KHONG~{first_row.AverageIncomeAmount.id}~{cust_professional.career_id}~{marketing_flag}~KHONG~{agreement_flag}~{GW_DEFAULT_KHTC_DOI_TUONG}"
 
+        issued_date = cust_identity.issued_date
+        # replace issued_date_year -> 2018
+        issued_date_new = issued_date.replace(year=2018)
+
         customer_info = {
             # TODO hard core customer category
             "customer_category": GW_DEFAULT_CUSTOMER_CATEGORY,
@@ -863,7 +867,7 @@ class CtrGWCustomer(BaseController):
             "cif_info": cif_info,
             "id_info_main": {
                 "id_num": cust_identity.identity_num,
-                "id_issued_date": date_to_string(cust_identity.issued_date, _format=GW_DATE_FORMAT),
+                "id_issued_date": date_to_string(issued_date_new, _format=GW_DATE_FORMAT),
                 "id_expired_date": date_to_string(cust_identity.expired_date, _format=GW_DATE_FORMAT),
                 "id_issued_location": cust_identity.place_of_issue_id,
                 "id_type": GW_DEFAULT_TYPE_ID
