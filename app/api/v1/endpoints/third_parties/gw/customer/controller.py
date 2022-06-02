@@ -822,9 +822,9 @@ class CtrGWCustomer(BaseController):
             # TODO hard core customer category
             "customer_category": GW_DEFAULT_CUSTOMER_CATEGORY,
             "customer_type": GW_CUSTOMER_TYPE_B if customer.customer_type_id == CUSTOMER_TYPE_ORGANIZE else GW_CUSTOMER_TYPE_I,
-            "cus_ekyc": f"E{customer.kyc_level_id}" if customer.kyc_level_id else GW_DEFAULT_VALUE,
+            "cus_ekyc": customer.kyc_level_id,
             "full_name": customer.full_name_vn,
-            "gender": GW_GENDER_FEMALE if cust_individual.gender_id == CRM_GENDER_TYPE_FEMALE else GW_GENDER_MALE,
+            "gender": cust_individual.gender_id,
             "telephone": customer.telephone_number if customer.telephone_number else GW_DEFAULT_VALUE,
             "mobile_phone": customer.mobile_number if customer.mobile_number else GW_DEFAULT_VALUE,
             "email": customer.email if customer.email else GW_DEFAULT_VALUE,
