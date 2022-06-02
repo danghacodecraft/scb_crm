@@ -1,7 +1,7 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.template.detail.repository import (
     repo_customer_address, repo_customer_info, repo_debit_card, repo_e_banking,
-    repo_form, repo_guardians, repo_join_account_holder, repo_sub_identity
+    repo_form, repo_guardians, repo_sub_identity
 )
 from app.settings.config import DATE_INPUT_OUTPUT_EKYC_FORMAT
 from app.utils.constant.cif import CONTACT_ADDRESS_CODE, RESIDENT_ADDRESS_CODE
@@ -23,7 +23,7 @@ class CtrTemplateDetail(BaseController):
         customer_address = self.call_repos(await repo_customer_address(cif_id=cif_id, session=self.oracle_session))
         subs_identity = self.call_repos(await repo_sub_identity(cif_id=cif_id, session=self.oracle_session))
         guardians = self.call_repos(await repo_guardians(cif_id=cif_id, session=self.oracle_session))
-        customer_join = self.call_repos(await repo_join_account_holder(cif_id=cif_id, session=self.oracle_session))
+        # customer_join = self.call_repos(await repo_join_account_holder(cif_id=cif_id, session=self.oracle_session))
         debit_cards = self.call_repos(await repo_debit_card(cif_id=cif_id, session=self.oracle_session))
         e_banking = self.call_repos(await repo_e_banking(cif_id=cif_id, session=self.oracle_session))
         # fatca_info = self.call_repos(await repos_fatca_info(cif_id=cif_id, session=self.oracle_session))
@@ -49,14 +49,25 @@ class CtrTemplateDetail(BaseController):
         # Thông tin khách hàng
         if customer_db:
             cust = customer_db[0]
+            if cust.CustomerGender.name == "Male":
+                data_request.update({
+                    "S1.A.1.2.4": ["Nam"]
+                })
+            elif cust.CustomerGender.name == "Female":
+                data_request.update({
+                    "S1.A.1.2.4": ["Nữ"]
+                })
+            else:
+                data_request.update({
+                    "S1.A.1.2.4": ["Other"]
+                })
             data_request.update({
                 "S1.A.1.1.3": cust.Customer.full_name_vn,
-                "S1.A.1.2.4": [cust.CustomerGender.name],
                 "S1.A.1.2.8": datetime_to_string(cust.CustomerIndividualInfo.date_of_birth,
                                                  DATE_INPUT_OUTPUT_EKYC_FORMAT),
                 "S1.A.1.2.6": cust.AddressProvince.name,
                 "S1.A.1.2.20": cust.AddressCountry.name,
-                "S1.A.1.2.23": [cust.ResidentStatus.name],
+                "S1.A.1.2.23": ["Cư trú"] if cust.ResidentStatus.name == "Resident" else ["Không cư trú"],
                 "S1.A.1.3.2": cust.CustomerIdentity.identity_num,
                 "S1.A.1.3.3": datetime_to_string(cust.CustomerIdentity.issued_date, DATE_INPUT_OUTPUT_EKYC_FORMAT),
                 "S1.A.1.3.4": cust.PlaceOfIssue.name,
@@ -110,15 +121,16 @@ class CtrTemplateDetail(BaseController):
             data_request.update({"S1.A.1.2.44": guardians_res})
 
         # Người đồng sở hữu
-        if customer_join:
-            customer_join_res = [{
-                # "S1.A.1.8": "",
-                "S1.A.1.8.3": item.CustomerJoin.full_name_vn,
-                "S1.A.1.8.2": item.CustomerJoin.cif_number,
-                "S1.A.1.8.4": item.CustomerIdentity.identity_num
-            } for item in customer_join]
-
-            data_request.update({"S1.A.1.8.3": customer_join_res})
+        # TODO
+        # if customer_join:
+        #     customer_join_res = [{
+        #         # "S1.A.1.8": "",
+        #         "S1.A.1.8.3": item.CustomerJoin.full_name_vn,
+        #         "S1.A.1.8.2": item.CustomerJoin.cif_number,
+        #         "S1.A.1.8.4": item.CustomerIdentity.identity_num
+        #     } for item in customer_join]
+        #
+        #     data_request.update({"S1.A.1.8.3": customer_join_res})
 
         # Thẻ ghi nợ (Thẻ chính - Thẻ phụ)
         if main_cards:
@@ -206,7 +218,7 @@ class CtrTemplateDetail(BaseController):
         customer_address = self.call_repos(await repo_customer_address(cif_id=cif_id, session=self.oracle_session))
         subs_identity = self.call_repos(await repo_sub_identity(cif_id=cif_id, session=self.oracle_session))
         guardians = self.call_repos(await repo_guardians(cif_id=cif_id, session=self.oracle_session))
-        customer_join = self.call_repos(await repo_join_account_holder(cif_id=cif_id, session=self.oracle_session))
+        # customer_join = self.call_repos(await repo_join_account_holder(cif_id=cif_id, session=self.oracle_session))
         debit_cards = self.call_repos(await repo_debit_card(cif_id=cif_id, session=self.oracle_session))
         e_banking = self.call_repos(await repo_e_banking(cif_id=cif_id, session=self.oracle_session))
         # fatca_info = self.call_repos(await repos_fatca_info(cif_id=cif_id, session=self.oracle_session))
@@ -232,15 +244,26 @@ class CtrTemplateDetail(BaseController):
         # Thông tin khách hàng
         if customer_db:
             cust = customer_db[0]
+            if cust.CustomerGender.name == "Male":
+                data_request.update({
+                    "S1.A.1.2.4": ["Nam/Male"]
+                })
+            elif cust.CustomerGender.name == "Female":
+                data_request.update({
+                    "S1.A.1.2.4": ["Nữ/Female"]
+                })
+            else:
+                data_request.update({
+                    "S1.A.1.2.4": ["Khác/Other"]
+                })
             data_request.update({
                 "S1.A.1.1.3": cust.Customer.full_name_vn,
-                "S1.A.1.2.4": ["Nam/Male"] if cust.CustomerGender.name == "Nam" else ["Nữ/Female"],
                 "S1.A.1.2.8": datetime_to_string(cust.CustomerIndividualInfo.date_of_birth,
                                                  DATE_INPUT_OUTPUT_EKYC_FORMAT),
                 "S1.A.1.2.6": cust.AddressProvince.name,
                 "S1.A.1.2.20": cust.AddressCountry.name,
-                "S1.A.1.2.23": ["Không cư trú/Non-resident"] if cust.ResidentStatus.name == "Không cư trú" else [
-                    "Cư trú/Resident"],
+                "S1.A.1.2.23": ["Cư trú/Resident"]
+                if cust.ResidentStatus.name == "Resident" else ["Không cư trú/Non-resident"],
                 "S1.A.1.3.2": cust.CustomerIdentity.identity_num,
                 "S1.A.1.3.3": datetime_to_string(cust.CustomerIdentity.issued_date, DATE_INPUT_OUTPUT_EKYC_FORMAT),
                 "S1.A.1.3.4": cust.PlaceOfIssue.name,
@@ -296,15 +319,16 @@ class CtrTemplateDetail(BaseController):
             data_request.update({"S1.A.1.2.44": guardians_res})
 
         # Người đồng sở hữu
-        if customer_join:
-            customer_join_res = [{
-                # "S1.A.1.8": "",
-                "S1.A.1.8.3": item.CustomerJoin.full_name_vn,
-                "S1.A.1.8.2": item.CustomerJoin.cif_number,
-                "S1.A.1.8.4": item.CustomerIdentity.identity_num
-            } for item in customer_join]
-
-            data_request.update({"S1.A.1.8.3": customer_join_res})
+        # TODO
+        # if customer_join:
+        #     customer_join_res = [{
+        #         # "S1.A.1.8": "",
+        #         "S1.A.1.8.3": item.CustomerJoin.full_name_vn,
+        #         "S1.A.1.8.2": item.CustomerJoin.cif_number,
+        #         "S1.A.1.8.4": item.CustomerIdentity.identity_num
+        #     } for item in customer_join]
+        #
+        #     data_request.update({"S1.A.1.8.3": customer_join_res})
 
         # Thẻ ghi nợ (Thẻ chính - Thẻ phụ)
         if main_cards:
