@@ -9,8 +9,7 @@ class DocumentFileFolder(Base):
     __tablename__ = 'crm_document_file_folder'
     __table_args__ = {'comment': 'Thư mục tệp tài liệu'}
 
-    document_file_folder_id = Column(VARCHAR(36), primary_key=True,
-                                     server_default=text("sys_guid() "))
+    document_file_folder_id = Column(VARCHAR(36), primary_key=True, server_default=text("sys_guid() "))
     document_file_folder_code = Column(VARCHAR(50), nullable=False, comment='Mã thư mục file')
     document_file_folder_name = Column(VARCHAR(250), nullable=False, comment='Tên thư mục file')
     level = Column(VARCHAR(250), nullable=False)
