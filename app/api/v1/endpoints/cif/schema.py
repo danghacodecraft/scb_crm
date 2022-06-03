@@ -100,6 +100,7 @@ class CifCustomerInformationResponse(BaseSchema):
 
 class CifCustomerWorkingInformationResponse(BaseSchema):
     booking_id: str = Field(..., description="Booking ID")
+    booking_code: str = Field(..., description="Mã booking")
     business_type: DropdownResponse = Field(..., description="Loại nghiệp vụ")
     created_at: datetime = Field(..., description="Ngày tạo")
 

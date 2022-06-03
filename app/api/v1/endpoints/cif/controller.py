@@ -651,10 +651,11 @@ class CtrCustomer(BaseController):
         return self.response(data=[
             {
                 "booking_id": booking_id,
+                "booking_code": booking_code,
                 "business_type": {
                     "id": business_type.id,
                     "code": business_type.code,
                     "name": business_type.name
                 },
                 "created_at": booking_created_at,
-            } for booking_id, booking_created_at, business_type in working_infos])
+            } for booking_id, booking_code, booking_created_at, business_type in working_infos])

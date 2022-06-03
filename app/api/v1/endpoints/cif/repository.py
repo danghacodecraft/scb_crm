@@ -268,6 +268,7 @@ async def repos_get_customer_working_infos(
     customer_working_info = session.execute(
         select(
             Booking.id,
+            Booking.code,
             Booking.created_at,
             BusinessType
         )
