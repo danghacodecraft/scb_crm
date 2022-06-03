@@ -1,6 +1,5 @@
-from sqlalchemy import DATE, VARCHAR, ForeignKey, text
+from sqlalchemy import VARCHAR, Column, ForeignKey, text
 from sqlalchemy.orm import relationship
-from sqlalchemy.testing.schema import Column
 
 from app.third_parties.oracle.base import Base
 
@@ -34,11 +33,11 @@ class DocumentFile(Base):
     booking_id = Column(ForeignKey('crm_booking.booking_id'))
     document_file_type_id = Column(ForeignKey('crm_document_file_type.document_file_type_id'))
     document_file_folder_id = Column(ForeignKey('crm_document_file_folder.document_file_folder_id'))
-    file_number = Column(VARCHAR(255), nullable=True, comment='Số văn bản')
+    # file_number = Column(VARCHAR(255), nullable=True, comment='Số văn bản')
     parent_id = Column('document_file_parent_id', VARCHAR(36), nullable=True, comment='Mã thư mục cấp cha')
     root_id = Column('document_file_root_id', VARCHAR(36), nullable=True, comment='Mã thư mục gốc')
     file_uuid = Column(VARCHAR(255), nullable=True, comment='UUID của file')
-    expired_date = Column(DATE, nullable=True, comment='Ngày hết hiệu lực')
+    # expired_date = Column(DATE, nullable=True, comment='Ngày hết hiệu lực')
     created_by_branch_name = Column(VARCHAR(255), nullable=True, comment='Tên nơi khởi tạo')
     created_by_branch_code = Column(VARCHAR(255), nullable=True, comment='Mã nơi khởi tạo')
     created_by_user_name = Column(VARCHAR(255), nullable=True, comment='Tên người khởi tạo')
