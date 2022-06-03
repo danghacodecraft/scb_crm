@@ -10,6 +10,7 @@ from app.api.v1.endpoints.user.schema import UserInfoResponse
 from app.settings.service import SERVICE
 from app.third_parties.oracle.base import SessionLocal
 from app.third_parties.oracle.models.document_file.model import DocumentFile
+from app.third_parties.plugin.document_file import plugin_create_document_file
 from app.utils.constant.document_file import DOCUMENT_FILE_TYPE_CODE_FILE, DOCUMENT_FILE_FOLDER_CODE_DEFAULT, \
     DATE_INPUT_OUTPUT_SERVICE_FILE_FORMAT
 from app.utils.functions import generate_uuid, string_to_datetime
@@ -72,32 +73,16 @@ class ServiceFile:
                 # Lưu vào DB
                 document_file_id = None
                 if save_to_db_flag:
-                    document_file_id = generate_uuid()
-                    document_file = dict(
-                        id=document_file_id,
+                    document_file_id = await plugin_create_document_file(
                         file_uuid=upload_file_response_body['uuid'],
-                        root_id=document_file_id,
                         booking_id=booking_id,
-                        document_file_type_id=DOCUMENT_FILE_TYPE_CODE_FILE
-                        if 'document_file_type_id' not in kwargs.keys()
-                        else kwargs.get('document_file_type_id'),
-                        document_file_folder_id=DOCUMENT_FILE_FOLDER_CODE_DEFAULT
-                        if 'document_file_folder_id' not in kwargs.keys()
-                        else kwargs.get('document_file_folder_id'),
                         created_at=string_to_datetime(
                             upload_file_response_body['created_at'],
                             _format=DATE_INPUT_OUTPUT_SERVICE_FILE_FORMAT
                         ),
-                        created_by_branch_name=current_user.hrm_branch_name,
-                        created_by_branch_code=current_user.hrm_branch_code,
-                        created_by_user_name=current_user.name,
-                        created_by_user_code=current_user.code
+                        current_user=current_user,
+                        session=self.oracle_session
                     )
-
-                    {document_file.update({key: value}) for key, value in kwargs.items()} # noqa
-
-                    self.oracle_session.add(DocumentFile(**document_file))
-                    self.oracle_session.commit()
 
                 upload_file_response_body.update(
                     document_file_id=document_file_id
