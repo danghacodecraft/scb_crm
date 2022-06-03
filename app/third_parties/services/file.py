@@ -41,10 +41,10 @@ class ServiceFile:
             file: bytes,
             name: str,
             return_download_file_url_flag: bool,
-            save_to_db_flag: bool = False,
-            current_user: Optional[UserInfoResponse] = None,
-            booking_id: Optional[str] = None,
-            **kwargs
+            # save_to_db_flag: bool = False,
+            # current_user: Optional[UserInfoResponse] = None,
+            # booking_id: Optional[str] = None,
+            # **kwargs
     ) -> tuple[bool, Any]:
         """
             Upload file lưu vào DB -> current_user
@@ -90,7 +90,8 @@ class ServiceFile:
                 #     document_file_id=document_file_id
                 # )
 
-                return True, upload_file_response_body
+                # return True, upload_file_response_body
+                return True
         except Exception as ex:
             logger.error(str(ex))
             return False, str(ex)
