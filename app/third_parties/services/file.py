@@ -79,7 +79,8 @@ class ServiceFile:
                             _format=DATE_INPUT_OUTPUT_SERVICE_FILE_FORMAT
                         ),
                         current_user=current_user,
-                        session=self.oracle_session
+                        session=self.oracle_session,
+                        **kwargs
                     )
 
                 upload_file_response_body.update(
