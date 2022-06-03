@@ -9,11 +9,9 @@ from starlette import status
 from app.api.v1.endpoints.user.schema import UserInfoResponse
 from app.settings.service import SERVICE
 from app.third_parties.oracle.base import SessionLocal
-from app.third_parties.oracle.models.document_file.model import DocumentFile
 from app.third_parties.plugin.document_file import plugin_create_document_file
-from app.utils.constant.document_file import DOCUMENT_FILE_TYPE_CODE_FILE, DOCUMENT_FILE_FOLDER_CODE_DEFAULT, \
-    DATE_INPUT_OUTPUT_SERVICE_FILE_FORMAT
-from app.utils.functions import generate_uuid, string_to_datetime
+from app.utils.constant.document_file import DATE_INPUT_OUTPUT_SERVICE_FILE_FORMAT
+from app.utils.functions import string_to_datetime
 
 
 class ServiceFile:
