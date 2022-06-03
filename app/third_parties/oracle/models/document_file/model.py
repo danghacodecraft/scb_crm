@@ -1,4 +1,4 @@
-from sqlalchemy import VARCHAR, Column, DateTime, ForeignKey, text
+from sqlalchemy import DATE, VARCHAR, Column, ForeignKey, text
 from sqlalchemy.orm import relationship
 
 from app.third_parties.oracle.base import Base
@@ -34,16 +34,15 @@ class DocumentFile(Base):
     __tablename__ = 'crm_document_file'
     __table_args__ = {'comment': 'Tập tin tài liệu'}
 
-    id = Column('document_file_id', VARCHAR(36), primary_key=True,
-                server_default=text("sys_guid() "))
-    booking_id = Column(ForeignKey('crm_booking.booking_id'))
-    document_file_type_id = Column(ForeignKey('crm_document_file_type.document_file_type_id'))
-    document_file_folder_id = Column(ForeignKey('crm_document_file_folder.document_file_folder_id'))
+    id = Column('document_file_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "))
+    booking_id = Column(ForeignKey('crm_booking.booking_id'), nullable=True)
+    document_file_type_id = Column(ForeignKey('crm_document_file_type.document_file_type_id'), nullable=True)
+    document_file_folder_id = Column(ForeignKey('crm_document_file_folder.document_file_folder_id'), nullable=True)
     parent_id = Column(VARCHAR(36), nullable=True, comment='Mã thư mục cấp cha')
     root_id = Column(VARCHAR(36), nullable=True, comment='Mã thư mục gốc')
     file_uuid = Column(VARCHAR(255), nullable=True, comment='UUID của file')
-    created_at = Column(DateTime, nullable=False, comment='Ngày tạo')
-    updated_at = Column(DateTime, nullable=True, comment='Ngày cập nhật')
+    expired_date = Column(DATE, nullable=True, comment='Ngày hết hiệu lực')
+    created_at = Column(DATE, nullable=True, comment='Thời gian khởi tạo')
     created_by_branch_name = Column(VARCHAR(255), nullable=True, comment='Tên nơi khởi tạo')
     created_by_branch_code = Column(VARCHAR(255), nullable=True, comment='Mã nơi khởi tạo')
     created_by_user_name = Column(VARCHAR(255), nullable=True, comment='Tên người khởi tạo')

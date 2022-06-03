@@ -160,3 +160,4 @@ class DetailCoOwnerResponse(BaseSchema):
     address_information: AddressInformationResponse = Field(
         ..., description="Địa chỉ liên hệ của đồng sở hữu"
     )
+    avatar_url: Optional[str] = Field(..., description="URL hình ảnh đại diện của người dùng")

@@ -2,8 +2,8 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.repository import repos_get_approval_process
 from app.api.v1.endpoints.cif.repository import (
     repos_customer_information, repos_get_cif_info,
-    repos_get_initializing_customer, repos_profile_history,
-    repos_validate_cif_number
+    repos_get_customer_working_infos, repos_get_initializing_customer,
+    repos_profile_history, repos_validate_cif_number
 )
 from app.api.v1.endpoints.cif.schema import CustomerByCIFNumberRequest
 from app.api.v1.endpoints.repository import (
@@ -211,7 +211,7 @@ class CtrCustomer(BaseController):
         data_response = {
             "customer_id": first_row.Customer.id,
             "status": dropdownflag(first_row.CustomerStatus),
-            "cif_number": first_row.Customer.cif_number if first_row.CustomerType else None,
+            "cif_number": first_row.Customer.cif_number,
             "avatar_url": ServiceFile().replace_with_cdn(uuid__link_downloads[first_row.Customer.avatar_url]),
             "customer_classification": dropdown(first_row.CustomerClassification),
             "full_name": first_row.Customer.full_name,
@@ -643,3 +643,19 @@ class CtrCustomer(BaseController):
         # })
         #
         # return self.response(data=customer_information)
+
+    async def ctr_retrieve_customer_working_info_by_cif_number(self, cif_number):
+        working_infos = self.call_repos(await repos_get_customer_working_infos(
+            cif_number=cif_number, session=self.oracle_session))
+
+        return self.response(data=[
+            {
+                "booking_id": booking_id,
+                "booking_code": booking_code,
+                "business_type": {
+                    "id": business_type.id,
+                    "code": business_type.code,
+                    "name": business_type.name
+                },
+                "created_at": booking_created_at,
+            } for booking_id, booking_code, booking_created_at, business_type in working_infos])

@@ -1,12 +1,13 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
-    repos_get_casa_account, repos_get_customer_ids_from_cif_numbers,
-    repos_get_customer_open_cif, repos_get_teller_info,
-    repos_gw_get_authorized, repos_gw_get_co_owner,
+    repos_get_casa_account, repos_get_customer_avatar_url_from_cif,
+    repos_get_customer_ids_from_cif_numbers, repos_get_customer_open_cif,
+    repos_get_teller_info, repos_gw_get_authorized, repos_gw_get_co_owner,
     repos_gw_get_customer_info_detail, repos_gw_get_customer_info_list,
     repos_gw_open_cif, repos_update_cif_number_customer
 )
+from app.settings.event import service_file
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
 )
@@ -326,6 +327,11 @@ class CtrGWCustomer(BaseController):
             address_full=resident_address_full
         )
 
+        avatar_url = self.call_repos(await repos_get_customer_avatar_url_from_cif(
+            cif_number=cif_number, session=self.oracle_session))
+
+        avatar_url = await service_file.download_file(avatar_url)
+
         if parameter == GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP:
             cif_information = dict(
                 cif_number=cif_number,
@@ -493,8 +499,12 @@ class CtrGWCustomer(BaseController):
                     province=dropdown_contact_address_province
                 ),
                 job_info=dropdown_job,
-                branch_info=dropdown_branch
+                branch_info=dropdown_branch,
+                avatar_url=avatar_url['file_url'] if avatar_url else None
             ))
+        customer_information.update(
+            avatar_url=avatar_url['file_url'] if avatar_url else None
+        )
 
         return self.response(data=customer_information)
 

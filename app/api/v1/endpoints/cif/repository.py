@@ -28,7 +28,7 @@ from app.third_parties.oracle.models.master_data.customer import (
 )
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import (
-    KYCLevel, MaritalStatus
+    BusinessType, KYCLevel, MaritalStatus
 )
 from app.utils.error_messages import (
     ERROR_BOOKING_CODE_NOT_EXIST, ERROR_CALL_SERVICE_SOA,
@@ -259,3 +259,23 @@ async def repos_get_booking(
     if not booking:
         return ReposReturn(is_error=True, msg=ERROR_BOOKING_CODE_NOT_EXIST)
     return ReposReturn(data=booking)
+
+
+async def repos_get_customer_working_infos(
+    cif_number: str,
+    session: Session
+):
+    customer_working_info = session.execute(
+        select(
+            Booking.id,
+            Booking.code,
+            Booking.created_at,
+            BusinessType
+        )
+        .join(BusinessType, Booking.business_type_id == BusinessType.id)
+        .join(BookingCustomer, Booking.id == BookingCustomer.booking_id)
+        .join(Customer, BookingCustomer.customer_id == Customer.id)
+        .filter(Customer.cif_number == cif_number)
+    ).all()
+
+    return ReposReturn(data=customer_working_info)

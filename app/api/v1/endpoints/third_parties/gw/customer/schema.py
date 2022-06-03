@@ -5,7 +5,7 @@ from pydantic import Field
 
 from app.api.base.schema import BaseGWSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
-from app.api.v1.schemas.utils import DropdownResponse, OptionalDropdownResponse
+from app.api.v1.schemas.utils import OptionalDropdownResponse
 
 
 class CustomerInfoCIFResponse(BaseGWSchema):
@@ -116,6 +116,7 @@ class GWCustomerInfoDetailResponse(BaseGWSchema):
     contact_address: GWCustomerDetailAddressInfo = Field(..., description="Thông tin địa chỉ liên hệ")
     job_info: OptionalDropdownResponse = Field(..., description="Thông tin việc làm")
     branch_info: OptionalDropdownResponse = Field(..., description="Thông tin đơn vị")
+    avatar_url: Optional[str] = Field(..., description="URL hình ảnh đại diện của người dùng")
 
 
 class GWCoOwnerResponse(BaseGWSchema):
@@ -212,6 +213,7 @@ class GuardianOrCustomerRelationshipByCIFNumberResponse(BaseGWSchema):
         description="Thông tin giấy tờ định danh khách hàng"
     )
     address_info: GWCustomerAddressInfoRes = Field(..., description="Thông tin địa chỉ khách hàng")
+    avatar_url: Optional[str] = Field(..., description="URL hình ảnh đại diện của người dùng")
 
 
 class NameOnCardResponse(BaseGWSchema):
@@ -221,7 +223,7 @@ class NameOnCardResponse(BaseGWSchema):
 
 
 class CardDeliveryAddressResponse(BaseGWSchema):
-    branch: Optional[DropdownResponse] = Field(..., description=" chi nhánh scb nhận thẻ")
+    branch: OptionalDropdownResponse = Field(..., description=" chi nhánh scb nhận thẻ")
     delivery_address: Optional[GWAddressInfo] = Field(..., descripion="Địa chỉ nhân thẻ")
 
 
@@ -229,3 +231,4 @@ class DebitCardByCIFNumberResponse(BaseGWSchema):
     cif_number: str = Field(..., description="Số CIF")
     name_on_card: NameOnCardResponse = Field(..., description="Tên trên thẻ")
     card_delivery_address: CardDeliveryAddressResponse = Field(..., description="Địa chỉ giao nhận thẻ")
+    avatar_url: Optional[str] = Field(..., description="URL hình ảnh đại diện của người dùng")

@@ -6,11 +6,12 @@ import aiohttp
 from loguru import logger
 from starlette import status
 
+from app.api.v1.endpoints.user.schema import UserInfoResponse
 from app.settings.service import SERVICE
 from app.third_parties.oracle.base import SessionLocal
-from app.third_parties.oracle.models.document_file.model import DocumentFile
-from app.utils.constant.document_file import DOCUMENT_FILE_TYPE_CODE_FILE, DOCUMENT_FILE_FOLDER_CODE_DEFAULT
-from app.utils.functions import generate_uuid
+from app.third_parties.plugin.document_file import plugin_create_document_file
+from app.utils.constant.document_file import DATE_INPUT_OUTPUT_SERVICE_FILE_FORMAT
+from app.utils.functions import string_to_datetime
 
 
 class ServiceFile:
@@ -38,6 +39,7 @@ class ServiceFile:
             name: str,
             return_download_file_url_flag: bool,
             save_to_db_flag: bool = False,
+            current_user: Optional[UserInfoResponse] = None,
             booking_id: Optional[str] = None,
             **kwargs
     ) -> tuple[bool, Any]:
@@ -69,24 +71,17 @@ class ServiceFile:
                 # Lưu vào DB
                 document_file_id = None
                 if save_to_db_flag:
-                    document_file_id = generate_uuid()
-                    document_file = dict(
-                        id=document_file_id,
+                    document_file_id = await plugin_create_document_file(
                         file_uuid=upload_file_response_body['uuid'],
-                        root_id=document_file_id,
                         booking_id=booking_id,
-                        document_file_type_id=DOCUMENT_FILE_TYPE_CODE_FILE
-                        if 'document_file_type_id' not in kwargs.keys()
-                        else kwargs.get('document_file_type_id'),
-                        document_file_folder_id=DOCUMENT_FILE_FOLDER_CODE_DEFAULT
-                        if 'document_file_folder_id' not in kwargs.keys()
-                        else kwargs.get('document_file_folder_id'),
+                        created_at=string_to_datetime(
+                            upload_file_response_body['created_at'],
+                            _format=DATE_INPUT_OUTPUT_SERVICE_FILE_FORMAT
+                        ),
+                        current_user=current_user,
+                        session=self.oracle_session,
+                        **kwargs
                     )
-
-                    {document_file.update({key: value}) for key, value in kwargs.items()}
-
-                    self.oracle_session.add(DocumentFile(**document_file))
-                    self.oracle_session.commit()
 
                 upload_file_response_body.update(
                     document_file_id=document_file_id
@@ -104,6 +99,7 @@ class ServiceFile:
             booking_id: Optional[str] = None,
             return_download_file_url_flag: bool = True,
             save_to_db_flag: bool = False,
+            current_user: Optional[UserInfoResponse] = None,
             **kwargs
     ) -> tuple[bool, Any]:
         """
@@ -113,6 +109,7 @@ class ServiceFile:
         return await self.__call_upload_file(
             booking_id=booking_id,
             save_to_db_flag=save_to_db_flag,
+            current_user=current_user,
             file=file,
             name=name,
             return_download_file_url_flag=return_download_file_url_flag,
