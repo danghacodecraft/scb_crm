@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Tuple
 from urllib.parse import urlparse
 
 import aiohttp
@@ -44,7 +44,7 @@ class ServiceFile:
             current_user: Optional[UserInfoResponse] = None,
             booking_id: Optional[str] = None,
             **kwargs
-    ) -> tuple[bool, Any]:
+    ) -> Tuple[bool, Any]:
         """
             Upload file lưu vào DB -> current_user
             Upload file không lưu vào DB -> current_user=None
@@ -103,7 +103,7 @@ class ServiceFile:
             save_to_db_flag: bool = False,
             current_user: Optional[UserInfoResponse] = None,
             **kwargs
-    ) -> tuple[bool, Any]:
+    ) -> Tuple[bool, Any]:
         """
         Upload file lưu vào DB -> current_user
         Upload file không lưu vào DB -> current_user=None
