@@ -98,6 +98,12 @@ class CifCustomerInformationResponse(BaseSchema):
     employees: List[EmployeeResponse] = Field(..., description="Danh sách nhân viên")
 
 
+class CifCustomerWorkingInformationResponse(BaseSchema):
+    booking_id: str = Field(..., description="Booking ID")
+    business_type: DropdownResponse = Field(..., description="Loại nghiệp vụ")
+    created_at: datetime = Field(..., description="Ngày tạo")
+
+
 class SOACIFInformation(BaseSchema):
     cif_number: str = CustomField().CIFNumberField
     issued_date: str = Field(None, description="Ngày cấp số CIF")
