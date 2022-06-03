@@ -14,7 +14,7 @@ async def repos_upload_file(
         current_user: Optional[UserInfoResponse] = None,
         save_to_db_flag: bool = False
 ) -> ReposReturn:
-    response = await service_file.upload_file(
+    is_success, response = await service_file.upload_file(
         file=file,
         name=name,
         save_to_db_flag=save_to_db_flag,
