@@ -6,6 +6,7 @@ from app.api.base.schema import BaseSchema
 
 
 class FileServiceResponse(BaseSchema):
+    document_file_id: str = Field(..., description='ID File tài liệu của CRM')
     created_at: datetime = Field(..., description='Tạo mới vào lúc, format dạng: `YYYY-mm-dd HH:MM:SS`',
                                  example='2021-15-12 06:07:08')
     created_by: str = Field(..., description='Tạo mới bởi')
@@ -15,7 +16,6 @@ class FileServiceResponse(BaseSchema):
     name: str = Field(..., description='Tên file')
     content_type: str = Field(..., description='Content-Type của file')
     size: int = Field(..., description='Kích thước file')
-    document_file_id: str = Field(..., description='ID File tài liệu')
 
 
 class FileServiceDownloadFileResponse(BaseSchema):

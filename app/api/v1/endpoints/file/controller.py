@@ -31,7 +31,8 @@ class CtrFile(BaseController):
             name=file_upload.filename,
             ekyc_flag=ekyc_flag,
             save_to_db_flag=save_to_db_flag,
-            booking_id=booking_id
+            booking_id=booking_id,
+            current_user=self.current_user.user_info
         ))
         if not is_success:
             return self.response_exception(msg="ERROR_INSERT_DOCUMENT_FILE", detail=str(info_file))

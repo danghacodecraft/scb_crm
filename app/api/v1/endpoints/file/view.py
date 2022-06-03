@@ -30,7 +30,7 @@ async def view_file_upload(
         ekyc_flag: bool = File(False, description='`true` is call ekyc'),
         current_user=Depends(get_current_user_from_header()),  # noqa
 ):
-    file_response = await CtrFile(is_init_oracle_session=False).upload_file(
+    file_response = await CtrFile(is_init_oracle_session=False, current_user=current_user).upload_file(
         file,
         ekyc_flag=ekyc_flag,
         save_to_db_flag=save_to_db_flag,
