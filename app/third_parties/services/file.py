@@ -1,5 +1,5 @@
 import asyncio
-from typing import List, Optional, Any
+from typing import Any, List, Optional
 from urllib.parse import urlparse
 
 import aiohttp
@@ -9,9 +9,12 @@ from starlette import status
 from app.api.v1.endpoints.user.schema import UserInfoResponse
 from app.settings.service import SERVICE
 from app.third_parties.oracle.base import SessionLocal
-from app.third_parties.plugin.document_file import plugin_create_document_file
-from app.utils.constant.document_file import DATE_INPUT_OUTPUT_SERVICE_FILE_FORMAT
-from app.utils.functions import string_to_datetime
+
+# from app.third_parties.plugin.document_file import plugin_create_document_file
+# from app.utils.constant.document_file import (
+#     DATE_INPUT_OUTPUT_SERVICE_FILE_FORMAT
+# )
+# from app.utils.functions import string_to_datetime
 
 
 class ServiceFile:
@@ -69,23 +72,23 @@ class ServiceFile:
                     upload_file_response_body['file_url'] = self.replace_with_cdn(upload_file_response_body['file_url'])
 
                 # Lưu vào DB
-                document_file_id = None
-                if save_to_db_flag:
-                    document_file_id = await plugin_create_document_file(
-                        file_uuid=upload_file_response_body['uuid'],
-                        booking_id=booking_id,
-                        created_at=string_to_datetime(
-                            upload_file_response_body['created_at'],
-                            _format=DATE_INPUT_OUTPUT_SERVICE_FILE_FORMAT
-                        ),
-                        current_user=current_user,
-                        session=self.oracle_session,
-                        **kwargs
-                    )
+                # document_file_id = None
+                # if save_to_db_flag:
+                #     document_file_id = await plugin_create_document_file(
+                #         file_uuid=upload_file_response_body['uuid'],
+                #         booking_id=booking_id,
+                #         created_at=string_to_datetime(
+                #             upload_file_response_body['created_at'],
+                #             _format=DATE_INPUT_OUTPUT_SERVICE_FILE_FORMAT
+                #         ),
+                #         current_user=current_user,
+                #         session=self.oracle_session,
+                #         **kwargs
+                #     )
 
-                upload_file_response_body.update(
-                    document_file_id=document_file_id
-                )
+                # upload_file_response_body.update(
+                #     document_file_id=document_file_id
+                # )
 
                 return True, upload_file_response_body
         except Exception as ex:
