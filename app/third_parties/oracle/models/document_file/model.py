@@ -1,4 +1,4 @@
-from sqlalchemy import VARCHAR, Column, ForeignKey, text
+from sqlalchemy import VARCHAR, Column, DateTime, ForeignKey, text
 from sqlalchemy.orm import relationship
 
 from app.third_parties.oracle.base import Base
@@ -8,7 +8,13 @@ class DocumentFileFolder(Base):
     __tablename__ = 'crm_document_file_folder'
     __table_args__ = {'comment': 'Thư mục tệp tài liệu'}
 
-    id = Column('document_file_folder_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "))
+    id = Column(
+        'document_file_folder_id',
+        VARCHAR(36),
+        primary_key=True,
+        server_default=text("sys_guid() "),
+        comment='Mã thư mục file'
+    )
     code = Column('document_file_folder_code', VARCHAR(50), nullable=False, comment='Mã thư mục file')
     name = Column('document_file_folder_name', VARCHAR(250), nullable=False, comment='Tên thư mục file')
     level = Column('document_file_folder_level', VARCHAR(250), nullable=False, comment='Cấp độ thư mục')
@@ -33,11 +39,11 @@ class DocumentFile(Base):
     booking_id = Column(ForeignKey('crm_booking.booking_id'))
     document_file_type_id = Column(ForeignKey('crm_document_file_type.document_file_type_id'))
     document_file_folder_id = Column(ForeignKey('crm_document_file_folder.document_file_folder_id'))
-    # file_number = Column(VARCHAR(255), nullable=True, comment='Số văn bản')
-    parent_id = Column('document_file_parent_id', VARCHAR(36), nullable=True, comment='Mã thư mục cấp cha')
-    root_id = Column('document_file_root_id', VARCHAR(36), nullable=True, comment='Mã thư mục gốc')
+    parent_id = Column(VARCHAR(36), nullable=True, comment='Mã thư mục cấp cha')
+    root_id = Column(VARCHAR(36), nullable=True, comment='Mã thư mục gốc')
     file_uuid = Column(VARCHAR(255), nullable=True, comment='UUID của file')
-    # expired_date = Column(DATE, nullable=True, comment='Ngày hết hiệu lực')
+    created_at = Column(DateTime, nullable=False, comment='Ngày tạo')
+    updated_at = Column(DateTime, nullable=True, comment='Ngày cập nhật')
     created_by_branch_name = Column(VARCHAR(255), nullable=True, comment='Tên nơi khởi tạo')
     created_by_branch_code = Column(VARCHAR(255), nullable=True, comment='Mã nơi khởi tạo')
     created_by_user_name = Column(VARCHAR(255), nullable=True, comment='Tên người khởi tạo')

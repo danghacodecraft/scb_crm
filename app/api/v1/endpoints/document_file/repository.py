@@ -29,6 +29,7 @@ async def repos_upload_file(file: bytes, name: str, ekyc_flag: bool, booking_id:
 
 
 @auto_commit
-async def repo_add_document_file(data, session: Session) -> ReposReturn:
+async def repos_add_document_file(data, session: Session) -> ReposReturn:
     session.add(DocumentFile(**data))
-    return ReposReturn(data=data)
+
+    return ReposReturn(data=data['id'])

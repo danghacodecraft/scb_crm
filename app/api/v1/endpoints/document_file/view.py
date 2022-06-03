@@ -5,6 +5,7 @@ from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.document_file.controller import CtrDocumentFile
+from app.api.v1.endpoints.document_file.schema import NewsDocumentFileResponse
 
 router = APIRouter()
 
@@ -14,9 +15,10 @@ router = APIRouter()
     name="Tạo tập tin tài liệu",
     description="Tạo tập tin tài liệu",
     responses=swagger_response(
-        response_model=ResponseData,
-        success_status_code=status.HTTP_200_OK
-    )
+        response_model=ResponseData[NewsDocumentFileResponse],
+        success_status_code=status.HTTP_201_CREATED
+    ),
+    status_code=status.HTTP_201_CREATED
 )
 async def view_document_file(
         file: UploadFile = File(..., description='File cần upload'),

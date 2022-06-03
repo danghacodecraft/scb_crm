@@ -15,6 +15,7 @@ class FileServiceResponse(BaseSchema):
     name: str = Field(..., description='Tên file')
     content_type: str = Field(..., description='Content-Type của file')
     size: int = Field(..., description='Kích thước file')
+    document_file_id: str = Field(..., description='ID File tài liệu')
 
 
 class FileServiceDownloadFileResponse(BaseSchema):
