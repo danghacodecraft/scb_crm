@@ -13,7 +13,7 @@ FILE_LIMIT = SERVICE["file-upload"]["file_limit"]
 async def file_validator(file: bytes) -> ValidatorReturn:
     file_size = len(file)
     if file_size == 0:
-        return ValidatorReturn(is_error=True, msg=ERROR_FILE_IS_NULL, loc='file')
+        return ValidatorReturn(is_error=True, msg=ERROR_FILE_IS_NULL, loc='file', detail="File is Null")
 
     if file_size > MAX_FILE_SIZE:
         return ValidatorReturn(is_error=True, msg=ERROR_FILE_TOO_LARGE, loc='file')
