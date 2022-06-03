@@ -119,7 +119,9 @@ class ServiceFile:
         )
 
     async def upload_multi_file(self, files: List[bytes], names: List[str],
-                                return_download_file_url_flag: bool = True) -> Optional[List[dict]]:
+                                return_download_file_url_flag: bool = True,
+                                **kwargs
+                                ) -> Optional[List[dict]]:
         coroutines = []
         for index, file in enumerate(files):
             # coroutines.append(self.__call_upload_file(file=file))
@@ -128,7 +130,8 @@ class ServiceFile:
                     self.__call_upload_file(
                         file=file,
                         name=names[index],
-                        return_download_file_url_flag=return_download_file_url_flag
+                        return_download_file_url_flag=return_download_file_url_flag,
+                        **kwargs
                     )
                 )
             )
