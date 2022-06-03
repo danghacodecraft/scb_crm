@@ -99,10 +99,10 @@ class JointAccountHolderAgreementAuthorization(Base):
     __table_args__ = {'comment': 'Thỏa thuận/ ủy quyền đồng sở hữu'}
 
     joint_acc_agree_id = Column(VARCHAR(36), primary_key=True, server_default=text("sys_guid() "))
-    joint_account_holder_id = Column('joint_account_holder_id',
-                                     ForeignKey('crm_joint_account_holder.joint_account_holder_id', VARCHAR(36)),
-                                     primary_key=True,
-                                     comment='Mã Thông tin đồng chủ sở hữu')
+    # joint_account_holder_id = Column('joint_account_holder_id',
+    #                                  ForeignKey('crm_joint_account_holder.joint_account_holder_id', VARCHAR(36)),
+    #                                  primary_key=True,
+    #                                  comment='Mã Thông tin đồng chủ sở hữu')
     agreement_flag = Column(NUMBER(1, 0, False), comment='Cờ ủy quyền')
     casa_account_id = Column(VARCHAR(36), nullable=False, comment="Số tài khoản hiện tại")
     document_file_id = Column(ForeignKey('crm_document_file.joint_account_holder_id', VARCHAR(36)), nullable=False,
@@ -110,8 +110,6 @@ class JointAccountHolderAgreementAuthorization(Base):
     active_flag = Column(NUMBER(1, 0, False), nullable=False, comment="Trạng thái thỏa thuận/ ủy quyền")
     created_at = Column(DateTime, comment='Ngày tạo')
     updated_at = Column(DateTime, comment='Ngày cập nhật')
-
-    joint_account_holder = relationship('JointAccountHolder')
 
 
 class MethodSign(Base):
