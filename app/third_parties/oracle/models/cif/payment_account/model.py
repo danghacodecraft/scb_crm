@@ -108,6 +108,8 @@ class JointAccountHolderAgreementAuthorization(Base):
     created_at = Column(DateTime, comment='Ngày tạo')
     updated_at = Column(DateTime, comment='Ngày cập nhật')
 
+    joint_account_holder = relationship('JointAccountHolder')
+
 
 class MethodSign(Base):
     __tablename__ = 'crm_method_sign'
