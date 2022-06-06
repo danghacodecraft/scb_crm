@@ -33,7 +33,7 @@ async def repos_upload_file(
     if not response:
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_FILE)
 
-    return ReposReturn(data=response)
+    return ReposReturn(data=(is_success, response))
 
 
 async def repos_upload_multi_file(files: List[bytes], names: List[str]) -> ReposReturn:
