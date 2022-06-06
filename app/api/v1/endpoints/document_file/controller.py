@@ -7,7 +7,7 @@ from app.api.v1.endpoints.document_file.repository import (
 )
 from app.api.v1.endpoints.file.validator import file_validator
 from app.third_parties.oracle.models.cif.form.model import Booking
-from app.utils.constant.utils import DOCUMENT_FILE_FOLDR, DOCUMENT_FILE_TYPE
+from app.utils.constant.utils import DOCUMENT_FILE_FOLDER, DOCUMENT_FILE_TYPE
 from app.utils.functions import generate_uuid, now
 
 
@@ -35,7 +35,7 @@ class CtrDocumentFile(BaseController):
             "id": uuid,
             "booking_id": booking_id,
             "document_file_type_id": DOCUMENT_FILE_TYPE,
-            "document_file_folder_id": DOCUMENT_FILE_FOLDR,
+            "document_file_folder_id": DOCUMENT_FILE_FOLDER,
             "root_id": uuid,
             "file_uuid": info_file['uuid'].replace("-", ""),
             "created_at": now(),
