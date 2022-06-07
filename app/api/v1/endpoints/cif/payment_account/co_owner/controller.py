@@ -1,7 +1,7 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.payment_account.co_owner.repository import (
-    repos_detail_co_owner, repos_get_casa_account,
-    repos_get_co_owner, repos_save_co_owner
+    repos_detail_co_owner, repos_get_casa_account, repos_get_co_owner,
+    repos_save_co_owner
 )
 from app.api.v1.endpoints.cif.payment_account.co_owner.schema import (
     AccountHolderRequest
@@ -15,9 +15,9 @@ from app.api.v1.endpoints.third_parties.gw.customer.controller import (
 from app.third_parties.oracle.models.master_data.customer import (
     CustomerRelationshipType
 )
-from app.utils.constant.gw import GW_REQUEST_PARAMETER_DEFAULT
+from app.utils.constant.gw import GW_REQUEST_PARAMETER_CO_OWNER
 from app.utils.error_messages import ERROR_CIF_NUMBER_NOT_EXIST
-from app.utils.functions import generate_uuid, dropdown
+from app.utils.functions import dropdown, generate_uuid
 
 
 class CtrCoOwner(BaseController):
@@ -132,26 +132,29 @@ class CtrCoOwner(BaseController):
 
             data = await CtrGWCustomer(current_user=self.current_user).ctr_gw_get_customer_info_detail(
                 cif_number=cif_number,
-                parameter=GW_REQUEST_PARAMETER_DEFAULT
+                parameter=GW_REQUEST_PARAMETER_CO_OWNER
             )
 
             gw_data = data['data']
-            identity_document = gw_data['id_info']
-            identity_number = identity_document['number']
+            identity_document = gw_data['identity_document']
+            identity_number = identity_document['identity_number']
             issued_date = identity_document['issued_date']
             expired_date = identity_document['expired_date']
             place_of_issue = identity_document['place_of_issue']
+
+            basic_information = gw_data['basic_information']
+            address_information = gw_data['address_information']
 
             joint_account_holders.append(dict(
                 id=cif_number,
                 basic_information=dict(
                     cif_number=cif_number,
                     customer_relationship=dropdown(customer_relationship_type),
-                    full_name_vn=gw_data['fullname_vn'],
-                    date_of_birth=gw_data['date_of_birth'],
-                    gender=gw_data['gender'],
-                    nationality=gw_data['nationality'],
-                    mobile_number=gw_data['mobile_phone'],
+                    full_name_vn=basic_information['full_name_vn'],
+                    date_of_birth=basic_information['date_of_birth'],
+                    gender=basic_information['gender'],
+                    nationality=basic_information['nationality'],
+                    mobile_number=basic_information['mobile_number'],
                     signature=None
                 ),
                 identity_document=dict(
@@ -161,8 +164,8 @@ class CtrCoOwner(BaseController):
                     place_of_issue=place_of_issue,
                 ),
                 address_information=dict(
-                    contact_address=gw_data['contact_address']['address_full'],
-                    resident_address=gw_data['resident_address']['address_full']
+                    contact_address=address_information['contact_address'].strip(" "),
+                    resident_address=address_information['resident_address'].strip(" ")
                 ),
                 avatar_url=None
             ))
