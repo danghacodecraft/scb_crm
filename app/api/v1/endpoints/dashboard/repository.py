@@ -94,17 +94,14 @@ async def repos_get_transaction_list(region_id: Optional[str], branch_id: Option
         TransactionStageStatus.name.label('status')
     ) \
         .join(BusinessType, Booking.business_type_id == BusinessType.id) \
-        .join(Branch, Booking.branch_id == Branch.id) \
+        .outerjoin(Branch, Booking.branch_id == Branch.id) \
         .join(BookingCustomer, Booking.id == BookingCustomer.booking_id) \
         .join(Customer, BookingCustomer.customer_id == Customer.id) \
         .outerjoin(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
         .outerjoin(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
         .outerjoin(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
         .outerjoin(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
-        .limit(limit) \
-        .offset(limit * (page - 1)) \
-        .order_by(desc(Booking.created_at))
-
+        .distinct()
     if region_id:
         sql = sql.filter(Branch.region_id == region_id)
 
@@ -137,6 +134,8 @@ async def repos_get_transaction_list(region_id: Optional[str], branch_id: Option
                 Booking.created_at >= date_to_datetime(from_date),
                 Booking.created_at <= end_time_of_day(date_to_datetime(to_date))
             ))
+
+    sql = sql.limit(limit).offset(limit * (page - 1)).order_by(desc(Booking.created_at))
 
     transaction_list = session.execute(sql).all()
     return ReposReturn(data=transaction_list)

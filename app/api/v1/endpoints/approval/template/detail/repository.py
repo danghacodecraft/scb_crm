@@ -1,5 +1,5 @@
 from sqlalchemy import and_, or_, select
-from sqlalchemy.orm import Session, aliased
+from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
@@ -23,7 +23,7 @@ from app.third_parties.oracle.models.cif.basic_information.personal.model import
 from app.third_parties.oracle.models.cif.debit_card.model import DebitCard
 from app.third_parties.oracle.models.cif.e_banking.model import EBankingInfo
 from app.third_parties.oracle.models.cif.payment_account.model import (
-    CasaAccount, JointAccountHolder
+    CasaAccount, JointAccountHolder, JointAccountHolderAgreementAuthorization
 )
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
@@ -161,19 +161,15 @@ async def repo_join_account_holder(cif_id: str, session: Session) -> ReposReturn
     """
     Lấy thông tin đồng chủ tài khoản
     """
-    customer_join = aliased(Customer, name="CustomerJoin")
     join_account_holder = session.execute(
         select(
-            Customer,
-            CasaAccount,
-            JointAccountHolder,
-            CustomerIdentity,
-            customer_join
+            JointAccountHolder.cif_num,
         )
-        .join(CasaAccount, Customer.id == CasaAccount.customer_id)
-        .outerjoin(JointAccountHolder, CasaAccount.id == JointAccountHolder.casa_account_id)
-        .join(customer_join, JointAccountHolder.cif_num == customer_join.cif_number)
-        .join(CustomerIdentity, customer_join.id == CustomerIdentity.customer_id)
+        .join(JointAccountHolderAgreementAuthorization,
+              JointAccountHolderAgreementAuthorization.joint_acc_agree_id == JointAccountHolder.joint_acc_agree_id)
+        .join(CasaAccount,
+              CasaAccount.id == JointAccountHolderAgreementAuthorization.casa_account_id)
+        .join(Customer, Customer.id == CasaAccount.customer_id)
         .filter(Customer.id == cif_id)
     ).all()
     return ReposReturn(data=join_account_holder)

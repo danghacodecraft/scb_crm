@@ -61,7 +61,7 @@ class CtrFingers(BaseController):
         finger_id_ekycs = self.call_repos(await repos_get_id_finger_ekyc(cif_id=cif_id, session=self.oracle_session))
 
         data_finger_img = await finger_img.read()
-        info_finger_img = self.call_repos(await repos_upload_file(
+        is_success, info_finger_img = self.call_repos(await repos_upload_file(
             file=data_finger_img,
             name=finger_img.filename,
             ekyc_flag=True,
