@@ -74,6 +74,7 @@ class CtrFile(BaseController):
         ))
 
         service = ServiceEKYC()
-        info_file = await service.upload_file_ekyc(info=info, booking_id=booking_id)
-
+        is_success, info_file = await service.upload_file_ekyc(info=info, booking_id=booking_id)
+        if not is_success:
+            return self.response_exception(msg="UPLOAD_FILE_EKYC", loc="UPLOAD_EKYC_FILE")
         return self.response(data=info_file)
