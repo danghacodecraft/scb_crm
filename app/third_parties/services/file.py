@@ -64,7 +64,7 @@ class ServiceFile:
                 logger.log("SERVICE", f"[FILE] {response.status} : {api_url}")
 
                 if response.status != status.HTTP_201_CREATED:
-                    return await response.json()
+                    return True, await response.json()
 
                 upload_file_response_body = await response.json()
                 if upload_file_response_body['file_url']:
