@@ -103,7 +103,7 @@ class CareerInformationContactInformationResponse(BaseSchema):
     average_income_amount: OptionalDropdownResponse = Field(..., description="Thu nhập BQ 3 tháng gần nhất")
     company_name: Optional[str] = Field(None, min_length=1, description="Tên cơ quan công tác")
     company_phone: Optional[str] = Field(None, min_length=1, description="Số điện thoại cơ quan")
-    company_position: DropdownResponse = Field(None, description="Chức vụ")
+    company_position: OptionalDropdownResponse = Field(..., description="Chức vụ")
     company_address: Optional[str] = Field(None, min_length=1, description="Địa chỉ cơ quan")
 
 
