@@ -190,10 +190,10 @@ class GWCIFInfoOpenCasaRequest(BaseGWSchema):
 
 
 class GWAccountInfoOpenCasaRequest(BaseGWSchema):
-    acc_spl: Optional[str] = Field(..., description="Tùy chọn tài khoản số đẹp Y/N")
-    account_num: Optional[str] = Field(..., description="Số tài khoản")
-    account_currency: Optional[str] = Field(..., description="Loại tiền trong tài khoản")
-    account_class_code: Optional[str] = Field(..., description="Mã sản phẩm")
+    acc_spl: bool = Field(..., description="Tùy chọn tài khoản số đẹp")
+    account_num: Optional[str] = Field(..., description="Số tài khoản", min_length=3, max_length=3)
+    account_currency: str = Field(..., description="Loại tiền trong tài khoản")
+    account_class_code: str = Field(..., description="Mã sản phẩm")
 
 
 class GWStaffInfoCheckerCasaRequest(BaseGWSchema):
@@ -216,9 +216,9 @@ class GWUdfInfoOpenCasaRequest(BaseGWSchema):
 class GWOpenCasaAccountRequest(BaseGWSchema):
     cif_info: GWCIFInfoOpenCasaRequest = Field(..., description="Thông tin CIF")
     account_info: GWAccountInfoOpenCasaRequest = Field(..., description="Thông tin tài khoản")
-    staff_info_checker: GWStaffInfoCheckerCasaRequest = Field(..., description="Thông tin nhân viên kiểm tra")
-    staff_info_maker: GWStaffInfoMakerCasaRequest = Field(..., description="Thông tin nhân viên tạo tài khoản")
-    udf_info: GWUdfInfoOpenCasaRequest = Field(..., description="Thông tin UDF")
+    # staff_info_checker: GWStaffInfoCheckerCasaRequest = Field(..., description="Thông tin nhân viên kiểm tra")
+    # staff_info_maker: GWStaffInfoMakerCasaRequest = Field(..., description="Thông tin nhân viên tạo tài khoản")
+    # udf_info: GWUdfInfoOpenCasaRequest = Field(..., description="Thông tin UDF")
 
 
 class GWOpenCasaAccountResponse(BaseGWSchema):
