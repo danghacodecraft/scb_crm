@@ -1,8 +1,6 @@
 GW_REPONSE_STATUS_SUCCESS = 1
 GW_CASA_REPONSE_STATUS_SUCCESS = '00'
 
-GW_FUNCTION_OPEN_CASA = "openCASA_in"
-
 GW_ENDPOINT_URL_RETRIEVE_CUS_DATA_MGMT_CIF_NUM = "/customer/v1.0/rest/selectCustomerRefDataMgmtCIFNum"
 GW_ENDPOINT_URL_RETRIEVE_CUS_REF_DATA_MGMT = "/customer/v1.0/rest/retrieveCustomerRefDataMgmt"
 GW_ENDPOINT_URL_RETRIEVE_CURRENT_ACCOUNT_CASA = "/currentaccount/v1.0/rest/retrieveCurrentAccountCASA"
@@ -36,6 +34,10 @@ GW_SELECT_CATEGORY = "/category/v1.0/rest/selectCategory"
 GW_HISTORY_CHANGE_FIELD_ACCOUNT = "/history/v1.0/rest/historyChangeFieldAccount"
 
 GW_ENDPOINT_URL_RETRIEVE_CUS_OPEN_CIF = '/customer/v1.0/rest/openCIFAuthorise'
+########################################################################################################################
+# Payment
+########################################################################################################################
+GW_ENDPOINT_URL_PAYMENT_AMOUNT_BLOCK = "/payment/v1.0/rest/amountBlock"
 
 GW_DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 GW_DATE_FORMAT = '%Y-%m-%d'
