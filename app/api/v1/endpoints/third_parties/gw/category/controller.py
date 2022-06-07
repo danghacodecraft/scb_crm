@@ -37,11 +37,6 @@ class CtrSelectCategory(BaseController):
                     )
                 ))
             else:
-                for key, value in category.items():
-                    response_datas.append(dict(
-                        id=key,
-                        code=key,
-                        name=value
-                    ))
+                response_datas = select_category_list
 
         return self.response(data=response_datas)
