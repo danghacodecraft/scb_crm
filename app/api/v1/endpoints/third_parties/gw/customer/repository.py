@@ -165,7 +165,7 @@ async def repos_gw_open_cif(
 async def repos_update_cif_number_customer(
         cif_id: str,
         data_update_customer: dict,
-        data_update_casa_account: dict,
+        # data_update_casa_account: dict,
         session: Session
 ):
     session.execute(
@@ -174,12 +174,12 @@ async def repos_update_cif_number_customer(
         ).filter(Customer.id == cif_id).values(data_update_customer)
     )
 
-    if data_update_casa_account:
-        session.execute(
-            update(
-                CasaAccount
-            ).filter(CasaAccount.customer_id == cif_id).values(data_update_casa_account)
-        )
+    # if data_update_casa_account:
+    #     session.execute(
+    #         update(
+    #             CasaAccount
+    #         ).filter(CasaAccount.customer_id == cif_id).values(data_update_casa_account)
+    #     )
 
     return ReposReturn(data=cif_id)
 
