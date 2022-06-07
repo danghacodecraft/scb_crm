@@ -38,8 +38,7 @@ from app.third_parties.oracle.models.master_data.identity import (
     CustomerIdentityType, PlaceOfIssue
 )
 from app.utils.constant.cif import (
-    AGREEMENT_AUTHOR_TYPE_DD, BUSINESS_FORM_TKTT_DSH,
-    CUSTOMER_RELATIONSHIP_TYPE_CUSTOMER_RELATIONSHIP, DROPDOWN_NONE_DICT,
+    AGREEMENT_AUTHOR_TYPE_DD, BUSINESS_FORM_TKTT_DSH, DROPDOWN_NONE_DICT,
     IMAGE_TYPE_SIGNATURE
 )
 from app.utils.error_messages import (
@@ -94,7 +93,10 @@ async def repos_get_co_owner(cif_id: str, session: Session) -> ReposReturn:
             JointAccountHolder,
             CustomerRelationshipType
         )
-        .join(JointAccountHolder, CasaAccount.id == JointAccountHolder.casa_account_id)
+        .join(JointAccountHolderAgreementAuthorization,
+              CasaAccount.id == JointAccountHolderAgreementAuthorization.casa_account_id)
+        .join(JointAccountHolder,
+              JointAccountHolderAgreementAuthorization.joint_acc_agree_id == JointAccountHolder.joint_acc_agree_id)
         .join(CustomerRelationshipType, JointAccountHolder.relationship_type_id == CustomerRelationshipType.id)
         .filter(CasaAccount.customer_id == cif_id)
     ).all()
