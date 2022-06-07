@@ -15,17 +15,27 @@ from app.utils.functions import now
 
 
 class CtrFile(BaseController):
-    async def upload_file(self, file_upload: UploadFile, ekyc_flag: bool, booking_id: Optional[str]):
+    async def upload_file(
+            self,
+            file_upload: UploadFile,
+            ekyc_flag: bool,
+            booking_id: Optional[str],
+            save_to_db_flag: bool = False
+    ):
         data_file_upload = await file_upload.read()
 
         self.call_validator(await file_validator(data_file_upload))
 
-        info_file = self.call_repos(await repos_upload_file(
+        is_success, info_file = self.call_repos(await repos_upload_file(
             file=data_file_upload,
             name=file_upload.filename,
             ekyc_flag=ekyc_flag,
-            booking_id=booking_id
+            save_to_db_flag=save_to_db_flag,
+            booking_id=booking_id,
+            current_user=self.current_user.user_info
         ))
+        if not is_success:
+            return self.response_exception(msg="ERROR_INSERT_DOCUMENT_FILE", detail=str(info_file))
 
         info_file['created_at'] = now()
         return self.response(data=info_file)
@@ -37,9 +47,9 @@ class CtrFile(BaseController):
         self.call_validator(await multi_file_validator(data_file_uploads))
 
         info_files = self.call_repos(await repos_upload_multi_file(files=data_file_uploads, names=names))
-        for info_file in info_files:
+        for status, info_file in info_files:
             info_file['created_at'] = now()
-
+        info_files = [info_file for status, info_file in info_files]
         return self.response(data=info_files)
 
     async def download_file(self, uuid: str):

@@ -98,11 +98,13 @@ class CifCustomerInformationResponse(BaseSchema):
     employees: List[EmployeeResponse] = Field(..., description="Danh sách nhân viên")
 
 
-class CifCustomerWorkingInformationResponse(BaseSchema):
-    booking_id: str = Field(..., description="Booking ID")
-    booking_code: str = Field(..., description="Mã booking")
-    business_type: DropdownResponse = Field(..., description="Loại nghiệp vụ")
-    created_at: datetime = Field(..., description="Ngày tạo")
+class CareerInformationContactInformationResponse(BaseSchema):
+    career: OptionalDropdownResponse = Field(..., description="Nghề nghiệp")
+    average_income_amount: OptionalDropdownResponse = Field(..., description="Thu nhập BQ 3 tháng gần nhất")
+    company_name: Optional[str] = Field(None, min_length=1, description="Tên cơ quan công tác")
+    company_phone: Optional[str] = Field(None, min_length=1, description="Số điện thoại cơ quan")
+    company_position: DropdownResponse = Field(None, description="Chức vụ")
+    company_address: Optional[str] = Field(None, min_length=1, description="Địa chỉ cơ quan")
 
 
 class SOACIFInformation(BaseSchema):
