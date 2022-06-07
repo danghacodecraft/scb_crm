@@ -74,7 +74,8 @@ class JointAccountHolder(Base):
     relationship_type_id = Column(ForeignKey('crm_cust_relationship_type.cust_relationship_type_id'), nullable=False,
                                   comment='Mối quan hệ với khách hàng hiện tại')
     joint_account_holder_no = Column(NUMBER(4, 2, True), comment='Số thứ tự tài khoản người đồng sở hữu')
-    joint_acc_agree_id = Column('join_acc_agree_id', ForeignKey('crm_joint_acc_agree.join_acc_agree_id'), comment='Số thứ tự tài khoản người đồng sở hữu')
+    joint_acc_agree_id = Column('join_acc_agree_id', ForeignKey('crm_joint_acc_agree.join_acc_agree_id'),
+                                comment='Mã thỏa thuận/ ủy quyền đồng sở hữu')
 
 
 class AgreementAuthorization(Base):
