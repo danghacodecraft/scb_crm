@@ -1,10 +1,14 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.template.detail.repository import (
     repo_customer_address, repo_customer_info, repo_debit_card, repo_e_banking,
-    repo_form, repo_guardians, repo_sub_identity
+    repo_form, repo_guardians, repo_join_account_holder, repo_sub_identity
+)
+from app.api.v1.endpoints.third_parties.gw.customer.controller import (
+    CtrGWCustomer
 )
 from app.settings.config import DATE_INPUT_OUTPUT_EKYC_FORMAT
 from app.utils.constant.cif import CONTACT_ADDRESS_CODE, RESIDENT_ADDRESS_CODE
+from app.utils.constant.gw import GW_REQUEST_PARAMETER_CO_OWNER
 from app.utils.constant.tms_dms import (
     PATH_FORM_1, PATH_FORM_2, PATH_FORM_3, PATH_FORM_4, PATH_FORM_5,
     PATH_FORM_6, TMS_TRANSLATE_AVERAGE_INCOME_AMOUNT_FORM_1,
@@ -23,7 +27,7 @@ class CtrTemplateDetail(BaseController):
         customer_address = self.call_repos(await repo_customer_address(cif_id=cif_id, session=self.oracle_session))
         subs_identity = self.call_repos(await repo_sub_identity(cif_id=cif_id, session=self.oracle_session))
         guardians = self.call_repos(await repo_guardians(cif_id=cif_id, session=self.oracle_session))
-        # customer_join = self.call_repos(await repo_join_account_holder(cif_id=cif_id, session=self.oracle_session))
+        customer_joins = self.call_repos(await repo_join_account_holder(cif_id=cif_id, session=self.oracle_session))
         debit_cards = self.call_repos(await repo_debit_card(cif_id=cif_id, session=self.oracle_session))
         e_banking = self.call_repos(await repo_e_banking(cif_id=cif_id, session=self.oracle_session))
         # fatca_info = self.call_repos(await repos_fatca_info(cif_id=cif_id, session=self.oracle_session))
@@ -121,16 +125,19 @@ class CtrTemplateDetail(BaseController):
             data_request.update({"S1.A.1.2.44": guardians_res})
 
         # Người đồng sở hữu
-        # TODO
-        # if customer_join:
-        #     customer_join_res = [{
-        #         # "S1.A.1.8": "",
-        #         "S1.A.1.8.3": item.CustomerJoin.full_name_vn,
-        #         "S1.A.1.8.2": item.CustomerJoin.cif_number,
-        #         "S1.A.1.8.4": item.CustomerIdentity.identity_num
-        #     } for item in customer_join]
-        #
-        #     data_request.update({"S1.A.1.8.3": customer_join_res})
+        customer_joins_res = []
+        if customer_joins:
+            for customer_join in customer_joins:
+                gw_customer_join = await CtrGWCustomer(current_user=self.current_user).ctr_gw_get_customer_info_detail(
+                    cif_number=customer_join['cif_num'], parameter=GW_REQUEST_PARAMETER_CO_OWNER)
+
+                customer_join_data = gw_customer_join['data']
+                customer_joins_res.append({
+                    "S1.A.1.8.3": customer_join_data['basic_information']['full_name_vn'],
+                    "S1.A.1.8.2": customer_join_data['id'],
+                    "S1.A.1.8.4": customer_join_data['identity_document']['identity_number']
+                })
+            data_request.update({"S1.A.1.8.3": customer_joins_res, "S1.A.1.8": ["Đồng chủ tài khoản"]})
 
         # Thẻ ghi nợ (Thẻ chính - Thẻ phụ)
         if main_cards:
@@ -218,7 +225,7 @@ class CtrTemplateDetail(BaseController):
         customer_address = self.call_repos(await repo_customer_address(cif_id=cif_id, session=self.oracle_session))
         subs_identity = self.call_repos(await repo_sub_identity(cif_id=cif_id, session=self.oracle_session))
         guardians = self.call_repos(await repo_guardians(cif_id=cif_id, session=self.oracle_session))
-        # customer_join = self.call_repos(await repo_join_account_holder(cif_id=cif_id, session=self.oracle_session))
+        customer_joins = self.call_repos(await repo_join_account_holder(cif_id=cif_id, session=self.oracle_session))
         debit_cards = self.call_repos(await repo_debit_card(cif_id=cif_id, session=self.oracle_session))
         e_banking = self.call_repos(await repo_e_banking(cif_id=cif_id, session=self.oracle_session))
         # fatca_info = self.call_repos(await repos_fatca_info(cif_id=cif_id, session=self.oracle_session))
@@ -319,16 +326,20 @@ class CtrTemplateDetail(BaseController):
             data_request.update({"S1.A.1.2.44": guardians_res})
 
         # Người đồng sở hữu
-        # TODO
-        # if customer_join:
-        #     customer_join_res = [{
-        #         # "S1.A.1.8": "",
-        #         "S1.A.1.8.3": item.CustomerJoin.full_name_vn,
-        #         "S1.A.1.8.2": item.CustomerJoin.cif_number,
-        #         "S1.A.1.8.4": item.CustomerIdentity.identity_num
-        #     } for item in customer_join]
-        #
-        #     data_request.update({"S1.A.1.8.3": customer_join_res})
+        customer_joins_res = []
+        if customer_joins:
+            for customer_join in customer_joins:
+                gw_customer_join = await CtrGWCustomer(current_user=self.current_user).ctr_gw_get_customer_info_detail(
+                    cif_number=customer_join['cif_num'], parameter=GW_REQUEST_PARAMETER_CO_OWNER)
+
+                customer_join_data = gw_customer_join['data']
+                customer_joins_res.append({
+                    "S1.A.1.8.3": customer_join_data['basic_information']['full_name_vn'],
+                    "S1.A.1.8.2": customer_join_data['id'],
+                    "S1.A.1.8.4": customer_join_data['identity_document']['identity_number']
+                })
+            data_request.update({"S1.A.1.8.3": customer_joins_res,
+                                 "S1.A.1.8": ["Đồng chủ tài khoản/Joint account holder"]})
 
         # Thẻ ghi nợ (Thẻ chính - Thẻ phụ)
         if main_cards:
