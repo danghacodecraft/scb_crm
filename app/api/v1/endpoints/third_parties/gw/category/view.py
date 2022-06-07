@@ -44,4 +44,4 @@ async def view_gw_select_category(
     if request.transaction_name == GW_REQUEST_DIRECT_INDIRECT:
         return ResponseData[List[CategoryResponse]](**select_category)
     else:
-        return ResponseData[List[DropdownResponse]](**select_category)
+        return ResponseData[List](**select_category)

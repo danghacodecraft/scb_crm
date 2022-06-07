@@ -40,7 +40,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE,
     GW_HISTORY_CHANGE_FIELD_ACCOUNT, GW_HISTOTY_ACOUNT_NUM,
     GW_HISTOTY_CHANGE_FIELD_ACCOUNT, GW_RETRIEVE_CASA_ACCOUNT_DETAIL,
-    GW_SELECT_CATEGORY
+    GW_SELECT_CATEGORY, GW_CASA_REPONSE_STATUS_SUCCESS, GW_FUNCTION_OPEN_CASA
 )
 from app.utils.functions import date_to_string
 
@@ -311,44 +311,36 @@ class ServiceGW:
             self,
             current_user: UserInfoResponse,
             cif_info,
-            account_info,
-            staff_info_checker,
-            staff_info_maker,
-            udf_info
-
+            account_info
     ):
         """
         Mở tài khoản thanh toán
         """
+        cif_number = cif_info.cif_num
         data_input = {
             "customer_info": {
                 "cif_info": {
-                    "cif_num": cif_info.cif_num
+                    "cif_num": cif_number
                 },
                 "account_info": {
-                    "acc_spl": account_info.acc_spl,
-                    "account_num": account_info.account_num,
+                    "acc_spl": "Y" if account_info.acc_spl else "N",
+                    "account_num": cif_number + account_info.account_num,  # RULE: Tài khoản số đẹp
                     "account_currency": account_info.account_currency,
                     "account_class_code": account_info.account_class_code,
                 },
                 "staff_info_checker": {
-                    "staff_name": staff_info_checker.staff_name
+                    "staff_name": "BINHNTH"  # TODO
                 },
                 "staff_info_maker": {
-                    "staff_name": staff_info_maker.staff_name
+                    "staff_name": "HIEUPN"  # TODO
                 },
                 "udf_info": {
-                    "udf_json_array": [
-                        {
-                            "UDF_NAME": item.UDF_NAME,
-                            "UDF_VALUE": item.UDF_VALUE
-                        }
-                        for item in udf_info.udf_json_array]
+                    "udf_json_array": []
                 }
             }
         }
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="openCASA_in", data_input=data_input
+            current_user=current_user, function_name=GW_FUNCTION_OPEN_CASA, data_input=data_input
         )
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_OPEN_CASA_ACCOUNT}"
@@ -377,6 +369,9 @@ class ServiceGW:
                     return False, return_data
                 else:
                     return_data = await response.json()
+                    if return_data['openCASA_out']['transaction_info']['transaction_error_code'] != GW_CASA_REPONSE_STATUS_SUCCESS:
+                        return False, return_data
+
                     return True, return_data
         except aiohttp.ClientConnectorError as ex:
             logger.error(str(ex))
