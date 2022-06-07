@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.api.base.repository import ReposReturn
 from app.settings.event import service_soa
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
-    CustomerAddress
+    CustomerAddress, CustomerProfessional
 )
 from app.third_parties.oracle.models.cif.basic_information.identity.model import (
     CustomerIdentity
@@ -28,7 +28,7 @@ from app.third_parties.oracle.models.master_data.customer import (
 )
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import (
-    BusinessType, KYCLevel, MaritalStatus
+    BusinessType, KYCLevel, MaritalStatus, Career, AverageIncomeAmount, Position
 )
 from app.utils.error_messages import (
     ERROR_BOOKING_CODE_NOT_EXIST, ERROR_CALL_SERVICE_SOA,
@@ -267,15 +267,17 @@ async def repos_get_customer_working_infos(
 ):
     customer_working_info = session.execute(
         select(
-            Booking.id,
-            Booking.code,
-            Booking.created_at,
-            BusinessType
+            Customer,
+            CustomerProfessional,
+            Career,
+            AverageIncomeAmount,
+            Position
         )
-        .join(BusinessType, Booking.business_type_id == BusinessType.id)
-        .join(BookingCustomer, Booking.id == BookingCustomer.booking_id)
-        .join(Customer, BookingCustomer.customer_id == Customer.id)
+        .join(CustomerProfessional, Customer.customer_professional_id == CustomerProfessional.id)
+        .outerjoin(Career, CustomerProfessional.career_id == Career.id)
+        .outerjoin(AverageIncomeAmount, CustomerProfessional.average_income_amount_id == AverageIncomeAmount.id)
+        .outerjoin(Position, CustomerProfessional.position_id == Position.id)
         .filter(Customer.cif_number == cif_number)
-    ).all()
+    ).first()
 
     return ReposReturn(data=customer_working_info)

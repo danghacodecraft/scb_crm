@@ -646,16 +646,28 @@ class CtrCustomer(BaseController):
 
     async def ctr_retrieve_customer_working_info_by_cif_number(self, cif_number):
         working_infos = self.call_repos(await repos_get_customer_working_infos(
-            cif_number=cif_number, session=self.oracle_session))
+            cif_number=cif_number, session=self.oracle_session
+        ))
 
-        return self.response(data=[
-            {
-                "booking_id": booking_id,
-                "booking_code": booking_code,
-                "business_type": {
-                    "id": business_type.id,
-                    "code": business_type.code,
-                    "name": business_type.name
-                },
-                "created_at": booking_created_at,
-            } for booking_id, booking_code, booking_created_at, business_type in working_infos])
+        response_data = dict(
+            career=DROPDOWN_NONE_DICT,
+            average_income_amount=DROPDOWN_NONE_DICT
+        )
+
+        if working_infos:
+            customer, customer_professional, career, average_income_amount, position = working_infos
+
+            if customer_professional:
+                response_data.update(
+                    company_name=customer_professional.company_name,
+                    company_phone=customer_professional.company_phone,
+                    company_address=customer_professional.company_address
+                )
+            if career:
+                response_data.update(
+                    average_income_amount=dropdown(average_income_amount),
+                    career=dropdown(career) if career else None,
+                    company_position=dropdown(position) if position else None
+                )
+
+        return self.response(data=response_data)
