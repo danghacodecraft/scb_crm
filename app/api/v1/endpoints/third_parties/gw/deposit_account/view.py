@@ -91,7 +91,7 @@ async def view_gw_get_column_chart_deposit_account_info(
 @router.post(
     path="/{account_number}/",
     name="[Thông tin tài khoản] Chi tiết tài khoản tiết kiệm",
-    description="Lấy chi tiết tài Khoản tiết kiệm theo số tài khoản",
+    description="Lấy chi tiết thông tin TK tiền gửi theo Số tài khoản",
     responses=swagger_response(
         response_model=ResponseData[GWDepositAccountTDResponse],
         success_examples=DEPOSIT_ACCOUNT_TD_SUCCESS_EXAMPLE,

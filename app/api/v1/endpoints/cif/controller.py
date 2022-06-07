@@ -667,7 +667,7 @@ class CtrCustomer(BaseController):
                 response_data.update(
                     average_income_amount=dropdown(average_income_amount),
                     career=dropdown(career) if career else None,
-                    company_position=dropdown(position) if position else None
+                    company_position=dropdown(position) if position else DROPDOWN_NONE_DICT
                 )
 
         return self.response(data=response_data)
