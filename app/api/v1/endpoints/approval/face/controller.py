@@ -46,7 +46,7 @@ class CtrApproveFace(BaseController):
         self.call_validator(await file_validator(image_data))
 
         # upload file vào service file -> lấy uuid_service_file, uuid_ekyc
-        face_info = self.call_repos(await repos_upload_file(
+        is_success, face_info = self.call_repos(await repos_upload_file(
             file=image_data,
             name=image_file.filename,
             ekyc_flag=True,

@@ -125,7 +125,7 @@ class CtrSignature(BaseController):
         current_user = self.current_user.user_info
         data_signature_img = await signature_img.read()
 
-        info_signature_img = self.call_repos(await repos_upload_file(
+        is_success, info_signature_img = self.call_repos(await repos_upload_file(
             file=data_signature_img,
             name=signature_img.filename,
             ekyc_flag=True))
