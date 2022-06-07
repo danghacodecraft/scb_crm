@@ -597,8 +597,9 @@ class CtrApproval(BaseController):
             cif_id: str,
             request: ApprovalRequest
     ):
-        # check cif đang tạo
-        self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
+        # check cif tồn tại
+        await self.get_model_object_by_id(model_id=cif_id, model=Customer, loc="cif_id")
+
         current_user = self.current_user.user_info
         auth_response = self.current_user
 
