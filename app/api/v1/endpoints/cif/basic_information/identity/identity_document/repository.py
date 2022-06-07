@@ -740,7 +740,7 @@ async def repos_upload_identity_document_and_ocr(
     if not is_success:
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_EKYC, detail=ocr_response.get('message', ''))
 
-    file_response = await service_file.upload_file(
+    is_success, file_response = await service_file.upload_file(
         file=image_file,
         name=image_file_name
     )

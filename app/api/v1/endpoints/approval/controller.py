@@ -18,6 +18,9 @@ from app.api.v1.endpoints.third_parties.gw.employee.repository import (
     repos_gw_get_employee_info_from_code
 )
 from app.api.v1.others.permission.controller import PermissionController
+from app.third_parties.oracle.models.cif.basic_information.model import (
+    Customer
+)
 from app.third_parties.oracle.models.master_data.identity import (
     CustomerIdentityType
 )
@@ -107,8 +110,9 @@ class CtrApproval(BaseController):
         return self.response(data=response_data)
 
     async def ctr_get_approval(self, cif_id: str, amount: int): # noqa
-        # check cif đang tạo
-        self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
+        # check cif tồn tại
+        await self.get_model_object_by_id(model_id=cif_id, model=Customer, loc="cif_id")
+
         # current_user = self.current_user.user_info
         auth_response = self.current_user
 

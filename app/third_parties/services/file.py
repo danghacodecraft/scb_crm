@@ -1,5 +1,5 @@
 import asyncio
-from typing import List, Optional, Any
+from typing import Any, List, Optional, Tuple
 from urllib.parse import urlparse
 
 import aiohttp
@@ -10,7 +10,9 @@ from app.api.v1.endpoints.user.schema import UserInfoResponse
 from app.settings.service import SERVICE
 from app.third_parties.oracle.base import SessionLocal
 from app.third_parties.plugin.document_file import plugin_create_document_file
-from app.utils.constant.document_file import DATE_INPUT_OUTPUT_SERVICE_FILE_FORMAT
+from app.utils.constant.document_file import (
+    DATE_INPUT_OUTPUT_SERVICE_FILE_FORMAT
+)
 from app.utils.functions import string_to_datetime
 
 
@@ -42,7 +44,7 @@ class ServiceFile:
             current_user: Optional[UserInfoResponse] = None,
             booking_id: Optional[str] = None,
             **kwargs
-    ) -> tuple[bool, Any]:
+    ) -> Tuple[bool, Any]:
         """
             Upload file lưu vào DB -> current_user
             Upload file không lưu vào DB -> current_user=None
@@ -62,7 +64,7 @@ class ServiceFile:
                 logger.log("SERVICE", f"[FILE] {response.status} : {api_url}")
 
                 if response.status != status.HTTP_201_CREATED:
-                    return await response.json()
+                    return True, await response.json()
 
                 upload_file_response_body = await response.json()
                 if upload_file_response_body['file_url']:
@@ -101,7 +103,7 @@ class ServiceFile:
             save_to_db_flag: bool = False,
             current_user: Optional[UserInfoResponse] = None,
             **kwargs
-    ) -> tuple[bool, Any]:
+    ) -> Tuple[bool, Any]:
         """
         Upload file lưu vào DB -> current_user
         Upload file không lưu vào DB -> current_user=None
@@ -117,7 +119,9 @@ class ServiceFile:
         )
 
     async def upload_multi_file(self, files: List[bytes], names: List[str],
-                                return_download_file_url_flag: bool = True) -> Optional[List[dict]]:
+                                return_download_file_url_flag: bool = True,
+                                **kwargs
+                                ) -> Optional[List[dict]]:
         coroutines = []
         for index, file in enumerate(files):
             # coroutines.append(self.__call_upload_file(file=file))
@@ -126,7 +130,8 @@ class ServiceFile:
                     self.__call_upload_file(
                         file=file,
                         name=names[index],
-                        return_download_file_url_flag=return_download_file_url_flag
+                        return_download_file_url_flag=return_download_file_url_flag,
+                        **kwargs
                     )
                 )
             )

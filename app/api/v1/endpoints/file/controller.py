@@ -47,9 +47,9 @@ class CtrFile(BaseController):
         self.call_validator(await multi_file_validator(data_file_uploads))
 
         info_files = self.call_repos(await repos_upload_multi_file(files=data_file_uploads, names=names))
-        for info_file in info_files:
+        for status, info_file in info_files:
             info_file['created_at'] = now()
-
+        info_files = [info_file for status, info_file in info_files]
         return self.response(data=info_files)
 
     async def download_file(self, uuid: str):

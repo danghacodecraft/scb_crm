@@ -4,7 +4,9 @@ from sqlalchemy.orm import Session
 
 from app.api.v1.endpoints.user.schema import UserInfoResponse
 from app.third_parties.oracle.models.document_file.model import DocumentFile
-from app.utils.constant.document_file import DOCUMENT_FILE_TYPE_CODE_FILE, DOCUMENT_FILE_FOLDER_CODE_DEFAULT
+from app.utils.constant.document_file import (
+    DOCUMENT_FILE_FOLDER_CODE_DEFAULT, DOCUMENT_FILE_TYPE_CODE_FILE
+)
 from app.utils.functions import generate_uuid
 
 
