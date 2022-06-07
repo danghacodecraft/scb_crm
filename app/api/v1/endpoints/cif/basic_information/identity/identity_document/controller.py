@@ -188,6 +188,9 @@ class CtrIdentityDocument(BaseController):
             loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
         )
 
+        # Kiểm tra xem Booking_id đã sử dụng chưa
+        await CtrBooking().is_used_booking(booking_id=booking_id)
+
         # check quyền user
         self.call_repos(await PermissionController.ctr_approval_check_permission(
             auth_response=self.current_user,

@@ -421,26 +421,25 @@ async def repos_save_identity(
         #     business_type_code=BUSINESS_TYPE_INIT_CIF
         # )
 
-        is_success, booking_response = await write_transaction_log_and_update_booking(
-            booking_id=booking_id,
-            log_data=request_data,
-            session=session,
-            customer_id=customer_id,
-            business_form_id=BUSINESS_FORM_TTCN_GTDD_GTDD
-        )
-        if not is_success:
-            return ReposReturn(is_error=True, msg=booking_response['msg'])
-
-        booking_code = booking_response['booking_code']
+        # is_success, booking_response = await write_transaction_log_and_update_booking(
+        #     booking_id=booking_id,
+        #     log_data=request_data,
+        #     session=session,
+        #     customer_id=customer_id,
+        #     business_form_id=BUSINESS_FORM_TTCN_GTDD_GTDD
+        # )
+        # if not is_success:
+        #     return ReposReturn(is_error=True, msg=booking_response['msg'])
+        #
+        # booking_code = booking_response['booking_code']
 
         session.execute(update(BookingCustomer).filter(BookingCustomer.booking_id == booking_id).values(customer_id=new_customer_id))
         # tạo booking code
-        if not booking_code:
-            is_existed, booking_code = await generate_booking_code(
-                branch_code=current_user.hrm_branch_code,
-                business_type_code=BUSINESS_TYPE_CODE_CIF,
-                session=session
-            )
+        is_existed, booking_code = await generate_booking_code(
+            branch_code=current_user.hrm_branch_code,
+            business_type_code=BUSINESS_TYPE_CODE_CIF,
+            session=session
+        )
         session.execute(update(BookingBusinessForm).filter(BookingBusinessForm.booking_id == booking_id).values(
             # business_form_id=BUSINESS_FORM_TTCN_GTDD_GTDD,
             save_flag=True,  # Save_flag đổi lại thành True do Business Form giờ là những Tab nhỏ nhiều cấp
@@ -605,7 +604,7 @@ async def repos_save_identity(
 
     # update booking
     session.execute(update(Booking).filter(Booking.id == booking_id).values(
-        code=booking_code,
+        # code=booking_code,
         transaction_id=saving_transaction_daily['transaction_id']
     ))
 
