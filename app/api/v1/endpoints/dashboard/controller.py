@@ -102,6 +102,7 @@ class CtrDashboard(BaseController):
                     )
                 )
             })
+        print(mapping_datas)
 
         if booking_ids:
             stage_infos = self.call_repos(await repos_get_senders(
