@@ -4,7 +4,7 @@ from app.api.base.repository import ReposReturn
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWAccountInfoCloseCasaRequest, GWAccountInfoOpenCasaRequest,
     GWCIFInfoOpenCasaRequest, GWStaffInfoCheckerCasaRequest,
-    GWStaffInfoMakerCasaRequest, GWUdfInfoOpenCasaRequest
+    GWStaffInfoMakerCasaRequest
 )
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.settings.event import service_gw
@@ -120,18 +120,14 @@ async def repos_gw_get_statements_casa_account_info(
     return ReposReturn(data=gw_report_history_account_info)
 
 
-async def repos_gw_get_open_casa_account(
+async def repos_gw_open_casa_account(
     cif_info: GWCIFInfoOpenCasaRequest,
     account_info: GWAccountInfoOpenCasaRequest,
-    staff_info_checker: GWStaffInfoCheckerCasaRequest,
-    staff_info_maker: GWStaffInfoMakerCasaRequest,
-    udf_info: GWUdfInfoOpenCasaRequest,
     current_user: AuthResponse
 ):
     current_user = current_user.user_info
     is_success, gw_open_casa_account_info = await service_gw.get_open_casa_account(
-        cif_info=cif_info, account_info=account_info, staff_info_checker=staff_info_checker,
-        staff_info_maker=staff_info_maker, udf_info=udf_info, current_user=current_user
+        cif_info=cif_info, account_info=account_info, current_user=current_user
     )
     if not is_success:
         return ReposReturn(

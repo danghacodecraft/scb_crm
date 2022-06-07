@@ -143,11 +143,11 @@ async def view_gw_get_statement_casa_account_info(
         success_status_code=status.HTTP_200_OK
     )
 )
-async def view_gw_get_open_casa_account(
+async def view_gw_open_casa_account(
         request: GWOpenCasaAccountRequest = Body(..., description="Thông tin khách hàng"),
         current_user=Depends(get_current_user_from_header())
 ):
-    gw_open_casa_account_info = await CtrGWCasaAccount(current_user).ctr_gw_get_open_casa_account(
+    gw_open_casa_account_info = await CtrGWCasaAccount(current_user).ctr_gw_open_casa_account(
         request=request
     )
     return ResponseData[GWOpenCasaAccountResponse](**gw_open_casa_account_info)
