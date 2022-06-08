@@ -79,6 +79,7 @@ class CifCustomerInformationResponse(BaseSchema):
     avatar_url: Optional[str] = Field(..., description="Đường dẫn hình ảnh khách hàng")
     customer_classification: DropdownResponse = Field(..., description="Hạng khách hàng")
     full_name: str = Field(..., description="Họ tên tiếng anh")
+    full_name_vn: str = Field(..., description="Họ tên tiếng việt")
     gender: DropdownResponse = Field(..., description="Giới tính")
     email: Optional[str] = Field(..., description="Địa chỉ email")
     mobile_number: Optional[str] = Field(..., description="Số điện thoại")
