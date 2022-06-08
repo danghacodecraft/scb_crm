@@ -2,30 +2,38 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.payment.repository import (
     repos_gw_payment_amount_block
 )
+from app.api.v1.endpoints.third_parties.gw.payment.schema import (
+    AccountAmountBlock
+)
 
 
 class CtrGWPayment(BaseController):
 
-    async def ctr_gw_payment_amount_block(self):
+    async def ctr_gw_payment_amount_block(
+        self,
+        account_number: str,
+        account_amount_block: AccountAmountBlock
+    ):
         current_user = self.current_user
 
         data_input = {
             "account_info": {
-                "account_num": "0010108370590001"
+                "account_num": account_number
             },
             "p_blk_detail": {
-                "AMOUNT": 1,
-                "AMOUNT_BLOCK_TYPE": "F",
-                "HOLD_CODE": "PTKHAC",
-                "EFFECTIVE_DATE": "30/11/2019",
-                "EXPIRY_DATE": "",
-                "REMARKS": "",
-                "VERIFY_AVAILABLE_BALANCE": "N",
+                "AMOUNT": account_amount_block.amount,
+                "AMOUNT_BLOCK_TYPE": account_amount_block.amount_block_type,
+                "HOLD_CODE": account_amount_block.hold_code,
+                "EFFECTIVE_DATE": account_amount_block.effective_date,
+                "EXPIRY_DATE": account_amount_block.expiry_date if account_amount_block.expiry_date else "",
+                "REMARKS": account_amount_block.remarks,
+                "VERIFY_AVAILABLE_BALANCE": account_amount_block.verify_available_balance,
                 "CHARGE_DETAIL": {
                     "TYPE_CHARGE": "",
                     "ACCOUNT_CHARGE": ""
                 }
             },
+            # TODO chưa được mô tả
             "p_blk_charge": [
                 {
                     "CHARGE_NAME": "",
@@ -33,6 +41,7 @@ class CtrGWPayment(BaseController):
                     "WAIVED": "N"
                 }
             ],
+            # TODO chưa được mô tả
             "p_blk_udf": [
                 {
                     "UDF_NAME": "",
