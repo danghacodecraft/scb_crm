@@ -5,7 +5,7 @@ from pydantic import Field
 from app.api.base.schema import BaseSchema
 
 
-class AccountAmountBlock(BaseSchema):
+class AccountAmountBlockRequest(BaseSchema):
     amount: int = Field(..., description="Số dư bị phong tỏa")
     amount_block_type: str = Field(..., description="Loại phong tỏa")
     hold_code: str = Field(..., description="Mã lý do bị phong tỏa")
@@ -16,6 +16,10 @@ class AccountAmountBlock(BaseSchema):
         ...,
         description="Có hoặc không kiểm tra giá trị số dư trước khi phong tỏa. Giá trị Y/N"
     )
+
+
+class AccountAmountBlockResponse(BaseSchema):
+    account_ref_no: str = Field(..., description="Số tham chiếu của lệnh phong tỏa tài khoản")
 
 
 class AmountUnblockDetail(BaseSchema):
