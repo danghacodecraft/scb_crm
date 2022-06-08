@@ -1,6 +1,6 @@
 GW_REPONSE_STATUS_SUCCESS = 1
 GW_CASA_REPONSE_STATUS_SUCCESS = '00'
-
+GW_FUNCTION_OPEN_CASA = "openCASA_in"
 GW_ENDPOINT_URL_RETRIEVE_CUS_DATA_MGMT_CIF_NUM = "/customer/v1.0/rest/selectCustomerRefDataMgmtCIFNum"
 GW_ENDPOINT_URL_RETRIEVE_CUS_REF_DATA_MGMT = "/customer/v1.0/rest/retrieveCustomerRefDataMgmt"
 GW_ENDPOINT_URL_RETRIEVE_CURRENT_ACCOUNT_CASA = "/currentaccount/v1.0/rest/retrieveCurrentAccountCASA"
