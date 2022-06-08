@@ -215,6 +215,7 @@ class CtrCustomer(BaseController):
             "avatar_url": ServiceFile().replace_with_cdn(uuid__link_downloads[first_row.Customer.avatar_url]),
             "customer_classification": dropdown(first_row.CustomerClassification),
             "full_name": first_row.Customer.full_name,
+            "full_name_vn": first_row.Customer.full_name_vn,
             "gender": dropdown(first_row.CustomerGender),
             "email": first_row.Customer.email,
             "mobile_number": first_row.Customer.mobile_number,
