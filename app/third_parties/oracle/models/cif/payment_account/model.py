@@ -115,6 +115,7 @@ class MethodSign(Base):
     __table_args__ = {'comment': 'Thông tin phương thức ký'}
 
     id = Column('method_sign_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "))
+    method_sign_type = Column(NUMBER(2), nullable=False, comment="Phương thức ký (1, 2, 3)")
     agreement_author_id = Column(VARCHAR(36), comment="Mã thông tin thỏa thuận - ủy quyền")
     joint_acc_agree_id = Column(VARCHAR(36), comment="Mã thỏa thuận - ủy quyền")
     created_at = Column(DateTime, comment='Ngày tạo')

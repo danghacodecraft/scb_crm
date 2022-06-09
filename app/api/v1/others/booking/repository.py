@@ -159,3 +159,16 @@ async def repos_is_correct_booking(
     ).scalar()
 
     return True if booking_customer else None
+
+
+async def repos_is_used_booking(
+        booking_id: str,
+        session: Session
+):
+    is_used_booking = session.execute(
+        select(
+            BookingCustomer
+        )
+        .filter(BookingCustomer.booking_id == booking_id)
+    ).scalar()
+    return True if is_used_booking else False

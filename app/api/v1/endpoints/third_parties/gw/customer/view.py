@@ -145,7 +145,7 @@ async def view_gw_co_owner(
 @router.post(
     path="/{account_number}/authorized/",
     name="[GW] Lấy danh sách ủy quyền theo tài khoản",
-    description="Lấy danh sách ủy quyền theo tài khoản",
+    description="Lấy danh sách ủy quyền theo số tài khoản",
     responses=swagger_response(
         response_model=ResponseData[GWAuthorizedListResponse],
         success_examples=CUSTOMER_AUTHORIZER_SUCCESS_EXAMPLE,

@@ -215,6 +215,7 @@ class CtrCustomer(BaseController):
             "avatar_url": ServiceFile().replace_with_cdn(uuid__link_downloads[first_row.Customer.avatar_url]),
             "customer_classification": dropdown(first_row.CustomerClassification),
             "full_name": first_row.Customer.full_name,
+            "full_name_vn": first_row.Customer.full_name_vn,
             "gender": dropdown(first_row.CustomerGender),
             "email": first_row.Customer.email,
             "mobile_number": first_row.Customer.mobile_number,
@@ -667,7 +668,7 @@ class CtrCustomer(BaseController):
                 response_data.update(
                     average_income_amount=dropdown(average_income_amount),
                     career=dropdown(career) if career else None,
-                    company_position=dropdown(position) if position else None
+                    company_position=dropdown(position) if position else DROPDOWN_NONE_DICT
                 )
 
         return self.response(data=response_data)

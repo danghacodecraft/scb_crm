@@ -8,11 +8,15 @@ from starlette import status
 from app.api.v1.endpoints.user.schema import UserInfoResponse
 from app.settings.service import SERVICE
 from app.utils.constant.gw import (
-    GW_AUTHORIZED_REF_DATA_MGM_ACC_NUM, GW_CO_OWNER_REF_DATA_MGM_ACC_NUM,
-    GW_CURRENT_ACCOUNT_CASA, GW_CURRENT_ACCOUNT_FROM_CIF,
-    GW_CUSTOMER_REF_DATA_MGMT_CIF_NUM, GW_DEPOSIT_ACCOUNT_FROM_CIF,
-    GW_DEPOSIT_ACCOUNT_TD, GW_EMPLOYEE_FROM_CODE, GW_EMPLOYEE_FROM_NAME,
-    GW_EMPLOYEES, GW_ENDPOINT_URL_CHECK_EXITS_ACCOUNT_CASA,
+    GW_AUTHORIZED_REF_DATA_MGM_ACC_NUM, GW_CASA_REPONSE_STATUS_SUCCESS,
+    GW_CO_OWNER_REF_DATA_MGM_ACC_NUM, GW_CURRENT_ACCOUNT_CASA,
+    GW_CURRENT_ACCOUNT_FROM_CIF, GW_CUSTOMER_REF_DATA_MGMT_CIF_NUM,
+    GW_DEPOSIT_ACCOUNT_FROM_CIF, GW_DEPOSIT_ACCOUNT_TD, GW_EMPLOYEE_FROM_CODE,
+    GW_EMPLOYEE_FROM_NAME, GW_EMPLOYEES,
+    GW_ENDPOINT_URL_CHECK_EXITS_ACCOUNT_CASA,
+    GW_ENDPOINT_URL_DEPOSIT_OPEN_ACCOUNT_TD,
+    GW_ENDPOINT_URL_PAYMENT_AMOUNT_BLOCK,
+    GW_ENDPOINT_URL_PAYMENT_AMOUNT_UNBLOCK,
     GW_ENDPOINT_URL_RETRIEVE_AUTHORIZED_ACCOUNT_NUM,
     GW_ENDPOINT_URL_RETRIEVE_CLOSE_CASA_ACCOUNT,
     GW_ENDPOINT_URL_RETRIEVE_CO_OWNER_ACCOUNT_NUM,
@@ -37,7 +41,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_RETRIEVE_STAFF_OTHER_INFO_FROM_CODE,
     GW_ENDPOINT_URL_RETRIEVE_TOPIC_INFO_FROM_CODE,
     GW_ENDPOINT_URL_RETRIEVE_WORKING_PROCESS_INFO_FROM_CODE,
-    GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE,
+    GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE, GW_FUNCTION_OPEN_CASA,
     GW_HISTORY_CHANGE_FIELD_ACCOUNT, GW_HISTOTY_ACOUNT_NUM,
     GW_HISTOTY_CHANGE_FIELD_ACCOUNT, GW_RETRIEVE_CASA_ACCOUNT_DETAIL,
     GW_SELECT_CATEGORY
@@ -311,44 +315,36 @@ class ServiceGW:
             self,
             current_user: UserInfoResponse,
             cif_info,
-            account_info,
-            staff_info_checker,
-            staff_info_maker,
-            udf_info
-
+            account_info
     ):
         """
         Mở tài khoản thanh toán
         """
+        cif_number = cif_info.cif_num
         data_input = {
             "customer_info": {
                 "cif_info": {
-                    "cif_num": cif_info.cif_num
+                    "cif_num": cif_number
                 },
                 "account_info": {
-                    "acc_spl": account_info.acc_spl,
-                    "account_num": account_info.account_num,
+                    "acc_spl": "Y" if account_info.acc_spl else "N",
+                    "account_num": cif_number + account_info.account_num,  # RULE: Tài khoản số đẹp
                     "account_currency": account_info.account_currency,
                     "account_class_code": account_info.account_class_code,
                 },
                 "staff_info_checker": {
-                    "staff_name": staff_info_checker.staff_name
+                    "staff_name": "BINHNTH"  # TODO
                 },
                 "staff_info_maker": {
-                    "staff_name": staff_info_maker.staff_name
+                    "staff_name": "HIEUPN"  # TODO
                 },
                 "udf_info": {
-                    "udf_json_array": [
-                        {
-                            "UDF_NAME": item.UDF_NAME,
-                            "UDF_VALUE": item.UDF_VALUE
-                        }
-                        for item in udf_info.udf_json_array]
+                    "udf_json_array": []
                 }
             }
         }
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="openCASA_in", data_input=data_input
+            current_user=current_user, function_name=GW_FUNCTION_OPEN_CASA, data_input=data_input
         )
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_OPEN_CASA_ACCOUNT}"
@@ -377,6 +373,9 @@ class ServiceGW:
                     return False, return_data
                 else:
                     return_data = await response.json()
+                    if return_data['openCASA_out']['transaction_info']['transaction_error_code'] != GW_CASA_REPONSE_STATUS_SUCCESS:
+                        return False, return_data
+
                     return True, return_data
         except aiohttp.ClientConnectorError as ex:
             logger.error(str(ex))
@@ -653,6 +652,41 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
+    async def deposit_open_account_td(self, current_user: UserInfoResponse, data_input):
+
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="openTD_in", data_input=data_input
+        )
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_DEPOSIT_OPEN_ACCOUNT_TD}"
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data
+                else:
+                    return_data = await response.json()
+                    return True, return_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data
     ####################################################################################################################
     # END --- DEPOSIT TD
     ####################################################################################################################
@@ -1582,3 +1616,79 @@ class ServiceGW:
     ####################################################################################################################
     # END --- CHECK_EXIST_CASA_ACCOUNT_NUMBER
     ####################################################################################################################
+
+    ####################################################################################################################
+    # start --- payment
+    ####################################################################################################################
+
+    async def gw_payment_amount_block(self, current_user: UserInfoResponse, data_input):
+
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="amountBlock_in", data_input=data_input
+        )
+        api_url = f"{self.url}{GW_ENDPOINT_URL_PAYMENT_AMOUNT_BLOCK}"
+
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW][Payment] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data
+                else:
+                    return_data = await response.json()
+                    return True, return_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data
+
+    async def gw_payment_amount_unblock(self, current_user: UserInfoResponse, data_input):
+
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="amountUnBlock_in", data_input=data_input
+        )
+        api_url = f"{self.url}{GW_ENDPOINT_URL_PAYMENT_AMOUNT_UNBLOCK}"
+
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW][Payment] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data
+                else:
+                    return_data = await response.json()
+                    return True, return_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data

@@ -1,12 +1,13 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
-    repos_get_casa_account, repos_get_customer_avatar_url_from_cif,
+    repos_get_customer_avatar_url_from_cif,
     repos_get_customer_ids_from_cif_numbers, repos_get_customer_open_cif,
     repos_get_teller_info, repos_gw_get_authorized, repos_gw_get_co_owner,
     repos_gw_get_customer_info_detail, repos_gw_get_customer_info_list,
     repos_gw_open_cif, repos_update_cif_number_customer
 )
+from app.api.v1.others.booking.controller import CtrBooking
 from app.settings.event import service_file
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
@@ -18,13 +19,14 @@ from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import (
     Branch, Career, MaritalStatus, ResidentStatus
 )
+from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import (
     CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE, CUSTOMER_COMPLETED_FLAG,
     CUSTOMER_TYPE_ORGANIZE, RESIDENT_ADDRESS_CODE, TRANSACTION_JOB_OPEN_CIF
 )
 from app.utils.constant.gw import (
-    GW_ACCOUNT_AUTO_CREATE_CIF_N, GW_ACCOUNT_CLASS_CODE, GW_AUTO,
-    GW_CUSTOMER_TYPE_B, GW_CUSTOMER_TYPE_I, GW_DATE_FORMAT, GW_DATETIME_FORMAT,
+    GW_AUTO, GW_CASA_REPONSE_STATUS_SUCCESS, GW_CUSTOMER_TYPE_B,
+    GW_CUSTOMER_TYPE_I, GW_DATE_FORMAT, GW_DATETIME_FORMAT,
     GW_DEFAULT_CUSTOMER_CATEGORY, GW_DEFAULT_KHTC_DOI_TUONG,
     GW_DEFAULT_TYPE_ID, GW_DEFAULT_VALUE, GW_GENDER_FEMALE, GW_GENDER_MALE,
     GW_LANGUAGE, GW_LOC_CHECK_CIF_EXIST, GW_LOCAL_CODE, GW_NO_AGREEMENT_FLAG,
@@ -726,15 +728,23 @@ class CtrGWCustomer(BaseController):
     async def ctr_gw_open_cif(self, cif_id: str, BOOKING_ID: str):
         current_user = self.current_user
 
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking(
+            business_type_code=BUSINESS_TYPE_INIT_CIF,
+            booking_id=BOOKING_ID,
+            cif_id=cif_id,
+            loc=f"header -> booking-id, booking_id: {BOOKING_ID}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        )
+
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
 
         response_customers = self.call_repos(await repos_get_customer_open_cif(
             cif_id=cif_id, session=self.oracle_session))
-
-        response_casa_account = self.call_repos(await repos_get_casa_account(
-            cif_id=cif_id, session=self.oracle_session
-        ))
+        # TODO thay thế phần mở tttk bằng api (không mở chung cùng cif)
+        # response_casa_account = self.call_repos(await repos_get_casa_account(
+        #     cif_id=cif_id, session=self.oracle_session
+        # ))
 
         # TODO get gdv
         teller = self.call_repos(await repos_get_teller_info(booking_id=BOOKING_ID, session=self.oracle_session)) # noqa
@@ -746,15 +756,16 @@ class CtrGWCustomer(BaseController):
             "acc_auto": GW_DEFAULT_VALUE,
             "account_num": GW_DEFAULT_VALUE
         }
-        if response_casa_account:
-            account_info = {
-                "account_class_code": GW_ACCOUNT_CLASS_CODE,
-                # TODO hard core auto_create
-                "account_auto_create_cif": GW_ACCOUNT_AUTO_CREATE_CIF_N,
-                "account_currency": response_casa_account.currency_id,
-                "acc_auto": GW_SELECT if response_casa_account.self_selected_account_flag else GW_AUTO,
-                "account_num": response_casa_account.casa_account_number if response_casa_account.self_selected_account_flag else ""
-            }
+        # TODO thay thế phần mở tttk bằng api (không mở chung cùng cif)
+        # if response_casa_account:
+        #     account_info = {
+        #         "account_class_code": GW_ACCOUNT_CLASS_CODE,
+        #         # TODO hard core auto_create
+        #         "account_auto_create_cif": GW_ACCOUNT_AUTO_CREATE_CIF_N,
+        #         "account_currency": response_casa_account.currency_id,
+        #         "acc_auto": GW_SELECT if response_casa_account.self_selected_account_flag else GW_AUTO,
+        #         "account_num": response_casa_account.casa_account_number if response_casa_account.self_selected_account_flag else ""
+        #     }
 
         first_row = response_customers[0]
         customer = first_row.Customer
@@ -947,7 +958,7 @@ class CtrGWCustomer(BaseController):
             )
         )
         # check open_cif success
-        if not response_data.get('openCIFAuthorise_out', {}).get('data_output') or not is_success:
+        if response_data.get('openCIFAuthorise_out').get('transaction_error_code') != GW_CASA_REPONSE_STATUS_SUCCESS:
             return self.response_exception(
                 msg=ERROR_CALL_SERVICE_GW,
                 detail=response_data.get('openCIFAuthorise_out', {}).get("transaction_info", {}).get('transaction_error_msg')
@@ -955,25 +966,25 @@ class CtrGWCustomer(BaseController):
 
         cif_number = response_data['openCIFAuthorise_out']['data_output']['customner_info']['cif_info']['cif_num']
         # TODO chưa thể mở tài khoản thanh toán
-        account_number = response_data['openCIFAuthorise_out']['data_output']['account_info']['account_num']
+        # account_number = response_data['openCIFAuthorise_out']['data_output']['account_info']['account_num']
 
         data_update_customer = {
             "cif_number": cif_number,
             "complete_flag": CUSTOMER_COMPLETED_FLAG
         }
 
-        data_update_casa_account = {}
+        # data_update_casa_account = {}
         # TODO data update casa_account
-        if account_number:
-            data_update_casa_account = {
-                "casa_account_number": account_number
-            }
+        # if account_number:
+        #     data_update_casa_account = {
+        #         "casa_account_number": account_number
+        #     }
 
         # call repos update cif_number and account_number
         await repos_update_cif_number_customer(
             cif_id=cif_id,
             data_update_customer=data_update_customer,
-            data_update_casa_account=data_update_casa_account,
+            # data_update_casa_account=data_update_casa_account,
             session=self.oracle_session
         )
         response = {

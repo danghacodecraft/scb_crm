@@ -35,7 +35,7 @@ router = APIRouter()
 @router.post(
     path="/",
     name="[GW] Danh sách Tài Khoản thanh toán theo số CIF",
-    description="[GW] Tìm kiếm danh sách Tài Khoản thanh toán theo số CIF",
+    description="[GW] Tìm kiếm danh sách TK thanh toán theo CIF",
     responses=swagger_response(
         response_model=ResponseData[GWCasaAccountByCIFNumberResponse],
         success_examples=CASA_ACCOUNT_BY_CIF_NUMBER_SUCCESS_EXAMPLE,
@@ -137,17 +137,17 @@ async def view_gw_get_statement_casa_account_info(
 @router.post(
     path="/open-casa/",
     name="[GW] Mở tài khoản thanh toán",
-    description="[GW] Mở tài khoản thanh toán",
+    description="[GW] Khởi tạo TK Thanh toán",
     responses=swagger_response(
         response_model=ResponseData[GWOpenCasaAccountResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
-async def view_gw_get_open_casa_account(
+async def view_gw_open_casa_account(
         request: GWOpenCasaAccountRequest = Body(..., description="Thông tin khách hàng"),
         current_user=Depends(get_current_user_from_header())
 ):
-    gw_open_casa_account_info = await CtrGWCasaAccount(current_user).ctr_gw_get_open_casa_account(
+    gw_open_casa_account_info = await CtrGWCasaAccount(current_user).ctr_gw_open_casa_account(
         request=request
     )
     return ResponseData[GWOpenCasaAccountResponse](**gw_open_casa_account_info)
@@ -175,7 +175,7 @@ async def view_gw_get_close_casa_account(
 @router.post(
     path="/{account_number}/",
     name="[GW] Chi tiết tài khoản thanh toán",
-    description="[GW] Lấy chi tiết tài Khoản thanh toán theo số tài khoản",
+    description="[GW] Lấy chi tiết thông tin TK thanh toán theo Số tài khoản",
     responses=swagger_response(
         response_model=ResponseData[GWCasaAccountResponse],
         success_examples=CASA_ACCOUNT_INFO_SUCCESS_EXAMPLE,

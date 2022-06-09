@@ -31,6 +31,7 @@ from app.third_parties.oracle.models.master_data.others import (
     AverageIncomeAmount, TransactionJob
 )
 from app.utils.constant.cif import IMAGE_TYPE_FACE
+from app.utils.constant.gw import GW_CASA_REPONSE_STATUS_SUCCESS
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_GW, ERROR_NO_DATA, ERROR_OPEN_CIF
 )
@@ -143,8 +144,7 @@ async def repos_gw_open_cif(
         account_info=account_info,
         current_user=current_user
     )
-
-    if not response_data.get('openCIFAuthorise_out', {}).get('data_output') or not is_success:
+    if response_data.get('openCIFAuthorise_out').get('transaction_error_code') != GW_CASA_REPONSE_STATUS_SUCCESS:
         transaction_job.update({
             "complete_flag": False,
             "error_code": ERROR_OPEN_CIF,
@@ -165,7 +165,7 @@ async def repos_gw_open_cif(
 async def repos_update_cif_number_customer(
         cif_id: str,
         data_update_customer: dict,
-        data_update_casa_account: dict,
+        # data_update_casa_account: dict,
         session: Session
 ):
     session.execute(
@@ -174,12 +174,12 @@ async def repos_update_cif_number_customer(
         ).filter(Customer.id == cif_id).values(data_update_customer)
     )
 
-    if data_update_casa_account:
-        session.execute(
-            update(
-                CasaAccount
-            ).filter(CasaAccount.customer_id == cif_id).values(data_update_casa_account)
-        )
+    # if data_update_casa_account:
+    #     session.execute(
+    #         update(
+    #             CasaAccount
+    #         ).filter(CasaAccount.customer_id == cif_id).values(data_update_casa_account)
+    #     )
 
     return ReposReturn(data=cif_id)
 

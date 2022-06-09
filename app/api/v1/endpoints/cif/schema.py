@@ -79,6 +79,7 @@ class CifCustomerInformationResponse(BaseSchema):
     avatar_url: Optional[str] = Field(..., description="Đường dẫn hình ảnh khách hàng")
     customer_classification: DropdownResponse = Field(..., description="Hạng khách hàng")
     full_name: str = Field(..., description="Họ tên tiếng anh")
+    full_name_vn: str = Field(..., description="Họ tên tiếng việt")
     gender: DropdownResponse = Field(..., description="Giới tính")
     email: Optional[str] = Field(..., description="Địa chỉ email")
     mobile_number: Optional[str] = Field(..., description="Số điện thoại")
@@ -103,7 +104,7 @@ class CareerInformationContactInformationResponse(BaseSchema):
     average_income_amount: OptionalDropdownResponse = Field(..., description="Thu nhập BQ 3 tháng gần nhất")
     company_name: Optional[str] = Field(None, min_length=1, description="Tên cơ quan công tác")
     company_phone: Optional[str] = Field(None, min_length=1, description="Số điện thoại cơ quan")
-    company_position: DropdownResponse = Field(None, description="Chức vụ")
+    company_position: OptionalDropdownResponse = Field(..., description="Chức vụ")
     company_address: Optional[str] = Field(None, min_length=1, description="Địa chỉ cơ quan")
 
 

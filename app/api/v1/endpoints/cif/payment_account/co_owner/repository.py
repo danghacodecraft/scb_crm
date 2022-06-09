@@ -92,7 +92,10 @@ async def repos_get_co_owner(cif_id: str, session: Session) -> ReposReturn:
             JointAccountHolder,
             CustomerRelationshipType
         )
-        .join(JointAccountHolder, CasaAccount.id == JointAccountHolder.casa_account_id)
+        .join(JointAccountHolderAgreementAuthorization,
+              CasaAccount.id == JointAccountHolderAgreementAuthorization.casa_account_id)
+        .join(JointAccountHolder,
+              JointAccountHolderAgreementAuthorization.joint_acc_agree_id == JointAccountHolder.joint_acc_agree_id)
         .join(CustomerRelationshipType, JointAccountHolder.relationship_type_id == CustomerRelationshipType.id)
         .filter(CasaAccount.customer_id == cif_id)
     ).all()
