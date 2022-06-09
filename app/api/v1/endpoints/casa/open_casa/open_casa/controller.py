@@ -1,3 +1,5 @@
+from typing import List
+
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
     repos_get_customer_by_cif_number, repos_save_casa_casa_account, repos_get_acc_structure_types
@@ -24,7 +26,7 @@ class CtrCasaOpenCasa(BaseController):
             self,
             booking_parent_id: str,
             cif_number: str,
-            requests: SavePaymentAccountRequest
+            requests: List[SavePaymentAccountRequest]
     ):
         saving_casa_accounts = []
         saving_bookings = []
