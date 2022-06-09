@@ -136,6 +136,8 @@ class BookingAccount(Base):
 
     booking_id = Column(ForeignKey('crm_booking.booking_id'))
     account_id = Column(VARCHAR(36), primary_key=True, server_default=text("sys_guid() "))
+    created_at = Column(DateTime, nullable=False)
+    updated_at = Column(DateTime)
 
     booking = relationship('Booking')
 
