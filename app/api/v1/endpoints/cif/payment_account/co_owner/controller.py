@@ -1,7 +1,7 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.payment_account.co_owner.repository import (
     repos_detail_co_owner, repos_get_casa_account, repos_get_co_owner,
-    repos_save_co_owner
+    repos_get_co_owner_signatures, repos_save_co_owner
 )
 from app.api.v1.endpoints.cif.payment_account.co_owner.schema import (
     AccountHolderRequest
@@ -9,6 +9,7 @@ from app.api.v1.endpoints.cif.payment_account.co_owner.schema import (
 from app.api.v1.endpoints.cif.repository import (
     repos_get_booking, repos_validate_cif_number
 )
+from app.api.v1.endpoints.file.repository import repos_download_file
 from app.api.v1.endpoints.third_parties.gw.customer.controller import (
     CtrGWCustomer
 )
@@ -94,7 +95,7 @@ class CtrCoOwner(BaseController):
         return self.response(data=co_owner_data)
 
     async def ctr_co_owner(self, cif_id: str):
-        detail_co_owner = self.call_repos(
+        account_holders, account_holder_signs = self.call_repos(
             await repos_get_co_owner(
                 cif_id=cif_id,
                 session=self.oracle_session,
@@ -103,9 +104,13 @@ class CtrCoOwner(BaseController):
         joint_account_holder_flag = False
         number_of_joint_account_holder = 0
         joint_account_holders = []
+        agreement_authorizations = []
+        cif_numbers = []
+        signature_list = []
 
-        for casa_account, joint_account_holder, customer_relationship_type in detail_co_owner:
+        for casa_account, acc_joint_acc_agree, joint_account_holder, customer_relationship_type in account_holders:
             cif_number = joint_account_holder.cif_num
+            cif_numbers.append(cif_number)
 
             data = await CtrGWCustomer(current_user=self.current_user).ctr_gw_get_customer_info_detail(
                 cif_number=cif_number,
@@ -123,6 +128,7 @@ class CtrCoOwner(BaseController):
             address_information = gw_data['address_information']
 
             joint_account_holders.append(dict(
+                document_file=acc_joint_acc_agree.document_file_id,
                 id=cif_number,
                 basic_information=dict(
                     cif_number=cif_number,
@@ -132,7 +138,7 @@ class CtrCoOwner(BaseController):
                     gender=basic_information['gender'],
                     nationality=basic_information['nationality'],
                     mobile_number=basic_information['mobile_number'],
-                    signature=None
+                    signature=[]
                 ),
                 identity_document=dict(
                     identity_number=identity_number,
@@ -147,12 +153,41 @@ class CtrCoOwner(BaseController):
                 avatar_url=None
             ))
             number_of_joint_account_holder += 1
+            for _, joint_acc_agree_id, method_sign, agreement_authorization in account_holder_signs:
+                if acc_joint_acc_agree.joint_acc_agree_id == joint_acc_agree_id:
+                    agreement_authorizations.append(dict(
+                        id=agreement_authorization.id,
+                        code=agreement_authorization.code,
+                        name=agreement_authorization.name,
+                        active_flag=agreement_authorization.active_flag,
+                        method_sign=method_sign.method_sign_type,
+                        signature_list=[]
+                    ))
+                    agree_join_acc = dict(
+                        cif_number=method_sign.agree_join_acc_cif_num,
+                        full_name_vn=method_sign.agree_join_acc_name,
+                    )
+                    if agree_join_acc not in signature_list:
+                        signature_list.append(agree_join_acc)
+
+        signatures = self.call_repos(await repos_get_co_owner_signatures(
+            cif_numbers=cif_numbers, session=self.oracle_session))
+        for idx, (_, _, joint_account_holder, _) in enumerate(account_holders):
+            for signature in signatures:
+                if joint_account_holder.cif_num == signature.cif_number:
+                    image_info = self.call_repos(await repos_download_file(signature.image_url))
+                    joint_account_holders[idx]['basic_information']['signature'].append(dict(
+                        id=signature.id,
+                        image_url=image_info['file_url']
+                    ))
+            if agreement_authorizations[idx]['method_sign'] == 3:
+                agreement_authorizations[idx]["signature_list"] = signature_list
 
         response_data = dict(
             joint_account_holder_flag=joint_account_holder_flag,
             number_of_joint_account_holder=number_of_joint_account_holder,
             joint_account_holders=joint_account_holders,
-            # agreement_authorization=agreement_authorization
+            agreement_authorization=agreement_authorizations
         )
 
         return self.response(data=response_data)
