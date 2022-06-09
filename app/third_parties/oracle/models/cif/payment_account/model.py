@@ -74,8 +74,10 @@ class JointAccountHolder(Base):
     relationship_type_id = Column(ForeignKey('crm_cust_relationship_type.cust_relationship_type_id'), nullable=False,
                                   comment='Mối quan hệ với khách hàng hiện tại')
     joint_account_holder_no = Column(NUMBER(4, 2, True), comment='Số thứ tự tài khoản người đồng sở hữu')
-    joint_acc_agree_id = Column('join_acc_agree_id', ForeignKey('crm_joint_acc_agree.join_acc_agree_id'),
+    joint_acc_agree_id = Column('join_acc_agree_id', ForeignKey('crm_joint_acc_agree.joint_acc_agree_id'),
                                 comment='Mã thỏa thuận/ ủy quyền đồng sở hữu')
+    created_at = Column(DateTime, comment='Ngày tạo')
+    updated_at = Column(DateTime, comment='Ngày chỉnh sửa')
 
 
 class AgreementAuthorization(Base):
@@ -99,11 +101,13 @@ class JointAccountHolderAgreementAuthorization(Base):
 
     joint_acc_agree_id = Column(VARCHAR(36), primary_key=True, server_default=text("sys_guid() "))
     casa_account_id = Column(VARCHAR(36), nullable=False, comment="Số tài khoản hiện tại")
-    document_file_id = Column(ForeignKey('crm_document_file.joint_account_holder_id', VARCHAR(36)), nullable=False,
+    document_file_id = Column(ForeignKey('crm_document_file.document_file_id'), nullable=False,
                               comment="Id  mã loại thẻ")
     active_flag = Column(NUMBER(1, 0, False), nullable=False, comment="Trạng thái thỏa thuận/ ủy quyền")
     created_at = Column(DateTime, comment='Ngày tạo')
     updated_at = Column(DateTime, comment='Ngày cập nhật')
+    in_scb_flag = Column(NUMBER(1), nullable=False, comment="Cờ đánh dấu văn bản trong hay ngoài SCB")
+    file_address = Column(VARCHAR(255), nullable=False, comment="Thông tin địa chỉ")
 
 
 class MethodSign(Base):
@@ -114,3 +118,9 @@ class MethodSign(Base):
     method_sign_type = Column(NUMBER(2), nullable=False, comment="Phương thức ký (1, 2, 3)")
     agreement_author_id = Column(VARCHAR(36), comment="Mã thông tin thỏa thuận - ủy quyền")
     joint_acc_agree_id = Column(VARCHAR(36), comment="Mã thỏa thuận - ủy quyền")
+    created_at = Column(DateTime, comment='Ngày tạo')
+    updated_at = Column(DateTime, comment='Ngày chỉnh sửa')
+    agreement_flag = Column(NUMBER(1, 0, False), nullable=False, comment="Đánh dấu đồng ý nội dung")
+    method_sign_type = Column(NUMBER(2, 0, False), nullable=False, comment="Phương thức ký (1, 2, 3)")
+    agree_join_acc_cif_num = Column(VARCHAR(7), nullable=True, comment="Số CIF tài khoản tham gia ký văn bản đồng ý Chủ sở hữu")
+    agree_join_acc_name = Column(VARCHAR(100), nullable=True, comment="Tên tài khoản tham gia ký văn bản đồng ý Chủ sở hữu")

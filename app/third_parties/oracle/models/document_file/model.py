@@ -1,4 +1,4 @@
-from sqlalchemy import DATE, VARCHAR, ForeignKey, text, Column
+from sqlalchemy import DATE, VARCHAR, Column, ForeignKey, text
 from sqlalchemy.orm import relationship
 
 from app.third_parties.oracle.base import Base

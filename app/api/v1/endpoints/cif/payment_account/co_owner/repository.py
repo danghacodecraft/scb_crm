@@ -1,7 +1,7 @@
 import json
 from typing import List
 
-from sqlalchemy import and_, delete, select
+from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -28,7 +28,7 @@ from app.third_parties.oracle.models.cif.basic_information.personal.model import
 )
 from app.third_parties.oracle.models.cif.payment_account.model import (
     AgreementAuthorization, CasaAccount, JointAccountHolder,
-    JointAccountHolderAgreementAuthorization
+    JointAccountHolderAgreementAuthorization, MethodSign
 )
 from app.third_parties.oracle.models.master_data.address import AddressCountry
 from app.third_parties.oracle.models.master_data.customer import (
@@ -86,7 +86,6 @@ async def repos_check_list_relationship_id(
 
 
 async def repos_get_co_owner(cif_id: str, session: Session) -> ReposReturn:
-
     account_holders = session.execute(
         select(
             CasaAccount,
@@ -117,56 +116,23 @@ async def repos_get_casa_account(cif_id: str, session: Session) -> ReposReturn:
 
 @auto_commit
 async def repos_save_co_owner(
-    cif_id: str,
-    save_account_holder: list,
-    save_account_agree: list,
-    log_data: json,
-    session: Session,
-    created_by: str,
+        save_info_co_owner,
+        save_account_holder,
+        save_agreement_authorization,
+        cif_id: str,
+        log_data: json,
+        created_by: str,
+        session: Session
 ) -> ReposReturn:
-    # lấy danh sách account holder để xóa
-    account_holder_ids = (
-        session.execute(
-            select(JointAccountHolder.id).join(
-                CasaAccount,
-                and_(
-                    JointAccountHolder.casa_account_id == CasaAccount.id,
-                    CasaAccount.customer_id == cif_id,
-                ),
-            )
-        )
-        .scalars()
-        .all()
-    )
-
-    # xóa JointAccountHolderAgreementAuthorization
-    session.execute(
-        delete(JointAccountHolderAgreementAuthorization).filter(
-            JointAccountHolderAgreementAuthorization.joint_account_holder_id.in_(
-                account_holder_ids
-            )
-        )
-    )
-
-    # xóa account holder
-    session.execute(
-        delete(JointAccountHolder).filter(JointAccountHolder.id.in_(account_holder_ids))
-    )
-    # xóa relationship
-    session.execute(
-        delete(CustomerPersonalRelationship).filter(
-            CustomerPersonalRelationship.customer_id == cif_id
-        )
-    )
+    session.add(JointAccountHolderAgreementAuthorization(**save_info_co_owner))
     session.bulk_save_objects(
-        [JointAccountHolder(**data_insert) for data_insert in save_account_holder]
+        JointAccountHolder(**account_holder)
+        for account_holder in save_account_holder
     )
 
     session.bulk_save_objects(
-        [
-            JointAccountHolderAgreementAuthorization(**data_insert)
-            for data_insert in save_account_agree
-        ]
+        MethodSign(**agreement_authorization)
+        for agreement_authorization in save_agreement_authorization
     )
 
     is_success, booking_response = await write_transaction_log_and_update_booking(
