@@ -58,7 +58,7 @@ class CtrCasaOpenCasa(BaseController):
             self,
             booking_parent_id: str,
             cif_number: str,
-            requests: List[SavePaymentAccountRequest]
+            casa_accounts: List[SavePaymentAccountRequest]
     ):
         saving_casa_accounts = []
         saving_bookings = []
@@ -77,7 +77,7 @@ class CtrCasaOpenCasa(BaseController):
         acc_type_ids = []
         acc_class_ids = []
         account_structure_type_level_2_ids = []
-        for index, request in enumerate(requests):
+        for index, request in enumerate(casa_accounts):
             self_selected_account_flag = request.self_selected_account_flag
             account_salary_organization_account = request.account_salary_organization_account
             account_structure_type_level_2_id = None
@@ -207,14 +207,13 @@ class CtrCasaOpenCasa(BaseController):
             )
         )
 
-        self.call_repos(
-            await repos_save_casa_casa_account(
-                saving_casa_accounts=saving_casa_accounts,
-                saving_bookings=saving_bookings,
-                saving_booking_accounts=saving_booking_accounts,
-                session=self.oracle_session
-            )
-        )
+        self.call_repos(await repos_save_casa_casa_account(
+            saving_casa_accounts=saving_casa_accounts,
+            saving_bookings=saving_bookings,
+            saving_booking_accounts=saving_booking_accounts,
+            booking_parent_id=booking_parent_id,
+            session=self.oracle_session
+        ))
 
         return self.response(data=dict(
             booking_parent_id=booking_parent_id,

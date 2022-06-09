@@ -30,7 +30,7 @@ async def view_save_casa_open_casa_info(
     save_casa_open_casa_info = await CtrCasaOpenCasa(current_user=current_user).ctr_save_casa_open_casa_info(
         booking_parent_id=BOOKING_ID,
         cif_number=open_casa_request.cif_number,
-        requests=open_casa_request.save_payment_account_requests
+        casa_accounts=open_casa_request.casa_accounts
     )
     return ResponseData[SaveCasaSuccessResponse](**save_casa_open_casa_info)
 

@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, delete
 from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -22,8 +22,27 @@ async def repos_save_casa_casa_account(
         saving_casa_accounts: List[dict],
         saving_bookings: List[dict],
         saving_booking_accounts: List[dict],
+        booking_parent_id: str,
         session: Session
 ):
+    account_ids = session.execute(
+        select(
+            BookingAccount.account_id
+        )
+        .filter(BookingAccount.booking_id == booking_parent_id)
+    ).scalars().all()
+
+    booking_ids = session.execute(
+        select(
+            BookingAccount.booking_id
+        )
+        .filter(BookingAccount.booking_id == booking_parent_id)
+    ).scalars().all()
+
+    session.execute(delete(Booking).filter(Booking.id.in_(booking_ids)))
+    session.execute(delete(CasaAccount).filter(CasaAccount.id.in_(account_ids)))
+    session.execute(delete(BookingAccount).filter(BookingAccount.account_id.in_(booking_ids)))
+
     session.bulk_save_objects([CasaAccount(**saving_casa_account) for saving_casa_account in saving_casa_accounts])
     session.bulk_save_objects([Booking(**saving_booking) for saving_booking in saving_bookings])
     session.bulk_save_objects([BookingAccount(**saving_booking_account) for saving_booking_account in saving_booking_accounts])
