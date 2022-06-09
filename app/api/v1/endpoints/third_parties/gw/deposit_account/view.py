@@ -116,7 +116,8 @@ async def view_gw_get_deposit_account_td(
         response_model=ResponseData[GWDepositAccountTDResponse],
         success_examples=DEPOSIT_ACCOUNT_TD_SUCCESS_EXAMPLE,
         success_status_code=status.HTTP_200_OK
-    )
+    ),
+    deprecated=True
 )
 async def view_gw_deposit_open_account_td(
         request: GWDepositOpenAccountTD = Body(...),
