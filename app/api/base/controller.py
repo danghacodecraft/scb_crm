@@ -87,7 +87,7 @@ class BaseController:
             )
         )
 
-    async def get_model_objects_by_ids(self, model_ids: List[str], model: Base, loc: str):
+    async def get_model_objects_by_ids(self, model_ids: List[str], model: Base, loc: str = None):
         return self.call_repos(
             await repos_get_model_objects_by_ids(
                 model_ids=model_ids,

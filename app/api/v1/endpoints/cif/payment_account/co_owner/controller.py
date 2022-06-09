@@ -12,9 +12,6 @@ from app.api.v1.endpoints.cif.repository import (
 from app.api.v1.endpoints.third_parties.gw.customer.controller import (
     CtrGWCustomer
 )
-from app.third_parties.oracle.models.master_data.customer import (
-    CustomerRelationshipType
-)
 from app.utils.constant.gw import GW_REQUEST_PARAMETER_CO_OWNER
 from app.utils.error_messages import ERROR_CIF_NUMBER_NOT_EXIST
 from app.utils.functions import dropdown, generate_uuid
@@ -31,18 +28,9 @@ class CtrCoOwner(BaseController):
         # lấy danh sách cif_number account request
         customer_relationship_not_exist_list = []
         for index, joint_account_holder in enumerate(co_owner.joint_account_holders):
-            # check số cif_number có tồn tại trong SOA
-            # response = self.call_repos(
-            #     await repos_check_exist_cif(cif_number=joint_account_holder.cif_number)
-            # )
-            # if not response["is_existed"]:
-            #     return self.response_exception(
-            #         msg="cif_number not exits in SOA", loc="AccountHolderRequest"
-            #     )
-
-            # check số cif_number có tồn tại trong GW
             cif_number = joint_account_holder.cif_number
-            is_existed = CtrGWCustomer().ctr_gw_check_exist_customer_detail_info(
+
+            is_existed = await CtrGWCustomer(current_user=self.current_user).ctr_gw_check_exist_customer_detail_info(
                 cif_number=cif_number
             )
 
@@ -52,56 +40,45 @@ class CtrCoOwner(BaseController):
                 )
             customer_relationship_not_exist_list.append(joint_account_holder.customer_relationship.id)
 
-        # check exist customer relationship
-        await self.get_model_objects_by_ids(
-            model_ids=customer_relationship_not_exist_list,
-            model=CustomerRelationshipType,
-            loc=f"joint_account_holder -> customer_relationship -> id: {customer_relationship_not_exist_list}"
-        )
+        uuid = generate_uuid()
+        save_info_co_owner = {
+            "active_flag": co_owner.joint_account_holder_flag,
+            "joint_acc_agree_id": uuid,
+            "created_at": co_owner.create_at,
+            "in_scb_flag": co_owner.address_flag,
+            "casa_account_id": casa_account,
+            "document_file_id": co_owner.file_uuid
+        }
 
-        # # check cif_number có tồn tại
-        # self.call_repos(
-        #     await repos_check_list_cif_number(
-        #         list_cif_number_request=list_cif_number_request,
-        #         session=self.oracle_session
-        #     )
-        # )
-
-        save_account_holder = []
-        for account_holder in co_owner.joint_account_holders:
-            save_account_holder.append(
-                {
-                    "id": generate_uuid(),
-                    "cif_num": account_holder.cif_number,
-                    "relationship_type_id": account_holder.customer_relationship.id,
-                    "casa_account_id": casa_account,
-                    "joint_account_holder_flag": co_owner.joint_account_holder_flag,
-                    "joint_account_holder_no": 1,
-                }
-            )
-
-        save_account_agree = []
-        for agreement in co_owner.agreement_authorization:
-            for signature in agreement.signature_list:
-                for account_holder in save_account_holder:
-                    if signature.cif_number == account_holder["cif_num"]:
-                        save_account_agree.append(
-                            {
-                                "agreement_authorization_id": agreement.id,
-                                "joint_account_holder_id": account_holder["id"],
-                                "agreement_flag": agreement.agreement_flag,
-                                "method_sign": agreement.method_sign,
-                            }
-                        )
+        save_account_holder = [{
+            "joint_account_holder_id": generate_uuid(),
+            "cif_num": item.cif_number,
+            "relationship_type_id": item.customer_relationship.id,
+            "joint_acc_agree_id": uuid,
+            "created_at": co_owner.create_at
+        } for item in co_owner.joint_account_holders]
+        save_agreement_authorization = []
+        for agreement_authorization in co_owner.agreement_authorization:
+            for signature_item in agreement_authorization.signature_list:
+                save_agreement_authorization.append({
+                    "agreement_author_id": agreement_authorization.agreement_author_id,
+                    "joint_acc_agree_id": uuid,
+                    "created_at": co_owner.create_at,
+                    "agreement_flag": agreement_authorization.agreement_flag,
+                    "method_sign_type": agreement_authorization.method_sign,
+                    "agree_join_acc_cif_num": signature_item.cif_number,
+                    "agree_join_acc_name": signature_item.full_name_vn
+                })
 
         co_owner_data = self.call_repos(
             await repos_save_co_owner(
-                cif_id=cif_id,
+                save_info_co_owner=save_info_co_owner,
                 save_account_holder=save_account_holder,
-                save_account_agree=save_account_agree,
+                save_agreement_authorization=save_agreement_authorization,
+                cif_id=cif_id,
                 log_data=co_owner.json(),
-                session=self.oracle_session,
-                created_by=current_user.username
+                created_by=current_user.username,
+                session=self.oracle_session
             )
         )
 

@@ -121,13 +121,13 @@ class SignatureAgreementAuthorRequest(BaseSchema):
 
 
 class AgreementAuthorRequest(BaseSchema):
-    id: str = Field(..., description="Mã danh mục thỏa thuận và uỷ quyền")
+    agreement_author_id: str = Field(..., description="Mã danh mục thỏa thuận và uỷ quyền")
     agreement_flag: bool = Field(
         ...,
         description="Thỏa thuận chữ ký các hồ sơ chứng từ.`True`: Có , `False`: Không",
     )
     method_sign: int = Field(..., description="Phương thức ký")
-    signature_list: List[SignatureAgreementAuthorRequest] = Field(
+    signature_list: Optional[List[SignatureAgreementAuthorRequest]] = Field(
         ..., description="Chữ ký của đồng sở hữu"
     )
 
@@ -136,6 +136,10 @@ class AccountHolderRequest(BaseSchema):
     joint_account_holder_flag: bool = Field(
         ..., description="Có đồng chủ sở hữu. `True`: Có , `False`: Không"
     )
+    number: str = Field(..., description="Số văn bản")
+    create_at: date = Field(..., description="Ngày lập")
+    address_flag: bool = Field(..., description="Nơi lập")
+    file_uuid: str = Field(..., description="Tập tin đính kèm")
     joint_account_holders: List[AccountRequest] = Field(
         ..., description="Danh sách các đồng sở hữu"
     )

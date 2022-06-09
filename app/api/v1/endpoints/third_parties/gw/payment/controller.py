@@ -3,7 +3,7 @@ from app.api.v1.endpoints.third_parties.gw.payment.repository import (
     repos_gw_payment_amount_block, repos_gw_payment_amount_unblock
 )
 from app.api.v1.endpoints.third_parties.gw.payment.schema import (
-    AccountAmountBlock, AccountAmountUnblock
+    AccountAmountBlockRequest, AccountAmountUnblock
 )
 
 
@@ -12,7 +12,7 @@ class CtrGWPayment(BaseController):
     async def ctr_gw_payment_amount_block(
             self,
             account_number: str,
-            account_amount_block: AccountAmountBlock
+            account_amount_block: AccountAmountBlockRequest
     ):
         current_user = self.current_user
 
@@ -66,8 +66,11 @@ class CtrGWPayment(BaseController):
             current_user=current_user,
             data_input=data_input
         ))
+        response_data = {
+            "account_ref_no": gw_payment_amount_block['amountBlock_out']['data_output']['account_info']['blance_lock_info']['account_ref_no']
+        }
 
-        return self.response(data=gw_payment_amount_block)
+        return self.response(data=response_data)
 
     async def ctr_gw_payment_amount_unblock(
             self,

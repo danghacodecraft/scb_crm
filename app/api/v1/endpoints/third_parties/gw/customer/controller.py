@@ -7,6 +7,7 @@ from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_gw_get_customer_info_detail, repos_gw_get_customer_info_list,
     repos_gw_open_cif, repos_update_cif_number_customer
 )
+from app.api.v1.others.booking.controller import CtrBooking
 from app.settings.event import service_file
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
@@ -18,17 +19,19 @@ from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import (
     Branch, Career, MaritalStatus, ResidentStatus
 )
+from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import (
     CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE, CUSTOMER_COMPLETED_FLAG,
     CUSTOMER_TYPE_ORGANIZE, RESIDENT_ADDRESS_CODE, TRANSACTION_JOB_OPEN_CIF
 )
 from app.utils.constant.gw import (
-    GW_AUTO, GW_CUSTOMER_TYPE_B, GW_CUSTOMER_TYPE_I, GW_DATE_FORMAT,
-    GW_DATETIME_FORMAT, GW_DEFAULT_CUSTOMER_CATEGORY,
-    GW_DEFAULT_KHTC_DOI_TUONG, GW_DEFAULT_TYPE_ID, GW_DEFAULT_VALUE,
-    GW_GENDER_FEMALE, GW_GENDER_MALE, GW_LANGUAGE, GW_LOC_CHECK_CIF_EXIST,
-    GW_LOCAL_CODE, GW_NO_AGREEMENT_FLAG, GW_NO_MARKETING_FLAG,
-    GW_REQUEST_PARAMETER_CO_OWNER, GW_REQUEST_PARAMETER_DEBIT_CARD,
+    GW_AUTO, GW_CASA_REPONSE_STATUS_SUCCESS, GW_CUSTOMER_TYPE_B,
+    GW_CUSTOMER_TYPE_I, GW_DATE_FORMAT, GW_DATETIME_FORMAT,
+    GW_DEFAULT_CUSTOMER_CATEGORY, GW_DEFAULT_KHTC_DOI_TUONG,
+    GW_DEFAULT_TYPE_ID, GW_DEFAULT_VALUE, GW_GENDER_FEMALE, GW_GENDER_MALE,
+    GW_LANGUAGE, GW_LOC_CHECK_CIF_EXIST, GW_LOCAL_CODE, GW_NO_AGREEMENT_FLAG,
+    GW_NO_MARKETING_FLAG, GW_REQUEST_PARAMETER_CO_OWNER,
+    GW_REQUEST_PARAMETER_DEBIT_CARD,
     GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP, GW_SELECT,
     GW_UDF_NAME, GW_YES, GW_YES_AGREEMENT_FLAG
 )
@@ -725,6 +728,14 @@ class CtrGWCustomer(BaseController):
     async def ctr_gw_open_cif(self, cif_id: str, BOOKING_ID: str):
         current_user = self.current_user
 
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking(
+            business_type_code=BUSINESS_TYPE_INIT_CIF,
+            booking_id=BOOKING_ID,
+            cif_id=cif_id,
+            loc=f"header -> booking-id, booking_id: {BOOKING_ID}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        )
+
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
 
@@ -947,7 +958,7 @@ class CtrGWCustomer(BaseController):
             )
         )
         # check open_cif success
-        if not response_data.get('openCIFAuthorise_out', {}).get('data_output') or not is_success:
+        if response_data.get('openCIFAuthorise_out').get('transaction_error_code') != GW_CASA_REPONSE_STATUS_SUCCESS:
             return self.response_exception(
                 msg=ERROR_CALL_SERVICE_GW,
                 detail=response_data.get('openCIFAuthorise_out', {}).get("transaction_info", {}).get('transaction_error_msg')
