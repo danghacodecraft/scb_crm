@@ -43,7 +43,7 @@ async def repos_login(username: str, password: str) -> ReposReturn:
 
     lst_data = []
     list(map(lambda x: lst_data.extend(x['group_role_list']), data_idm['menu_list']))
-    filter_permission_code = list(filter(
+    filter_permission_code = list(filter( # noqa
         lambda x: x.get('is_permission') is True,
         list(filter(
             lambda item: len(
@@ -66,7 +66,15 @@ async def repos_login(username: str, password: str) -> ReposReturn:
     # filter_permission_code = list(filter(lambda x: x.get('permission_code') == "ACCESS", filter_group_code['permission_list']))
     #
     # if not filter_permission_code or not filter_group_code['is_permission']:
-    if not filter_permission_code:
+    # if not filter_permission_code:
+    #     return ReposReturn(
+    #         is_error=True,
+    #         msg="Permission Denied",
+    #         detail="Permission Denied",
+    #         error_status_code=status.HTTP_403_FORBIDDEN
+    #     )
+    # TODO hard core check department != "68"
+    if data_idm['user_info']['hrm_department_code'] != "68":
         return ReposReturn(
             is_error=True,
             msg="Permission Denied",
