@@ -55,7 +55,7 @@ class SavePaymentAccountRequest(BaseSchema):
                                                 \n`self_selected_account_flag`=`True` => Bắt buộc truyền lên
                                                 \n`self_selected_account_flag`=`False` => Không bắt buộc truyền lên""",
                                                min_length=1)
-    account_salary_organization_account: str = Field(..., description="Tài khoản của tổ chức chi lương", min_length=1)
+    account_salary_organization_account: Optional[str] = Field(..., description="Tài khoản của tổ chức chi lương", min_length=1)
 
     @validator('casa_account_number', 'account_salary_organization_account')
     def check_account_number_length(cls, v):

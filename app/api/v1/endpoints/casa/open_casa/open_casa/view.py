@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import APIRouter, Body, Depends, Header
 from starlette import status
 
@@ -28,11 +30,12 @@ router = APIRouter()
 async def view_save_casa_open_casa_info(
         BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         cif_number: str = CustomField().CIFNumberPath,
-        request: SavePaymentAccountRequest = Body(...),
+        requests: List[SavePaymentAccountRequest] = Body(...),
         current_user=Depends(get_current_user_from_header())  # noqa
 ):
     save_casa_open_casa_info = await CtrCasaOpenCasa(current_user=current_user).ctr_save_casa_open_casa_info(
+        booking_parent_id=BOOKING_ID,
         cif_number=cif_number,
-        request=request
+        requests=requests
     )
     return ResponseData[SaveCasaSuccessResponse](**save_casa_open_casa_info)

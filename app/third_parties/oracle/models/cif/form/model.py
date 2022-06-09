@@ -118,6 +118,7 @@ class Booking(Base):
     id = Column('booking_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "), comment='ID chính')
     code = Column('booking_code', VARCHAR(50), comment='Mã code')
     transaction_id = Column(ForeignKey('crm_transaction_daily.transaction_id'), comment='ID Transaction')
+    parent_id = Column('booking_parent_id', ForeignKey('crm_booking.booking_id'), comment='ID Booking cha')
     business_type_id = Column('business_type_id', ForeignKey('crm_business_type.business_type_id'),
                               comment='ID type')
 
