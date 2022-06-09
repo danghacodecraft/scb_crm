@@ -29,7 +29,7 @@ def dropdown_name(name: str, code: Optional[str] = None) -> dict:
     }
 
 
-def optional_dropdown(obj, obj_name: Optional[str], obj_code: Optional[str] = None) -> dict:
+def optional_dropdown(obj, obj_name: Optional[str] = None, obj_code: Optional[str] = None) -> dict:
     return dropdown(obj) if obj else dropdown_name(name=obj_name, code=obj_code)
 
 

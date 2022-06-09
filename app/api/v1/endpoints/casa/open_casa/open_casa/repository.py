@@ -1,7 +1,7 @@
 from typing import List
 
 from sqlalchemy import select, and_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn, auto_commit
 from app.third_parties.oracle.models.cif.basic_information.model import (
@@ -109,3 +109,23 @@ async def repos_get_acc_structure_types(acc_structure_type_ids: List[str], level
         )
 
     return ReposReturn(data=acc_structure_types)
+
+
+async def repos_get_casa_open_casa_info(booking_parent_id: str, session: Session):
+    booking_parent = aliased(Booking, name="BookingParent")
+    get_casa_open_casa_info = session.execute(
+        select(
+            booking_parent,
+            Booking,
+            BookingAccount,
+            CasaAccount,
+            AccountStructureType  # Level 1
+        )
+        .join(Booking, booking_parent.id == Booking.parent_id)
+        .join(BookingAccount, Booking.id == BookingAccount.booking_id)
+        .join(CasaAccount, BookingAccount.account_id == CasaAccount.id)
+        .join(AccountStructureType, CasaAccount.acc_structure_type_id == AccountStructureType.parent_id)
+        .filter(booking_parent.id == booking_parent_id)
+        .distinct()
+    ).all()
+    return ReposReturn(data=get_casa_open_casa_info)
