@@ -1,6 +1,7 @@
 import json
 from typing import List, Optional, Tuple
 
+import inflection as inflection
 from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
 
@@ -46,7 +47,7 @@ async def repos_get_model_object_by_id_or_code(model_id: Optional[str], model_co
     return ReposReturn(data=obj)
 
 
-async def repos_get_model_objects_by_ids(model_ids: List[str], model: Base, loc: str, session: Session) -> ReposReturn:
+async def repos_get_model_objects_by_ids(model_ids: List[str], model: Base, session: Session, loc: Optional[str] = None) -> ReposReturn:
     """
     Get model objects by ids
     Chỉ cần truyền vào list id -> hàm sẽ tự chuyển về set(model_ids)
@@ -65,10 +66,11 @@ async def repos_get_model_objects_by_ids(model_ids: List[str], model: Base, loc:
 
     objs = session.execute(statement).scalars().all()
     if len(objs) != len(model_ids):
+        obj_ids = [obj.id for obj in objs]
         return ReposReturn(
             is_error=True,
             msg=ERROR_ID_NOT_EXIST,
-            loc=f'{str(model.__tablename__)}_id' if not loc else loc
+            loc=f'{inflection.tableize(str(model.id))}, {model_ids - model_ids.intersection(set(obj_ids))}' if not loc else loc
         )
 
     return ReposReturn(data=objs)

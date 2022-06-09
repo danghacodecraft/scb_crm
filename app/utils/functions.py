@@ -250,3 +250,21 @@ def gen_qr_code(data: dict):
 
 def make_description_from_dict(dictionary: dict):
     return "<br/>" + "<br/>".join(f'`{k}`: {v}' for k, v in dictionary.items())
+
+
+def get_index_positions(list_of_elements, element):
+    """
+    Trả về 1 danh sách index các element nằm trong list
+    """
+    index_position_list = []
+    index_position = 0
+    while True:
+        try:
+            # Search for item in list from indexPos to the end of list
+            index_position = list_of_elements.index(element, index_position)
+            # Add the index position in list
+            index_position_list.append(index_position)
+            index_position += 1
+        except ValueError as e:
+            break
+    return index_position_list

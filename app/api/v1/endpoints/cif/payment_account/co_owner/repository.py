@@ -17,14 +17,8 @@ from app.third_parties.oracle.models.cif.basic_information.contact.model import 
 from app.third_parties.oracle.models.cif.basic_information.guardian_and_relationship.model import (
     CustomerPersonalRelationship
 )
-from app.third_parties.oracle.models.cif.basic_information.identity.model import (
-    CustomerIdentity, CustomerIdentityImage
-)
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
-)
-from app.third_parties.oracle.models.cif.basic_information.personal.model import (
-    CustomerIndividualInfo
 )
 from app.third_parties.oracle.models.cif.payment_account.model import (
     AgreementAuthorization, CasaAccount, JointAccountHolder,
@@ -34,12 +28,9 @@ from app.third_parties.oracle.models.master_data.address import AddressCountry
 from app.third_parties.oracle.models.master_data.customer import (
     CustomerGender, CustomerRelationshipType
 )
-from app.third_parties.oracle.models.master_data.identity import (
-    CustomerIdentityType, PlaceOfIssue
-)
+from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.utils.constant.cif import (
-    AGREEMENT_AUTHOR_TYPE_DD, BUSINESS_FORM_TKTT_DSH, DROPDOWN_NONE_DICT,
-    IMAGE_TYPE_SIGNATURE
+    AGREEMENT_AUTHOR_TYPE_DD, BUSINESS_FORM_TKTT_DSH, DROPDOWN_NONE_DICT
 )
 from app.utils.error_messages import (
     ERROR_AGREEMENT_AUTHORIZATIONS_NOT_EXIST, ERROR_CALL_SERVICE_SOA,
@@ -167,59 +158,6 @@ async def repos_get_list_cif_number(cif_id: str, session: Session):
         list_cif_number.append(account_holder.JointAccountHolder.cif_num)
 
     return ReposReturn(data=(account_holders, list_cif_number))
-
-
-async def repos_get_customer_by_cif_number(
-    list_cif_number: List[str], session: Session
-) -> ReposReturn:
-    # lấy dữ liệu customer theo số cif_number
-    customers = session.execute(
-        select(
-            Customer,
-            AddressCountry,
-            CustomerIdentity,
-            CustomerIdentityImage,
-            CustomerIndividualInfo,
-            CustomerGender,
-            PlaceOfIssue,
-            CustomerIdentityType,
-            CustomerPersonalRelationship,
-            CustomerRelationshipType,
-        )
-        .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id)
-        .join(AddressCountry, Customer.nationality_id == AddressCountry.id)
-        .join(PlaceOfIssue, CustomerIdentity.place_of_issue_id == PlaceOfIssue.id)
-        .join(CustomerIndividualInfo, Customer.id == CustomerIndividualInfo.customer_id)
-        .join(
-            CustomerIdentityType,
-            CustomerIdentity.identity_type_id == CustomerIdentityType.id,
-        )
-        .join(CustomerGender, CustomerIndividualInfo.gender_id == CustomerGender.id)
-        .join(
-            CustomerPersonalRelationship,
-            Customer.id == CustomerPersonalRelationship.customer_id,
-        )
-        .join(
-            CustomerRelationshipType,
-            CustomerRelationshipType.id
-            == CustomerPersonalRelationship.customer_relationship_type_id,
-        )
-        .join(
-            CustomerIdentityImage,
-            and_(
-                CustomerIdentity.id == CustomerIdentityImage.identity_id,
-                CustomerIdentityImage.image_type_id == IMAGE_TYPE_SIGNATURE,
-            ),
-        )
-        .filter(Customer.cif_number.in_(list_cif_number))
-    ).all()
-
-    if not customers:
-        return ReposReturn(
-            is_error=True, msg=ERROR_CIF_NUMBER_NOT_EXIST, loc="cif_number"
-        )
-
-    return ReposReturn(data=customers)
 
 
 async def repos_get_customer_address(
