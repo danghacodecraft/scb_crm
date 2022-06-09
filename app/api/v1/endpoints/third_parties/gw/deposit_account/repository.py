@@ -84,3 +84,12 @@ async def repos_gw_get_column_chart_deposit_account_info(
         )
 
     return ReposReturn(data=gw_get_column_chart_deposit_account_info)
+
+
+async def repos_gw_deposit_open_account_td(current_user, data_input):
+
+    is_success, gw_deposit_open_account_td = await service_gw.deposit_open_account_td(
+        current_user=current_user,
+        data_input=data_input
+    )
+    return ReposReturn(data=gw_deposit_open_account_td)

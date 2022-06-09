@@ -21,7 +21,7 @@ from app.api.v1.endpoints.third_parties.gw.deposit_account.example import (
 from app.api.v1.endpoints.third_parties.gw.deposit_account.schema import (
     GWColumnChartDepositAccountRequest, GWColumnChartDepositAccountResponse,
     GWDepositAccountByCIFNumberResponse, GWDepositAccountTDResponse,
-    GWReportStatementHistoryTDAccountInfoRequest
+    GWDepositOpenAccountTD, GWReportStatementHistoryTDAccountInfoRequest
 )
 
 router = APIRouter()
@@ -106,3 +106,21 @@ async def view_gw_get_deposit_account_td(
         account_number=account_number
     )
     return ResponseData[GWDepositAccountTDResponse](**gw_deposit_account_td)
+
+
+@router.post(
+    path="/open-td/",
+    name="[Tài khoản tiết kiệm] Khởi tạo tài khoản tiết kiệm",
+    description="Khởi tạo tài khoản tiết kiệm",
+    responses=swagger_response(
+        response_model=ResponseData[GWDepositAccountTDResponse],
+        success_examples=DEPOSIT_ACCOUNT_TD_SUCCESS_EXAMPLE,
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_deposit_open_account_td(
+        request: GWDepositOpenAccountTD = Body(...),
+        current_user=Depends(get_current_user_from_header())
+):
+    gw_deposit_open_account_td = await CtrGWDepositAccount(current_user).ctr_gw_deposit_open_account_td(request=request)
+    return ResponseData(**gw_deposit_open_account_td)
