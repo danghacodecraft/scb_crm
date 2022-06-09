@@ -14,6 +14,7 @@ from app.utils.constant.gw import (
     GW_DEPOSIT_ACCOUNT_FROM_CIF, GW_DEPOSIT_ACCOUNT_TD, GW_EMPLOYEE_FROM_CODE,
     GW_EMPLOYEE_FROM_NAME, GW_EMPLOYEES,
     GW_ENDPOINT_URL_CHECK_EXITS_ACCOUNT_CASA,
+    GW_ENDPOINT_URL_DEPOSIT_OPEN_ACCOUNT_TD,
     GW_ENDPOINT_URL_PAYMENT_AMOUNT_BLOCK,
     GW_ENDPOINT_URL_PAYMENT_AMOUNT_UNBLOCK,
     GW_ENDPOINT_URL_RETRIEVE_AUTHORIZED_ACCOUNT_NUM,
@@ -651,6 +652,41 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
+    async def deposit_open_account_td(self, current_user: UserInfoResponse, data_input):
+
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="openTD_in", data_input=data_input
+        )
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_DEPOSIT_OPEN_ACCOUNT_TD}"
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data
+                else:
+                    return_data = await response.json()
+                    return True, return_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data
     ####################################################################################################################
     # END --- DEPOSIT TD
     ####################################################################################################################
