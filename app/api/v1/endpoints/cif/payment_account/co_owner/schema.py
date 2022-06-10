@@ -60,6 +60,7 @@ class AddressInformationResponse(BaseSchema):
 
 
 class AccountHolderResponse(BaseSchema):
+    document_file: str = Field(..., description="Tập tin đính kèm")
     id: str = Field(..., description="Mã định danh của đồng sở hữu")
     avatar_url: Optional[str] = Field(..., description="Tên tiếng việt của đồng sở hữu")
     basic_information: BasicInformationResponse = Field(
@@ -98,9 +99,9 @@ class AccountHolderSuccessResponse(BaseSchema):
     joint_account_holders: List[AccountHolderResponse] = Field(
         ..., description="Thông tin cá nhân"
     )
-    # agreement_authorization: Optional[List[AgreementAuthorResponse]] = Field(
-    #     ..., description="Danh mục thỏa thuận và uỷ quyền"
-    # )
+    agreement_authorization: Optional[List[AgreementAuthorResponse]] = Field(
+        ..., description="Danh mục thỏa thuận và uỷ quyền"
+    )
 
 
 ############################################################

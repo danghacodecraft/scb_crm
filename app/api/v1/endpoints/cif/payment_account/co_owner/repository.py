@@ -80,6 +80,7 @@ async def repos_get_co_owner(cif_id: str, session: Session) -> ReposReturn:
     account_holders = session.execute(
         select(
             CasaAccount,
+            JointAccountHolderAgreementAuthorization,
             JointAccountHolder,
             CustomerRelationshipType
         )
@@ -91,7 +92,40 @@ async def repos_get_co_owner(cif_id: str, session: Session) -> ReposReturn:
         .filter(CasaAccount.customer_id == cif_id)
     ).all()
 
-    return ReposReturn(data=account_holders)
+    account_holder_signs = session.execute(
+        select(
+            CasaAccount,
+            JointAccountHolderAgreementAuthorization.joint_acc_agree_id,
+            MethodSign,
+            AgreementAuthorization,
+        )
+        .join(JointAccountHolderAgreementAuthorization,
+              CasaAccount.id == JointAccountHolderAgreementAuthorization.casa_account_id)
+        .join(MethodSign,
+              JointAccountHolderAgreementAuthorization.joint_acc_agree_id == MethodSign.joint_acc_agree_id)
+        .join(AgreementAuthorization, MethodSign.agreement_author_id == AgreementAuthorization.id)
+        .filter(CasaAccount.customer_id == cif_id)
+    ).all()
+
+    return ReposReturn(data=(account_holders, account_holder_signs))
+
+
+async def repos_get_co_owner_signatures(cif_numbers: List, session: Session) -> ReposReturn:
+    signatures = session.execute(
+        select(
+            Customer.cif_number,
+            CustomerIdentityImage.id,
+            CustomerIdentityImage.image_url
+        )
+        .join(CustomerIdentity, CustomerIdentityImage.identity_id == CustomerIdentity.id)
+        .join(Customer, CustomerIdentity.customer_id == Customer.id)
+        .filter(
+            CustomerIdentityImage.image_type_id == IMAGE_TYPE_SIGNATURE,
+            Customer.cif_number.in_(cif_numbers)
+        )
+    ).all()
+
+    return ReposReturn(data=signatures)
 
 
 async def repos_get_casa_account(cif_id: str, session: Session) -> ReposReturn:
