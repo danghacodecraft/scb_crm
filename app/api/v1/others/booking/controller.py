@@ -68,6 +68,9 @@ class CtrBooking(BaseController):
             cif_id: Optional[str] = None,
             check_correct_booking_flag: Optional[bool] = True,
     ):
+        """
+        check_correct_booking_flag: Đối với step đầu tiên của module, param này bằng False và phải truyền cif id
+        """
         booking = None
         if booking_id:
             booking = self.call_repos(await repos_check_exist_booking(

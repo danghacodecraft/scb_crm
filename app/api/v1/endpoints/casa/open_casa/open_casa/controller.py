@@ -11,6 +11,7 @@ from app.api.v1.endpoints.cif.payment_account.detail.schema import (
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_get_casa_account_info
 )
+from app.api.v1.others.booking.controller import CtrBooking
 from app.third_parties.oracle.models.master_data.account import AccountType, AccountClass
 from app.third_parties.oracle.models.master_data.others import Currency
 from app.utils.constant.business_type import BUSINESS_TYPE_OPEN_CASA
@@ -68,6 +69,13 @@ class CtrCasaOpenCasa(BaseController):
         ################################################################################################################
         # VALIDATE
         ################################################################################################################
+        # Kiểm tra booking
+        await CtrBooking().ctr_get_booking(
+            booking_id=booking_parent_id,
+            business_type_code=BUSINESS_TYPE_OPEN_CASA,
+            check_correct_booking_flag=False
+        )
+
         # Kiểm tra số CIF có tồn tại trong CRM không
         customer = self.call_repos(await repos_get_customer_by_cif_number(
             cif_number=cif_number,
