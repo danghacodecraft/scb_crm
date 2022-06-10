@@ -51,5 +51,4 @@ async def view_get_casa_open_casa_info(
     get_casa_open_casa_info = await CtrCasaOpenCasa(current_user=current_user).ctr_get_casa_open_casa_info(
         booking_parent_id=BOOKING_ID
     )
-    # return ResponseData(**get_casa_open_casa_info)
     return ResponseData[CasaOpenCasaResponse](**get_casa_open_casa_info)

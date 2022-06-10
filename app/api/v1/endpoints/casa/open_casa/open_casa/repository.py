@@ -25,6 +25,7 @@ async def repos_save_casa_casa_account(
         booking_parent_id: str,
         session: Session
 ):
+    # Lấy Booking con từ Booking cha
     booking_ids = tuple(session.execute(
         select(
             Booking.id
@@ -32,6 +33,7 @@ async def repos_save_casa_casa_account(
         .filter(Booking.parent_id == booking_parent_id)
     ).scalars().all())
 
+    # Lấy những account map với booking con
     account_ids = tuple(session.execute(
         select(
             BookingAccount.account_id
@@ -39,10 +41,12 @@ async def repos_save_casa_casa_account(
         .filter(BookingAccount.booking_id.in_(booking_ids))
     ).scalars().all())
 
-    session.execute(delete(BookingAccount).filter(BookingAccount.account_id.in_(booking_ids)))
+    # Xóa dữ liệu cũ
+    session.execute(delete(BookingAccount).filter(BookingAccount.booking_id.in_(booking_ids)))
     session.execute(delete(Booking).filter(Booking.id.in_(booking_ids)))
     session.execute(delete(CasaAccount).filter(CasaAccount.id.in_(account_ids)))
 
+    # Cập nhật lại bằng dữ liệu mới
     session.bulk_save_objects([CasaAccount(**saving_casa_account) for saving_casa_account in saving_casa_accounts])
     session.bulk_save_objects([Booking(**saving_booking) for saving_booking in saving_bookings])
     session.bulk_save_objects([BookingAccount(**saving_booking_account) for saving_booking_account in saving_booking_accounts])
