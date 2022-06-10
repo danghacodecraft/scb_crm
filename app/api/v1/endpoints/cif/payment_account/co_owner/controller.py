@@ -56,10 +56,12 @@ class CtrCoOwner(BaseController):
         save_info_co_owner = {
             "active_flag": co_owner.joint_account_holder_flag,
             "joint_acc_agree_id": uuid,
+            "joint_acc_agree_document_no": co_owner.document_no,
             "created_at": co_owner.create_at,
             "in_scb_flag": co_owner.address_flag,
+            "joint_acc_agree_document_address": co_owner.document_address,
             "casa_account_id": casa_account,
-            "document_file_id": co_owner.file_uuid
+            "joint_acc_agree_document_file_id": co_owner.file_uuid
         }
 
         save_account_holder = [{

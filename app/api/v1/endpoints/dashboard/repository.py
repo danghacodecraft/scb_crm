@@ -171,9 +171,11 @@ async def repos_get_senders(
             TransactionDaily,
             TransactionStage,
             TransactionStageRole,
-            TransactionSender
+            TransactionSender,
+            Booking.id
         )
         .outerjoin(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
+        .join(Booking, TransactionDaily.transaction_id == Booking.transaction_id)
         .outerjoin(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id)
         .outerjoin(TransactionStageRole, TransactionStage.id == TransactionStageRole.transaction_stage_id)
         .filter(TransactionDaily.transaction_id.in_(transaction_daily_ids))
