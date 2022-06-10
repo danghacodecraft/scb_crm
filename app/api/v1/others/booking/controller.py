@@ -4,20 +4,21 @@ from starlette import status
 
 from app.api.base.controller import BaseController
 from app.api.v1.others.booking.repository import (
-    repos_check_exist_booking, repos_create_booking, repos_is_correct_booking, repos_is_used_booking,
-    repos_get_customer_by_booking_id
+    repos_check_exist_booking, repos_create_booking,
+    repos_get_customer_by_booking_id, repos_is_correct_booking,
+    repos_is_used_booking
 )
 from app.api.v1.others.permission.controller import PermissionController
 from app.utils.constant.approval import CIF_STAGE_INIT
-from app.utils.constant.business_type import BUSINESS_TYPES, BUSINESS_TYPE_INIT_CIF
+from app.utils.constant.business_type import BUSINESS_TYPES
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_OPEN_CIF, IDM_MENU_CODE_OPEN_CIF,
     IDM_PERMISSION_CODE_OPEN_CIF
 )
 from app.utils.error_messages import (
-    ERROR_BOOKING_ID_NOT_EXIST, ERROR_BOOKING_INCORRECT,
-    ERROR_BUSINESS_TYPE_CODE_INCORRECT, ERROR_BUSINESS_TYPE_NOT_EXIST,
-    ERROR_CIF_ID_NOT_EXIST, ERROR_PERMISSION, ERROR_BOOKING_ALREADY_USED
+    ERROR_BOOKING_ALREADY_USED, ERROR_BOOKING_ID_NOT_EXIST,
+    ERROR_BOOKING_INCORRECT, ERROR_BUSINESS_TYPE_CODE_INCORRECT,
+    ERROR_BUSINESS_TYPE_NOT_EXIST, ERROR_CIF_ID_NOT_EXIST, ERROR_PERMISSION
 )
 
 

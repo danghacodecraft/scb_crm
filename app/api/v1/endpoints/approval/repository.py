@@ -15,9 +15,9 @@ from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingCustomer, TransactionDaily, TransactionSender
 )
 from app.third_parties.oracle.models.master_data.others import (
-    BusinessType, TransactionStage, TransactionStageAction,
-    TransactionStageLane, TransactionStagePhase, TransactionStageRole,
-    TransactionStageStatus, TransactionJob
+    BusinessJob, BusinessType, TransactionJob, TransactionStage,
+    TransactionStageAction, TransactionStageLane, TransactionStagePhase,
+    TransactionStageRole, TransactionStageStatus
 )
 from app.utils.constant.cif import IMAGE_TYPE_FACE
 from app.utils.error_messages import ERROR_CIF_ID_NOT_EXIST
@@ -368,3 +368,17 @@ async def repos_get_business_jobs(session: Session, cif_id: str):
         .order_by(TransactionJob.created_at)
     ).scalars().all()
     return ReposReturn(data=business_jobs)
+
+
+async def repos_get_business_job_codes(business_type_code: str, session: Session):
+    business_job_codes = session.execute(
+        select(
+            BusinessJob
+        )
+        .filter(and_(
+            BusinessJob.business_type_id == business_type_code,
+            BusinessJob.active_flag == 1
+        ))
+    ).scalars().all()
+    print(business_job_codes)
+    return ReposReturn(data=business_job_codes)

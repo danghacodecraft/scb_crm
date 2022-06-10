@@ -9,15 +9,14 @@ from app.api.v1.endpoints.approval.common_repository import (
 from app.api.v1.endpoints.approval.repository import (
     repos_approval_get_face_authentication, repos_approve,
     repos_get_approval_identity_faces, repos_get_approval_identity_images,
-    repos_get_approval_process, repos_get_business_jobs,
-    repos_get_compare_image_transactions, repos_get_list_audit
+    repos_get_approval_process, repos_get_business_job_codes,
+    repos_get_business_jobs, repos_get_compare_image_transactions,
+    repos_get_list_audit
 )
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
-from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.api.v1.endpoints.third_parties.gw.employee.repository import (
     repos_gw_get_employee_info_from_code
 )
-from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
@@ -28,8 +27,8 @@ from app.third_parties.oracle.models.master_data.identity import (
 from app.third_parties.oracle.models.master_data.others import BusinessJob
 from app.third_parties.services.idm import ServiceIDM
 from app.utils.constant.approval import (
-    BUSINESS_JOB_CODES, CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV,
-    CIF_STAGE_BEGIN, CIF_STAGE_COMPLETED, CIF_STAGE_INIT
+    CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_BEGIN,
+    CIF_STAGE_COMPLETED, CIF_STAGE_INIT, INIT_RESPONSE
 )
 from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import (
@@ -1256,21 +1255,22 @@ class CtrApproval(BaseController):
         return face_transactions, fingerprint_transactions, signature_transactions
 
     async def ctr_get_business_jobs(self, booking_id: str, cif_id: str, business_type_code: str):
-
-        # Check exist booking
-        await CtrBooking().ctr_get_booking(
-            booking_id=booking_id,
-            business_type_code=business_type_code,
-            cif_id=cif_id,
-            loc="booking_id"
-        )
-
+        # TODO: Kiểm tra booking_id, cif_id, business_type_code
+        # Casa Account không cần cif_id
         business_jobs = self.call_repos(await repos_get_business_jobs(
             cif_id=cif_id,
             session=self.oracle_session
         ))
 
-        mapping_datas = BUSINESS_JOB_CODES
+        business_job_codes = self.call_repos(await repos_get_business_job_codes(
+            business_type_code=business_type_code,
+            session=self.oracle_session
+        ))
+
+        mapping_datas = {}
+        for business_job_code in business_job_codes:
+            mapping_datas.update({business_job_code.code: INIT_RESPONSE})
+
         for business_job in business_jobs:
             mapping_datas[business_job.business_job_id] = dict(
                 error_code=business_job.error_code,
