@@ -17,7 +17,7 @@ from app.utils.error_messages import ERROR_CIF_NUMBER_NOT_EXIST, ERROR_IDS_NOT_E
 from app.utils.functions import get_index_positions
 
 
-@auto_commit
+# @auto_commit
 async def repos_save_casa_casa_account(
         saving_casa_accounts: List[dict],
         saving_bookings: List[dict],
@@ -25,23 +25,25 @@ async def repos_save_casa_casa_account(
         booking_parent_id: str,
         session: Session
 ):
-    account_ids = session.execute(
+    booking_ids = tuple(session.execute(
+        select(
+            Booking.id
+        )
+        .filter(Booking.parent_id == booking_parent_id)
+    ).scalars().all())
+
+    account_ids = tuple(session.execute(
         select(
             BookingAccount.account_id
         )
-        .filter(BookingAccount.booking_id == booking_parent_id)
-    ).scalars().all()
+        .filter(BookingAccount.booking_id.in_(booking_ids))
+    ).scalars().all())
+    print(booking_ids)
+    print(account_ids)
 
-    booking_ids = session.execute(
-        select(
-            BookingAccount.booking_id
-        )
-        .filter(BookingAccount.booking_id == booking_parent_id)
-    ).scalars().all()
-
+    session.execute(delete(BookingAccount).filter(BookingAccount.account_id.in_(booking_ids)))
     session.execute(delete(Booking).filter(Booking.id.in_(booking_ids)))
     session.execute(delete(CasaAccount).filter(CasaAccount.id.in_(account_ids)))
-    session.execute(delete(BookingAccount).filter(BookingAccount.account_id.in_(booking_ids)))
 
     session.bulk_save_objects([CasaAccount(**saving_casa_account) for saving_casa_account in saving_casa_accounts])
     session.bulk_save_objects([Booking(**saving_booking) for saving_booking in saving_bookings])
