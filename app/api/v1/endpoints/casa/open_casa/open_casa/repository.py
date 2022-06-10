@@ -17,7 +17,7 @@ from app.utils.error_messages import ERROR_CIF_NUMBER_NOT_EXIST, ERROR_IDS_NOT_E
 from app.utils.functions import get_index_positions
 
 
-# @auto_commit
+@auto_commit
 async def repos_save_casa_casa_account(
         saving_casa_accounts: List[dict],
         saving_bookings: List[dict],
@@ -38,8 +38,6 @@ async def repos_save_casa_casa_account(
         )
         .filter(BookingAccount.booking_id.in_(booking_ids))
     ).scalars().all())
-    print(booking_ids)
-    print(account_ids)
 
     session.execute(delete(BookingAccount).filter(BookingAccount.account_id.in_(booking_ids)))
     session.execute(delete(Booking).filter(Booking.id.in_(booking_ids)))
