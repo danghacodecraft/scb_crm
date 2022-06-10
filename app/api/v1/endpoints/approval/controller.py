@@ -17,6 +17,7 @@ from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.api.v1.endpoints.third_parties.gw.employee.repository import (
     repos_gw_get_employee_info_from_code
 )
+from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
@@ -1254,7 +1255,16 @@ class CtrApproval(BaseController):
             )
         return face_transactions, fingerprint_transactions, signature_transactions
 
-    async def ctr_get_business_jobs(self, cif_id: str):
+    async def ctr_get_business_jobs(self, booking_id: str, cif_id: str, business_type_code: str):
+
+        # Check exist booking
+        await CtrBooking().ctr_get_booking(
+            booking_id=booking_id,
+            business_type_code=business_type_code,
+            cif_id=cif_id,
+            loc="booking_id"
+        )
+
         business_jobs = self.call_repos(await repos_get_business_jobs(
             cif_id=cif_id,
             session=self.oracle_session

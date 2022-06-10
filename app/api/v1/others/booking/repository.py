@@ -7,11 +7,12 @@ from sqlalchemy.sql.functions import count
 
 from app.api.base.repository import ReposReturn
 from app.api.v1.endpoints.user.schema import UserInfoResponse
+from app.third_parties.oracle.models.cif.basic_information.model import Customer
 from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingBusinessForm, BookingCustomer
 )
 from app.utils.constant.cif import BUSINESS_FORM_TTCN_GTDD_GTDD
-from app.utils.error_messages import ERROR_BOOKING_CODE_EXISTED, MESSAGE_STATUS
+from app.utils.error_messages import ERROR_BOOKING_CODE_EXISTED, MESSAGE_STATUS, ERROR_CIF_ID_NOT_EXIST
 from app.utils.functions import (
     date_to_datetime, datetime_to_string, end_time_of_day, generate_uuid, now,
     today
@@ -143,6 +144,24 @@ async def repos_check_exist_booking(
     return ReposReturn(data=booking)
 
 
+async def repos_get_customer_by_booking_id(booking_id: str, session: Session):
+
+    customer = session.execute(
+        select(
+            Customer,
+            Booking,
+            BookingCustomer
+        )
+        .join(BookingCustomer, Booking.id == BookingCustomer.booking_id)
+        .join(Customer, BookingCustomer.customer_id == Customer.id)
+        .filter(Booking.id == booking_id)
+    ).scalar()
+
+    return ReposReturn(data=customer)
+
+########################################################################################################################
+# Not Repos Type
+########################################################################################################################
 async def repos_is_correct_booking(
         booking_id: str,
         cif_id: str,
