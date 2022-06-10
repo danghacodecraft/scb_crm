@@ -90,8 +90,7 @@ class AgreementAuthorization(Base):
     name = Column('agreement_author_name', VARCHAR(1000), comment='Tên ủy quyền')
     active_flag = Column('agreement_active_flag', NUMBER(1, 2, True), comment='Cờ trạng thái kích hoạt')
 
-    agreement_author_type = Column('agreement_author_type', VARCHAR(20),
-                                   comment='Loại tài khoản thỏa thuận ủy quyền (FD, DD, CSD, TD)')
+    agreement_author_type = Column('agreement_author_type', VARCHAR(20), comment='Loại tài khoản thỏa thuận ủy quyền (FD, DD, CSD, TD)')
     created_at = Column(DateTime, comment='Ngày tạo')
     updated_at = Column(DateTime, comment='Ngày chỉnh sửa')
 
@@ -105,7 +104,7 @@ class JointAccountHolderAgreementAuthorization(Base):
     joint_acc_agree_document_file_id = Column(ForeignKey('crm_document_file.document_file_id'), nullable=False,
                                               comment="Id  mã loại thẻ")
     active_flag = Column(NUMBER(1, 0, False), nullable=False, comment="Trạng thái thỏa thuận/ ủy quyền")
-    created_at = Column(DateTime, nullable=False, comment='Ngày tạo')
+    created_at = Column(DateTime, comment='Ngày tạo')
     updated_at = Column(DateTime, comment='Ngày cập nhật')
     in_scb_flag = Column(NUMBER(1), nullable=False, comment="Cờ đánh dấu văn bản trong hay ngoài SCB")
     joint_acc_agree_document_no = Column(VARCHAR(100), comment="Số văn bản")
@@ -124,7 +123,5 @@ class MethodSign(Base):
     updated_at = Column(DateTime, comment='Ngày chỉnh sửa')
     agreement_flag = Column(NUMBER(1, 0, False), nullable=False, comment="Đánh dấu đồng ý nội dung")
     method_sign_type = Column(NUMBER(2, 0, False), nullable=False, comment="Phương thức ký (1, 2, 3)")
-    agree_join_acc_cif_num = Column(VARCHAR(7), nullable=True,
-                                    comment="Số CIF tài khoản tham gia ký văn bản đồng ý Chủ sở hữu")
-    agree_join_acc_name = Column(VARCHAR(100), nullable=True,
-                                 comment="Tên tài khoản tham gia ký văn bản đồng ý Chủ sở hữu")
+    agree_join_acc_cif_num = Column(VARCHAR(7), nullable=True, comment="Số CIF tài khoản tham gia ký văn bản đồng ý Chủ sở hữu")
+    agree_join_acc_name = Column(VARCHAR(100), nullable=True, comment="Tên tài khoản tham gia ký văn bản đồng ý Chủ sở hữu")
