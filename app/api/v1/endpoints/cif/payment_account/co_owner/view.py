@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Path, Query
+from fastapi import APIRouter, Depends, Header, Path
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -27,9 +27,10 @@ router = APIRouter()
 async def view_create_co_owner(
         co_owner: AccountHolderRequest,
         cif_id: str = Path(..., description='Id CIF ảo'),
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         current_user=Depends(get_current_user_from_header())
 ):
-    co_owner_data = await CtrCoOwner(current_user).ctr_save_co_owner(cif_id, co_owner)
+    co_owner_data = await CtrCoOwner(current_user).ctr_save_co_owner(cif_id, co_owner, booking_id=BOOKING_ID)
     return ResponseData[SaveSuccessResponse](**co_owner_data)
 
 
@@ -48,7 +49,6 @@ async def view_retrieve_co_owner(
 ):
     co_owner_data = await CtrCoOwner(current_user).ctr_co_owner(cif_id)
     return ResponseData[AccountHolderSuccessResponse](**co_owner_data)
-
 
 # @router.get(
 #     path="/detail-co-owner/",

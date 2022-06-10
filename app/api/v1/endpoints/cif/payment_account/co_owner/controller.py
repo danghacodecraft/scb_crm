@@ -13,13 +13,24 @@ from app.api.v1.endpoints.file.repository import repos_download_file
 from app.api.v1.endpoints.third_parties.gw.customer.controller import (
     CtrGWCustomer
 )
+from app.api.v1.others.booking.controller import CtrBooking
+from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.gw import GW_REQUEST_PARAMETER_CO_OWNER
 from app.utils.error_messages import ERROR_CIF_NUMBER_NOT_EXIST
 from app.utils.functions import dropdown, generate_uuid
 
 
 class CtrCoOwner(BaseController):
-    async def ctr_save_co_owner(self, cif_id: str, co_owner: AccountHolderRequest):
+    async def ctr_save_co_owner(self, cif_id: str, co_owner: AccountHolderRequest, booking_id: str):
+
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking(
+            business_type_code=BUSINESS_TYPE_INIT_CIF,
+            booking_id=booking_id,
+            check_correct_booking_flag=False,
+            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        )
+
         current_user = self.current_user.user_info
         # lấy casa_account_id theo số cif_id
         casa_account = self.call_repos(
