@@ -1,7 +1,7 @@
 from typing import List
 
-from sqlalchemy import select, and_
-from sqlalchemy.orm import Session
+from sqlalchemy import select, and_, delete
+from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn, auto_commit
 from app.third_parties.oracle.models.cif.basic_information.model import (
@@ -22,8 +22,27 @@ async def repos_save_casa_casa_account(
         saving_casa_accounts: List[dict],
         saving_bookings: List[dict],
         saving_booking_accounts: List[dict],
+        booking_parent_id: str,
         session: Session
 ):
+    booking_ids = tuple(session.execute(
+        select(
+            Booking.id
+        )
+        .filter(Booking.parent_id == booking_parent_id)
+    ).scalars().all())
+
+    account_ids = tuple(session.execute(
+        select(
+            BookingAccount.account_id
+        )
+        .filter(BookingAccount.booking_id.in_(booking_ids))
+    ).scalars().all())
+
+    session.execute(delete(BookingAccount).filter(BookingAccount.account_id.in_(booking_ids)))
+    session.execute(delete(Booking).filter(Booking.id.in_(booking_ids)))
+    session.execute(delete(CasaAccount).filter(CasaAccount.id.in_(account_ids)))
+
     session.bulk_save_objects([CasaAccount(**saving_casa_account) for saving_casa_account in saving_casa_accounts])
     session.bulk_save_objects([Booking(**saving_booking) for saving_booking in saving_bookings])
     session.bulk_save_objects([BookingAccount(**saving_booking_account) for saving_booking_account in saving_booking_accounts])
@@ -109,3 +128,23 @@ async def repos_get_acc_structure_types(acc_structure_type_ids: List[str], level
         )
 
     return ReposReturn(data=acc_structure_types)
+
+
+async def repos_get_casa_open_casa_info(booking_parent_id: str, session: Session):
+    booking_parent = aliased(Booking, name="BookingParent")
+    get_casa_open_casa_info = session.execute(
+        select(
+            booking_parent,
+            Booking,
+            BookingAccount,
+            CasaAccount,
+            AccountStructureType  # Level 1
+        )
+        .join(Booking, booking_parent.id == Booking.parent_id)
+        .join(BookingAccount, Booking.id == BookingAccount.booking_id)
+        .join(CasaAccount, BookingAccount.account_id == CasaAccount.id)
+        .join(AccountStructureType, CasaAccount.acc_structure_type_id == AccountStructureType.parent_id)
+        .filter(booking_parent.id == booking_parent_id)
+        .distinct()
+    ).all()
+    return ReposReturn(data=get_casa_open_casa_info)

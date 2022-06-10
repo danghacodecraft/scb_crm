@@ -2,7 +2,8 @@ from typing import List
 
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
-    repos_get_customer_by_cif_number, repos_save_casa_casa_account, repos_get_acc_structure_types
+    repos_get_customer_by_cif_number, repos_save_casa_casa_account, repos_get_acc_structure_types,
+    repos_get_casa_open_casa_info
 )
 from app.api.v1.endpoints.cif.payment_account.detail.schema import (
     SavePaymentAccountRequest
@@ -18,15 +19,46 @@ from app.utils.error_messages import (
     ERROR_ACCOUNT_NUMBER_NOT_NULL, ERROR_CASA_ACCOUNT_EXIST,
     ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_FIELD_REQUIRED, ERROR_VALIDATE
 )
-from app.utils.functions import generate_uuid, now
+from app.utils.functions import generate_uuid, now, dropdown, optional_dropdown
 
 
 class CtrCasaOpenCasa(BaseController):
+    async def ctr_get_casa_open_casa_info(
+            self,
+            booking_parent_id: str
+    ):
+        get_casa_open_casa_infos = self.call_repos(await repos_get_casa_open_casa_info(
+            booking_parent_id=booking_parent_id,
+            session=self.oracle_session
+        ))
+
+        casa_accounts = []
+
+        for _, booking, booking_account, casa_account, acc_structure_type_level_1 in get_casa_open_casa_infos:
+            casa_accounts.append(dict(
+                self_selected_account_flag=casa_account.self_selected_account_flag,
+                currency=dropdown(casa_account.currency),
+                account_type=dropdown(casa_account.account_type),
+                account_class=dropdown(casa_account.account_class),
+                account_structure_type_level_1=optional_dropdown(acc_structure_type_level_1),
+                account_structure_type_level_2=optional_dropdown(casa_account.account_structure_type),
+                account_structure_type_level_3=optional_dropdown(None),
+                casa_account_number=casa_account.casa_account_number,
+                account_salary_organization_account=casa_account.acc_salary_org_acc,
+                account_salary_organization_name=casa_account.acc_salary_org_name
+            ))
+
+        return self.response(data=dict(
+            transaction_code=booking_parent_id,
+            total_item=len(casa_accounts),
+            casa_accounts=casa_accounts
+        ))
+
     async def ctr_save_casa_open_casa_info(
             self,
             booking_parent_id: str,
             cif_number: str,
-            requests: List[SavePaymentAccountRequest]
+            casa_accounts: List[SavePaymentAccountRequest]
     ):
         saving_casa_accounts = []
         saving_bookings = []
@@ -45,7 +77,7 @@ class CtrCasaOpenCasa(BaseController):
         acc_type_ids = []
         acc_class_ids = []
         account_structure_type_level_2_ids = []
-        for index, request in enumerate(requests):
+        for index, request in enumerate(casa_accounts):
             self_selected_account_flag = request.self_selected_account_flag
             account_salary_organization_account = request.account_salary_organization_account
             account_structure_type_level_2_id = None
@@ -175,14 +207,13 @@ class CtrCasaOpenCasa(BaseController):
             )
         )
 
-        self.call_repos(
-            await repos_save_casa_casa_account(
-                saving_casa_accounts=saving_casa_accounts,
-                saving_bookings=saving_bookings,
-                saving_booking_accounts=saving_booking_accounts,
-                session=self.oracle_session
-            )
-        )
+        self.call_repos(await repos_save_casa_casa_account(
+            saving_casa_accounts=saving_casa_accounts,
+            saving_bookings=saving_bookings,
+            saving_booking_accounts=saving_booking_accounts,
+            booking_parent_id=booking_parent_id,
+            session=self.oracle_session
+        ))
 
         return self.response(data=dict(
             booking_parent_id=booking_parent_id,
