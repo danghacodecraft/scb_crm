@@ -137,9 +137,10 @@ class AccountHolderRequest(BaseSchema):
     joint_account_holder_flag: bool = Field(
         ..., description="Có đồng chủ sở hữu. `True`: Có , `False`: Không"
     )
-    number: str = Field(..., description="Số văn bản")
+    document_no: str = Field(..., description="Số văn bản")
     create_at: date = Field(..., description="Ngày lập")
     address_flag: bool = Field(..., description="Nơi lập")
+    document_address: Optional[str] = Field(None, description="Thông tin địa chỉ file")
     file_uuid: str = Field(..., description="Tập tin đính kèm")
     joint_account_holders: List[AccountRequest] = Field(
         ..., description="Danh sách các đồng sở hữu"
