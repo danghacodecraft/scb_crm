@@ -645,14 +645,15 @@ class CtrCustomer(BaseController):
         #
         # return self.response(data=customer_information)
 
-    async def ctr_retrieve_customer_working_info_by_cif_number(self, cif_number):
+    async def ctr_retrieve_customer_working_info_by_cif_number(self, cif_id_or_number):
         working_infos = self.call_repos(await repos_get_customer_working_infos(
-            cif_number=cif_number, session=self.oracle_session
+            cif_id_or_number=cif_id_or_number, session=self.oracle_session
         ))
 
         response_data = dict(
             career=DROPDOWN_NONE_DICT,
-            average_income_amount=DROPDOWN_NONE_DICT
+            average_income_amount=DROPDOWN_NONE_DICT,
+            company_position=DROPDOWN_NONE_DICT
         )
 
         if working_infos:

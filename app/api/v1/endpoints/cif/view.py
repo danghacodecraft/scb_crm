@@ -68,7 +68,7 @@ async def view_customer(
 
 
 @router.get(
-    path="/{cif_number}/working-info/",
+    path="/{cif_id_or_number}/working-info/",
     name="Customer working information",
     description="Lấy dữ liệu `THÔNG TIN LÀM VIỆC` của khách hàng",
     responses=swagger_response(
@@ -77,11 +77,11 @@ async def view_customer(
     )
 )
 async def view_retrieve_customer_working_info_by_cif_number(
-        cif_number: str = Path(..., description='Id CIF ảo'),
+        cif_id_or_number: str = Path(..., description='Id CIF ảo hoặc CIF number'),
         current_user=Depends(get_current_user_from_header())
 ):
     customer_information = await CtrCustomer(current_user).ctr_retrieve_customer_working_info_by_cif_number(
-        cif_number=cif_number,
+        cif_id_or_number=cif_id_or_number,
     )
 
     return ResponseData[CareerInformationContactInformationResponse](**customer_information)

@@ -1,7 +1,7 @@
 import re
 from typing import List
 
-from sqlalchemy import desc, select
+from sqlalchemy import desc, select, or_
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn
@@ -262,7 +262,7 @@ async def repos_get_booking(
 
 
 async def repos_get_customer_working_infos(
-    cif_number: str,
+    cif_id_or_number: str,
     session: Session
 ):
     customer_working_info = session.execute(
@@ -277,7 +277,7 @@ async def repos_get_customer_working_infos(
         .outerjoin(Career, CustomerProfessional.career_id == Career.id)
         .outerjoin(AverageIncomeAmount, CustomerProfessional.average_income_amount_id == AverageIncomeAmount.id)
         .outerjoin(Position, CustomerProfessional.position_id == Position.id)
-        .filter(Customer.cif_number == cif_number)
+        .filter(or_(Customer.cif_id_or_number == cif_number, Customer.id == cif_id_or_number))
     ).first()
 
     return ReposReturn(data=customer_working_info)
