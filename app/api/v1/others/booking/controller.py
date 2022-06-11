@@ -4,7 +4,9 @@ from starlette import status
 
 from app.api.base.controller import BaseController
 from app.api.v1.others.booking.repository import (
-    repos_check_exist_booking, repos_create_booking, repos_is_correct_booking, repos_is_used_booking
+    repos_check_exist_booking, repos_create_booking,
+    repos_get_customer_by_booking_id, repos_is_correct_booking,
+    repos_is_used_booking
 )
 from app.api.v1.others.permission.controller import PermissionController
 from app.utils.constant.approval import CIF_STAGE_INIT
@@ -14,9 +16,9 @@ from app.utils.constant.idm import (
     IDM_PERMISSION_CODE_OPEN_CIF
 )
 from app.utils.error_messages import (
-    ERROR_BOOKING_ID_NOT_EXIST, ERROR_BOOKING_INCORRECT,
-    ERROR_BUSINESS_TYPE_CODE_INCORRECT, ERROR_BUSINESS_TYPE_NOT_EXIST,
-    ERROR_CIF_ID_NOT_EXIST, ERROR_PERMISSION, ERROR_BOOKING_ALREADY_USED
+    ERROR_BOOKING_ALREADY_USED, ERROR_BOOKING_ID_NOT_EXIST,
+    ERROR_BOOKING_INCORRECT, ERROR_BUSINESS_TYPE_CODE_INCORRECT,
+    ERROR_BUSINESS_TYPE_NOT_EXIST, ERROR_CIF_ID_NOT_EXIST, ERROR_PERMISSION
 )
 
 
@@ -104,3 +106,17 @@ class CtrBooking(BaseController):
             return self.response_exception(msg=ERROR_BOOKING_ALREADY_USED, loc=f"booking_id: {booking_id}")
 
         return self.response(data=is_used_booking)
+
+    async def ctr_get_customer_info(self, booking_id: str):
+        """
+        Lấy thông tin khách hàng bằng booking_id
+        """
+        customer_info = self.call_repos(await repos_get_customer_by_booking_id(
+            booking_id=booking_id,
+            session=self.oracle_session
+        ))
+
+        if not customer_info:
+            return self.response_exception(msg=ERROR_CIF_ID_NOT_EXIST, loc=f"header -> booking_id: {booking_id}")
+
+        return self.response(data=customer_info)

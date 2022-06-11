@@ -7,6 +7,9 @@ from sqlalchemy.sql.functions import count
 
 from app.api.base.repository import ReposReturn
 from app.api.v1.endpoints.user.schema import UserInfoResponse
+from app.third_parties.oracle.models.cif.basic_information.model import (
+    Customer
+)
 from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingBusinessForm, BookingCustomer
 )
@@ -143,6 +146,25 @@ async def repos_check_exist_booking(
     return ReposReturn(data=booking)
 
 
+async def repos_get_customer_by_booking_id(booking_id: str, session: Session):
+
+    customer = session.execute(
+        select(
+            Customer,
+            Booking,
+            BookingCustomer
+        )
+        .join(BookingCustomer, Booking.id == BookingCustomer.booking_id)
+        .join(Customer, BookingCustomer.customer_id == Customer.id)
+        .filter(Booking.id == booking_id)
+    ).scalar()
+
+    return ReposReturn(data=customer)
+
+
+########################################################################################################################
+# Not Repos Type
+########################################################################################################################
 async def repos_is_correct_booking(
         booking_id: str,
         cif_id: str,
