@@ -380,5 +380,4 @@ async def repos_get_business_job_codes(business_type_code: str, session: Session
             BusinessJob.active_flag == 1
         ))
     ).scalars().all()
-    print(business_job_codes)
     return ReposReturn(data=business_job_codes)
