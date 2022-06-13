@@ -8,6 +8,7 @@ UUID_MAX_LENGTH = 32
 CIF_NUMBER_REGEX = r"^\d{7}$"
 
 BUSINESS_TYPE_CODE_CIF = "CIF"
+BUSINESS_TYPE_CODE_OPEN_CASA = "OPEN_CASA"
 
 IDENTITY_DOCUMENT_TYPE_IDENTITY_CARD = 'CMND'
 IDENTITY_DOCUMENT_TYPE_CITIZEN_CARD = 'CCCD'
@@ -183,6 +184,9 @@ BUSINESS_FORM_EB = "EB"
 
 BUSINESS_FORM_TGN = "TGN"
 
+
+BUSINESS_FORM_OPEN_CASA_OPEN_CASA = 'OPEN_CASA_KHOI_TAO'
+
 TRANSACTION_STATUS_FALSE = "0"
 TRANSACTION_STATUS_TRUE = "1"
 
@@ -223,6 +227,23 @@ PROFILE_HISTORY_DESCRIPTIONS_INIT_PAYMENT_ACCOUNT = "Mở tài khoản thanh to�
 PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_ACCOUNT = "Mở tài khoản tiết kiệm"
 PROFILE_HISTORY_DESCRIPTIONS_INIT_DEBIT_CARD = "Tạo thẻ ghi nợ"
 PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING = "Tạo E-Banking"
+
+PROFILE_HISTORY_DESCRIPTIONS = {
+    BUSINESS_TYPE_CODE_CIF: {
+        'description': PROFILE_HISTORY_DESCRIPTIONS_INIT_CIF,
+        'content': "Giao dịch viên đang chuẩn bị hồ sơ. "
+                   "Mốc thời gian tính từ lúc GDV điền thông tin tab đầu tiên [Thông tin cá nhân]"
+    },
+    # PROFILE_HISTORY_DESCRIPTIONS_EDIT_CIF: "Tu chỉnh CIF",
+    BUSINESS_TYPE_CODE_OPEN_CASA: {
+        'description': PROFILE_HISTORY_DESCRIPTIONS_INIT_PAYMENT_ACCOUNT,
+        'content': "Giao dịch viên đang chuẩn bị hồ sơ. "
+                   "Mốc thời gian tính từ lúc GDV điền thông tin tab đầu tiên [Mở tài khoản thanh toán]"
+    },
+    # PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_ACCOUNT: "Mở tài khoản tiết kiệm",
+    # PROFILE_HISTORY_DESCRIPTIONS_INIT_DEBIT_CARD: "Tạo thẻ ghi nợ",
+    # PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING: "Tạo E-Banking"
+}
 
 EB_QUESTION_TYPE_BASIC_01 = 'BASIC_01'
 EB_QUESTION_TYPE_BASIC_02 = 'BASIC_02'

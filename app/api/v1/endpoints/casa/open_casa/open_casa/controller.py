@@ -1,26 +1,24 @@
-from typing import List
-
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
     repos_get_customer_by_cif_number, repos_save_casa_casa_account, repos_get_acc_structure_types,
     repos_get_casa_open_casa_info
 )
-from app.api.v1.endpoints.cif.payment_account.detail.schema import (
-    SavePaymentAccountRequest
-)
+from app.api.v1.endpoints.casa.open_casa.open_casa.schema import CasaOpenCasaRequest
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_get_casa_account_info
 )
 from app.api.v1.others.booking.controller import CtrBooking
+from app.api.v1.validator import validate_history_data
 from app.third_parties.oracle.models.master_data.account import AccountType, AccountClass
 from app.third_parties.oracle.models.master_data.others import Currency
 from app.utils.constant.business_type import BUSINESS_TYPE_OPEN_CASA
-from app.utils.constant.cif import ACC_STRUCTURE_TYPE_LEVEL_2, STAFF_TYPE_BUSINESS_CODE
+from app.utils.constant.cif import ACC_STRUCTURE_TYPE_LEVEL_2, STAFF_TYPE_BUSINESS_CODE, \
+    PROFILE_HISTORY_DESCRIPTIONS_INIT_PAYMENT_ACCOUNT, PROFILE_HISTORY_STATUS_INIT
 from app.utils.error_messages import (
     ERROR_ACCOUNT_NUMBER_NOT_NULL, ERROR_CASA_ACCOUNT_EXIST,
     ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_FIELD_REQUIRED, ERROR_VALIDATE
 )
-from app.utils.functions import generate_uuid, now, dropdown, optional_dropdown
+from app.utils.functions import generate_uuid, now, dropdown, optional_dropdown, orjson_dumps
 
 
 class CtrCasaOpenCasa(BaseController):
@@ -58,9 +56,11 @@ class CtrCasaOpenCasa(BaseController):
     async def ctr_save_casa_open_casa_info(
             self,
             booking_parent_id: str,
-            cif_number: str,
-            casa_accounts: List[SavePaymentAccountRequest]
+            open_casa_request: CasaOpenCasaRequest
     ):
+        cif_number = open_casa_request.cif_number
+        casa_accounts = open_casa_request.casa_accounts
+        current_user_info = self.current_user.user_info
         saving_casa_accounts = []
         saving_bookings = []
         saving_booking_accounts = []
@@ -216,11 +216,53 @@ class CtrCasaOpenCasa(BaseController):
             )
         )
 
+        # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CASA
+        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
+            business_type_id=BUSINESS_TYPE_OPEN_CASA
+        )
+
+        (
+            saving_transaction_stage_status, saving_transaction_stage, saving_transaction_stage_phase,
+            saving_transaction_stage_lane, saving_transaction_stage_role, saving_transaction_daily,
+            saving_transaction_sender
+        ) = transaction_datas
+
+        print('saving_transaction_stage_status', saving_transaction_stage_status)
+        print('saving_transaction_stage', saving_transaction_stage)
+        print('saving_transaction_stage_phase', saving_transaction_stage_phase)
+        print('saving_transaction_stage_lane', saving_transaction_stage_lane)
+        print('saving_transaction_stage_role', saving_transaction_stage_role)
+        print('saving_transaction_daily', saving_transaction_daily)
+        print('saving_transaction_sender', saving_transaction_sender)
+
+        history_datas = self.make_history_log_data(
+            description=PROFILE_HISTORY_DESCRIPTIONS_INIT_PAYMENT_ACCOUNT,
+            history_status=PROFILE_HISTORY_STATUS_INIT,
+            current_user=current_user_info
+        )
+        # Validate history data
+        is_success, history_response = validate_history_data(history_datas)
+        if not is_success:
+            return self.response_exception(
+                msg=history_response['msg'],
+                loc=history_response['loc'],
+                detail=history_response['detail']
+            )
+
         self.call_repos(await repos_save_casa_casa_account(
             saving_casa_accounts=saving_casa_accounts,
             saving_bookings=saving_bookings,
             saving_booking_accounts=saving_booking_accounts,
             booking_parent_id=booking_parent_id,
+            saving_transaction_stage_status=saving_transaction_stage_status,
+            saving_transaction_stage=saving_transaction_stage,
+            saving_transaction_stage_phase=saving_transaction_stage_phase,
+            saving_transaction_stage_lane=saving_transaction_stage_lane,
+            saving_transaction_stage_role=saving_transaction_stage_role,
+            saving_transaction_daily=saving_transaction_daily,
+            saving_transaction_sender=saving_transaction_sender,
+            request_json=open_casa_request.json(),
+            history_datas=orjson_dumps(history_datas),
             session=self.oracle_session
         ))
 

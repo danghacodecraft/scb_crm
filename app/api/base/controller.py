@@ -20,6 +20,7 @@ from app.api.v1.endpoints.repository import (
 )
 from app.api.v1.endpoints.user.schema import AuthResponse, UserInfoResponse
 from app.third_parties.oracle.base import Base, SessionLocal, SessionLocal_Task
+from app.utils.constant.cif import PROFILE_HISTORY_DESCRIPTIONS
 from app.utils.constant.ekyc import is_success
 from app.utils.error_messages import (
     ERROR_GROUP_ROLE_CODE, ERROR_MENU_CODE, MESSAGE_STATUS
@@ -454,10 +455,9 @@ class BaseController:
             transaction_root_id=transaction_daily_id,
             is_reject=False,
             data=orjson_dumps(dict(
-                content="Giao dịch viên đang chuẩn bị hồ sơ. "
-                        "Mốc thời gian tính từ lúc GDV điền thông tin tab đầu tiên [Thông tin cá nhân]"
+                content=PROFILE_HISTORY_DESCRIPTIONS[business_type_id]['content']
             )),
-            description="Khởi tạo CIF",
+            description=PROFILE_HISTORY_DESCRIPTIONS[business_type_id]['description'],
             created_at=now()
         )
 
