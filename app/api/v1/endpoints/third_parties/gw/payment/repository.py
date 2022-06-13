@@ -11,7 +11,7 @@ async def repos_gw_payment_amount_block(current_user, data_input):
     amount_block_out = gw_payment_amount_block.get('amountBlock_out', {})
 
     # check trường hợp lỗi
-    if gw_payment_amount_block.get('transaction_info').get('transaction_error_code') != GW_CASA_REPONSE_STATUS_SUCCESS:
+    if amount_block_out.get('transaction_info').get('transaction_error_code') != GW_CASA_REPONSE_STATUS_SUCCESS:
         return ReposReturn(is_error=True, msg=amount_block_out.get('transaction_info').get('transaction_error_msg'))
 
     return ReposReturn(data=gw_payment_amount_block)
