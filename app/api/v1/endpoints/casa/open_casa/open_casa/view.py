@@ -40,7 +40,7 @@ async def view_save_casa_open_casa_info(
     name="[CASA] Mở tài khoản thanh toán",
     description="[CASA] Mở tài khoản thanh toán",
     responses=swagger_response(
-        response_model=ResponseData,
+        response_model=ResponseData[CasaOpenCasaResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
