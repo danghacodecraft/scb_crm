@@ -6,7 +6,7 @@ from app.api.base.controller import BaseController
 from app.api.v1.others.booking.repository import (
     repos_check_exist_booking, repos_create_booking,
     repos_get_customer_by_booking_id, repos_is_correct_booking,
-    repos_is_used_booking
+    repos_is_used_booking, repos_get_business_type
 )
 from app.api.v1.others.permission.controller import PermissionController
 from app.utils.constant.approval import CIF_STAGE_INIT
@@ -120,3 +120,13 @@ class CtrBooking(BaseController):
             return self.response_exception(msg=ERROR_CIF_ID_NOT_EXIST, loc=f"header -> booking_id: {booking_id}")
 
         return self.response(data=customer_info)
+
+    async def ctr_get_business_type(self, booking_id: str):
+        """
+        Lấy thông tin nghiệp vụ thông qua booking
+        """
+        business_type = self.call_repos(await repos_get_business_type(
+            booking_id=booking_id,
+            session=self.oracle_session
+        ))
+        return self.response(data=business_type)

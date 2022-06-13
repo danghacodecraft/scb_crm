@@ -17,6 +17,7 @@ from app.api.v1.endpoints.approval.schema import ApprovalRequest
 from app.api.v1.endpoints.third_parties.gw.employee.repository import (
     repos_gw_get_employee_info_from_code
 )
+from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
@@ -595,6 +596,7 @@ class CtrApproval(BaseController):
     async def ctr_approve(
             self,
             cif_id: str,
+            booking_id: str,
             request: ApprovalRequest
     ):
         # check cif tồn tại
@@ -671,6 +673,7 @@ class CtrApproval(BaseController):
         content = request.approval.content
         reject_flag = request.approval.reject_flag
         action_id = request.approval.action_id
+        business_type = await CtrBooking().ctr_get_business_type(booking_id=booking_id)
         business_type_id = BUSINESS_TYPE_INIT_CIF
 
         _, _, _, previous_transaction_stage, _, _, _ = self.call_repos(
