@@ -180,7 +180,7 @@ async def repos_get_casa_open_casa_info(booking_parent_id: str, session: Session
         .join(Booking, booking_parent.id == Booking.parent_id)
         .join(BookingAccount, Booking.id == BookingAccount.booking_id)
         .join(CasaAccount, BookingAccount.account_id == CasaAccount.id)
-        .join(AccountStructureType, CasaAccount.acc_structure_type_id == AccountStructureType.parent_id)
+        .outerjoin(AccountStructureType, CasaAccount.acc_structure_type_id == AccountStructureType.parent_id)
         .filter(booking_parent.id == booking_parent_id)
         .distinct()
     ).all()
