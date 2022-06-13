@@ -14,7 +14,7 @@ from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingBusinessForm, BookingCustomer
 )
 from app.utils.constant.cif import BUSINESS_FORM_TTCN_GTDD_GTDD
-from app.utils.error_messages import ERROR_BOOKING_CODE_EXISTED, MESSAGE_STATUS
+from app.utils.error_messages import ERROR_BOOKING_CODE_EXISTED, MESSAGE_STATUS, ERROR_BOOKING_ID_NOT_EXIST
 from app.utils.functions import (
     date_to_datetime, datetime_to_string, end_time_of_day, generate_uuid, now,
     today
@@ -160,6 +160,18 @@ async def repos_get_customer_by_booking_id(booking_id: str, session: Session):
     ).scalar()
 
     return ReposReturn(data=customer)
+
+
+async def repos_get_business_type(booking_id: str, session: Session):
+    booking = session.execute(
+        select(
+            Booking
+        )
+        .filter(Booking.id == booking_id)
+    ).scalar()
+    if not booking:
+        return ReposReturn(is_error=True, msg=ERROR_BOOKING_ID_NOT_EXIST, loc=f"booking_id: {booking_id}")
+    return ReposReturn(data=booking.business_type)
 
 
 ########################################################################################################################
