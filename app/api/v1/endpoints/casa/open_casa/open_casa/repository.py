@@ -1,3 +1,4 @@
+import json
 from typing import List
 
 from sqlalchemy import select, and_, delete
@@ -7,14 +8,17 @@ from app.api.base.repository import ReposReturn, auto_commit
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
 )
-from app.third_parties.oracle.models.cif.form.model import BookingAccount, Booking
+from app.third_parties.oracle.models.cif.form.model import BookingAccount, Booking, BookingBusinessForm, \
+    TransactionDaily, TransactionSender
 from app.third_parties.oracle.models.cif.payment_account.model import (
     CasaAccount
 )
 from app.third_parties.oracle.models.master_data.account import AccountStructureType
-from app.utils.constant.cif import ACTIVE_FLAG_ACTIVED
+from app.third_parties.oracle.models.master_data.others import TransactionStageStatus, TransactionStage, \
+    TransactionStageLane, TransactionStagePhase, TransactionStageRole
+from app.utils.constant.cif import ACTIVE_FLAG_ACTIVED, BUSINESS_FORM_OPEN_CASA_OPEN_CASA
 from app.utils.error_messages import ERROR_CIF_NUMBER_NOT_EXIST, ERROR_IDS_NOT_EXIST
-from app.utils.functions import get_index_positions
+from app.utils.functions import get_index_positions, now
 
 
 @auto_commit
@@ -23,6 +27,15 @@ async def repos_save_casa_casa_account(
         saving_bookings: List[dict],
         saving_booking_accounts: List[dict],
         booking_parent_id: str,
+        saving_transaction_stage_status: dict,
+        saving_transaction_stage: dict,
+        saving_transaction_stage_phase: dict,
+        saving_transaction_stage_lane: dict,
+        saving_transaction_stage_role: dict,
+        saving_transaction_daily: dict,
+        saving_transaction_sender: dict,
+        request_json: json,
+        history_datas: json,
         session: Session
 ):
     # Lấy Booking con từ Booking cha
@@ -50,6 +63,26 @@ async def repos_save_casa_casa_account(
     session.bulk_save_objects([CasaAccount(**saving_casa_account) for saving_casa_account in saving_casa_accounts])
     session.bulk_save_objects([Booking(**saving_booking) for saving_booking in saving_bookings])
     session.bulk_save_objects([BookingAccount(**saving_booking_account) for saving_booking_account in saving_booking_accounts])
+
+    # Lưu log vào DB
+    session.add_all([
+        # Tạo BOOKING, CRM_TRANSACTION_DAILY -> CRM_BOOKING -> BOOKING_CUSTOMER -> BOOKING_BUSINESS_FORM
+        TransactionStageStatus(**saving_transaction_stage_status),
+        TransactionStage(**saving_transaction_stage),
+        TransactionStageLane(**saving_transaction_stage_lane),
+        TransactionStagePhase(**saving_transaction_stage_phase),
+        TransactionStageRole(**saving_transaction_stage_role),
+        TransactionDaily(**saving_transaction_daily),
+        TransactionSender(**saving_transaction_sender),
+        BookingBusinessForm(**dict(
+            booking_id=booking_parent_id,
+            form_data=request_json,
+            business_form_id=BUSINESS_FORM_OPEN_CASA_OPEN_CASA,
+            save_flag=True,
+            created_at=now(),
+            log_data=history_datas
+        ))
+    ])
 
     return ReposReturn(data=(saving_casa_accounts, saving_booking_accounts))
 
