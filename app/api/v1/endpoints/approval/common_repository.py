@@ -31,6 +31,7 @@ async def repos_get_begin_stage(business_type_id: str, session: Session):
             StageRole
         )
         .join(StageStatus, Stage.status_id == StageStatus.id)
+        .join(Lane, Stage.business_type_id == Lane.business_type_id)
         .join(StageLane, Stage.id == StageLane.stage_id)
         .join(StagePhase, Stage.id == StagePhase.stage_id)
         .join(Phase, StagePhase.phase_id == Phase.id)
@@ -45,7 +46,8 @@ async def repos_get_begin_stage(business_type_id: str, session: Session):
         return ReposReturn(
             is_error=True,
             msg=ERROR_BEGIN_STAGE_NOT_EXIST,
-            detail=f"business_type_id: {business_type_id}"
+            detail=f"business_type_id: {business_type_id}",
+            loc="repos_get_begin_stage"
         )
 
     return ReposReturn(data=begin_stage)
