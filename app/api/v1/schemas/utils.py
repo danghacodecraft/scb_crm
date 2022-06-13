@@ -51,5 +51,5 @@ class HistoryData(BaseSchema):
     user_id: str = Field(..., description="Mã NV")
     user_name: str = Field(..., description="Tên NV")
     position_id: str = Field(..., description="Chức vụ")
-    position_code: str = Field(..., description="Chức vụ")
-    position_name: str = Field(..., description="Chức vụ")
+    position_code: Optional[str] = Field(..., description="Chức vụ")
+    position_name: Optional[str] = Field(..., description="Chức vụ")
