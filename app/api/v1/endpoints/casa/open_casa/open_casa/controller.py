@@ -73,7 +73,8 @@ class CtrCasaOpenCasa(BaseController):
         await CtrBooking().ctr_get_booking(
             booking_id=booking_parent_id,
             business_type_code=BUSINESS_TYPE_OPEN_CASA,
-            check_correct_booking_flag=False
+            check_correct_booking_flag=False,
+            loc=f'booking_id: {booking_parent_id}'
         )
 
         # Kiểm tra số CIF có tồn tại trong CRM không
