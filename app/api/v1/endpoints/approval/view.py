@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from fastapi import APIRouter, Body, Depends, Path, Query
+from fastapi import APIRouter, Body, Depends, Path, Query, Header
 from starlette import status
 
 from app.api.base.schema import PagingResponse, ResponseData
@@ -11,6 +11,8 @@ from app.api.v1.endpoints.approval.schema import (
     ApprovalRequest, CifApprovalProcessResponse, CifApprovalResponse,
     CifApprovalSuccessResponse, ApprovalBusinessJob
 )
+from app.utils.constant.business_type import BUSINESS_TYPES
+from app.utils.functions import make_description_from_dict
 
 router = APIRouter()
 
@@ -26,9 +28,17 @@ router = APIRouter()
 )
 async def view_get_business_jobs(
         cif_id: str = Path(..., description='Id CIF ảo'),
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
+        business_type_code: str = Query(
+            ..., description=f"Mã loại nghiệp vụ {make_description_from_dict(dictionary=BUSINESS_TYPES)}"
+        ),
         current_user=Depends(get_current_user_from_header())
 ):
-    business_jobs = await CtrApproval(current_user).ctr_get_business_jobs(cif_id=cif_id)
+    business_jobs = await CtrApproval(current_user).ctr_get_business_jobs(
+        cif_id=cif_id,
+        business_type_code=business_type_code,
+        booking_id=BOOKING_ID
+    )
 
     return ResponseData[List[ApprovalBusinessJob]](**business_jobs)
 
