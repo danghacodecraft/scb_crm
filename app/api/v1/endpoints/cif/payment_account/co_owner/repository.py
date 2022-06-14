@@ -1,7 +1,7 @@
 import json
 from typing import List
 
-from sqlalchemy import and_, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -14,8 +14,8 @@ from app.settings.event import service_soa
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
     CustomerAddress
 )
-from app.third_parties.oracle.models.cif.basic_information.guardian_and_relationship.model import (
-    CustomerPersonalRelationship
+from app.third_parties.oracle.models.cif.basic_information.identity.model import (
+    CustomerIdentity, CustomerIdentityImage
 )
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
@@ -30,7 +30,8 @@ from app.third_parties.oracle.models.master_data.customer import (
 )
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.utils.constant.cif import (
-    AGREEMENT_AUTHOR_TYPE_DD, BUSINESS_FORM_TKTT_DSH, DROPDOWN_NONE_DICT
+    AGREEMENT_AUTHOR_TYPE_DD, BUSINESS_FORM_TKTT_DSH, DROPDOWN_NONE_DICT,
+    IMAGE_TYPE_SIGNATURE
 )
 from app.utils.error_messages import (
     ERROR_AGREEMENT_AUTHORIZATIONS_NOT_EXIST, ERROR_CALL_SERVICE_SOA,
