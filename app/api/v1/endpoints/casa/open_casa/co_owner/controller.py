@@ -1,36 +1,46 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.casa.open_casa.co_owner.repository import (
-    repos_get_casa_account, repos_save_co_owner
+    repos_check_casa_account, repos_save_co_owner
 )
 from app.api.v1.endpoints.casa.open_casa.co_owner.schema import (
     AccountHolderRequest
 )
-from app.api.v1.endpoints.cif.repository import repos_get_booking
+from app.api.v1.endpoints.cif.repository import repos_get_booking_account
 from app.api.v1.endpoints.third_parties.gw.customer.controller import (
     CtrGWCustomer
 )
 from app.api.v1.others.booking.controller import CtrBooking
-from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
-from app.utils.error_messages import ERROR_CIF_NUMBER_NOT_EXIST
+from app.utils.constant.business_type import (
+    BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA
+)
+from app.utils.error_messages import (
+    ERROR_CASA_ACCOUNT_ID_NOT_EXIST, ERROR_CIF_NUMBER_NOT_EXIST
+)
 from app.utils.functions import generate_uuid
 
 
 class CtrCoOwner(BaseController):
-    async def ctr_save_co_owner(self, cif_id: str, co_owner: AccountHolderRequest, booking_id: str):
+    async def ctr_save_co_owner(self, account_id: str, co_owner: AccountHolderRequest, booking_id: str):
 
         # Check exist Booking
         await CtrBooking().ctr_get_booking_and_validate(
-            business_type_code=BUSINESS_TYPE_INIT_CIF,
+            business_type_code=BUSINESS_TYPE_OPEN_CASA,
             booking_id=booking_id,
             check_correct_booking_flag=False,
             loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
         )
 
         current_user = self.current_user.user_info
-        # lấy casa_account_id theo số cif_id
-        casa_account = self.call_repos(
-            await repos_get_casa_account(cif_id=cif_id, session=self.oracle_session)
-        )
+        # Check exist casa_account_id
+        account_id = self.call_repos(
+            await repos_check_casa_account(
+                account_id=account_id,
+                session=self.oracle_session))
+
+        if not account_id:
+            return self.response_exception(
+                msg=ERROR_CASA_ACCOUNT_ID_NOT_EXIST, loc=account_id
+            )
 
         # Lấy danh sách cif_number account request
         customer_relationship_not_exist_list = []
@@ -56,7 +66,7 @@ class CtrCoOwner(BaseController):
             "joint_acc_agree_document_no": co_owner.document_no,
             "in_scb_flag": co_owner.address_flag,
             "joint_acc_agree_document_address": co_owner.document_address,
-            "casa_account_id": casa_account,
+            "casa_account_id": account_id,
             "joint_acc_agree_document_file_id": co_owner.file_uuid
         }
         save_account_holder = [{
@@ -84,7 +94,7 @@ class CtrCoOwner(BaseController):
                 save_info_co_owner=save_info_co_owner,
                 save_account_holder=save_account_holder,
                 save_agreement_authorization=save_agreement_authorization,
-                cif_id=cif_id,
+                account_id=account_id,
                 log_data=co_owner.json(),
                 created_by=current_user.username,
                 session=self.oracle_session
@@ -92,8 +102,8 @@ class CtrCoOwner(BaseController):
         )
 
         # Lấy Booking Code
-        booking = self.call_repos(await repos_get_booking(
-            cif_id=cif_id, session=self.oracle_session
+        booking = self.call_repos(await repos_get_booking_account(
+            account_id=account_id, session=self.oracle_session
         ))
         co_owner_data.update(booking=dict(
             id=booking.id,
