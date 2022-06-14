@@ -116,6 +116,30 @@ class CtrGWCasaAccount(BaseController):
         staff_info_direct = account_info['staff_info_direct']
         staff_info_indirect = account_info['staff_info_indirect']
 
+        lock_none = {
+            "balance_lock": "",
+            "date_lock": "",
+            "expire_date_lock": "",
+            "type_code_lock": "",
+            "type_name_lock": "",
+            "reason_lock": "",
+            "ref_no": ""
+        }
+
+        lock_info_response = []
+
+        for lock_info in lock_infos:
+            lock_dict = dict(
+                balance_lock=lock_info['account_balance_lock'],
+                date_lock=lock_info['account_date_lock'],
+                expire_date_lock=lock_info['account_expire_date_lock'],
+                type_code_lock=lock_info['account_type_code_lock'],
+                type_name_lock=lock_info['account_type_name_lock'],
+                reason_lock=lock_info['account_reason_lock'],
+                ref_no=lock_info['account_ref_no'])
+            if lock_dict != lock_none:
+                lock_info_response.append(lock_dict)
+
         gw_casa_account_info_response = dict(
             number=account_info['account_num'],
             type=account_info['account_type'],
@@ -148,14 +172,7 @@ class CtrGWCasaAccount(BaseController):
             service_escrow=account_info['account_service_escrow'],
             service_escrow_ex_date=string_to_date(account_info['account_service_escrow_ex_date'],
                                                   _format=DATETIME_INPUT_OUTPUT_FORMAT),
-            lock_info=[dict(
-                balance_lock=lock_info['account_balance_lock'],
-                date_lock=lock_info['account_date_lock'],
-                expire_date_lock=lock_info['account_expire_date_lock'],
-                type_code_lock=lock_info['account_type_code_lock'],
-                type_name_lock=lock_info['account_type_name_lock'],
-                reason_lock=lock_info['account_reason_lock'],
-                ref_no=lock_info['account_ref_no']) for lock_info in lock_infos],
+            lock_info=lock_info_response,
             branch_info=dict(
                 code=branch_info['branch_code'],
                 name=branch_info['branch_name']
