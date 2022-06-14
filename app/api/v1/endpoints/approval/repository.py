@@ -51,7 +51,7 @@ async def repos_get_approval_process(cif_id: str, session: Session) -> ReposRetu
     return ReposReturn(data=transactions)
 
 
-# @auto_commit
+@auto_commit
 async def repos_approve(
         cif_id: str,
         saving_transaction_stage_status: dict,
