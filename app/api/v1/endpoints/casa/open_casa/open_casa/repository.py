@@ -1,7 +1,7 @@
 import json
 from typing import List
 
-from sqlalchemy import select, and_, delete
+from sqlalchemy import select, and_, delete, update
 from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -58,6 +58,7 @@ async def repos_save_casa_casa_account(
     session.execute(delete(BookingAccount).filter(BookingAccount.booking_id.in_(booking_ids)))
     session.execute(delete(Booking).filter(Booking.id.in_(booking_ids)))
     session.execute(delete(CasaAccount).filter(CasaAccount.id.in_(account_ids)))
+    session.execute(delete(BookingBusinessForm).filter(BookingBusinessForm.booking_id == booking_parent_id))
 
     # Cập nhật lại bằng dữ liệu mới
     session.bulk_save_objects([CasaAccount(**saving_casa_account) for saving_casa_account in saving_casa_accounts])
@@ -83,6 +84,17 @@ async def repos_save_casa_casa_account(
             log_data=history_datas
         ))
     ])
+
+    # Update Booking
+    session.execute(
+        update(
+            Booking
+        )
+        .filter(Booking.id == booking_parent_id)
+        .values(
+            transaction_id=saving_transaction_daily['transaction_id']
+        )
+    )
 
     return ReposReturn(data=(saving_casa_accounts, saving_booking_accounts))
 
