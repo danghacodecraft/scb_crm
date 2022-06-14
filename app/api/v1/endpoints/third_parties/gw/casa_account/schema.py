@@ -11,7 +11,7 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.example import (
 from app.api.v1.endpoints.third_parties.gw.schema import (
     GWBranchDropdownResponse, GWCIFInfoResponse
 )
-from app.api.v1.schemas.utils import DropdownResponse, OptionalDropdownResponse
+from app.api.v1.schemas.utils import OptionalDropdownResponse
 
 
 class CasaAccountByCIFNumberResponse(BaseGWSchema):
@@ -83,7 +83,7 @@ class GWAccountInfoResponse(BaseGWSchema):
     latest_transaction_date: Optional[date] = Field(..., description="Ngày giao dịch gần nhất")
     open_date: Optional[date] = Field(..., description="Ngày mở tài khoản")
     maturity_date: Optional[date] = Field(..., description="Ngày đến hạn")
-    status: List[DropdownResponse] = Field(..., description="Trạng thái tài khoản (no debits, no credit..)")
+    status: List[OptionalDropdownResponse] = Field(..., description="Trạng thái tài khoản (no debits, no credit..)")
     lock_status: Optional[str] = Field(..., description="Trạng thái tài khoản (phong tỏa hoặc không)")
     class_name: Optional[str] = Field(...,
                                       description="Tên sản phẩm. Ví dụ: Tiết kiệm thông thường, phát lộc phát tài…")
