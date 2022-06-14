@@ -181,7 +181,7 @@ class CtrIdentityDocument(BaseController):
     ):
 
         # Check exist Booking
-        await CtrBooking().ctr_get_booking(
+        await CtrBooking().ctr_get_booking_and_validate(
             business_type_code=BUSINESS_TYPE_INIT_CIF,
             booking_id=booking_id,
             check_correct_booking_flag=False,
@@ -850,7 +850,7 @@ class CtrIdentityDocument(BaseController):
     async def upload_identity_document_and_ocr(self, identity_type: int, image_file: UploadFile, booking_id: str):
 
         # Check exist Booking
-        await CtrBooking().ctr_get_booking(
+        await CtrBooking().ctr_get_booking_and_validate(
             business_type_code=BUSINESS_TYPE_INIT_CIF,
             booking_id=booking_id,
             check_correct_booking_flag=False,

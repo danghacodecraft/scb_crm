@@ -729,7 +729,7 @@ class CtrGWCustomer(BaseController):
         current_user = self.current_user
 
         # Check exist Booking
-        await CtrBooking().ctr_get_booking(
+        await CtrBooking().ctr_get_booking_and_validate(
             business_type_code=BUSINESS_TYPE_INIT_CIF,
             booking_id=BOOKING_ID,
             cif_id=cif_id,

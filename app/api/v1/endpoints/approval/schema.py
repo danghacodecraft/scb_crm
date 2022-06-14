@@ -76,14 +76,18 @@ class CifApprovalSuccessResponse(BaseSchema):
     is_open_cif: bool = Field(..., description="Được phép mở CIF không?")
 
 
-class FaceAuthenticationRequest(BaseSchema):
+class AuthenticationRequest(BaseSchema):
     compare_face_image_uuid: str = Field(..., description="UUID hình ảnh upload")
 
 
+class OptionalAuthenticationRequest(BaseSchema):
+    compare_face_image_uuid: Optional[str] = Field(..., description="UUID hình ảnh upload")
+
+
 class AuthenticationRequest(BaseSchema):
-    face: FaceAuthenticationRequest = Field(None, description="[Thông tin xác thực] Khuôn mặt")
-    signature: FaceAuthenticationRequest = Field(None, description="[Thông tin xác thực] Chữ ký")
-    fingerprint: FaceAuthenticationRequest = Field(None, description="[Thông tin xác thực] Vân tay")
+    face: OptionalAuthenticationRequest = Field(..., description="[Thông tin xác thực] Khuôn mặt")
+    signature: AuthenticationRequest = Field(..., description="[Thông tin xác thực] Chữ ký")
+    fingerprint: OptionalAuthenticationRequest = Field(..., description="[Thông tin xác thực] Vân tay")
 
 
 class ApprovalRequest(BaseSchema):

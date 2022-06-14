@@ -70,7 +70,7 @@ class CtrCasaOpenCasa(BaseController):
         # VALIDATE
         ################################################################################################################
         # Kiểm tra booking
-        await CtrBooking().ctr_get_booking(
+        await CtrBooking().ctr_get_booking_and_validate(
             booking_id=booking_parent_id,
             business_type_code=BUSINESS_TYPE_OPEN_CASA,
             check_correct_booking_flag=False,

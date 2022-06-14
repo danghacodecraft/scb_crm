@@ -3,8 +3,8 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_get_casa_account_by_cif_number, repos_gw_get_casa_account_info,
     repos_gw_get_close_casa_account,
     repos_gw_get_column_chart_casa_account_info,
-    repos_gw_open_casa_account, repos_gw_get_pie_chart_casa_account_info,
-    repos_gw_get_statements_casa_account_info
+    repos_gw_get_pie_chart_casa_account_info,
+    repos_gw_get_statements_casa_account_info, repos_gw_open_casa_account
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWOpenCasaAccountRequest, GWReportColumnChartHistoryAccountInfoRequest,
@@ -15,7 +15,9 @@ from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.utils.constant.gw import (
     GW_TRANSACTION_TYPE_SEND, GW_TRANSACTION_TYPE_WITHDRAW
 )
-from app.utils.error_messages import ERROR_CALL_SERVICE_GW, ERROR_ACCOUNT_NUMBER_NOT_NULL
+from app.utils.error_messages import (
+    ERROR_ACCOUNT_NUMBER_NOT_NULL, ERROR_CALL_SERVICE_GW
+)
 from app.utils.functions import string_to_date
 
 
@@ -329,15 +331,12 @@ class CtrGWCasaAccount(BaseController):
         gw_open_casa_account_info = self.call_repos(await repos_gw_get_close_casa_account(
             account_info=request.account_info,
             p_blk_closure=request.p_blk_closure,
-            p_blk_charge_main=request.p_blk_charge_main,
-            p_blk_charge_details=request.p_blk_charge_details,
-            p_blk_udf=request.p_blk_udf,
-            staff_info_checker=request.staff_info_checker,
-            staff_info_maker=request.staff_info_maker,
             current_user=self.current_user
         ))
+
         transaction_info = gw_open_casa_account_info['closeCASA_out']['transaction_info']
-        if transaction_info['transaction_error_code']:
+
+        if transaction_info['transaction_error_code'] != "00":
             return self.response_exception(
                 msg=transaction_info['transaction_error_msg'], loc=transaction_info['transaction_error_code'],
                 detail=ERROR_CALL_SERVICE_GW)

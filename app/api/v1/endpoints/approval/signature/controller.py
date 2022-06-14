@@ -115,7 +115,7 @@ class CtrSignature(BaseController):
     async def ctr_compare_signature(self, cif_id: str, signature_img, booking_id: Optional[str]):
 
         # Check exist Booking
-        await CtrBooking().ctr_get_booking(
+        await CtrBooking().ctr_get_booking_and_validate(
             business_type_code=BUSINESS_TYPE_INIT_CIF,
             booking_id=booking_id,
             cif_id=cif_id,
