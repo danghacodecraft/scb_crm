@@ -12,18 +12,18 @@ from app.third_parties.oracle.models.cif.payment_account.model import (
     MethodSign
 )
 from app.utils.constant.cif import BUSINESS_FORM_TKTT_DSH
-from app.utils.error_messages import ERROR_CASA_ACCOUNT_NOT_EXIST
+from app.utils.error_messages import ERROR_CASA_ACCOUNT_ID_NOT_EXIST
 from app.utils.functions import now
 
 
-async def repos_get_casa_account(cif_id: str, session: Session) -> ReposReturn:
+async def repos_check_casa_account(account_id: str, session: Session) -> ReposReturn:
     casa_account = session.execute(
-        select(CasaAccount.id).filter(CasaAccount.customer_id == cif_id)
+        select(CasaAccount.id).filter(CasaAccount.id == account_id)
     ).scalar()
 
     if not casa_account:
         return ReposReturn(
-            is_error=True, msg=ERROR_CASA_ACCOUNT_NOT_EXIST, loc=f"cif_id: {cif_id}"
+            is_error=True, msg=ERROR_CASA_ACCOUNT_ID_NOT_EXIST, loc=f"account_id: {account_id}"
         )
     return ReposReturn(data=casa_account)
 
@@ -33,7 +33,7 @@ async def repos_save_co_owner(
         save_info_co_owner,
         save_account_holder,
         save_agreement_authorization,
-        cif_id: str,
+        account_id: str,
         log_data: json,
         created_by: str,
         session: Session
@@ -52,12 +52,12 @@ async def repos_save_co_owner(
     is_success, booking_response = await write_transaction_log_and_update_booking(
         log_data=log_data,
         session=session,
-        customer_id=cif_id,
+        account_id=account_id,
         business_form_id=BUSINESS_FORM_TKTT_DSH,
     )
     if not is_success:
         return ReposReturn(is_error=True, msg=booking_response['msg'])
 
     return ReposReturn(
-        data={"cif_id": cif_id, "created_at": now(), "created_by": created_by}
+        data={"account_id": account_id, "created_at": now(), "created_by": created_by}
     )
