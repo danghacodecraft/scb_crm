@@ -24,7 +24,7 @@ class CtrCoOwner(BaseController):
     async def ctr_save_co_owner(self, cif_id: str, co_owner: AccountHolderRequest, booking_id: str):
 
         # Check exist Booking
-        await CtrBooking().ctr_get_booking(
+        await CtrBooking().ctr_get_booking_and_validate(
             business_type_code=BUSINESS_TYPE_INIT_CIF,
             booking_id=booking_id,
             check_correct_booking_flag=False,

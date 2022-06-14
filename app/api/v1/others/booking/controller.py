@@ -62,7 +62,7 @@ class CtrBooking(BaseController):
             booking_code=booking_code
         ))
 
-    async def ctr_get_booking(
+    async def ctr_get_booking_and_validate(
             self,
             booking_id: Optional[str],
             loc: str,
