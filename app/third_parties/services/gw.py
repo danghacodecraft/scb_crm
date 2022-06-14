@@ -386,11 +386,6 @@ class ServiceGW:
             current_user: UserInfoResponse,
             account_info,
             p_blk_closure,
-            p_blk_charge_main,
-            p_blk_charge_details,
-            p_blk_udf,
-            staff_info_checker,
-            staff_info_maker
     ):
         """
         Mở tài khoản thanh toán
@@ -405,14 +400,14 @@ class ServiceGW:
                     "ACCOUNT_NO": item.account_no
                 }
                 for item in p_blk_closure],
-            "p_blk_charge_main": p_blk_charge_main,
-            "p_blk_charge_details": p_blk_charge_details,
-            "p_blk_udf": p_blk_udf,
+            "p_blk_charge_main": None,  # TODO
+            "p_blk_charge_details": None,  # TODO
+            "p_blk_udf": None,  # TODO
             "staff_info_checker": {
-                "staff_name": staff_info_checker.staff_name
+                "staff_name": "HOANT2"  # TODO
             },
             "staff_info_maker": {
-                "staff_name": staff_info_maker.staff_name
+                "staff_name": "KHANHLQ"  # TODO
             }
         }
         request_data = self.gw_create_request_body(
