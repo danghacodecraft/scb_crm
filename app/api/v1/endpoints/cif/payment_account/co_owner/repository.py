@@ -1,7 +1,7 @@
 import json
 from typing import List
 
-from sqlalchemy import and_, delete, select
+from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -17,30 +17,20 @@ from app.third_parties.oracle.models.cif.basic_information.contact.model import 
 from app.third_parties.oracle.models.cif.basic_information.guardian_and_relationship.model import (
     CustomerPersonalRelationship
 )
-from app.third_parties.oracle.models.cif.basic_information.identity.model import (
-    CustomerIdentity, CustomerIdentityImage
-)
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
 )
-from app.third_parties.oracle.models.cif.basic_information.personal.model import (
-    CustomerIndividualInfo
-)
 from app.third_parties.oracle.models.cif.payment_account.model import (
     AgreementAuthorization, CasaAccount, JointAccountHolder,
-    JointAccountHolderAgreementAuthorization
+    JointAccountHolderAgreementAuthorization, MethodSign
 )
 from app.third_parties.oracle.models.master_data.address import AddressCountry
 from app.third_parties.oracle.models.master_data.customer import (
     CustomerGender, CustomerRelationshipType
 )
-from app.third_parties.oracle.models.master_data.identity import (
-    CustomerIdentityType, PlaceOfIssue
-)
+from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.utils.constant.cif import (
-    AGREEMENT_AUTHOR_TYPE_DD, BUSINESS_FORM_TKTT_DSH,
-    CUSTOMER_RELATIONSHIP_TYPE_CUSTOMER_RELATIONSHIP, DROPDOWN_NONE_DICT,
-    IMAGE_TYPE_SIGNATURE
+    AGREEMENT_AUTHOR_TYPE_DD, BUSINESS_FORM_TKTT_DSH, DROPDOWN_NONE_DICT
 )
 from app.utils.error_messages import (
     ERROR_AGREEMENT_AUTHORIZATIONS_NOT_EXIST, ERROR_CALL_SERVICE_SOA,
@@ -87,110 +77,55 @@ async def repos_check_list_relationship_id(
 
 
 async def repos_get_co_owner(cif_id: str, session: Session) -> ReposReturn:
-    customer_relationships = session.execute(
-        select(CustomerPersonalRelationship, CustomerRelationshipType)
-        .join(Customer, CustomerPersonalRelationship.customer_id == Customer.id)
-        .join(
-            CustomerRelationshipType,
-            CustomerPersonalRelationship.customer_relationship_type_id
-            == CustomerRelationshipType.id,
+    account_holders = session.execute(
+        select(
+            CasaAccount,
+            JointAccountHolderAgreementAuthorization,
+            JointAccountHolder,
+            CustomerRelationshipType
         )
+        .join(JointAccountHolderAgreementAuthorization,
+              CasaAccount.id == JointAccountHolderAgreementAuthorization.casa_account_id)
+        .join(JointAccountHolder,
+              JointAccountHolderAgreementAuthorization.joint_acc_agree_id == JointAccountHolder.joint_acc_agree_id)
+        .join(CustomerRelationshipType, JointAccountHolder.relationship_type_id == CustomerRelationshipType.id)
+        .filter(CasaAccount.customer_id == cif_id)
+    ).all()
+
+    account_holder_signs = session.execute(
+        select(
+            CasaAccount,
+            JointAccountHolderAgreementAuthorization.joint_acc_agree_id,
+            MethodSign,
+            AgreementAuthorization,
+        )
+        .join(JointAccountHolderAgreementAuthorization,
+              CasaAccount.id == JointAccountHolderAgreementAuthorization.casa_account_id)
+        .join(MethodSign,
+              JointAccountHolderAgreementAuthorization.joint_acc_agree_id == MethodSign.joint_acc_agree_id)
+        .join(AgreementAuthorization, MethodSign.agreement_author_id == AgreementAuthorization.id)
+        .filter(CasaAccount.customer_id == cif_id)
+    ).all()
+
+    return ReposReturn(data=(account_holders, account_holder_signs))
+
+
+async def repos_get_co_owner_signatures(cif_numbers: List, session: Session) -> ReposReturn:
+    signatures = session.execute(
+        select(
+            Customer.cif_number,
+            CustomerIdentityImage.id,
+            CustomerIdentityImage.image_url
+        )
+        .join(CustomerIdentity, CustomerIdentityImage.identity_id == CustomerIdentity.id)
+        .join(Customer, CustomerIdentity.customer_id == Customer.id)
         .filter(
-            CustomerPersonalRelationship.customer_id == cif_id,
-            CustomerPersonalRelationship.type
-            == CUSTOMER_RELATIONSHIP_TYPE_CUSTOMER_RELATIONSHIP,
+            CustomerIdentityImage.image_type_id == IMAGE_TYPE_SIGNATURE,
+            Customer.cif_number.in_(cif_numbers)
         )
     ).all()
 
-    account_holders = (
-        session.execute(
-            select(
-                JointAccountHolder
-            )
-            .join(CasaAccount, CasaAccount.id == JointAccountHolder.casa_account_id)
-            .filter(CasaAccount.customer_id == cif_id)
-        )
-        .scalars().all()
-    )
-
-    customer_relationship_detail = []
-    for account in account_holders:
-        (
-            is_success,
-            customer_relationship,
-        ) = await service_soa.retrieve_customer_ref_data_mgmt(
-            cif_number=account.cif_num,
-            flat_address=True,
-        )
-        customer_detail_data = customer_relationship["data"]
-
-        if customer_detail_data["basic_information"]["gender"]:
-            gender = await repos_get_model_object_by_id_or_code(
-                model_id=customer_detail_data["basic_information"]["gender"],
-                model_code=None,
-                loc="[SERVICE][SOA] gender",
-                model=CustomerGender,
-                session=session,
-            )
-            customer_detail_data["basic_information"]["gender"] = (
-                dropdown(gender.data) if gender.data else DROPDOWN_NONE_DICT
-            )
-        if customer_detail_data["basic_information"]["nationality"]:
-            nationality = await repos_get_model_object_by_id_or_code(
-                model_id=customer_detail_data["basic_information"]["nationality"],
-                model_code=None,
-                loc="[SERVICE][SOA] nationality",
-                model=AddressCountry,
-                session=session,
-            )
-            if nationality.data:
-                customer_detail_data["basic_information"]["nationality"] = dropdown(
-                    nationality.data
-                )
-        for relationship, relationship_type in customer_relationships:
-            customer_detail_data["basic_information"].update(
-                {"customer_relationship": dropdown(relationship_type)}
-            )
-        # TODO: place_of_issue query k có trong db crm nên đang để là str
-        if customer_detail_data["identity_document"]["place_of_issue"]:
-            place_of_issue_model = await get_optional_model_object_by_code_or_name(
-                model=PlaceOfIssue,
-                model_code=None,
-                model_name=customer_detail_data["identity_document"]["place_of_issue"],
-                session=session,
-            )
-            if not place_of_issue_model:
-                customer_detail_data["identity_document"]["place_of_issue"] = {
-                    "id": None,
-                    "code": None,
-                    "name": customer_detail_data["identity_document"]["place_of_issue"],
-                }
-
-            else:
-                customer_detail_data["identity_document"]["place_of_issue"] = dropdown(
-                    place_of_issue_model
-                )
-
-        # TODO: pypass chữ ký vì trong SOA không có chữ ký
-        customer_detail_data["basic_information"].update(
-            {
-                "signature": [
-                    {"id": "string", "image_url": "https://example.com"},
-                    {"id": "string", "image_url": "https://example.com"},
-                ]
-            }
-        )
-
-        customer_relationship_detail.append(customer_relationship.get("data"))
-
-    return ReposReturn(
-        data={
-            "joint_account_holder_flag": account_holders[0].joint_account_holder_flag if account_holders else False,
-            "number_of_joint_account_holder": len(account_holders),
-            "joint_account_holders": customer_relationship_detail,
-            "agreement_authorization": None,
-        }
-    )
+    return ReposReturn(data=signatures)
 
 
 async def repos_get_casa_account(cif_id: str, session: Session) -> ReposReturn:
@@ -206,56 +141,23 @@ async def repos_get_casa_account(cif_id: str, session: Session) -> ReposReturn:
 
 @auto_commit
 async def repos_save_co_owner(
-    cif_id: str,
-    save_account_holder: list,
-    save_account_agree: list,
-    log_data: json,
-    session: Session,
-    created_by: str,
+        save_info_co_owner,
+        save_account_holder,
+        save_agreement_authorization,
+        cif_id: str,
+        log_data: json,
+        created_by: str,
+        session: Session
 ) -> ReposReturn:
-    # lấy danh sách account holder để xóa
-    account_holder_ids = (
-        session.execute(
-            select(JointAccountHolder.id).join(
-                CasaAccount,
-                and_(
-                    JointAccountHolder.casa_account_id == CasaAccount.id,
-                    CasaAccount.customer_id == cif_id,
-                ),
-            )
-        )
-        .scalars()
-        .all()
-    )
-
-    # xóa JointAccountHolderAgreementAuthorization
-    session.execute(
-        delete(JointAccountHolderAgreementAuthorization).filter(
-            JointAccountHolderAgreementAuthorization.joint_account_holder_id.in_(
-                account_holder_ids
-            )
-        )
-    )
-
-    # xóa account holder
-    session.execute(
-        delete(JointAccountHolder).filter(JointAccountHolder.id.in_(account_holder_ids))
-    )
-    # xóa relationship
-    session.execute(
-        delete(CustomerPersonalRelationship).filter(
-            CustomerPersonalRelationship.customer_id == cif_id
-        )
-    )
+    session.add(JointAccountHolderAgreementAuthorization(**save_info_co_owner))
     session.bulk_save_objects(
-        [JointAccountHolder(**data_insert) for data_insert in save_account_holder]
+        JointAccountHolder(**account_holder)
+        for account_holder in save_account_holder
     )
 
     session.bulk_save_objects(
-        [
-            JointAccountHolderAgreementAuthorization(**data_insert)
-            for data_insert in save_account_agree
-        ]
+        MethodSign(**agreement_authorization)
+        for agreement_authorization in save_agreement_authorization
     )
 
     is_success, booking_response = await write_transaction_log_and_update_booking(
@@ -290,59 +192,6 @@ async def repos_get_list_cif_number(cif_id: str, session: Session):
         list_cif_number.append(account_holder.JointAccountHolder.cif_num)
 
     return ReposReturn(data=(account_holders, list_cif_number))
-
-
-async def repos_get_customer_by_cif_number(
-    list_cif_number: List[str], session: Session
-) -> ReposReturn:
-    # lấy dữ liệu customer theo số cif_number
-    customers = session.execute(
-        select(
-            Customer,
-            AddressCountry,
-            CustomerIdentity,
-            CustomerIdentityImage,
-            CustomerIndividualInfo,
-            CustomerGender,
-            PlaceOfIssue,
-            CustomerIdentityType,
-            CustomerPersonalRelationship,
-            CustomerRelationshipType,
-        )
-        .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id)
-        .join(AddressCountry, Customer.nationality_id == AddressCountry.id)
-        .join(PlaceOfIssue, CustomerIdentity.place_of_issue_id == PlaceOfIssue.id)
-        .join(CustomerIndividualInfo, Customer.id == CustomerIndividualInfo.customer_id)
-        .join(
-            CustomerIdentityType,
-            CustomerIdentity.identity_type_id == CustomerIdentityType.id,
-        )
-        .join(CustomerGender, CustomerIndividualInfo.gender_id == CustomerGender.id)
-        .join(
-            CustomerPersonalRelationship,
-            Customer.id == CustomerPersonalRelationship.customer_id,
-        )
-        .join(
-            CustomerRelationshipType,
-            CustomerRelationshipType.id
-            == CustomerPersonalRelationship.customer_relationship_type_id,
-        )
-        .join(
-            CustomerIdentityImage,
-            and_(
-                CustomerIdentity.id == CustomerIdentityImage.identity_id,
-                CustomerIdentityImage.image_type_id == IMAGE_TYPE_SIGNATURE,
-            ),
-        )
-        .filter(Customer.cif_number.in_(list_cif_number))
-    ).all()
-
-    if not customers:
-        return ReposReturn(
-            is_error=True, msg=ERROR_CIF_NUMBER_NOT_EXIST, loc="cif_number"
-        )
-
-    return ReposReturn(data=customers)
 
 
 async def repos_get_customer_address(

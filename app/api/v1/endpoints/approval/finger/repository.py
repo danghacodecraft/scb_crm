@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
@@ -46,16 +46,20 @@ async def repos_get_data_finger(cif_id: str, session: Session) -> ReposReturn:
 
 
 async def repos_compare_finger_ekyc(
-        cif_id: str,
-        uuid_ekyc: str,
-        id_fingers: list
+    cif_id: str,
+    uuid_ekyc: str,
+    id_fingers: list,
+    booking_id: Optional[str]
 ):
     json_body = {
         "uuid": uuid_ekyc,
         "id_fingers": id_fingers,
         "limit": len(id_fingers)
     }
-    is_success, response = await service_ekyc.compare_finger_ekyc(cif_id=cif_id, json_body=json_body)
+    is_success, response = await service_ekyc.compare_finger_ekyc(
+        json_body=json_body,
+        booking_id=booking_id
+    )
     if not is_success:
         return ReposReturn(is_error=True, msg=response['message'], loc="COMPARE_FINGERPRINT")
     return ReposReturn(data=response)

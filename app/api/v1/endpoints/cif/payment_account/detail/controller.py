@@ -2,13 +2,13 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.payment_account.detail.repository import (
     repos_check_casa_account, repos_check_exist_casa_account_number,
     repos_detail_payment_account, repos_get_casa_account_from_soa,
-    repos_save_payment_account
+    repos_gw_check_exist_casa_account_number, repos_save_payment_account
 )
 from app.api.v1.endpoints.cif.payment_account.detail.schema import (
     SavePaymentAccountRequest
 )
 from app.api.v1.endpoints.cif.repository import (
-    repos_get_booking_code, repos_get_initializing_customer
+    repos_get_booking, repos_get_initializing_customer
 )
 from app.api.v1.endpoints.repository import repos_get_acc_structure_type
 from app.api.v1.validator import validate_history_data
@@ -25,9 +25,7 @@ from app.utils.error_messages import (
     ERROR_CASA_ACCOUNT_EXIST, ERROR_CASA_ACCOUNT_NOT_EXIST,
     ERROR_INVALID_NUMBER, ERROR_NOT_NULL, MESSAGE_STATUS
 )
-from app.utils.functions import (
-    datetime_to_string, is_valid_number, now, orjson_dumps
-)
+from app.utils.functions import is_valid_number, now, orjson_dumps
 
 
 class CtrPaymentAccount(BaseController):
@@ -165,20 +163,11 @@ class CtrPaymentAccount(BaseController):
             "updated_at": now(),
         }
 
-        history_datas = [dict(
+        history_datas = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_INIT_PAYMENT_ACCOUNT,
-            completed_at=datetime_to_string(now()),
-            created_at=datetime_to_string(now()),
-            status=PROFILE_HISTORY_STATUS_INIT,
-            branch_id=current_user.hrm_branch_id,
-            branch_code=current_user.hrm_branch_code,
-            branch_name=current_user.hrm_branch_name,
-            user_id=current_user.code,
-            user_name=current_user.name,
-            position_id=current_user.hrm_position_id,
-            position_code=current_user.hrm_position_code,
-            position_name=current_user.hrm_position_name
-        )]
+            history_status=PROFILE_HISTORY_STATUS_INIT,
+            current_user=current_user
+        )
         # Validate history data
         is_success, history_response = validate_history_data(history_datas)
         if not is_success:
@@ -200,10 +189,13 @@ class CtrPaymentAccount(BaseController):
             ))
 
         # Lấy Booking Code
-        booking_code = self.call_repos(await repos_get_booking_code(
+        booking = self.call_repos(await repos_get_booking(
             cif_id=cif_id, session=self.oracle_session
         ))
-        save_payment_account_info.update(booking_code=booking_code)
+        save_payment_account_info.update(booking=dict(
+            id=booking.id,
+            code=booking.code
+        ))
 
         return self.response(data=save_payment_account_info)
 
@@ -222,3 +214,24 @@ class CtrPaymentAccount(BaseController):
             )
         )
         return self.response(data=casa_account_info)
+
+    async def ctr_gw_check_exist_casa_account_number(self, casa_account_number):
+        current_user = self.current_user
+
+        # VALIDATE: casa_account_number
+        if not is_valid_number(casa_account_number):
+            return self.response_exception(
+                msg=ERROR_INVALID_NUMBER,
+                loc="casa_account_number"
+            )
+
+        data_output = self.call_repos(
+            await repos_gw_check_exist_casa_account_number(
+                casa_account_number=casa_account_number,
+                current_user=current_user
+            )
+        )
+        is_existed = False
+        if data_output['retrieveCurrentAccountCASA_out']['data_output']['customer_info']['account_info']['account_num']:
+            is_existed = True
+        return self.response(data=dict(is_existed=is_existed))

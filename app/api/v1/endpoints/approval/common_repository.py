@@ -6,10 +6,13 @@ from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingCustomer, TransactionDaily, TransactionSender
 )
 from app.third_parties.oracle.models.master_data.others import (
-    Lane, Phase, Stage, StageLane, StagePhase, StageRole, StageStatus,
-    TransactionStage, TransactionStageStatus
+    Lane, Phase, Stage, StageAction, StageLane, StagePhase, StageRole,
+    StageStatus, TransactionStage, TransactionStageAction,
+    TransactionStageStatus
 )
-from app.utils.constant.approval import CIF_STAGE_APPROVE_KSS, CIF_STAGE_INIT
+from app.utils.constant.approval import (
+    CIF_STAGE_APPROVE_KSS, CIF_STAGE_BEGIN, CIF_STAGE_INIT
+)
 from app.utils.error_messages import (
     ERROR_BEGIN_STAGE_NOT_EXIST, ERROR_NEXT_RECEIVER_NOT_EXIST,
     ERROR_NEXT_STAGE_NOT_EXIST
@@ -20,9 +23,19 @@ async def repos_get_begin_stage(business_type_id: str, session: Session):
     begin_stage = session.execute(
         select(
             StageStatus,
-            Stage
+            Stage,
+            StagePhase,
+            Phase,
+            StageLane,
+            Lane,
+            StageRole
         )
         .join(StageStatus, Stage.status_id == StageStatus.id)
+        .join(Lane, Stage.business_type_id == Lane.business_type_id)
+        .join(StageLane, Stage.id == StageLane.stage_id)
+        .join(StagePhase, Stage.id == StagePhase.stage_id)
+        .join(Phase, StagePhase.phase_id == Phase.id)
+        .join(StageRole, Stage.id == StageRole.stage_id)
         .filter(and_(
             Stage.parent_id.is_(None),
             Stage.business_type_id == business_type_id
@@ -33,16 +46,39 @@ async def repos_get_begin_stage(business_type_id: str, session: Session):
         return ReposReturn(
             is_error=True,
             msg=ERROR_BEGIN_STAGE_NOT_EXIST,
-            detail=f"business_type_id: {business_type_id}"
+            detail=f"business_type_id: {business_type_id}",
+            loc="repos_get_begin_stage"
         )
 
     return ReposReturn(data=begin_stage)
 
 
+async def repos_get_stage_teller(business_type_id: str, session: Session):
+    stage_teller = session.execute(
+        select(
+            Stage
+        )
+        .filter(and_(
+            Stage.id == CIF_STAGE_INIT,
+            Stage.business_type_id == business_type_id
+        ))
+    ).scalar()
+
+    if not stage_teller:
+        return ReposReturn(
+            is_error=True,
+            msg=ERROR_BEGIN_STAGE_NOT_EXIST,
+            detail=f"business_type_id: {business_type_id}"
+        )
+
+    return ReposReturn(data=stage_teller)
+
+
 async def repos_get_next_stage(
-        business_type_id: str,
-        current_stage_code: str,
-        session: Session
+    business_type_id: str,
+    current_stage_code: str,
+    session: Session,
+    reject_flag: bool = False
 ):
     """
     Trả về thông tin Stage tiếp theo
@@ -54,7 +90,8 @@ async def repos_get_next_stage(
         )
         .filter(and_(
             Stage.parent_id == current_stage_code,
-            Stage.business_type_id == business_type_id
+            Stage.business_type_id == business_type_id,
+            Stage.is_reject == reject_flag
         ))
     ).scalar()
 
@@ -83,13 +120,15 @@ async def repos_get_previous_stage(
             TransactionDaily,
             TransactionStage,
             TransactionStageStatus,
-            TransactionSender
+            TransactionSender,
+            TransactionStageAction
         )
         .join(Booking, BookingCustomer.booking_id == Booking.id)
         .outerjoin(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
-        .outerjoin(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id)
+        .join(TransactionStage, (TransactionDaily.transaction_stage_id == TransactionStage.id))
         .outerjoin(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id)
         .outerjoin(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
+        .outerjoin(TransactionStageAction, TransactionStage.action_id == TransactionStageAction.id)
         .filter(BookingCustomer.customer_id == cif_id)
         .order_by(desc(TransactionDaily.created_at))
     ).first()
@@ -110,11 +149,13 @@ async def repos_get_previous_transaction_daily(
             previous_transaction_daily,
             TransactionSender,
             TransactionStage,
-            TransactionDaily
+            TransactionDaily,
+            TransactionStageAction
         )
         .join(previous_transaction_daily, TransactionDaily.transaction_parent_id == previous_transaction_daily.transaction_id)
         .join(TransactionSender, previous_transaction_daily.transaction_id == TransactionSender.transaction_id)
         .join(TransactionStage, previous_transaction_daily.transaction_stage_id == TransactionStage.id)
+        .join(TransactionStageAction, TransactionStage.action_id == TransactionStageAction.id)
         .filter(TransactionDaily.transaction_id == transaction_daily_id)
     ).first()
 
@@ -149,12 +190,21 @@ async def repos_get_begin_transaction_daily(
 async def repos_get_stage_information(
         business_type_id: str,
         stage_id: str,
-        session: Session
+        session: Session,
+        reject_flag: bool,
+        stage_action_id: str,
+        is_give_back: bool = False
 ):
     """
     Lấy thông tin Stage
     Output: StageStatus, Stage, StageLane, Lane, StagePhase, Phase, StageRole
     """
+    if is_give_back:
+        # Nếu trả lại hồ sơ set reject flag để Khởi tạo hồ sơ lấy đc data
+        reject_flag = False
+    if stage_id == CIF_STAGE_INIT:
+        reject_flag = False
+
     stage_info = session.execute(
         select(
             StageStatus,
@@ -163,7 +213,8 @@ async def repos_get_stage_information(
             Lane,
             StagePhase,
             Phase,
-            StageRole
+            StageRole,
+            StageAction
         )
         .join(StageStatus, Stage.status_id == StageStatus.id)
         .outerjoin(StageLane, Stage.id == StageLane.stage_id)
@@ -171,14 +222,20 @@ async def repos_get_stage_information(
         .outerjoin(StagePhase, Stage.id == StagePhase.stage_id)
         .outerjoin(Phase, StagePhase.phase_id == Phase.id)
         .outerjoin(StageRole, Stage.id == StageRole.stage_id)
+        .outerjoin(StageAction, and_(
+            Stage.id == StageAction.stage_id,
+            StageAction.id == stage_action_id,
+            StageAction.is_reject == reject_flag
+        ))
         .filter(and_(
             Stage.id == stage_id,
-            Stage.business_type_id == business_type_id
+            Stage.business_type_id == business_type_id,
+            Stage.is_reject == reject_flag
         ))
     ).first()
     if not stage_info:
         return ReposReturn(is_error=True, msg="Stage is None",
-                           loc=f"stage_id: {stage_id}, business_type_id: {business_type_id}")
+                           loc=f"stage_id: {stage_id}, business_type_id: {business_type_id}, reject_flag: {reject_flag}")
 
     return ReposReturn(data=stage_info)
 
@@ -201,7 +258,7 @@ async def repos_get_next_receiver(
             )
             .join(StageLane, Stage.id == StageLane.stage_id)
             .filter(
-                Stage.parent_id == CIF_STAGE_INIT
+                Stage.parent_id == CIF_STAGE_BEGIN
             )
         ).first()
     else:

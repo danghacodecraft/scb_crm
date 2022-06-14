@@ -75,6 +75,9 @@ class TransactionReceiver(Base):
     position_id = Column(VARCHAR(36), comment='Mã khối')
     position_code = Column(VARCHAR(10), comment='Mã code khối')
     position_name = Column(VARCHAR(100), comment='Tên khối')
+    title_id = Column(VARCHAR(36), comment='Mã chức danh')
+    title_code = Column(VARCHAR(10), comment='Mã code chức danh')
+    title_name = Column(VARCHAR(100), comment='Tên chức danh')
 
     # transaction = relationship('TransactionDaily', uselist=False)
 
@@ -99,6 +102,11 @@ class TransactionSender(Base):
     position_id = Column(VARCHAR(36), comment='Mã khối')
     position_code = Column(VARCHAR(10), comment='Mã code khối')
     position_name = Column(VARCHAR(100), comment='Tên khối')
+    title_id = Column(VARCHAR(36), comment='Mã chức danh')
+    title_code = Column(VARCHAR(10), comment='Mã code chức danh')
+    title_name = Column(VARCHAR(100), comment='Tên chức danh')
+    created_at = Column(DateTime, comment='Ngày tạo')
+    updated_at = Column('update_at', DateTime, comment='Ngày chỉnh sửa')
 
     # transaction = relationship('TransactionDaily', uselist=False)
 
@@ -110,6 +118,7 @@ class Booking(Base):
     id = Column('booking_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "), comment='ID chính')
     code = Column('booking_code', VARCHAR(50), comment='Mã code')
     transaction_id = Column(ForeignKey('crm_transaction_daily.transaction_id'), comment='ID Transaction')
+    parent_id = Column('booking_parent_id', ForeignKey('crm_booking.booking_id'), comment='ID Booking cha')
     business_type_id = Column('business_type_id', ForeignKey('crm_business_type.business_type_id'),
                               comment='ID type')
 
@@ -125,8 +134,10 @@ class BookingAccount(Base):
     __tablename__ = 'crm_booking_account'
     __table_args__ = {'comment': 'Tài khoản booking'}
 
-    booking_id = Column(ForeignKey('crm_booking.booking_id'))
-    account_id = Column(VARCHAR(36), primary_key=True, server_default=text("sys_guid() "))
+    booking_id = Column('account_booking_id', ForeignKey('crm_booking.booking_id'))
+    account_id = Column('casa_account_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "))
+    created_at = Column(DateTime, nullable=False)
+    updated_at = Column(DateTime)
 
     booking = relationship('Booking')
 

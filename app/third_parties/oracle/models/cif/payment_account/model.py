@@ -67,15 +67,17 @@ class JointAccountHolder(Base):
     __tablename__ = 'crm_joint_account_holder'
     __table_args__ = {'comment': 'Thông tin đồng chủ sở hữu'}
 
-    id = Column('joint_account_holder_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "),
-                comment='Mã Thông tin đồng chủ sở hữu')
+    joint_account_holder_id = Column('joint_account_holder_id', VARCHAR(36), primary_key=True,
+                                     server_default=text("sys_guid() "),
+                                     comment='Mã Thông tin đồng chủ sở hữu')
     cif_num = Column(VARCHAR(9), nullable=False, comment='Mã Khách hàng')
-    casa_account_id = Column(ForeignKey('crm_casa_account.casa_account_id'), nullable=False,
-                             comment='Số tài khoản hiện tại')
-    joint_account_holder_flag = Column(NUMBER(1, 2, True), comment='Cờ đồng sở hữu tài khoản')
+    relationship_type_id = Column(ForeignKey('crm_cust_relationship_type.cust_relationship_type_id'), nullable=False,
+                                  comment='Mối quan hệ với khách hàng hiện tại')
     joint_account_holder_no = Column(NUMBER(4, 2, True), comment='Số thứ tự tài khoản người đồng sở hữu')
-
-    casa_account = relationship('CasaAccount')
+    joint_acc_agree_id = Column('join_acc_agree_id', ForeignKey('crm_joint_acc_agree.joint_acc_agree_id'),
+                                comment='Mã thỏa thuận/ ủy quyền đồng sở hữu')
+    created_at = Column(DateTime, comment='Ngày tạo')
+    updated_at = Column(DateTime, comment='Ngày chỉnh sửa')
 
 
 class AgreementAuthorization(Base):
@@ -97,11 +99,29 @@ class JointAccountHolderAgreementAuthorization(Base):
     __tablename__ = 'crm_joint_acc_agree'
     __table_args__ = {'comment': 'Thỏa thuận/ ủy quyền đồng sở hữu'}
 
-    agreement_authorization_id = Column('agreement_author_id',
-                                        ForeignKey('crm_agreement_authorization.agreement_author_id'), primary_key=True,
-                                        server_default=text("sys_guid() "), comment='Mã thỏa thuận - ủy quyền')
-    joint_account_holder_id = Column('joint_account_holder_id',
-                                     ForeignKey('crm_joint_account_holder.joint_account_holder_id'), primary_key=True,
-                                     comment='Mã Thông tin đồng chủ sở hữu')
-    method_sign = Column(NUMBER(1, 0, False), comment='Phương thức kí')
-    agreement_flag = Column(NUMBER(1, 0, False), comment='Cờ ủy quyền')
+    joint_acc_agree_id = Column(VARCHAR(36), primary_key=True, server_default=text("sys_guid() "))
+    casa_account_id = Column(VARCHAR(36), nullable=False, comment="Số tài khoản hiện tại")
+    joint_acc_agree_document_file_id = Column(ForeignKey('crm_document_file.document_file_id'), nullable=False,
+                                              comment="Id  mã loại thẻ")
+    active_flag = Column(NUMBER(1, 0, False), nullable=False, comment="Trạng thái thỏa thuận/ ủy quyền")
+    created_at = Column(DateTime, comment='Ngày tạo')
+    updated_at = Column(DateTime, comment='Ngày cập nhật')
+    in_scb_flag = Column(NUMBER(1), nullable=False, comment="Cờ đánh dấu văn bản trong hay ngoài SCB")
+    joint_acc_agree_document_no = Column(VARCHAR(100), comment="Số văn bản")
+    joint_acc_agree_document_address = Column(VARCHAR(255), nullable=False, comment="Thông tin địa chỉ")
+
+
+class MethodSign(Base):
+    __tablename__ = 'crm_method_sign'
+    __table_args__ = {'comment': 'Thông tin phương thức ký'}
+
+    id = Column('method_sign_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "))
+    method_sign_type = Column(NUMBER(2), nullable=False, comment="Phương thức ký (1, 2, 3)")
+    agreement_author_id = Column(VARCHAR(36), comment="Mã thông tin thỏa thuận - ủy quyền")
+    joint_acc_agree_id = Column(VARCHAR(36), comment="Mã thỏa thuận - ủy quyền")
+    created_at = Column(DateTime, comment='Ngày tạo')
+    updated_at = Column(DateTime, comment='Ngày chỉnh sửa')
+    agreement_flag = Column(NUMBER(1, 0, False), nullable=False, comment="Đánh dấu đồng ý nội dung")
+    method_sign_type = Column(NUMBER(2, 0, False), nullable=False, comment="Phương thức ký (1, 2, 3)")
+    agree_join_acc_cif_num = Column(VARCHAR(7), nullable=True, comment="Số CIF tài khoản tham gia ký văn bản đồng ý Chủ sở hữu")
+    agree_join_acc_name = Column(VARCHAR(100), nullable=True, comment="Tên tài khoản tham gia ký văn bản đồng ý Chủ sở hữu")

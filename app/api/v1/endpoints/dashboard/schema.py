@@ -1,4 +1,5 @@
-from typing import Optional
+from datetime import datetime
+from typing import List, Optional
 
 from pydantic import Field
 
@@ -6,10 +7,31 @@ from app.api.base.schema import BaseSchema
 from app.api.v1.schemas.utils import DropdownResponse
 
 
+class TransactionListBusinessTypeResponse(BaseSchema):
+    name: Optional[str] = Field(..., description="Tên loại nghiệp vụ")
+    number: Optional[str] = Field(..., description="Số nghiệp vụ")
+
+
+class TransactionListSenderResponse(BaseSchema):
+    name: Optional[str] = Field(..., description="Tên người gửi")
+    created_at: Optional[datetime] = Field(..., description="Ngày tạo")
+
+
 class TransactionListResponse(BaseSchema):
+    created_at: datetime = Field(..., description="Thời gian tạo")
     cif_id: str = Field(..., description="CIF ID")
+    cif_number: Optional[str] = Field(..., description="CIF number")
     full_name_vn: str = Field(..., description="Tên khách hàng")
+    booking_id: str = Field(..., description="Mã booking")
     booking_code: Optional[str] = Field(..., description="Mã booking")
+    stage_role: Optional[str] = Field(..., description="Vai trò")
+    status: Optional[str] = Field(..., description="Trạng thái")
+    business_type: TransactionListBusinessTypeResponse = Field(..., description="Loại giao dịch")
+    branch_code: Optional[str] = Field(..., description="Mã đơn vị kinh doanh")
+    branch_name: Optional[str] = Field(..., description="Tên đơn vị kinh doanh")
+    teller: TransactionListSenderResponse = Field(..., description="GDV")
+    supervisor: TransactionListSenderResponse = Field(..., description="KSV")
+    audit: TransactionListSenderResponse = Field(..., description="KSS")
 
 
 class CustomerInfoResponse(BaseSchema):
@@ -23,3 +45,43 @@ class CustomerInfoResponse(BaseSchema):
     district: DropdownResponse = Field(None, description="Quận - Huyện")
     province: DropdownResponse = Field(None, description="Tình thành")
     branch: DropdownResponse = Field(None, description="Chi nhánh")
+
+
+class BranchResponse(BaseSchema):
+    code: str = Field(..., description="Mã ")
+    id: str = Field(..., description="CIF id")
+    title: str = Field(..., description="Tiêu đề")
+    unit: str = Field(..., description="Đơn vị")
+    day: int = Field(..., description="Ngày")
+    week: int = Field(..., description="Tuần")
+    month: int = Field(..., description="Tháng")
+    accumulated: int = Field(..., description="Tích lũy")
+    amt_year: int = Field(..., description="amt năm")
+    amt_ky_truoc: int = Field(..., description="amt kỳ trước")
+    divisor_bal_lcl: int = Field(..., description="Divisor_bal_lcl")
+    divider_bal_lcl: int = Field(..., description="Divider_bal_lcl")
+
+
+class AccountingEntryResponse(BaseSchema):
+    id: str = Field(..., description="Mã bút toán")
+    title: str = Field(..., description="Tiêu đề bút toán")
+    val: float = Field(..., description="Giá trị bút toán")
+    unit: str = Field(..., description="Đơn vị bút toán")
+
+
+class ListRegionResponse(BaseSchema):
+    branch_id: str = Field(..., description="Mã vùng")
+    branch_name: str = Field(..., description="Tên vùng")
+    longitude: float = Field(..., description="Kinh độ")
+    latitude: float = Field(..., description="Vĩ độ")
+    type: str = Field(..., description="Loại")
+
+
+class RegionResponse(BaseSchema):
+    region_id: str = Field(..., description="ID Mã vùng")
+    region_name: str = Field(..., description="Tên vùng")
+    branches: List[ListRegionResponse] = Field(..., description="Chi nhánh")
+    left: float = Field(..., description="Left")
+    right: float = Field(..., description="Right")
+    top: float = Field(..., description="Top")
+    bottom: float = Field(..., description="Bottom")

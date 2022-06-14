@@ -1,13 +1,13 @@
 import re
 from typing import List
 
-from sqlalchemy import desc, select
+from sqlalchemy import desc, select, or_
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn
 from app.settings.event import service_soa
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
-    CustomerAddress
+    CustomerAddress, CustomerProfessional
 )
 from app.third_parties.oracle.models.cif.basic_information.identity.model import (
     CustomerIdentity
@@ -19,8 +19,7 @@ from app.third_parties.oracle.models.cif.basic_information.personal.model import
     CustomerIndividualInfo
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingBusinessForm, BookingCustomer, TransactionDaily,
-    TransactionSender
+    Booking, BookingBusinessForm, BookingCustomer
 )
 from app.third_parties.oracle.models.master_data.address import AddressCountry
 from app.third_parties.oracle.models.master_data.customer import (
@@ -29,7 +28,7 @@ from app.third_parties.oracle.models.master_data.customer import (
 )
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import (
-    KYCLevel, MaritalStatus
+    BusinessType, KYCLevel, MaritalStatus, Career, AverageIncomeAmount, Position
 )
 from app.utils.error_messages import (
     ERROR_BOOKING_CODE_NOT_EXIST, ERROR_CALL_SERVICE_SOA,
@@ -231,53 +230,54 @@ async def repos_get_total_participants(
     cif_id: str,
     session: Session
 ):
-    transaction_root_id = session.execute(
+    total_participants = session.execute(
         select(
-            TransactionDaily.transaction_root_id,
+            BookingBusinessForm.log_data,
             BookingCustomer,
             Booking
         )
         .join(Booking, BookingCustomer.booking_id == Booking.id)
-        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
+        .join(BookingBusinessForm, Booking.id == BookingBusinessForm.booking_id)
         .filter(BookingCustomer.customer_id == cif_id)
-    ).scalar()
+    ).scalars().all()
 
-    total_participants = session.execute(
-        select(
-            TransactionSender.user_id,
-            TransactionSender.user_fullname,
-            TransactionSender.user_name,
-            TransactionSender.user_email,
-            TransactionSender.position_id,
-            TransactionSender.position_code,
-            TransactionSender.position_name,
-            TransactionSender.department_id,
-            TransactionSender.department_code,
-            TransactionSender.department_name,
-            TransactionSender.branch_id,
-            TransactionSender.branch_code,
-            TransactionSender.branch_name,
-            TransactionDaily.transaction_root_id
-        )
-        .join(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
-        .filter(TransactionDaily.transaction_root_id == transaction_root_id)
-        .distinct()
-    ).all()
     return ReposReturn(data=total_participants)
 
 
-async def repos_get_booking_code(
+async def repos_get_booking(
     cif_id: str,
     session: Session
 ):
-    booking_code = session.execute(
+    booking = session.execute(
         select(
-            Booking.code,
+            Booking,
             BookingCustomer
         )
         .join(Booking, BookingCustomer.booking_id == Booking.id)
         .filter(BookingCustomer.customer_id == cif_id)
     ).scalar()
-    if not booking_code:
+    if not booking:
         return ReposReturn(is_error=True, msg=ERROR_BOOKING_CODE_NOT_EXIST)
-    return ReposReturn(data=booking_code)
+    return ReposReturn(data=booking)
+
+
+async def repos_get_customer_working_infos(
+    cif_id_or_number: str,
+    session: Session
+):
+    customer_working_info = session.execute(
+        select(
+            Customer,
+            CustomerProfessional,
+            Career,
+            AverageIncomeAmount,
+            Position
+        )
+        .join(CustomerProfessional, Customer.customer_professional_id == CustomerProfessional.id)
+        .outerjoin(Career, CustomerProfessional.career_id == Career.id)
+        .outerjoin(AverageIncomeAmount, CustomerProfessional.average_income_amount_id == AverageIncomeAmount.id)
+        .outerjoin(Position, CustomerProfessional.position_id == Position.id)
+        .filter(or_(Customer.cif_id_or_number == cif_number, Customer.id == cif_id_or_number))
+    ).first()
+
+    return ReposReturn(data=customer_working_info)

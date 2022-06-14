@@ -5,7 +5,7 @@ from app.api.v1.endpoints.cif.debit_card.repository import (
 )
 from app.api.v1.endpoints.cif.debit_card.schema import DebitCardRequest
 from app.api.v1.endpoints.cif.repository import (
-    repos_get_booking_code, repos_get_initializing_customer
+    repos_get_booking, repos_get_initializing_customer
 )
 from app.api.v1.validator import validate_history_data
 from app.third_parties.oracle.models.master_data.address import (
@@ -20,9 +20,7 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_INIT_DEBIT_CARD, PROFILE_HISTORY_STATUS_INIT
 )
 from app.utils.error_messages import ERROR_NOT_REGISTER, VALIDATE_ERROR
-from app.utils.functions import (
-    datetime_to_string, generate_uuid, now, orjson_dumps
-)
+from app.utils.functions import generate_uuid, now, orjson_dumps
 from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese
 
 
@@ -30,6 +28,15 @@ class CtrDebitCard(BaseController):
     async def ctr_debit_card(self, cif_id: str):
 
         debit_card = self.call_repos(await repos_debit_card(cif_id, self.oracle_session))
+
+        # Lấy Booking Code
+        booking = self.call_repos(await repos_get_booking(
+            cif_id=cif_id, session=self.oracle_session
+        ))
+        debit_card.update(booking=dict(
+            id=booking.id,
+            code=booking.code,
+        ))
         return self.response(debit_card)
 
     async def ctr_add_debit_card(
@@ -402,20 +409,12 @@ class CtrDebitCard(BaseController):
             }
             list_debit_card_type.append(debit_card_type)
 
-        history_datas = [dict(
+        history_datas = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_INIT_DEBIT_CARD,
-            completed_at=datetime_to_string(now()),
-            created_at=datetime_to_string(now()),
-            status=PROFILE_HISTORY_STATUS_INIT,
-            branch_id=current_user.hrm_branch_id,
-            branch_code=current_user.hrm_branch_code,
-            branch_name=current_user.hrm_branch_name,
-            user_id=current_user.code,
-            user_name=current_user.name,
-            position_id=current_user.hrm_position_id,
-            position_code=current_user.hrm_position_code,
-            position_name=current_user.hrm_position_name
-        )]
+            history_status=PROFILE_HISTORY_STATUS_INIT,
+            current_user=current_user
+        )
+
         # Validate history data
         is_success, history_response = validate_history_data(history_datas)
         if not is_success:
@@ -445,10 +444,13 @@ class CtrDebitCard(BaseController):
         )
 
         # Lấy Booking Code
-        booking_code = self.call_repos(await repos_get_booking_code(
+        booking = self.call_repos(await repos_get_booking(
             cif_id=cif_id, session=self.oracle_session
         ))
-        add_debit_card.update(booking_code=booking_code)
+        add_debit_card.update(booking=dict(
+            id=booking.id,
+            code=booking.code
+        ))
 
         return self.response(data=add_debit_card)
 

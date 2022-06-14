@@ -1,12 +1,13 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_get_casa_account_by_cif_number, repos_gw_get_casa_account_info,
+    repos_gw_get_close_casa_account,
     repos_gw_get_column_chart_casa_account_info,
     repos_gw_get_pie_chart_casa_account_info,
-    repos_gw_get_statements_casa_account_info
+    repos_gw_get_statements_casa_account_info, repos_gw_open_casa_account
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
-    GWReportColumnChartHistoryAccountInfoRequest,
+    GWOpenCasaAccountRequest, GWReportColumnChartHistoryAccountInfoRequest,
     GWReportPieChartHistoryAccountInfoRequest,
     GWReportStatementHistoryAccountInfoRequest
 )
@@ -14,7 +15,10 @@ from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.utils.constant.gw import (
     GW_TRANSACTION_TYPE_SEND, GW_TRANSACTION_TYPE_WITHDRAW
 )
-from app.utils.functions import orjson_loads, string_to_date
+from app.utils.error_messages import (
+    ERROR_ACCOUNT_NUMBER_NOT_NULL, ERROR_CALL_SERVICE_GW
+)
+from app.utils.functions import string_to_date
 
 
 class CtrGWCasaAccount(BaseController):
@@ -96,26 +100,35 @@ class CtrGWCasaAccount(BaseController):
         )
 
         account_info = customer_info['account_info']
+
+        lock_infos = account_info['account_lock_info']
+
         branch_info = account_info['branch_info']
         status_info = []
         if account_info['account_status']:
-            list_account_status = orjson_loads(account_info['account_status'])[0]
-            for key, value in list_account_status.items():
+            for key, value in account_info['account_status'][0].items():
                 status_info.append(dict(
                     id=key,
                     code=key,
                     name=value
                 ))
+
+        staff_info_direct = account_info['staff_info_direct']
+        staff_info_indirect = account_info['staff_info_indirect']
+
         gw_casa_account_info_response = dict(
             number=account_info['account_num'],
             type=account_info['account_type'],
             type_name=account_info['account_type_name'],
             currency=account_info['account_currency'],
+            product_package=account_info["account_product_package"],
             balance=account_info['account_balance'],
             balance_available=account_info['account_balance_available'],
             balance_available_vnd=account_info['account_balance_available_vnd'],
             balance_lock=account_info['account_balance_lock'],
             over_draft_limit=account_info['account_over_draft_limit'],
+            over_draft_used=account_info['account_over_draft_used'],
+            over_draft_remain=account_info['account_over_draft_remain'],
             over_draft_expired_date=string_to_date(account_info['account_over_draft_expired_date'],
                                                    _format=DATETIME_INPUT_OUTPUT_FORMAT),
             latest_transaction_date=string_to_date(account_info['account_latest_trans_date'],
@@ -135,9 +148,25 @@ class CtrGWCasaAccount(BaseController):
             service_escrow=account_info['account_service_escrow'],
             service_escrow_ex_date=string_to_date(account_info['account_service_escrow_ex_date'],
                                                   _format=DATETIME_INPUT_OUTPUT_FORMAT),
+            lock_info=[dict(
+                balance_lock=lock_info['account_balance_lock'],
+                date_lock=lock_info['account_date_lock'],
+                expire_date_lock=lock_info['account_expire_date_lock'],
+                type_code_lock=lock_info['account_type_code_lock'],
+                type_name_lock=lock_info['account_type_name_lock'],
+                reason_lock=lock_info['account_reason_lock'],
+                ref_no=lock_info['account_ref_no']) for lock_info in lock_infos],
             branch_info=dict(
                 code=branch_info['branch_code'],
                 name=branch_info['branch_name']
+            ),
+            staff_info_direct=dict(
+                code=staff_info_direct['staff_code'],
+                name=staff_info_direct['staff_name']
+            ),
+            staff_info_indirect=dict(
+                code=staff_info_indirect['staff_code'],
+                name=staff_info_indirect['staff_name']
             )
         )
 
@@ -281,6 +310,38 @@ class CtrGWCasaAccount(BaseController):
             currency=account_info['account_currency'],
             balance_available_vnd=balance_available_vnd if balance_available_vnd else None,
             report_casa_account=column_chart))
+
+    async def ctr_gw_open_casa_account(self, request: GWOpenCasaAccountRequest):
+
+        if request.account_info.acc_spl and not request.account_info.account_num:
+            return self.response_exception(msg=ERROR_ACCOUNT_NUMBER_NOT_NULL, loc="account_info -> account_num")
+
+        gw_open_casa_account_info = self.call_repos(await repos_gw_open_casa_account(
+            cif_info=request.cif_info,
+            account_info=request.account_info,
+            current_user=self.current_user
+        ))
+        casa_account_number = gw_open_casa_account_info['openCASA_out']['data_output']['account_info']['account_num']
+
+        return self.response(data=dict(
+            number=casa_account_number
+        ))
+
+    async def ctr_gw_get_close_casa_account(self, request):
+        gw_open_casa_account_info = self.call_repos(await repos_gw_get_close_casa_account(
+            account_info=request.account_info,
+            p_blk_closure=request.p_blk_closure,
+            current_user=self.current_user
+        ))
+
+        transaction_info = gw_open_casa_account_info['closeCASA_out']['transaction_info']
+
+        if transaction_info['transaction_error_code'] != "00":
+            return self.response_exception(
+                msg=transaction_info['transaction_error_msg'], loc=transaction_info['transaction_error_code'],
+                detail=ERROR_CALL_SERVICE_GW)
+
+        return self.response(data=dict(number=request.account_info.account_num))
 
     async def ctr_gw_get_statement_casa_account_info(self, request: GWReportStatementHistoryAccountInfoRequest):
         gw_report_statements_casa_account_info = self.call_repos(await repos_gw_get_statements_casa_account_info(

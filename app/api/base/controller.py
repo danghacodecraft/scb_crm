@@ -9,22 +9,26 @@ from app.api.base.repository import ReposReturn
 from app.api.base.schema import Error
 from app.api.base.validator import ValidatorReturn
 from app.api.v1.endpoints.approval.common_repository import (
-    repos_get_begin_stage, repos_get_next_receiver
+    repos_get_begin_stage
 )
 from app.api.v1.endpoints.file.repository import (
     repos_check_is_exist_multi_file, repos_download_multi_file
 )
 from app.api.v1.endpoints.repository import (
+    get_optional_model_object_by_code_or_name,
     repos_get_model_object_by_id_or_code, repos_get_model_objects_by_ids
 )
-from app.api.v1.endpoints.user.schema import AuthResponse
+from app.api.v1.endpoints.user.schema import AuthResponse, UserInfoResponse
 from app.third_parties.oracle.base import Base, SessionLocal, SessionLocal_Task
-from app.third_parties.oracle.models.master_data.others import Branch
+from app.utils.constant.cif import PROFILE_HISTORY_DESCRIPTIONS
 from app.utils.constant.ekyc import is_success
 from app.utils.error_messages import (
     ERROR_GROUP_ROLE_CODE, ERROR_MENU_CODE, MESSAGE_STATUS
 )
-from app.utils.functions import generate_uuid, now, orjson_dumps
+from app.utils.functions import (
+    datetime_to_string, dropdown, dropdown_name, generate_uuid, now,
+    orjson_dumps
+)
 
 
 class BaseController:
@@ -84,7 +88,7 @@ class BaseController:
             )
         )
 
-    async def get_model_objects_by_ids(self, model_ids: List[str], model: Base, loc: str):
+    async def get_model_objects_by_ids(self, model_ids: List[str], model: Base, loc: str = None):
         return self.call_repos(
             await repos_get_model_objects_by_ids(
                 model_ids=model_ids,
@@ -395,9 +399,12 @@ class BaseController:
 
         saving_transaction_stage_status_id = generate_uuid()
         saving_transaction_stage_id = generate_uuid()
+        saving_transaction_stage_phase_id = generate_uuid()
+        saving_transaction_stage_lane_id = generate_uuid()
+        saving_transaction_stage_role_id = generate_uuid()
         transaction_daily_id = generate_uuid()
 
-        begin_stage_status, begin_stage = self.call_repos(
+        begin_stage_status, begin_stage, _, begin_phase, _, begin_lane, begin_stage_role = self.call_repos(
             await repos_get_begin_stage(
                 business_type_id=business_type_id,
                 session=self.oracle_session
@@ -409,16 +416,36 @@ class BaseController:
             name=begin_stage_status.name
         )
 
+        saving_transaction_stage_phase = dict(
+            id=saving_transaction_stage_phase_id,
+            code=begin_phase.code,
+            name=begin_phase.name
+        )
+
+        saving_transaction_stage_lane = dict(
+            id=saving_transaction_stage_lane_id,
+            code=begin_lane.code,
+            name=begin_lane.name
+        )
+
+        saving_transaction_stage_role = dict(
+            id=saving_transaction_stage_role_id,
+            transaction_stage_id=saving_transaction_stage_id,
+            code=begin_stage_role.code,
+            name=begin_stage_role.name
+        )
+
         saving_transaction_stage = dict(
             id=saving_transaction_stage_id,
             status_id=saving_transaction_stage_status_id,
-            lane_id=None,
-            phase_id=None,
+            lane_id=saving_transaction_stage_lane_id,
+            phase_id=saving_transaction_stage_phase_id,
             business_type_id=business_type_id,
             sla_transaction_id=None,  # TODO
             transaction_stage_phase_code=begin_stage.code,
             transaction_stage_phase_name=begin_stage.name,
-            action_id=None
+            action_id=None,
+            is_reject=False
         )
 
         saving_transaction_daily = dict(
@@ -428,10 +455,9 @@ class BaseController:
             transaction_root_id=transaction_daily_id,
             is_reject=False,
             data=orjson_dumps(dict(
-                content="Giao dịch viên đang chuẩn bị hồ sơ. "
-                        "Mốc thời gian tính từ lúc GDV điền thông tin tab đầu tiên [Thông tin cá nhân]"
+                content=PROFILE_HISTORY_DESCRIPTIONS[business_type_id]['content']
             )),
-            description="Khởi tạo CIF",
+            description=PROFILE_HISTORY_DESCRIPTIONS[business_type_id]['description'],
             created_at=now()
         )
 
@@ -461,53 +487,58 @@ class BaseController:
             department_name=current_user.hrm_department_name,
             position_id=current_user.hrm_position_id,
             position_code=current_user.hrm_position_code,
-            position_name=current_user.hrm_position_name
+            position_name=current_user.hrm_position_name,
+            title_id=current_user.hrm_title_id,
+            title_code=current_user.hrm_title_code,
+            title_name=current_user.hrm_title_name,
+            created_at=now()
         )
 
-        receiver = self.call_repos(await repos_get_next_receiver(
-            business_type_id=business_type_id,
-            current_stage_id=begin_stage.id,
-            reject_flag=False,
-            session=self.oracle_session
-        ))
-
-        receiver_branch = await self.get_model_object_by_id(
-            model_id=receiver.branch_id,
-            model=Branch,
-            loc="next_receiver -> branch_id"
-        )
+        # receiver = self.call_repos(await repos_get_next_receiver(
+        #     business_type_id=business_type_id,
+        #     current_stage_id=begin_stage.id,
+        #     reject_flag=False,
+        #     session=self.oracle_session
+        # ))
+        #
+        # receiver_branch = await self.get_model_object_by_id(
+        #     model_id=receiver.branch_id,
+        #     model=Branch,
+        #     loc="next_receiver -> branch_id"
+        # )
         # receiver_department = await self.get_model_object_by_id(
         #     model_id=next_receiver.department_id,
         #     model=Department,
         #     loc="next_receiver -> department_id"
         # )
 
-        saving_transaction_receiver = dict(
-            transaction_id=transaction_daily_id,
-            user_id=current_user.code,
-            user_name=current_user.username,
-            user_fullname=current_user.name,
-            user_email=current_user.email,
-            branch_id=receiver_branch.id,
-            branch_code=receiver_branch.code,
-            branch_name=receiver_branch.name,
-            department_id=receiver.department_id,
-            department_code=current_user.hrm_department_code,
-            department_name=current_user.hrm_department_name,
-            position_id=current_user.hrm_position_id,
-            position_code=current_user.hrm_position_code,
-            position_name=current_user.hrm_position_name
-        )
+        # saving_transaction_receiver = dict(
+        #     transaction_id=transaction_daily_id,
+        #     user_id=current_user.code,
+        #     user_name=current_user.username,
+        #     user_fullname=current_user.name,
+        #     user_email=current_user.email,
+        #     branch_id=receiver_branch.id,
+        #     branch_code=receiver_branch.code,
+        #     branch_name=receiver_branch.name,
+        #     department_id=receiver.department_id,
+        #     department_code=current_user.hrm_department_code,
+        #     department_name=current_user.hrm_department_name,
+        #     position_id=current_user.hrm_position_id,
+        #     position_code=current_user.hrm_position_code,
+        #     position_name=current_user.hrm_position_name
+        # )
 
-        return (saving_transaction_stage_status, saving_transaction_stage, saving_transaction_daily,
-                saving_transaction_sender, saving_transaction_receiver)
+        return (saving_transaction_stage_status, saving_transaction_stage, saving_transaction_stage_phase,
+                saving_transaction_stage_lane, saving_transaction_stage_role, saving_transaction_daily,
+                saving_transaction_sender)
 
     @staticmethod
     def check_permission(current_user: AuthResponse, menu_code: str, group_role_code: str):
         permissions = []
         list_role_code = []
         for item in current_user.menu_list:
-            if item.menu_name == menu_code:
+            if item.menu_code == menu_code:
                 permissions.extend(item.group_role_list)
 
         if not permissions:
@@ -523,3 +554,45 @@ class BaseController:
             return False, {'msg': MESSAGE_STATUS[ERROR_GROUP_ROLE_CODE]}
 
         return True, {"msg": is_success}
+
+    async def dropdown_mapping_crm_model_or_dropdown_name(
+            self, model: Base, name: Optional[str], code: Optional[str] = None) -> dict:
+        """
+        Input: code hoặc name
+        Output: dropdown object
+        """
+        obj_mapping_crm = await get_optional_model_object_by_code_or_name(
+            model=model,
+            model_code=code,
+            model_name=name,
+            session=self.oracle_session
+        )
+
+        return dropdown(obj_mapping_crm) if obj_mapping_crm else dropdown_name(name=name)
+
+    @staticmethod
+    def make_history_log_data(description: str, history_status: int, current_user: UserInfoResponse):
+        history_log_data = [dict(
+            description=description,
+            completed_at=datetime_to_string(now()),
+            created_at=datetime_to_string(now()),
+            status=history_status,
+            branch_id=current_user.hrm_branch_id,
+            branch_code=current_user.hrm_branch_code,
+            branch_name=current_user.hrm_branch_name,
+            user_id=current_user.code,
+            user_name=current_user.name,
+            user_username=current_user.username,
+            user_avatar=current_user.avatar_url,
+            user_email=current_user.email,
+            position_id=current_user.hrm_position_id,
+            position_code=current_user.hrm_position_code,
+            position_name=current_user.hrm_position_name,
+            department_id=current_user.hrm_department_id,
+            department_code=current_user.hrm_department_code,
+            department_name=current_user.hrm_department_name,
+            title_id=current_user.hrm_title_id,
+            title_code=current_user.hrm_title_code,
+            title_name=current_user.hrm_title_name
+        )]
+        return history_log_data

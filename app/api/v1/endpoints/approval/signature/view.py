@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, File, Path, UploadFile
+from fastapi import APIRouter, Depends, File, Header, Path, UploadFile
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -26,7 +26,12 @@ router = APIRouter()
 async def view_compare_signature(
         signature_img: UploadFile = File(..., description="Hình ảnh chữ ký"),
         cif_id: str = Path(..., description="cif_id"),
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         current_user=Depends(get_current_user_from_header())
 ):
-    signature = await CtrSignature(current_user).ctr_compare_signature(cif_id=cif_id, signature_img=signature_img)
+    signature = await CtrSignature(current_user).ctr_compare_signature(
+        cif_id=cif_id,
+        signature_img=signature_img,
+        booking_id=BOOKING_ID
+    )
     return ResponseData[List[CompareSignatureResponse]](**signature)

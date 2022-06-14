@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import UploadFile
 
@@ -10,13 +10,15 @@ from app.api.v1.endpoints.cif.basic_information.identity.fingerprint.schema impo
     TwoFingerPrintRequest
 )
 from app.api.v1.endpoints.cif.repository import (
-    repos_get_booking_code, repos_get_customer_identity,
+    repos_get_booking, repos_get_customer_identity,
     repos_get_initializing_customer
 )
+from app.api.v1.others.booking.controller import CtrBooking
 from app.settings.event import service_ekyc, service_file
 from app.third_parties.oracle.models.master_data.identity import (
     FingerType, HandSide
 )
+from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import (
     ACTIVE_FLAG_ACTIVED, ACTIVE_FLAG_CREATE_FINGERPRINT,
     ACTIVE_FLAG_DISACTIVED, FRONT_FLAG_CREATE_FINGERPRINT, HAND_SIDE_LEFT_CODE,
@@ -70,12 +72,17 @@ class CtrFingerPrint(BaseController):
                     "ekyc_id": item.ekyc_id
                 })
         # tạo dữ liệu gửi lên từ request
+        id_ekycs = []
         for fingerprint in fingerprints:
             identity_image_id = generate_uuid()
             uuid = parse_file_uuid(fingerprint.image_url)
 
             fingerprint.image_url = uuid
             image_uuids.append(uuid)
+            # check id_ekyc k được trùng
+            if fingerprint.id_ekyc in id_ekycs:
+                return self.response_exception(msg='ID_EKYC is not exist')
+            id_ekycs.append(fingerprint.id_ekyc)
 
             save_identity_image.append({
                 "id": identity_image_id,
@@ -129,10 +136,13 @@ class CtrFingerPrint(BaseController):
         )
 
         # Lấy Booking Code
-        booking_code = self.call_repos(await repos_get_booking_code(
+        booking = self.call_repos(await repos_get_booking(
             cif_id=cif_id, session=self.oracle_session
         ))
-        data.update(booking_code=booking_code)
+        data.update(booking=dict(
+            id=booking.id,
+            code=booking.code
+        ))
 
         return self.response(data=data)
 
@@ -146,7 +156,8 @@ class CtrFingerPrint(BaseController):
         uuid__link_downloads = await self.get_link_download_multi_file(uuids=image_uuids)
 
         for row in fingerprint_data:
-            row.CustomerIdentityImageTransaction.image_url = uuid__link_downloads[row.CustomerIdentityImageTransaction.image_url]
+            row.CustomerIdentityImageTransaction.image_url = uuid__link_downloads[
+                row.CustomerIdentityImageTransaction.image_url]
 
             fingerprint = {
                 'image_url': row.CustomerIdentityImageTransaction.image_url,
@@ -165,24 +176,44 @@ class CtrFingerPrint(BaseController):
             'fingerprint_2': fingerprint_2
         })
 
-    async def ctr_add_fingerprint(self, cif_id: str, file: UploadFile, ids_finger: List):
+    async def ctr_add_fingerprint(
+            self,
+            cif_id: str,
+            file: UploadFile,
+            ids_finger: List,
+            booking_id: Optional[str]
+    ):
+
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking_and_validate(
+            business_type_code=BUSINESS_TYPE_INIT_CIF,
+            booking_id=booking_id,
+            cif_id=cif_id,
+            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        )
 
         response_data = {}
 
         file_upload = await file.read()
         # upload service file
-        response = await service_file.upload_file(file=file_upload, name=file.filename)
+        is_success, response = await service_file.upload_file(file=file_upload, name=file.filename)
 
         # upload file ekyc
-        is_success, uuid_ekyc = await service_ekyc.upload_file(file=file_upload, name=file.filename)
+        is_success, uuid_ekyc = await service_ekyc.upload_file(
+            file=file_upload,
+            name=file.filename,
+            booking_id=booking_id
+        )
 
         # body add finger call ekyc
         json_body_add_finger = {
             "uuid": uuid_ekyc['uuid']
         }
 
-        is_success_add_finger, id_finger = await service_ekyc.add_finger_ekyc(cif_id=cif_id,
-                                                                              json_body=json_body_add_finger)
+        is_success_add_finger, id_finger = await service_ekyc.add_finger_ekyc(
+            booking_id=booking_id,
+            json_body=json_body_add_finger
+        )
         if not is_success_add_finger:
             return self.response_exception(msg=ERROR_CALL_SERVICE_EKYC, loc="ADD_FINGERPRINT", detail=str(id_finger))
 
@@ -199,7 +230,10 @@ class CtrFingerPrint(BaseController):
                 "limit": len(ids_finger)
             }
 
-            is_success_compare, compare = await service_ekyc.compare_finger_ekyc(cif_id=cif_id, json_body=json_compare)
+            is_success_compare, compare = await service_ekyc.compare_finger_ekyc(
+                booking_id=booking_id,
+                json_body=json_compare
+            )
 
             if not is_success_compare:
                 return self.response_exception(msg=ERROR_CALL_SERVICE_EKYC, loc="ADD_FINGERPRINT", detail=str(compare))

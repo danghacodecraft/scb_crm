@@ -1,5 +1,6 @@
 import json
 from typing import Dict, Union
+from urllib.parse import urlparse
 
 import aiohttp
 from loguru import logger
@@ -11,6 +12,10 @@ from app.utils.error_messages import ERROR_CALL_SERVICE_IDM
 
 class ServiceIDM:
     HOST = SERVICE["idm"]['host']
+    cdn = {
+        'thumb': '/cdn-profile/thumb/',
+        'avatar': '/cdn-profile/',
+    }
 
     def __init__(self):
         self.session = None
@@ -92,3 +97,13 @@ class ServiceIDM:
         except Exception as ex:
             logger.exception(ex)
             return False, {"message": str(ex)}
+
+    def replace_with_cdn(self, file_url: str, avatar_type: str = 'thumb') -> str:
+        file_url_parse_result = urlparse(file_url)
+
+        if file_url_parse_result.netloc and file_url_parse_result.scheme:
+            file_url = file_url.replace(f'{file_url_parse_result.scheme}://{file_url_parse_result.netloc}{self.cdn["avatar"]}', self.cdn[avatar_type])
+        elif self.cdn:
+            # Thay thế link tải file từ service bằng CDN config theo dự án
+            file_url = self.cdn.get(avatar_type) + file_url
+        return file_url

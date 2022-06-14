@@ -9,9 +9,8 @@ from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.cif.controller import CtrCustomer
 from app.api.v1.endpoints.cif.schema import (
     CheckExistCIFRequest, CheckExistCIFSuccessResponse,
-    CifCustomerInformationResponse, CifInformationResponse,
-    CifProfileHistoryResponse, CustomerByCIFNumberRequest,
-    CustomerByCIFNumberResponse
+    CifCustomerInformationResponse, CifInformationResponse, CifProfileHistoryResponse,
+    CustomerByCIFNumberRequest, CustomerByCIFNumberResponse, CareerInformationContactInformationResponse
 )
 
 router = APIRouter()
@@ -66,6 +65,26 @@ async def view_customer(
 ):
     customer_information_data = await CtrCustomer(current_user).ctr_customer_information(cif_id)
     return ResponseData[CifCustomerInformationResponse](**customer_information_data)
+
+
+@router.get(
+    path="/{cif_id_or_number}/working-info/",
+    name="Customer working information",
+    description="Lấy dữ liệu `THÔNG TIN LÀM VIỆC` của khách hàng",
+    responses=swagger_response(
+        response_model=ResponseData[CareerInformationContactInformationResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_retrieve_customer_working_info_by_cif_number(
+        cif_id_or_number: str = Path(..., description='Id CIF ảo hoặc CIF number'),
+        current_user=Depends(get_current_user_from_header())
+):
+    customer_information = await CtrCustomer(current_user).ctr_retrieve_customer_working_info_by_cif_number(
+        cif_id_or_number=cif_id_or_number,
+    )
+
+    return ResponseData[CareerInformationContactInformationResponse](**customer_information)
 
 
 @router.post(

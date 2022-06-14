@@ -3,7 +3,6 @@ from typing import Optional, Union
 from fastapi import UploadFile
 
 from app.api.base.controller import BaseController
-from app.api.v1.controller import PermissionController
 from app.api.v1.endpoints.cif.basic_information.identity.identity_document.repository import (
     repos_compare_face, repos_get_detail_identity,
     repos_get_identity_image_transactions, repos_get_identity_information,
@@ -15,10 +14,12 @@ from app.api.v1.endpoints.cif.basic_information.identity.identity_document.schem
     PassportSaveRequest
 )
 from app.api.v1.endpoints.cif.repository import (
-    repos_check_not_exist_cif_number
+    repos_check_not_exist_cif_number, repos_get_booking
 )
 from app.api.v1.endpoints.file.controller import CtrFile
 from app.api.v1.endpoints.file.validator import file_validator
+from app.api.v1.others.booking.controller import CtrBooking
+from app.api.v1.others.permission.controller import PermissionController
 from app.api.v1.validator import validate_history_data
 from app.settings.config import DATE_INPUT_OUTPUT_EKYC_FORMAT
 from app.settings.event import service_ekyc
@@ -45,9 +46,10 @@ from app.third_parties.oracle.models.master_data.identity import (
 )
 from app.third_parties.oracle.models.master_data.others import Nation, Religion
 from app.utils.constant.approval import CIF_STAGE_BEGIN
+from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import (
-    ADDRESS_COUNTRY_CODE_VN, BUSINESS_TYPE_INIT_CIF, CHANNEL_AT_THE_COUNTER,
-    CONTACT_ADDRESS_CODE, CRM_GENDER_TYPE_MALE, CUSTOMER_UNCOMPLETED_FLAG,
+    ADDRESS_COUNTRY_CODE_VN, CHANNEL_AT_THE_COUNTER, CONTACT_ADDRESS_CODE,
+    CRM_GENDER_TYPE_MALE, CUSTOMER_UNCOMPLETED_FLAG,
     EKYC_DOCUMENT_TYPE_NEW_CITIZEN, EKYC_DOCUMENT_TYPE_NEW_IDENTITY,
     EKYC_DOCUMENT_TYPE_OLD_CITIZEN, EKYC_DOCUMENT_TYPE_OLD_IDENTITY,
     EKYC_DOCUMENT_TYPE_PASSPORT, EKYC_GENDER_TYPE_FEMALE,
@@ -56,7 +58,8 @@ from app.utils.constant.cif import (
     IDENTITY_DOCUMENT_TYPE_PASSPORT, IDENTITY_DOCUMENT_TYPE_TYPE,
     IDENTITY_IMAGE_FLAG_BACKSIDE, IDENTITY_IMAGE_FLAG_FRONT_SIDE,
     IMAGE_TYPE_CODE_IDENTITY, PROFILE_HISTORY_DESCRIPTIONS_INIT_CIF,
-    PROFILE_HISTORY_STATUS_INIT, RESIDENT_ADDRESS_CODE
+    PROFILE_HISTORY_STATUS_INIT, RESIDENT_ADDRESS_CODE, CRM_TITLE_TYPE_MALE, CRM_GENDER_TYPE_FEMALE,
+    CRM_TITLE_TYPE_FEMALE
 )
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_OPEN_CIF, IDM_MENU_CODE_OPEN_CIF,
@@ -64,8 +67,9 @@ from app.utils.constant.idm import (
 )
 from app.utils.error_messages import (  # noqa
     ERROR_CALL_SERVICE_EKYC, ERROR_IDENTITY_DOCUMENT_NOT_EXIST,
-    ERROR_IDENTITY_DOCUMENT_TYPE_TYPE_NOT_EXIST, ERROR_INVALID_URL,
-    ERROR_NO_DATA, ERROR_NOT_NULL, ERROR_WRONG_TYPE_IDENTITY, MESSAGE_STATUS
+    ERROR_IDENTITY_DOCUMENT_TYPE_TYPE_NOT_EXIST, ERROR_IDENTITY_TYPE_NOT_EXIST,
+    ERROR_INVALID_URL, ERROR_NO_DATA, ERROR_NOT_NULL,
+    ERROR_WRONG_TYPE_IDENTITY, MESSAGE_STATUS
 )
 from app.utils.functions import (  # noqa
     calculate_age, date_to_string, datetime_to_string, dropdown, now,
@@ -119,6 +123,17 @@ class CtrIdentityDocument(BaseController):
         for fingerprint in fingerprints:
             fingerprint['image_url'] = uuid__link_downloads[fingerprint['image_url']]
 
+        # Lấy Booking Code
+        booking = self.call_repos(await repos_get_booking(
+            cif_id=cif_id, session=self.oracle_session
+        ))
+        detail_data.update(
+            booking=dict(
+                id=booking.id,
+                code=booking.code
+            )
+        )
+
         return detail_data['identity_document_type']['code'], self.response(data=detail_data)
 
     async def get_identity_log_list(self, cif_id: str):
@@ -159,9 +174,23 @@ class CtrIdentityDocument(BaseController):
 
         return self.response(data=identity_log_infos)
 
-    async def save_identity(self, identity_document_request: Union[IdentityCardSaveRequest,
-                                                                   CitizenCardSaveRequest,
-                                                                   PassportSaveRequest]):
+    async def save_identity(
+            self,
+            booking_id: Optional[str],
+            identity_document_request: Union[IdentityCardSaveRequest, CitizenCardSaveRequest, PassportSaveRequest]
+    ):
+
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking_and_validate(
+            business_type_code=BUSINESS_TYPE_INIT_CIF,
+            booking_id=booking_id,
+            check_correct_booking_flag=False,
+            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        )
+
+        # Kiểm tra xem Booking_id đã sử dụng chưa
+        await CtrBooking().is_used_booking(booking_id=booking_id)
+
         # check quyền user
         self.call_repos(await PermissionController.ctr_approval_check_permission(
             auth_response=self.current_user,
@@ -235,6 +264,7 @@ class CtrIdentityDocument(BaseController):
         if first_name is None and middle_name is None and last_name is None:
             return self.response_exception(msg='', detail='Can not split name to fist, middle and last name')
 
+        # check customer_economic_profession_id
         customer_economic_profession_id = identity_document_request.cif_information.customer_economic_profession.id
         if is_create or (customer.customer_economic_profession_id != customer_economic_profession_id):
             await self.get_model_object_by_id(model_id=customer_economic_profession_id,
@@ -282,8 +312,8 @@ class CtrIdentityDocument(BaseController):
             "active_flag": True,
             "open_cif_at": now(),
             "open_branch_id": current_user.hrm_branch_code,
-            "kyc_level_id": "KYC_1",  # TODO
-            "customer_category_id": "D0682B44BEB3830EE0530100007F1DDC",  # TODO
+            "kyc_level_id": "EKYC_1",  # TODO
+            "customer_category_id": "I_11",  # TODO
             "customer_economic_profession_id": customer_economic_profession_id,
             "nationality_id": nationality_id,
             "customer_classification_id": customer_classification_id,
@@ -321,6 +351,13 @@ class CtrIdentityDocument(BaseController):
         }
 
         gender_id = basic_information.gender.id
+        title_id = None
+        if gender_id == CRM_GENDER_TYPE_MALE:
+            title_id = CRM_TITLE_TYPE_MALE
+
+        if gender_id == CRM_GENDER_TYPE_FEMALE:
+            title_id = CRM_TITLE_TYPE_FEMALE
+
         # RULE: Trường hợp đặc biệt: dù tạo mới, cập nhật hay không cũng phải dùng để validate field bên EKYC
         # if is_create or (customer_individual_info.gender_id != gender_id):
         validate_gender = await self.get_model_object_by_id(model_id=gender_id, model=CustomerGender,
@@ -376,7 +413,8 @@ class CtrIdentityDocument(BaseController):
             "under_15_year_old_flag": True if calculate_age(basic_information.date_of_birth) < 15 else False,
             "identifying_characteristics": identity_characteristic,
             "father_full_name": father_full_name_vn,
-            "mother_full_name": mother_full_name_vn
+            "mother_full_name": mother_full_name_vn,
+            "title_id": title_id
         }
 
         ################################################################################################################
@@ -714,7 +752,8 @@ class CtrIdentityDocument(BaseController):
 
         is_success, compare_response = await service_ekyc.compare_face(
             face_uuid=compare_face_uuid_ekyc,
-            avatar_image_uuid=identity_avatar_image_uuid
+            avatar_image_uuid=identity_avatar_image_uuid,
+            booking_id=booking_id
         )
 
         if not is_success:
@@ -741,35 +780,33 @@ class CtrIdentityDocument(BaseController):
         ################################################################################################################
         # Thêm avatar thành Hình ảnh định danh Khuôn mặt
         ################################################################################################################
-        avatar_image_uuid_service = await CtrFile().upload_ekyc_file(uuid_ekyc=identity_avatar_image_uuid)
+        avatar_image_uuid_service = await CtrFile().upload_ekyc_file(
+            uuid_ekyc=identity_avatar_image_uuid,
+            booking_id=booking_id
+        )
         ################################################################################################################
         # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CIF
         transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
             business_type_id=BUSINESS_TYPE_INIT_CIF
         )
 
-        (saving_transaction_stage_status, saving_transaction_stage, saving_transaction_daily, saving_transaction_sender,
-         saving_transaction_receiver) = transaction_datas
+        (
+            saving_transaction_stage_status, saving_transaction_stage, saving_transaction_stage_phase,
+            saving_transaction_stage_lane, saving_transaction_stage_role, saving_transaction_daily,
+            saving_transaction_sender
+        ) = transaction_datas
 
         request_data = await parse_identity_model_to_dict(
             request=identity_document_request,
             identity_document_type_id=identity_document_type_id
         )
 
-        history_datas = [dict(
+        history_datas = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_INIT_CIF,
-            completed_at=datetime_to_string(now()),
-            created_at=datetime_to_string(now()),
-            status=PROFILE_HISTORY_STATUS_INIT,
-            branch_id=current_user.hrm_branch_id,
-            branch_code=current_user.hrm_branch_code,
-            branch_name=current_user.hrm_branch_name,
-            user_id=current_user.code,
-            user_name=current_user.name,
-            position_id=current_user.hrm_position_id,
-            position_code=current_user.hrm_position_code,
-            position_name=current_user.hrm_position_name
-        )]
+            history_status=PROFILE_HISTORY_STATUS_INIT,
+            current_user=current_user
+        )
+
         # Validate history data
         is_success, history_response = validate_history_data(history_datas)
         if not is_success:
@@ -793,23 +830,35 @@ class CtrIdentityDocument(BaseController):
                 saving_customer_identity_images=saving_customer_identity_images,
                 saving_transaction_stage_status=saving_transaction_stage_status,
                 saving_transaction_stage=saving_transaction_stage,
+                saving_transaction_stage_phase=saving_transaction_stage_phase,
+                saving_transaction_stage_lane=saving_transaction_stage_lane,
+                saving_transaction_stage_role=saving_transaction_stage_role,
                 saving_transaction_daily=saving_transaction_daily,
                 saving_transaction_sender=saving_transaction_sender,
-                saving_transaction_receiver=saving_transaction_receiver,
+                # saving_transaction_receiver=saving_transaction_receiver,
                 avatar_image_uuid_service=avatar_image_uuid_service,
                 identity_avatar_image_uuid_ekyc=identity_avatar_image_uuid,
-                request_data=request_data,
-                history_datas=history_datas,
+                booking_id=booking_id,
+                request_data=orjson_dumps(request_data),
+                history_datas=orjson_dumps(history_datas),
                 current_user=current_user,
                 session=self.oracle_session
             )
         )
         return self.response(data=info_save_document)
 
-    async def upload_identity_document_and_ocr(self, identity_type: int, image_file: UploadFile):
+    async def upload_identity_document_and_ocr(self, identity_type: int, image_file: UploadFile, booking_id: str):
+
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking_and_validate(
+            business_type_code=BUSINESS_TYPE_INIT_CIF,
+            booking_id=booking_id,
+            check_correct_booking_flag=False,
+            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        )
 
         if identity_type not in EKYC_IDENTITY_TYPE:
-            return self.response_exception(msg='', detail='identity_type is not exist', loc='identity_type')
+            return self.response_exception(msg=ERROR_IDENTITY_TYPE_NOT_EXIST, loc='identity_type')
 
         image_file_name = image_file.filename
         image_data = await image_file.read()
@@ -827,7 +876,7 @@ class CtrIdentityDocument(BaseController):
 
         return self.response(data=upload_info)
 
-    async def compare_face(self, face_image: UploadFile, identity_image_uuid: str):
+    async def compare_face(self, face_image: UploadFile, identity_image_uuid: str, booking_id: Optional[str]):
 
         face_image_data = await face_image.read()
         self.call_validator(await file_validator(face_image_data))
@@ -836,13 +885,15 @@ class CtrIdentityDocument(BaseController):
             await repos_compare_face(
                 face_image_data=face_image_data,
                 identity_image_uuid=identity_image_uuid,
-                session=self.oracle_session
+                booking_id=booking_id
             )
         )
 
         return self.response(data=face_compare_info)
 
-    async def validate_ekyc(self, ocr_ekyc_request: OcrEkycRequest):
+    async def validate_ekyc(self, ocr_ekyc_request: OcrEkycRequest, booking_id: Optional[str]):
+
+        qc_code = ocr_ekyc_request.qr_code
 
         if not ocr_ekyc_request.data:
             return self.response_exception(msg=ERROR_NO_DATA)
@@ -852,7 +903,14 @@ class CtrIdentityDocument(BaseController):
             "data": ocr_ekyc_request.data
         }
 
-        response = self.call_repos(await repos_validate_ekyc(request_body=request_body))
+        if ocr_ekyc_request.document_type == EKYC_DOCUMENT_TYPE_NEW_CITIZEN:
+            request_body['data'].update({
+                'qr_code': qc_code
+            })
+        response = self.call_repos(await repos_validate_ekyc(
+            request_body=request_body,
+            booking_id=booking_id
+        ))
 
         return self.response(data=response)
 

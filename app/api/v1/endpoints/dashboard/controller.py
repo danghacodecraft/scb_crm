@@ -2,9 +2,16 @@ from datetime import date
 
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.dashboard.repository import (
-    repos_count_total_item, repos_get_customer, repos_get_total_item,
-    repos_get_transaction_list
+    repos_accounting_entry, repos_branch, repos_count_total_item,
+    repos_get_customer, repos_get_senders, repos_get_total_item,
+    repos_get_transaction_list, repos_region
 )
+from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
+from app.utils.constant.cif import (
+    CIF_STAGE_ROLE_CODE_AUDIT, CIF_STAGE_ROLE_CODE_SUPERVISOR,
+    CIF_STAGE_ROLE_CODE_TELLER, CIF_STAGE_ROLE_CODES
+)
+from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
 from app.utils.functions import dropdown
 
 
@@ -40,8 +47,91 @@ class CtrDashboard(BaseController):
         if total_item % limit != 0:
             total_page += 1
 
+        mapping_datas = {}
+        booking_ids = []
+
+        for transaction in transaction_list:
+            booking, business_type, branch, customer, status = transaction
+
+            booking_id = booking.id
+            booking_code = booking.code
+            booking_ids.append(booking_id)
+
+            business_type_id = business_type.id
+            business_type_name = business_type.name
+
+            branch_code = branch.code
+            branch_name = branch.name
+            full_name_vn = customer.full_name_vn
+            cif_id = customer.id
+            cif_number = customer.cif_number
+
+            business_type_number = None
+            if business_type_id == BUSINESS_TYPE_INIT_CIF:
+                business_type_number = cif_number
+
+            # TODO: còn các loại nghiệp vụ khác
+
+            mapping_datas.update({
+                booking_id: dict(
+                    created_at=booking.created_at,
+                    full_name_vn=full_name_vn,
+                    cif_id=cif_id,
+                    cif_number=cif_number,
+                    booking_id=booking_id,
+                    booking_code=booking_code,
+                    business_type=dict(
+                        name=business_type_name,
+                        number=business_type_number
+                    ),
+                    branch_code=branch_code,
+                    branch_name=branch_name,
+                    stage_role=None,
+                    status=status,
+                    teller=dict(
+                        name=None,
+                        created_at=None
+                    ),
+                    supervisor=dict(
+                        name=None,
+                        created_at=None
+                    ),
+                    audit=dict(
+                        name=None,
+                        created_at=None
+                    )
+                )
+            })
+
+        if booking_ids:
+            stage_infos = self.call_repos(await repos_get_senders(
+                booking_ids=tuple(booking_ids),
+                session=self.oracle_session
+            ))
+
+            for transaction_daily, stage, stage_role, sender, booking_id in stage_infos:
+                if stage_role and stage_role.code in CIF_STAGE_ROLE_CODES:
+                    mapping_datas[booking_id].update(
+                        stage_role=stage_role.code,
+                    )
+                    if stage_role.code == CIF_STAGE_ROLE_CODE_TELLER:
+                        mapping_datas[booking_id]['teller'].update(
+                            name=sender.user_fullname,
+                            created_at=transaction_daily.created_at
+                        )
+                    if stage_role.code == CIF_STAGE_ROLE_CODE_SUPERVISOR:
+                        mapping_datas[booking_id]['supervisor'].update(
+                            name=sender.user_fullname,
+                            created_at=transaction_daily.created_at
+                        )
+                    if stage_role.code == CIF_STAGE_ROLE_CODE_AUDIT:
+                        mapping_datas[booking_id]['audit'].update(
+                            name=sender.user_fullname,
+                            created_at=transaction_daily.created_at
+                        )
+
         return self.response_paging(
-            data=transaction_list,
+            data=[mapping_data for _, mapping_data in mapping_datas.items()],
             current_page=current_page,
             total_items=total_item,
             total_page=total_page
@@ -99,3 +189,66 @@ class CtrDashboard(BaseController):
             total_items=total_item,
             total_page=total_page
         )
+
+    async def ctr_branch(self):
+        current_user = self.current_user.user_info
+        if not current_user:
+            return self.response_exception(
+                msg=USER_NOT_EXIST,
+                detail=MESSAGE_STATUS[USER_NOT_EXIST],
+                loc="current_user"
+            )
+
+        branch_code = current_user.hrm_branch_code
+
+        is_success, contract_info = self.call_repos(
+            await repos_branch(
+                branch_code=branch_code,
+                session=self.oracle_session
+            )
+        )
+        if not is_success:
+            return self.response_exception(msg=str(contract_info))
+
+        return self.response(data=contract_info)
+
+    async def ctr_accounting_entry(self):
+        current_user = self.current_user.user_info
+        if not current_user:
+            return self.response_exception(
+                msg=USER_NOT_EXIST,
+                detail=MESSAGE_STATUS[USER_NOT_EXIST],
+                loc="current_user"
+            )
+
+        branch_code = current_user.hrm_branch_code
+
+        is_success, contract_info = self.call_repos(
+            await repos_accounting_entry(
+                branch_code=branch_code,
+                session=self.oracle_session
+            )
+        )
+        if not is_success:
+            return self.response_exception(msg=str(contract_info))
+
+        return self.response(data=contract_info)
+
+    async def ctr_region(self):
+        current_user = self.current_user.user_info
+        if not current_user:
+            return self.response_exception(
+                msg=USER_NOT_EXIST,
+                detail=MESSAGE_STATUS[USER_NOT_EXIST],
+                loc="current_user"
+            )
+
+        is_success, contract_info = self.call_repos(
+            await repos_region(
+                session=self.oracle_session
+            )
+        )
+        if not is_success:
+            return self.response_exception(msg=str(contract_info))
+
+        return self.response(data=contract_info)

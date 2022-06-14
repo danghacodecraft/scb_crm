@@ -30,35 +30,43 @@ async def repos_get_list_user() -> ReposReturn:
 
 async def repos_login(username: str, password: str) -> ReposReturn:
     is_success, data_idm = await service_idm.login(username=username, password=password)
-    detail = None
 
     if not is_success:
-        for key, item in data_idm.items():
-            detail = data_idm[key][0]
-
         return ReposReturn(
             is_error=True,
             msg=ERROR_CALL_SERVICE_IDM,
-            detail=detail
+            detail=str(data_idm)
         )
     data_idm['user_info']['token'] = base64.b64encode(
         zlib.compress(orjson.dumps(data_idm))
     ).decode('utf-8')
 
-    try:
-        # Check has permission in IDM
-        filter_code = list(filter(lambda x: x.get('menu_code') == "HOME", data_idm['menu_list']))[0]
-        filter_group_code = list(filter(lambda x: x.get('group_role_code') == "ACCESS", filter_code['group_role_list']))[0]
-    except IndexError:
-        return ReposReturn(
-            is_error=True,
-            msg="Permission Denied",
-            detail="Permission Denied",
-            error_status_code=status.HTTP_403_FORBIDDEN
-        )
-    filter_permission_code = list(filter(lambda x: x.get('permission_code') == "ACCESS", filter_group_code['permission_list']))
+    lst_data = []
+    list(map(lambda x: lst_data.extend(x['group_role_list']), data_idm['menu_list']))
+    filter_permission_code = list(filter(
+        lambda x: x.get('is_permission') is True,
+        list(filter(
+            lambda item: len(
+                list(filter(
+                    lambda permission: permission.get('permission_code') == "ACCESS", item['permission_list']))
+            ) > 0, lst_data))
 
-    if not filter_permission_code or not filter_group_code['is_permission']:
+    ))
+    # try:
+    #     # Check has permission in IDM
+    #     filter_code = list(filter(lambda x: x.get('menu_code') == "HOME", data_idm['menu_list']))[0]
+    #     filter_group_code = list(filter(lambda x: x.get('group_role_code') == "ACCESS", filter_code['group_role_list']))[0]
+    # except IndexError:
+    #     return ReposReturn(
+    #         is_error=True,
+    #         msg="Permission Denied",
+    #         detail="Permission Denied",
+    #         error_status_code=status.HTTP_403_FORBIDDEN
+    #     )
+    # filter_permission_code = list(filter(lambda x: x.get('permission_code') == "ACCESS", filter_group_code['permission_list']))
+    #
+    # if not filter_permission_code or not filter_group_code['is_permission']:
+    if not filter_permission_code:
         return ReposReturn(
             is_error=True,
             msg="Permission Denied",

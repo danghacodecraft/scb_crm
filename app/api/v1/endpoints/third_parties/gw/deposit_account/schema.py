@@ -1,61 +1,37 @@
 from datetime import date
 from typing import List, Optional
 
-from pydantic import Field, validator
+from pydantic import Field
 
-from app.api.base.schema import BaseSchema
+from app.api.base.schema import BaseGWSchema
 from app.api.v1.endpoints.third_parties.gw.schema import (
     GWBranchDropdownResponse, GWCIFInfoResponse
 )
 
 
-class GWDepositPayinAccountResponse(BaseSchema):
+class GWDepositPayinAccountResponse(BaseGWSchema):
     number: Optional[str] = Field(..., description="""Số tài khoản nguồn
                                 + Trường hợp p_payout_type='S' -->Truyền giá trị
                                 + Trường hợp p_payout_type='Y' --> Null""")
 
-    @validator('*', pre=True)
-    def check_blank_str(string):
-        if string == '':
-            return None
-        return string
 
-
-class GWDepositPayoutAccountResponse(BaseSchema):
+class GWDepositPayoutAccountResponse(BaseGWSchema):
     number: Optional[str] = Field(..., description="""Số tài khoản chỉ định lúc đáo hạn
                                 + Trường hợp p_payout_type='S' -->Truyền giá trị
                                 + Trường hợp p_payout_type='Y' --> Null""")
 
-    @validator('*', pre=True)
-    def check_blank_str(string):
-        if string == '':
-            return None
-        return string
 
-
-class GWAccountStaffInfoDirectResponse(BaseSchema):
+class GWAccountStaffInfoDirectResponse(BaseGWSchema):
     code: Optional[str] = Field(..., description="Mã nhân viên")
     name: Optional[str] = Field(..., description="Tên nhân viên")
 
-    @validator('*', pre=True)
-    def check_blank_str(string):
-        if string == '':
-            return None
-        return string
 
-
-class GWAccountStaffInfoIndirectResponse(BaseSchema):
+class GWAccountStaffInfoIndirectResponse(BaseGWSchema):
     code: Optional[str] = Field(..., description="Mã nhân viên")
     name: Optional[str] = Field(..., description="Tên nhân viên")
 
-    @validator('*', pre=True)
-    def check_blank_str(string):
-        if string == '':
-            return None
-        return string
 
-
-class GWDepositAccountInfoResponse(BaseSchema):
+class GWDepositAccountInfoResponse(BaseGWSchema):
     number: Optional[str] = Field(..., description="Số tài khoản")
     term: Optional[str] = Field(..., description="Kỳ hạn, 1 tháng ,2 tháng… Dành cho tài khoản tiết kiệm")
     type: Optional[str] = Field(..., description="Loại tài khoản (thanh toán, tiết kiệm…)")
@@ -81,14 +57,8 @@ class GWDepositAccountInfoResponse(BaseSchema):
     staff_info_indirect: GWAccountStaffInfoIndirectResponse = Field(...,
                                                                     description="Thông tin nhân viên không trực tiếp")
 
-    @validator('*', pre=True)
-    def check_blank_str(string):
-        if string == '':
-            return None
-        return string
 
-
-class GWDepositCustomerInfoResponse(BaseSchema):
+class GWDepositCustomerInfoResponse(BaseGWSchema):
     fullname_vn: Optional[str] = Field(..., description="Họ và tên")
     date_of_birth: Optional[str] = Field(..., description="Ngày sinh")
     gender: Optional[str] = Field(..., description="Giới tính")
@@ -96,20 +66,14 @@ class GWDepositCustomerInfoResponse(BaseSchema):
     mobile_phone: Optional[str] = Field(..., description="Điện thoại di động")
     type: Optional[str] = Field(..., description="Loại khách hàng (cá nhân hoặc doanh nghiệp)")
 
-    @validator('*', pre=True)
-    def check_blank_str(string):
-        if string == '':
-            return None
-        return string
 
-
-class GWDepositAccountTDResponse(BaseSchema):
+class GWDepositAccountTDResponse(BaseGWSchema):
     customer_info: GWDepositCustomerInfoResponse = Field(..., description="Thông tin người sỡ hữu tài khoản")
     cif_info: GWCIFInfoResponse = Field(..., description="Thông tin CIF")
     account_info: GWDepositAccountInfoResponse = Field(..., description="Thông tin tài khoản")
 
 
-class GWDepositAccountByCIFNumberInfoResponse(BaseSchema):
+class GWDepositAccountByCIFNumberInfoResponse(BaseGWSchema):
     number: Optional[str] = Field(..., description="Số tài khoản")
     term: Optional[str] = Field(..., description="Kỳ hạn, 1 tháng ,2 tháng… Dành cho tài khoản tiết kiệm")
     type: Optional[str] = Field(..., description="Loại tài khoản (thanh toán, tiết kiệm…)")
@@ -131,15 +95,31 @@ class GWDepositAccountByCIFNumberInfoResponse(BaseSchema):
     payin_account: GWDepositPayinAccountResponse = Field(..., description="Số tài khoản nguồn")
     payout_account: GWDepositPayoutAccountResponse = Field(..., description="Số tài khoản chỉ định lúc đáo hạn")
 
-    @validator('*', pre=True)
-    def check_blank_str(string):
-        if string == '':
-            return None
-        return string
 
-
-class GWDepositAccountByCIFNumberResponse(BaseSchema):
+class GWDepositAccountByCIFNumberResponse(BaseGWSchema):
     total_balances: Optional[int] = Field(..., description="Tổng số dư")
     total_items: Optional[int] = Field(..., description="Số lượng tài khoản")
     account_info_list: List[GWDepositAccountByCIFNumberInfoResponse] = Field(
         ..., description="Thông tin danh sách tài khoản")
+
+
+class GWColumnChartDepositAccountRequest(BaseGWSchema):
+    account_number: str = Field(..., description="Số tài khoản", example="07051360001")
+    from_date: Optional[date] = Field(..., description="Từ ngày", example=None)
+    to_date: Optional[date] = Field(..., description="Đến ngày", example="2019-01-01")
+
+
+class GWColumnChartDepositAccountResponse(BaseGWSchema):
+    year: Optional[int] = Field(..., description="Năm giao dịch")
+    month: Optional[str] = Field(..., description="Tháng giao dịch")
+    value: Optional[float] = Field(..., description="Giá trị giao dịch")
+
+
+class GWReportStatementHistoryTDAccountInfoRequest(BaseGWSchema):
+    account_number: str = Field(..., description="Số tài khoản")
+    from_date: date = Field(date(year=2020, month=4, day=20), description="Từ ngày")
+    to_date: date = Field(date(year=2025, month=7, day=20), description="Đến ngày")
+
+
+class GWDepositOpenAccountTD(BaseGWSchema):
+    cif_number: str = Field(..., description="Số CIF")

@@ -9,7 +9,7 @@ from app.api.v1.endpoints.cif.e_banking.schema import (
     EBankingRequest, GetInitialPasswordMethod
 )
 from app.api.v1.endpoints.cif.repository import (
-    repos_get_booking_code, repos_get_initializing_customer
+    repos_get_booking, repos_get_initializing_customer
 )
 from app.api.v1.validator import validate_history_data
 from app.third_parties.oracle.models.master_data.customer import (
@@ -28,9 +28,7 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING, PROFILE_HISTORY_STATUS_INIT
 )
 from app.utils.error_messages import ERROR_E_BANKING
-from app.utils.functions import (
-    datetime_to_string, dropdown, generate_uuid, now, orjson_dumps
-)
+from app.utils.functions import dropdown, generate_uuid, now, orjson_dumps
 
 
 class CtrEBanking(BaseController):
@@ -195,20 +193,12 @@ class CtrEBanking(BaseController):
                     "method_authentication_id": auth_method_id
                 })
 
-        history_datas = [dict(
+        history_datas = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING,
-            completed_at=datetime_to_string(now()),
-            created_at=datetime_to_string(now()),
-            status=PROFILE_HISTORY_STATUS_INIT,
-            branch_id=current_user.hrm_branch_id,
-            branch_code=current_user.hrm_branch_code,
-            branch_name=current_user.hrm_branch_name,
-            user_id=current_user.code,
-            user_name=current_user.name,
-            position_id=current_user.hrm_position_id,
-            position_code=current_user.hrm_position_code,
-            position_name=current_user.hrm_position_name
-        )]
+            history_status=PROFILE_HISTORY_STATUS_INIT,
+            current_user=current_user
+        )
+
         # Validate history data
         is_success, history_response = validate_history_data(history_datas)
         if not is_success:
@@ -235,10 +225,13 @@ class CtrEBanking(BaseController):
         )
 
         # Lấy Booking Code
-        booking_code = self.call_repos(await repos_get_booking_code(
+        booking = self.call_repos(await repos_get_booking(
             cif_id=cif_id, session=self.oracle_session
         ))
-        e_banking_data.update(booking_code=booking_code)
+        e_banking_data.update(booking=dict(
+            id=booking.id,
+            code=booking.code
+        ))
 
         return self.response(data=e_banking_data)
 

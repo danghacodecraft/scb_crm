@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Query
 from starlette import status
@@ -10,7 +10,8 @@ from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.dependencies.paging import PaginationParams
 from app.api.v1.endpoints.dashboard.controller import CtrDashboard
 from app.api.v1.endpoints.dashboard.schema import (
-    CustomerInfoResponse, TransactionListResponse
+    AccountingEntryResponse, BranchResponse, CustomerInfoResponse,
+    RegionResponse, TransactionListResponse
 )
 
 router = APIRouter()
@@ -74,3 +75,51 @@ async def view_customers(
     )
 
     return PagingResponse[CustomerInfoResponse](**customers)
+
+
+@router.get(
+    path="/branch/",
+    name="Branch",
+    description="Chi nhánh",
+    responses=swagger_response(
+        response_model=ResponseData[BranchResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_branch(
+        current_user=Depends(get_current_user_from_header())
+):
+    branch = await CtrDashboard(current_user).ctr_branch()
+    return ResponseData[List[BranchResponse]](**branch)
+
+
+@router.get(
+    path="/accounting-entry/",
+    name="Accounting entry",
+    description="Tổng bút toán",
+    responses=swagger_response(
+        response_model=ResponseData[AccountingEntryResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_accounting_entry(
+        current_user=Depends(get_current_user_from_header())
+):
+    accounting_entry = await CtrDashboard(current_user).ctr_accounting_entry()
+    return ResponseData[List[AccountingEntryResponse]](**accounting_entry)
+
+
+@router.get(
+    path="/region/",
+    name="Region",
+    description="Vùng",
+    responses=swagger_response(
+        response_model=ResponseData[RegionResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_region(
+        current_user=Depends(get_current_user_from_header())
+):
+    region = await CtrDashboard(current_user).ctr_region()
+    return ResponseData[List[RegionResponse]](**region)

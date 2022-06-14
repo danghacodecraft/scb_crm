@@ -5,6 +5,7 @@ from sqlalchemy import and_, desc, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn
+from app.settings.event import service_dwh
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
     CustomerAddress
 )
@@ -15,15 +16,17 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingCustomer, TransactionDaily
+    Booking, BookingCustomer, TransactionDaily, TransactionSender
 )
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
 )
 from app.third_parties.oracle.models.master_data.others import (
-    Branch, TransactionStage, TransactionStageStatus
+    Branch, BusinessType, TransactionStage, TransactionStageRole,
+    TransactionStageStatus
 )
 from app.utils.constant.cif import CONTACT_ADDRESS_CODE
+from app.utils.constant.dwh import NAME_ACCOUNTING_ENTRY
 from app.utils.functions import date_to_datetime, end_time_of_day
 from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese
 
@@ -84,21 +87,21 @@ async def repos_get_transaction_list(region_id: Optional[str], branch_id: Option
                                      search_box: Optional[str], from_date: Optional[date], to_date: Optional[date],
                                      limit: int, page: int, session: Session):
     sql = select(
-        Customer.full_name_vn,
-        Customer.id.label('cif_id'),
-        Booking.code.label('booking_code')
+        Booking,
+        BusinessType,
+        Branch,
+        Customer,
+        TransactionStageStatus.name.label('status')
     ) \
-        .join(BookingCustomer, Customer.id == BookingCustomer.customer_id) \
-        .join(Booking, BookingCustomer.booking_id == Booking.id) \
-        .join(Branch, Booking.branch_id == Branch.id) \
-        .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
-        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
-        .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
-        .join(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
-        .limit(limit) \
-        .offset(limit * (page - 1)) \
-        .order_by(desc(Customer.open_cif_at))
-
+        .join(BusinessType, Booking.business_type_id == BusinessType.id) \
+        .outerjoin(Branch, Booking.branch_id == Branch.id) \
+        .join(BookingCustomer, Booking.id == BookingCustomer.booking_id) \
+        .join(Customer, BookingCustomer.customer_id == Customer.id) \
+        .outerjoin(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
+        .outerjoin(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
+        .outerjoin(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
+        .outerjoin(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
+        .distinct()
     if region_id:
         sql = sql.filter(Branch.region_id == region_id)
 
@@ -132,8 +135,52 @@ async def repos_get_transaction_list(region_id: Optional[str], branch_id: Option
                 Booking.created_at <= end_time_of_day(date_to_datetime(to_date))
             ))
 
+    sql = sql.limit(limit).offset(limit * (page - 1)).order_by(desc(Booking.created_at))
+
     transaction_list = session.execute(sql).all()
     return ReposReturn(data=transaction_list)
+
+
+async def repos_get_senders(
+        booking_ids: tuple,
+        session: Session
+):
+    # Lấy tất cả các transaction
+    transaction_root_dailies = session.execute(
+        select(
+            TransactionDaily.transaction_root_id,
+            Booking
+        )
+        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
+        .filter(Booking.id.in_(booking_ids))
+    ).scalars().all()
+
+    if not transaction_root_dailies:
+        return ReposReturn(is_error=True, msg="No Transaction Root Daily")
+
+    transaction_daily_ids = session.execute(
+        select(
+            TransactionDaily.transaction_id
+        )
+        .filter(TransactionDaily.transaction_root_id.in_(transaction_root_dailies))
+    ).scalars().all()
+
+    # TODO: Sender với Daily đang confict cần có giải pháp
+    stage_infos = session.execute(
+        select(
+            TransactionDaily,
+            TransactionStage,
+            TransactionStageRole,
+            TransactionSender,
+            Booking.id
+        )
+        .outerjoin(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
+        .join(Booking, TransactionDaily.transaction_id == Booking.transaction_id)
+        .outerjoin(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id)
+        .outerjoin(TransactionStageRole, TransactionStage.id == TransactionStageRole.transaction_stage_id)
+        .filter(TransactionDaily.transaction_id.in_(transaction_daily_ids))
+    ).all()
+    return ReposReturn(data=stage_infos)
 
 
 async def repos_get_total_item(
@@ -158,7 +205,7 @@ async def repos_get_total_item(
         .outerjoin(AddressCountry, CustomerAddress.address_country_id == AddressCountry.id) \
         .outerjoin(Branch, Customer.open_branch_id == Branch.id)
 
-    customers = customers.filter(Customer.complete_flag == True)   # noqa
+    customers = customers.filter(Customer.complete_flag == True)  # noqa
     if cif_number:
         customers = customers.filter(Customer.cif_number.ilike(f'%{cif_number}%'))
     if identity_number:
@@ -205,7 +252,7 @@ async def repos_get_customer(
         .outerjoin(AddressCountry, CustomerAddress.address_country_id == AddressCountry.id) \
         .outerjoin(Branch, Customer.open_branch_id == Branch.id)
 
-    customers = customers.filter(Customer.complete_flag == True) # noqa
+    customers = customers.filter(Customer.complete_flag == True)  # noqa
     if cif_number:
         customers = customers.filter(Customer.cif_number.ilike(f'%{cif_number}%'))
     if identity_number:
@@ -223,3 +270,29 @@ async def repos_get_customer(
     ).all()
 
     return ReposReturn(data=customers)
+
+
+async def repos_branch(
+        branch_code: str,
+        session: Session
+) -> ReposReturn:
+    data_response = await service_dwh.get_branch(branch_code=branch_code)
+
+    return ReposReturn(data=data_response)
+
+
+async def repos_accounting_entry(
+        branch_code: str,
+        session: Session
+) -> ReposReturn:
+    data_response = await service_dwh.accounting_entry(branch_code=branch_code, module=NAME_ACCOUNTING_ENTRY)
+
+    return ReposReturn(data=data_response)
+
+
+async def repos_region(
+        session: Session
+) -> ReposReturn:
+    data_response = await service_dwh.get_region()
+
+    return ReposReturn(data=data_response)

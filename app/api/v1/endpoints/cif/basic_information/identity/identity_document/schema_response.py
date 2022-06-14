@@ -72,6 +72,7 @@ class OCRResultIdentityCardResponse(BaseSchema):  # noqa
 
 # RESPONSE CMND
 class IdentityCardDetailResponse(BaseSchema):
+    booking: OptionalDropdownResponse = Field(..., description="Booking")
     identity_document_type: DropdownResponse = Field(..., description="Loại giấy tờ định danh")
     front_side_information: FrontSideIdentityCitizenCardResponse = Field(..., description="Thông tin mặt trước")
     back_side_information: BackSideIdentityCitizenCardResponse = Field(..., description="Thông tin mặt sau")
@@ -112,6 +113,7 @@ class OCRResultCitizenCardResponse(BaseSchema):  # noqa
 
 # RESPONSE CCCD
 class CitizenCardDetailResponse(BaseSchema):
+    booking: OptionalDropdownResponse = Field(..., description="Booking")
     identity_document_type: DropdownResponse = Field(..., description="Loại giấy tờ định danh")
     front_side_information: FrontSideIdentityCitizenCardResponse = Field(..., description="Thông tin mặt trước")
     back_side_information: BackSideIdentityCitizenCardResponse = Field(..., description="Thông tin mặt sau")
@@ -161,6 +163,7 @@ class OCRResultPassportResponse(BaseSchema):
 
 # RESPONSE HC
 class PassportDetailResponse(BaseSchema):
+    booking: OptionalDropdownResponse = Field(..., description="Booking")
     identity_document_type: DropdownResponse = Field(..., description="Loại giấy tờ định danh")
     passport_information: InformationPassportResponse = Field(..., description="Thông tin hộ chiếu")
     ocr_result: OCRResultPassportResponse = Field(..., description="Phân tích OCR")

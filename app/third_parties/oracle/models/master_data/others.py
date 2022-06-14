@@ -367,6 +367,8 @@ class TransactionStageLane(Base):
     name = Column('transaction_stage_lane_name', VARCHAR(250), comment='Tên phân luồng')
     department_id = Column(VARCHAR(36), comment='Mã phòng ban thực hiện')
     branch_id = Column(VARCHAR(36), comment='Mã đơn vị thực hiện')
+    created_at = Column(DateTime, comment='Ngày tạo')
+    updated_at = Column('update_at', DateTime, comment='Ngày chỉnh sửa')
 
 
 class TransactionStagePhase(Base):
@@ -377,6 +379,8 @@ class TransactionStagePhase(Base):
                 comment='ID chính')
     code = Column('transaction_stage_phase_code', VARCHAR(50), comment='Mã code')
     name = Column('transaction_stage_phase_name', VARCHAR(250), comment='Tên')
+    created_at = Column(DateTime, comment='Ngày tạo')
+    updated_at = Column('update_at', DateTime, comment='Ngày chỉnh sửa')
 
 
 class TransactionStageRole(Base):
@@ -389,6 +393,8 @@ class TransactionStageRole(Base):
     code = Column('transaction_stage_role_code', VARCHAR(50),
                   comment='Mã quyền thưc hiện bước kiểu text ( vd: NHAP, DUYET)')
     name = Column('transaction_stage_role_name', VARCHAR(250), comment='Tên quyền thực hiện bước')
+    created_at = Column(DateTime, comment='Ngày tạo')
+    updated_at = Column('update_at', DateTime, comment='Ngày chỉnh sửa')
 
 
 class TransactionStageStatus(Base):
@@ -400,6 +406,8 @@ class TransactionStageStatus(Base):
     code = Column('transaction_stage_status_code', VARCHAR(50),
                   comment='Mã trạng thái của bước thực hiện kiểu chữ (vd: KHOI_TAO) ')
     name = Column('transaction_stage_status_name', VARCHAR(250), comment='Tên trạng thái của bước thực hiện')
+    created_at = Column(DateTime, comment='Ngày tạo')
+    updated_at = Column('update_at', DateTime, comment='Ngày chỉnh sửa')
 
 
 class TransactionJob(Base):
@@ -450,11 +458,14 @@ class TransactionStage(Base):
     transaction_stage_phase_code = Column(VARCHAR(50), comment='Mã bước thực hiện kiểu chữ(vd: IN, DUYET)')
     transaction_stage_phase_name = Column(VARCHAR(250), comment='Tên bước hiện')
     responsible_flag = Column(NUMBER(1, 0, False), comment='Cờ người chịu trách nhiệm của bước thực hiện')
+    is_reject = Column(NUMBER(1, 0, False), comment='Cờ từ chối phê duyệt')
     action_id = Column(
         'transaction_stage_action_id',
         ForeignKey('crm_transaction_stage_action.transaction_stage_action_id'),
         comment='Mã hành động'
     )
+    created_at = Column(DateTime, comment='Ngày tạo')
+    updated_at = Column('update_at', DateTime, comment='Ngày chỉnh sửa')
 
     business_type = relationship('BusinessType')
     lane = relationship('TransactionStageLane')
@@ -500,22 +511,16 @@ class StageLane(Base):
 class StageAction(Base):
     __tablename__ = 'crm_stage_action'
     id = Column(
-        'stage_action_id', VARCHAR(36),
+        'action_stage_id', VARCHAR(36),
         primary_key=True, comment='Mã gen tự động hành động',
         server_default=text("sys_guid() ")
     )
     code = Column('stage_action_code', VARCHAR(50), nullable=False, comment='Mã hành động')
     name = Column('stage_action_name', VARCHAR(250), nullable=False, comment='Tên hành động')
-    group_id = Column('stage_action_group_id', VARCHAR(36), comment='Nhóm hành động')
-    status_id = Column(
-        'stage_status_id', VARCHAR(36),
-        ForeignKey('crm_stage_status.stage_status_id'),
-        nullable=False, comment='Trạng thái hành động'
-    )
+    stage_id = Column('stage_id', VARCHAR(36), nullable=False, comment='Bước')
+    is_reject = Column(NUMBER(1, 0, False), comment='Cờ từ chối phê duyệt')
     created_at = Column('created_at', DateTime, nullable=False, comment='Ngày tạo')
     updated_at = Column('updated_at', DateTime, comment='Ngày cập nhật')
-
-    status = relationship('StageStatus')
 
 
 class TransactionStageAction(Base):
@@ -526,15 +531,7 @@ class TransactionStageAction(Base):
         primary_key=True, comment='Mã gen tự động hành động',
         server_default=text("sys_guid() ")
     )
-    code = Column('transaction_stage_action_code', VARCHAR(50), nullable=False, comment='Mã hành động')
-    name = Column('transaction_stage_action_name', VARCHAR(250), nullable=False, comment='Tên hành động')
-    group_id = Column('transaction_stage_action_group_id', VARCHAR(36), comment='Nhóm hành động')
-    status_id = Column(
-        'transaction_stage_status_id', VARCHAR(36),
-        ForeignKey('crm_transaction_stage_status.transaction_stage_status_id'),
-        comment='Trạng thái hành động', nullable=False
-    )
-    created_at = Column('created_at', DateTime, nullable=False, comment='Ngày tạo')
-    updated_at = Column('updated_at', DateTime, comment='Ngày cập nhật')
-
-    status = relationship('TransactionStageStatus')
+    code = Column('transaction_stage_action_code', VARCHAR(50), nullable=True, comment='Mã hành động')
+    name = Column('transaction_stage_action_name', VARCHAR(250), nullable=True, comment='Tên hành động')
+    created_at = Column(DateTime, comment='Ngày tạo')
+    updated_at = Column('update_at', DateTime, comment='Ngày chỉnh sửa')

@@ -6,7 +6,7 @@ from app.api.v1.endpoints.cif.basic_information.identity.signature.schema import
     SignaturesRequest
 )
 from app.api.v1.endpoints.cif.repository import (
-    repos_get_booking_code, repos_get_customer_identity,
+    repos_get_booking, repos_get_customer_identity,
     repos_get_initializing_customer
 )
 from app.utils.constant.cif import (
@@ -81,10 +81,13 @@ class CtrSignature(BaseController):
         )
 
         # Lấy Booking Code
-        booking_code = self.call_repos(await repos_get_booking_code(
+        booking = self.call_repos(await repos_get_booking(
             cif_id=cif_id, session=self.oracle_session
         ))
-        data.update(booking_code=booking_code)
+        data.update(booking=dict(
+            id=booking.id,
+            code=booking.code
+        ))
 
         return self.response(data=data)
 
@@ -99,7 +102,7 @@ class CtrSignature(BaseController):
         date__signatures = {}
         for customer_identity_image in signature_data:
             signature = {
-                'identity_image_id': customer_identity_image.id,
+                'identity_image_id': customer_identity_image.identity_image_id,
                 'image_url': customer_identity_image.image_url,
                 'active_flag': customer_identity_image.active_flag,
                 'maker_at': customer_identity_image.maker_at

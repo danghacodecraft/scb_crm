@@ -417,6 +417,7 @@ CASA_ACCOUNT_INFO_SUCCESS_EXAMPLE = {
                     "type": "CASA",
                     "type_name": "U",
                     "currency": "VND",
+                    "product_package": "Thanh toán đa lợi",
                     "balance": "1318143",
                     "balance_lock": "0.0",
                     "over_draft_limit": "",

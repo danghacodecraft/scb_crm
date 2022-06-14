@@ -1,9 +1,9 @@
 import json
 from typing import List, Optional, Tuple
 
+import inflection as inflection
 from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
-from sqlalchemy.sql.functions import count
 
 from app.api.base.repository import ReposReturn
 from app.third_parties.oracle.base import Base
@@ -16,8 +16,7 @@ from app.third_parties.oracle.models.master_data.account import (
 from app.utils.constant.cif import ACTIVE_FLAG_ACTIVED
 from app.utils.error_messages import ERROR_ID_NOT_EXIST, ERROR_INVALID_NUMBER
 from app.utils.functions import (
-    date_to_datetime, datetime_to_string, dropdown, end_time_of_day,
-    is_valid_number, now, special_dropdown, today
+    dropdown, is_valid_number, now, special_dropdown
 )
 
 
@@ -48,7 +47,7 @@ async def repos_get_model_object_by_id_or_code(model_id: Optional[str], model_co
     return ReposReturn(data=obj)
 
 
-async def repos_get_model_objects_by_ids(model_ids: List[str], model: Base, loc: str, session: Session) -> ReposReturn:
+async def repos_get_model_objects_by_ids(model_ids: List[str], model: Base, session: Session, loc: Optional[str] = None) -> ReposReturn:
     """
     Get model objects by ids
     Chỉ cần truyền vào list id -> hàm sẽ tự chuyển về set(model_ids)
@@ -67,10 +66,11 @@ async def repos_get_model_objects_by_ids(model_ids: List[str], model: Base, loc:
 
     objs = session.execute(statement).scalars().all()
     if len(objs) != len(model_ids):
+        obj_ids = [obj.id for obj in objs]
         return ReposReturn(
             is_error=True,
             msg=ERROR_ID_NOT_EXIST,
-            loc=f'{str(model.tablename)}_id' if not loc else loc
+            loc=f'{inflection.tableize(str(model.id))}, {model_ids - model_ids.intersection(set(obj_ids))}' if not loc else loc
         )
 
     return ReposReturn(data=objs)
@@ -155,7 +155,8 @@ async def write_transaction_log_and_update_booking(
         business_form_id: str,
         history_datas: Optional[List] = None,
         customer_id: Optional[str] = None,
-        account_id: Optional[str] = None
+        account_id: Optional[str] = None,
+        booking_id: Optional[str] = None
 ) -> Tuple[bool, Optional[dict]]:
     if customer_id:
         booking = session.execute(
@@ -184,6 +185,13 @@ async def write_transaction_log_and_update_booking(
     else:
         booking = None
 
+    if booking_id:
+        booking = session.execute(
+            select(
+                Booking
+            ).filter(Booking.id == booking_id)
+        ).scalar()
+
     if not booking:
         return False, dict(msg='Can not found booking')
 
@@ -206,6 +214,7 @@ async def write_transaction_log_and_update_booking(
             log_data=history_datas
         )))
         response = dict(
+            booking_id=booking.id,
             booking_code=booking.code,
             created_at=now(),
             updated_at=now()
@@ -226,6 +235,7 @@ async def write_transaction_log_and_update_booking(
         booking_business_form.log_data = history_datas
         booking_business_form.update_at = now()
         response = dict(
+            booking_id=booking.id,
             booking_code=booking.code,
             created_at=booking_business_form.created_at,
             updated_at=now()
@@ -256,26 +266,3 @@ async def repos_is_valid_number(string: str, loc: str):
         return ReposReturn(data=None)
 
     return ReposReturn(is_error=True, msg=ERROR_INVALID_NUMBER, loc=loc)
-
-
-async def generate_booking_code(
-    branch_code: str,
-    business_type_code: str,
-    session: Session
-):
-    datetime_today = date_to_datetime(today())
-    sequence = session.execute(
-        select(
-            count(Booking.id)
-        )
-        .filter(and_(
-            Booking.created_at >= datetime_today,
-            Booking.created_at < end_time_of_day(datetime_today)
-        ))
-    ).scalar()
-
-    date_code = datetime_to_string(datetime_today, _format='%Y%m%d')
-    sequence_code = '{:07d}'.format(sequence + 1)
-    booking_code = f'{branch_code}_CRM_{business_type_code}_{date_code}_{sequence_code}'
-    is_existed = session.execute(select(Booking).filter(Booking.code == booking_code)).scalar() is not None
-    return is_existed, booking_code
