@@ -141,7 +141,10 @@ class CtrCoOwner(BaseController):
             address_information = gw_data['address_information']
 
             joint_account_holders.append(dict(
-                document_file=acc_joint_acc_agree.document_file_id,
+                document_file=acc_joint_acc_agree.joint_acc_agree_document_file_id,
+                document_address=acc_joint_acc_agree.joint_acc_agree_document_address,
+                document_no=acc_joint_acc_agree.joint_acc_agree_document_no,
+                in_scb_flag=acc_joint_acc_agree.in_scb_flag,
                 id=cif_number,
                 basic_information=dict(
                     cif_number=cif_number,

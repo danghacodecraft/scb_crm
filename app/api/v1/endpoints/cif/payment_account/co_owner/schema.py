@@ -60,7 +60,10 @@ class AddressInformationResponse(BaseSchema):
 
 
 class AccountHolderResponse(BaseSchema):
-    document_file: str = Field(..., description="Tập tin đính kèm")
+    document_file: Optional[str] = Field(..., description="Tập tin đính kèm")
+    document_address: Optional[str] = Field(..., description="Địa chỉ tập tin đính kèm")
+    document_no: Optional[str] = Field(..., description="Số văn bản")
+    in_scb_flag: bool = Field(..., description="Cờ trong SCB")
     id: str = Field(..., description="Mã định danh của đồng sở hữu")
     avatar_url: Optional[str] = Field(..., description="Tên tiếng việt của đồng sở hữu")
     basic_information: BasicInformationResponse = Field(
