@@ -1,7 +1,7 @@
 import re
 from typing import List
 
-from sqlalchemy import desc, select, or_
+from sqlalchemy import desc, or_, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn
@@ -19,7 +19,7 @@ from app.third_parties.oracle.models.cif.basic_information.personal.model import
     CustomerIndividualInfo
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingBusinessForm, BookingCustomer
+    Booking, BookingAccount, BookingBusinessForm, BookingCustomer
 )
 from app.third_parties.oracle.models.master_data.address import AddressCountry
 from app.third_parties.oracle.models.master_data.customer import (
@@ -28,7 +28,7 @@ from app.third_parties.oracle.models.master_data.customer import (
 )
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import (
-    BusinessType, KYCLevel, MaritalStatus, Career, AverageIncomeAmount, Position
+    AverageIncomeAmount, Career, KYCLevel, MaritalStatus, Position
 )
 from app.utils.error_messages import (
     ERROR_BOOKING_CODE_NOT_EXIST, ERROR_CALL_SERVICE_SOA,
@@ -261,6 +261,33 @@ async def repos_get_booking(
     return ReposReturn(data=booking)
 
 
+async def repos_get_booking_account(
+        account_id: str,
+        session: Session
+):
+    booking_parent_id = session.execute(
+        select(
+            Booking.parent_id,
+            BookingAccount
+        )
+        .join(Booking, BookingAccount.booking_id == Booking.id)
+        .filter(BookingAccount.account_id == account_id)
+    ).scalar()
+    if not booking_parent_id:
+        return ReposReturn(is_error=True, msg=ERROR_BOOKING_CODE_NOT_EXIST)
+
+    booking_parent = session.execute(
+        select(
+            Booking
+        )
+        .filter(Booking.id == booking_parent_id)
+    ).scalar()
+    if not booking_parent:
+        return ReposReturn(is_error=True, msg=ERROR_BOOKING_CODE_NOT_EXIST, loc="booking_parent")
+
+    return ReposReturn(data=booking_parent)
+
+
 async def repos_get_customer_working_infos(
     cif_id_or_number: str,
     session: Session
@@ -277,7 +304,7 @@ async def repos_get_customer_working_infos(
         .outerjoin(Career, CustomerProfessional.career_id == Career.id)
         .outerjoin(AverageIncomeAmount, CustomerProfessional.average_income_amount_id == AverageIncomeAmount.id)
         .outerjoin(Position, CustomerProfessional.position_id == Position.id)
-        .filter(or_(Customer.cif_id_or_number == cif_number, Customer.id == cif_id_or_number))
+        .filter(or_(Customer.cif_id_or_number == cif_id_or_number, Customer.id == cif_id_or_number))
     ).first()
 
     return ReposReturn(data=customer_working_info)
