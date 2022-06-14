@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingCustomer, TransactionDaily, TransactionSender
+    Booking, BookingCustomer, TransactionDaily, TransactionSender, BookingAccount
 )
 from app.third_parties.oracle.models.master_data.others import (
     Lane, Phase, Stage, StageAction, StageLane, StagePhase, StageRole,
@@ -105,7 +105,7 @@ async def repos_get_next_stage(
     return ReposReturn(data=next_stage_info)
 
 
-async def repos_get_previous_stage(
+async def repos_open_cif_get_previous_stage(
         cif_id: str,
         session: Session
 ):
@@ -285,3 +285,22 @@ async def repos_get_next_receiver(
         _, next_receiver = next_receiver
 
     return ReposReturn(data=next_receiver)
+
+
+async def repos_open_casa_get_previous_stage(booking_id: str, session: Session):
+    previous_stage_info = session.execute(
+        select(
+            Booking,
+            TransactionDaily,
+            TransactionStage
+        )
+        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
+        .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id)
+        .filter(Booking.id == booking_id)
+    ).first()
+    print(previous_stage_info)
+
+    if not previous_stage_info:
+        return ReposReturn(is_error=True, msg="ádsad")
+
+    return ReposReturn(data=previous_stage_info)

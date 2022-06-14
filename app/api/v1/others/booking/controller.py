@@ -129,4 +129,4 @@ class CtrBooking(BaseController):
             booking_id=booking_id,
             session=self.oracle_session
         ))
-        return self.response(data=business_type)
+        return business_type
