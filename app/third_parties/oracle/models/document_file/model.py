@@ -1,4 +1,4 @@
-from sqlalchemy import DATE, VARCHAR, Column, ForeignKey, text
+from sqlalchemy import DATE, DATETIME, VARCHAR, Column, ForeignKey, text
 from sqlalchemy.orm import relationship
 
 from app.third_parties.oracle.base import Base
@@ -42,7 +42,7 @@ class DocumentFile(Base):
     root_id = Column(VARCHAR(36), nullable=True, comment='Mã thư mục gốc')
     file_uuid = Column(VARCHAR(255), nullable=True, comment='UUID của file')
     expired_date = Column(DATE, nullable=True, comment='Ngày hết hiệu lực')
-    created_at = Column(DATE, nullable=True, comment='Thời gian khởi tạo')
+    created_at = Column(DATETIME, nullable=True, comment='Thời gian khởi tạo')
     created_by_branch_name = Column(VARCHAR(255), nullable=True, comment='Tên nơi khởi tạo')
     created_by_branch_code = Column(VARCHAR(255), nullable=True, comment='Mã nơi khởi tạo')
     created_by_user_name = Column(VARCHAR(255), nullable=True, comment='Tên người khởi tạo')
