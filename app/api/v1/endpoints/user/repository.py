@@ -7,6 +7,7 @@ from starlette import status
 
 from app.api.base.repository import ReposReturn
 from app.settings.event import service_idm
+from app.third_parties.services.idm import ServiceIDM
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_IDM, ERROR_INVALID_TOKEN, USER_ID_NOT_EXIST
 )
@@ -37,6 +38,8 @@ async def repos_login(username: str, password: str) -> ReposReturn:
             msg=ERROR_CALL_SERVICE_IDM,
             detail=str(data_idm)
         )
+
+    data_idm["user_info"]["avatar_url"] = ServiceIDM().replace_with_cdn(data_idm["user_info"]["avatar_url"])
     data_idm['user_info']['token'] = base64.b64encode(
         zlib.compress(orjson.dumps(data_idm))
     ).decode('utf-8')

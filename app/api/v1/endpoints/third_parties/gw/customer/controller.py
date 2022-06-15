@@ -25,7 +25,7 @@ from app.utils.constant.cif import (
     CUSTOMER_TYPE_ORGANIZE, RESIDENT_ADDRESS_CODE, TRANSACTION_JOB_OPEN_CIF
 )
 from app.utils.constant.gw import (
-    GW_AUTO, GW_CASA_REPONSE_STATUS_SUCCESS, GW_CUSTOMER_TYPE_B,
+    GW_AUTO, GW_CASA_RESPONSE_STATUS_SUCCESS, GW_CUSTOMER_TYPE_B,
     GW_CUSTOMER_TYPE_I, GW_DATE_FORMAT, GW_DATETIME_FORMAT,
     GW_DEFAULT_CUSTOMER_CATEGORY, GW_DEFAULT_KHTC_DOI_TUONG,
     GW_DEFAULT_TYPE_ID, GW_DEFAULT_VALUE, GW_GENDER_FEMALE, GW_GENDER_MALE,
@@ -958,7 +958,7 @@ class CtrGWCustomer(BaseController):
             )
         )
         # check open_cif success
-        if response_data.get('openCIFAuthorise_out').get('transaction_info').get('transaction_error_code') != GW_CASA_REPONSE_STATUS_SUCCESS:
+        if response_data.get('openCIFAuthorise_out').get('transaction_info').get('transaction_error_code') != GW_CASA_RESPONSE_STATUS_SUCCESS:
             return self.response_exception(
                 msg=ERROR_CALL_SERVICE_GW,
                 detail=response_data.get('openCIFAuthorise_out', {}).get("transaction_info", {}).get('transaction_error_msg')
