@@ -39,7 +39,7 @@ from app.third_parties.oracle.models.master_data.identity import (
     PlaceOfIssue
 )
 from app.third_parties.oracle.models.master_data.others import (
-    Nation, Religion, TransactionStage, TransactionStageLane,
+    Nation, Religion, SlaTransaction, TransactionStage, TransactionStageLane,
     TransactionStagePhase, TransactionStageRole, TransactionStageStatus
 )
 from app.utils.constant.cif import (
@@ -333,6 +333,7 @@ async def repos_save_identity(
         saving_customer_identity_images: List[dict],
         saving_transaction_stage_status: dict,
         saving_transaction_stage: dict,
+        saving_sla_transaction: dict,
         saving_transaction_stage_phase: dict,
         saving_transaction_stage_lane: dict,
         saving_transaction_stage_role: dict,
@@ -591,6 +592,7 @@ async def repos_save_identity(
     session.add_all([
         # Tạo BOOKING, CRM_TRANSACTION_DAILY -> CRM_BOOKING -> BOOKING_CUSTOMER -> BOOKING_BUSINESS_FORM
         TransactionStageStatus(**saving_transaction_stage_status),
+        SlaTransaction(**saving_sla_transaction),
         TransactionStage(**saving_transaction_stage),
         TransactionStageLane(**saving_transaction_stage_lane),
         TransactionStagePhase(**saving_transaction_stage_phase),

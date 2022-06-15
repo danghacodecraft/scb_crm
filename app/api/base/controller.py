@@ -399,6 +399,7 @@ class BaseController:
 
         saving_transaction_stage_status_id = generate_uuid()
         saving_transaction_stage_id = generate_uuid()
+        sla_transaction_id = generate_uuid()
         saving_transaction_stage_phase_id = generate_uuid()
         saving_transaction_stage_lane_id = generate_uuid()
         saving_transaction_stage_role_id = generate_uuid()
@@ -435,13 +436,23 @@ class BaseController:
             name=begin_stage_role.name
         )
 
+        saving_sla_transaction = dict(
+            id=sla_transaction_id,
+            parent_id=None,
+            sla_id=None,
+            sla_name=None,
+            sla_deadline=None,
+            active_flag=1,
+            created_at=now()
+        )
+
         saving_transaction_stage = dict(
             id=saving_transaction_stage_id,
             status_id=saving_transaction_stage_status_id,
             lane_id=saving_transaction_stage_lane_id,
             phase_id=saving_transaction_stage_phase_id,
             business_type_id=business_type_id,
-            sla_transaction_id=None,  # TODO
+            sla_transaction_id=sla_transaction_id,
             transaction_stage_phase_code=begin_stage.code,
             transaction_stage_phase_name=begin_stage.name,
             action_id=None,
@@ -529,9 +540,9 @@ class BaseController:
         #     position_name=current_user.hrm_position_name
         # )
 
-        return (saving_transaction_stage_status, saving_transaction_stage, saving_transaction_stage_phase,
-                saving_transaction_stage_lane, saving_transaction_stage_role, saving_transaction_daily,
-                saving_transaction_sender)
+        return (saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
+                saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
+                saving_transaction_daily, saving_transaction_sender)
 
     @staticmethod
     def check_permission(current_user: AuthResponse, menu_code: str, group_role_code: str):
