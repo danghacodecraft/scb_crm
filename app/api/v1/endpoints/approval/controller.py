@@ -29,7 +29,7 @@ from app.third_parties.oracle.models.master_data.others import BusinessJob
 from app.third_parties.services.idm import ServiceIDM
 from app.utils.constant.approval import (
     CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_COMPLETED, CIF_STAGE_INIT, INIT_RESPONSE, STAGE_BEGINS,
-    INIT_STAGES, APPROVE_AUDIT_STAGES, APPROVE_SUPERVISOR_STAGES
+    INIT_STAGES, APPROVE_AUDIT_STAGES, APPROVE_SUPERVISOR_STAGES, COMPLETED_STAGES
 )
 from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA
 from app.utils.constant.cif import (
@@ -932,7 +932,7 @@ class CtrApproval(BaseController):
             ))
         next_stage_code = next_stage.code
         next_stage_role_code = None
-        if next_stage_code != CIF_STAGE_COMPLETED:
+        if next_stage_code not in COMPLETED_STAGES:
             _, _, _, _, _, _, next_stage_role, _ = self.call_repos(await repos_get_stage_information(
                 business_type_id=business_type_id,
                 stage_id=next_stage_code,

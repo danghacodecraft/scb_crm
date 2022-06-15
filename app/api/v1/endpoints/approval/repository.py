@@ -12,7 +12,7 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingCustomer, TransactionDaily, TransactionSender, BookingAccount
+    Booking, BookingCustomer, TransactionDaily, TransactionSender
 )
 from app.third_parties.oracle.models.master_data.others import (
     BusinessJob, BusinessType, TransactionJob, TransactionStage,
@@ -21,8 +21,7 @@ from app.third_parties.oracle.models.master_data.others import (
 )
 from app.utils.constant.business_type import BUSINESS_TYPES, BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA
 from app.utils.constant.cif import IMAGE_TYPE_FACE
-from app.utils.error_messages import ERROR_CIF_ID_NOT_EXIST, ERROR_BOOKING_ID_NOT_EXIST, \
-    ERROR_BOOKING_TRANSACTION_NOT_EXIST
+from app.utils.error_messages import ERROR_BOOKING_ID_NOT_EXIST, ERROR_BOOKING_TRANSACTION_NOT_EXIST
 
 
 async def repos_get_approval_process(booking_id: str, session: Session) -> ReposReturn:
@@ -80,7 +79,7 @@ async def repos_get_approval_process(booking_id: str, session: Session) -> Repos
     return ReposReturn(data=transactions)
 
 
-# @auto_commit
+@auto_commit
 async def repos_approve(
         cif_id: str,
         business_type_id: str,
