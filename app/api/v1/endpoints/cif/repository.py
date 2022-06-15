@@ -304,7 +304,7 @@ async def repos_get_customer_working_infos(
         .outerjoin(Career, CustomerProfessional.career_id == Career.id)
         .outerjoin(AverageIncomeAmount, CustomerProfessional.average_income_amount_id == AverageIncomeAmount.id)
         .outerjoin(Position, CustomerProfessional.position_id == Position.id)
-        .filter(or_(Customer.cif_id_or_number == cif_id_or_number, Customer.id == cif_id_or_number))
+        .filter(or_(Customer.id == cif_id_or_number, Customer.id == cif_id_or_number))
     ).first()
 
     return ReposReturn(data=customer_working_info)
