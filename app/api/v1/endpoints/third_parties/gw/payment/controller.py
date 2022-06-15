@@ -1,9 +1,10 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.payment.repository import (
-    repos_gw_payment_amount_block, repos_gw_payment_amount_unblock
+    repos_gw_pay_in_cash, repos_gw_payment_amount_block,
+    repos_gw_payment_amount_unblock
 )
 from app.api.v1.endpoints.third_parties.gw.payment.schema import (
-    AccountAmountBlockRequest, AccountAmountUnblock
+    AccountAmountBlockRequest, AccountAmountUnblock, PayInCashRequest
 )
 
 
@@ -67,7 +68,9 @@ class CtrGWPayment(BaseController):
             data_input=data_input
         ))
         response_data = {
-            "account_ref_no": gw_payment_amount_block['amountBlock_out']['data_output']['account_info']['blance_lock_info']['account_ref_no']
+            "account_ref_no":
+                gw_payment_amount_block['amountBlock_out']['data_output']['account_info']['blance_lock_info'][
+                    'account_ref_no']
         }
 
         return self.response(data=response_data)
@@ -145,3 +148,102 @@ class CtrGWPayment(BaseController):
             current_user=current_user
         ))
         return self.response(data=gw_payment_amount_unblock)
+
+    async def ctr_gw_pay_in_cash(self, pay_in_cash: PayInCashRequest):
+        current_user = self.current_user
+
+        data_input = {
+            "account_info": {
+                "account_num": pay_in_cash.account_number,
+                "account_currency": pay_in_cash.account_currency,
+                "account_opening_amount": pay_in_cash.account_opening_amount
+            },
+            "p_blk_denomination": "",
+            "p_blk_charge": pay_in_cash.p_blk_charge,
+            "p_blk_project": "",
+            "p_blk_mis": "",
+            # TODO hard core
+            "p_blk_udf": [
+                {
+                    "UDF_NAME": "NGUOI_GIAO_DICH",
+                    "UDF_VALUE": ""
+                },
+                {
+                    "UDF_NAME": "CMND_PASSPORT",
+                    "UDF_VALUE": ""
+                },
+                {
+                    "UDF_NAME": "NGAY_CAP",
+                    "UDF_VALUE": ""
+                },
+                {
+                    "UDF_NAME": "NOI_CAP",
+                    "UDF_VALUE": ""
+                },
+                {
+                    "UDF_NAME": "DIA_CHI",
+                    "UDF_VALUE": ""
+                },
+                {
+                    "UDF_NAME": "THU_PHI_DICH_VU",
+                    "UDF_VALUE": ""
+                },
+                {
+                    "UDF_NAME": "TEN_KHACH_HANG",
+                    "UDF_VALUE": ""
+                },
+                {
+                    "UDF_NAME": "TY_GIA_GD_DOI_UNG_HO",
+                    "UDF_VALUE": "1"
+                },
+                {
+                    "UDF_NAME": "MUC_DICH_GIAO_DICH",
+                    "UDF_VALUE": "MUC_DICH_KHAC"
+                },
+                {
+                    "UDF_NAME": "NGHIEP_VU_GDQT",
+                    "UDF_VALUE": ""
+                },
+                {
+                    "UDF_NAME": "NGAY_CHOT_TY_GIA",
+                    "UDF_VALUE": ""
+                },
+                {
+                    "UDF_NAME": "GIO_PHUT_CHOT_TY_GIA",
+                    "UDF_VALUE": ""
+                },
+                {
+                    "UDF_NAME": "REF_BAO_CO_1",
+                    "UDF_VALUE": ""
+                },
+                {
+                    "UDF_NAME": "REF_BAO_CO_2",
+                    "UDF_VALUE": ""
+                },
+                {
+                    "UDF_NAME": "REF_BAO_CO_3",
+                    "UDF_VALUE": ""
+                },
+                {
+                    "UDF_NAME": "REF_BAO_CO_4",
+                    "UDF_VALUE": ""
+                },
+                {
+                    "UDF_NAME": "REF_BAO_CO_5",
+                    "UDF_VALUE": ""
+                }
+            ],
+            # TODO hard core
+            "staff_info_checker": {
+                "staff_name": "HOANT2"
+            },
+            # TODO hard core
+            "staff_info_maker": {
+                "staff_name": "KHANHLQ"
+            }
+        }
+        gw_pay_in_cash = self.call_repos(await repos_gw_pay_in_cash(
+            data_input=data_input,
+            current_user=current_user
+        ))
+        return self.response(data=gw_pay_in_cash)

@@ -4,7 +4,6 @@ from app.utils.constant.gw import GW_CASA_REPONSE_STATUS_SUCCESS
 
 
 async def repos_gw_payment_amount_block(current_user, data_input):
-
     is_success, gw_payment_amount_block = await service_gw.gw_payment_amount_block(
         current_user=current_user.user_info, data_input=data_input
     )
@@ -18,7 +17,6 @@ async def repos_gw_payment_amount_block(current_user, data_input):
 
 
 async def repos_gw_payment_amount_unblock(current_user, data_input):
-
     is_success, gw_payment_amount_unblock = await service_gw.gw_payment_amount_unblock(
         data_input=data_input,
         current_user=current_user.user_info
@@ -30,3 +28,17 @@ async def repos_gw_payment_amount_unblock(current_user, data_input):
         return ReposReturn(is_error=True, msg=amount_unblock_out.get('transaction_info').get('transaction_error_msg'))
 
     return ReposReturn(data=gw_payment_amount_unblock)
+
+
+async def repos_gw_pay_in_cash(current_user, data_input):
+    is_success, gw_pay_in_cash = await service_gw.gw_payment_amount_unblock(
+        data_input=data_input,
+        current_user=current_user.user_info
+    )
+    pay_in_cash = gw_pay_in_cash.get('amountUnBlock_out', {})
+
+    # check trường hợp lỗi
+    if pay_in_cash.get('transaction_info').get('transaction_error_code') != GW_CASA_REPONSE_STATUS_SUCCESS:
+        return ReposReturn(is_error=True, msg=pay_in_cash.get('transaction_info').get('transaction_error_msg'))
+
+    return ReposReturn(data=gw_pay_in_cash)
