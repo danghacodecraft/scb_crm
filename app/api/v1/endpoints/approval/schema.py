@@ -4,7 +4,7 @@ from typing import List, Optional
 from pydantic import Field
 
 from app.api.base.schema import BaseSchema
-from app.api.v1.schemas.utils import OptionalDropdownResponse, DropdownResponse
+from app.api.v1.schemas.utils import DropdownResponse, OptionalDropdownResponse
 from app.utils.constant.approval import CIF_ACTIONS
 from app.utils.functions import make_description_from_dict
 
@@ -84,7 +84,7 @@ class OptionalAuthenticationRequest(BaseSchema):
     compare_face_image_uuid: Optional[str] = Field(..., description="UUID hình ảnh upload")
 
 
-class AuthenticationRequest(BaseSchema):
+class AuthenticationInfosRequest(BaseSchema):
     face: OptionalAuthenticationRequest = Field(..., description="[Thông tin xác thực] Khuôn mặt")
     signature: AuthenticationRequest = Field(..., description="[Thông tin xác thực] Chữ ký")
     fingerprint: OptionalAuthenticationRequest = Field(..., description="[Thông tin xác thực] Vân tay")
@@ -92,7 +92,7 @@ class AuthenticationRequest(BaseSchema):
 
 class ApprovalRequest(BaseSchema):
     approval: CifApproveRequest = Field(..., description="Thông tin các TAB phê duyệt")
-    authentication: Optional[AuthenticationRequest] = Field(None, description="Thông tin xác thực")
+    authentication: Optional[AuthenticationInfosRequest] = Field(None, description="Thông tin xác thực")
 
 
 ########################################################################################################################
