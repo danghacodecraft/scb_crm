@@ -5,7 +5,6 @@ from app.api.v1.endpoints.user.repository import (
     repos_get_list_user, repos_get_user_info, repos_login
 )
 from app.api.v1.endpoints.user.schema import UserUpdateRequest
-from app.third_parties.services.idm import ServiceIDM
 from app.utils.functions import now
 
 
@@ -16,8 +15,6 @@ class CtrUser(BaseController):
 
     async def ctr_login(self, credentials: HTTPBasicCredentials):
         auth_res = self.call_repos(await repos_login(username=credentials.username.upper(), password=credentials.password))
-        if auth_res["user_info"]["avatar_url"]:
-            auth_res["user_info"]["avatar_url"] = ServiceIDM().replace_with_cdn(auth_res["user_info"]["avatar_url"])
         return self.response(data=auth_res)
 
     async def ctr_get_current_user_info(self):

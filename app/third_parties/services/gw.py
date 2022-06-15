@@ -8,7 +8,7 @@ from starlette import status
 from app.api.v1.endpoints.user.schema import UserInfoResponse
 from app.settings.service import SERVICE
 from app.utils.constant.gw import (
-    GW_AUTHORIZED_REF_DATA_MGM_ACC_NUM, GW_CASA_REPONSE_STATUS_SUCCESS,
+    GW_AUTHORIZED_REF_DATA_MGM_ACC_NUM, GW_CASA_RESPONSE_STATUS_SUCCESS,
     GW_CO_OWNER_REF_DATA_MGM_ACC_NUM, GW_CURRENT_ACCOUNT_CASA,
     GW_CURRENT_ACCOUNT_FROM_CIF, GW_CUSTOMER_REF_DATA_MGMT_CIF_NUM,
     GW_DEPOSIT_ACCOUNT_FROM_CIF, GW_DEPOSIT_ACCOUNT_TD, GW_EMPLOYEE_FROM_CODE,
@@ -44,7 +44,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_RETRIEVE_WORKING_PROCESS_INFO_FROM_CODE,
     GW_ENDPOINT_URL_SELECT_CATEGORY,
     GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE, GW_FUNCTION_OPEN_CASA,
-    GW_HISTORY_CHANGE_FIELD_ACCOUNT, GW_HISTOTY_ACOUNT_NUM,
+    GW_HISTORY_ACCOUNT_NUM, GW_HISTORY_CHANGE_FIELD_ACCOUNT,
     GW_RETRIEVE_CASA_ACCOUNT_DETAIL
 )
 from app.utils.functions import date_to_string
@@ -374,7 +374,7 @@ class ServiceGW:
                     return False, return_data
                 else:
                     return_data = await response.json()
-                    if return_data['openCASA_out']['transaction_info']['transaction_error_code'] != GW_CASA_REPONSE_STATUS_SUCCESS:
+                    if return_data['openCASA_out']['transaction_info']['transaction_error_code'] != GW_CASA_RESPONSE_STATUS_SUCCESS:
                         return False, return_data
 
                     return True, return_data
@@ -1444,7 +1444,7 @@ class ServiceGW:
             "transaction_info": {
                 "transaction_name": GW_HISTORY_CHANGE_FIELD_ACCOUNT,
                 "transaction_value": {
-                    "account_num": GW_HISTOTY_ACOUNT_NUM
+                    "account_num": GW_HISTORY_ACCOUNT_NUM
                 }
             }
         }

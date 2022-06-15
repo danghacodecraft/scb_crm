@@ -1,6 +1,6 @@
 from app.api.base.repository import ReposReturn
 from app.settings.event import service_gw
-from app.utils.constant.gw import GW_CASA_REPONSE_STATUS_SUCCESS
+from app.utils.constant.gw import GW_CASA_RESPONSE_STATUS_SUCCESS
 
 
 async def repos_gw_payment_amount_block(current_user, data_input):
@@ -10,7 +10,7 @@ async def repos_gw_payment_amount_block(current_user, data_input):
     amount_block_out = gw_payment_amount_block.get('amountBlock_out', {})
 
     # check trường hợp lỗi
-    if amount_block_out.get('transaction_info').get('transaction_error_code') != GW_CASA_REPONSE_STATUS_SUCCESS:
+    if amount_block_out.get('transaction_info').get('transaction_error_code') != GW_CASA_RESPONSE_STATUS_SUCCESS:
         return ReposReturn(is_error=True, msg=amount_block_out.get('transaction_info').get('transaction_error_msg'))
 
     return ReposReturn(data=gw_payment_amount_block)
@@ -24,7 +24,7 @@ async def repos_gw_payment_amount_unblock(current_user, data_input):
     amount_unblock_out = gw_payment_amount_unblock.get('amountUnBlock_out', {})
 
     # check trường hợp lỗi
-    if amount_unblock_out.get('transaction_info').get('transaction_error_code') != GW_CASA_REPONSE_STATUS_SUCCESS:
+    if amount_unblock_out.get('transaction_info').get('transaction_error_code') != GW_CASA_RESPONSE_STATUS_SUCCESS:
         return ReposReturn(is_error=True, msg=amount_unblock_out.get('transaction_info').get('transaction_error_msg'))
 
     return ReposReturn(data=gw_payment_amount_unblock)
@@ -38,7 +38,7 @@ async def repos_gw_pay_in_cash(current_user, data_input):
     pay_in_cash = gw_pay_in_cash.get('amountUnBlock_out', {})
 
     # check trường hợp lỗi
-    if pay_in_cash.get('transaction_info').get('transaction_error_code') != GW_CASA_REPONSE_STATUS_SUCCESS:
+    if pay_in_cash.get('transaction_info').get('transaction_error_code') != GW_CASA_RESPONSE_STATUS_SUCCESS:
         return ReposReturn(is_error=True, msg=pay_in_cash.get('transaction_info').get('transaction_error_msg'))
 
     return ReposReturn(data=gw_pay_in_cash)
