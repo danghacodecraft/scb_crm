@@ -958,7 +958,7 @@ class CtrGWCustomer(BaseController):
             )
         )
         # check open_cif success
-        if response_data.get('openCIFAuthorise_out').get('transaction_error_code') != GW_CASA_REPONSE_STATUS_SUCCESS:
+        if response_data.get('openCIFAuthorise_out').get('transaction_info').get('transaction_error_code') != GW_CASA_REPONSE_STATUS_SUCCESS:
             return self.response_exception(
                 msg=ERROR_CALL_SERVICE_GW,
                 detail=response_data.get('openCIFAuthorise_out', {}).get("transaction_info", {}).get('transaction_error_msg')
