@@ -36,7 +36,7 @@ class OptionalDropdownRequest(BaseSchema):
 # Response save
 ########################################################################################################################
 class SaveSuccessResponse(BaseSchema):
-    account_id: str = Field(..., min_length=1, description='Id CIF ảo')
+    cif_id: str = Field(..., min_length=1, description='Id CIF ảo')
     booking: OptionalDropdownResponse = Field(None, description='Booking')
 
 
