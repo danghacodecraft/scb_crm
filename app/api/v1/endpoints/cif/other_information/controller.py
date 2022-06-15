@@ -6,7 +6,6 @@ from app.api.v1.endpoints.cif.other_information.schema import (
     OtherInformationUpdateRequest
 )
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
-from app.third_parties.oracle.models.master_data.others import HrmEmployee
 
 
 class CtrOtherInfo(BaseController):
@@ -25,7 +24,7 @@ class CtrOtherInfo(BaseController):
             hrm_employee_ids.append(update_other_info_req.indirect_sale_staff.id)
 
         # check exist hrm_employee_ids
-        await self.get_model_objects_by_ids(model_ids=hrm_employee_ids, model=HrmEmployee, loc='staff_id')
+        # await self.get_model_objects_by_ids(model_ids=hrm_employee_ids, model=HrmEmployee, loc='staff_id')
 
         update_other_info = self.call_repos(
             await repos_update_other_info(
