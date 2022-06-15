@@ -53,10 +53,10 @@ async def view_get_business_jobs(
     )
 )
 async def view_approval_process(
-        cif_id: str = Path(..., description='Id CIF ảo'),
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         current_user=Depends(get_current_user_from_header())
 ):
-    approval_process = await CtrApproval(current_user).ctr_approval_process(cif_id)
+    approval_process = await CtrApproval(current_user).ctr_approval_process(booking_id=BOOKING_ID)
     return ResponseData[List[CifApprovalProcessResponse]](**approval_process)
 
 

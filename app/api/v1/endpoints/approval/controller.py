@@ -57,8 +57,11 @@ from app.utils.functions import (
 
 
 class CtrApproval(BaseController):
-    async def ctr_approval_process(self, cif_id: str):
-        transactions = self.call_repos((await repos_get_approval_process(cif_id=cif_id, session=self.oracle_session)))
+    async def ctr_approval_process(self, booking_id: str):
+        transactions = self.call_repos((await repos_get_approval_process(
+            booking_id=booking_id,
+            session=self.oracle_session
+        )))
         response_data = []
         lst_parent = {}
 
