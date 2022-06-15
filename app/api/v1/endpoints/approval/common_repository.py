@@ -11,7 +11,7 @@ from app.third_parties.oracle.models.master_data.others import (
     TransactionStageStatus
 )
 from app.utils.constant.approval import (
-    CIF_STAGE_APPROVE_KSS, CIF_STAGE_BEGIN, CIF_STAGE_INIT, STAGE_INITS
+    CIF_STAGE_APPROVE_KSS, CIF_STAGE_BEGIN, CIF_STAGE_INIT, INIT_STAGES
 )
 from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.error_messages import (
@@ -204,7 +204,7 @@ async def repos_get_stage_information(
     if is_give_back:
         # Nếu trả lại hồ sơ set reject flag để Khởi tạo hồ sơ lấy đc data
         reject_flag = False
-    if stage_id in STAGE_INITS:
+    if stage_id in INIT_STAGES:
         reject_flag = False
 
     stage_info = session.execute(

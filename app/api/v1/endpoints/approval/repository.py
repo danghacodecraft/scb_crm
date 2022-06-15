@@ -80,7 +80,7 @@ async def repos_get_approval_process(booking_id: str, session: Session) -> Repos
     return ReposReturn(data=transactions)
 
 
-@auto_commit
+# @auto_commit
 async def repos_approve(
         cif_id: str,
         business_type_id: str,
@@ -98,14 +98,14 @@ async def repos_approve(
         session: Session
 ):
 
-    # print('saving_transaction_stage_status', saving_transaction_stage_status)
-    # print('saving_transaction_stage_action', saving_transaction_stage_action)
-    # print('saving_transaction_stage', saving_transaction_stage)
-    # print('saving_transaction_daily', saving_transaction_daily)
-    # print('saving_transaction_stage_lane', saving_transaction_stage_lane)
-    # print('saving_transaction_stage_phase', saving_transaction_stage_phase)
-    # print('saving_transaction_stage_role', saving_transaction_stage_role)
-    # print('saving_transaction_sender', saving_transaction_sender)
+    print('saving_transaction_stage_status', saving_transaction_stage_status)
+    print('saving_transaction_stage_action', saving_transaction_stage_action)
+    print('saving_transaction_stage', saving_transaction_stage)
+    print('saving_transaction_daily', saving_transaction_daily)
+    print('saving_transaction_stage_lane', saving_transaction_stage_lane)
+    print('saving_transaction_stage_phase', saving_transaction_stage_phase)
+    print('saving_transaction_stage_role', saving_transaction_stage_role)
+    print('saving_transaction_sender', saving_transaction_sender)
 
     saving_transaction_daily_parent_id = None
     saving_transaction_daily_root_id = saving_transaction_daily['transaction_id']
