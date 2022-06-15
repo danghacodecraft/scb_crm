@@ -28,8 +28,8 @@ from app.third_parties.oracle.models.master_data.identity import (
 from app.third_parties.oracle.models.master_data.others import BusinessJob
 from app.third_parties.services.idm import ServiceIDM
 from app.utils.constant.approval import (
-    CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_BEGIN,
-    CIF_STAGE_COMPLETED, CIF_STAGE_INIT, INIT_RESPONSE
+    CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_COMPLETED, CIF_STAGE_INIT, INIT_RESPONSE, STAGE_BEGINS,
+    STAGE_INITS, STAGE_APPROVE_SUPERVISORS, STAGE_APPROVE_AUDITS
 )
 from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA
 from app.utils.constant.cif import (
@@ -406,7 +406,7 @@ class CtrApproval(BaseController):
         #     )
 
         # Chưa có hồ sơ nào trước đó, GDV gửi hồ sơ đi
-        if previous_stage_code == CIF_STAGE_BEGIN:
+        if previous_stage_code in STAGE_BEGINS:
             # if not is_stage_teller:
             #     return self.response_exception(
             #         loc=f"Stage: {previous_stage_code}, "
@@ -421,7 +421,7 @@ class CtrApproval(BaseController):
                 teller_is_disable = False
 
         # Hồ sơ GDV đã gửi
-        elif previous_stage_code == CIF_STAGE_INIT:
+        elif previous_stage_code in STAGE_INITS:
             teller_is_reject = previous_transaction_stage_is_reject
             teller_stage_code = previous_stage_code
             teller_is_completed = True
@@ -472,7 +472,7 @@ class CtrApproval(BaseController):
                     dropdown_action_supervisor = dropdown(supervisor_transaction_stage_action)
 
         # KSV đã xử lý hồ sơ
-        elif previous_stage_code == CIF_STAGE_APPROVE_KSV:
+        elif previous_stage_code in STAGE_APPROVE_SUPERVISORS:
             supervisor_transaction_stage_action = previous_transaction_stage_action
             if previous_transaction_stage_action:
                 dropdown_action_supervisor = dropdown(supervisor_transaction_stage_action)
@@ -508,7 +508,7 @@ class CtrApproval(BaseController):
                 is_open_cif = True
 
         # KSS đã xử lý hồ sơ
-        elif previous_stage_code == CIF_STAGE_APPROVE_KSS:
+        elif previous_stage_code in STAGE_APPROVE_AUDITS:
             audit_transaction_stage = previous_transaction_stage
             audit_is_reject = previous_transaction_stage.is_reject
             audit_stage_code = previous_stage_code
@@ -690,7 +690,7 @@ class CtrApproval(BaseController):
                 )
             )
 
-        if previous_transaction_stage:
+        if not previous_transaction_stage:
             return self.response_exception(msg="No Previous Transaction Stage")
 
         ################################################################################################################
@@ -702,6 +702,7 @@ class CtrApproval(BaseController):
         previous_stage_is_reject = False
         is_give_back = False
         if previous_transaction_stage:
+            print("previous")
             is_stage_init = False
             _, previous_stage, _, _, _, _, _, _ = self.call_repos(
                 await repos_get_stage_information(
@@ -713,6 +714,7 @@ class CtrApproval(BaseController):
                 ))
             previous_stage_code = previous_stage.code
             previous_stage_is_reject = previous_stage.is_reject
+            print(previous_stage_code)
 
         ################################################################################################################
         # CURRENT STAGE
@@ -741,7 +743,7 @@ class CtrApproval(BaseController):
             current_stage_code = CIF_STAGE_INIT
         else:
             # Nếu là bước GDV
-            if previous_stage_is_reject or previous_stage_code == CIF_STAGE_BEGIN:
+            if previous_stage_is_reject or previous_stage_code in STAGE_BEGINS:
                 current_stage = self.call_repos(await repos_get_stage_teller(
                     business_type_id=business_type_id,
                     session=self.oracle_session
@@ -835,7 +837,7 @@ class CtrApproval(BaseController):
             )
 
         (
-            current_stage_status, current_stage, _, current_lane, _, current_phase, current_stage_role,
+            current_stage_status, current_stage, _, current_lane, current_stage_phase, current_phase, current_stage_role,
             current_stage_action
         ) = self.call_repos(await repos_get_stage_information(
             business_type_id=business_type_id,
@@ -861,7 +863,7 @@ class CtrApproval(BaseController):
         if current_stage:
             ############################################################################################################
             # check quyền user
-            if current_stage_code == CIF_STAGE_INIT:
+            if current_stage_code in STAGE_INITS:
                 self.call_repos(await PermissionController.ctr_approval_check_permission(
                     auth_response=auth_response,
                     menu_code=IDM_MENU_CODE_OPEN_CIF,
@@ -903,7 +905,7 @@ class CtrApproval(BaseController):
             current_phase_name = current_phase.name
             current_stage_role_code = current_stage_role.code
             current_stage_role_name = current_stage_role.name
-            if current_stage_code != CIF_STAGE_INIT:
+            if current_stage_code not in STAGE_INITS:
                 # Nếu truyền vào Param StageAction giả
                 if not current_stage_action:
                     return self.response_exception(
@@ -1111,6 +1113,8 @@ class CtrApproval(BaseController):
 
         approval_process = self.call_repos((await repos_approve(
             cif_id=cif_id,
+            business_type_id=business_type_id,
+            booking_id=booking_id,
             saving_transaction_stage_status=saving_transaction_stage_status,
             saving_transaction_stage_action=saving_transaction_stage_action,
             saving_transaction_stage=saving_transaction_stage,
@@ -1141,11 +1145,11 @@ class CtrApproval(BaseController):
         content: str
     ):
         # GDV
-        if current_stage_code == CIF_STAGE_INIT:
+        if current_stage_code in STAGE_INITS:
             description = f"{current_stage_role_code} đã gửi hồ sơ cho {next_stage_role_code}."
         else:
             # KSV
-            if current_stage_code == CIF_STAGE_APPROVE_KSV:
+            if current_stage_code in STAGE_APPROVE_SUPERVISORS:
                 if not reject_flag:
                     description = f"Hoàn tất hồ sơ. Hồ sơ đã được phê duyệt bởi {current_stage_role_code}" \
                                   f". Hồ sơ đã gửi cho {next_stage_role_code}."
@@ -1154,7 +1158,7 @@ class CtrApproval(BaseController):
                         return self.response_exception(msg=ERROR_CONTENT_NOT_NULL, loc="content")
                     description = f"Hồ sơ bị từ chối. Lý do: {content}"
             # KSS
-            elif current_stage_code == CIF_STAGE_APPROVE_KSS:
+            elif current_stage_code in STAGE_APPROVE_AUDITS:
                 if not reject_flag:
                     description = f"Hoàn thành hồ sơ. Hồ sơ đã được phê duyệt bởi {current_stage_role_code}."
                 else:
@@ -1162,7 +1166,7 @@ class CtrApproval(BaseController):
                         return self.response_exception(msg=ERROR_CONTENT_NOT_NULL, loc="content")
                     description = f"Hồ sơ bị từ chối. Lý do: {content}"
             else:
-                return self.response_exception(msg=ERROR_STAGE_COMPLETED, loc="description")
+                return self.response_exception(msg=ERROR_STAGE_COMPLETED)
 
         return description
 
