@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import Field
 
@@ -25,10 +25,6 @@ class AccountAmountBlockRequest(BaseSchema):
     )
 
 
-class AccountAmountBlockResponse(BaseSchema):
-    account_ref_no: str = Field(..., description="Số tham chiếu của lệnh phong tỏa tài khoản")
-
-
 class AmountUnblockDetail(BaseSchema):
     amount: int = Field(..., description="Số dư")
     hold_code: str = Field(..., description="Mã lý do")
@@ -41,3 +37,23 @@ class AccountAmountUnblock(BaseSchema):
     p_type_unblock: str = Field(..., description="Loại hình giải tỏa: C:Toàn phần/P: Một phần")
     p_blk_detail: Optional[AmountUnblockDetail] = Field(None,
                                                         description="Chi tiết giải tỏa một phần (NULL nếu giải tỏa toàn phần)")
+
+
+class PBlkChargeRequest(BaseSchema):
+    charge_name: str = Field(..., description="Danh mục thu phí")
+    charge_amount: int = Field(..., description="Số tiền thu phí")
+    waived: str = Field(..., description="Có thu tính phí hay không")
+
+
+class PayInCashRequest(BaseSchema):
+    account_number: str = Field(..., description="Số tài khoản")
+    account_currency: str = Field(..., description="Loại tiền trong tài khoản")
+    account_opening_amount: str = Field(..., description="Số tiền gửi vào")
+    p_blk_charge: Optional[List[PBlkChargeRequest]] = Field(None, description="Danh mục phí")
+
+
+########################################################################################################################
+# Response
+########################################################################################################################
+class AccountAmountBlockResponse(BaseSchema):
+    account_ref_no: str = Field(..., description="Số tham chiếu của lệnh phong tỏa tài khoản")

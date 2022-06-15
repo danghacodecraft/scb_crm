@@ -40,6 +40,7 @@ GW_ENDPOINT_URL_RETRIEVE_CUS_OPEN_CIF = '/customer/v1.0/rest/openCIFAuthorise'
 ########################################################################################################################
 GW_ENDPOINT_URL_PAYMENT_AMOUNT_BLOCK = "/payment/v1.0/rest/amountBlock"
 GW_ENDPOINT_URL_PAYMENT_AMOUNT_UNBLOCK = "/payment/v1.0/rest/amountUnBlock"
+GW_ENDPOINT_URL_PAY_IN_CASH = "/payment/v1.0/rest/payInCash"
 GW_DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 GW_DATE_FORMAT = '%Y-%m-%d'
 
