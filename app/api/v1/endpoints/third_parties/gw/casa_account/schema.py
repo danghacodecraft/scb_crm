@@ -11,7 +11,7 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.example import (
 from app.api.v1.endpoints.third_parties.gw.schema import (
     GWBranchDropdownResponse, GWCIFInfoResponse
 )
-from app.api.v1.schemas.utils import DropdownResponse, OptionalDropdownResponse
+from app.api.v1.schemas.utils import OptionalDropdownResponse
 
 
 class CasaAccountByCIFNumberResponse(BaseGWSchema):
@@ -83,7 +83,7 @@ class GWAccountInfoResponse(BaseGWSchema):
     latest_transaction_date: Optional[date] = Field(..., description="Ngày giao dịch gần nhất")
     open_date: Optional[date] = Field(..., description="Ngày mở tài khoản")
     maturity_date: Optional[date] = Field(..., description="Ngày đến hạn")
-    status: List[DropdownResponse] = Field(..., description="Trạng thái tài khoản (no debits, no credit..)")
+    status: List[OptionalDropdownResponse] = Field(..., description="Trạng thái tài khoản (no debits, no credit..)")
     lock_status: Optional[str] = Field(..., description="Trạng thái tài khoản (phong tỏa hoặc không)")
     class_name: Optional[str] = Field(...,
                                       description="Tên sản phẩm. Ví dụ: Tiết kiệm thông thường, phát lộc phát tài…")
@@ -196,10 +196,6 @@ class GWAccountInfoOpenCasaRequest(BaseGWSchema):
     account_class_code: str = Field(..., description="Mã sản phẩm")
 
 
-class GWStaffInfoCheckerCasaRequest(BaseGWSchema):
-    staff_name: str = Field(..., description="Tên nhân viên")
-
-
 class GWStaffInfoMakerCasaRequest(BaseGWSchema):
     staff_name: str = Field(..., description="Tên nhân viên")
 
@@ -226,22 +222,20 @@ class GWOpenCasaAccountResponse(BaseGWSchema):
 
 
 class GWAccountInfoCloseCasaRequest(BaseGWSchema):
-    account_num: Optional[str] = Field(..., description="Số tài khoản")
+    account_num: Optional[str] = Field(..., description="Số tài khoản chọn để khóa")
 
 
 class GWCloseCasaClosureResponse(BaseGWSchema):
-    close_mode: str = Field(..., description="Loại khóa tài khoản")
-    account_no: str = Field(..., description="Số tài khoản")
+    close_mode: str = Field(..., description="""Loại khóa tài khoản
+    \n `CASA`: Khóa tài khoản nhận tiền tệ chuyển khoản,
+    trường hợp này yêu cầu nhập account_no
+    \n `CASH`: Khóa tài khoản nhận tiền tệ""")
+    account_no: Optional[str] = Field(..., description="Số tài khoản nhận tiền từ tài khoản bị đóng")
 
 
 class GWCloseCasaAccountRequest(BaseGWSchema):
     account_info: GWAccountInfoCloseCasaRequest = Field(..., description="Thông tin tài khoản")
-    p_blk_closure: List[GWCloseCasaClosureResponse] = Field(..., description="Json Array CLOSE_MODE")
-    p_blk_charge_main: Optional[str] = Field(..., description="P Blk Charge Main")
-    p_blk_charge_details: Optional[str] = Field(..., description="P Blk Charge Details")
-    p_blk_udf: Optional[str] = Field(..., description="P Blk Udf")
-    staff_info_checker: GWStaffInfoCheckerCasaRequest = Field(..., description="Thông tin nhân viên kiểm tra")
-    staff_info_maker: GWStaffInfoMakerCasaRequest = Field(..., description="Thông tin nhân viên đóng tài khoản")
+    p_blk_closure: List[GWCloseCasaClosureResponse] = Field(..., description="Danh sách loại đóng tài khoản")
 
 
 class GWCloseCasaAccountResponse(BaseGWSchema):

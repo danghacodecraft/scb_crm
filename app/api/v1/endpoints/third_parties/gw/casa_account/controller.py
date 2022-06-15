@@ -3,8 +3,8 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_get_casa_account_by_cif_number, repos_gw_get_casa_account_info,
     repos_gw_get_close_casa_account,
     repos_gw_get_column_chart_casa_account_info,
-    repos_gw_open_casa_account, repos_gw_get_pie_chart_casa_account_info,
-    repos_gw_get_statements_casa_account_info
+    repos_gw_get_pie_chart_casa_account_info,
+    repos_gw_get_statements_casa_account_info, repos_gw_open_casa_account
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWOpenCasaAccountRequest, GWReportColumnChartHistoryAccountInfoRequest,
@@ -15,7 +15,9 @@ from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.utils.constant.gw import (
     GW_TRANSACTION_TYPE_SEND, GW_TRANSACTION_TYPE_WITHDRAW
 )
-from app.utils.error_messages import ERROR_CALL_SERVICE_GW, ERROR_ACCOUNT_NUMBER_NOT_NULL
+from app.utils.error_messages import (
+    ERROR_ACCOUNT_NUMBER_NOT_NULL, ERROR_CALL_SERVICE_GW
+)
 from app.utils.functions import string_to_date
 
 
@@ -114,6 +116,30 @@ class CtrGWCasaAccount(BaseController):
         staff_info_direct = account_info['staff_info_direct']
         staff_info_indirect = account_info['staff_info_indirect']
 
+        lock_none = {
+            "balance_lock": "",
+            "date_lock": "",
+            "expire_date_lock": "",
+            "type_code_lock": "",
+            "type_name_lock": "",
+            "reason_lock": "",
+            "ref_no": ""
+        }
+
+        lock_info_response = []
+
+        for lock_info in lock_infos:
+            lock_dict = dict(
+                balance_lock=lock_info['account_balance_lock'],
+                date_lock=lock_info['account_date_lock'],
+                expire_date_lock=lock_info['account_expire_date_lock'],
+                type_code_lock=lock_info['account_type_code_lock'],
+                type_name_lock=lock_info['account_type_name_lock'],
+                reason_lock=lock_info['account_reason_lock'],
+                ref_no=lock_info['account_ref_no'])
+            if lock_dict != lock_none:
+                lock_info_response.append(lock_dict)
+
         gw_casa_account_info_response = dict(
             number=account_info['account_num'],
             type=account_info['account_type'],
@@ -146,14 +172,7 @@ class CtrGWCasaAccount(BaseController):
             service_escrow=account_info['account_service_escrow'],
             service_escrow_ex_date=string_to_date(account_info['account_service_escrow_ex_date'],
                                                   _format=DATETIME_INPUT_OUTPUT_FORMAT),
-            lock_info=[dict(
-                balance_lock=lock_info['account_balance_lock'],
-                date_lock=lock_info['account_date_lock'],
-                expire_date_lock=lock_info['account_expire_date_lock'],
-                type_code_lock=lock_info['account_type_code_lock'],
-                type_name_lock=lock_info['account_type_name_lock'],
-                reason_lock=lock_info['account_reason_lock'],
-                ref_no=lock_info['account_ref_no']) for lock_info in lock_infos],
+            lock_info=lock_info_response,
             branch_info=dict(
                 code=branch_info['branch_code'],
                 name=branch_info['branch_name']
@@ -329,15 +348,12 @@ class CtrGWCasaAccount(BaseController):
         gw_open_casa_account_info = self.call_repos(await repos_gw_get_close_casa_account(
             account_info=request.account_info,
             p_blk_closure=request.p_blk_closure,
-            p_blk_charge_main=request.p_blk_charge_main,
-            p_blk_charge_details=request.p_blk_charge_details,
-            p_blk_udf=request.p_blk_udf,
-            staff_info_checker=request.staff_info_checker,
-            staff_info_maker=request.staff_info_maker,
             current_user=self.current_user
         ))
+
         transaction_info = gw_open_casa_account_info['closeCASA_out']['transaction_info']
-        if transaction_info['transaction_error_code']:
+
+        if transaction_info['transaction_error_code'] != "00":
             return self.response_exception(
                 msg=transaction_info['transaction_error_msg'], loc=transaction_info['transaction_error_code'],
                 detail=ERROR_CALL_SERVICE_GW)

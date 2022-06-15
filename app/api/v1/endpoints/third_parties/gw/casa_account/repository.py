@@ -3,8 +3,7 @@ from datetime import date
 from app.api.base.repository import ReposReturn
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWAccountInfoCloseCasaRequest, GWAccountInfoOpenCasaRequest,
-    GWCIFInfoOpenCasaRequest, GWStaffInfoCheckerCasaRequest,
-    GWStaffInfoMakerCasaRequest
+    GWCIFInfoOpenCasaRequest
 )
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.settings.event import service_gw
@@ -141,20 +140,15 @@ async def repos_gw_open_casa_account(
 
 
 async def repos_gw_get_close_casa_account(
-    account_info: GWAccountInfoCloseCasaRequest,
-    p_blk_closure,
-    p_blk_charge_main,
-    p_blk_charge_details,
-    p_blk_udf,
-    staff_info_checker: GWStaffInfoCheckerCasaRequest,
-    staff_info_maker: GWStaffInfoMakerCasaRequest,
-    current_user: AuthResponse
+        account_info: GWAccountInfoCloseCasaRequest,
+        p_blk_closure,
+        current_user: AuthResponse
 ):
     current_user = current_user.user_info
     is_success, gw_close_casa_account_info = await service_gw.get_close_casa_account(
-        account_info=account_info, p_blk_closure=p_blk_closure, p_blk_charge_main=p_blk_charge_main,
-        staff_info_checker=staff_info_checker, p_blk_charge_details=p_blk_charge_details, p_blk_udf=p_blk_udf,
-        staff_info_maker=staff_info_maker, current_user=current_user
+        account_info=account_info,
+        p_blk_closure=p_blk_closure,
+        current_user=current_user
     )
     if not is_success:
         return ReposReturn(
