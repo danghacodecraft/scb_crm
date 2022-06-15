@@ -5,9 +5,7 @@ from pydantic import Field
 
 from app.api.base.schema import BaseSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
-from app.api.v1.schemas.utils import (
-    DropdownRequest, OptionalDropdownRequest, OptionalDropdownResponse
-)
+from app.api.v1.schemas.utils import DropdownRequest, OptionalDropdownResponse
 
 
 ############################################################
@@ -80,8 +78,8 @@ class BasicInformationResponse(BaseSchema):
     customer_relationship: DropdownRequest = Field(..., description="Mối quan hệ của khách hàng với đồng sở hữu")
     full_name_vn: str = Field(..., description="Họ và tên")
     date_of_birth: str = Field(..., description="Ngày sinh")
-    gender: OptionalDropdownRequest = Field(..., description="Giới tính")
-    nationality: OptionalDropdownRequest = Field(..., description="Quốc tịch")
+    gender: OptionalDropdownResponse = Field(..., description="Giới tính")
+    nationality: OptionalDropdownResponse = Field(..., description="Quốc tịch")
     mobile_number: str = Field(..., description="Số ĐTDĐ")
     signature: List[SignatureResponse] = Field(..., description="Mẫu chữ ký")
 
@@ -90,7 +88,7 @@ class IdentityDocumentResponse(BaseSchema):
     identity_number: str = Field(..., description="Số CMND/CCCD/Hộ Chiếu")
     issued_date: date = Field(..., description="Ngày cấp")
     expired_date: date = Field(..., description="Ngày hết hạn")
-    place_of_issue: OptionalDropdownRequest = Field(..., description="Nơi cấp")
+    place_of_issue: OptionalDropdownResponse = Field(..., description="Nơi cấp")
 
 
 class AddressInformationResponse(BaseSchema):
