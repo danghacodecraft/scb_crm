@@ -9,9 +9,7 @@ from app.third_parties.oracle.models.cif.form.model import (
 from app.utils.constant.business_type import (
     BUSINESS_TYPE_AMOUNT_BLOCK, BUSINESS_TYPE_AMOUNT_UNBLOCK
 )
-from app.utils.constant.gw import (
-    BUSINESS_FORM_AMOUNT_BLOCK, GW_CASA_RESPONSE_STATUS_SUCCESS
-)
+from app.utils.constant.gw import GW_CASA_RESPONSE_STATUS_SUCCESS
 from app.utils.error_messages import ERROR_BOOKING_CODE_EXISTED, MESSAGE_STATUS
 from app.utils.functions import generate_uuid, now, orjson_dumps
 
@@ -51,7 +49,7 @@ async def repos_create_booking_payment(
         ),
         BookingBusinessForm(
             booking_id=booking_id,
-            business_form_id=BUSINESS_FORM_AMOUNT_BLOCK,
+            business_form_id=business_type_code,
             save_flag=False,
             form_data=orjson_dumps(form_data),
             log_data=orjson_dumps(log_data),
