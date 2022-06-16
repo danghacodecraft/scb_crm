@@ -1749,7 +1749,7 @@ class ServiceGW:
 
         try:
             async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW][Payment] {response.status} {api_url}")
+                logger.log("SERVICE", f"[GW][UserInfo] {response.status} {api_url}")
                 if response.status != status.HTTP_200_OK:
                     if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
                         return_error = await response.json()

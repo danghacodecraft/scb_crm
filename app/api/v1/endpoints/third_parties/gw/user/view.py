@@ -16,15 +16,15 @@ router = APIRouter()
 
 @router.post(
     path="/{user_id}/",
-    name="[GW] Amount Block",
-    description="Phong tỏa tài khoản",
+    name="[GW] Select User Info By User Id",
+    description="Lấy thông tin user trên CoreFCC",
     responses=swagger_response(
         response_model=ResponseData[List[GWDetailUserInfoResponse]],
         success_status_code=status.HTTP_200_OK
     )
 )
 async def view_gw_amount_block(
-        user_id: str = Path(..., description="Số tài khoản"),
+        user_id: str = Path(..., description="User ID"),
         current_user=Depends(get_current_user_from_header())
 ):
     gw_detail_user = await CtrGWUser(current_user).ctr_gw_detail_user(user_id=user_id)
