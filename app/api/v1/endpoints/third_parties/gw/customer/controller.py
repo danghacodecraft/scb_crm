@@ -19,10 +19,13 @@ from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import (
     Branch, Career, MaritalStatus, ResidentStatus
 )
+from app.utils.constant.approval import (
+    BUSINESS_JOB_CODE_CIF_INFO, BUSINESS_JOB_CODE_INIT
+)
 from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import (
     CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE, CUSTOMER_COMPLETED_FLAG,
-    CUSTOMER_TYPE_ORGANIZE, RESIDENT_ADDRESS_CODE, TRANSACTION_JOB_OPEN_CIF
+    CUSTOMER_TYPE_ORGANIZE, RESIDENT_ADDRESS_CODE
 )
 from app.utils.constant.gw import (
     GW_AUTO, GW_CASA_RESPONSE_STATUS_SUCCESS, GW_CUSTOMER_TYPE_B,
@@ -398,7 +401,7 @@ class CtrGWCustomer(BaseController):
                 id=cif_number,
                 basic_information=dict(
                     cif_number=cif_number,
-                    customer_relationship=None,     # TODO: Không tìm ra mối qh KH
+                    customer_relationship=None,  # TODO: Không tìm ra mối qh KH
                     full_name_vn=full_name_vn,
                     date_of_birth=date_of_birth,
                     gender=dropdown_gender,
@@ -511,8 +514,8 @@ class CtrGWCustomer(BaseController):
         return self.response(data=customer_information)
 
     async def ctr_gw_check_exist_customer_detail_info(
-        self,
-        cif_number: str
+            self,
+            cif_number: str
     ):
         gw_check_exist_customer_detail_info = self.call_repos(await repos_gw_get_customer_info_detail(
             cif_number=cif_number,
@@ -937,15 +940,26 @@ class CtrGWCustomer(BaseController):
         #     cif_id=cif_id, session=self.oracle_session
         # ))
 
-        transaction_job = {
-            "booking_id": BOOKING_ID,
-            "business_job_id": TRANSACTION_JOB_OPEN_CIF,
-            "complete_flag": True,
-            "error_code": "",
-            "error_desc": "",
-            "created_at": now(),
-            "updated_at": now()
-        }
+        transaction_jobs = [
+            {
+                "booking_id": BOOKING_ID,
+                "business_job_id": BUSINESS_JOB_CODE_INIT,
+                "complete_flag": True,
+                "error_code": "",
+                "error_desc": "",
+                "created_at": now(),
+                "updated_at": now()
+            },
+            {
+                "booking_id": BOOKING_ID,
+                "business_job_id": BUSINESS_JOB_CODE_CIF_INFO,
+                "complete_flag": True,
+                "error_code": "",
+                "error_desc": "",
+                "created_at": now(),
+                "updated_at": now()
+            }
+        ]
 
         is_success, response_data = self.call_repos(
             await repos_gw_open_cif(
@@ -953,7 +967,7 @@ class CtrGWCustomer(BaseController):
                 customer_info=customer_info,
                 account_info=account_info,
                 current_user=current_user.user_info,
-                transaction_job=transaction_job,
+                transaction_jobs=transaction_jobs,
                 session=self.oracle_session
             )
         )
