@@ -980,35 +980,34 @@ class CtrApproval(BaseController):
         )
         sla_id = None
         sla_name = None
-        deadline = None
+        sla_deadline = None
         if current_stage_code == CIF_STAGE_INIT:
             sla_id = "CIF_GDV"
             sla_name = "SLA GDV Mở CIF"
-            deadline = 1
+            sla_deadline = 1
         elif current_stage_code == CIF_STAGE_APPROVE_KSV:
             sla_id = "CIF_KSV"
             sla_name = "SLA KSV Mở CIF"
-            deadline = 2
+            sla_deadline = 2
         elif current_stage_code == CIF_STAGE_APPROVE_KSS:
             sla_id = "CIF_KSS"
-            sla_name = "SLA GDV KSS"
-            deadline = 3
+            sla_name = "SLA KSS Mở CIF"
+            sla_deadline = 3
+        elif current_stage_code == CIF_STAGE_COMPLETED:
+            sla_id = "CIF_COMPLETED"
+            sla_name = "SLA Completed Mở CIF"
+            sla_deadline = 4
 
-        if current_stage.is_reject == 0:
-            parent_id = await repos_get_sla_transaction_parent_id_from_stage_transaction_id(
-                stage_transaction_id=previous_stage_code, session=self.oracle_session
-            )
-        else:
-            parent_id = await repos_get_sla_transaction_parent_id_from_stage_transaction_id(
-                stage_transaction_id=next_stage_code, session=self.oracle_session
-            )
+        sla_trans_parent_id = await repos_get_sla_transaction_parent_id_from_stage_transaction_id(
+            stage_transaction_id=previous_transaction_stage.id, session=self.oracle_session
+        )
 
         saving_sla_transaction = dict(
             id=generate_uuid(),
-            parent_id=parent_id,
+            parent_id=sla_trans_parent_id,
             sla_id=sla_id,
             sla_name=sla_name,
-            deadline=deadline,
+            sla_deadline=sla_deadline,
             active_flag=1,
             created_at=now()
         )

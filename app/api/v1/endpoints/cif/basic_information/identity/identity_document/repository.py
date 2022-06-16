@@ -1213,7 +1213,4 @@ async def repos_get_sla_transaction_parent_id_from_stage_transaction_id(stage_tr
         .filter(TransactionStage.id == stage_transaction_id)
     ).scalar()
 
-    if not sla_id:
-        return ReposReturn(is_error=True, msg='get empty sla transaction')
-
     return sla_id
