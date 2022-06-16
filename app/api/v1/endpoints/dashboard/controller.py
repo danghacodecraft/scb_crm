@@ -4,9 +4,10 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.dashboard.repository import (
     repos_accounting_entry, repos_branch, repos_count_total_item,
     repos_get_customer, repos_get_senders, repos_get_total_item,
-    repos_get_transaction_list, repos_region
+    repos_get_transaction_list, repos_region, repos_get_open_casa_info_from_booking,
+    repos_get_open_cif_info_from_booking
 )
-from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
+from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA
 from app.utils.constant.cif import (
     CIF_STAGE_ROLE_CODE_AUDIT, CIF_STAGE_ROLE_CODE_SUPERVISOR,
     CIF_STAGE_ROLE_CODE_TELLER, CIF_STAGE_ROLE_CODES
@@ -49,40 +50,40 @@ class CtrDashboard(BaseController):
 
         mapping_datas = {}
         booking_ids = []
+        business_type_init_cifs = []
+        business_type_open_casas = []
 
         for transaction in transaction_list:
-            booking, business_type, branch, customer, status = transaction
+            booking, branch, status = transaction
 
             booking_id = booking.id
             booking_code = booking.code
             booking_ids.append(booking_id)
+            business_type = booking.business_type
 
             business_type_id = business_type.id
             business_type_name = business_type.name
 
             branch_code = branch.code
             branch_name = branch.name
-            full_name_vn = customer.full_name_vn
-            cif_id = customer.id
-            cif_number = customer.cif_number
 
-            business_type_number = None
             if business_type_id == BUSINESS_TYPE_INIT_CIF:
-                business_type_number = cif_number
-
+                business_type_init_cifs.append(booking_id)
+            if business_type_id == BUSINESS_TYPE_OPEN_CASA:
+                business_type_open_casas.append(booking_id)
             # TODO: còn các loại nghiệp vụ khác
 
             mapping_datas.update({
                 booking_id: dict(
                     created_at=booking.created_at,
-                    full_name_vn=full_name_vn,
-                    cif_id=cif_id,
-                    cif_number=cif_number,
+                    full_name_vn=None,
+                    cif_id=None,
+                    cif_number=None,
                     booking_id=booking_id,
                     booking_code=booking_code,
                     business_type=dict(
                         name=business_type_name,
-                        number=business_type_number
+                        number=None
                     ),
                     branch_code=branch_code,
                     branch_name=branch_name,
@@ -103,9 +104,32 @@ class CtrDashboard(BaseController):
                 )
             })
 
-        if booking_ids:
+        open_casa_infos = self.call_repos(
+            await repos_get_open_casa_info_from_booking(booking_ids=business_type_open_casas, session=self.oracle_session))
+
+        for booking, _, casa_account, customer in open_casa_infos:
+            mapping_datas[booking.parent_id].update(
+                full_name_vn=customer.full_name_vn,
+                cif_id=customer.id,
+                cif_number=customer.cif_number
+            )
+            mapping_datas[booking.parent_id]['business_type'].update(number = casa_account.casa_account_number)
+
+        open_cif_infos = self.call_repos(
+            await repos_get_open_cif_info_from_booking(booking_ids=business_type_init_cifs, session=self.oracle_session))
+
+        for booking, _, customer in open_cif_infos:
+            if customer:
+                mapping_datas[booking.id].update(
+                    full_name_vn=customer.full_name_vn,
+                    cif_id=customer.id,
+                    cif_number=customer.cif_number
+                )
+                mapping_datas[booking.id]['business_type'].update(number=customer.cif_number)
+
+        if business_type_init_cifs:
             stage_infos = self.call_repos(await repos_get_senders(
-                booking_ids=tuple(booking_ids),
+                booking_ids=tuple(business_type_init_cifs),
                 session=self.oracle_session
             ))
 

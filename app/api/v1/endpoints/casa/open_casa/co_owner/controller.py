@@ -15,6 +15,8 @@ from app.api.v1.endpoints.third_parties.gw.customer.controller import (
     CtrGWCustomer
 )
 from app.api.v1.others.booking.controller import CtrBooking
+from app.third_parties.oracle.models.master_data.address import AddressCountry
+from app.third_parties.oracle.models.master_data.customer import CustomerGender
 from app.utils.constant.business_type import (
     BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA
 )
@@ -182,6 +184,16 @@ class CtrCoOwner(BaseController):
             basic_information = gw_data['basic_information']
             address_information = gw_data['address_information']
 
+            gender_name = basic_information["gender"]["name"]
+            dropdown_gender = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=CustomerGender, name=None, code=gender_name
+            )
+
+            nationality_name = basic_information['nationality']["name"]
+            dropdown_nationality = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=AddressCountry, name=None, code=nationality_name
+            )
+
             joint_account_holders.append(dict(
                 id=joint_account_holder.joint_account_holder_id,
                 basic_information=dict(
@@ -189,8 +201,8 @@ class CtrCoOwner(BaseController):
                     customer_relationship=dropdown(customer_relationship_type),
                     full_name_vn=basic_information['full_name_vn'],
                     date_of_birth=basic_information['date_of_birth'],
-                    gender=basic_information['gender'],
-                    nationality=basic_information['nationality'],
+                    gender=dropdown_gender,
+                    nationality=dropdown_nationality,
                     mobile_number=basic_information['mobile_number'],
                     signature=[]
                 ),
