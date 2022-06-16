@@ -1,24 +1,30 @@
+from starlette import status
+
 from app.api.base.controller import BaseController
+from app.api.v1.endpoints.casa.open_casa.open_casa.repository import repos_get_customer_by_cif_number
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_get_casa_account_by_cif_number, repos_gw_get_casa_account_info,
     repos_gw_get_close_casa_account,
     repos_gw_get_column_chart_casa_account_info,
     repos_gw_get_pie_chart_casa_account_info,
-    repos_gw_get_statements_casa_account_info, repos_gw_open_casa_account
+    repos_gw_get_statements_casa_account_info, repos_gw_open_casa_account, repos_open_casa_get_casa_account_infos,
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWOpenCasaAccountRequest, GWReportColumnChartHistoryAccountInfoRequest,
     GWReportPieChartHistoryAccountInfoRequest,
     GWReportStatementHistoryAccountInfoRequest
 )
+from app.api.v1.others.permission.controller import PermissionController
 from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
+from app.utils.constant.approval import CIF_STAGE_APPROVE_KSV
 from app.utils.constant.gw import (
     GW_TRANSACTION_TYPE_SEND, GW_TRANSACTION_TYPE_WITHDRAW
 )
+from app.utils.constant.idm import IDM_MENU_CODE_OPEN_CIF, IDM_PERMISSION_CODE_KSV, IDM_GROUP_ROLE_CODE_APPROVAL
 from app.utils.error_messages import (
-    ERROR_ACCOUNT_NUMBER_NOT_NULL, ERROR_CALL_SERVICE_GW
+    ERROR_CALL_SERVICE_GW, ERROR_PERMISSION
 )
-from app.utils.functions import string_to_date
+from app.utils.functions import string_to_date, now
 
 
 class CtrGWCasaAccount(BaseController):
@@ -329,19 +335,66 @@ class CtrGWCasaAccount(BaseController):
             report_casa_account=column_chart))
 
     async def ctr_gw_open_casa_account(self, request: GWOpenCasaAccountRequest):
-
-        if request.account_info.acc_spl and not request.account_info.account_num:
-            return self.response_exception(msg=ERROR_ACCOUNT_NUMBER_NOT_NULL, loc="account_info -> account_num")
-
-        gw_open_casa_account_info = self.call_repos(await repos_gw_open_casa_account(
-            cif_info=request.cif_info,
-            account_info=request.account_info,
-            current_user=self.current_user
+        current_user = self.current_user
+        current_user_info = current_user.user_info
+        is_role_supervisor = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
+            auth_response=current_user,
+            menu_code=IDM_MENU_CODE_OPEN_CIF,
+            group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
+            permission_code=IDM_PERMISSION_CODE_KSV,
+            stage_code=CIF_STAGE_APPROVE_KSV
         ))
-        casa_account_number = gw_open_casa_account_info['openCASA_out']['data_output']['account_info']['account_num']
+        if not is_role_supervisor:
+            self.response_exception(
+                loc=f"user: {current_user_info.code} - {current_user_info.username}",
+                msg=ERROR_PERMISSION,
+                error_status_code=status.HTTP_403_FORBIDDEN
+            )
+
+        cif_number = request.cif_number
+        booking_parent_id = request.booking_parent_id
+        # Kiểm tra số CIF có tồn tại trong CRM không
+        self.call_repos(await repos_get_customer_by_cif_number(
+            cif_number=cif_number,
+            session=self.oracle_session
+        ))
+        casa_accounts = request.casa_accounts
+        casa_account_ids = []
+        for casa_account in casa_accounts:
+            casa_account_ids.append(casa_account.id)
+
+        casa_account_infos = self.call_repos(await repos_open_casa_get_casa_account_infos(
+            casa_account_ids=casa_account_ids,
+            session=self.oracle_session
+        ))
+        casa_account_successes = {}
+        casa_account_unsuccesses = {}
+        for casa_account_info in casa_account_infos:
+            self_selected_account_flag = casa_account_info.self_selected_account_flag
+
+            casa_account_id = casa_account_info.id
+            casa_account_unsuccesses.update({casa_account_id: None})
+
+            gw_open_casa_account_info = self.call_repos(await repos_gw_open_casa_account(
+                cif_number=cif_number,
+                self_selected_account_flag=self_selected_account_flag,
+                casa_account_info=casa_account_info,
+                current_user=self.current_user,
+                booking_parent_id=booking_parent_id,
+                session=self.oracle_session
+            ))
+            casa_account_successes.update({casa_account_id: gw_open_casa_account_info['openCASA_out']['data_output']['account_info']['account_num']})
+            casa_account_unsuccesses.pop(casa_account_id)
 
         return self.response(data=dict(
-            number=casa_account_number
+            successes=[dict(
+                id=casa_account_id,
+                number=casa_account_number
+            )for casa_account_id, casa_account_number in casa_account_successes.items()],
+            unsuccesses=[dict(
+                id=casa_account_id,
+                number=casa_account_number
+            ) for casa_account_id, casa_account_number in casa_account_unsuccesses.items()]
         ))
 
     async def ctr_gw_get_close_casa_account(self, request):

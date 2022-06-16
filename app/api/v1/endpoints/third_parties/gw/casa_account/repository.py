@@ -1,17 +1,27 @@
 from datetime import date
+from typing import List
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
-    GWAccountInfoCloseCasaRequest, GWAccountInfoOpenCasaRequest,
-    GWCIFInfoOpenCasaRequest
+    GWAccountInfoCloseCasaRequest
 )
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.settings.event import service_gw
+from app.third_parties.oracle.models.cif.form.model import BookingBusinessForm
+from app.third_parties.oracle.models.cif.payment_account.model import CasaAccount
+from app.third_parties.oracle.models.master_data.others import TransactionJob
+from app.utils.constant.approval import BUSINESS_JOB_CODE_INIT, BUSINESS_JOB_CODE_START_CASA, \
+    BUSINESS_JOB_CODE_OPEN_CASA
+from app.utils.constant.cif import BUSINESS_FORM_OPEN_CASA_PD
 from app.utils.constant.gw import (
     GW_TRANSACTION_NAME_COLUMN_CHART, GW_TRANSACTION_NAME_PIE_CHART,
     GW_TRANSACTION_NAME_STATEMENT
 )
 from app.utils.error_messages import ERROR_CALL_SERVICE_GW
+from app.utils.functions import now, orjson_dumps, generate_uuid
 
 
 async def repos_gw_get_casa_account_by_cif_number(
@@ -120,14 +130,29 @@ async def repos_gw_get_statements_casa_account_info(
 
 
 async def repos_gw_open_casa_account(
-    cif_info: GWCIFInfoOpenCasaRequest,
-    account_info: GWAccountInfoOpenCasaRequest,
+    cif_number: str,
+    self_selected_account_flag: bool,
+    casa_account_info,
+    booking_parent_id: str,
+    session: Session,
     current_user: AuthResponse
 ):
     current_user = current_user.user_info
-    is_success, gw_open_casa_account_info = await service_gw.get_open_casa_account(
-        cif_info=cif_info, account_info=account_info, current_user=current_user
+    is_success, gw_open_casa_account_info, form_data = await service_gw.get_open_casa_account(
+        cif_number=cif_number,
+        self_selected_account_flag=self_selected_account_flag,
+        casa_account_info=casa_account_info,
+        current_user=current_user
     )
+    await repos_add_business_form_and_transaction_job(
+        booking_id=booking_parent_id,
+        business_form_id=BUSINESS_FORM_OPEN_CASA_PD,
+        form_data=form_data,
+        gw_response=gw_open_casa_account_info,
+        is_success=is_success,
+        session=session
+    )
+
     if not is_success:
         return ReposReturn(
             is_error=True,
@@ -159,3 +184,56 @@ async def repos_gw_get_close_casa_account(
         )
 
     return ReposReturn(data=gw_close_casa_account_info)
+
+
+async def repos_open_casa_get_casa_account_infos(
+    casa_account_ids: List[str],
+    session: Session
+):
+    casa_account_infos = session.execute(
+        select(
+            CasaAccount
+        )
+        .filter(CasaAccount.id.in_(casa_account_ids))
+    ).scalars().all()
+    return ReposReturn(data=casa_account_infos)
+
+
+async def repos_add_business_form_and_transaction_job(
+    booking_id: str,
+    business_form_id: str,
+    form_data: dict,
+    session: Session,
+    gw_response,
+    is_success: bool,
+    history_datas=[]
+):
+    error_code = None
+    error_desc = None
+    if not is_success:
+        transaction_info = gw_response['openCASA_out']['transaction_info']
+        error_code = transaction_info['transaction_error_code']
+        error_desc = transaction_info['transaction_error_msg']
+
+    session.add_all([
+        TransactionJob(**dict(
+            transaction_id=generate_uuid(),
+            booking_id=booking_id,
+            business_job_id=BUSINESS_JOB_CODE_OPEN_CASA,
+            complete_flag=is_success,
+            error_code=error_code,
+            error_desc=error_desc,
+            created_at=now()
+        )),
+        BookingBusinessForm(**dict(
+            booking_id=booking_id,
+            business_form_id=business_form_id,
+            save_flag=True,
+            created_at=now(),
+            form_data=orjson_dumps(form_data),
+            log_data=orjson_dumps(history_datas)
+        ))
+    ])
+
+    session.commit()
+    return True
