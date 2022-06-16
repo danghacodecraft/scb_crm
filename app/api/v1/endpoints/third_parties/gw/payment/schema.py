@@ -56,4 +56,9 @@ class PayInCashRequest(BaseSchema):
 # Response
 ########################################################################################################################
 class AccountAmountBlockResponse(BaseSchema):
+    booking_id: str = Field(..., description="Booking_id khởi tạo khi phong tỏa tài khoản")
     account_ref_no: str = Field(..., description="Số tham chiếu của lệnh phong tỏa tài khoản")
+
+
+class AccountAmountUnblockResponse(BaseSchema):
+    booking_id: str = Field(..., description="Booking_id khởi tạo khi phong tỏa tài khoản")
