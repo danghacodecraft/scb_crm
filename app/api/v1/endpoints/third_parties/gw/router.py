@@ -14,30 +14,24 @@ from app.api.v1.endpoints.third_parties.gw.history import view as views_history
 from app.api.v1.endpoints.third_parties.gw.organization import \
     view as views_organization
 from app.api.v1.endpoints.third_parties.gw.payment import view as views_payment
+from app.api.v1.endpoints.third_parties.gw.user import view as views_user
 
 router_module = APIRouter()
 
-router_module.include_router(
-    router=views_casa_account.router, prefix="/casa-account", tags=["[Third-Party][GW][Casa-Account]"]
-)
-router_module.include_router(
-    router=views_deposit_account.router, prefix="/deposit-account", tags=["[Third-Party][GW][Deposit-Account]"]
-)
-router_module.include_router(
-    router=views_customer.router, prefix="/customer", tags=["[Third-Party][GW][Customer]"]
-)
-router_module.include_router(
-    router=views_employee.router, prefix="/employee", tags=["[Third-Party][GW][Employee]"]
-)
-router_module.include_router(
-    router=views_organization.router, prefix="/organization", tags=["[Third-Party][GW][Organization]"]
-)
-router_module.include_router(
-    router=views_category.router, prefix="/category", tags=["[Third-Party][GW][Category]"]
-)
-router_module.include_router(
-    router=views_history.router, prefix="/history", tags=["[Third-Party][GW][History]"]
-)
-router_module.include_router(
-    router=views_payment.router, prefix="/payment", tags=["[Third-Party][GW][Payment]"]
-)
+router_module.include_router(router=views_casa_account.router, prefix="/casa-account", tags=["[Third-Party][GW][Casa-Account]"])
+
+router_module.include_router(router=views_deposit_account.router, prefix="/deposit-account", tags=["[Third-Party][GW][Deposit-Account]"])
+
+router_module.include_router(router=views_customer.router, prefix="/customer", tags=["[Third-Party][GW][Customer]"])
+
+router_module.include_router(router=views_employee.router, prefix="/employee", tags=["[Third-Party][GW][Employee]"])
+
+router_module.include_router(router=views_organization.router, prefix="/organization", tags=["[Third-Party][GW][Organization]"])
+
+router_module.include_router(router=views_category.router, prefix="/category", tags=["[Third-Party][GW][Category]"])
+
+router_module.include_router(router=views_history.router, prefix="/history", tags=["[Third-Party][GW][History]"])
+
+router_module.include_router(router=views_payment.router, prefix="/payment", tags=["[Third-Party][GW][Payment]"])
+
+router_module.include_router(router=views_user.router, prefix="/user", tags=["[Third-Party][GW][User]"])
