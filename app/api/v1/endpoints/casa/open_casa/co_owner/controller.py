@@ -225,7 +225,7 @@ class CtrCoOwner(BaseController):
                         id=agreement_authorization.id,
                         code=agreement_authorization.code,
                         name=agreement_authorization.name,
-                        active_flag=agreement_authorization.active_flag,
+                        agreement_flag=agreement_authorization.active_flag,
                         method_sign=method_sign.method_sign_type,
                         signature_list=[]
                     ))
