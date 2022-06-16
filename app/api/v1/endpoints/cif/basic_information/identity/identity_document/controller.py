@@ -736,7 +736,7 @@ class CtrIdentityDocument(BaseController):
         #                                                           document_type=ekyc_document_type_request)
         # if not is_valid:
         #     errors = validate_response['errors']
-        #     return_errors = []saving_sla_transaction
+        #     return_errors = []
         #     for key, value in errors.items():
         #         return_errors.append(f"{key} -> {value}")
         #     return self.response_exception(msg=ERROR_CALL_SERVICE_EKYC, detail=', '.join(return_errors))

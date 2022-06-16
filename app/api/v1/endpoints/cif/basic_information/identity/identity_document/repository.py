@@ -1202,3 +1202,18 @@ async def repos_compare_face(
         "similar_percent": compare_face_info.get('data').get('similarity_percent'),
         "face_uuid_ekyc": face_uuid
     })
+
+
+async def repos_get_sla_transaction_parent_id_from_stage_transaction_id(stage_transaction_id: str, session: Session):
+    sla_id = session.execute(
+        select(
+            SlaTransaction.id
+        )
+        .join(TransactionStage, SlaTransaction.id == TransactionStage.sla_transaction_id)
+        .filter(TransactionStage.id == stage_transaction_id)
+    ).scalar()
+
+    if not sla_id:
+        return ReposReturn(is_error=True, msg='get empty sla transaction')
+
+    return sla_id

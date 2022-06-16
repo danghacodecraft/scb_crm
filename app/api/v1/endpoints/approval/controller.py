@@ -14,10 +14,13 @@ from app.api.v1.endpoints.approval.repository import (
     repos_get_list_audit
 )
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
+from app.api.v1.endpoints.cif.basic_information.identity.identity_document.repository import (
+    repos_get_sla_transaction_parent_id_from_stage_transaction_id
+)
 from app.api.v1.endpoints.third_parties.gw.employee.repository import (
     repos_gw_get_employee_info_from_code
 )
-from app.api.v1.others.booking.controller import CtrBooking
+# from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
@@ -41,17 +44,15 @@ from app.utils.constant.idm import (
     IDM_MENU_CODE_OPEN_CIF, IDM_PERMISSION_CODE_KSS, IDM_PERMISSION_CODE_KSV,
     IDM_PERMISSION_CODE_OPEN_CIF
 )
-from app.utils.error_messages import (
+from app.utils.error_messages import (  # ERROR_APPROVAL_NO_FACE_IN_IDENTITY_STEP,; ERROR_APPROVAL_NO_FINGERPRINT_IN_IDENTITY_STEP,; ERROR_APPROVAL_UPLOAD_FINGERPRINT, ERROR_APPROVAL_UPLOAD_FACE,
     ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
     ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT,
     ERROR_APPROVAL_INCORRECT_UPLOAD_SIGNATURE,
     ERROR_APPROVAL_NO_DATA_IN_IDENTITY_STEP,
-    ERROR_APPROVAL_NO_FACE_IN_IDENTITY_STEP,
-    ERROR_APPROVAL_NO_FINGERPRINT_IN_IDENTITY_STEP,
-    ERROR_APPROVAL_NO_SIGNATURE_IN_IDENTITY_STEP, ERROR_APPROVAL_UPLOAD_FACE,
-    ERROR_APPROVAL_UPLOAD_FINGERPRINT, ERROR_APPROVAL_UPLOAD_SIGNATURE,
-    ERROR_CONTENT_NOT_NULL, ERROR_PERMISSION, ERROR_STAGE_COMPLETED,
-    ERROR_VALIDATE, ERROR_WRONG_STAGE_ACTION, MESSAGE_STATUS
+    ERROR_APPROVAL_NO_SIGNATURE_IN_IDENTITY_STEP,
+    ERROR_APPROVAL_UPLOAD_SIGNATURE, ERROR_CONTENT_NOT_NULL, ERROR_PERMISSION,
+    ERROR_STAGE_COMPLETED, ERROR_VALIDATE, ERROR_WRONG_STAGE_ACTION,
+    MESSAGE_STATUS
 )
 from app.utils.functions import (
     dropdown, generate_uuid, now, orjson_dumps, orjson_loads
@@ -673,7 +674,7 @@ class CtrApproval(BaseController):
         content = request.approval.content
         reject_flag = request.approval.reject_flag
         action_id = request.approval.action_id
-        business_type = await CtrBooking().ctr_get_business_type(booking_id=booking_id)
+        # business_type = await CtrBooking().ctr_get_business_type(booking_id=booking_id)
         business_type_id = BUSINESS_TYPE_INIT_CIF
 
         _, _, _, previous_transaction_stage, _, _, _ = self.call_repos(
@@ -929,6 +930,7 @@ class CtrApproval(BaseController):
             next_stage_role_code = next_stage_role.code
 
         saving_transaction_stage_status_id = generate_uuid()
+        saving_sla_transaction_id = generate_uuid()
         saving_transaction_stage_id = generate_uuid()
         saving_transaction_stage_lane_id = generate_uuid()
         saving_transaction_stage_phase_id = generate_uuid()
@@ -976,6 +978,40 @@ class CtrApproval(BaseController):
             created_at=now(),
             updated_at=now()
         )
+        sla_id = None
+        sla_name = None
+        deadline = None
+        if current_stage_code == CIF_STAGE_INIT:
+            sla_id = "CIF_GDV"
+            sla_name = "SLA GDV Mở CIF"
+            deadline = 1
+        elif current_stage_code == CIF_STAGE_APPROVE_KSV:
+            sla_id = "CIF_KSV"
+            sla_name = "SLA KSV Mở CIF"
+            deadline = 2
+        elif current_stage_code == CIF_STAGE_APPROVE_KSS:
+            sla_id = "CIF_KSS"
+            sla_name = "SLA GDV KSS"
+            deadline = 3
+
+        if current_stage.is_reject == 0:
+            parent_id = await repos_get_sla_transaction_parent_id_from_stage_transaction_id(
+                stage_transaction_id=previous_stage_code, session=self.oracle_session
+            )
+        else:
+            parent_id = await repos_get_sla_transaction_parent_id_from_stage_transaction_id(
+                stage_transaction_id=next_stage_code, session=self.oracle_session
+            )
+
+        saving_sla_transaction = dict(
+            id=generate_uuid(),
+            parent_id=parent_id,
+            sla_id=sla_id,
+            sla_name=sla_name,
+            deadline=deadline,
+            active_flag=1,
+            created_at=now()
+        )
 
         saving_transaction_stage = dict(
             id=saving_transaction_stage_id,
@@ -983,7 +1019,7 @@ class CtrApproval(BaseController):
             lane_id=saving_transaction_stage_lane_id,
             phase_id=saving_transaction_stage_phase_id,
             business_type_id=business_type_id,
-            sla_transaction_id=None,  # TODO
+            sla_transaction_id=saving_sla_transaction_id,
             transaction_stage_phase_code=current_stage_code,
             transaction_stage_phase_name=current_stage_name,
             is_reject=reject_flag,
@@ -1102,6 +1138,7 @@ class CtrApproval(BaseController):
             cif_id=cif_id,
             saving_transaction_stage_status=saving_transaction_stage_status,
             saving_transaction_stage_action=saving_transaction_stage_action,
+            saving_sla_transaction=saving_sla_transaction,
             saving_transaction_stage=saving_transaction_stage,
             saving_transaction_stage_lane=saving_transaction_stage_lane,
             saving_transaction_stage_phase=saving_transaction_stage_phase,
@@ -1223,8 +1260,8 @@ class CtrApproval(BaseController):
         Input: CustomerIdentity, CustomerIdentityImage
         Output: (face_transactions, fingerprint_transactions, signature_transactions)
         """
-        is_existed_face = False
-        is_existed_fingerprint = False
+        # is_existed_face = False
+        # is_existed_fingerprint = False
         is_existed_signature = False
         face_transactions = []
         fingerprint_transactions = []
@@ -1233,11 +1270,11 @@ class CtrApproval(BaseController):
             _, customer_identity_image = transaction
             image_type_id = customer_identity_image.image_type_id
             if image_type_id == IMAGE_TYPE_FACE:
-                is_existed_face = True
+                # is_existed_face = True
                 face_transactions.append(transaction)
                 continue
             if image_type_id == IMAGE_TYPE_FINGERPRINT:
-                is_existed_fingerprint = True
+                # is_existed_fingerprint = True
                 fingerprint_transactions.append(transaction)
                 continue
             if image_type_id == IMAGE_TYPE_SIGNATURE:

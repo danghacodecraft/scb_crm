@@ -3,7 +3,7 @@ from typing import List
 from sqlalchemy import and_, desc, select
 from sqlalchemy.orm import Session, aliased
 
-from app.api.base.repository import ReposReturn, auto_commit
+from app.api.base.repository import ReposReturn
 from app.third_parties.oracle.models.cif.basic_information.identity.model import (
     CustomerCompareImage, CustomerCompareImageTransaction, CustomerIdentity,
     CustomerIdentityImage, CustomerIdentityImageTransaction
@@ -15,9 +15,9 @@ from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingCustomer, TransactionDaily, TransactionSender
 )
 from app.third_parties.oracle.models.master_data.others import (
-    BusinessJob, BusinessType, TransactionJob, TransactionStage,
-    TransactionStageAction, TransactionStageLane, TransactionStagePhase,
-    TransactionStageRole, TransactionStageStatus
+    BusinessJob, BusinessType, SlaTransaction, TransactionJob,
+    TransactionStage, TransactionStageAction, TransactionStageLane,
+    TransactionStagePhase, TransactionStageRole, TransactionStageStatus
 )
 from app.utils.constant.cif import IMAGE_TYPE_FACE
 from app.utils.error_messages import ERROR_CIF_ID_NOT_EXIST
@@ -51,11 +51,12 @@ async def repos_get_approval_process(cif_id: str, session: Session) -> ReposRetu
     return ReposReturn(data=transactions)
 
 
-@auto_commit
+# @auto_commit
 async def repos_approve(
         cif_id: str,
         saving_transaction_stage_status: dict,
         saving_transaction_stage_action: dict,
+        saving_sla_transaction: dict,
         saving_transaction_stage: dict,
         saving_transaction_daily: dict,
         saving_transaction_stage_lane: dict,
@@ -89,11 +90,12 @@ async def repos_approve(
         transaction_parent_id=saving_transaction_daily_parent_id,
         transaction_root_id=saving_transaction_daily_root_id,
     ))
-    session.commit()
+    # session.commit()
 
     session.add_all([
         TransactionStageStatus(**saving_transaction_stage_status),
         TransactionStageAction(**saving_transaction_stage_action),
+        SlaTransaction(**saving_sla_transaction),
         TransactionStage(**saving_transaction_stage),
         TransactionDaily(**saving_transaction_daily),
         TransactionStageLane(**saving_transaction_stage_lane),
