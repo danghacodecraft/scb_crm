@@ -8,7 +8,7 @@ from app.api.v1.endpoints.cif.payment_account.co_owner.controller import (
     CtrCoOwner
 )
 from app.api.v1.endpoints.cif.payment_account.co_owner.schema import (
-    AccountHolderRequest, AccountHolderSuccessResponse
+    AccountHolderRequest, GetCoOwnerResponse
 )
 from app.api.v1.schemas.utils import SaveSuccessResponse
 
@@ -39,16 +39,18 @@ async def view_create_co_owner(
     name="B. Thông tin đồng sở hữu",
     description="Lấy dữ liệu tab `THÔNG TIN ĐỒNG SỞ HỮU` của khách hàng",
     responses=swagger_response(
-        response_model=ResponseData[AccountHolderSuccessResponse],
+        response_model=ResponseData[GetCoOwnerResponse],
         success_status_code=status.HTTP_200_OK
     ),
 )
 async def view_retrieve_co_owner(
         cif_id: str = Path(..., description='Id CIF ảo'),
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         current_user=Depends(get_current_user_from_header())
 ):
-    co_owner_data = await CtrCoOwner(current_user).ctr_co_owner(cif_id)
-    return ResponseData[AccountHolderSuccessResponse](**co_owner_data)
+    co_owner_data = await CtrCoOwner(current_user).ctr_co_owner(cif_id=cif_id, booking_id=BOOKING_ID)
+    return ResponseData[GetCoOwnerResponse](**co_owner_data)
+    # return ResponseData(**co_owner_data)
 
 # @router.get(
 #     path="/detail-co-owner/",

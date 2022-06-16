@@ -126,7 +126,7 @@ class CtrCoOwner(BaseController):
             business_type_code=BUSINESS_TYPE_OPEN_CASA,
             booking_id=booking_id,
             check_correct_booking_flag=False,
-            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_OPEN_CASA}"
         )
 
         # Check exist casa_account_id
