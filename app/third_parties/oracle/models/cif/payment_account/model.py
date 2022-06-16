@@ -122,6 +122,5 @@ class MethodSign(Base):
     created_at = Column(DateTime, comment='Ngày tạo')
     updated_at = Column(DateTime, comment='Ngày chỉnh sửa')
     agreement_flag = Column(NUMBER(1, 0, False), nullable=False, comment="Đánh dấu đồng ý nội dung")
-    method_sign_type = Column(NUMBER(2, 0, False), nullable=False, comment="Phương thức ký (1, 2, 3)")
     agree_join_acc_cif_num = Column(VARCHAR(7), nullable=True, comment="Số CIF tài khoản tham gia ký văn bản đồng ý Chủ sở hữu")
     agree_join_acc_name = Column(VARCHAR(100), nullable=True, comment="Tên tài khoản tham gia ký văn bản đồng ý Chủ sở hữu")
