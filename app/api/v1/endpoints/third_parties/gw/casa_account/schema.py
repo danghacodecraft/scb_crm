@@ -212,6 +212,7 @@ class GWOpenCasaResponse(BaseGWSchema):
     id: str = Field(..., description="Mã tài khoản thanh toán")
     number: Optional[str] = Field(..., description="Số tài khoản thanh toán")
 
+
 class GWOpenCasaAccountResponse(BaseGWSchema):
     successes: List[GWOpenCasaResponse] = Field(..., description="Những tài khoản thanh toán tạo thành công")
     unsuccesses: List[GWOpenCasaResponse] = Field(..., description="Những tài khoản thanh toán tạo `KHÔNG` thành công")
