@@ -24,7 +24,7 @@ from app.utils.constant.idm import IDM_MENU_CODE_OPEN_CIF, IDM_PERMISSION_CODE_K
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_GW, ERROR_PERMISSION
 )
-from app.utils.functions import string_to_date, now
+from app.utils.functions import string_to_date
 
 
 class CtrGWCasaAccount(BaseController):
