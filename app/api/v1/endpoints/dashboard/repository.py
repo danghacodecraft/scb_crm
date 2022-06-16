@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Optional
+from typing import Optional, List
 
 from sqlalchemy import and_, desc, func, or_, select
 from sqlalchemy.orm import Session
@@ -16,13 +16,14 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingCustomer, TransactionDaily, TransactionSender
+    Booking, BookingCustomer, TransactionDaily, TransactionSender, BookingAccount
 )
+from app.third_parties.oracle.models.cif.payment_account.model import CasaAccount
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
 )
 from app.third_parties.oracle.models.master_data.others import (
-    Branch, BusinessType, TransactionStage, TransactionStageRole,
+    Branch, TransactionStage, TransactionStageRole,
     TransactionStageStatus
 )
 from app.utils.constant.cif import CONTACT_ADDRESS_CODE
@@ -88,19 +89,13 @@ async def repos_get_transaction_list(region_id: Optional[str], branch_id: Option
                                      limit: int, page: int, session: Session):
     sql = select(
         Booking,
-        BusinessType,
         Branch,
-        Customer,
         TransactionStageStatus.name.label('status')
     ) \
-        .join(BusinessType, Booking.business_type_id == BusinessType.id) \
-        .outerjoin(Branch, Booking.branch_id == Branch.id) \
-        .join(BookingCustomer, Booking.id == BookingCustomer.booking_id) \
-        .join(Customer, BookingCustomer.customer_id == Customer.id) \
-        .outerjoin(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
-        .outerjoin(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
-        .outerjoin(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
-        .outerjoin(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
+        .join(Branch, Booking.branch_id == Branch.id) \
+        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
+        .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
+        .join(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
         .distinct()
     if region_id:
         sql = sql.filter(Branch.region_id == region_id)
@@ -165,7 +160,6 @@ async def repos_get_senders(
         .filter(TransactionDaily.transaction_root_id.in_(transaction_root_dailies))
     ).scalars().all()
 
-    # TODO: Sender với Daily đang confict cần có giải pháp
     stage_infos = session.execute(
         select(
             TransactionDaily,
@@ -274,7 +268,6 @@ async def repos_get_customer(
 
 async def repos_branch(
         branch_code: str,
-        session: Session
 ) -> ReposReturn:
     data_response = await service_dwh.get_branch(branch_code=branch_code)
 
@@ -283,7 +276,6 @@ async def repos_branch(
 
 async def repos_accounting_entry(
         branch_code: str,
-        session: Session
 ) -> ReposReturn:
     data_response = await service_dwh.accounting_entry(branch_code=branch_code, module=NAME_ACCOUNTING_ENTRY)
 
@@ -291,8 +283,44 @@ async def repos_accounting_entry(
 
 
 async def repos_region(
-        session: Session
 ) -> ReposReturn:
     data_response = await service_dwh.get_region()
 
     return ReposReturn(data=data_response)
+
+
+async def repos_get_open_casa_info_from_booking(
+    booking_ids: List,
+    session: Session
+) -> ReposReturn:
+    open_casa_infos = session.execute(
+        select(
+            Booking,
+            BookingAccount,
+            CasaAccount,
+            Customer
+        )
+        .join(BookingAccount, Booking.id == BookingAccount.booking_id)
+        .join(CasaAccount, BookingAccount.account_id == CasaAccount.id)
+        .join(Customer, CasaAccount.customer_id == Customer.id)
+        .filter(Booking.parent_id.in_(booking_ids))
+    ).all()
+
+    return ReposReturn(data=open_casa_infos)
+
+
+async def repos_get_open_cif_info_from_booking(
+    booking_ids: List,
+    session: Session
+) -> ReposReturn:
+    open_cif_infos = session.execute(
+        select(
+            Booking,
+            BookingCustomer,
+            Customer
+        )
+        .outerjoin(BookingCustomer, Booking.id == BookingCustomer.booking_id)
+        .outerjoin(Customer, BookingCustomer.customer_id == Customer.id)
+        .filter(Booking.id.in_(booking_ids))
+    ).all()
+    return ReposReturn(data=open_cif_infos)
