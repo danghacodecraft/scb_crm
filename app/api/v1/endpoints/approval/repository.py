@@ -3,7 +3,7 @@ from typing import List
 from sqlalchemy import and_, desc, select
 from sqlalchemy.orm import Session, aliased
 
-from app.api.base.repository import ReposReturn
+from app.api.base.repository import ReposReturn, auto_commit
 from app.third_parties.oracle.models.cif.basic_information.identity.model import (
     CustomerCompareImage, CustomerCompareImageTransaction, CustomerIdentity,
     CustomerIdentityImage, CustomerIdentityImageTransaction
@@ -51,7 +51,7 @@ async def repos_get_approval_process(cif_id: str, session: Session) -> ReposRetu
     return ReposReturn(data=transactions)
 
 
-# @auto_commit
+@auto_commit
 async def repos_approve(
         cif_id: str,
         saving_transaction_stage_status: dict,
@@ -90,7 +90,7 @@ async def repos_approve(
         transaction_parent_id=saving_transaction_daily_parent_id,
         transaction_root_id=saving_transaction_daily_root_id,
     ))
-    # session.commit()
+    session.commit()
 
     session.add_all([
         TransactionStageStatus(**saving_transaction_stage_status),
