@@ -31,6 +31,16 @@ class GWAccountStaffInfoIndirectResponse(BaseGWSchema):
     name: Optional[str] = Field(..., description="Tên nhân viên")
 
 
+class GWDepositAccountLockInfo(BaseGWSchema):
+    balance_lock: Optional[str] = Field(..., description="Số dư bị phong tỏa")
+    date_lock: Optional[str] = Field(..., description="Ngày phong tỏa")
+    expire_date_lock: Optional[str] = Field(..., description="Ngày hết phong tỏa")
+    type_code_lock: Optional[str] = Field(..., description="Tên loại phong tỏa")
+    type_name_lock: Optional[str] = Field(..., description="Mã loại phong tỏa")
+    reason_lock: Optional[str] = Field(..., description="Lý do phong tỏa")
+    ref_no: Optional[str] = Field(..., description="Số tham chiếu core")
+
+
 class GWDepositAccountInfoResponse(BaseGWSchema):
     number: Optional[str] = Field(..., description="Số tài khoản")
     term: Optional[str] = Field(..., description="Kỳ hạn, 1 tháng ,2 tháng… Dành cho tài khoản tiết kiệm")
@@ -50,6 +60,8 @@ class GWDepositAccountInfoResponse(BaseGWSchema):
                                       description="Tên sản phẩm. Ví dụ: Tiết kiệm thông thường, phát lộc phát tài…")
     class_code: Optional[str] = Field(..., description="Mã sản phẩm")
     interest_rate: Optional[str] = Field(..., description="Lãi suất")
+    roll_type: Optional[str] = Field(..., description="Loại tái ký")
+    lock_info: List[GWDepositAccountLockInfo] = Field(..., description="Thông tin tài khoản phong tỏa")
     branch_info: GWBranchDropdownResponse = Field(..., description="Thông tin chi nhánh")
     payin_account: GWDepositPayinAccountResponse = Field(..., description="Số tài khoản nguồn")
     payout_account: GWDepositPayoutAccountResponse = Field(..., description="Số tài khoản chỉ định lúc đáo hạn")

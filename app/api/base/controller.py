@@ -155,6 +155,24 @@ class BaseController:
             for info in self.call_repos(await repos_download_multi_file(uuids=uuids))
         }
 
+    async def get_info_multi_file(self, uuids: List[str]) -> dict:
+        """
+        Hàm get link download file từ service file
+        :param uuids:
+        :return: dict, key là uuid, value là link download file đó
+        """
+
+        # FIXME: service file không cho download các uuid trùng nhau, dữ liệu đang test nên có thể trùng uuid
+        uuids = list(set(uuids))
+
+        if not uuids:
+            return {}
+
+        return {
+            info['uuid']: info
+            for info in self.call_repos(await repos_download_multi_file(uuids=uuids))
+        }
+
     def append_error(self, msg: str, loc: str = "", detail: str = ""):
         """
         Hàm add exception để trả về
