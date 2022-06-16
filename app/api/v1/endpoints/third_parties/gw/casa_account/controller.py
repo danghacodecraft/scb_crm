@@ -1,13 +1,17 @@
 from starlette import status
 
 from app.api.base.controller import BaseController
-from app.api.v1.endpoints.casa.open_casa.open_casa.repository import repos_get_customer_by_cif_number
+from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
+    repos_get_customer_by_cif_number
+)
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_get_casa_account_by_cif_number, repos_gw_get_casa_account_info,
     repos_gw_get_close_casa_account,
     repos_gw_get_column_chart_casa_account_info,
     repos_gw_get_pie_chart_casa_account_info,
-    repos_gw_get_statements_casa_account_info, repos_gw_open_casa_account, repos_open_casa_get_casa_account_infos,
+    repos_gw_get_statements_casa_account_info, repos_gw_open_casa_account,
+    repos_open_casa_get_casa_account_infos,
+    repos_update_casa_account_to_approved
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWOpenCasaAccountRequest, GWReportColumnChartHistoryAccountInfoRequest,
@@ -20,11 +24,12 @@ from app.utils.constant.approval import CIF_STAGE_APPROVE_KSV
 from app.utils.constant.gw import (
     GW_TRANSACTION_TYPE_SEND, GW_TRANSACTION_TYPE_WITHDRAW
 )
-from app.utils.constant.idm import IDM_MENU_CODE_OPEN_CIF, IDM_PERMISSION_CODE_KSV, IDM_GROUP_ROLE_CODE_APPROVAL
-from app.utils.error_messages import (
-    ERROR_CALL_SERVICE_GW, ERROR_PERMISSION
+from app.utils.constant.idm import (
+    IDM_GROUP_ROLE_CODE_APPROVAL, IDM_MENU_CODE_OPEN_CIF,
+    IDM_PERMISSION_CODE_KSV
 )
-from app.utils.functions import string_to_date
+from app.utils.error_messages import ERROR_CALL_SERVICE_GW, ERROR_PERMISSION
+from app.utils.functions import now, string_to_date
 
 
 class CtrGWCasaAccount(BaseController):
@@ -385,6 +390,23 @@ class CtrGWCasaAccount(BaseController):
             ))
             casa_account_successes.update({casa_account_id: gw_open_casa_account_info['openCASA_out']['data_output']['account_info']['account_num']})
             casa_account_unsuccesses.pop(casa_account_id)
+
+        update_casa_accounts = []
+        casa_account_success_ids = []
+        for casa_account_id, casa_account_number in casa_account_successes.items():
+            update_casa_accounts.append(dict(
+                id=casa_account_id,
+                number=casa_account_number,
+                approve_status=True,
+                checker_id=current_user_info.code,
+                checker_at=now()
+            ))
+            casa_account_success_ids.append(casa_account_id)
+
+        self.call_repos(await repos_update_casa_account_to_approved(
+            update_casa_accounts=update_casa_accounts,
+            session=self.oracle_session
+        ))
 
         return self.response(data=dict(
             successes=[dict(
