@@ -103,6 +103,27 @@ class JointAccountHoldersResponse(BaseSchema):
     address_information: AddressInformationResponse = Field(..., description="Thông tin địa chỉ")
 
 
+class SignatureAgreementAuthorResponse(BaseSchema):
+    cif_number: str = CustomField(
+        description="Mã định danh của đồng sở hữu"
+    ).CIFNumberField
+    full_name_vn: str = Field(..., description="Tên tiếng việt của đồng sở hữu")
+
+
+class AgreementAuthorResponse(BaseSchema):
+    id: str = Field(..., description="Mã danh mục thỏa thuận và uỷ quyền")
+    code: str = Field(..., description="Code danh mục thỏa thuận và uỷ quyền")
+    name: str = Field(..., description="Nội dung của danh mục thỏa thuận và uỷ quyền")
+    agreement_flag: Optional[bool] = Field(
+        ...,
+        description="Thỏa thuận chữ ký các hồ sơ chứng từ.True: Có , False: Không",
+    )
+    method_sign: Optional[int] = Field(..., description="Phương thức ký")
+    signature_list: Optional[List[SignatureAgreementAuthorResponse]] = Field(
+        ..., description="Chữ ký của đồng sở hữu"
+    )
+
+
 class GetCoOwnerResponse(BaseSchema):
     joint_account_holder_flag: bool = Field(
         ..., description="Có đồng chủ sở hữu. `True`: Có , `False`: Không"
@@ -114,3 +135,6 @@ class GetCoOwnerResponse(BaseSchema):
     file_uuid: FileUuidResponse = Field(..., description="Tập tin đính kèm")
     number_of_joint_account_holder: int = Field(..., description="Số lượng đồng sở hữu")
     joint_account_holders: List[JointAccountHoldersResponse] = Field(..., description="Thông tin đồng sở hữu")
+    agreement_authorization: List[AgreementAuthorResponse] = Field(
+        ..., description="Danh mục thỏa thuận và ủy quyền"
+    )
