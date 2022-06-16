@@ -6,7 +6,9 @@ from app.settings.event import service_gw
 from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingBusinessForm
 )
-from app.utils.constant.business_type import BUSINESS_TYPE_AMOUNT_BLOCK
+from app.utils.constant.business_type import (
+    BUSINESS_TYPE_AMOUNT_BLOCK, BUSINESS_TYPE_AMOUNT_UNBLOCK
+)
 from app.utils.constant.gw import (
     BUSINESS_FORM_AMOUNT_BLOCK, GW_CASA_RESPONSE_STATUS_SUCCESS
 )
@@ -85,18 +87,28 @@ async def repos_gw_payment_amount_block(
     return ReposReturn(data=(booking_id, gw_payment_amount_block))
 
 
-async def repos_gw_payment_amount_unblock(current_user, data_input):
+async def repos_gw_payment_amount_unblock(current_user, data_input, session):
     is_success, gw_payment_amount_unblock = await service_gw.gw_payment_amount_unblock(
         data_input=data_input,
         current_user=current_user.user_info
     )
+
+    booking = await repos_create_booking_payment(
+        business_type_code=BUSINESS_TYPE_AMOUNT_UNBLOCK,
+        current_user=current_user.user_info,
+        form_data=data_input,
+        log_data=gw_payment_amount_unblock,
+        session=session
+    )
+    booking_id, booking_code = booking.data
+
     amount_unblock_out = gw_payment_amount_unblock.get('amountUnBlock_out', {})
 
     # check trường hợp lỗi
     if amount_unblock_out.get('transaction_info').get('transaction_error_code') != GW_CASA_RESPONSE_STATUS_SUCCESS:
         return ReposReturn(is_error=True, msg=amount_unblock_out.get('transaction_info').get('transaction_error_msg'))
 
-    return ReposReturn(data=gw_payment_amount_unblock)
+    return ReposReturn(data=(booking_id, gw_payment_amount_unblock))
 
 
 async def repos_gw_pay_in_cash(current_user, data_input):

@@ -145,11 +145,15 @@ class CtrGWPayment(BaseController):
                 "staff_name": "KHANHLQ"
             }
         }
-        gw_payment_amount_unblock = self.call_repos(await repos_gw_payment_amount_unblock(
+        booking_id, gw_payment_amount_unblock = self.call_repos(await repos_gw_payment_amount_unblock(
             data_input=data_input,
-            current_user=current_user
+            current_user=current_user,
+            session=self.oracle_session
         ))
-        return self.response(data=gw_payment_amount_unblock)
+        response_data = {
+            "booking_id": booking_id,
+        }
+        return self.response(data=response_data)
 
     async def ctr_gw_pay_in_cash(self, pay_in_cash: PayInCashRequest):
         current_user = self.current_user

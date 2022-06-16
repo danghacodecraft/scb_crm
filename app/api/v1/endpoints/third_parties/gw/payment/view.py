@@ -9,7 +9,7 @@ from app.api.v1.endpoints.third_parties.gw.payment.controller import (
 )
 from app.api.v1.endpoints.third_parties.gw.payment.schema import (
     AccountAmountBlockRequest, AccountAmountBlockResponse,
-    AccountAmountUnblock, PayInCashRequest
+    AccountAmountUnblock, AccountAmountUnblockResponse, PayInCashRequest
 )
 
 router = APIRouter()
@@ -42,7 +42,7 @@ async def view_gw_amount_block(
     name="[GW] Amount Unblock",
     description="Giải tỏa tài khoản",
     responses=swagger_response(
-        response_model=ResponseData[AccountAmountUnblock],
+        response_model=ResponseData[AccountAmountUnblockResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -53,7 +53,7 @@ async def view_gw_amount_unblock(
     gw_payment_amount_unblock = await CtrGWPayment(current_user).ctr_gw_payment_amount_unblock(
         account_amount_unblock=account_amount_unblock
     )
-    return ResponseData(**gw_payment_amount_unblock)
+    return ResponseData[AccountAmountUnblockResponse](**gw_payment_amount_unblock)
 
 
 @router.post(
