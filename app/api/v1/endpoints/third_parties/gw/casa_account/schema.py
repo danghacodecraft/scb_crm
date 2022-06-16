@@ -185,15 +185,8 @@ class GWReportStatementHistoryTDAccountInfoResponse(BaseGWSchema):
     expire_date: Optional[date] = Field(..., description='Ngày đến hạn')
 
 
-class GWCIFInfoOpenCasaRequest(BaseGWSchema):
-    cif_num: Optional[str] = CustomField().OptionalCIFNumberField
-
-
 class GWAccountInfoOpenCasaRequest(BaseGWSchema):
-    acc_spl: bool = Field(..., description="Tùy chọn tài khoản số đẹp")
-    account_num: Optional[str] = Field(..., description="Số tài khoản", min_length=3, max_length=3)
-    account_currency: str = Field(..., description="Loại tiền trong tài khoản")
-    account_class_code: str = Field(..., description="Mã sản phẩm")
+    id: str = Field(..., description="Id tài khoản Thanh toán")
 
 
 class GWStaffInfoMakerCasaRequest(BaseGWSchema):
@@ -210,15 +203,19 @@ class GWUdfInfoOpenCasaRequest(BaseGWSchema):
 
 
 class GWOpenCasaAccountRequest(BaseGWSchema):
-    cif_info: GWCIFInfoOpenCasaRequest = Field(..., description="Thông tin CIF")
-    account_info: GWAccountInfoOpenCasaRequest = Field(..., description="Thông tin tài khoản")
-    # staff_info_checker: GWStaffInfoCheckerCasaRequest = Field(..., description="Thông tin nhân viên kiểm tra")
-    # staff_info_maker: GWStaffInfoMakerCasaRequest = Field(..., description="Thông tin nhân viên tạo tài khoản")
-    # udf_info: GWUdfInfoOpenCasaRequest = Field(..., description="Thông tin UDF")
+    cif_number: str = CustomField().CIFNumberField
+    booking_parent_id: str = Field(..., description="Mã Booking Cha")
+    casa_accounts: List[GWAccountInfoOpenCasaRequest] = Field(..., description="Danh sách ID các tài khoản")
+
+
+class GWOpenCasaResponse(BaseGWSchema):
+    id: str = Field(..., description="Mã tài khoản thanh toán")
+    number: Optional[str] = Field(..., description="Số tài khoản thanh toán")
 
 
 class GWOpenCasaAccountResponse(BaseGWSchema):
-    number: str = Field(..., description="Số tài khoản thanh toán")
+    successes: List[GWOpenCasaResponse] = Field(..., description="Những tài khoản thanh toán tạo thành công")
+    unsuccesses: List[GWOpenCasaResponse] = Field(..., description="Những tài khoản thanh toán tạo `KHÔNG` thành công")
 
 
 class GWAccountInfoCloseCasaRequest(BaseGWSchema):

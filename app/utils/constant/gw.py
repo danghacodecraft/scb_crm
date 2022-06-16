@@ -41,7 +41,8 @@ GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_ID_FCC = '/users/v1.0/rest/selectUse
 GW_ENDPOINT_URL_PAYMENT_AMOUNT_BLOCK = "/payment/v1.0/rest/amountBlock"
 GW_ENDPOINT_URL_PAYMENT_AMOUNT_UNBLOCK = "/payment/v1.0/rest/amountUnBlock"
 GW_ENDPOINT_URL_PAY_IN_CASH = "/payment/v1.0/rest/payInCash"
-
+# ---------------------------------------------- USER ---------------------------------------------- #
+GW_ENDPOINT_URL_SELECT_USER_INFO = "/users/v1.0/rest/selectUserInfoByUserID"
 
 ######################################################################################################
 #                                           Constant                                                #
@@ -105,6 +106,9 @@ GW_SELECT = "Y"
 
 GW_HISTORY_ACCOUNT_NUM = "00576400195"
 GW_HISTORY_CHANGE_FIELD_ACCOUNT = "TD"
+
+GW_SELF_SELECTED_ACCOUNT_FLAG = 'Y'
+GW_SELF_UNSELECTED_ACCOUNT_FLAG = 'N'
 
 GW_YES = "DONG_Y"
 GW_NO_AGREEMENT_FLAG = "KHONG"

@@ -1,7 +1,7 @@
 import json
 from typing import List
 
-from sqlalchemy import select, and_, delete
+from sqlalchemy import select, and_, delete, update
 from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -15,10 +15,11 @@ from app.third_parties.oracle.models.cif.payment_account.model import (
 )
 from app.third_parties.oracle.models.master_data.account import AccountStructureType
 from app.third_parties.oracle.models.master_data.others import TransactionStageStatus, TransactionStage, \
-    TransactionStageLane, TransactionStagePhase, TransactionStageRole
+    TransactionStageLane, TransactionStagePhase, TransactionStageRole, TransactionJob
+from app.utils.constant.approval import BUSINESS_JOB_CODE_START_CASA
 from app.utils.constant.cif import ACTIVE_FLAG_ACTIVED, BUSINESS_FORM_OPEN_CASA_OPEN_CASA
 from app.utils.error_messages import ERROR_CIF_NUMBER_NOT_EXIST, ERROR_IDS_NOT_EXIST
-from app.utils.functions import get_index_positions, now
+from app.utils.functions import get_index_positions, now, generate_uuid
 
 
 @auto_commit
@@ -58,6 +59,7 @@ async def repos_save_casa_casa_account(
     session.execute(delete(BookingAccount).filter(BookingAccount.booking_id.in_(booking_ids)))
     session.execute(delete(Booking).filter(Booking.id.in_(booking_ids)))
     session.execute(delete(CasaAccount).filter(CasaAccount.id.in_(account_ids)))
+    session.execute(delete(BookingBusinessForm).filter(BookingBusinessForm.booking_id == booking_parent_id))
 
     # Cập nhật lại bằng dữ liệu mới
     session.bulk_save_objects([CasaAccount(**saving_casa_account) for saving_casa_account in saving_casa_accounts])
@@ -81,8 +83,28 @@ async def repos_save_casa_casa_account(
             save_flag=True,
             created_at=now(),
             log_data=history_datas
+        )),
+        TransactionJob(**dict(
+            transaction_id=generate_uuid(),
+            booking_id=booking_parent_id,
+            business_job_id=BUSINESS_JOB_CODE_START_CASA,
+            complete_flag=True,
+            error_code=None,
+            error_desc=None,
+            created_at=now()
         ))
     ])
+
+    # Update Booking
+    session.execute(
+        update(
+            Booking
+        )
+        .filter(Booking.id == booking_parent_id)
+        .values(
+            transaction_id=saving_transaction_daily['transaction_id']
+        )
+    )
 
     return ReposReturn(data=(saving_casa_accounts, saving_booking_accounts))
 
