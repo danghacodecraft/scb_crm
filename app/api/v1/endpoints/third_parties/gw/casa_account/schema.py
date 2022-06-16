@@ -143,25 +143,25 @@ class GWReportColumnChart(BaseGWSchema):
 
 
 class GWReportColumnChartHistoryAccountInfoResponse(BaseGWSchema):
-    fullname_vn: str = Field(..., description="Họ và tên")
-    type: str = Field(..., description="Loại tài khoản (thanh toán, tiết kiệm…)")
-    type_name: str = Field(..., description="Tên loại tài khoản")
-    number: str = Field(..., description="Số tài khoản")
-    currency: str = Field(..., description="Loại tiền trong tài khoản")
+    fullname_vn: Optional[str] = Field(..., description="Họ và tên")
+    type: Optional[str] = Field(..., description="Loại tài khoản (thanh toán, tiết kiệm…)")
+    type_name: Optional[str] = Field(..., description="Tên loại tài khoản")
+    number: Optional[str] = Field(..., description="Số tài khoản")
+    currency: Optional[str] = Field(..., description="Loại tiền trong tài khoản")
     balance_available_vnd: Optional[int] = Field(..., description="Số dư khả dụng trong tài khoản vnd")
     report_casa_account: List[GWReportColumnChart] = Field(..., escription="Báo cáo tài khoản CASA")
 
 
 class GWReportColumnChartHistoryAccountInfoRequest(BaseGWSchema):
     account_number: str = Field(..., description="Số tài khoản")
-    from_date: date = Field(date(year=2020, month=4, day=20), description="Từ ngày")
-    to_date: date = Field(date(year=2025, month=7, day=20), description="Đến ngày")
+    from_date: date = Field(..., description="Từ ngày")
+    to_date: date = Field(..., description="Đến ngày")
 
 
 class GWReportStatementHistoryAccountInfoRequest(BaseGWSchema):
     account_number: str = Field(..., description="Số tài khoản")
-    from_date: date = Field(date(year=2020, month=4, day=20), description="Từ ngày")
-    to_date: date = Field(date(year=2025, month=7, day=20), description="Đến ngày")
+    from_date: date = Field(..., description="Từ ngày")
+    to_date: date = Field(..., description="Đến ngày")
 
 
 class GWReportStatementHistoryAccountInfoResponse(BaseGWSchema):
