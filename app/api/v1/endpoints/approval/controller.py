@@ -11,7 +11,7 @@ from app.api.v1.endpoints.approval.repository import (
     repos_get_approval_identity_faces, repos_get_approval_identity_images,
     repos_get_approval_process, repos_get_business_job_codes,
     repos_get_business_jobs, repos_get_compare_image_transactions,
-    repos_get_list_audit
+    repos_get_list_audit, repos_get_business_jobs_by_open_casa
 )
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
 from app.api.v1.endpoints.third_parties.gw.employee.repository import (
@@ -31,7 +31,7 @@ from app.utils.constant.approval import (
     CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_COMPLETED, CIF_STAGE_INIT, INIT_RESPONSE, STAGE_BEGINS,
     INIT_STAGES, APPROVE_AUDIT_STAGES, APPROVE_SUPERVISOR_STAGES, COMPLETED_STAGES
 )
-from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA
+from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA, BUSINESS_TYPES
 from app.utils.constant.cif import (
     DROPDOWN_NONE_DICT, IMAGE_TYPE_FACE, IMAGE_TYPE_FINGERPRINT,
     IMAGE_TYPE_SIGNATURE
@@ -49,7 +49,7 @@ from app.utils.error_messages import (
     ERROR_APPROVAL_NO_SIGNATURE_IN_IDENTITY_STEP,
     ERROR_APPROVAL_UPLOAD_SIGNATURE,
     ERROR_CONTENT_NOT_NULL, ERROR_PERMISSION, ERROR_STAGE_COMPLETED,
-    ERROR_VALIDATE, ERROR_WRONG_STAGE_ACTION, MESSAGE_STATUS
+    ERROR_VALIDATE, ERROR_WRONG_STAGE_ACTION, MESSAGE_STATUS, ERROR_BUSINESS_TYPE_NOT_EXIST
 )
 from app.utils.functions import (
     dropdown, generate_uuid, now, orjson_dumps, orjson_loads
@@ -1278,10 +1278,20 @@ class CtrApproval(BaseController):
     async def ctr_get_business_jobs(self, booking_id: str, cif_id: str, business_type_code: str):
         # TODO: Kiểm tra booking_id, cif_id, business_type_code
         # Casa Account không cần cif_id
-        business_jobs = self.call_repos(await repos_get_business_jobs(
-            cif_id=cif_id,
-            session=self.oracle_session
-        ))
+        if business_type_code not in BUSINESS_TYPES:
+            self.response_exception(msg=ERROR_BUSINESS_TYPE_NOT_EXIST, loc=f'business_type_code: {business_type_code}')
+
+        business_jobs = []
+        if business_type_code == BUSINESS_TYPE_INIT_CIF:
+            business_jobs = self.call_repos(await repos_get_business_jobs(
+                cif_id=cif_id,
+                session=self.oracle_session
+            ))
+        if business_type_code == BUSINESS_TYPE_OPEN_CASA:
+            business_jobs = self.call_repos(await repos_get_business_jobs_by_open_casa(
+                booking_id=booking_id,
+                session=self.oracle_session
+            ))
 
         business_job_codes = self.call_repos(await repos_get_business_job_codes(
             business_type_code=business_type_code,

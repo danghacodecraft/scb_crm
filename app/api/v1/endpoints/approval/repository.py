@@ -411,6 +411,18 @@ async def repos_get_business_jobs(session: Session, cif_id: str):
     return ReposReturn(data=business_jobs)
 
 
+async def repos_get_business_jobs_by_open_casa(booking_id: str, session: Session):
+    business_jobs = session.execute(
+        select(
+            TransactionJob,
+            Booking
+        )
+        .join(TransactionJob, Booking.id == TransactionJob.booking_id)
+        .filter(Booking.id == booking_id)
+    ).scalars().all()
+    return ReposReturn(data=business_jobs)
+
+
 async def repos_get_business_job_codes(business_type_code: str, session: Session):
     business_job_codes = session.execute(
         select(
