@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlalchemy import insert, select, update
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -131,12 +131,12 @@ async def repos_gw_get_authorized(
 
 
 async def repos_gw_open_cif(
-    cif_id: str,
-    customer_info: dict,
-    account_info: dict,
-    current_user,
-    transaction_job: dict,
-    session: Session
+        cif_id: str,
+        customer_info: dict,
+        account_info: dict,
+        current_user,
+        transaction_jobs: List,
+        session: Session
 ):
     is_success, response_data = await service_gw.open_cif(
         cif_id=cif_id,
@@ -145,16 +145,16 @@ async def repos_gw_open_cif(
         current_user=current_user
     )
     if response_data.get('openCIFAuthorise_out').get('transaction_error_code') != GW_CASA_RESPONSE_STATUS_SUCCESS:
-        transaction_job.update({
-            "complete_flag": False,
-            "error_code": ERROR_OPEN_CIF,
-            "error_desc": response_data.get('openCIFAuthorise_out', {}).get('transaction_info', {}).get('transaction_error_msg')
-        })
+        for transaction_job in transaction_jobs:
+            transaction_job.update({
+                "complete_flag": False,
+                "error_code": ERROR_OPEN_CIF,
+                "error_desc": response_data.get('openCIFAuthorise_out', {}).get('transaction_info', {}).get(
+                    'transaction_error_msg')
+            })
     # insert transaction_job
-    session.execute(
-        insert(
-            TransactionJob
-        ).values(transaction_job)
+    session.bulk_save_objects(
+        TransactionJob(**transaction_job) for transaction_job in transaction_jobs
     )
     session.commit()
 
@@ -201,7 +201,6 @@ async def repos_get_customer_open_cif(
         cif_id: str,
         session: Session
 ):
-
     customer = session.execute(
         select(
             Customer,
