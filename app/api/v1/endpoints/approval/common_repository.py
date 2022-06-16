@@ -11,8 +11,9 @@ from app.third_parties.oracle.models.master_data.others import (
     TransactionStageStatus
 )
 from app.utils.constant.approval import (
-    CIF_STAGE_APPROVE_KSS, CIF_STAGE_BEGIN, CIF_STAGE_INIT
+    CIF_STAGE_APPROVE_KSS, CIF_STAGE_BEGIN, CIF_STAGE_INIT, INIT_STAGES
 )
+from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.error_messages import (
     ERROR_BEGIN_STAGE_NOT_EXIST, ERROR_NEXT_RECEIVER_NOT_EXIST,
     ERROR_NEXT_STAGE_NOT_EXIST
@@ -54,12 +55,13 @@ async def repos_get_begin_stage(business_type_id: str, session: Session):
 
 
 async def repos_get_stage_teller(business_type_id: str, session: Session):
+    stage_id = f'{business_type_id}_{CIF_STAGE_INIT}' if business_type_id != BUSINESS_TYPE_INIT_CIF else CIF_STAGE_INIT
     stage_teller = session.execute(
         select(
             Stage
         )
         .filter(and_(
-            Stage.id == CIF_STAGE_INIT,
+            Stage.id == stage_id,
             Stage.business_type_id == business_type_id
         ))
     ).scalar()
@@ -105,7 +107,7 @@ async def repos_get_next_stage(
     return ReposReturn(data=next_stage_info)
 
 
-async def repos_get_previous_stage(
+async def repos_open_cif_get_previous_stage(
         cif_id: str,
         session: Session
 ):
@@ -202,7 +204,7 @@ async def repos_get_stage_information(
     if is_give_back:
         # Nếu trả lại hồ sơ set reject flag để Khởi tạo hồ sơ lấy đc data
         reject_flag = False
-    if stage_id == CIF_STAGE_INIT:
+    if stage_id in INIT_STAGES:
         reject_flag = False
 
     stage_info = session.execute(
@@ -285,3 +287,21 @@ async def repos_get_next_receiver(
         _, next_receiver = next_receiver
 
     return ReposReturn(data=next_receiver)
+
+
+async def repos_open_casa_get_previous_stage(booking_id: str, session: Session):
+    previous_stage_info = session.execute(
+        select(
+            Booking,
+            TransactionDaily,
+            TransactionStage
+        )
+        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
+        .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id)
+        .filter(Booking.id == booking_id)
+    ).first()
+
+    if not previous_stage_info:
+        return ReposReturn(is_error=True, msg="ádsad")
+
+    return ReposReturn(data=previous_stage_info)

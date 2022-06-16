@@ -2,16 +2,16 @@ from starlette import status
 
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.common_repository import (
-    repos_get_next_stage, repos_get_previous_stage,
+    repos_get_next_stage, repos_open_cif_get_previous_stage,
     repos_get_previous_transaction_daily, repos_get_stage_information,
-    repos_get_stage_teller
+    repos_get_stage_teller, repos_open_casa_get_previous_stage
 )
 from app.api.v1.endpoints.approval.repository import (
     repos_approval_get_face_authentication, repos_approve,
     repos_get_approval_identity_faces, repos_get_approval_identity_images,
     repos_get_approval_process, repos_get_business_job_codes,
     repos_get_business_jobs, repos_get_compare_image_transactions,
-    repos_get_list_audit
+    repos_get_list_audit, repos_get_business_jobs_by_open_casa
 )
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
 from app.api.v1.endpoints.third_parties.gw.employee.repository import (
@@ -28,10 +28,10 @@ from app.third_parties.oracle.models.master_data.identity import (
 from app.third_parties.oracle.models.master_data.others import BusinessJob
 from app.third_parties.services.idm import ServiceIDM
 from app.utils.constant.approval import (
-    CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_BEGIN,
-    CIF_STAGE_COMPLETED, CIF_STAGE_INIT, INIT_RESPONSE
+    CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_COMPLETED, CIF_STAGE_INIT, INIT_RESPONSE, STAGE_BEGINS,
+    INIT_STAGES, APPROVE_AUDIT_STAGES, APPROVE_SUPERVISOR_STAGES, COMPLETED_STAGES
 )
-from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
+from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA, BUSINESS_TYPES
 from app.utils.constant.cif import (
     DROPDOWN_NONE_DICT, IMAGE_TYPE_FACE, IMAGE_TYPE_FINGERPRINT,
     IMAGE_TYPE_SIGNATURE
@@ -46,12 +46,10 @@ from app.utils.error_messages import (
     ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT,
     ERROR_APPROVAL_INCORRECT_UPLOAD_SIGNATURE,
     ERROR_APPROVAL_NO_DATA_IN_IDENTITY_STEP,
-    ERROR_APPROVAL_NO_FACE_IN_IDENTITY_STEP,
-    ERROR_APPROVAL_NO_FINGERPRINT_IN_IDENTITY_STEP,
-    ERROR_APPROVAL_NO_SIGNATURE_IN_IDENTITY_STEP, ERROR_APPROVAL_UPLOAD_FACE,
-    ERROR_APPROVAL_UPLOAD_FINGERPRINT, ERROR_APPROVAL_UPLOAD_SIGNATURE,
+    ERROR_APPROVAL_NO_SIGNATURE_IN_IDENTITY_STEP,
+    ERROR_APPROVAL_UPLOAD_SIGNATURE,
     ERROR_CONTENT_NOT_NULL, ERROR_PERMISSION, ERROR_STAGE_COMPLETED,
-    ERROR_VALIDATE, ERROR_WRONG_STAGE_ACTION, MESSAGE_STATUS
+    ERROR_VALIDATE, ERROR_WRONG_STAGE_ACTION, MESSAGE_STATUS, ERROR_BUSINESS_TYPE_NOT_EXIST
 )
 from app.utils.functions import (
     dropdown, generate_uuid, now, orjson_dumps, orjson_loads
@@ -59,8 +57,11 @@ from app.utils.functions import (
 
 
 class CtrApproval(BaseController):
-    async def ctr_approval_process(self, cif_id: str):
-        transactions = self.call_repos((await repos_get_approval_process(cif_id=cif_id, session=self.oracle_session)))
+    async def ctr_approval_process(self, booking_id: str):
+        transactions = self.call_repos((await repos_get_approval_process(
+            booking_id=booking_id,
+            session=self.oracle_session
+        )))
         response_data = []
         lst_parent = {}
 
@@ -328,7 +329,7 @@ class CtrApproval(BaseController):
 
         # Kiểm tra xem đang ở bước nào của giao dịch
         _, _, previous_transaction_daily, previous_transaction_stage, _, previous_transaction_sender, previous_transaction_stage_action = self.call_repos(
-            await repos_get_previous_stage(
+            await repos_open_cif_get_previous_stage(
                 cif_id=cif_id,
                 session=self.oracle_session
             ))
@@ -408,7 +409,7 @@ class CtrApproval(BaseController):
         #     )
 
         # Chưa có hồ sơ nào trước đó, GDV gửi hồ sơ đi
-        if previous_stage_code == CIF_STAGE_BEGIN:
+        if previous_stage_code in STAGE_BEGINS:
             # if not is_stage_teller:
             #     return self.response_exception(
             #         loc=f"Stage: {previous_stage_code}, "
@@ -423,7 +424,7 @@ class CtrApproval(BaseController):
                 teller_is_disable = False
 
         # Hồ sơ GDV đã gửi
-        elif previous_stage_code == CIF_STAGE_INIT:
+        elif previous_stage_code in INIT_STAGES:
             teller_is_reject = previous_transaction_stage_is_reject
             teller_stage_code = previous_stage_code
             teller_is_completed = True
@@ -474,7 +475,7 @@ class CtrApproval(BaseController):
                     dropdown_action_supervisor = dropdown(supervisor_transaction_stage_action)
 
         # KSV đã xử lý hồ sơ
-        elif previous_stage_code == CIF_STAGE_APPROVE_KSV:
+        elif previous_stage_code in APPROVE_SUPERVISOR_STAGES:
             supervisor_transaction_stage_action = previous_transaction_stage_action
             if previous_transaction_stage_action:
                 dropdown_action_supervisor = dropdown(supervisor_transaction_stage_action)
@@ -510,7 +511,7 @@ class CtrApproval(BaseController):
                 is_open_cif = True
 
         # KSS đã xử lý hồ sơ
-        elif previous_stage_code == CIF_STAGE_APPROVE_KSS:
+        elif previous_stage_code in APPROVE_AUDIT_STAGES:
             audit_transaction_stage = previous_transaction_stage
             audit_is_reject = previous_transaction_stage.is_reject
             audit_stage_code = previous_stage_code
@@ -674,13 +675,26 @@ class CtrApproval(BaseController):
         reject_flag = request.approval.reject_flag
         action_id = request.approval.action_id
         business_type = await CtrBooking().ctr_get_business_type(booking_id=booking_id)
-        business_type_id = BUSINESS_TYPE_INIT_CIF
+        business_type_id = business_type.code
 
-        _, _, _, previous_transaction_stage, _, _, _ = self.call_repos(
-            await repos_get_previous_stage(
-                cif_id=cif_id,
-                session=self.oracle_session
-            ))
+        previous_transaction_stage = None
+
+        if business_type_id == BUSINESS_TYPE_INIT_CIF:
+            _, _, _, previous_transaction_stage, _, _, _ = self.call_repos(
+                await repos_open_cif_get_previous_stage(
+                    cif_id=cif_id,
+                    session=self.oracle_session
+                ))
+        if business_type_id == BUSINESS_TYPE_OPEN_CASA:
+            _, _, previous_transaction_stage = self.call_repos(
+                await repos_open_casa_get_previous_stage(
+                    booking_id=booking_id,
+                    session=self.oracle_session
+                )
+            )
+
+        if not previous_transaction_stage:
+            return self.response_exception(msg="No Previous Transaction Stage")
 
         ################################################################################################################
         # PREVIOUS STAGE
@@ -730,7 +744,7 @@ class CtrApproval(BaseController):
             current_stage_code = CIF_STAGE_INIT
         else:
             # Nếu là bước GDV
-            if previous_stage_is_reject or previous_stage_code == CIF_STAGE_BEGIN:
+            if previous_stage_is_reject or previous_stage_code in STAGE_BEGINS:
                 current_stage = self.call_repos(await repos_get_stage_teller(
                     business_type_id=business_type_id,
                     session=self.oracle_session
@@ -824,7 +838,7 @@ class CtrApproval(BaseController):
             )
 
         (
-            current_stage_status, current_stage, _, current_lane, _, current_phase, current_stage_role,
+            current_stage_status, current_stage, _, current_lane, current_stage_phase, current_phase, current_stage_role,
             current_stage_action
         ) = self.call_repos(await repos_get_stage_information(
             business_type_id=business_type_id,
@@ -850,7 +864,7 @@ class CtrApproval(BaseController):
         if current_stage:
             ############################################################################################################
             # check quyền user
-            if current_stage_code == CIF_STAGE_INIT:
+            if current_stage_code in INIT_STAGES:
                 self.call_repos(await PermissionController.ctr_approval_check_permission(
                     auth_response=auth_response,
                     menu_code=IDM_MENU_CODE_OPEN_CIF,
@@ -858,7 +872,7 @@ class CtrApproval(BaseController):
                     permission_code=IDM_PERMISSION_CODE_OPEN_CIF,
                     stage_code=CIF_STAGE_INIT
                 ))
-            elif current_stage_code == CIF_STAGE_APPROVE_KSV:
+            elif current_stage_code in APPROVE_SUPERVISOR_STAGES:
                 self.call_repos(await PermissionController.ctr_approval_check_permission(
                     auth_response=auth_response,
                     menu_code=IDM_MENU_CODE_OPEN_CIF,
@@ -866,7 +880,7 @@ class CtrApproval(BaseController):
                     permission_code=IDM_PERMISSION_CODE_KSV,
                     stage_code=CIF_STAGE_APPROVE_KSV
                 ))
-            elif current_stage_code == CIF_STAGE_APPROVE_KSS:
+            elif current_stage_code in APPROVE_AUDIT_STAGES:
                 self.call_repos(await PermissionController.ctr_approval_check_permission(
                     auth_response=auth_response,
                     menu_code=IDM_MENU_CODE_OPEN_CIF,
@@ -892,7 +906,7 @@ class CtrApproval(BaseController):
             current_phase_name = current_phase.name
             current_stage_role_code = current_stage_role.code
             current_stage_role_name = current_stage_role.name
-            if current_stage_code != CIF_STAGE_INIT:
+            if current_stage_code not in INIT_STAGES:
                 # Nếu truyền vào Param StageAction giả
                 if not current_stage_action:
                     return self.response_exception(
@@ -905,7 +919,7 @@ class CtrApproval(BaseController):
         ################################################################################################################
         # NEXT STAGE
         ################################################################################################################
-        if current_stage.is_reject and current_stage_code == CIF_STAGE_APPROVE_KSV:
+        if current_stage.is_reject and current_stage_code in APPROVE_SUPERVISOR_STAGES:
             next_stage = self.call_repos(await repos_get_stage_teller(
                 business_type_id=business_type_id,
                 session=self.oracle_session
@@ -918,7 +932,7 @@ class CtrApproval(BaseController):
             ))
         next_stage_code = next_stage.code
         next_stage_role_code = None
-        if next_stage_code != CIF_STAGE_COMPLETED:
+        if next_stage_code not in COMPLETED_STAGES:
             _, _, _, _, _, _, next_stage_role, _ = self.call_repos(await repos_get_stage_information(
                 business_type_id=business_type_id,
                 stage_id=next_stage_code,
@@ -1100,6 +1114,8 @@ class CtrApproval(BaseController):
 
         approval_process = self.call_repos((await repos_approve(
             cif_id=cif_id,
+            business_type_id=business_type_id,
+            booking_id=booking_id,
             saving_transaction_stage_status=saving_transaction_stage_status,
             saving_transaction_stage_action=saving_transaction_stage_action,
             saving_transaction_stage=saving_transaction_stage,
@@ -1130,11 +1146,11 @@ class CtrApproval(BaseController):
         content: str
     ):
         # GDV
-        if current_stage_code == CIF_STAGE_INIT:
+        if current_stage_code in INIT_STAGES:
             description = f"{current_stage_role_code} đã gửi hồ sơ cho {next_stage_role_code}."
         else:
             # KSV
-            if current_stage_code == CIF_STAGE_APPROVE_KSV:
+            if current_stage_code in APPROVE_SUPERVISOR_STAGES:
                 if not reject_flag:
                     description = f"Hoàn tất hồ sơ. Hồ sơ đã được phê duyệt bởi {current_stage_role_code}" \
                                   f". Hồ sơ đã gửi cho {next_stage_role_code}."
@@ -1143,7 +1159,7 @@ class CtrApproval(BaseController):
                         return self.response_exception(msg=ERROR_CONTENT_NOT_NULL, loc="content")
                     description = f"Hồ sơ bị từ chối. Lý do: {content}"
             # KSS
-            elif current_stage_code == CIF_STAGE_APPROVE_KSS:
+            elif current_stage_code in APPROVE_AUDIT_STAGES:
                 if not reject_flag:
                     description = f"Hoàn thành hồ sơ. Hồ sơ đã được phê duyệt bởi {current_stage_role_code}."
                 else:
@@ -1151,7 +1167,7 @@ class CtrApproval(BaseController):
                         return self.response_exception(msg=ERROR_CONTENT_NOT_NULL, loc="content")
                     description = f"Hồ sơ bị từ chối. Lý do: {content}"
             else:
-                return self.response_exception(msg=ERROR_STAGE_COMPLETED, loc="description")
+                return self.response_exception(msg=ERROR_STAGE_COMPLETED)
 
         return description
 
@@ -1262,10 +1278,20 @@ class CtrApproval(BaseController):
     async def ctr_get_business_jobs(self, booking_id: str, cif_id: str, business_type_code: str):
         # TODO: Kiểm tra booking_id, cif_id, business_type_code
         # Casa Account không cần cif_id
-        business_jobs = self.call_repos(await repos_get_business_jobs(
-            cif_id=cif_id,
-            session=self.oracle_session
-        ))
+        if business_type_code not in BUSINESS_TYPES:
+            self.response_exception(msg=ERROR_BUSINESS_TYPE_NOT_EXIST, loc=f'business_type_code: {business_type_code}')
+
+        business_jobs = []
+        if business_type_code == BUSINESS_TYPE_INIT_CIF:
+            business_jobs = self.call_repos(await repos_get_business_jobs(
+                cif_id=cif_id,
+                session=self.oracle_session
+            ))
+        if business_type_code == BUSINESS_TYPE_OPEN_CASA:
+            business_jobs = self.call_repos(await repos_get_business_jobs_by_open_casa(
+                booking_id=booking_id,
+                session=self.oracle_session
+            ))
 
         business_job_codes = self.call_repos(await repos_get_business_job_codes(
             business_type_code=business_type_code,

@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlalchemy import and_, desc, select
+from sqlalchemy import and_, desc, select, update
 from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -19,34 +19,62 @@ from app.third_parties.oracle.models.master_data.others import (
     TransactionStageAction, TransactionStageLane, TransactionStagePhase,
     TransactionStageRole, TransactionStageStatus
 )
+from app.utils.constant.business_type import BUSINESS_TYPES, BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA
 from app.utils.constant.cif import IMAGE_TYPE_FACE
-from app.utils.error_messages import ERROR_CIF_ID_NOT_EXIST
+from app.utils.error_messages import ERROR_BOOKING_ID_NOT_EXIST, ERROR_BOOKING_TRANSACTION_NOT_EXIST
 
 
-async def repos_get_approval_process(cif_id: str, session: Session) -> ReposReturn:
+async def repos_get_approval_process(booking_id: str, session: Session) -> ReposReturn:
+    booking = session.execute(
+        select(
+            Booking
+        ).filter(Booking.id == booking_id)
+    ).scalar()
+    if not booking:
+        return ReposReturn(is_error=True, msg=ERROR_BOOKING_ID_NOT_EXIST, loc=f'header -> booking_id: {booking_id}')
+
+    transactions = []
     trans_root_daily = aliased(TransactionDaily, name='TransactionDaily')
 
-    transactions = session.execute(
-        select(
-            BookingCustomer,
-            Booking,
-            TransactionDaily,
-            TransactionSender,
-            trans_root_daily
-        )
-        .join(Booking, BookingCustomer.booking_id == Booking.id)
-        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
-        .join(
-            trans_root_daily,
-            trans_root_daily.transaction_root_id == TransactionDaily.transaction_root_id
-        )
-        .join(TransactionSender, trans_root_daily.transaction_id == TransactionSender.transaction_id)
-        .filter(BookingCustomer.customer_id == cif_id)
-        .order_by(desc(trans_root_daily.created_at))
-    ).all()
+    if booking.business_type_id == BUSINESS_TYPE_INIT_CIF:
+        transactions = session.execute(
+            select(
+                BookingCustomer,
+                Booking,
+                TransactionDaily,
+                TransactionSender,
+                trans_root_daily
+            )
+            .join(BookingCustomer, BookingCustomer.booking_id == Booking.id)
+            .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
+            .join(
+                trans_root_daily,
+                trans_root_daily.transaction_root_id == TransactionDaily.transaction_root_id
+            )
+            .join(TransactionSender, trans_root_daily.transaction_id == TransactionSender.transaction_id)
+            .filter(Booking.id == booking_id)
+            .order_by(desc(trans_root_daily.created_at))
+        ).all()
+
+    if booking.business_type_id == BUSINESS_TYPE_OPEN_CASA:
+        transactions = session.execute(
+            select(
+                TransactionDaily,
+                TransactionDaily,
+                TransactionDaily,
+                TransactionSender,
+                trans_root_daily
+            )
+            .join(
+                trans_root_daily,
+                trans_root_daily.transaction_root_id == TransactionDaily.transaction_root_id
+            )
+            .join(TransactionSender, trans_root_daily.transaction_id == TransactionSender.transaction_id)
+            .filter(TransactionDaily.transaction_id == booking.transaction_id)
+        ).all()
 
     if not transactions:
-        return ReposReturn(is_error=True, msg=ERROR_CIF_ID_NOT_EXIST, loc='cif_id')
+        return ReposReturn(is_error=True, msg=ERROR_BOOKING_TRANSACTION_NOT_EXIST, loc=f'booking_id: {booking_id}')
 
     return ReposReturn(data=transactions)
 
@@ -54,6 +82,8 @@ async def repos_get_approval_process(cif_id: str, session: Session) -> ReposRetu
 @auto_commit
 async def repos_approve(
         cif_id: str,
+        business_type_id: str,
+        booking_id: str,
         saving_transaction_stage_status: dict,
         saving_transaction_stage_action: dict,
         saving_transaction_stage: dict,
@@ -66,6 +96,16 @@ async def repos_approve(
         is_stage_init: bool,
         session: Session
 ):
+
+    print('saving_transaction_stage_status', saving_transaction_stage_status)
+    print('saving_transaction_stage_action', saving_transaction_stage_action)
+    print('saving_transaction_stage', saving_transaction_stage)
+    print('saving_transaction_daily', saving_transaction_daily)
+    print('saving_transaction_stage_lane', saving_transaction_stage_lane)
+    print('saving_transaction_stage_phase', saving_transaction_stage_phase)
+    print('saving_transaction_stage_role', saving_transaction_stage_role)
+    print('saving_transaction_sender', saving_transaction_sender)
+
     saving_transaction_daily_parent_id = None
     saving_transaction_daily_root_id = saving_transaction_daily['transaction_id']
 
@@ -103,16 +143,17 @@ async def repos_approve(
         # TransactionReceiver(**saving_transaction_receiver)
     ])
 
+    if business_type_id not in BUSINESS_TYPES:
+        return ReposReturn(is_error=True, msg=f"business_type_id={business_type_id} not in {BUSINESS_TYPES}")
+
     # Cập nhật lại TransactionDaily mới cho Booking
-    booking_customer, booking = session.execute(
-        select(
-            BookingCustomer,
+    session.execute(
+        update(
             Booking
         )
-        .join(Booking, BookingCustomer.booking_id == Booking.id)
-        .filter(BookingCustomer.customer_id == cif_id)
-    ).first()
-    booking.transaction_id = saving_transaction_daily['transaction_id']
+        .filter(Booking.id == booking_id)
+        .values(transaction_id=saving_transaction_daily['transaction_id'])
+    )
 
     return ReposReturn(data={
         "cif_id": cif_id
@@ -366,6 +407,18 @@ async def repos_get_business_jobs(session: Session, cif_id: str):
         .join(TransactionJob, BookingCustomer.booking_id == TransactionJob.booking_id)
         .filter(BookingCustomer.customer_id == cif_id)
         .order_by(TransactionJob.created_at)
+    ).scalars().all()
+    return ReposReturn(data=business_jobs)
+
+
+async def repos_get_business_jobs_by_open_casa(booking_id: str, session: Session):
+    business_jobs = session.execute(
+        select(
+            TransactionJob,
+            Booking
+        )
+        .join(TransactionJob, Booking.id == TransactionJob.booking_id)
+        .filter(Booking.id == booking_id)
     ).scalars().all()
     return ReposReturn(data=business_jobs)
 
