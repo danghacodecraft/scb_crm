@@ -84,6 +84,33 @@ class CtrGWDepositAccount(BaseController):
             issued_date=cif_info["cif_issued_date"]
         )
 
+        gw_lock_info = account_info['account_lock_info']
+
+        lock_none = {
+            "balance_lock": "",
+            "date_lock": "",
+            "expire_date_lock": "",
+            "type_code_lock": "",
+            "type_name_lock": "",
+            "reason_lock": "",
+            "ref_no": ""
+        }
+
+        lock_info = []
+
+        for lock in gw_lock_info:
+            lock_item = dict(
+                balance_lock=lock['account_balance_lock'],
+                date_lock=lock['account_date_lock'],
+                expire_date_lock=lock['account_expire_date_lock'],
+                type_code_lock=lock['account_type_code_lock'],
+                type_name_lock=lock['account_type_name_lock'],
+                reason_lock=lock['account_reason_lock'],
+                ref_no=lock['account_ref_no']
+            )
+            if lock_item != lock_none:
+                lock_info.append(lock_item)
+
         branch_info = account_info["branch_info"]
         payin_account = account_info["payin_acc"]
         payout_account = account_info["payout_acc"]
@@ -108,6 +135,8 @@ class CtrGWDepositAccount(BaseController):
             "class_name": account_info["account_class_name"],
             "class_code": account_info["account_class_code"],
             "interest_rate": account_info["account_interest_rate"],
+            "roll_type": account_info["account_roll_type"],
+            "lock_info": lock_info,
             "branch_info": dict(
                 code=branch_info["branch_code"],
                 name=branch_info["branch_name"]
