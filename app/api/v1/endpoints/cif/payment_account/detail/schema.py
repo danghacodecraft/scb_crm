@@ -18,6 +18,7 @@ from app.utils.error_messages import (
 
 
 class PaymentAccountResponse(BaseSchema):
+    id: str = Field(..., description="Mã TKTT")
     self_selected_account_flag: bool = Field(..., description="""Cờ tự chọn số tài khoản
                                                               \nSố tài khoản thường => `False`
                                                               \nSố tài khoản yêu cầu => `True`""")
@@ -43,7 +44,6 @@ class CheckExistCasaAccountNumberResponse(BaseSchema):
 ########################################################################################################################
 # Chi tiết tài khoản thanh toán
 class SavePaymentAccountRequest(BaseSchema):
-    id: str = Field(..., description="Mã TKTT")
     self_selected_account_flag: bool = Field(..., description="""Cờ tự chọn số tài khoản
                                                               \nSố tài khoản thường => `False`
                                                               \nSố tài khoản yêu cầu => `True`""")
