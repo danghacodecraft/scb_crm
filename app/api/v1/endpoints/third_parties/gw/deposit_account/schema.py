@@ -129,8 +129,8 @@ class GWColumnChartDepositAccountResponse(BaseGWSchema):
 
 class GWReportStatementHistoryTDAccountInfoRequest(BaseGWSchema):
     account_number: str = Field(..., description="Số tài khoản")
-    from_date: date = Field(date(year=2020, month=4, day=20), description="Từ ngày")
-    to_date: date = Field(date(year=2025, month=7, day=20), description="Đến ngày")
+    from_date: date = Field(..., description="Từ ngày")
+    to_date: date = Field(..., description="Đến ngày")
 
 
 class GWDepositOpenAccountTD(BaseGWSchema):

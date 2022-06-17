@@ -15,6 +15,7 @@ from app.utils.constant.business_type import BUSINESS_TYPES
 from app.utils.functions import make_description_from_dict
 
 router = APIRouter()
+router_special = APIRouter()
 
 
 @router.get(
@@ -43,7 +44,7 @@ async def view_get_business_jobs(
     return ResponseData[List[ApprovalBusinessJob]](**business_jobs)
 
 
-@router.get(
+@router_special.get(
     path="/process/",
     name="Quá trình xử lý hồ sơ",
     description="Lấy dữ liệu tab `VI. PHÊ DUYỆT - QUÁ TRÌNH XỬ LÝ HỒ SƠ` ",
@@ -53,10 +54,10 @@ async def view_get_business_jobs(
     )
 )
 async def view_approval_process(
-        cif_id: str = Path(..., description='Id CIF ảo'),
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         current_user=Depends(get_current_user_from_header())
 ):
-    approval_process = await CtrApproval(current_user).ctr_approval_process(cif_id)
+    approval_process = await CtrApproval(current_user).ctr_approval_process(booking_id=BOOKING_ID)
     return ResponseData[List[CifApprovalProcessResponse]](**approval_process)
 
 
@@ -106,11 +107,8 @@ async def view_get_approve(
     return ResponseData[CifApprovalSuccessResponse](**approve_info)
 
 
-router_special = APIRouter()
-
-
 @router_special.get(
-    path="/",
+    path="/audit/",
     description="Thông tin KSS CIF",
     name="Kiểm soát sau CIF",
     responses=swagger_response(
