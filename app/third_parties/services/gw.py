@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Optional
 
 import aiohttp
@@ -48,6 +49,7 @@ from app.utils.constant.gw import (
     GW_RETRIEVE_CASA_ACCOUNT_DETAIL, GW_SELF_SELECTED_ACCOUNT_FLAG,
     GW_SELF_UNSELECTED_ACCOUNT_FLAG
 )
+from app.utils.functions import date_to_string
 
 
 class ServiceGW:
