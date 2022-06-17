@@ -159,18 +159,16 @@ class ServiceGW:
             current_user: UserInfoResponse,
             account_number: str,
             transaction_name: str,
-            # from_date: date,
-            # to_date: date
+            from_date: date,
+            to_date: date
     ):
         data_input = {
             "transaction_info": {
                 "transaction_name": transaction_name,
                 "transaction_value": {
                     "P_ACC": account_number,
-                    "P_FDATE": "2020-01-01",
-                    "P_TDATE": "2022-01-01"
-                    # "P_FDATE": date_to_string(from_date),
-                    # "P_TDATE": date_to_string(to_date)
+                    "P_FDATE": date_to_string(from_date),
+                    "P_TDATE": date_to_string(to_date)
                 }
             }
         }
@@ -214,18 +212,16 @@ class ServiceGW:
             current_user: UserInfoResponse,
             account_number: str,
             transaction_name: str,
-            # from_date: date,
-            # to_date: date
+            from_date: date,
+            to_date: date
     ):
         data_input = {
             "transaction_info": {
                 "transaction_name": transaction_name,
                 "transaction_value": {
                     "P_ACC": account_number,
-                    "P_FDATE": "2020-01-01",
-                    "P_TDATE": "2022-01-01"
-                    # "P_FDATE": date_to_string(from_date),
-                    # "P_TDATE": date_to_string(to_date)
+                    "P_FDATE": date_to_string(from_date),
+                    "P_TDATE": date_to_string(to_date)
                 }
             }
         }
