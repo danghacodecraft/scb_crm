@@ -64,11 +64,11 @@ async def ctr_gw_get_statement_deposit_account_td(
 
 
 async def repos_gw_get_column_chart_deposit_account_info(
-    account_number: str, current_user, from_date: Optional[date], to_date: Optional[date]
+    cif_number: str, current_user, from_date: Optional[date], to_date: Optional[date]
 ):
     current_user = current_user.user_info
     is_success, gw_get_column_chart_deposit_account_info = await service_gw.select_report_td_from_cif_data_input(
-        account_number=account_number,
+        cif_number=cif_number,
         current_user=current_user,
         endpoint=GW_ENDPOINT_URL_RETRIEVE_REPORT_TD_FROM_CIF,
         transaction_name=GW_TRANSACTION_NAME_COLUMN_CHART_TD,

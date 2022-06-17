@@ -4,12 +4,14 @@ from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
     repos_get_casa_open_casa_info
 )
 from app.api.v1.endpoints.casa.open_casa.open_casa.schema import CasaOpenCasaRequest
+from app.api.v1.endpoints.config.account.repository import repos_get_account_classes
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_get_casa_account_info
 )
+from app.api.v1.endpoints.third_parties.gw.customer.repository import repos_gw_get_customer_info_detail
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.validator import validate_history_data
-from app.third_parties.oracle.models.master_data.account import AccountType, AccountClass
+from app.third_parties.oracle.models.master_data.account import AccountType
 from app.third_parties.oracle.models.master_data.others import Currency
 from app.utils.constant.business_type import BUSINESS_TYPE_OPEN_CASA
 from app.utils.constant.casa import CASA_ACCOUNT_STATUS_UNAPPROVED
@@ -61,7 +63,8 @@ class CtrCasaOpenCasa(BaseController):
     ):
         cif_number = open_casa_request.cif_number
         casa_accounts = open_casa_request.casa_accounts
-        current_user_info = self.current_user.user_info
+        current_user = self.current_user
+        current_user_info = current_user.user_info
         saving_casa_accounts = []
         saving_bookings = []
         saving_booking_accounts = []
@@ -202,11 +205,24 @@ class CtrCasaOpenCasa(BaseController):
             model=AccountType
         )
 
+        gw_customer_detail = self.call_repos(await repos_gw_get_customer_info_detail(
+            cif_number=cif_number,
+            current_user=current_user
+        ))
+
         # Check Account Class
-        await self.get_model_objects_by_ids(
-            model_ids=acc_class_ids,
-            model=AccountClass
-        )
+        account_class_ids = self.call_repos(await repos_get_account_classes(
+            customer_category_id=gw_customer_detail['retrieveCustomerRefDataMgmt_out']['data_output']['customer_info']['customer_category'],
+            account_class_ids=acc_class_ids,
+            session=self.oracle_session
+        ))
+        unique_account_class_ids = set(account_class_ids)
+        unique_unique_account_class_ids = set(unique_account_class_ids)
+        if len(unique_account_class_ids) != len(unique_unique_account_class_ids):
+            return self.response_exception(
+                msg=ERROR_CASA_ACCOUNT_EXIST,
+                detail=f'{unique_unique_account_class_ids.intersection(unique_account_class_ids)} is not exist'
+            )
 
         # Trường hợp đặc biệt, phải check luôn cả loại kiến trúc là cấp 2 nên không dùng get_model_object_by_id
         self.call_repos(
