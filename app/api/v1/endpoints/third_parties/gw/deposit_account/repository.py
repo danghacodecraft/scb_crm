@@ -44,10 +44,10 @@ async def repos_gw_get_deposit_account_td(
 
 
 async def ctr_gw_get_statement_deposit_account_td(
-    account_number: str,
-    current_user: str,
-    # from_date: date,
-    # to_date: date
+        account_number: str,
+        current_user: str,
+        # from_date: date,
+        # to_date: date
 ):
     is_success, gw_report_history_td_account_info = await service_gw.get_report_statement_td_account(
         current_user=current_user,
@@ -61,17 +61,14 @@ async def ctr_gw_get_statement_deposit_account_td(
 
 
 async def repos_gw_get_column_chart_deposit_account_info(
-        cif_number: str, current_user,
-        # from_date: Optional[date], to_date: Optional[date]
+        cif_number: str, current_user
 ):
     current_user = current_user.user_info
     is_success, gw_get_column_chart_deposit_account_info = await service_gw.select_report_td_from_cif_data_input(
         cif_number=cif_number,
         current_user=current_user,
         endpoint=GW_ENDPOINT_URL_RETRIEVE_REPORT_TD_FROM_CIF,
-        transaction_name=GW_TRANSACTION_NAME_COLUMN_CHART_TD,
-        # from_date=from_date,
-        # to_date=to_date
+        transaction_name=GW_TRANSACTION_NAME_COLUMN_CHART_TD
     )
     if not is_success:
         return ReposReturn(
@@ -85,7 +82,6 @@ async def repos_gw_get_column_chart_deposit_account_info(
 
 
 async def repos_gw_deposit_open_account_td(current_user, data_input):
-
     is_success, gw_deposit_open_account_td = await service_gw.deposit_open_account_td(
         current_user=current_user,
         data_input=data_input
