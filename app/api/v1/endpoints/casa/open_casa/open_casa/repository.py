@@ -59,7 +59,6 @@ async def repos_save_casa_casa_account(
     session.execute(delete(BookingAccount).filter(BookingAccount.booking_id.in_(booking_ids)))
     session.execute(delete(Booking).filter(Booking.id.in_(booking_ids)))
     session.execute(delete(CasaAccount).filter(CasaAccount.id.in_(account_ids)))
-    session.execute(delete(BookingBusinessForm).filter(BookingBusinessForm.booking_id == booking_parent_id))
 
     # Cập nhật lại bằng dữ liệu mới
     session.bulk_save_objects([CasaAccount(**saving_casa_account) for saving_casa_account in saving_casa_accounts])

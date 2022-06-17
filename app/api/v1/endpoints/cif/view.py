@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Body, Depends, Path
+from fastapi import APIRouter, Body, Depends, Path, Header
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -60,10 +60,11 @@ async def view_profile_history(
     )
 )
 async def view_customer(
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         cif_id: str = Path(..., description='Id CIF ảo'),
         current_user=Depends(get_current_user_from_header())
 ):
-    customer_information_data = await CtrCustomer(current_user).ctr_customer_information(cif_id)
+    customer_information_data = await CtrCustomer(current_user).ctr_customer_information(cif_id, booking_id=BOOKING_ID)
     return ResponseData[CifCustomerInformationResponse](**customer_information_data)
 
 
