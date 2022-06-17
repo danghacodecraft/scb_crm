@@ -268,8 +268,8 @@ class CtrGWCasaAccount(BaseController):
         gw_report_column_chart_casa_account_info = self.call_repos(await repos_gw_get_column_chart_casa_account_info(
             account_number=request.account_number,
             current_user=self.current_user.user_info,
-            from_date=request.from_date,
-            to_date=request.to_date
+            # from_date=request.from_date,
+            # to_date=request.to_date
         ))
         report_casa_accounts = \
             gw_report_column_chart_casa_account_info['selectReportHisCaSaFromAcc_out']['data_output']['report_info'][
@@ -450,8 +450,8 @@ class CtrGWCasaAccount(BaseController):
         gw_report_statements_casa_account_info = self.call_repos(await repos_gw_get_statements_casa_account_info(
             account_number=request.account_number,
             current_user=self.current_user.user_info,
-            from_date=request.from_date,
-            to_date=request.to_date
+            # from_date=request.from_date,
+            # to_date=request.to_date
         ))
         report_casa_accounts = \
             gw_report_statements_casa_account_info['selectReportStatementCaSaFromAcc_out']['data_output']['report_info']['report_casa_account']
