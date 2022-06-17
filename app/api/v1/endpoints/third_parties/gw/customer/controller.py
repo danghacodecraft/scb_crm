@@ -13,7 +13,7 @@ from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
 )
 from app.third_parties.oracle.models.master_data.customer import (
-    CustomerGender, CustomerRelationshipType, CustomerType
+    CustomerGender, CustomerRelationshipType, CustomerType, CustomerCategory
 )
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import (
@@ -223,6 +223,10 @@ class CtrGWCustomer(BaseController):
         dropdown_customer_type = await self.dropdown_mapping_crm_model_or_dropdown_name(
             model=CustomerType, name=customer_type_code_or_name, code=customer_type_code_or_name
         )
+
+        customer_category_code_or_name = customer_info['customer_category']
+        dropdown_customer_category = await self.dropdown_mapping_crm_model_or_dropdown_name(
+            model=CustomerCategory, code=customer_category_code_or_name, name=customer_category_code_or_name)
 
         full_name_vn = customer_info['full_name']
         full_name = convert_to_unsigned_vietnamese(full_name_vn)
@@ -471,6 +475,7 @@ class CtrGWCustomer(BaseController):
                 telephone=customer_info['telephone'],
                 otherphone=customer_info['otherphone'],
                 customer_type=dropdown_customer_type,
+                customer_category=dropdown_customer_category,
                 resident_status=dropdown_resident_status,
                 legal_representativeprsn_name=customer_info['legal_representativeprsn_name'],
                 legal_representativeprsn_id=customer_info['legal_representativeprsn_id'],
