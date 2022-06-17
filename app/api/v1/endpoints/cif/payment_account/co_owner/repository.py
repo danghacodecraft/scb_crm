@@ -24,6 +24,7 @@ from app.third_parties.oracle.models.cif.payment_account.model import (
     AgreementAuthorization, CasaAccount, JointAccountHolder,
     JointAccountHolderAgreementAuthorization, MethodSign
 )
+from app.third_parties.oracle.models.document_file.model import DocumentFile
 from app.third_parties.oracle.models.master_data.address import AddressCountry
 from app.third_parties.oracle.models.master_data.customer import (
     CustomerGender, CustomerRelationshipType
@@ -34,9 +35,10 @@ from app.utils.constant.cif import (
     IMAGE_TYPE_SIGNATURE
 )
 from app.utils.error_messages import (
-    ERROR_AGREEMENT_AUTHORIZATIONS_NOT_EXIST, ERROR_CALL_SERVICE_SOA,
-    ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_CIF_NUMBER_NOT_EXIST, ERROR_NO_DATA,
-    ERROR_RELATIONSHIP_EXIST
+    ERROR_ACCOUNT_ID_DOES_NOT_EXIST, ERROR_AGREEMENT_AUTHORIZATIONS_NOT_EXIST,
+    ERROR_CALL_SERVICE_SOA, ERROR_CASA_ACCOUNT_NOT_EXIST,
+    ERROR_CIF_NUMBER_NOT_EXIST, ERROR_DOCUMENT_ID_DOES_NOT_EXIST,
+    ERROR_NO_DATA, ERROR_RELATIONSHIP_EXIST
 )
 from app.utils.functions import dropdown, now
 
@@ -77,20 +79,19 @@ async def repos_check_list_relationship_id(
     return ReposReturn(data=list_relationship)
 
 
-async def repos_get_co_owner(cif_id: str, session: Session) -> ReposReturn:
+async def repos_get_co_owner(account_id: str, session: Session) -> ReposReturn:
     account_holders = session.execute(
         select(
             CasaAccount,
             JointAccountHolderAgreementAuthorization,
             JointAccountHolder,
             CustomerRelationshipType
-        )
-        .join(JointAccountHolderAgreementAuthorization,
-              CasaAccount.id == JointAccountHolderAgreementAuthorization.casa_account_id)
+        ).join(JointAccountHolderAgreementAuthorization,
+               CasaAccount.id == JointAccountHolderAgreementAuthorization.casa_account_id)
         .join(JointAccountHolder,
               JointAccountHolderAgreementAuthorization.joint_acc_agree_id == JointAccountHolder.joint_acc_agree_id)
         .join(CustomerRelationshipType, JointAccountHolder.relationship_type_id == CustomerRelationshipType.id)
-        .filter(CasaAccount.customer_id == cif_id)
+        .filter(CasaAccount.id == account_id)
     ).all()
 
     account_holder_signs = session.execute(
@@ -99,16 +100,54 @@ async def repos_get_co_owner(cif_id: str, session: Session) -> ReposReturn:
             JointAccountHolderAgreementAuthorization.joint_acc_agree_id,
             MethodSign,
             AgreementAuthorization,
-        )
-        .join(JointAccountHolderAgreementAuthorization,
-              CasaAccount.id == JointAccountHolderAgreementAuthorization.casa_account_id)
+        ).join(JointAccountHolderAgreementAuthorization,
+               CasaAccount.id == JointAccountHolderAgreementAuthorization.casa_account_id)
         .join(MethodSign,
               JointAccountHolderAgreementAuthorization.joint_acc_agree_id == MethodSign.joint_acc_agree_id)
         .join(AgreementAuthorization, MethodSign.agreement_author_id == AgreementAuthorization.id)
-        .filter(CasaAccount.customer_id == cif_id)
+        .filter(CasaAccount.id == account_id)
     ).all()
 
     return ReposReturn(data=(account_holders, account_holder_signs))
+
+
+async def repos_payment_account_co_owner(cif_id: str, session: Session):
+    co_owner = session.execute(
+        select(
+            JointAccountHolderAgreementAuthorization
+        )
+        .join(JointAccountHolder,
+              JointAccountHolderAgreementAuthorization.joint_acc_agree_id == JointAccountHolder.joint_acc_agree_id)
+        .join(Customer,
+              JointAccountHolder.cif_num == Customer.cif_number)
+        .filter(Customer.id == cif_id)
+    ).scalar()
+
+    if not co_owner:
+        return ReposReturn(
+            loc="account_id_does_not_exit",
+            msg=ERROR_ACCOUNT_ID_DOES_NOT_EXIST,
+            detail=co_owner
+        )
+
+    return ReposReturn(data=co_owner)
+
+
+async def repos_get_uuid(document_id: str, session: Session):
+    get_uuid = session.execute(
+        select(
+            DocumentFile.file_uuid
+        ).filter(DocumentFile.id == document_id)
+    ).scalar()
+
+    if not get_uuid:
+        return ReposReturn(
+            loc="document_id_does_not_exit",
+            msg=ERROR_DOCUMENT_ID_DOES_NOT_EXIST,
+            detail=get_uuid
+        )
+
+    return ReposReturn(data=get_uuid)
 
 
 async def repos_get_co_owner_signatures(cif_numbers: List, session: Session) -> ReposReturn:
@@ -173,6 +212,40 @@ async def repos_save_co_owner(
     return ReposReturn(
         data={"cif_id": cif_id, "created_at": now(), "created_by": created_by}
     )
+
+
+async def repos_check_cif_id(cif_id: str, session: Session):
+    account_co_owner = session.execute(
+        select(
+            CasaAccount.id,
+        ).filter(CasaAccount.customer_id == cif_id)
+    ).scalar()
+
+    if not account_co_owner:
+        return ReposReturn(
+            loc="account_id_does_not_exit",
+            msg=ERROR_ACCOUNT_ID_DOES_NOT_EXIST,
+            detail=account_co_owner
+        )
+
+    return ReposReturn(data=account_co_owner)
+
+
+async def repos_account_co_owner(account_id: str, session: Session):
+    account_co_owner = session.execute(
+        select(
+            JointAccountHolderAgreementAuthorization
+        ).filter(JointAccountHolderAgreementAuthorization.casa_account_id == account_id)
+    ).scalar()
+
+    if not account_co_owner:
+        return ReposReturn(
+            loc="account_id_does_not_exit",
+            msg=ERROR_ACCOUNT_ID_DOES_NOT_EXIST,
+            detail=account_co_owner
+        )
+
+    return ReposReturn(data=account_co_owner)
 
 
 async def repos_get_list_cif_number(cif_id: str, session: Session):
