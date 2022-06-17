@@ -157,7 +157,7 @@ async def repos_gw_open_casa_account(
     if not is_success:
         return ReposReturn(
             is_error=True,
-            loc="get_open_casa_account",
+            loc=f"get_open_casa_account, casa_account_id: {casa_account_info.id}",
             msg=ERROR_CALL_SERVICE_GW,
             detail=str(gw_open_casa_account_info)
         )
