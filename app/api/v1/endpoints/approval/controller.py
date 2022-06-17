@@ -14,6 +14,9 @@ from app.api.v1.endpoints.approval.repository import (
     repos_get_compare_image_transactions, repos_get_list_audit
 )
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
+from app.api.v1.endpoints.cif.basic_information.identity.identity_document.repository import (
+    repos_get_sla_transaction_parent_id_from_stage_transaction_id
+)
 from app.api.v1.endpoints.third_parties.gw.employee.repository import (
     repos_gw_get_employee_info_from_code
 )
@@ -946,6 +949,7 @@ class CtrApproval(BaseController):
             next_stage_role_code = next_stage_role.code
 
         saving_transaction_stage_status_id = generate_uuid()
+        saving_sla_transaction_id = generate_uuid()
         saving_transaction_stage_id = generate_uuid()
         saving_transaction_stage_lane_id = generate_uuid()
         saving_transaction_stage_phase_id = generate_uuid()
@@ -994,13 +998,49 @@ class CtrApproval(BaseController):
             updated_at=now()
         )
 
+        sla_id = None
+        sla_name = None
+
+        sla_deadline = None
+        if current_stage_code == CIF_STAGE_INIT:
+            sla_id = "CIF_GDV"
+            sla_name = "SLA GDV Mở CIF"
+            sla_deadline = 1
+        elif current_stage_code == CIF_STAGE_APPROVE_KSV:
+            sla_id = "CIF_KSV"
+            sla_name = "SLA KSV Mở CIF"
+            sla_deadline = 2
+        elif current_stage_code == CIF_STAGE_APPROVE_KSS:
+            sla_id = "CIF_KSS"
+            sla_name = "SLA KSS Mở CIF"
+            sla_deadline = 3
+        elif current_stage_code == CIF_STAGE_COMPLETED:
+            sla_id = "CIF_COMPLETED"
+            sla_name = "SLA Completed Mở CIF"
+            sla_deadline = 4
+
+        sla_trans_parent_id = await repos_get_sla_transaction_parent_id_from_stage_transaction_id(
+            stage_transaction_id=previous_transaction_stage.id, session=self.oracle_session
+        )
+
+        saving_sla_transaction = dict(
+            id=saving_sla_transaction_id,
+            parent_id=sla_trans_parent_id,
+            sla_id=sla_id,
+            sla_name=sla_name,
+            sla_deadline=sla_deadline,
+            active_flag=1,
+            created_at=now()
+
+        )
+
         saving_transaction_stage = dict(
             id=saving_transaction_stage_id,
             status_id=saving_transaction_stage_status_id,
             lane_id=saving_transaction_stage_lane_id,
             phase_id=saving_transaction_stage_phase_id,
             business_type_id=business_type_id,
-            sla_transaction_id=None,  # TODO
+            sla_transaction_id=saving_sla_transaction_id,
             transaction_stage_phase_code=current_stage_code,
             transaction_stage_phase_name=current_stage_name,
             is_reject=reject_flag,
@@ -1121,6 +1161,7 @@ class CtrApproval(BaseController):
             booking_id=booking_id,
             saving_transaction_stage_status=saving_transaction_stage_status,
             saving_transaction_stage_action=saving_transaction_stage_action,
+            saving_sla_transaction=saving_sla_transaction,
             saving_transaction_stage=saving_transaction_stage,
             saving_transaction_stage_lane=saving_transaction_stage_lane,
             saving_transaction_stage_phase=saving_transaction_stage_phase,
