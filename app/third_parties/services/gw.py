@@ -46,7 +46,8 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE,
     GW_ENDPOINT_URL_SELECT_USER_INFO, GW_FUNCTION_OPEN_CASA,
     GW_HISTORY_ACCOUNT_NUM, GW_HISTORY_CHANGE_FIELD_ACCOUNT,
-    GW_RETRIEVE_CASA_ACCOUNT_DETAIL, GW_SELF_SELECTED_ACCOUNT_FLAG, GW_SELF_UNSELECTED_ACCOUNT_FLAG
+    GW_RETRIEVE_CASA_ACCOUNT_DETAIL, GW_SELF_SELECTED_ACCOUNT_FLAG,
+    GW_SELF_UNSELECTED_ACCOUNT_FLAG
 )
 from app.utils.functions import date_to_string
 
@@ -522,7 +523,7 @@ class ServiceGW:
             "transaction_info": {
                 "transaction_name": transaction_name,
                 "transaction_value": {
-                    "P_ACC": account_number,
+                    "P_CIF": account_number,
                     "P_FDATE": date_to_string(from_date),
                     "P_TDATE": date_to_string(to_date)
                 }
