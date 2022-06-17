@@ -178,8 +178,8 @@ class CtrGWDepositAccount(BaseController):
         gw_report_statements_casa_td_account_info = self.call_repos(await ctr_gw_get_statement_deposit_account_td(
             account_number=request.account_number,
             current_user=self.current_user.user_info,
-            from_date=request.from_date,
-            to_date=request.to_date
+            # from_date=request.from_date,
+            # to_date=request.to_date
         ))
         report_td_accounts = \
             gw_report_statements_casa_td_account_info['selectReportStatementTDFromAcc_out']['data_output']['report_info']['report_td_account']
@@ -218,11 +218,12 @@ class CtrGWDepositAccount(BaseController):
         current_user = self.current_user
 
         cif_number = request.cif_number
-        from_date = request.from_date
-        to_date = request.to_date
+        # from_date = request.from_date
+        # to_date = request.to_date
 
         gw_column_chart_deposit_account_infos = self.call_repos(await repos_gw_get_column_chart_deposit_account_info(
-            cif_number=cif_number, current_user=current_user, from_date=from_date, to_date=to_date
+            cif_number=cif_number, current_user=current_user,
+            # from_date=from_date, to_date=to_date
         ))
         data_output = gw_column_chart_deposit_account_infos['selectReportTDFromCif_out']['data_output']
         report_td_accounts = data_output['report_info']['report_td_account']
