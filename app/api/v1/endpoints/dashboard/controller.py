@@ -3,11 +3,13 @@ from datetime import date
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.dashboard.repository import (
     repos_accounting_entry, repos_branch, repos_count_total_item,
-    repos_get_customer, repos_get_senders, repos_get_total_item,
-    repos_get_transaction_list, repos_region, repos_get_open_casa_info_from_booking,
-    repos_get_open_cif_info_from_booking
+    repos_get_customer, repos_get_open_casa_info_from_booking,
+    repos_get_open_cif_info_from_booking, repos_get_senders,
+    repos_get_total_item, repos_get_transaction_list, repos_region
 )
-from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA
+from app.utils.constant.business_type import (
+    BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA
+)
 from app.utils.constant.cif import (
     CIF_STAGE_ROLE_CODE_AUDIT, CIF_STAGE_ROLE_CODE_SUPERVISOR,
     CIF_STAGE_ROLE_CODE_TELLER, CIF_STAGE_ROLE_CODES
@@ -54,7 +56,7 @@ class CtrDashboard(BaseController):
         business_type_open_casas = []
 
         for transaction in transaction_list:
-            booking, branch, status = transaction
+            booking, branch, sla_transaction, root, status = transaction
 
             booking_id = booking.id
             booking_code = booking.code
@@ -66,6 +68,16 @@ class CtrDashboard(BaseController):
 
             branch_code = branch.code
             branch_name = branch.name
+
+            print('abc')
+            if sla_transaction:
+                print(sla_transaction)
+                print('---')
+                print(root)
+                print('-----')
+                print(sla_transaction.sla_id)
+                # print(root.sla_id)
+            print('----------------')
 
             if business_type_id == BUSINESS_TYPE_INIT_CIF:
                 business_type_init_cifs.append(booking_id)
@@ -113,7 +125,7 @@ class CtrDashboard(BaseController):
                 cif_id=customer.id,
                 cif_number=customer.cif_number
             )
-            mapping_datas[booking.parent_id]['business_type'].update(number = casa_account.casa_account_number)
+            mapping_datas[booking.parent_id]['business_type'].update(number=casa_account.casa_account_number)
 
         open_cif_infos = self.call_repos(
             await repos_get_open_cif_info_from_booking(booking_ids=business_type_init_cifs, session=self.oracle_session))

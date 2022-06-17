@@ -1,8 +1,8 @@
 from datetime import date
-from typing import Optional, List
+from typing import List, Optional
 
 from sqlalchemy import and_, desc, func, or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn
 from app.settings.event import service_dwh
@@ -16,14 +16,17 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingCustomer, TransactionDaily, TransactionSender, BookingAccount
+    Booking, BookingAccount, BookingCustomer, TransactionDaily,
+    TransactionSender
 )
-from app.third_parties.oracle.models.cif.payment_account.model import CasaAccount
+from app.third_parties.oracle.models.cif.payment_account.model import (
+    CasaAccount
+)
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
 )
 from app.third_parties.oracle.models.master_data.others import (
-    Branch, TransactionStage, TransactionStageRole,
+    Branch, SlaTransaction, TransactionStage, TransactionStageRole,
     TransactionStageStatus
 )
 from app.utils.constant.cif import CONTACT_ADDRESS_CODE
@@ -87,14 +90,20 @@ async def repos_get_transaction_list(region_id: Optional[str], branch_id: Option
                                      transaction_type_id: Optional[str], status_code: Optional[str],
                                      search_box: Optional[str], from_date: Optional[date], to_date: Optional[date],
                                      limit: int, page: int, session: Session):
+    sla_transaction_root = aliased(SlaTransaction, name='SlaTransactionRoot')
+
     sql = select(
         Booking,
         Branch,
+        SlaTransaction,
+        sla_transaction_root,
         TransactionStageStatus.name.label('status')
     ) \
         .join(Branch, Booking.branch_id == Branch.id) \
         .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
         .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
+        .outerjoin(SlaTransaction, TransactionStage.sla_transaction_id == SlaTransaction.id) \
+        .outerjoin(sla_transaction_root, SlaTransaction.root_id == sla_transaction_root.root_id) \
         .join(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
         .distinct()
     if region_id:
