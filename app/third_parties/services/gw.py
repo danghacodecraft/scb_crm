@@ -16,7 +16,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_DEPOSIT_OPEN_ACCOUNT_TD,
     GW_ENDPOINT_URL_HISTORY_CHANGE_FIELD, GW_ENDPOINT_URL_PAY_IN_CASH,
     GW_ENDPOINT_URL_PAYMENT_AMOUNT_BLOCK,
-    GW_ENDPOINT_URL_PAYMENT_AMOUNT_UNBLOCK,
+    GW_ENDPOINT_URL_PAYMENT_AMOUNT_UNBLOCK, GW_ENDPOINT_URL_REDEEM_ACCOUNT,
     GW_ENDPOINT_URL_RETRIEVE_AUTHORIZED_ACCOUNT_NUM,
     GW_ENDPOINT_URL_RETRIEVE_CLOSE_CASA_ACCOUNT,
     GW_ENDPOINT_URL_RETRIEVE_CO_OWNER_ACCOUNT_NUM,
@@ -1735,11 +1735,41 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
+    async def gw_payment_redeem_account(self, request_data):
+        api_url = f"{self.url}{GW_ENDPOINT_URL_REDEEM_ACCOUNT}"
+
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW][Payment] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data
+                else:
+                    return_data = await response.json()
+                    return True, return_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data
+
     ####################################################################################################################
     # start --- user
     ####################################################################################################################
     async def gw_detail_user(self, current_user: UserInfoResponse, data_input):
-
         request_data = self.gw_create_request_body(
             current_user=current_user, function_name="selectUserInfoByUserID_in", data_input=data_input
         )

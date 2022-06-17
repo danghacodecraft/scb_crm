@@ -41,6 +41,7 @@ GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_ID_FCC = '/users/v1.0/rest/selectUse
 GW_ENDPOINT_URL_PAYMENT_AMOUNT_BLOCK = "/payment/v1.0/rest/amountBlock"
 GW_ENDPOINT_URL_PAYMENT_AMOUNT_UNBLOCK = "/payment/v1.0/rest/amountUnBlock"
 GW_ENDPOINT_URL_PAY_IN_CASH = "/payment/v1.0/rest/payInCash"
+GW_ENDPOINT_URL_REDEEM_ACCOUNT = "/payment/v1.0/rest/redeemAccount"
 # ---------------------------------------------- USER ---------------------------------------------- #
 GW_ENDPOINT_URL_SELECT_USER_INFO = "/users/v1.0/rest/selectUserInfoByUserID"
 
