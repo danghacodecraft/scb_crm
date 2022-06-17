@@ -4,24 +4,25 @@ from typing import List
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.base.repository import ReposReturn
+from app.api.base.repository import ReposReturn, auto_commit
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWAccountInfoCloseCasaRequest
 )
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.settings.event import service_gw
 from app.third_parties.oracle.models.cif.form.model import BookingBusinessForm
-from app.third_parties.oracle.models.cif.payment_account.model import CasaAccount
+from app.third_parties.oracle.models.cif.payment_account.model import (
+    CasaAccount
+)
 from app.third_parties.oracle.models.master_data.others import TransactionJob
-from app.utils.constant.approval import BUSINESS_JOB_CODE_INIT, BUSINESS_JOB_CODE_START_CASA, \
-    BUSINESS_JOB_CODE_OPEN_CASA
+from app.utils.constant.approval import BUSINESS_JOB_CODE_OPEN_CASA
 from app.utils.constant.cif import BUSINESS_FORM_OPEN_CASA_PD
 from app.utils.constant.gw import (
     GW_TRANSACTION_NAME_COLUMN_CHART, GW_TRANSACTION_NAME_PIE_CHART,
     GW_TRANSACTION_NAME_STATEMENT
 )
 from app.utils.error_messages import ERROR_CALL_SERVICE_GW
-from app.utils.functions import now, orjson_dumps, generate_uuid
+from app.utils.functions import generate_uuid, now, orjson_dumps
 
 
 async def repos_gw_get_casa_account_by_cif_number(
@@ -206,8 +207,8 @@ async def repos_add_business_form_and_transaction_job(
     session: Session,
     gw_response,
     is_success: bool,
-    history_datas=[]
 ):
+    history_datas = []
     error_code = None
     error_desc = None
     if not is_success:
@@ -237,3 +238,13 @@ async def repos_add_business_form_and_transaction_job(
 
     session.commit()
     return True
+
+
+@auto_commit
+async def repos_update_casa_account_to_approved(
+    update_casa_accounts: List,
+    session: Session
+):
+    session.bulk_update_mappings(CasaAccount, update_casa_accounts)
+
+    return ReposReturn(data=True)

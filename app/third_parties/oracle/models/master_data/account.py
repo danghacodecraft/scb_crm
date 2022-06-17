@@ -1,7 +1,10 @@
-from sqlalchemy import VARCHAR, Column, text
+from sqlalchemy import VARCHAR, Column, text, ForeignKey
 from sqlalchemy.dialects.oracle import NUMBER
+from sqlalchemy.orm import relationship
 
 from app.third_parties.oracle.base import Base
+
+from app.third_parties.oracle.models.master_data.customer import CustomerCategory  # noqa
 
 
 class AccountClass(Base):
@@ -26,6 +29,21 @@ class AccountStructureType(Base):
     value = Column('acc_structure_type_value', VARCHAR(16), comment='Giá trị loại kết cấu tài khoản')
     level = Column('acc_structure_type_level', NUMBER(8, 2, True), comment='Mức độ loại kết cấu tài khoản')
     active_flag = Column('acc_structure_type_active_flag', NUMBER(1, 2, True), comment='Cờ loại kết cấu tài khoản')
+
+
+class AccountClassCustomerCategory(Base):
+    __tablename__ = 'crm_acc_class_cust_category'
+    __table_args__ = {'comment': 'Loại tài khoản Khách hàng'}
+    account_class_id = Column(
+        'acc_class_id', ForeignKey('crm_acc_class.acc_class_id'), primary_key=True, comment='Mã loại hình khoản'
+    )
+    customer_category_id = Column(
+        'cust_category_id', ForeignKey('crm_cust_category.cust_category_id'),
+        primary_key=True, comment='Mã Loại khách hàng'
+    )
+
+    account_class = relationship('AccountClass')
+    customer_category = relationship('CustomerCategory')
 
 
 class AccountType(Base):
