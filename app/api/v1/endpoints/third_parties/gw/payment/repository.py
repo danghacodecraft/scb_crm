@@ -1,3 +1,5 @@
+from typing import Optional
+
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -18,9 +20,9 @@ from app.utils.functions import generate_uuid, now, orjson_dumps
 async def repos_create_booking_payment(
         business_type_code: str,
         current_user,
-        form_data,
-        log_data,
-        session: Session
+        session: Session,
+        form_data: Optional = None,
+        log_data: Optional = None
 ):
     booking_id = generate_uuid()
     current_user_branch_code = current_user.hrm_branch_code
@@ -50,7 +52,7 @@ async def repos_create_booking_payment(
         BookingBusinessForm(
             booking_id=booking_id,
             business_form_id=business_type_code,
-            save_flag=False,
+            save_flag=True,
             form_data=orjson_dumps(form_data),
             log_data=orjson_dumps(log_data),
             created_at=now()
@@ -121,3 +123,16 @@ async def repos_gw_pay_in_cash(current_user, data_input):
         return ReposReturn(is_error=True, msg=pay_in_cash.get('transaction_info').get('transaction_error_msg'))
 
     return ReposReturn(data=gw_pay_in_cash)
+
+
+async def repos_gw_redeem_account(current_user, data_input):
+    request_data = service_gw.gw_create_request_body(
+        current_user=current_user.user_info,
+        function_name="redeemAccount_in",
+        data_input=data_input
+    )
+    is_success, gw_payment_redeem_account = await service_gw.gw_payment_redeem_account(
+        request_data=request_data
+    )
+
+    return ReposReturn(data=(request_data, gw_payment_redeem_account))
