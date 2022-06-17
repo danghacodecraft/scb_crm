@@ -29,18 +29,22 @@ router = APIRouter()
 async def view_transaction_list(
         region_id: Optional[str] = None,
         branch_id: Optional[str] = None,
-        transaction_type_id: Optional[str] = None,
+        business_type_id: Optional[str] = None,
         status_code: Optional[str] = None,
         search_box: Optional[str] = None,
         from_date: Optional[date] = None,
         to_date: Optional[date] = None,
         current_user=Depends(get_current_user_from_header()),
         pagination_params: PaginationParams = Depends(),
+
 ):
+    print('====================')
+    print(business_type_id)
+
     transaction_list_response = await CtrDashboard(
         current_user=current_user,
         pagination_params=pagination_params,
-    ).ctr_get_transaction_list(region_id=region_id, branch_id=branch_id, transaction_type_id=transaction_type_id,
+    ).ctr_get_transaction_list(region_id=region_id, branch_id=branch_id, business_type_id=business_type_id,
                                status_code=status_code, search_box=search_box, from_date=from_date, to_date=to_date)
 
     return PagingResponse[TransactionListResponse](**transaction_list_response)
