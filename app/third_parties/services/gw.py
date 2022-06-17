@@ -515,7 +515,7 @@ class ServiceGW:
             current_user: UserInfoResponse,
             transaction_name: str,
             endpoint: str,
-            account_number: str,
+            cif_number: str,
             from_date: Optional[date],
             to_date: Optional[date]
     ):
@@ -523,7 +523,7 @@ class ServiceGW:
             "transaction_info": {
                 "transaction_name": transaction_name,
                 "transaction_value": {
-                    "P_CIF": account_number,
+                    "P_CIF": cif_number,
                     "P_FDATE": date_to_string(from_date),
                     "P_TDATE": date_to_string(to_date)
                 }
