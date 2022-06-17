@@ -92,7 +92,7 @@ class CtrCustomer(BaseController):
             log_details=log_details
         ) for created_at, log_details in response_datas.items()])
 
-    async def ctr_customer_information(self, cif_id: str):
+    async def ctr_customer_information(self, cif_id: str, booking_id):
         customer_information = self.call_repos(
             await repos_customer_information(cif_id=cif_id, session=self.oracle_session))
         first_row = customer_information[0]
@@ -104,7 +104,7 @@ class CtrCustomer(BaseController):
         #     )
         # )
 
-        transactions = self.call_repos((await repos_get_approval_process(cif_id=cif_id, session=self.oracle_session)))
+        transactions = self.call_repos((await repos_get_approval_process(booking_id=booking_id, session=self.oracle_session)))
 
         list_distinct_employee = []
         list_distinct_user_code = []
@@ -227,6 +227,7 @@ class CtrCustomer(BaseController):
             "nationality": dropdown(first_row.AddressCountry),
             "marital_status": dropdown(first_row.MaritalStatus) if first_row.MaritalStatus else DROPDOWN_NONE_DICT,
             "customer_type": dropdown(first_row.CustomerType) if first_row.CustomerType else DROPDOWN_NONE_DICT,
+            "customer_category": dropdown(first_row.CustomerCategory) if first_row.CustomerCategory else DROPDOWN_NONE_DICT,
             "credit_rating": None,
             "address": first_row.CustomerAddress.address,
             "total_employees": len(list_distinct_employee),
