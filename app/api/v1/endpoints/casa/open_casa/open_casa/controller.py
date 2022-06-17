@@ -97,12 +97,11 @@ class CtrCasaOpenCasa(BaseController):
             acc_salary_org_name = None
 
             # Nếu tài khoản số đẹp phải truyền số TKTT
+            casa_account_number = None
             if self_selected_account_flag:
                 casa_account_number = request.casa_account_number
                 if not casa_account_number:
                     is_errors.append(dict(msg=ERROR_ACCOUNT_NUMBER_NOT_NULL, loc=f"{index} -> casa_account_number"))
-            else:
-                casa_account_number = 'DEFAULT'
 
             # Nếu là TKTT tự chọn
             if self_selected_account_flag:
