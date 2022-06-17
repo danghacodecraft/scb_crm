@@ -50,7 +50,7 @@ async def view_retrieve_co_owner(
 ):
     co_owner_data = await CtrCoOwner(current_user).ctr_co_owner(cif_id=cif_id, booking_id=BOOKING_ID)
     return ResponseData[GetCoOwnerResponse](**co_owner_data)
-    # return ResponseData(**co_owner_data)
+
 
 # @router.get(
 #     path="/detail-co-owner/",
