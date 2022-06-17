@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -15,12 +15,13 @@ from app.third_parties.oracle.models.cif.payment_account.model import (
 )
 from app.third_parties.oracle.models.master_data.others import TransactionJob
 from app.utils.constant.approval import BUSINESS_JOB_CODE_OPEN_CASA
+from app.utils.constant.casa import CASA_ACCOUNT_STATUS_APPROVED
 from app.utils.constant.cif import BUSINESS_FORM_OPEN_CASA_PD
 from app.utils.constant.gw import (
     GW_TRANSACTION_NAME_COLUMN_CHART, GW_TRANSACTION_NAME_PIE_CHART,
     GW_TRANSACTION_NAME_STATEMENT
 )
-from app.utils.error_messages import ERROR_CALL_SERVICE_GW
+from app.utils.error_messages import ERROR_CALL_SERVICE_GW, ERROR_CASA_ACCOUNT_APPROVED
 from app.utils.functions import generate_uuid, now, orjson_dumps
 
 
@@ -153,15 +154,7 @@ async def repos_gw_open_casa_account(
         session=session
     )
 
-    if not is_success:
-        return ReposReturn(
-            is_error=True,
-            loc="get_open_casa_account",
-            msg=ERROR_CALL_SERVICE_GW,
-            detail=str(gw_open_casa_account_info)
-        )
-
-    return ReposReturn(data=gw_open_casa_account_info)
+    return is_success, gw_open_casa_account_info
 
 
 async def repos_gw_get_close_casa_account(
@@ -247,3 +240,23 @@ async def repos_update_casa_account_to_approved(
     session.bulk_update_mappings(CasaAccount, update_casa_accounts)
 
     return ReposReturn(data=True)
+
+
+async def repos_check_casa_account_approved(casa_account_ids: List, session: Session):
+    casa_account_status_approved_ids = session.execute(
+        select(
+            CasaAccount.id
+        ).filter(and_(
+            CasaAccount.id.in_(casa_account_ids),
+            CasaAccount.approve_status == CASA_ACCOUNT_STATUS_APPROVED
+        ))
+    ).scalars().all()
+
+    if casa_account_status_approved_ids:
+        return ReposReturn(
+            is_error=True,
+            msg=ERROR_CASA_ACCOUNT_APPROVED,
+            loc=f'casa_account_ids: {casa_account_status_approved_ids}'
+        )
+
+    return ReposReturn(data=casa_account_status_approved_ids)

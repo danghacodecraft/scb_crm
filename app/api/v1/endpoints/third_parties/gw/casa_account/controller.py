@@ -11,7 +11,7 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_get_pie_chart_casa_account_info,
     repos_gw_get_statements_casa_account_info, repos_gw_open_casa_account,
     repos_open_casa_get_casa_account_infos,
-    repos_update_casa_account_to_approved
+    repos_update_casa_account_to_approved, repos_check_casa_account_approved
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWOpenCasaAccountRequest, GWReportColumnChartHistoryAccountInfoRequest,
@@ -372,40 +372,50 @@ class CtrGWCasaAccount(BaseController):
         for casa_account in casa_accounts:
             casa_account_ids.append(casa_account.id)
 
+        # RULE: tài khoản đã được phê duyệt thì không cho phép phê duyệt
+        self.call_repos(await repos_check_casa_account_approved(
+            casa_account_ids=casa_account_ids,
+            session=self.oracle_session
+        ))
+
         casa_account_infos = self.call_repos(await repos_open_casa_get_casa_account_infos(
             casa_account_ids=casa_account_ids,
             session=self.oracle_session
         ))
+
         casa_account_successes = {}
-        casa_account_unsuccesses = {}
+        gw_errors = []
         for casa_account_info in casa_account_infos:
             self_selected_account_flag = casa_account_info.self_selected_account_flag
 
             casa_account_id = casa_account_info.id
-            casa_account_unsuccesses.update({casa_account_id: None})
 
-            gw_open_casa_account_info = self.call_repos(await repos_gw_open_casa_account(
+            is_success, gw_open_casa_account_info = await repos_gw_open_casa_account(
                 cif_number=cif_number,
                 self_selected_account_flag=self_selected_account_flag,
                 casa_account_info=casa_account_info,
                 current_user=self.current_user,
                 booking_parent_id=booking_parent_id,
                 session=self.oracle_session
-            ))
-            casa_account_successes.update({casa_account_id: gw_open_casa_account_info['openCASA_out']['data_output']['account_info']['account_num']})
-            casa_account_unsuccesses.pop(casa_account_id)
+            )
+            if not is_success:
+                gw_errors.append(dict(
+                    id=casa_account_id,
+                    msg=ERROR_CALL_SERVICE_GW,
+                    detail=str(gw_open_casa_account_info)
+                ))
+            else:
+                casa_account_successes.update({casa_account_id: gw_open_casa_account_info['openCASA_out']['data_output']['account_info']['account_num']})
 
         update_casa_accounts = []
-        casa_account_success_ids = []
         for casa_account_id, casa_account_number in casa_account_successes.items():
             update_casa_accounts.append(dict(
                 id=casa_account_id,
-                number=casa_account_number,
+                casa_account_number=casa_account_number,
                 approve_status=1,
                 checker_id=current_user_info.code,
                 checker_at=now()
             ))
-            casa_account_success_ids.append(casa_account_id)
 
         self.call_repos(await repos_update_casa_account_to_approved(
             update_casa_accounts=update_casa_accounts,
@@ -417,10 +427,7 @@ class CtrGWCasaAccount(BaseController):
                 id=casa_account_id,
                 number=casa_account_number
             )for casa_account_id, casa_account_number in casa_account_successes.items()],
-            unsuccesses=[dict(
-                id=casa_account_id,
-                number=casa_account_number
-            ) for casa_account_id, casa_account_number in casa_account_unsuccesses.items()]
+            errors=gw_errors
         ))
 
     async def ctr_gw_get_close_casa_account(self, request):
