@@ -38,6 +38,7 @@ class CtrCasaOpenCasa(BaseController):
 
         for _, booking, booking_account, casa_account, acc_structure_type_level_1 in get_casa_open_casa_infos:
             casa_accounts.append(dict(
+                id=casa_account.id,
                 self_selected_account_flag=casa_account.self_selected_account_flag,
                 currency=dropdown(casa_account.currency),
                 account_type=dropdown(casa_account.account_type),
