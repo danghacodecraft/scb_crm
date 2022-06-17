@@ -43,6 +43,7 @@ class CheckExistCasaAccountNumberResponse(BaseSchema):
 ########################################################################################################################
 # Chi tiết tài khoản thanh toán
 class SavePaymentAccountRequest(BaseSchema):
+    id: str = Field(..., description="Mã TKTT")
     self_selected_account_flag: bool = Field(..., description="""Cờ tự chọn số tài khoản
                                                               \nSố tài khoản thường => `False`
                                                               \nSố tài khoản yêu cầu => `True`""")
