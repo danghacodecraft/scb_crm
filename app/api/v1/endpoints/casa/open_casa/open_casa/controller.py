@@ -12,6 +12,7 @@ from app.api.v1.validator import validate_history_data
 from app.third_parties.oracle.models.master_data.account import AccountType, AccountClass
 from app.third_parties.oracle.models.master_data.others import Currency
 from app.utils.constant.business_type import BUSINESS_TYPE_OPEN_CASA
+from app.utils.constant.casa import CASA_ACCOUNT_STATUS_UNAPPROVED
 from app.utils.constant.cif import ACC_STRUCTURE_TYPE_LEVEL_2, STAFF_TYPE_BUSINESS_CODE, \
     PROFILE_HISTORY_DESCRIPTIONS_INIT_PAYMENT_ACCOUNT, PROFILE_HISTORY_STATUS_INIT
 from app.utils.error_messages import (
@@ -158,7 +159,7 @@ class CtrCasaOpenCasa(BaseController):
                 maker_at=now(),
                 checker_id=None,
                 checker_at=None,
-                approve_status=None,
+                approve_status=CASA_ACCOUNT_STATUS_UNAPPROVED,
                 self_selected_account_flag=self_selected_account_flag,
                 acc_active_flag=1,
                 created_at=now(),
