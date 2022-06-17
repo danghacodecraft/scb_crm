@@ -154,14 +154,14 @@ class GWReportColumnChartHistoryAccountInfoResponse(BaseGWSchema):
 
 class GWReportColumnChartHistoryAccountInfoRequest(BaseGWSchema):
     account_number: str = Field(..., description="Số tài khoản")
-    from_date: date = Field(..., description="Từ ngày")
-    to_date: date = Field(..., description="Đến ngày")
+    # from_date: date = Field(..., description="Từ ngày")
+    # to_date: date = Field(..., description="Đến ngày")
 
 
 class GWReportStatementHistoryAccountInfoRequest(BaseGWSchema):
     account_number: str = Field(..., description="Số tài khoản")
-    from_date: date = Field(..., description="Từ ngày")
-    to_date: date = Field(..., description="Đến ngày")
+    # from_date: date = Field(..., description="Từ ngày")
+    # to_date: date = Field(..., description="Đến ngày")
 
 
 class GWReportStatementHistoryAccountInfoResponse(BaseGWSchema):
