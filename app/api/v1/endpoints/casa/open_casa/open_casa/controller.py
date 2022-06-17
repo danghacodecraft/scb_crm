@@ -46,6 +46,7 @@ class CtrCasaOpenCasa(BaseController):
                 account_structure_type_level_2=optional_dropdown(casa_account.account_structure_type),
                 account_structure_type_level_3=optional_dropdown(None),
                 casa_account_number=casa_account.casa_account_number,
+                approve_status=casa_account.approve_status,
                 account_salary_organization_account=casa_account.acc_salary_org_acc,
                 account_salary_organization_name=casa_account.acc_salary_org_name
             ))
