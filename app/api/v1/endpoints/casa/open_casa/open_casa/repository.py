@@ -17,6 +17,7 @@ from app.third_parties.oracle.models.master_data.account import AccountStructure
 from app.third_parties.oracle.models.master_data.others import TransactionStageStatus, TransactionStage, \
     TransactionStageLane, TransactionStagePhase, TransactionStageRole, TransactionJob
 from app.utils.constant.approval import BUSINESS_JOB_CODE_START_CASA
+from app.utils.constant.casa import CASA_ACCOUNT_STATUS_APPROVED
 from app.utils.constant.cif import ACTIVE_FLAG_ACTIVED, BUSINESS_FORM_OPEN_CASA_OPEN_CASA
 from app.utils.error_messages import ERROR_CIF_NUMBER_NOT_EXIST, ERROR_IDS_NOT_EXIST
 from app.utils.functions import get_index_positions, now, generate_uuid
@@ -39,26 +40,33 @@ async def repos_save_casa_casa_account(
         history_datas: json,
         session: Session
 ):
-    # Lấy Booking con từ Booking cha
-    booking_ids = tuple(session.execute(
+    # Lấy Những Account có thể xóa được
+    deletable_datas = session.execute(
         select(
-            Booking.id
+            CasaAccount,
+            Booking,
+            BookingAccount
         )
+        .join(BookingAccount, Booking.id == BookingAccount.booking_id)
+        .join(CasaAccount, and_(
+            BookingAccount.account_id == CasaAccount.id,
+            CasaAccount.approve_status != CASA_ACCOUNT_STATUS_APPROVED
+        ))
         .filter(Booking.parent_id == booking_parent_id)
-    ).scalars().all())
+    ).all()
 
-    # Lấy những account map với booking con
-    account_ids = tuple(session.execute(
-        select(
-            BookingAccount.account_id
-        )
-        .filter(BookingAccount.booking_id.in_(booking_ids))
-    ).scalars().all())
+    deletable_casa_account_ids = []
+    deletable_booking_ids = []
+    for casa_account, booking, _ in deletable_datas:
+        deletable_casa_account_ids.append(casa_account.id)
+        deletable_booking_ids.append(booking.id)
 
-    # Xóa dữ liệu cũ
-    session.execute(delete(BookingAccount).filter(BookingAccount.booking_id.in_(booking_ids)))
-    session.execute(delete(Booking).filter(Booking.id.in_(booking_ids)))
-    session.execute(delete(CasaAccount).filter(CasaAccount.id.in_(account_ids)))
+    deletable_casa_account_ids = tuple(deletable_casa_account_ids)
+    deletable_booking_ids = tuple(deletable_booking_ids)
+    # Xóa dữ liệu cũ, những tài khoản phê duyệt rồi thì giữ lại
+    session.execute(delete(BookingAccount).filter(BookingAccount.booking_id.in_(deletable_booking_ids)))
+    session.execute(delete(Booking).filter(Booking.id.in_(deletable_booking_ids)))
+    session.execute(delete(CasaAccount).filter(CasaAccount.id.in_(deletable_casa_account_ids)))
 
     # Cập nhật lại bằng dữ liệu mới
     session.bulk_save_objects([CasaAccount(**saving_casa_account) for saving_casa_account in saving_casa_accounts])
