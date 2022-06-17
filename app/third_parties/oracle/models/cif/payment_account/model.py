@@ -33,7 +33,7 @@ class CasaAccount(Base):
     maker_at = Column(DateTime, nullable=False, comment='Thời gian thực hiện')
     checker_id = Column(VARCHAR(36), nullable=False, comment='Mã người duyệt')
     checker_at = Column(DateTime, comment='Thời gian duyệt')
-    approve_status = Column(VARCHAR(3), comment='Trạng thái duyệt')
+    approve_status = Column(NUMBER(10), comment='Trạng thái duyệt, 0: Thất bại, 1: Thành công')
     self_selected_account_flag = Column(NUMBER(1, 0, False), comment='Loại Tài khoản tự chọn')
     acc_active_flag = Column(NUMBER(1, 0, False), comment='Cờ kích hoạt tài khoản')
     created_at = Column(DateTime, comment='Ngày tạo')

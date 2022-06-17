@@ -18,9 +18,11 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWReportPieChartHistoryAccountInfoRequest,
     GWReportStatementHistoryAccountInfoRequest
 )
+from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
 from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.utils.constant.approval import CIF_STAGE_APPROVE_KSV
+from app.utils.constant.cif import BUSINESS_TYPE_CODE_OPEN_CASA
 from app.utils.constant.gw import (
     GW_TRANSACTION_TYPE_SEND, GW_TRANSACTION_TYPE_WITHDRAW
 )
@@ -357,12 +359,15 @@ class CtrGWCasaAccount(BaseController):
             )
 
         cif_number = request.cif_number
-        booking_parent_id = request.booking_parent_id
         # Kiểm tra số CIF có tồn tại trong CRM không
         self.call_repos(await repos_get_customer_by_cif_number(
             cif_number=cif_number,
             session=self.oracle_session
         ))
+
+        # Kiểm tra Booking Account
+        booking_parent_id = request.booking_parent_id
+        await CtrBooking().ctr_get_casa_account_from_booking(booking_id=booking_parent_id, session=self.oracle_session)
         casa_accounts = request.casa_accounts
         casa_account_ids = []
         for casa_account in casa_accounts:
@@ -397,7 +402,7 @@ class CtrGWCasaAccount(BaseController):
             update_casa_accounts.append(dict(
                 id=casa_account_id,
                 number=casa_account_number,
-                approve_status=True,
+                approve_status=1,
                 checker_id=current_user_info.code,
                 checker_at=now()
             ))
