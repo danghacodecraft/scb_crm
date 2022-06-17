@@ -38,6 +38,7 @@ class CtrCasaOpenCasa(BaseController):
 
         for _, booking, booking_account, casa_account, acc_structure_type_level_1 in get_casa_open_casa_infos:
             casa_accounts.append(dict(
+                id=casa_account.id,
                 self_selected_account_flag=casa_account.self_selected_account_flag,
                 currency=dropdown(casa_account.currency),
                 account_type=dropdown(casa_account.account_type),
@@ -46,6 +47,7 @@ class CtrCasaOpenCasa(BaseController):
                 account_structure_type_level_2=optional_dropdown(casa_account.account_structure_type),
                 account_structure_type_level_3=optional_dropdown(None),
                 casa_account_number=casa_account.casa_account_number,
+                approve_status=casa_account.approve_status,
                 account_salary_organization_account=casa_account.acc_salary_org_acc,
                 account_salary_organization_name=casa_account.acc_salary_org_name
             ))
@@ -97,12 +99,11 @@ class CtrCasaOpenCasa(BaseController):
             acc_salary_org_name = None
 
             # Nếu tài khoản số đẹp phải truyền số TKTT
+            casa_account_number = None
             if self_selected_account_flag:
                 casa_account_number = request.casa_account_number
                 if not casa_account_number:
                     is_errors.append(dict(msg=ERROR_ACCOUNT_NUMBER_NOT_NULL, loc=f"{index} -> casa_account_number"))
-            else:
-                casa_account_number = 'DEFAULT'
 
             # Nếu là TKTT tự chọn
             if self_selected_account_flag:

@@ -144,7 +144,7 @@ async def view_gw_get_statement_casa_account_info(
     )
 )
 async def view_gw_open_casa_account(
-        request: GWOpenCasaAccountRequest = Body(..., description="Thông tin khách hàng"),
+        request: GWOpenCasaAccountRequest = Body(..., description="Thông tin tài khoản"),
         current_user=Depends(get_current_user_from_header())
 ):
     gw_open_casa_account_info = await CtrGWCasaAccount(current_user).ctr_gw_open_casa_account(

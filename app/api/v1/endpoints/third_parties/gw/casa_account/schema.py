@@ -208,14 +208,20 @@ class GWOpenCasaAccountRequest(BaseGWSchema):
     casa_accounts: List[GWAccountInfoOpenCasaRequest] = Field(..., description="Danh sách ID các tài khoản")
 
 
-class GWOpenCasaResponse(BaseGWSchema):
+class GWOpenCasaSucessResponse(BaseGWSchema):
     id: str = Field(..., description="Mã tài khoản thanh toán")
     number: Optional[str] = Field(..., description="Số tài khoản thanh toán")
 
 
+class GWOpenCasaErrorResponse(BaseGWSchema):
+    id: Optional[str] = Field(..., description="Mã khoản thanh toán")
+    msg: Optional[str] = Field(..., description="Mã lỗi tài khoản thanh toán")
+    detail: Optional[str] = Field(..., description="Mô tả lỗi tài khoản thanh toán")
+
+
 class GWOpenCasaAccountResponse(BaseGWSchema):
-    successes: List[GWOpenCasaResponse] = Field(..., description="Những tài khoản thanh toán tạo thành công")
-    unsuccesses: List[GWOpenCasaResponse] = Field(..., description="Những tài khoản thanh toán tạo `KHÔNG` thành công")
+    successes: List[GWOpenCasaSucessResponse] = Field(..., description="Những tài khoản thanh toán tạo thành công")
+    errors: List[GWOpenCasaErrorResponse] = Field(..., description="Những tài khoản thanh toán tạo `KHÔNG` thành công")
 
 
 class GWAccountInfoCloseCasaRequest(BaseGWSchema):

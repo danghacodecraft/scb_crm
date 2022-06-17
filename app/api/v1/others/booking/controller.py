@@ -157,7 +157,4 @@ class CtrBooking(BaseController):
             if casa_account.approve_status == CASA_ACCOUNT_STATUS_APPROVED:
                 approved_casa_account_ids.append(casa_account.id)
 
-        if approved_casa_account_ids:
-            return self.response_exception(msg=ERROR_CASA_ACCOUNT_APPROVED, loc=f"id: {approved_casa_account_ids}")
-
         return self.response(data=casa_accounts)
