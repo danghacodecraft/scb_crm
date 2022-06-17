@@ -1,4 +1,3 @@
-from datetime import date
 from typing import Optional
 
 import aiohttp
@@ -49,7 +48,6 @@ from app.utils.constant.gw import (
     GW_RETRIEVE_CASA_ACCOUNT_DETAIL, GW_SELF_SELECTED_ACCOUNT_FLAG,
     GW_SELF_UNSELECTED_ACCOUNT_FLAG
 )
-from app.utils.functions import date_to_string
 
 
 class ServiceGW:
@@ -466,16 +464,18 @@ class ServiceGW:
             current_user: UserInfoResponse,
             account_number: str,
             transaction_name: str,
-            from_date: date,
-            to_date: date
+            # from_date: date,
+            # to_date: date
     ):
         data_input = {
             "transaction_info": {
                 "transaction_name": transaction_name,
                 "transaction_value": {
                     "P_ACC": account_number,
-                    "P_FDATE": date_to_string(from_date),
-                    "P_TDATE": date_to_string(to_date)
+                    "P_FDATE": "2020-01-01",
+                    "P_TDATE": "2020-01-01"
+                    # "P_FDATE": date_to_string(from_date),
+                    # "P_TDATE": date_to_string(to_date)
                 }
             }
         }
@@ -520,16 +520,18 @@ class ServiceGW:
             transaction_name: str,
             endpoint: str,
             cif_number: str,
-            from_date: Optional[date],
-            to_date: Optional[date]
+            # from_date: Optional[date],
+            # to_date: Optional[date]
     ):
         data_input = {
             "transaction_info": {
                 "transaction_name": transaction_name,
                 "transaction_value": {
                     "P_CIF": cif_number,
-                    "P_FDATE": date_to_string(from_date),
-                    "P_TDATE": date_to_string(to_date)
+                    "P_FDATE": "2020-01-01",
+                    "P_TDATE": "2020-01-01"
+                    # "P_FDATE": date_to_string(from_date),
+                    # "P_TDATE": date_to_string(to_date)
                 }
             }
         }
