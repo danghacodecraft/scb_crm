@@ -22,7 +22,6 @@ from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
 from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.utils.constant.approval import CIF_STAGE_APPROVE_KSV
-from app.utils.constant.cif import BUSINESS_TYPE_CODE_OPEN_CASA
 from app.utils.constant.gw import (
     GW_TRANSACTION_TYPE_SEND, GW_TRANSACTION_TYPE_WITHDRAW
 )
@@ -269,8 +268,8 @@ class CtrGWCasaAccount(BaseController):
         gw_report_column_chart_casa_account_info = self.call_repos(await repos_gw_get_column_chart_casa_account_info(
             account_number=request.account_number,
             current_user=self.current_user.user_info,
-            from_date=request.from_date,
-            to_date=request.to_date
+            # from_date=request.from_date,
+            # to_date=request.to_date
         ))
         report_casa_accounts = \
             gw_report_column_chart_casa_account_info['selectReportHisCaSaFromAcc_out']['data_output']['report_info'][
@@ -444,8 +443,8 @@ class CtrGWCasaAccount(BaseController):
         gw_report_statements_casa_account_info = self.call_repos(await repos_gw_get_statements_casa_account_info(
             account_number=request.account_number,
             current_user=self.current_user.user_info,
-            from_date=request.from_date,
-            to_date=request.to_date
+            # from_date=request.from_date,
+            # to_date=request.to_date
         ))
         report_casa_accounts = \
             gw_report_statements_casa_account_info['selectReportStatementCaSaFromAcc_out']['data_output']['report_info']['report_casa_account']
