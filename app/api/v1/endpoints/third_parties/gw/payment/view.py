@@ -7,9 +7,13 @@ from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.third_parties.gw.payment.controller import (
     CtrGWPayment
 )
+from app.api.v1.endpoints.third_parties.gw.payment.example import (
+    REDEEM_ACCOUNT_REQUEST_EXAMPLE
+)
 from app.api.v1.endpoints.third_parties.gw.payment.schema import (
     AccountAmountBlockRequest, AccountAmountBlockResponse,
-    AccountAmountUnblock, AccountAmountUnblockResponse, PayInCashRequest
+    AccountAmountUnblock, PayInCashRequest, PaymentSuccessResponse,
+    RedeemAccountRequest
 )
 
 router = APIRouter()
@@ -42,7 +46,7 @@ async def view_gw_amount_block(
     name="[GW] Amount Unblock",
     description="Giải tỏa tài khoản",
     responses=swagger_response(
-        response_model=ResponseData[AccountAmountUnblockResponse],
+        response_model=ResponseData[PaymentSuccessResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -53,7 +57,7 @@ async def view_gw_amount_unblock(
     gw_payment_amount_unblock = await CtrGWPayment(current_user).ctr_gw_payment_amount_unblock(
         account_amount_unblock=account_amount_unblock
     )
-    return ResponseData[AccountAmountUnblockResponse](**gw_payment_amount_unblock)
+    return ResponseData[PaymentSuccessResponse](**gw_payment_amount_unblock)
 
 
 @router.post(
@@ -71,3 +75,21 @@ async def gw_pay_in_cash(
 ):
     pay_in_cash = await CtrGWPayment(current_user).ctr_gw_pay_in_cash(pay_in_cash=pay_in_cash)
     return ResponseData(**pay_in_cash)
+
+
+@router.post(
+    path="/redeem-account/",
+    name="[GW] Redeem Account",
+    description="Tất toán sổ tiết kiệm",
+    responses=swagger_response(
+        response_model=ResponseData[PaymentSuccessResponse],
+        success_status_code=status.HTTP_200_OK
+    ),
+
+)
+async def gw_redeem_account(
+        redeem_account: RedeemAccountRequest = Body(..., example=REDEEM_ACCOUNT_REQUEST_EXAMPLE),
+        current_user=Depends(get_current_user_from_header())
+):
+    redeem_account_response = await CtrGWPayment(current_user).ctr_gw_redeem_account(redeem_account=redeem_account)
+    return ResponseData[PaymentSuccessResponse](**redeem_account_response)

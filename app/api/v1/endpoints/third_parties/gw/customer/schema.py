@@ -99,6 +99,7 @@ class GWCustomerInfoDetailResponse(BaseGWSchema):
     telephone: Optional[str] = Field(..., description="Điện thoại bàn")
     otherphone: Optional[str] = Field(..., description="Số điện thoại khác")
     customer_type: OptionalDropdownResponse = Field(..., description="Loại khách hàng (cá nhân hoặc doanh nghiệp)")
+    customer_category: OptionalDropdownResponse = Field(..., description="Nhóm khách hàng (I_11, I_12,...)")
     resident_status: OptionalDropdownResponse = Field(..., description="Tình trạng cư trú")
     legal_representativeprsn_name: Optional[str] = Field(
         ..., description="Tên người đại diện theo pháp luật (doanh nghiệp)"

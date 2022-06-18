@@ -1,7 +1,8 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.payment_account.co_owner.repository import (
-    repos_detail_co_owner, repos_get_casa_account, repos_get_co_owner,
-    repos_get_co_owner_signatures, repos_save_co_owner
+    repos_account_co_owner, repos_check_cif_id, repos_detail_co_owner,
+    repos_get_casa_account, repos_get_co_owner, repos_get_co_owner_signatures,
+    repos_get_uuid, repos_save_co_owner
 )
 from app.api.v1.endpoints.cif.payment_account.co_owner.schema import (
     AccountHolderRequest
@@ -14,9 +15,13 @@ from app.api.v1.endpoints.third_parties.gw.customer.controller import (
     CtrGWCustomer
 )
 from app.api.v1.others.booking.controller import CtrBooking
+from app.third_parties.oracle.models.master_data.address import AddressCountry
+from app.third_parties.oracle.models.master_data.customer import CustomerGender
 from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.gw import GW_REQUEST_PARAMETER_CO_OWNER
-from app.utils.error_messages import ERROR_CIF_NUMBER_NOT_EXIST
+from app.utils.error_messages import (
+    ERROR_CIF_ID_DOES_NOT_EXIST, ERROR_CIF_NUMBER_NOT_EXIST
+)
 from app.utils.functions import dropdown, generate_uuid
 
 
@@ -107,24 +112,54 @@ class CtrCoOwner(BaseController):
 
         return self.response(data=co_owner_data)
 
-    async def ctr_co_owner(self, cif_id: str):
+    async def ctr_co_owner(self, cif_id: str, booking_id: str):
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking_and_validate(
+            business_type_code=BUSINESS_TYPE_INIT_CIF,
+            booking_id=booking_id,
+            check_correct_booking_flag=False,
+            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        )
+
+        # Check exist cif_id
+        account_id = self.call_repos(
+            await repos_check_cif_id(
+                cif_id=cif_id,
+                session=self.oracle_session))
+
+        if not account_id:
+            return self.response_exception(
+                msg=ERROR_CIF_ID_DOES_NOT_EXIST, loc=account_id
+            )
+
+        account_co_owner = self.call_repos(await repos_account_co_owner(
+            account_id=account_id,
+            session=self.oracle_session
+        ))
+
+        document_uuid = self.call_repos(await repos_get_uuid(
+            document_id=account_co_owner.joint_acc_agree_document_file_id,
+            session=self.oracle_session
+        ))
+        document_uuids = [document_uuid]
+        # gọi đến service file để lấy link download
+        uuid__link_downloads = await self.get_info_multi_file(uuids=document_uuids)
+
         account_holders, account_holder_signs = self.call_repos(
             await repos_get_co_owner(
-                cif_id=cif_id,
+                account_id=account_id,
                 session=self.oracle_session,
             )
         )
-        joint_account_holder_flag = False
         number_of_joint_account_holder = 0
         joint_account_holders = []
         agreement_authorizations = []
-        cif_numbers = []
         signature_list = []
+        cif_numbers = []
 
         for casa_account, acc_joint_acc_agree, joint_account_holder, customer_relationship_type in account_holders:
             cif_number = joint_account_holder.cif_num
             cif_numbers.append(cif_number)
-
             data = await CtrGWCustomer(current_user=self.current_user).ctr_gw_get_customer_info_detail(
                 cif_number=cif_number,
                 parameter=GW_REQUEST_PARAMETER_CO_OWNER
@@ -140,19 +175,25 @@ class CtrCoOwner(BaseController):
             basic_information = gw_data['basic_information']
             address_information = gw_data['address_information']
 
+            gender_name = basic_information["gender"]["name"]
+            dropdown_gender = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=CustomerGender, name=None, code=gender_name
+            )
+
+            nationality_name = basic_information['nationality']["name"]
+            dropdown_nationality = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=AddressCountry, name=None, code=nationality_name
+            )
+
             joint_account_holders.append(dict(
-                document_file=acc_joint_acc_agree.joint_acc_agree_document_file_id,
-                document_address=acc_joint_acc_agree.joint_acc_agree_document_address,
-                document_no=acc_joint_acc_agree.joint_acc_agree_document_no,
-                in_scb_flag=acc_joint_acc_agree.in_scb_flag,
-                id=cif_number,
+                id=joint_account_holder.joint_account_holder_id,
                 basic_information=dict(
-                    cif_number=cif_number,
+                    cif_number=joint_account_holder.cif_num,
                     customer_relationship=dropdown(customer_relationship_type),
                     full_name_vn=basic_information['full_name_vn'],
                     date_of_birth=basic_information['date_of_birth'],
-                    gender=basic_information['gender'],
-                    nationality=basic_information['nationality'],
+                    gender=dropdown_gender,
+                    nationality=dropdown_nationality,
                     mobile_number=basic_information['mobile_number'],
                     signature=[]
                 ),
@@ -166,8 +207,8 @@ class CtrCoOwner(BaseController):
                     contact_address=address_information['contact_address'].strip(" "),
                     resident_address=address_information['resident_address'].strip(" ")
                 ),
-                avatar_url=None
             ))
+
             number_of_joint_account_holder += 1
             for _, joint_acc_agree_id, method_sign, agreement_authorization in account_holder_signs:
                 if acc_joint_acc_agree.joint_acc_agree_id == joint_acc_agree_id:
@@ -175,7 +216,7 @@ class CtrCoOwner(BaseController):
                         id=agreement_authorization.id,
                         code=agreement_authorization.code,
                         name=agreement_authorization.name,
-                        active_flag=agreement_authorization.active_flag,
+                        agreement_flag=agreement_authorization.active_flag,
                         method_sign=method_sign.method_sign_type,
                         signature_list=[]
                     ))
@@ -188,6 +229,7 @@ class CtrCoOwner(BaseController):
 
         signatures = self.call_repos(await repos_get_co_owner_signatures(
             cif_numbers=cif_numbers, session=self.oracle_session))
+
         for idx, (_, _, joint_account_holder, _) in enumerate(account_holders):
             for signature in signatures:
                 if joint_account_holder.cif_num == signature.cif_number:
@@ -200,12 +242,17 @@ class CtrCoOwner(BaseController):
                 agreement_authorizations[idx]["signature_list"] = signature_list
 
         response_data = dict(
-            joint_account_holder_flag=joint_account_holder_flag,
+            joint_account_holder_flag=account_co_owner.active_flag,
+            document_no=account_co_owner.joint_acc_agree_document_no,
+            created_at=account_co_owner.created_at,
+            address_flag=account_co_owner.in_scb_flag,
+            document_address=account_co_owner.joint_acc_agree_document_address,
+            file_uuid=uuid__link_downloads[document_uuid],
+
             number_of_joint_account_holder=number_of_joint_account_holder,
             joint_account_holders=joint_account_holders,
             agreement_authorization=agreement_authorizations
         )
-
         return self.response(data=response_data)
 
         # query db crm

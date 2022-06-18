@@ -1,5 +1,7 @@
 from typing import Optional
 
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 from starlette import status
 
 from app.api.base.controller import BaseController
@@ -9,8 +11,11 @@ from app.api.v1.others.booking.repository import (
     repos_is_used_booking, repos_get_business_type
 )
 from app.api.v1.others.permission.controller import PermissionController
+from app.third_parties.oracle.models.cif.form.model import Booking, BookingAccount
+from app.third_parties.oracle.models.cif.payment_account.model import CasaAccount
 from app.utils.constant.approval import CIF_STAGE_INIT
 from app.utils.constant.business_type import BUSINESS_TYPES
+from app.utils.constant.casa import CASA_ACCOUNT_STATUS_APPROVED
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_OPEN_CIF, IDM_MENU_CODE_OPEN_CIF,
     IDM_PERMISSION_CODE_OPEN_CIF
@@ -18,7 +23,8 @@ from app.utils.constant.idm import (
 from app.utils.error_messages import (
     ERROR_BOOKING_ALREADY_USED, ERROR_BOOKING_ID_NOT_EXIST,
     ERROR_BOOKING_INCORRECT, ERROR_BUSINESS_TYPE_CODE_INCORRECT,
-    ERROR_BUSINESS_TYPE_NOT_EXIST, ERROR_CIF_ID_NOT_EXIST, ERROR_PERMISSION
+    ERROR_BUSINESS_TYPE_NOT_EXIST, ERROR_CIF_ID_NOT_EXIST, ERROR_PERMISSION, ERROR_CASA_ACCOUNT_NOT_EXIST,
+    ERROR_CASA_ACCOUNT_APPROVED
 )
 
 
@@ -130,3 +136,25 @@ class CtrBooking(BaseController):
             session=self.oracle_session
         ))
         return business_type
+
+    async def ctr_get_casa_account_from_booking(self, booking_id: str, session: Session):
+        casa_accounts = session.execute(
+            select(
+                CasaAccount,
+                Booking,
+                BookingAccount
+            )
+            .join(BookingAccount, Booking.id == BookingAccount.booking_id)
+            .join(CasaAccount, BookingAccount.account_id == CasaAccount.id)
+            .filter(Booking.parent_id == booking_id)
+        ).scalars().all()
+
+        if not casa_accounts:
+            return self.response_exception(msg=ERROR_CASA_ACCOUNT_NOT_EXIST, loc=f'booking_id: {booking_id}')
+
+        approved_casa_account_ids = []
+        for casa_account in casa_accounts:
+            if casa_account.approve_status == CASA_ACCOUNT_STATUS_APPROVED:
+                approved_casa_account_ids.append(casa_account.id)
+
+        return self.response(data=casa_accounts)
