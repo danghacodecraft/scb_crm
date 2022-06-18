@@ -19,7 +19,7 @@ from app.utils.functions import dropdown
 
 
 class CtrDashboard(BaseController):
-    async def ctr_get_transaction_list(self, region_id: str, branch_id: str, transaction_type_id: str,
+    async def ctr_get_transaction_list(self, region_id: str, branch_id: str, business_type_id: str,
                                        status_code: str, search_box: str, from_date: date, to_date: date):
         limit = self.pagination_params.limit
         current_page = 1
@@ -29,7 +29,7 @@ class CtrDashboard(BaseController):
         transaction_list = self.call_repos(await repos_get_transaction_list(
             region_id=region_id,
             branch_id=branch_id,
-            transaction_type_id=transaction_type_id,
+            business_type_id=business_type_id,
             status_code=status_code,
             search_box=search_box,
             from_date=from_date,
@@ -40,7 +40,7 @@ class CtrDashboard(BaseController):
         ))
 
         total_item = self.call_repos(await repos_count_total_item(
-            region_id=region_id, branch_id=branch_id, transaction_type_id=transaction_type_id, status_code=status_code,
+            region_id=region_id, branch_id=branch_id, business_type_id=business_type_id, status_code=status_code,
             search_box=search_box, from_date=from_date, to_date=to_date, session=self.oracle_session))
 
         total_page = 0
@@ -134,7 +134,8 @@ class CtrDashboard(BaseController):
         if business_type_init_cifs:
             stage_infos = self.call_repos(await repos_get_senders(
                 booking_ids=tuple(business_type_init_cifs),
-                session=self.oracle_session
+                region_id=region_id, branch_id=branch_id, business_type_id=business_type_id, status_code=status_code,
+                search_box=search_box, from_date=from_date, to_date=to_date, session=self.oracle_session
             ))
 
             for transaction_daily, stage, stage_role, sender, booking_id in stage_infos:
@@ -157,7 +158,6 @@ class CtrDashboard(BaseController):
                             name=sender.user_fullname,
                             created_at=transaction_daily.created_at
                         )
-
         return self.response_paging(
             data=[mapping_data for _, mapping_data in mapping_datas.items()],
             current_page=current_page,

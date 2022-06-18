@@ -46,8 +46,7 @@ async def repos_gw_get_deposit_account_td(
 async def ctr_gw_get_statement_deposit_account_td(
         account_number: str,
         current_user: str,
-        # from_date: date,
-        # to_date: date
+
 ):
     is_success, gw_report_history_td_account_info = await service_gw.get_report_statement_td_account(
         current_user=current_user,
