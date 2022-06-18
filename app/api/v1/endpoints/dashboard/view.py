@@ -38,8 +38,6 @@ async def view_transaction_list(
         pagination_params: PaginationParams = Depends(),
 
 ):
-    print('====================')
-    print(business_type_id)
 
     transaction_list_response = await CtrDashboard(
         current_user=current_user,
