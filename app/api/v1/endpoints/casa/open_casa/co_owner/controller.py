@@ -24,7 +24,7 @@ from app.utils.constant.gw import GW_REQUEST_PARAMETER_CO_OWNER
 from app.utils.error_messages import (
     ERROR_CASA_ACCOUNT_ID_DOES_NOT_EXIST,
     ERROR_CASA_ACCOUNT_ID_DOES_NOT_EXIST_IN_JOINT_ACCOUNT_AGREEMENT,
-    ERROR_CIF_NUMBER_NOT_EXIST
+    ERROR_CIF_NUMBER_NOT_EXIST, ERROR_DOCUMENT_ID_DOES_NOT_EXIST
 )
 from app.utils.functions import dropdown, generate_uuid
 
@@ -156,6 +156,11 @@ class CtrCoOwner(BaseController):
             document_id=account_co_owner.joint_acc_agree_document_file_id,
             session=self.oracle_session
         ))
+        if not document_uuid:
+            return self.response_exception(
+                msg=ERROR_DOCUMENT_ID_DOES_NOT_EXIST, loc=account_co_owner.joint_acc_agree_document_file_id
+            )
+
         document_uuids = [document_uuid]
         # gọi đến service file để lấy link download
         uuid__link_downloads = await self.get_info_multi_file(uuids=document_uuids)
