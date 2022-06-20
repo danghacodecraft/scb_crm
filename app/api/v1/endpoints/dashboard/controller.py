@@ -85,7 +85,7 @@ class CtrDashboard(BaseController):
                     booking_code=booking_code,
                     business_type=dict(
                         name=business_type_name,
-                        number=None
+                        numbers=[]
                     ),
                     branch_code=branch_code,
                     branch_name=branch_name,
@@ -106,18 +106,33 @@ class CtrDashboard(BaseController):
                 )
             })
 
+        # Lấy thông tin các giao dịch Mở TKTT
         open_casa_infos = self.call_repos(
             await repos_get_open_casa_info_from_booking(booking_ids=business_type_open_casas,
                                                         session=self.oracle_session))
-
+        exist_booking = {}
         for booking, _, casa_account, customer in open_casa_infos:
+            account_info = dict(
+                number=casa_account.casa_account_number,
+                approval_status=casa_account.approve_status
+            )
+            if booking.parent_id not in exist_booking:
+                account_numbers = [account_info]
+            else:
+                account_numbers = exist_booking[booking.parent_id]
+                account_numbers.append(account_info)
+            exist_booking.update({booking.parent_id: account_numbers})
+
             mapping_datas[booking.parent_id].update(
                 full_name_vn=customer.full_name_vn,
                 cif_id=customer.id,
                 cif_number=customer.cif_number
             )
-            mapping_datas[booking.parent_id]['business_type'].update(number=casa_account.casa_account_number)
+            mapping_datas[booking.parent_id]['business_type'].update(
+                numbers=account_numbers
+            )
 
+        # Lấy thông tin các giao dịch Mở CIF
         open_cif_infos = self.call_repos(
             await repos_get_open_cif_info_from_booking(booking_ids=business_type_init_cifs,
                                                        session=self.oracle_session))
@@ -129,7 +144,12 @@ class CtrDashboard(BaseController):
                     cif_id=customer.id,
                     cif_number=customer.cif_number
                 )
-                mapping_datas[booking.id]['business_type'].update(number=customer.cif_number)
+                mapping_datas[booking.id]['business_type'].update(
+                    numbers=[dict(
+                        number=customer.cif_number,
+                        approval_status=customer.complete_flag
+                    )]
+                )
 
         if business_type_init_cifs:
             stage_infos = self.call_repos(await repos_get_senders(
