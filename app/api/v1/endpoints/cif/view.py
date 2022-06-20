@@ -107,7 +107,7 @@ async def view_check_exist_cif(
 
 
 @router.post(
-    path="/{cif_id}/",
+    path="/",
     name="Lấy dữ liệu thông tin của khách hàng thông qua số CIF",
     description="Lấy dữ liệu thông tin của khách hàng thông qua số CIF",
     responses=swagger_response(
@@ -116,12 +116,10 @@ async def view_check_exist_cif(
     )
 )
 async def view_retrieve_customer_information_by_cif_number(
-        cif_id: str = Path(..., description='Id CIF ảo'),
         request: CustomerByCIFNumberRequest = Body(..., description="Thông tin khách hàng qua số CIF"),
         current_user=Depends(get_current_user_from_header())
 ):
     customer_information = await CtrCustomer(current_user).ctr_retrieve_customer_information_by_cif_number(
-        cif_id=cif_id,
         request=request
     )
     return ResponseData[CustomerByCIFNumberResponse](**customer_information)

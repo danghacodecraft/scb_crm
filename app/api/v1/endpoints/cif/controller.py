@@ -3,8 +3,7 @@ from app.api.v1.endpoints.approval.repository import repos_get_approval_process
 from app.api.v1.endpoints.cif.repository import (
     repos_customer_information, repos_get_cif_id_by_cif_number,
     repos_get_cif_info, repos_get_customer_working_infos,
-    repos_get_initializing_customer, repos_profile_history,
-    repos_validate_cif_number
+    repos_profile_history, repos_validate_cif_number
 )
 from app.api.v1.endpoints.cif.schema import CustomerByCIFNumberRequest
 from app.api.v1.endpoints.repository import (
@@ -260,13 +259,9 @@ class CtrCustomer(BaseController):
 
     async def ctr_retrieve_customer_information_by_cif_number(
             self,
-            cif_id: str,
             request: CustomerByCIFNumberRequest
     ):
         cif_number = request.cif_number
-
-        # check cif đang tạo
-        self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
 
         # check cif number is valid
         self.call_repos(await repos_validate_cif_number(cif_number=cif_number))
