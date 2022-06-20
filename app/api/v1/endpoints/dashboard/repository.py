@@ -26,7 +26,8 @@ from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
 )
 from app.third_parties.oracle.models.master_data.others import (
-    Branch, TransactionStage, TransactionStageRole, TransactionStageStatus
+    Branch, SlaTransaction, TransactionStage, TransactionStageRole,
+    TransactionStageStatus
 )
 from app.utils.constant.cif import CONTACT_ADDRESS_CODE
 from app.utils.constant.dwh import NAME_ACCOUNTING_ENTRY
@@ -250,6 +251,82 @@ async def repos_get_senders(
     ).all()
 
     return ReposReturn(data=stage_infos)
+
+
+async def repos_get_sla_trans(
+        booking_ids: tuple, region_id: Optional[str], branch_id: Optional[str],
+        business_type_id: Optional[str], status_code: Optional[str], search_box: Optional[str],
+        from_date: Optional[date], to_date: Optional[date], session: Session
+):
+    sql = select(
+        TransactionDaily.transaction_root_id,
+        Booking
+    ).join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
+        .filter(Booking.id.in_(booking_ids))
+
+    if region_id:
+        sql = sql.filter(Branch.region_id == region_id)
+
+    if branch_id:
+        sql = sql.filter(Booking.branch_id == branch_id)
+
+    if business_type_id:
+        sql = sql.filter(Booking.business_type_id == business_type_id)
+
+    if status_code:
+        sql = sql.filter(TransactionStageStatus.code == status_code)
+
+    if search_box:
+        search_box = f'%{search_box}%'
+        sql = sql.filter(
+            or_(
+                Booking.code.ilike(search_box),
+                or_(
+                    Customer.cif_number.ilike(search_box),
+                    or_(
+                        CustomerIdentity.identity_num.ilike(search_box)),
+                    Customer.full_name.ilike(convert_to_unsigned_vietnamese(search_box))
+                )
+            )
+        )
+
+    if from_date and to_date:
+        sql = sql.filter(
+            and_(
+                Booking.created_at >= date_to_datetime(from_date),
+                Booking.created_at <= end_time_of_day(date_to_datetime(to_date))
+            ))
+
+    transaction_root_dailies = session.execute(
+        sql
+    ).scalars().all()
+
+    if not transaction_root_dailies:
+        return ReposReturn(is_error=True, msg="No Transaction Root Daily")
+
+    transaction_daily_ids = session.execute(
+        select(
+            TransactionDaily.transaction_id
+        )
+        .filter(TransactionDaily.transaction_root_id.in_(transaction_root_dailies))
+    ).scalars().all()
+
+    sql = select(
+        TransactionDaily,
+        TransactionStage,
+        SlaTransaction,
+        Booking.id
+    ) \
+        .join(Booking, TransactionDaily.transaction_id == Booking.transaction_id) \
+        .outerjoin(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
+        .join(SlaTransaction, TransactionStage.sla_transaction_id == SlaTransaction.id) \
+        .filter(
+            TransactionDaily.transaction_id.in_(transaction_daily_ids),
+            Booking.business_type_id == business_type_id)
+
+    sla_trans = session.execute(sql).all()
+
+    return ReposReturn(data=sla_trans)
 
 
 async def repos_get_total_item(

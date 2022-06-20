@@ -5,7 +5,8 @@ from app.api.v1.endpoints.dashboard.repository import (
     repos_accounting_entry, repos_branch, repos_count_total_item,
     repos_get_customer, repos_get_open_casa_info_from_booking,
     repos_get_open_cif_info_from_booking, repos_get_senders,
-    repos_get_total_item, repos_get_transaction_list, repos_region
+    repos_get_sla_trans, repos_get_total_item, repos_get_transaction_list,
+    repos_region
 )
 from app.utils.constant.business_type import (
     BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA
@@ -158,6 +159,70 @@ class CtrDashboard(BaseController):
                             name=sender.user_fullname,
                             created_at=transaction_daily.created_at
                         )
+
+        sla_trans = self.call_repos(await repos_get_sla_trans(
+            booking_ids=tuple(business_type_init_cifs),
+            region_id=region_id, branch_id=branch_id, business_type_id=business_type_id, status_code=status_code,
+            search_box=search_box, from_date=from_date, to_date=to_date, session=self.oracle_session))
+
+        init_time = None
+        teller_time = None
+        teller_sla_time = None
+        supervisor_time = None
+        supervisor_sla_time = None
+        audit_time = None
+        audit_sla_time = None
+        for idx, (trans_dl, trans_stg, sla_transaction, book_id) in enumerate(sla_trans):
+            if sla_transaction.sla_id is None:
+                init_time = sla_transaction.created_at
+                print('1')
+                print(init_time)
+            elif sla_transaction.sla_id == "CIF_GDV":
+                teller_time = sla_transaction.created_at
+                print('2')
+                print(teller_time)
+            elif sla_transaction.sla_id == "CIF_KSV":
+                supervisor_time = sla_transaction.created_at
+                print('3')
+                print(supervisor_time)
+            elif sla_transaction.sla_id == "CIF_KSS":
+                audit_time = sla_transaction.created_at
+                print('4')
+                print(audit_time)
+
+            if init_time and teller_time:
+                teller_sla_time = teller_time - init_time
+
+            if teller_time and supervisor_time:
+                supervisor_sla_time = supervisor_time - teller_time
+
+            if supervisor_time and audit_time:
+                audit_sla_time = audit_time - supervisor_time
+
+            mapping_datas[book_id]['teller'].update(
+                sla_time=teller_sla_time
+            )
+
+            mapping_datas[book_id]['supervisor'].update(
+                sla_time=supervisor_sla_time
+            )
+
+            mapping_datas[book_id]['audit'].update(
+                sla_time=audit_sla_time
+            )
+
+            # print(idx)
+            # print("trans_dl.__dict")
+            # print(trans_dl.__dict__)
+            # print("trans_stg.__dict")
+            # print(trans_stg.__dict__)
+            # print("sla_tr.__dict")
+            # print(sla_tr.__dict__)
+            # print("bk_id")
+            # print(bk_id)
+            # print(idx)
+            # mapping_datas.update()
+
         return self.response_paging(
             data=[mapping_data for _, mapping_data in mapping_datas.items()],
             current_page=current_page,
