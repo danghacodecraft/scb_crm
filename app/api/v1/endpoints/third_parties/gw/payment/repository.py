@@ -68,7 +68,7 @@ async def repos_create_booking_payment(
 
 
 @auto_commit
-async def repos_gw_payment_amount_block(
+async def repos_payment_amount_block(
         booking_id,
         saving_transaction_stage_status,
         saving_transaction_stage,
@@ -89,6 +89,7 @@ async def repos_gw_payment_amount_block(
         TransactionStageRole(**saving_transaction_stage_role),
         TransactionDaily(**saving_transaction_daily),
         TransactionSender(**saving_transaction_sender),
+        # lưu form data request từ client
         BookingBusinessForm(**dict(
             booking_id=booking_id,
             form_data=request_json,
@@ -107,6 +108,18 @@ async def repos_gw_payment_amount_block(
     )
 
     return ReposReturn(data=booking_id)
+
+
+async def repos_gw_payment_amount_block(
+    current_user,
+    data_input,
+    session
+):
+    is_success, gw_payment_amount_block = await service_gw.gw_payment_amount_block(
+        current_user=current_user.user_info, data_input=data_input
+    )
+
+    return ReposReturn(data=gw_payment_amount_block)
     # is_success, gw_payment_amount_block = await service_gw.gw_payment_amount_block(
     #     current_user=current_user.user_info, data_input=data_input
     # )

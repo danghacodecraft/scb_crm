@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from sqlalchemy import and_, desc, select, update
 from sqlalchemy.orm import Session, aliased
@@ -12,16 +12,21 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingCustomer, TransactionDaily, TransactionSender
+    Booking, BookingBusinessForm, BookingCustomer, TransactionDaily,
+    TransactionSender
 )
 from app.third_parties.oracle.models.master_data.others import (
     BusinessJob, BusinessType, TransactionJob, TransactionStage,
     TransactionStageAction, TransactionStageLane, TransactionStagePhase,
     TransactionStageRole, TransactionStageStatus
 )
-from app.utils.constant.business_type import BUSINESS_TYPES, BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA
+from app.utils.constant.business_type import (
+    BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA, BUSINESS_TYPES
+)
 from app.utils.constant.cif import IMAGE_TYPE_FACE
-from app.utils.error_messages import ERROR_BOOKING_ID_NOT_EXIST, ERROR_BOOKING_TRANSACTION_NOT_EXIST
+from app.utils.error_messages import (
+    ERROR_BOOKING_ID_NOT_EXIST, ERROR_BOOKING_TRANSACTION_NOT_EXIST
+)
 
 
 async def repos_get_approval_process(booking_id: str, session: Session) -> ReposReturn:
@@ -424,3 +429,20 @@ async def repos_get_business_job_codes(business_type_code: str, session: Session
         ))
     ).scalars().all()
     return ReposReturn(data=business_job_codes)
+
+
+async def repos_get_booking_business_form_by_booking_id(
+        booking_id: str,
+        session: Session,
+        business_form_id: Optional[str] = None
+):
+    business_form = session.execute(
+        select(
+            BookingBusinessForm
+        ).filter(and_(
+            BookingBusinessForm.booking_id == booking_id,
+            BookingBusinessForm.business_form_id == business_form_id
+        ))
+    ).scalar()
+
+    return ReposReturn(data=business_form)
