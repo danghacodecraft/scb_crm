@@ -22,7 +22,9 @@ from app.utils.constant.business_type import (
 )
 from app.utils.constant.gw import GW_REQUEST_PARAMETER_CO_OWNER
 from app.utils.error_messages import (
-    ERROR_CASA_ACCOUNT_ID_NOT_EXIST, ERROR_CIF_NUMBER_NOT_EXIST
+    ERROR_CASA_ACCOUNT_ID_DOES_NOT_EXIST,
+    ERROR_CASA_ACCOUNT_ID_DOES_NOT_EXIST_IN_JOINT_ACCOUNT_AGREEMENT,
+    ERROR_CIF_NUMBER_NOT_EXIST
 )
 from app.utils.functions import dropdown, generate_uuid
 
@@ -47,7 +49,7 @@ class CtrCoOwner(BaseController):
 
         if not account_id:
             return self.response_exception(
-                msg=ERROR_CASA_ACCOUNT_ID_NOT_EXIST, loc=account_id
+                msg=ERROR_CASA_ACCOUNT_ID_DOES_NOT_EXIST, loc=account_id
             )
 
         # Lấy danh sách cif_number account request
@@ -120,7 +122,7 @@ class CtrCoOwner(BaseController):
 
         return self.response(data=co_owner_data)
 
-    async def ctr_co_owner(self, account_id: str, booking_id: str):
+    async def ctr_co_owner(self, account_id: str, booking_id: str, ERROR_CASA_ACCOUNT_ID_NOT_EXIST=None):
         # Check exist Booking
         await CtrBooking().ctr_get_booking_and_validate(
             business_type_code=BUSINESS_TYPE_OPEN_CASA,
@@ -137,13 +139,18 @@ class CtrCoOwner(BaseController):
 
         if not account_id:
             return self.response_exception(
-                msg=ERROR_CASA_ACCOUNT_ID_NOT_EXIST, loc=account_id
+                msg=ERROR_CASA_ACCOUNT_ID_DOES_NOT_EXIST, loc=account_id
             )
 
         account_co_owner = self.call_repos(await repos_account_co_owner(
             account_id=account_id,
             session=self.oracle_session
         ))
+
+        if not account_co_owner:
+            return self.response_exception(
+                msg=ERROR_CASA_ACCOUNT_ID_DOES_NOT_EXIST_IN_JOINT_ACCOUNT_AGREEMENT, loc=account_id
+            )
 
         document_uuid = self.call_repos(await repos_get_uuid(
             document_id=account_co_owner.joint_acc_agree_document_file_id,
