@@ -430,7 +430,7 @@ class SlaTransaction(Base):
     id = Column('sla_transaction_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "),
                 comment='Mã giao dịch SLA')
     parent_id = Column('sla_parent_transaction_id', VARCHAR(36), comment='Mã id cha')
-    root_id = Column('sla_parent_transaction_root_id', VARCHAR(36), comment='Mã id gốc')
+    root_id = Column('sla_root_transaction_id', VARCHAR(36), comment='Mã id gốc')
     sla_id = Column(ForeignKey('crm_sla.sla_id'), comment='Mã SLA')
     sla_name = Column(VARCHAR(50), comment='Tên giao dịch SLA')
     sla_deadline = Column(NUMBER(10, 0, False), comment='dealine')
