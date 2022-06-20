@@ -1,9 +1,10 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.repository import repos_get_approval_process
 from app.api.v1.endpoints.cif.repository import (
-    repos_customer_information, repos_get_cif_info,
-    repos_get_customer_working_infos, repos_get_initializing_customer,
-    repos_profile_history, repos_validate_cif_number
+    repos_customer_information, repos_get_cif_id_by_cif_number,
+    repos_get_cif_info, repos_get_customer_working_infos,
+    repos_get_initializing_customer, repos_profile_history,
+    repos_validate_cif_number
 )
 from app.api.v1.endpoints.cif.schema import CustomerByCIFNumberRequest
 from app.api.v1.endpoints.repository import (
@@ -240,10 +241,10 @@ class CtrCustomer(BaseController):
         # validate cif_number
         self.call_repos(await repos_validate_cif_number(cif_number=cif_number))
 
-        # check_exist_info = self.call_repos(
-        #     await repos_check_exist_cif(cif_number=cif_number)
-        # )
-        # return self.response(data=check_exist_info)
+        cif_id = self.call_repos(await repos_get_cif_id_by_cif_number(
+            cif_number=cif_number, session=self.oracle_session
+        ))
+
         gw_check_exist_customer_detail_info = self.call_repos(await repos_gw_get_customer_info_detail(
             cif_number=cif_number,
             current_user=self.current_user,
@@ -253,7 +254,8 @@ class CtrCustomer(BaseController):
         customer_info = data_output['customer_info']['id_info']
 
         return self.response(data=dict(
-            is_existed=True if customer_info['id_num'] else False
+            is_existed=True if customer_info['id_num'] else False,
+            cif_id=cif_id
         ))
 
     async def ctr_retrieve_customer_information_by_cif_number(

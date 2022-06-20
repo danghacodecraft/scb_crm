@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Body, Depends, Path, Header
+from fastapi import APIRouter, Body, Depends, Header, Path
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -8,9 +8,10 @@ from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.cif.controller import CtrCustomer
 from app.api.v1.endpoints.cif.schema import (
-    CheckExistCIFRequest, CheckExistCIFSuccessResponse,
-    CifCustomerInformationResponse, CifInformationResponse, CifProfileHistoryResponse,
-    CustomerByCIFNumberRequest, CustomerByCIFNumberResponse, CareerInformationContactInformationResponse
+    CareerInformationContactInformationResponse, CheckExistCIFRequest,
+    CheckExistCIFSuccessResponse, CifCustomerInformationResponse,
+    CifInformationResponse, CifProfileHistoryResponse,
+    CustomerByCIFNumberRequest, CustomerByCIFNumberResponse
 )
 
 router = APIRouter()
@@ -91,7 +92,7 @@ async def view_retrieve_customer_working_info_by_cif_number(
 @router.post(
     path="/check-exist/",
     name="Kiểm tra tồn tại",
-    description="Kiểm tra CIF có tồn tại hay không",
+    description="Kiểm tra số CIF có tồn tại hay không",
     responses=swagger_response(
         response_model=ResponseData[CheckExistCIFSuccessResponse],
         success_status_code=status.HTTP_200_OK

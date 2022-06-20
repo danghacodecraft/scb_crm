@@ -23,8 +23,9 @@ class CifInformationResponse(BaseSchema):
 
 
 class CheckExistCIFSuccessResponse(BaseSchema):
-    is_existed: bool = Field(...,
-                             description="Cờ đã tồn tại hay chưa <br>`True` => tồn tại <br>`False` => chưa tồn tại")
+    is_existed: bool = Field(..., description="CIF Number đã tồn tại trong `GW` chưa")
+    cif_id: Optional[str] = Field(..., description="`cif_id`=`value` nếu tồn tại trong DB, <br/>"
+                                                   "`cif_id`=`null` nếu không có trong DB")
 
 
 class CheckExistCIFRequest(BaseSchema):
