@@ -106,6 +106,7 @@ class CtrDashboard(BaseController):
                     )
                 )
             })
+        print(booking_ids)
 
         # Lấy thông tin các giao dịch Mở TKTT
         open_casa_infos = self.call_repos(

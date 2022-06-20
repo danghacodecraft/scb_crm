@@ -1026,7 +1026,7 @@ class CtrApproval(BaseController):
         saving_sla_transaction = dict(
             id=saving_sla_transaction_id,
             parent_id=sla_trans_parent.id,
-            sla_root=sla_trans_parent.root_id,
+            root_id=sla_trans_parent.root_id,
             sla_id=sla_id,
             sla_name=sla_name,
             sla_deadline=sla_deadline,
