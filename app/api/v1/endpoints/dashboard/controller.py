@@ -151,6 +151,7 @@ class CtrDashboard(BaseController):
                     )]
                 )
 
+        # Lấy tất cả người thực hiện của giao dịch
         if booking_ids:
             stage_infos = self.call_repos(await repos_get_senders(
                 booking_ids=tuple(booking_ids),
@@ -159,7 +160,6 @@ class CtrDashboard(BaseController):
             ))
 
             for transaction_daily, stage, stage_role, sender, booking_id, business_type_id in stage_infos:
-                print(business_type_id)
                 if stage_role and stage_role.code in CIF_STAGE_ROLE_CODES:
                     mapping_datas[booking_id].update(
                         stage_role=stage_role.code,
