@@ -22,9 +22,7 @@ from app.third_parties.oracle.models.master_data.customer import (
     CustomerRelationshipType
 )
 from app.utils.constant.cif import BUSINESS_FORM_TKTT_DSH, IMAGE_TYPE_SIGNATURE
-from app.utils.error_messages import (
-    ERROR_CASA_ACCOUNT_ID_DOES_NOT_EXIST, ERROR_DOCUMENT_ID_DOES_NOT_EXIST
-)
+from app.utils.error_messages import ERROR_CASA_ACCOUNT_ID_DOES_NOT_EXIST
 from app.utils.functions import now
 
 
@@ -123,13 +121,6 @@ async def repos_get_uuid(document_id: str, session: Session):
             DocumentFile.file_uuid
         ).filter(DocumentFile.id == document_id)
     ).scalar()
-
-    if not get_uuid:
-        return ReposReturn(
-            loc="document_id_does_not_exit",
-            msg=ERROR_DOCUMENT_ID_DOES_NOT_EXIST,
-            detail=get_uuid
-        )
 
     return ReposReturn(data=get_uuid)
 
