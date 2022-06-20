@@ -27,13 +27,14 @@ class SignatureResponse(BaseSchema):
 
 class BasicInformationResponse(BaseSchema):
     cif_number: str = Field(description="Số CIF của đồng sở hữu")
-    customer_relationship: DropdownRequest = Field(..., description="Mối quan hệ của khách hàng với đồng sở hữu")
+    customer_relationship: OptionalDropdownResponse = Field(None,
+                                                            description="Mối quan hệ của khách hàng với đồng sở hữu")
     full_name_vn: str = Field(..., description="Họ và tên")
     date_of_birth: str = Field(..., description="Ngày sinh")
     gender: OptionalDropdownResponse = Field(..., description="Giới tính")
     nationality: OptionalDropdownResponse = Field(..., description="Quốc tịch")
     mobile_number: str = Field(..., description="Số ĐTDĐ")
-    signature: List[SignatureResponse] = Field(..., description="Mẫu chữ ký")
+    signature: List[SignatureResponse] = Field(None, description="Mẫu chữ ký")
 
 
 class IdentityDocumentResponse(BaseSchema):
