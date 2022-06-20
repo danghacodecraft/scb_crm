@@ -151,14 +151,15 @@ class CtrDashboard(BaseController):
                     )]
                 )
 
-        if business_type_init_cifs:
+        if booking_ids:
             stage_infos = self.call_repos(await repos_get_senders(
-                booking_ids=tuple(business_type_init_cifs),
-                region_id=region_id, branch_id=branch_id, business_type_id=business_type_id, status_code=status_code,
+                booking_ids=tuple(booking_ids),
+                region_id=region_id, branch_id=branch_id, status_code=status_code,
                 search_box=search_box, from_date=from_date, to_date=to_date, session=self.oracle_session
             ))
 
-            for transaction_daily, stage, stage_role, sender, booking_id in stage_infos:
+            for transaction_daily, stage, stage_role, sender, booking_id, business_type_id in stage_infos:
+                print(business_type_id)
                 if stage_role and stage_role.code in CIF_STAGE_ROLE_CODES:
                     mapping_datas[booking_id].update(
                         stage_role=stage_role.code,

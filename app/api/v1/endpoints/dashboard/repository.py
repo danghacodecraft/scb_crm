@@ -140,8 +140,7 @@ async def repos_get_transaction_list(region_id: Optional[str], branch_id: Option
 
 async def repos_get_senders(
         booking_ids: tuple,
-        region_id: Optional[str], branch_id: Optional[str],
-        business_type_id: Optional[str], status_code: Optional[str],
+        region_id: Optional[str], branch_id: Optional[str], status_code: Optional[str],
         search_box: Optional[str], from_date: Optional[date], to_date: Optional[date],
         session: Session
 ):
@@ -157,9 +156,6 @@ async def repos_get_senders(
 
     if branch_id:
         sql = sql.filter(Booking.branch_id == branch_id)
-
-    if business_type_id:
-        sql = sql.filter(Booking.business_type_id == business_type_id)
 
     if status_code:
         sql = sql.filter(TransactionStageStatus.code == status_code)
@@ -204,22 +200,20 @@ async def repos_get_senders(
         TransactionStage,
         TransactionStageRole,
         TransactionSender,
-        Booking.id
+        Booking.id,
+        Booking.business_type_id
     ) \
         .outerjoin(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id) \
         .join(Booking, TransactionDaily.transaction_id == Booking.transaction_id) \
         .outerjoin(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
         .outerjoin(TransactionStageRole, TransactionStage.id == TransactionStageRole.transaction_stage_id) \
-        .filter(TransactionDaily.transaction_id.in_(transaction_daily_ids), Booking.business_type_id == business_type_id)
+        .filter(TransactionDaily.transaction_id.in_(transaction_daily_ids))
 
     if region_id:
         sql = sql.filter(Branch.region_id == region_id)
 
     if branch_id:
         sql = sql.filter(Booking.branch_id == branch_id)
-
-    if business_type_id:
-        sql = sql.filter(Booking.business_type_id == business_type_id)
 
     if status_code:
         sql = sql.filter(TransactionStageStatus.code == status_code)
