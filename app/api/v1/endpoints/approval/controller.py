@@ -15,7 +15,7 @@ from app.api.v1.endpoints.approval.repository import (
 )
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
 from app.api.v1.endpoints.cif.basic_information.identity.identity_document.repository import (
-    repos_get_sla_transaction_parent_id_from_stage_transaction_id
+    repos_get_sla_transaction_parent_from_stage_transaction_id
 )
 from app.api.v1.endpoints.third_parties.gw.employee.repository import (
     repos_gw_get_employee_info_from_code
@@ -1019,19 +1019,19 @@ class CtrApproval(BaseController):
             sla_name = "SLA Completed Mở CIF"
             sla_deadline = 4
 
-        sla_trans_parent_id = await repos_get_sla_transaction_parent_id_from_stage_transaction_id(
+        sla_trans_parent = await repos_get_sla_transaction_parent_from_stage_transaction_id(
             stage_transaction_id=previous_transaction_stage.id, session=self.oracle_session
         )
 
         saving_sla_transaction = dict(
             id=saving_sla_transaction_id,
-            parent_id=sla_trans_parent_id,
+            parent_id=sla_trans_parent.id,
+            sla_root=sla_trans_parent.root_id,
             sla_id=sla_id,
             sla_name=sla_name,
             sla_deadline=sla_deadline,
             active_flag=1,
             created_at=now()
-
         )
 
         saving_transaction_stage = dict(

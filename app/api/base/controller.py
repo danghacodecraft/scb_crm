@@ -457,6 +457,7 @@ class BaseController:
         saving_sla_transaction = dict(
             id=sla_transaction_id,
             parent_id=None,
+            root_id=sla_transaction_id,
             sla_id=None,
             sla_name=None,
             sla_deadline=None,

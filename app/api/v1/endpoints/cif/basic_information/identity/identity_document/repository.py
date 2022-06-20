@@ -1204,10 +1204,10 @@ async def repos_compare_face(
     })
 
 
-async def repos_get_sla_transaction_parent_id_from_stage_transaction_id(stage_transaction_id: str, session: Session):
+async def repos_get_sla_transaction_parent_from_stage_transaction_id(stage_transaction_id: str, session: Session):
     sla_id = session.execute(
         select(
-            SlaTransaction.id
+            SlaTransaction
         )
         .join(TransactionStage, SlaTransaction.id == TransactionStage.sla_transaction_id)
         .filter(TransactionStage.id == stage_transaction_id)
