@@ -1,15 +1,24 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import Field
+from pydantic import Field, validator
 
 from app.api.base.schema import BaseSchema
 from app.api.v1.schemas.utils import DropdownResponse
 
 
+class OptionalNumberInfo(BaseSchema):
+    number: Optional[str] = Field(..., description="Số")
+    approval_status: int = Field(..., description="Trạng thái phê duyệt")
+
+    @validator('approval_status', pre=True)
+    def check_nullable(cls, value):
+        return 0 if value is None else value
+
+
 class TransactionListBusinessTypeResponse(BaseSchema):
     name: Optional[str] = Field(..., description="Tên loại nghiệp vụ")
-    number: Optional[str] = Field(..., description="Số nghiệp vụ")
+    numbers: Optional[List[OptionalNumberInfo]] = Field(..., description="Số nghiệp vụ")
 
 
 class TransactionListSenderResponse(BaseSchema):
