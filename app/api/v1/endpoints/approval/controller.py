@@ -28,7 +28,7 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
 from app.third_parties.oracle.models.master_data.identity import (
     CustomerIdentityType
 )
-from app.third_parties.oracle.models.master_data.others import BusinessJob
+from app.third_parties.oracle.models.master_data.others import BusinessJob, Sla
 from app.third_parties.services.idm import ServiceIDM
 from app.utils.constant.approval import (
     APPROVE_AUDIT_STAGES, APPROVE_SUPERVISOR_STAGES, CIF_STAGE_APPROVE_KSS,
@@ -46,6 +46,9 @@ from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_APPROVAL, IDM_GROUP_ROLE_CODE_OPEN_CIF,
     IDM_MENU_CODE_OPEN_CIF, IDM_PERMISSION_CODE_KSS, IDM_PERMISSION_CODE_KSV,
     IDM_PERMISSION_CODE_OPEN_CIF
+)
+from app.utils.constant.sla import (
+    SLA_CODE_CIF_AUDIT, SLA_CODE_CIF_SUPERVISOR, SLA_CODE_CIF_TELLER
 )
 from app.utils.error_messages import (
     ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
@@ -606,6 +609,7 @@ class CtrApproval(BaseController):
             booking_id: str,
             request: ApprovalRequest
     ):
+        print(booking_id)
         # check cif tồn tại
         await self.get_model_object_by_id(model_id=cif_id, model=Customer, loc="cif_id")
 
@@ -999,25 +1003,16 @@ class CtrApproval(BaseController):
         )
 
         sla_id = None
-        sla_name = None
-
-        sla_deadline = None
         if current_stage_code == CIF_STAGE_INIT:
-            sla_id = "CIF_GDV"
-            sla_name = "SLA GDV Mở CIF"
-            sla_deadline = 1
+            sla_id = SLA_CODE_CIF_TELLER
         elif current_stage_code == CIF_STAGE_APPROVE_KSV:
-            sla_id = "CIF_KSV"
-            sla_name = "SLA KSV Mở CIF"
-            sla_deadline = 2
+            sla_id = SLA_CODE_CIF_SUPERVISOR
         elif current_stage_code == CIF_STAGE_APPROVE_KSS:
-            sla_id = "CIF_KSS"
-            sla_name = "SLA KSS Mở CIF"
-            sla_deadline = 3
-        elif current_stage_code == CIF_STAGE_COMPLETED:
-            sla_id = "CIF_COMPLETED"
-            sla_name = "SLA Completed Mở CIF"
-            sla_deadline = 4
+            sla_id = SLA_CODE_CIF_AUDIT
+        else:
+            self.response_exception(msg="Current Stage is not exist")
+
+        sla = await self.get_model_object_by_id(model_id=sla_id, model=Sla, loc=f"sla_id: {sla_id}")
 
         sla_trans_parent = await repos_get_sla_transaction_parent_from_stage_transaction_id(
             stage_transaction_id=previous_transaction_stage.id, session=self.oracle_session
@@ -1028,8 +1023,8 @@ class CtrApproval(BaseController):
             parent_id=sla_trans_parent.id,
             root_id=sla_trans_parent.root_id,
             sla_id=sla_id,
-            sla_name=sla_name,
-            sla_deadline=sla_deadline,
+            sla_name=sla.name,
+            sla_deadline=sla.deadline,
             active_flag=1,
             created_at=now()
         )
