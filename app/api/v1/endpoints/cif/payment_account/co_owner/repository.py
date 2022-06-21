@@ -133,7 +133,7 @@ async def repos_payment_account_co_owner(cif_id: str, session: Session):
     return ReposReturn(data=co_owner)
 
 
-async def repos_get_uuid(document_id: str, session: Session):
+async def repos_get_file_uuid(document_id: str, session: Session):
     get_uuid = session.execute(
         select(
             DocumentFile.file_uuid
@@ -177,6 +177,14 @@ async def repos_get_casa_account(cif_id: str, session: Session) -> ReposReturn:
             is_error=True, msg=ERROR_CASA_ACCOUNT_NOT_EXIST, loc=f"cif_id: {cif_id}"
         )
     return ReposReturn(data=casa_account)
+
+
+async def repos_check_file_id(file_uuid: str, session: Session) -> ReposReturn:
+    file_uuid_info = session.execute(
+        select(DocumentFile.id).filter(DocumentFile.file_uuid == file_uuid)
+    ).scalar()
+
+    return ReposReturn(data=file_uuid_info)
 
 
 @auto_commit
@@ -322,7 +330,7 @@ async def repos_get_account_holders(cif_id: str, session: Session) -> ReposRetur
 
 
 async def repos_detail_co_owner(
-    cif_id: str, cif_number_need_to_find: str, session: Session
+        cif_id: str, cif_number_need_to_find: str, session: Session
 ):
     is_success, detail_co_owner = await service_soa.retrieve_customer_ref_data_mgmt(
         cif_number=cif_number_need_to_find, flat_address=True
