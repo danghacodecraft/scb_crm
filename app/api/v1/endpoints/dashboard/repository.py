@@ -44,7 +44,10 @@ async def repos_count_total_item(region_id: Optional[str], branch_id: Optional[s
         .join(Branch, Booking.branch_id == Branch.id) \
         .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
         .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
-        .join(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
+        .outerjoin(BookingCustomer, Booking.id == BookingCustomer.booking_id) \
+        .outerjoin(Customer, BookingCustomer.customer_id == Customer.id) \
+        .outerjoin(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
+        .outerjoin(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
         .distinct()
 
     if region_id:
@@ -96,8 +99,12 @@ async def repos_get_transaction_list(region_id: Optional[str], branch_id: Option
         .join(Branch, Booking.branch_id == Branch.id) \
         .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
         .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
-        .join(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
+        .outerjoin(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
+        .outerjoin(BookingCustomer, Booking.id == BookingCustomer.booking_id) \
+        .outerjoin(Customer, BookingCustomer.customer_id == Customer.id) \
+        .outerjoin(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
         .distinct()
+
     if region_id:
         sql = sql.filter(Branch.region_id == region_id)
 
@@ -147,7 +154,13 @@ async def repos_get_senders(
     sql = select(
         TransactionDaily.transaction_root_id,
         Booking
-    ).join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
+    ) \
+        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
+        .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
+        .join(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
+        .outerjoin(BookingCustomer, Booking.id == BookingCustomer.booking_id) \
+        .outerjoin(Customer, BookingCustomer.customer_id == Customer.id) \
+        .outerjoin(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
         .filter(Booking.id.in_(booking_ids))
 
     transaction_root_dailies = session.execute(
