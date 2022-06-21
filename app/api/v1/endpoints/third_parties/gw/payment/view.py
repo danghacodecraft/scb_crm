@@ -65,21 +65,24 @@ async def view_gw_amount_block(
 
 @router.post(
     path="/amount-unblock/",
-    name="[GW] Amount Unblock",
+    name="Amount Unblock",
     description="Giải tỏa tài khoản",
     responses=swagger_response(
         response_model=ResponseData[PaymentSuccessResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
-async def view_gw_amount_unblock(
-        account_amount_unblock: AccountAmountUnblock = Body(...),
-        current_user=Depends(get_current_user_from_header())
+async def view_amount_unblock(
+        account_amount_unblocks: List[AccountAmountUnblock] = Body(...),
+        current_user=Depends(get_current_user_from_header()),
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch")
 ):
-    gw_payment_amount_unblock = await CtrGWPayment(current_user).ctr_gw_payment_amount_unblock(
-        account_amount_unblock=account_amount_unblock
+    payment_amount_unblock = await CtrGWPayment(current_user).ctr_payment_amount_unblock(
+        account_amount_unblocks=account_amount_unblocks,
+        booking_id=BOOKING_ID
     )
-    return ResponseData[PaymentSuccessResponse](**gw_payment_amount_unblock)
+
+    return ResponseData(**payment_amount_unblock)
 
 
 @router.post(

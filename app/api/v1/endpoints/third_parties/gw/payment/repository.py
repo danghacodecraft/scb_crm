@@ -16,7 +16,8 @@ from app.third_parties.oracle.models.master_data.others import (
 )
 from app.utils.constant.business_type import BUSINESS_TYPE_AMOUNT_UNBLOCK
 from app.utils.constant.cif import (
-    BUSINESS_FORM_AMOUNT_BLOCK, BUSINESS_FORM_AMOUNT_BLOCK_PD
+    BUSINESS_FORM_AMOUNT_BLOCK, BUSINESS_FORM_AMOUNT_BLOCK_PD,
+    BUSINESS_FORM_AMOUNT_UNBLOCK
 )
 from app.utils.constant.gw import GW_CASA_RESPONSE_STATUS_SUCCESS
 from app.utils.error_messages import ERROR_BOOKING_CODE_EXISTED, MESSAGE_STATUS
@@ -150,6 +151,48 @@ async def repos_gw_payment_amount_block(
             })
 
     return ReposReturn(data=response_data)
+
+
+@auto_commit
+async def repos_payment_amount_unblock(
+        booking_id,
+        saving_transaction_stage_status,
+        saving_transaction_stage,
+        saving_transaction_stage_lane,
+        saving_transaction_stage_phase,
+        saving_transaction_stage_role,
+        saving_transaction_daily,
+        saving_transaction_sender,
+        request_json: json,
+        history_data: json,
+        session
+):
+    session.add_all([
+        TransactionStageStatus(**saving_transaction_stage_status),
+        TransactionStage(**saving_transaction_stage),
+        TransactionStageLane(**saving_transaction_stage_lane),
+        TransactionStagePhase(**saving_transaction_stage_phase),
+        TransactionStageRole(**saving_transaction_stage_role),
+        TransactionDaily(**saving_transaction_daily),
+        TransactionSender(**saving_transaction_sender),
+        # lưu form data request từ client
+        BookingBusinessForm(**dict(
+            booking_id=booking_id,
+            form_data=request_json,
+            business_form_id=BUSINESS_FORM_AMOUNT_UNBLOCK,
+            save_flag=True,
+            created_at=now(),
+            log_data=history_data
+        ))
+    ])
+
+    # Update Booking
+    session.execute(
+        update(Booking)
+        .filter(Booking.id == booking_id)
+        .values(transaction_id=saving_transaction_daily['transaction_id'])
+    )
+    return ReposReturn(data=booking_id)
 
 
 async def repos_gw_payment_amount_unblock(current_user, data_input, session):
