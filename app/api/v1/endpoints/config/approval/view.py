@@ -8,7 +8,8 @@ from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.config.approval.controller import CtrConfigApproval
 from app.api.v1.schemas.utils import DropdownResponse
-from app.utils.constant.approval import CIF_APPROVE_STAGES
+from app.utils.constant.approval import CIF_APPROVE_STAGES, ROLE_CODES
+from app.utils.constant.business_type import BUSINESS_TYPES
 from app.utils.functions import make_description_from_dict
 
 router = APIRouter()
@@ -24,10 +25,14 @@ router = APIRouter()
     )
 )
 async def view_stage_action_info(
-    stage_code: str = Query(..., description="Mã bước phê duyệt" + make_description_from_dict(CIF_APPROVE_STAGES)),
+    business_type_code: str = Query(..., description="Mã Nghiệp vụ" + make_description_from_dict(BUSINESS_TYPES)),
+    role_code: str = Query(..., description="Mã Quyền thực hiện" + make_description_from_dict(ROLE_CODES)),
     current_user=Depends(get_current_user_from_header())
 ):
-    stage_action_info = await CtrConfigApproval(current_user=current_user).ctr_stage_action(stage_code=stage_code)
+    stage_action_info = await CtrConfigApproval(current_user=current_user).ctr_stage_action(
+        business_type_code=business_type_code,
+        role_code=role_code
+    )
     return ResponseData[List[DropdownResponse]](**stage_action_info)
 
 
