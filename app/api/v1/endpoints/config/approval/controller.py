@@ -11,21 +11,12 @@ from app.utils.error_messages import ERROR_APPROVAL_STAGE_NOT_EXISTED
 
 
 class CtrConfigApproval(BaseController):
-    async def ctr_stage_action(self, stage_code: str):
-        if stage_code:
-            if stage_code not in CIF_APPROVE_STAGES:
-                return self.response_exception(msg=ERROR_APPROVAL_STAGE_NOT_EXISTED)
-            stage_action_info = self.call_repos(await repos_get_stage_action(
-                stage_code=stage_code,
-                session=self.oracle_session
-            ))
-        else:
-            stage_action_info = self.call_repos(
-                await repos_get_data_model_config(
-                    session=self.oracle_session,
-                    model=StageAction
-                )
-            )
+    async def ctr_stage_action(self, business_type_code: str, role_code: str):
+        stage_action_info = self.call_repos(await repos_get_stage_action(
+            business_type_code=business_type_code,
+            role_code=role_code,
+            session=self.oracle_session
+        ))
         return self.response(stage_action_info)
 
     async def ctr_stage_status(self):
