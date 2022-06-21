@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import APIRouter, Body, Depends, Header, Path
 from starlette import status
 
@@ -20,7 +22,7 @@ router = APIRouter()
 
 
 @router.post(
-    path="/{account_number}/amount-block/",
+    path="/amount-block/",
     name="Amount Block",
     description="Phong tỏa tài khoản",
     responses=swagger_response(
@@ -29,22 +31,20 @@ router = APIRouter()
     )
 )
 async def view_amount_block(
-        account_amount_block: AccountAmountBlockRequest = Body(...),
-        account_number: str = Path(..., description="Số tài khoản"),
+        account_amount_blocks: List[AccountAmountBlockRequest] = Body(...),
         current_user=Depends(get_current_user_from_header()),
         BOOKING_ID: str = Header(..., description="Mã phiên giao dịch")
 ):
     payment_amount_block = await CtrGWPayment(current_user).ctr_payment_amount_block(
         BOOKING_ID=BOOKING_ID,
-        account_number=account_number,
-        account_amount_block=account_amount_block
+        account_amount_blocks=account_amount_blocks
     )
 
     return ResponseData[PaymentSuccessResponse](**payment_amount_block)
 
 
 @router.post(
-    path="/{account_number}/amount-block-pd/",
+    path="/amount-block-pd/",
     name="[GW] Amount Block",
     description="Phong tỏa tài khoản - Phê duyệt",
     responses=swagger_response(

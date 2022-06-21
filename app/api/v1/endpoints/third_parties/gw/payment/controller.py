@@ -8,8 +8,7 @@ from app.api.v1.endpoints.third_parties.gw.payment.repository import (
     repos_gw_redeem_account, repos_payment_amount_block
 )
 from app.api.v1.endpoints.third_parties.gw.payment.schema import (
-    AccountAmountBlockRequest, AccountAmountUnblock, PayInCashRequest,
-    RedeemAccountRequest
+    AccountAmountUnblock, PayInCashRequest, RedeemAccountRequest
 )
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.validator import validate_history_data
@@ -29,9 +28,8 @@ class CtrGWPayment(BaseController):
 
     async def ctr_payment_amount_block(
             self,
-            account_number: str,
             BOOKING_ID: str,
-            account_amount_block: AccountAmountBlockRequest
+            account_amount_blocks: list
     ):
         current_user = self.current_user
 
@@ -42,51 +40,54 @@ class CtrGWPayment(BaseController):
             check_correct_booking_flag=False,
             loc=f'booking_id: {BOOKING_ID}'
         )
-        data_input = {
-            "account_info": {
-                "account_num": account_number
-            },
-            "p_blk_detail": {
-                "AMOUNT": account_amount_block.amount,
-                "AMOUNT_BLOCK_TYPE": account_amount_block.amount_block_type,
-                "HOLD_CODE": account_amount_block.hold_code,
-                "EFFECTIVE_DATE": account_amount_block.effective_date,
-                "EXPIRY_DATE": account_amount_block.expiry_date if account_amount_block.expiry_date else "",
-                "REMARKS": account_amount_block.remarks,
-                "VERIFY_AVAILABLE_BALANCE": account_amount_block.verify_available_balance,
-                "CHARGE_DETAIL": {
-                    "TYPE_CHARGE": "",
-                    "ACCOUNT_CHARGE": ""
-                }
-            },
-            # TODO chưa được mô tả
-            "p_blk_charge": [
-                {
-                    "CHARGE_NAME": "",
-                    "CHARGE_AMOUNT": 0,
-                    "WAIVED": "N"
-                }
-            ],
-            # TODO chưa được mô tả
-            "p_blk_udf": [
-                {
-                    "UDF_NAME": "",
-                    "UDF_VALUE": "",
-                    "AMOUNT_BLOCK": {
-                        "UDF_NAME": "",
-                        "UDF_VALUE": ""
+        request_datas = []
+        for item in account_amount_blocks:
+            request_datas.append({
+                "account_info": {
+                    "account_num": item.account_number
+                },
+                "p_blk_detail": {
+                    "AMOUNT": item.amount,
+                    "AMOUNT_BLOCK_TYPE": item.amount_block_type,
+                    "HOLD_CODE": item.hold_code,
+                    "EFFECTIVE_DATE": item.effective_date,
+                    "EXPIRY_DATE": item.expiry_date if item.expiry_date else "",
+                    "REMARKS": item.remarks,
+                    "VERIFY_AVAILABLE_BALANCE": item.verify_available_balance,
+                    "CHARGE_DETAIL": {
+                        "TYPE_CHARGE": "",
+                        "ACCOUNT_CHARGE": ""
                     }
+                },
+                # TODO chưa được mô tả
+                "p_blk_charge": [
+                    {
+                        "CHARGE_NAME": "",
+                        "CHARGE_AMOUNT": 0,
+                        "WAIVED": "N"
+                    }
+                ],
+                # TODO chưa được mô tả
+                "p_blk_udf": [
+                    {
+                        "UDF_NAME": "",
+                        "UDF_VALUE": "",
+                        "AMOUNT_BLOCK": {
+                            "UDF_NAME": "",
+                            "UDF_VALUE": ""
+                        }
+                    }
+                ],
+                "staff_info_checker": {
+                    # TODO hard core
+                    "staff_name": "HOANT2"
+                },
+                "staff_info_maker": {
+                    # TODO hard core
+                    "staff_name": "KHANHLQ"
                 }
-            ],
-            "staff_info_checker": {
-                # TODO hard core
-                "staff_name": "HOANT2"
-            },
-            "staff_info_maker": {
-                # TODO hard core
-                "staff_name": "KHANHLQ"
-            }
-        }
+            })
+
         # Tạo data TransactionDaily và các TransactionStage
         transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
             business_type_id=BUSINESS_TYPE_AMOUNT_BLOCK
@@ -121,7 +122,7 @@ class CtrGWPayment(BaseController):
             saving_transaction_stage_role=saving_transaction_stage_role,
             saving_transaction_daily=saving_transaction_daily,
             saving_transaction_sender=saving_transaction_sender,
-            request_json=orjson_dumps(data_input),
+            request_json=orjson_dumps(request_datas),
             history_datas=orjson_dumps(history_datas),
             session=self.oracle_session
         ))
