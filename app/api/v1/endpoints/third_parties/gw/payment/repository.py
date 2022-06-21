@@ -15,7 +15,9 @@ from app.third_parties.oracle.models.master_data.others import (
     TransactionStageRole, TransactionStageStatus
 )
 from app.utils.constant.business_type import BUSINESS_TYPE_AMOUNT_UNBLOCK
-from app.utils.constant.cif import BUSINESS_FORM_AMOUNT_BLOCK
+from app.utils.constant.cif import (
+    BUSINESS_FORM_AMOUNT_BLOCK, BUSINESS_FORM_AMOUNT_BLOCK_PD
+)
 from app.utils.constant.gw import GW_CASA_RESPONSE_STATUS_SUCCESS
 from app.utils.error_messages import ERROR_BOOKING_CODE_EXISTED, MESSAGE_STATUS
 from app.utils.functions import generate_uuid, now, orjson_dumps
@@ -110,35 +112,30 @@ async def repos_payment_amount_block(
     return ReposReturn(data=booking_id)
 
 
+@auto_commit
 async def repos_gw_payment_amount_block(
     current_user,
     data_input,
-    session
+    booking_id,
+    session: Session
 ):
-    is_success, gw_payment_amount_block = await service_gw.gw_payment_amount_block(
+    is_success, gw_payment_amount_block, request_data = await service_gw.gw_payment_amount_block(
         current_user=current_user.user_info, data_input=data_input
     )
 
-    return ReposReturn(data=gw_payment_amount_block)
-    # is_success, gw_payment_amount_block = await service_gw.gw_payment_amount_block(
-    #     current_user=current_user.user_info, data_input=data_input
-    # )
-    # booking = await repos_create_booking_payment(
-    #     business_type_code=BUSINESS_TYPE_AMOUNT_BLOCK,
-    #     current_user=current_user.user_info,
-    #     form_data=data_input,
-    #     log_data=gw_payment_amount_block,
-    #     session=session
-    # )
-    # booking_id, booking_code = booking.data
-    #
-    # amount_block_out = gw_payment_amount_block.get('amountBlock_out', {})
-    #
-    # # check trường hợp lỗi
-    # if amount_block_out.get('transaction_info').get('transaction_error_code') != GW_CASA_RESPONSE_STATUS_SUCCESS:
-    #     return ReposReturn(is_error=True, msg=amount_block_out.get('transaction_info').get('transaction_error_msg'))
+    # lưu form data request GW
+    session.add(
+        BookingBusinessForm(**dict(
+            booking_id=booking_id,
+            form_data=orjson_dumps(request_data),
+            business_form_id=BUSINESS_FORM_AMOUNT_BLOCK_PD,
+            save_flag=True,
+            created_at=now(),
+            log_data=orjson_dumps(gw_payment_amount_block)
+        ))
+    )
 
-    # return ReposReturn(data=(booking_id, gw_payment_amount_block))
+    return ReposReturn(data=gw_payment_amount_block)
 
 
 async def repos_gw_payment_amount_unblock(current_user, data_input, session):

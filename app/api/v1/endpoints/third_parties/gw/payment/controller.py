@@ -21,6 +21,7 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_STATUS_INIT
 )
 from app.utils.constant.gw import GW_CASA_RESPONSE_STATUS_SUCCESS
+from app.utils.error_messages import ERROR_CALL_SERVICE_GW
 from app.utils.functions import orjson_dumps, orjson_loads
 
 
@@ -124,29 +125,6 @@ class CtrGWPayment(BaseController):
             history_datas=orjson_dumps(history_datas),
             session=self.oracle_session
         ))
-        # booking_id, booking_code = self.call_repos(
-        #     await repos_create_booking_payment(
-        #         business_type_code=BUSINESS_FORM_AMOUNT_BLOCK,
-        #         current_user=current_user.user_info,
-        #         form_data=data_input,
-        #         log_data=None,
-        #         session=self.oracle_session
-        #     )
-        # )
-        # print('booking_id',booking_id)
-
-        # booking_id, gw_payment_amount_block = self.call_repos(await repos_gw_payment_amount_block(
-        #     current_user=current_user,
-        #     data_input=data_input,
-        #     session=self.oracle_session
-        # ))
-        # response_data = {
-        #     "booking_id": booking_id,
-        #     "account_number": account_number
-        #     # "account_ref_no":
-        #     #     gw_payment_amount_block['amountBlock_out']['data_output']['account_info']['blance_lock_info'][
-        #     #         'account_ref_no']
-        # }
 
         return self.response(data=booking_id)
 
@@ -164,17 +142,25 @@ class CtrGWPayment(BaseController):
         if request_data_gw.get('account_info').get('account_num') != account_number:
             return self.response_exception(msg="account_number is not same", loc="GW_AMOUNT_BLOCK", detail="GW_AMOUNT_BLOCK")
 
-        # booking_id, gw_payment_amount_block = self.call_repos(await repos_gw_payment_amount_block(
-        #     current_user=current_user,
-        #     data_input=request_data_gw,
-        #     session=self.oracle_session
-        # ))
         gw_payment_amount_block = self.call_repos(await repos_gw_payment_amount_block(
             current_user=current_user,
+            booking_id=BOOKING_ID,
             data_input=request_data_gw,
             session=self.oracle_session
         ))
-        return self.response(data=gw_payment_amount_block)
+
+        if gw_payment_amount_block['amountBlock_out']['transaction_info']['transaction_error_code'] != GW_CASA_RESPONSE_STATUS_SUCCESS:
+            return self.response_exception(
+                detail=gw_payment_amount_block['amountBlock_out']['transaction_info']['transaction_error_msg'],
+                loc=ERROR_CALL_SERVICE_GW,
+                msg=ERROR_CALL_SERVICE_GW
+            )
+
+        response_data = {
+            "booking_id": BOOKING_ID,
+            "account_ref_no": gw_payment_amount_block['amountBlock_out']['data_output']['account_info']['blance_lock_info']['account_ref_no']
+        }
+        return self.response(data=response_data)
 
     async def ctr_gw_payment_amount_unblock(
             self,

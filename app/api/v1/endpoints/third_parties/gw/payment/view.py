@@ -24,7 +24,7 @@ router = APIRouter()
     name="Amount Block",
     description="Phong tỏa tài khoản",
     responses=swagger_response(
-        response_model=ResponseData[AccountAmountBlockResponse],
+        response_model=ResponseData[PaymentSuccessResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -40,7 +40,7 @@ async def view_amount_block(
         account_amount_block=account_amount_block
     )
 
-    return ResponseData(**payment_amount_block)
+    return ResponseData[PaymentSuccessResponse](**payment_amount_block)
 
 
 @router.post(
@@ -62,7 +62,7 @@ async def view_gw_amount_block(
         account_number=account_number,
     )
 
-    return ResponseData(**gw_payment_amount_block)
+    return ResponseData[AccountAmountBlockResponse](**gw_payment_amount_block)
 
 
 @router.post(
