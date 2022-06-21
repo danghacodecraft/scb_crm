@@ -45,8 +45,8 @@ class IdentityDocumentResponse(BaseSchema):
 
 
 class AddressInformationResponse(BaseSchema):
-    contact_address: str = Field(..., description="Địa chỉ liên hệ")
-    resident_address: str = Field(..., description="Địa chỉ thường trú")
+    contact_address: Optional[str] = Field(..., description="Địa chỉ liên hệ")
+    resident_address: Optional[str] = Field(..., description="Địa chỉ thường trú")
 
 
 class JointAccountHoldersResponse(BaseSchema):
@@ -134,7 +134,7 @@ class AccountHolderRequest(BaseSchema):
     joint_account_holders: List[AccountRequest] = Field(
         ..., description="Danh sách các đồng sở hữu"
     )
-    agreement_authorization: List[AgreementAuthorResponse] = Field(
+    agreement_authorization: List[AgreementAuthorRequest] = Field(
         ..., description="Danh mục thỏa thuận và ủy quyền"
     )
 
