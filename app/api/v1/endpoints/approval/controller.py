@@ -609,7 +609,6 @@ class CtrApproval(BaseController):
             booking_id: str,
             request: ApprovalRequest
     ):
-        print(booking_id)
         # check cif tồn tại
         await self.get_model_object_by_id(model_id=cif_id, model=Customer, loc="cif_id")
 
