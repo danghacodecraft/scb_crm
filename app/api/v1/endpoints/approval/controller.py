@@ -21,6 +21,7 @@ from app.api.v1.endpoints.third_parties.gw.employee.repository import (
     repos_gw_get_employee_info_from_code
 )
 from app.api.v1.others.booking.controller import CtrBooking
+from app.api.v1.others.booking.repository import repos_get_customer_by_booking_id
 from app.api.v1.others.permission.controller import PermissionController
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
@@ -120,9 +121,9 @@ class CtrApproval(BaseController):
 
         return self.response(data=response_data)
 
-    async def ctr_get_approval(self, cif_id: str, amount: int): # noqa
+    async def ctr_get_approval(self, booking_id: str, amount: int): # noqa
         # check cif tồn tại
-        await self.get_model_object_by_id(model_id=cif_id, model=Customer, loc="cif_id")
+        # await self.get_model_object_by_id(model_id=cif_id, model=Customer, loc="cif_id")
 
         # current_user = self.current_user.user_info
         auth_response = self.current_user
@@ -138,6 +139,16 @@ class CtrApproval(BaseController):
         image_face_uuids = []
 
         compare_face_uuid = None
+
+        customer_info = self.call_repos(await repos_get_customer_by_booking_id(
+            booking_id=booking_id,
+            session=self.oracle_session
+        ))
+
+        if not customer_info:
+            return self.response_exception(msg="sadas")
+
+        cif_id = customer_info.id
 
         transactions = self.call_repos(await repos_get_approval_identity_images(
             cif_id=cif_id,
@@ -337,9 +348,9 @@ class CtrApproval(BaseController):
         ################################################################################################################
 
         # Kiểm tra xem đang ở bước nào của giao dịch
-        _, _, previous_transaction_daily, previous_transaction_stage, _, previous_transaction_sender, previous_transaction_stage_action = self.call_repos(
+        _, previous_transaction_daily, previous_transaction_stage, _, previous_transaction_sender, previous_transaction_stage_action = self.call_repos(
             await repos_open_cif_get_previous_stage(
-                cif_id=cif_id,
+                booking_id=booking_id,
                 session=self.oracle_session
             ))
 
@@ -689,9 +700,9 @@ class CtrApproval(BaseController):
         previous_transaction_stage = None
 
         if business_type_id == BUSINESS_TYPE_INIT_CIF:
-            _, _, _, previous_transaction_stage, _, _, _ = self.call_repos(
+            _, _, previous_transaction_stage, _, _, _ = self.call_repos(
                 await repos_open_cif_get_previous_stage(
-                    cif_id=cif_id,
+                    booking_id=booking_id,
                     session=self.oracle_session
                 ))
         if business_type_id == BUSINESS_TYPE_OPEN_CASA:
