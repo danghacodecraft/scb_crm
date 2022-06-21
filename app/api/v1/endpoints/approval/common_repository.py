@@ -108,16 +108,15 @@ async def repos_get_next_stage(
 
 
 async def repos_open_cif_get_previous_stage(
-        cif_id: str,
+        booking_id: str,
         session: Session
 ):
     """
     Trả về thông tin Stage đã lưu trong DB trước đó
-    Output: BookingCustomer, Booking, TransactionDaily, TransactionStage, TransactionStageStatus, TransactionSender
+    Output: Booking, TransactionDaily, TransactionStage, TransactionStageStatus, TransactionSender
     """
     previous_stage_info = session.execute(
         select(
-            BookingCustomer,
             Booking,
             TransactionDaily,
             TransactionStage,
@@ -125,13 +124,12 @@ async def repos_open_cif_get_previous_stage(
             TransactionSender,
             TransactionStageAction
         )
-        .join(Booking, BookingCustomer.booking_id == Booking.id)
         .outerjoin(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
         .join(TransactionStage, (TransactionDaily.transaction_stage_id == TransactionStage.id))
         .outerjoin(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id)
         .outerjoin(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
         .outerjoin(TransactionStageAction, TransactionStage.action_id == TransactionStageAction.id)
-        .filter(BookingCustomer.customer_id == cif_id)
+        .filter(Booking.id == booking_id)
         .order_by(desc(TransactionDaily.created_at))
     ).first()
 
