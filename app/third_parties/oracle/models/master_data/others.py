@@ -519,6 +519,8 @@ class StageAction(Base):
     code = Column('stage_action_code', VARCHAR(50), nullable=False, comment='Mã hành động')
     name = Column('stage_action_name', VARCHAR(250), nullable=False, comment='Tên hành động')
     stage_id = Column('stage_id', VARCHAR(36), nullable=False, comment='Bước')
+    business_type_id = Column(VARCHAR(36), nullable=False, comment='Mã nghiệp vụ')
+    role_id = Column(VARCHAR(36), nullable=False, comment='Quyền thực hiện')
     is_reject = Column(NUMBER(1, 0, False), comment='Cờ từ chối phê duyệt')
     created_at = Column('created_at', DateTime, nullable=False, comment='Ngày tạo')
     updated_at = Column('updated_at', DateTime, comment='Ngày cập nhật')
