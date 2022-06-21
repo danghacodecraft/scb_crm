@@ -85,7 +85,7 @@ async def view_approve(
     return ResponseData[Optional[CifApprovalResponse]](**approve_info)
 
 
-@router.get(
+@router_special.get(
     path="/",
     description="Thông tin chi tiết - Phê duyệt biểu mẫu",
     name="Phê duyệt",
