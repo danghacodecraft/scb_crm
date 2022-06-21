@@ -107,4 +107,4 @@ class PaymentSuccessResponse(BaseSchema):
 
 
 class AccountAmountBlockResponse(PaymentSuccessResponse):
-    account_ref_no: str = Field(..., description="Số tham chiếu của lệnh phong tỏa tài khoản")
+    account_list: List = Field(..., description="Danh sách account và số tham chiếu của lệnh phong tỏa tài khoản")
