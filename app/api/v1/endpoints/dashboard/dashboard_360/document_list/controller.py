@@ -11,7 +11,7 @@ from app.utils.functions import dropdown
 class CtrDocumentList(BaseController):
     async def ctr_document_list(self, booking_id: str):
         # Check exist Booking
-        await CtrBooking().ctr_get_booking_and_validate(
+        await CtrBooking().ctr_get_booking(
             business_type_code=BUSINESS_TYPE_INIT_CIF,
             booking_id=booking_id,
             check_correct_booking_flag=False,
