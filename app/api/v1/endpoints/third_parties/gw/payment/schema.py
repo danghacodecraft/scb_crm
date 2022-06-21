@@ -9,6 +9,7 @@ from app.api.base.schema import BaseSchema
 # Request
 ########################################################################################################################
 class AccountAmountBlockRequest(BaseSchema):
+    account_number: str = Field(..., description="Số tài khoản")
     amount: int = Field(..., description="Số dư bị phong tỏa")
     amount_block_type: str = Field(
         ...,

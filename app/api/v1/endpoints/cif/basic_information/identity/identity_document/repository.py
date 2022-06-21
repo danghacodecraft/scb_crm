@@ -39,7 +39,7 @@ from app.third_parties.oracle.models.master_data.identity import (
     PlaceOfIssue
 )
 from app.third_parties.oracle.models.master_data.others import (
-    Nation, Religion, TransactionStage, TransactionStageLane,
+    Nation, Religion, SlaTransaction, TransactionStage, TransactionStageLane,
     TransactionStagePhase, TransactionStageRole, TransactionStageStatus
 )
 from app.utils.constant.cif import (
@@ -333,6 +333,7 @@ async def repos_save_identity(
         saving_customer_identity_images: List[dict],
         saving_transaction_stage_status: dict,
         saving_transaction_stage: dict,
+        saving_sla_transaction: dict,
         saving_transaction_stage_phase: dict,
         saving_transaction_stage_lane: dict,
         saving_transaction_stage_role: dict,
@@ -591,6 +592,7 @@ async def repos_save_identity(
     session.add_all([
         # Tạo BOOKING, CRM_TRANSACTION_DAILY -> CRM_BOOKING -> BOOKING_CUSTOMER -> BOOKING_BUSINESS_FORM
         TransactionStageStatus(**saving_transaction_stage_status),
+        SlaTransaction(**saving_sla_transaction),
         TransactionStage(**saving_transaction_stage),
         TransactionStageLane(**saving_transaction_stage_lane),
         TransactionStagePhase(**saving_transaction_stage_phase),
@@ -1200,3 +1202,35 @@ async def repos_compare_face(
         "similar_percent": compare_face_info.get('data').get('similarity_percent'),
         "face_uuid_ekyc": face_uuid
     })
+
+
+async def repos_get_sla_transaction_parent_from_stage_transaction_id(stage_transaction_id: str, session: Session):
+    sla_id = session.execute(
+        select(
+            SlaTransaction
+        )
+        .join(TransactionStage, SlaTransaction.id == TransactionStage.sla_transaction_id)
+        .filter(TransactionStage.id == stage_transaction_id)
+    ).scalar()
+
+    return sla_id
+
+
+async def repos_get_previous_sla_transaction_from_current(sla_transaction_parent_id: str, session: Session):
+    previous_sla_trans = session.execute(
+        select(
+            SlaTransaction,
+            TransactionStage,
+            TransactionDaily,
+            TransactionSender
+        )
+        .join(TransactionStage, SlaTransaction.id == TransactionStage.sla_transaction_id)
+        .join(TransactionDaily, TransactionStage.id == TransactionDaily.transaction_stage_id)
+        .join(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
+        .filter(SlaTransaction.id == sla_transaction_parent_id)
+    ).first()
+
+    if not previous_sla_trans:
+        return ReposReturn(is_error=True, msg="no previous sla transaction")
+
+    return ReposReturn(data=previous_sla_trans)

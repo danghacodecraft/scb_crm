@@ -49,7 +49,8 @@ from app.utils.constant.approval import CIF_STAGE_BEGIN
 from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import (
     ADDRESS_COUNTRY_CODE_VN, CHANNEL_AT_THE_COUNTER, CONTACT_ADDRESS_CODE,
-    CRM_GENDER_TYPE_MALE, CUSTOMER_UNCOMPLETED_FLAG,
+    CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE, CRM_TITLE_TYPE_FEMALE,
+    CRM_TITLE_TYPE_MALE, CUSTOMER_UNCOMPLETED_FLAG,
     EKYC_DOCUMENT_TYPE_NEW_CITIZEN, EKYC_DOCUMENT_TYPE_NEW_IDENTITY,
     EKYC_DOCUMENT_TYPE_OLD_CITIZEN, EKYC_DOCUMENT_TYPE_OLD_IDENTITY,
     EKYC_DOCUMENT_TYPE_PASSPORT, EKYC_GENDER_TYPE_FEMALE,
@@ -58,8 +59,7 @@ from app.utils.constant.cif import (
     IDENTITY_DOCUMENT_TYPE_PASSPORT, IDENTITY_DOCUMENT_TYPE_TYPE,
     IDENTITY_IMAGE_FLAG_BACKSIDE, IDENTITY_IMAGE_FLAG_FRONT_SIDE,
     IMAGE_TYPE_CODE_IDENTITY, PROFILE_HISTORY_DESCRIPTIONS_INIT_CIF,
-    PROFILE_HISTORY_STATUS_INIT, RESIDENT_ADDRESS_CODE, CRM_TITLE_TYPE_MALE, CRM_GENDER_TYPE_FEMALE,
-    CRM_TITLE_TYPE_FEMALE
+    PROFILE_HISTORY_STATUS_INIT, RESIDENT_ADDRESS_CODE
 )
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_OPEN_CIF, IDM_MENU_CODE_OPEN_CIF,
@@ -791,9 +791,9 @@ class CtrIdentityDocument(BaseController):
         )
 
         (
-            saving_transaction_stage_status, saving_transaction_stage, saving_transaction_stage_phase,
-            saving_transaction_stage_lane, saving_transaction_stage_role, saving_transaction_daily,
-            saving_transaction_sender
+            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
+            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
+            saving_transaction_daily, saving_transaction_sender
         ) = transaction_datas
 
         request_data = await parse_identity_model_to_dict(
@@ -830,6 +830,7 @@ class CtrIdentityDocument(BaseController):
                 saving_customer_identity_images=saving_customer_identity_images,
                 saving_transaction_stage_status=saving_transaction_stage_status,
                 saving_transaction_stage=saving_transaction_stage,
+                saving_sla_transaction=saving_sla_transaction,
                 saving_transaction_stage_phase=saving_transaction_stage_phase,
                 saving_transaction_stage_lane=saving_transaction_stage_lane,
                 saving_transaction_stage_role=saving_transaction_stage_role,

@@ -26,7 +26,8 @@ from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
 )
 from app.third_parties.oracle.models.master_data.others import (
-    Branch, TransactionStage, TransactionStageRole, TransactionStageStatus
+    Branch, SlaTransaction, TransactionStage, TransactionStageRole,
+    TransactionStageStatus
 )
 from app.utils.constant.cif import CONTACT_ADDRESS_CODE
 from app.utils.constant.dwh import NAME_ACCOUNTING_ENTRY
@@ -200,13 +201,15 @@ async def repos_get_senders(
         TransactionStage,
         TransactionStageRole,
         TransactionSender,
-        Booking.id,
-        Booking.business_type_id
+        Booking,
+        Booking.business_type_id,
+        SlaTransaction
     ) \
         .outerjoin(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id) \
         .join(Booking, TransactionDaily.transaction_id == Booking.transaction_id) \
         .outerjoin(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
         .outerjoin(TransactionStageRole, TransactionStage.id == TransactionStageRole.transaction_stage_id) \
+        .outerjoin(SlaTransaction, TransactionStage.sla_transaction_id == SlaTransaction.id) \
         .filter(TransactionDaily.transaction_id.in_(transaction_daily_ids))
 
     if region_id:

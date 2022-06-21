@@ -2,22 +2,26 @@ from starlette import status
 
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.common_repository import (
-    repos_get_next_stage, repos_open_cif_get_previous_stage,
-    repos_get_previous_transaction_daily, repos_get_stage_information,
-    repos_get_stage_teller, repos_open_casa_get_previous_stage
+    repos_get_next_stage, repos_get_previous_transaction_daily,
+    repos_get_stage_information, repos_get_stage_teller,
+    repos_open_casa_get_previous_stage, repos_open_cif_get_previous_stage
 )
 from app.api.v1.endpoints.approval.repository import (
     repos_approval_get_face_authentication, repos_approve,
     repos_get_approval_identity_faces, repos_get_approval_identity_images,
     repos_get_approval_process, repos_get_business_job_codes,
-    repos_get_business_jobs, repos_get_compare_image_transactions,
-    repos_get_list_audit, repos_get_business_jobs_by_open_casa
+    repos_get_business_jobs, repos_get_business_jobs_by_open_casa,
+    repos_get_compare_image_transactions, repos_get_list_audit
 )
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
+from app.api.v1.endpoints.cif.basic_information.identity.identity_document.repository import (
+    repos_get_sla_transaction_parent_from_stage_transaction_id
+)
 from app.api.v1.endpoints.third_parties.gw.employee.repository import (
     repos_gw_get_employee_info_from_code
 )
 from app.api.v1.others.booking.controller import CtrBooking
+from app.api.v1.others.booking.repository import repos_get_customer_by_booking_id
 from app.api.v1.others.permission.controller import PermissionController
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
@@ -25,13 +29,16 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
 from app.third_parties.oracle.models.master_data.identity import (
     CustomerIdentityType
 )
-from app.third_parties.oracle.models.master_data.others import BusinessJob
+from app.third_parties.oracle.models.master_data.others import BusinessJob, Sla
 from app.third_parties.services.idm import ServiceIDM
 from app.utils.constant.approval import (
-    CIF_STAGE_APPROVE_KSS, CIF_STAGE_APPROVE_KSV, CIF_STAGE_COMPLETED, CIF_STAGE_INIT, INIT_RESPONSE, STAGE_BEGINS,
-    INIT_STAGES, APPROVE_AUDIT_STAGES, APPROVE_SUPERVISOR_STAGES, COMPLETED_STAGES
+    APPROVE_AUDIT_STAGES, APPROVE_SUPERVISOR_STAGES, CIF_STAGE_APPROVE_KSS,
+    CIF_STAGE_APPROVE_KSV, CIF_STAGE_COMPLETED, CIF_STAGE_INIT,
+    COMPLETED_STAGES, INIT_RESPONSE, INIT_STAGES, STAGE_BEGINS
 )
-from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA, BUSINESS_TYPES
+from app.utils.constant.business_type import (
+    BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA, BUSINESS_TYPES
+)
 from app.utils.constant.cif import (
     DROPDOWN_NONE_DICT, IMAGE_TYPE_FACE, IMAGE_TYPE_FINGERPRINT,
     IMAGE_TYPE_SIGNATURE
@@ -41,15 +48,18 @@ from app.utils.constant.idm import (
     IDM_MENU_CODE_OPEN_CIF, IDM_PERMISSION_CODE_KSS, IDM_PERMISSION_CODE_KSV,
     IDM_PERMISSION_CODE_OPEN_CIF
 )
+from app.utils.constant.sla import (
+    SLA_CODE_CIF_AUDIT, SLA_CODE_CIF_SUPERVISOR, SLA_CODE_CIF_TELLER
+)
 from app.utils.error_messages import (
     ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
     ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT,
     ERROR_APPROVAL_INCORRECT_UPLOAD_SIGNATURE,
     ERROR_APPROVAL_NO_DATA_IN_IDENTITY_STEP,
     ERROR_APPROVAL_NO_SIGNATURE_IN_IDENTITY_STEP,
-    ERROR_APPROVAL_UPLOAD_SIGNATURE,
+    ERROR_APPROVAL_UPLOAD_SIGNATURE, ERROR_BUSINESS_TYPE_NOT_EXIST,
     ERROR_CONTENT_NOT_NULL, ERROR_PERMISSION, ERROR_STAGE_COMPLETED,
-    ERROR_VALIDATE, ERROR_WRONG_STAGE_ACTION, MESSAGE_STATUS, ERROR_BUSINESS_TYPE_NOT_EXIST
+    ERROR_VALIDATE, ERROR_WRONG_STAGE_ACTION, MESSAGE_STATUS, ERROR_CIF_ID_NOT_EXIST
 )
 from app.utils.functions import (
     dropdown, generate_uuid, now, orjson_dumps, orjson_loads
@@ -111,10 +121,7 @@ class CtrApproval(BaseController):
 
         return self.response(data=response_data)
 
-    async def ctr_get_approval(self, cif_id: str, amount: int): # noqa
-        # check cif tồn tại
-        await self.get_model_object_by_id(model_id=cif_id, model=Customer, loc="cif_id")
-
+    async def ctr_get_approval(self, booking_id: str, amount: int): # noqa
         # current_user = self.current_user.user_info
         auth_response = self.current_user
 
@@ -129,6 +136,19 @@ class CtrApproval(BaseController):
         image_face_uuids = []
 
         compare_face_uuid = None
+
+        customer_info = self.call_repos(await repos_get_customer_by_booking_id(
+            booking_id=booking_id,
+            session=self.oracle_session
+        ))
+
+        if not customer_info:
+            return self.response_exception(msg=ERROR_CIF_ID_NOT_EXIST, loc=f"booking_id {booking_id}")
+
+        cif_id = customer_info.id
+
+        # check cif tồn tại
+        await self.get_model_object_by_id(model_id=cif_id, model=Customer, loc="cif_id")
 
         transactions = self.call_repos(await repos_get_approval_identity_images(
             cif_id=cif_id,
@@ -328,9 +348,9 @@ class CtrApproval(BaseController):
         ################################################################################################################
 
         # Kiểm tra xem đang ở bước nào của giao dịch
-        _, _, previous_transaction_daily, previous_transaction_stage, _, previous_transaction_sender, previous_transaction_stage_action = self.call_repos(
+        _, previous_transaction_daily, previous_transaction_stage, _, previous_transaction_sender, previous_transaction_stage_action = self.call_repos(
             await repos_open_cif_get_previous_stage(
-                cif_id=cif_id,
+                booking_id=booking_id,
                 session=self.oracle_session
             ))
 
@@ -680,9 +700,9 @@ class CtrApproval(BaseController):
         previous_transaction_stage = None
 
         if business_type_id == BUSINESS_TYPE_INIT_CIF:
-            _, _, _, previous_transaction_stage, _, _, _ = self.call_repos(
+            _, _, previous_transaction_stage, _, _, _ = self.call_repos(
                 await repos_open_cif_get_previous_stage(
-                    cif_id=cif_id,
+                    booking_id=booking_id,
                     session=self.oracle_session
                 ))
         if business_type_id == BUSINESS_TYPE_OPEN_CASA:
@@ -943,6 +963,7 @@ class CtrApproval(BaseController):
             next_stage_role_code = next_stage_role.code
 
         saving_transaction_stage_status_id = generate_uuid()
+        saving_sla_transaction_id = generate_uuid()
         saving_transaction_stage_id = generate_uuid()
         saving_transaction_stage_lane_id = generate_uuid()
         saving_transaction_stage_phase_id = generate_uuid()
@@ -991,13 +1012,40 @@ class CtrApproval(BaseController):
             updated_at=now()
         )
 
+        sla_id = None
+        if current_stage_code == CIF_STAGE_INIT:
+            sla_id = SLA_CODE_CIF_TELLER
+        elif current_stage_code == CIF_STAGE_APPROVE_KSV:
+            sla_id = SLA_CODE_CIF_SUPERVISOR
+        elif current_stage_code == CIF_STAGE_APPROVE_KSS:
+            sla_id = SLA_CODE_CIF_AUDIT
+        else:
+            self.response_exception(msg="Current Stage is not exist")
+
+        sla = await self.get_model_object_by_id(model_id=sla_id, model=Sla, loc=f"sla_id: {sla_id}")
+
+        sla_trans_parent = await repos_get_sla_transaction_parent_from_stage_transaction_id(
+            stage_transaction_id=previous_transaction_stage.id, session=self.oracle_session
+        )
+
+        saving_sla_transaction = dict(
+            id=saving_sla_transaction_id,
+            parent_id=sla_trans_parent.id,
+            root_id=sla_trans_parent.root_id,
+            sla_id=sla_id,
+            sla_name=sla.name,
+            sla_deadline=sla.deadline,
+            active_flag=1,
+            created_at=now()
+        )
+
         saving_transaction_stage = dict(
             id=saving_transaction_stage_id,
             status_id=saving_transaction_stage_status_id,
             lane_id=saving_transaction_stage_lane_id,
             phase_id=saving_transaction_stage_phase_id,
             business_type_id=business_type_id,
-            sla_transaction_id=None,  # TODO
+            sla_transaction_id=saving_sla_transaction_id,
             transaction_stage_phase_code=current_stage_code,
             transaction_stage_phase_name=current_stage_name,
             is_reject=reject_flag,
@@ -1118,6 +1166,7 @@ class CtrApproval(BaseController):
             booking_id=booking_id,
             saving_transaction_stage_status=saving_transaction_stage_status,
             saving_transaction_stage_action=saving_transaction_stage_action,
+            saving_sla_transaction=saving_sla_transaction,
             saving_transaction_stage=saving_transaction_stage,
             saving_transaction_stage_lane=saving_transaction_stage_lane,
             saving_transaction_stage_phase=saving_transaction_stage_phase,
@@ -1239,8 +1288,6 @@ class CtrApproval(BaseController):
         Input: CustomerIdentity, CustomerIdentityImage
         Output: (face_transactions, fingerprint_transactions, signature_transactions)
         """
-        is_existed_face = False
-        is_existed_fingerprint = False
         is_existed_signature = False
         face_transactions = []
         fingerprint_transactions = []
@@ -1249,11 +1296,9 @@ class CtrApproval(BaseController):
             _, customer_identity_image = transaction
             image_type_id = customer_identity_image.image_type_id
             if image_type_id == IMAGE_TYPE_FACE:
-                is_existed_face = True
                 face_transactions.append(transaction)
                 continue
             if image_type_id == IMAGE_TYPE_FINGERPRINT:
-                is_existed_fingerprint = True
                 fingerprint_transactions.append(transaction)
                 continue
             if image_type_id == IMAGE_TYPE_SIGNATURE:
