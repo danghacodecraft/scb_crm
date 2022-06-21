@@ -4,8 +4,9 @@ from app.api.v1.endpoints.approval.repository import (
 )
 from app.api.v1.endpoints.third_parties.gw.payment.repository import (
     repos_create_booking_payment, repos_gw_pay_in_cash,
-    repos_gw_payment_amount_block, repos_gw_redeem_account,
-    repos_payment_amount_block, repos_payment_amount_unblock
+    repos_gw_payment_amount_block, repos_gw_payment_amount_unblock,
+    repos_gw_redeem_account, repos_payment_amount_block,
+    repos_payment_amount_unblock
 )
 from app.api.v1.endpoints.third_parties.gw.payment.schema import (
     PayInCashRequest, RedeemAccountRequest
@@ -17,7 +18,8 @@ from app.utils.constant.business_type import (
     BUSINESS_TYPE_REDEEM_ACCOUNT
 )
 from app.utils.constant.cif import (
-    BUSINESS_FORM_AMOUNT_BLOCK, PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_BLOCK,
+    BUSINESS_FORM_AMOUNT_BLOCK, BUSINESS_FORM_AMOUNT_UNBLOCK,
+    PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_BLOCK,
     PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_UNBLOCK, PROFILE_HISTORY_STATUS_INIT
 )
 from app.utils.constant.gw import GW_CASA_RESPONSE_STATUS_SUCCESS
@@ -268,16 +270,38 @@ class CtrGWPayment(BaseController):
             history_data=orjson_dumps(history_data),
             session=self.oracle_session
         ))
-        # booking_id, gw_payment_amount_unblock = self.call_repos(await repos_payment_amount_unblock(
-        #     data_input=data_input,
-        #     current_user=current_user,
-        #     session=self.oracle_session
-        # ))
 
-        # response_data = {
-        #     "booking_id": booking_id,
-        # }
-        return self.response(data=booking_id)
+        response_data = {
+            "booking_id": booking_id,
+        }
+        return self.response(data=response_data)
+
+    async def ctr_gw_payment_amount_unblock(
+            self,
+            BOOKING_ID: str,
+    ):
+        current_user = self.current_user
+        booking_business_form = self.call_repos(
+            await repos_get_booking_business_form_by_booking_id(
+                booking_id=BOOKING_ID,
+                business_form_id=BUSINESS_FORM_AMOUNT_UNBLOCK,
+                session=self.oracle_session
+
+            ))
+        request_data = orjson_loads(booking_business_form.form_data)
+
+        gw_payment_amount_unblock = self.call_repos(await repos_gw_payment_amount_unblock(
+            current_user=current_user,
+            booking_id=BOOKING_ID,
+            request_data_gw=request_data,
+            session=self.oracle_session
+        ))
+
+        response_data = {
+            "booking_id": BOOKING_ID,
+            "account_list": gw_payment_amount_unblock
+        }
+        return self.response(data=response_data)
 
     async def ctr_gw_pay_in_cash(self, pay_in_cash: PayInCashRequest):
         current_user = self.current_user
