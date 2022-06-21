@@ -1,8 +1,8 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.payment_account.co_owner.repository import (
-    repos_account_co_owner, repos_check_cif_id, repos_detail_co_owner,
-    repos_get_casa_account, repos_get_co_owner, repos_get_co_owner_signatures,
-    repos_get_uuid, repos_save_co_owner
+    repos_account_co_owner, repos_check_cif_id, repos_check_file_id,
+    repos_detail_co_owner, repos_get_casa_account, repos_get_co_owner,
+    repos_get_co_owner_signatures, repos_get_file_uuid, repos_save_co_owner
 )
 from app.api.v1.endpoints.cif.payment_account.co_owner.schema import (
     AccountHolderRequest
@@ -10,7 +10,9 @@ from app.api.v1.endpoints.cif.payment_account.co_owner.schema import (
 from app.api.v1.endpoints.cif.repository import (
     repos_get_booking, repos_validate_cif_number
 )
-from app.api.v1.endpoints.file.repository import repos_download_file
+from app.api.v1.endpoints.file.repository import (
+    repos_check_is_exist_multi_file, repos_download_file
+)
 from app.api.v1.endpoints.third_parties.gw.customer.controller import (
     CtrGWCustomer
 )
@@ -20,7 +22,8 @@ from app.third_parties.oracle.models.master_data.customer import CustomerGender
 from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.gw import GW_REQUEST_PARAMETER_CO_OWNER
 from app.utils.error_messages import (
-    ERROR_CIF_ID_DOES_NOT_EXIST, ERROR_CIF_NUMBER_NOT_EXIST
+    ERROR_ACCOUNT_ID_DOES_NOT_EXIST, ERROR_CIF_ID_DOES_NOT_EXIST,
+    ERROR_CIF_NUMBER_NOT_EXIST, ERROR_DOCUMENT_ID_DOES_NOT_EXIST
 )
 from app.utils.functions import dropdown, generate_uuid
 
@@ -41,6 +44,21 @@ class CtrCoOwner(BaseController):
         casa_account = self.call_repos(
             await repos_get_casa_account(cif_id=cif_id, session=self.oracle_session)
         )
+
+        # Check exist file_id
+        file_id = self.call_repos(
+            await repos_check_file_id(
+                file_uuid=co_owner.file_uuid,
+                session=self.oracle_session))
+
+        if not file_id:
+            is_exist = self.call_repos(await repos_check_is_exist_multi_file(uuids=co_owner.file_uuid))
+            if not is_exist:
+                return self.response_exception(
+                    msg='',
+                    loc='file_uuid',
+                    detail='Can not found file in service file'
+                )
 
         # lấy danh sách cif_number account request
         customer_relationship_not_exist_list = []
@@ -66,7 +84,7 @@ class CtrCoOwner(BaseController):
             "in_scb_flag": co_owner.address_flag,
             "joint_acc_agree_document_address": co_owner.document_address,
             "casa_account_id": casa_account,
-            "joint_acc_agree_document_file_id": co_owner.file_uuid
+            "joint_acc_agree_document_file_id": file_id
         }
 
         save_account_holder = [{
@@ -136,11 +154,21 @@ class CtrCoOwner(BaseController):
             account_id=account_id,
             session=self.oracle_session
         ))
+        if not account_co_owner:
+            return self.response_exception(
+                msg=ERROR_ACCOUNT_ID_DOES_NOT_EXIST, loc=account_id
+            )
 
-        document_uuid = self.call_repos(await repos_get_uuid(
+        document_uuid = self.call_repos(await repos_get_file_uuid(
             document_id=account_co_owner.joint_acc_agree_document_file_id,
             session=self.oracle_session
         ))
+
+        if not document_uuid:
+            return self.response_exception(
+                msg=ERROR_DOCUMENT_ID_DOES_NOT_EXIST, loc=account_co_owner.joint_acc_agree_document_file_id
+            )
+
         document_uuids = [document_uuid]
         # gọi đến service file để lấy link download
         uuid__link_downloads = await self.get_info_multi_file(uuids=document_uuids)
