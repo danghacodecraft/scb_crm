@@ -1,26 +1,47 @@
 from app.api.base.controller import BaseController
+from app.api.v1.endpoints.approval.repository import (
+    repos_get_booking_business_form_by_booking_id
+)
 from app.api.v1.endpoints.third_parties.gw.payment.repository import (
     repos_create_booking_payment, repos_gw_pay_in_cash,
     repos_gw_payment_amount_block, repos_gw_payment_amount_unblock,
-    repos_gw_redeem_account
+    repos_gw_redeem_account, repos_payment_amount_block
 )
 from app.api.v1.endpoints.third_parties.gw.payment.schema import (
     AccountAmountBlockRequest, AccountAmountUnblock, PayInCashRequest,
     RedeemAccountRequest
 )
-from app.utils.constant.business_type import BUSINESS_TYPE_REDEEM_ACCOUNT
+from app.api.v1.others.booking.controller import CtrBooking
+from app.api.v1.validator import validate_history_data
+from app.utils.constant.business_type import (
+    BUSINESS_TYPE_AMOUNT_BLOCK, BUSINESS_TYPE_REDEEM_ACCOUNT
+)
+from app.utils.constant.cif import (
+    BUSINESS_FORM_AMOUNT_BLOCK, PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_BLOCK,
+    PROFILE_HISTORY_STATUS_INIT
+)
 from app.utils.constant.gw import GW_CASA_RESPONSE_STATUS_SUCCESS
+from app.utils.error_messages import ERROR_CALL_SERVICE_GW
+from app.utils.functions import orjson_dumps, orjson_loads
 
 
 class CtrGWPayment(BaseController):
 
-    async def ctr_gw_payment_amount_block(
+    async def ctr_payment_amount_block(
             self,
             account_number: str,
+            BOOKING_ID: str,
             account_amount_block: AccountAmountBlockRequest
     ):
         current_user = self.current_user
 
+        # Kiểm tra booking
+        await CtrBooking().ctr_get_booking_and_validate(
+            booking_id=BOOKING_ID,
+            business_type_code=BUSINESS_TYPE_AMOUNT_BLOCK,
+            check_correct_booking_flag=False,
+            loc=f'booking_id: {BOOKING_ID}'
+        )
         data_input = {
             "account_info": {
                 "account_num": account_number
@@ -66,19 +87,79 @@ class CtrGWPayment(BaseController):
                 "staff_name": "KHANHLQ"
             }
         }
+        # Tạo data TransactionDaily và các TransactionStage
+        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
+            business_type_id=BUSINESS_TYPE_AMOUNT_BLOCK
+        )
+        (
+            saving_transaction_stage_status, saving_transaction_stage, saving_transaction_stage_phase,
+            saving_transaction_stage_lane, saving_transaction_stage_role, saving_transaction_daily,
+            saving_transaction_sender
+        ) = transaction_datas
 
-        booking_id, gw_payment_amount_block = self.call_repos(await repos_gw_payment_amount_block(
-            current_user=current_user,
-            data_input=data_input,
+        history_datas = self.make_history_log_data(
+            description=PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_BLOCK,
+            history_status=PROFILE_HISTORY_STATUS_INIT,
+            current_user=current_user.user_info
+        )
+
+        # Validate history data
+        is_success, history_response = validate_history_data(history_datas)
+        if not is_success:
+            return self.response_exception(
+                msg=history_response['msg'],
+                loc=history_response['loc'],
+                detail=history_response['detail']
+            )
+
+        booking_id = self.call_repos(await repos_payment_amount_block(
+            booking_id=BOOKING_ID,
+            saving_transaction_stage_status=saving_transaction_stage_status,
+            saving_transaction_stage=saving_transaction_stage,
+            saving_transaction_stage_phase=saving_transaction_stage_phase,
+            saving_transaction_stage_lane=saving_transaction_stage_lane,
+            saving_transaction_stage_role=saving_transaction_stage_role,
+            saving_transaction_daily=saving_transaction_daily,
+            saving_transaction_sender=saving_transaction_sender,
+            request_json=orjson_dumps(data_input),
+            history_datas=orjson_dumps(history_datas),
             session=self.oracle_session
         ))
-        response_data = {
-            "booking_id": booking_id,
-            "account_ref_no":
-                gw_payment_amount_block['amountBlock_out']['data_output']['account_info']['blance_lock_info'][
-                    'account_ref_no']
-        }
 
+        return self.response(data=booking_id)
+
+    async def ctr_gw_payment_amount_block(self, account_number: str, BOOKING_ID: str):
+        current_user = self.current_user
+        booking_business_form = self.call_repos(
+            await repos_get_booking_business_form_by_booking_id(
+                booking_id=BOOKING_ID,
+                business_form_id=BUSINESS_FORM_AMOUNT_BLOCK,
+                session=self.oracle_session
+
+            ))
+        request_data_gw = orjson_loads(booking_business_form.form_data)
+
+        if request_data_gw.get('account_info').get('account_num') != account_number:
+            return self.response_exception(msg="account_number is not same", loc="GW_AMOUNT_BLOCK", detail="GW_AMOUNT_BLOCK")
+
+        gw_payment_amount_block = self.call_repos(await repos_gw_payment_amount_block(
+            current_user=current_user,
+            booking_id=BOOKING_ID,
+            data_input=request_data_gw,
+            session=self.oracle_session
+        ))
+
+        if gw_payment_amount_block['amountBlock_out']['transaction_info']['transaction_error_code'] != GW_CASA_RESPONSE_STATUS_SUCCESS:
+            return self.response_exception(
+                detail=gw_payment_amount_block['amountBlock_out']['transaction_info']['transaction_error_msg'],
+                loc=ERROR_CALL_SERVICE_GW,
+                msg=ERROR_CALL_SERVICE_GW
+            )
+
+        response_data = {
+            "booking_id": BOOKING_ID,
+            "account_ref_no": gw_payment_amount_block['amountBlock_out']['data_output']['account_info']['blance_lock_info']['account_ref_no']
+        }
         return self.response(data=response_data)
 
     async def ctr_gw_payment_amount_unblock(
