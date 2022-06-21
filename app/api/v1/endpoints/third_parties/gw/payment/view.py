@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Body, Depends, Path
+from fastapi import APIRouter, Body, Depends, Header, Path
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -21,21 +21,45 @@ router = APIRouter()
 
 @router.post(
     path="/{account_number}/amount-block/",
-    name="[GW] Amount Block",
+    name="Amount Block",
     description="Phong tỏa tài khoản",
+    responses=swagger_response(
+        response_model=ResponseData[PaymentSuccessResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_amount_block(
+        account_amount_block: AccountAmountBlockRequest = Body(...),
+        account_number: str = Path(..., description="Số tài khoản"),
+        current_user=Depends(get_current_user_from_header()),
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch")
+):
+    payment_amount_block = await CtrGWPayment(current_user).ctr_payment_amount_block(
+        BOOKING_ID=BOOKING_ID,
+        account_number=account_number,
+        account_amount_block=account_amount_block
+    )
+
+    return ResponseData[PaymentSuccessResponse](**payment_amount_block)
+
+
+@router.post(
+    path="/{account_number}/amount-block-pd/",
+    name="[GW] Amount Block",
+    description="Phong tỏa tài khoản - Phê duyệt",
     responses=swagger_response(
         response_model=ResponseData[AccountAmountBlockResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
 async def view_gw_amount_block(
-        account_amount_block: AccountAmountBlockRequest = Body(...),
         account_number: str = Path(..., description="Số tài khoản"),
-        current_user=Depends(get_current_user_from_header())
+        current_user=Depends(get_current_user_from_header()),
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch")
 ):
     gw_payment_amount_block = await CtrGWPayment(current_user).ctr_gw_payment_amount_block(
+        BOOKING_ID=BOOKING_ID,
         account_number=account_number,
-        account_amount_block=account_amount_block
     )
 
     return ResponseData[AccountAmountBlockResponse](**gw_payment_amount_block)
