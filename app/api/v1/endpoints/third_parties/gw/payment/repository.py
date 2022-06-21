@@ -115,27 +115,41 @@ async def repos_payment_amount_block(
 @auto_commit
 async def repos_gw_payment_amount_block(
     current_user,
-    data_input,
+    request_data_gw: list,
     booking_id,
     session: Session
 ):
-    is_success, gw_payment_amount_block, request_data = await service_gw.gw_payment_amount_block(
-        current_user=current_user.user_info, data_input=data_input
-    )
+    response_data = []
+    for item in request_data_gw:
+        is_success, gw_payment_amount_block, request_data = await service_gw.gw_payment_amount_block(
+            current_user=current_user.user_info, data_input=item
+        )
 
-    # lưu form data request GW
-    session.add(
-        BookingBusinessForm(**dict(
-            booking_id=booking_id,
-            form_data=orjson_dumps(request_data),
-            business_form_id=BUSINESS_FORM_AMOUNT_BLOCK_PD,
-            save_flag=True,
-            created_at=now(),
-            log_data=orjson_dumps(gw_payment_amount_block)
-        ))
-    )
+        # lưu form data request GW
+        session.add(
+            BookingBusinessForm(**dict(
+                booking_id=booking_id,
+                form_data=orjson_dumps(item),
+                business_form_id=BUSINESS_FORM_AMOUNT_BLOCK_PD,
+                save_flag=True,
+                created_at=now(),
+                log_data=orjson_dumps(gw_payment_amount_block)
+            ))
+        )
+        amount_block = gw_payment_amount_block.get('amountBlock_out').get('data_output')
 
-    return ReposReturn(data=gw_payment_amount_block)
+        if isinstance(amount_block, dict):
+            response_data.append({
+                'account_number': item.get('account_info').get('account_num'),
+                'account_ref_no': amount_block.get('account_info').get('blance_lock_info').get('account_ref_no')
+            })
+        else:
+            response_data.append({
+                'account_number': item.get('account_info').get('account_num'),
+                'account_ref_no': amount_block
+            })
+
+    return ReposReturn(data=response_data)
 
 
 async def repos_gw_payment_amount_unblock(current_user, data_input, session):

@@ -41,13 +41,11 @@ async def repos_count_total_item(region_id: Optional[str], branch_id: Optional[s
     transaction_list = select(
         func.count(Booking.code)
     ) \
-        .join(BookingCustomer, Booking.id == BookingCustomer.booking_id) \
-        .join(Customer, BookingCustomer.customer_id == Customer.id) \
         .join(Branch, Booking.branch_id == Branch.id) \
-        .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
         .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
         .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
-        .join(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id)
+        .join(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
+        .distinct()
 
     if region_id:
         transaction_list = transaction_list.filter(Branch.region_id == region_id)
@@ -151,36 +149,6 @@ async def repos_get_senders(
         Booking
     ).join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
         .filter(Booking.id.in_(booking_ids))
-
-    if region_id:
-        sql = sql.filter(Branch.region_id == region_id)
-
-    if branch_id:
-        sql = sql.filter(Booking.branch_id == branch_id)
-
-    if status_code:
-        sql = sql.filter(TransactionStageStatus.code == status_code)
-
-    if search_box:
-        search_box = f'%{search_box}%'
-        sql = sql.filter(
-            or_(
-                Booking.code.ilike(search_box),
-                or_(
-                    Customer.cif_number.ilike(search_box),
-                    or_(
-                        CustomerIdentity.identity_num.ilike(search_box)),
-                    Customer.full_name.ilike(convert_to_unsigned_vietnamese(search_box))
-                )
-            )
-        )
-
-    if from_date and to_date:
-        sql = sql.filter(
-            and_(
-                Booking.created_at >= date_to_datetime(from_date),
-                Booking.created_at <= end_time_of_day(date_to_datetime(to_date))
-            ))
 
     transaction_root_dailies = session.execute(
         sql
