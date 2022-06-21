@@ -74,7 +74,9 @@ async def repos_detail_payment_account(cif_id: str, session: Session) -> ReposRe
         if account_structure_type_level_3 else DROPDOWN_NONE_DICT,
         "casa_account_number": detail.CasaAccount.casa_account_number,
         "account_salary_organization_account": detail.CasaAccount.acc_salary_org_acc,
-        "account_salary_organization_name": detail.CasaAccount.acc_salary_org_name
+        "account_salary_organization_name": detail.CasaAccount.acc_salary_org_name,
+        "id": detail.CasaAccount.id,
+        "approve_status": detail.CasaAccount.approve_status,
     })
 
 
