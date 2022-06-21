@@ -153,10 +153,11 @@ async def repos_get_customer_by_booking_id(booking_id: str, session: Session):
         select(
             Booking
         )
-            .filter(Booking.id == booking_id)
+        .filter(Booking.id == booking_id)
     ).scalar()
     if not booking:
         return ReposReturn(is_error=True, msg=ERROR_BOOKING_ID_NOT_EXIST, loc=f"booking_id: {booking_id}")
+
     if booking.business_type.id == BUSINESS_TYPE_CODE_CIF:
         customer = session.execute(
             select(

@@ -8,7 +8,7 @@ from app.third_parties.oracle.models.cif.form.model import (
 from app.third_parties.oracle.models.master_data.others import (
     Lane, Phase, Stage, StageAction, StageLane, StagePhase, StageRole,
     StageStatus, TransactionStage, TransactionStageAction,
-    TransactionStageStatus
+    TransactionStageStatus, BusinessType
 )
 from app.utils.constant.approval import (
     CIF_STAGE_APPROVE_KSS, CIF_STAGE_BEGIN, CIF_STAGE_INIT, INIT_STAGES
@@ -303,3 +303,18 @@ async def repos_open_casa_get_previous_stage(booking_id: str, session: Session):
         return ReposReturn(is_error=True, msg="ádsad")
 
     return ReposReturn(data=previous_stage_info)
+
+
+async def repos_get_stage_codes_in_business(business_type_code: str, session: Session):
+    """
+    Lấy những bước giao dịch trong 1 nghiệp vụ
+    """
+    stages_codes = session.execute(
+        select(
+            Stage.code,
+            BusinessType
+        )
+        .join(Stage, BusinessType.id == Stage.business_type_id)
+        .filter(BusinessType.id == business_type_code)
+    ).scalars().all()
+    return ReposReturn(data=stages_codes)
