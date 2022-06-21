@@ -59,7 +59,7 @@ from app.utils.error_messages import (
     ERROR_APPROVAL_NO_SIGNATURE_IN_IDENTITY_STEP,
     ERROR_APPROVAL_UPLOAD_SIGNATURE, ERROR_BUSINESS_TYPE_NOT_EXIST,
     ERROR_CONTENT_NOT_NULL, ERROR_PERMISSION, ERROR_STAGE_COMPLETED,
-    ERROR_VALIDATE, ERROR_WRONG_STAGE_ACTION, MESSAGE_STATUS
+    ERROR_VALIDATE, ERROR_WRONG_STAGE_ACTION, MESSAGE_STATUS, ERROR_CIF_ID_NOT_EXIST
 )
 from app.utils.functions import (
     dropdown, generate_uuid, now, orjson_dumps, orjson_loads
@@ -122,9 +122,6 @@ class CtrApproval(BaseController):
         return self.response(data=response_data)
 
     async def ctr_get_approval(self, booking_id: str, amount: int): # noqa
-        # check cif tồn tại
-        # await self.get_model_object_by_id(model_id=cif_id, model=Customer, loc="cif_id")
-
         # current_user = self.current_user.user_info
         auth_response = self.current_user
 
@@ -146,9 +143,12 @@ class CtrApproval(BaseController):
         ))
 
         if not customer_info:
-            return self.response_exception(msg="sadas")
+            return self.response_exception(msg=ERROR_CIF_ID_NOT_EXIST, loc=f"booking_id {booking_id}")
 
         cif_id = customer_info.id
+
+        # check cif tồn tại
+        await self.get_model_object_by_id(model_id=cif_id, model=Customer, loc="cif_id")
 
         transactions = self.call_repos(await repos_get_approval_identity_images(
             cif_id=cif_id,
