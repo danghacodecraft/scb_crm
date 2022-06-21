@@ -15,7 +15,7 @@ from app.third_parties.oracle.models.cif.payment_account.model import (
 )
 from app.third_parties.oracle.models.master_data.account import AccountStructureType
 from app.third_parties.oracle.models.master_data.others import TransactionStageStatus, TransactionStage, \
-    TransactionStageLane, TransactionStagePhase, TransactionStageRole, TransactionJob
+    TransactionStageLane, TransactionStagePhase, TransactionStageRole, TransactionJob, SlaTransaction
 from app.utils.constant.approval import BUSINESS_JOB_CODE_START_CASA
 from app.utils.constant.casa import CASA_ACCOUNT_STATUS_APPROVED
 from app.utils.constant.cif import ACTIVE_FLAG_ACTIVED, BUSINESS_FORM_OPEN_CASA_OPEN_CASA
@@ -30,6 +30,7 @@ async def repos_save_casa_casa_account(
         saving_booking_accounts: List[dict],
         booking_parent_id: str,
         saving_transaction_stage_status: dict,
+        saving_sla_transaction: dict,
         saving_transaction_stage: dict,
         saving_transaction_stage_phase: dict,
         saving_transaction_stage_lane: dict,
@@ -77,6 +78,7 @@ async def repos_save_casa_casa_account(
     session.add_all([
         # Tạo BOOKING, CRM_TRANSACTION_DAILY -> CRM_BOOKING -> BOOKING_CUSTOMER -> BOOKING_BUSINESS_FORM
         TransactionStageStatus(**saving_transaction_stage_status),
+        SlaTransaction(**saving_sla_transaction),
         TransactionStage(**saving_transaction_stage),
         TransactionStageLane(**saving_transaction_stage_lane),
         TransactionStagePhase(**saving_transaction_stage_phase),

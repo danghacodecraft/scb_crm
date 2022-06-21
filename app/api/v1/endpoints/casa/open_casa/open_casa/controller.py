@@ -240,9 +240,9 @@ class CtrCasaOpenCasa(BaseController):
         )
 
         (
-            saving_transaction_stage_status, saving_transaction_stage, saving_transaction_stage_phase,
-            saving_transaction_stage_lane, saving_transaction_stage_role, saving_transaction_daily,
-            saving_transaction_sender
+            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
+            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
+            saving_transaction_daily, saving_transaction_sender
         ) = transaction_datas
 
         history_datas = self.make_history_log_data(
@@ -265,6 +265,7 @@ class CtrCasaOpenCasa(BaseController):
             saving_booking_accounts=saving_booking_accounts,
             booking_parent_id=booking_parent_id,
             saving_transaction_stage_status=saving_transaction_stage_status,
+            saving_sla_transaction=saving_sla_transaction,
             saving_transaction_stage=saving_transaction_stage,
             saving_transaction_stage_phase=saving_transaction_stage_phase,
             saving_transaction_stage_lane=saving_transaction_stage_lane,
