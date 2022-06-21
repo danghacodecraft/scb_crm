@@ -24,6 +24,8 @@ class TransactionListBusinessTypeResponse(BaseSchema):
 class TransactionListSenderResponse(BaseSchema):
     name: Optional[str] = Field(..., description="Tên người gửi")
     created_at: Optional[datetime] = Field(..., description="Ngày tạo")
+    sla_time: Optional[str] = Field(None, description="Khoảng thời gian thực hiện")
+    sla_deadline: Optional[int] = Field(None, description="Tình trạng SLA")
 
 
 class TransactionListResponse(BaseSchema):

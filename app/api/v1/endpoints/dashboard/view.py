@@ -45,7 +45,7 @@ async def view_transaction_list(
     ).ctr_get_transaction_list(region_id=region_id, branch_id=branch_id, business_type_id=business_type_id,
                                status_code=status_code, search_box=search_box, from_date=from_date, to_date=to_date)
 
-    return PagingResponse(**transaction_list_response)
+    return PagingResponse[TransactionListResponse](**transaction_list_response)
 
 
 @router.get(
