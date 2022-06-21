@@ -86,14 +86,14 @@ class BasicInformationResponse(BaseSchema):
 
 class IdentityDocumentResponse(BaseSchema):
     identity_number: str = Field(..., description="Số CMND/CCCD/Hộ Chiếu")
-    issued_date: Optional[date] = Field(..., description="Ngày cấp")
-    expired_date: Optional[date] = Field(..., description="Ngày hết hạn")
+    issued_date: date = Field(..., description="Ngày cấp")
+    expired_date: date = Field(..., description="Ngày hết hạn")
     place_of_issue: OptionalDropdownResponse = Field(..., description="Nơi cấp")
 
 
 class AddressInformationResponse(BaseSchema):
-    contact_address: Optional[str] = Field(..., description="Địa chỉ liên hệ")
-    resident_address: Optional[str] = Field(..., description="Địa chỉ thường trú")
+    contact_address: str = Field(..., description="Địa chỉ liên hệ")
+    resident_address: str = Field(..., description="Địa chỉ thường trú")
 
 
 class JointAccountHoldersResponse(BaseSchema):
