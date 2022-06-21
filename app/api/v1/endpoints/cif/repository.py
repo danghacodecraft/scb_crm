@@ -23,8 +23,8 @@ from app.third_parties.oracle.models.cif.form.model import (
 )
 from app.third_parties.oracle.models.master_data.address import AddressCountry
 from app.third_parties.oracle.models.master_data.customer import (
-    CustomerClassification, CustomerEconomicProfession, CustomerGender,
-    CustomerStatus, CustomerType
+    CustomerCategory, CustomerClassification, CustomerEconomicProfession,
+    CustomerGender, CustomerStatus, CustomerType
 )
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import (
@@ -119,7 +119,8 @@ async def repos_customer_information(cif_id: str, session: Session) -> ReposRetu
             CustomerClassification,
             CustomerGender,
             MaritalStatus,
-            CustomerType
+            CustomerType,
+            CustomerCategory
         )
         .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id)
         .join(CustomerIndividualInfo, Customer.id == CustomerIndividualInfo.customer_id)
@@ -131,6 +132,7 @@ async def repos_customer_information(cif_id: str, session: Session) -> ReposRetu
         .join(CustomerGender, CustomerIndividualInfo.gender_id == CustomerGender.id)
         .outerjoin(MaritalStatus, CustomerIndividualInfo.marital_status_id == MaritalStatus.id)
         .outerjoin(CustomerType, Customer.customer_type_id == CustomerType.id)
+        .outerjoin(CustomerCategory, Customer.customer_category_id == CustomerCategory.id)
         .filter(
             Customer.id == cif_id
         ).order_by(desc(CustomerIdentity.maker_at))
@@ -308,3 +310,8 @@ async def repos_get_customer_working_infos(
     ).first()
 
     return ReposReturn(data=customer_working_info)
+
+
+async def repos_get_cif_id_by_cif_number(cif_number: str, session: Session):
+    cif_id = session.execute(select(Customer.id).filter(Customer.cif_number == cif_number)).scalar()
+    return ReposReturn(data=cif_id)

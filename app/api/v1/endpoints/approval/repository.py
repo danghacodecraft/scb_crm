@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from sqlalchemy import and_, desc, select, update
 from sqlalchemy.orm import Session, aliased
@@ -12,7 +12,8 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingCustomer, TransactionDaily, TransactionSender
+    Booking, BookingBusinessForm, BookingCustomer, TransactionDaily,
+    TransactionSender
 )
 from app.third_parties.oracle.models.master_data.others import (
     BusinessJob, BusinessType, SlaTransaction, TransactionJob,
@@ -101,16 +102,6 @@ async def repos_approve(
         is_stage_init: bool,
         session: Session
 ):
-
-    print('saving_transaction_stage_status', saving_transaction_stage_status)
-    print('saving_transaction_stage_action', saving_transaction_stage_action)
-    print('saving_transaction_stage', saving_transaction_stage)
-    print('saving_transaction_daily', saving_transaction_daily)
-    print('saving_transaction_stage_lane', saving_transaction_stage_lane)
-    print('saving_transaction_stage_phase', saving_transaction_stage_phase)
-    print('saving_transaction_stage_role', saving_transaction_stage_role)
-    print('saving_transaction_sender', saving_transaction_sender)
-
     saving_transaction_daily_parent_id = None
     saving_transaction_daily_root_id = saving_transaction_daily['transaction_id']
 
@@ -440,3 +431,20 @@ async def repos_get_business_job_codes(business_type_code: str, session: Session
         ))
     ).scalars().all()
     return ReposReturn(data=business_job_codes)
+
+
+async def repos_get_booking_business_form_by_booking_id(
+        booking_id: str,
+        session: Session,
+        business_form_id: Optional[str] = None
+):
+    business_form = session.execute(
+        select(
+            BookingBusinessForm
+        ).filter(and_(
+            BookingBusinessForm.booking_id == booking_id,
+            BookingBusinessForm.business_form_id == business_form_id
+        ))
+    ).scalar()
+
+    return ReposReturn(data=business_form)

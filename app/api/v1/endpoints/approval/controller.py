@@ -15,12 +15,13 @@ from app.api.v1.endpoints.approval.repository import (
 )
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
 from app.api.v1.endpoints.cif.basic_information.identity.identity_document.repository import (
-    repos_get_sla_transaction_parent_id_from_stage_transaction_id
+    repos_get_sla_transaction_parent_from_stage_transaction_id
 )
 from app.api.v1.endpoints.third_parties.gw.employee.repository import (
     repos_gw_get_employee_info_from_code
 )
 from app.api.v1.others.booking.controller import CtrBooking
+from app.api.v1.others.booking.repository import repos_get_customer_by_booking_id
 from app.api.v1.others.permission.controller import PermissionController
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
@@ -28,7 +29,7 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
 from app.third_parties.oracle.models.master_data.identity import (
     CustomerIdentityType
 )
-from app.third_parties.oracle.models.master_data.others import BusinessJob
+from app.third_parties.oracle.models.master_data.others import BusinessJob, Sla
 from app.third_parties.services.idm import ServiceIDM
 from app.utils.constant.approval import (
     APPROVE_AUDIT_STAGES, APPROVE_SUPERVISOR_STAGES, CIF_STAGE_APPROVE_KSS,
@@ -47,6 +48,9 @@ from app.utils.constant.idm import (
     IDM_MENU_CODE_OPEN_CIF, IDM_PERMISSION_CODE_KSS, IDM_PERMISSION_CODE_KSV,
     IDM_PERMISSION_CODE_OPEN_CIF
 )
+from app.utils.constant.sla import (
+    SLA_CODE_CIF_AUDIT, SLA_CODE_CIF_SUPERVISOR, SLA_CODE_CIF_TELLER
+)
 from app.utils.error_messages import (
     ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
     ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT,
@@ -55,7 +59,7 @@ from app.utils.error_messages import (
     ERROR_APPROVAL_NO_SIGNATURE_IN_IDENTITY_STEP,
     ERROR_APPROVAL_UPLOAD_SIGNATURE, ERROR_BUSINESS_TYPE_NOT_EXIST,
     ERROR_CONTENT_NOT_NULL, ERROR_PERMISSION, ERROR_STAGE_COMPLETED,
-    ERROR_VALIDATE, ERROR_WRONG_STAGE_ACTION, MESSAGE_STATUS
+    ERROR_VALIDATE, ERROR_WRONG_STAGE_ACTION, MESSAGE_STATUS, ERROR_CIF_ID_NOT_EXIST
 )
 from app.utils.functions import (
     dropdown, generate_uuid, now, orjson_dumps, orjson_loads
@@ -117,10 +121,7 @@ class CtrApproval(BaseController):
 
         return self.response(data=response_data)
 
-    async def ctr_get_approval(self, cif_id: str, amount: int): # noqa
-        # check cif tồn tại
-        await self.get_model_object_by_id(model_id=cif_id, model=Customer, loc="cif_id")
-
+    async def ctr_get_approval(self, booking_id: str, amount: int): # noqa
         # current_user = self.current_user.user_info
         auth_response = self.current_user
 
@@ -135,6 +136,19 @@ class CtrApproval(BaseController):
         image_face_uuids = []
 
         compare_face_uuid = None
+
+        customer_info = self.call_repos(await repos_get_customer_by_booking_id(
+            booking_id=booking_id,
+            session=self.oracle_session
+        ))
+
+        if not customer_info:
+            return self.response_exception(msg=ERROR_CIF_ID_NOT_EXIST, loc=f"booking_id {booking_id}")
+
+        cif_id = customer_info.id
+
+        # check cif tồn tại
+        await self.get_model_object_by_id(model_id=cif_id, model=Customer, loc="cif_id")
 
         transactions = self.call_repos(await repos_get_approval_identity_images(
             cif_id=cif_id,
@@ -334,9 +348,9 @@ class CtrApproval(BaseController):
         ################################################################################################################
 
         # Kiểm tra xem đang ở bước nào của giao dịch
-        _, _, previous_transaction_daily, previous_transaction_stage, _, previous_transaction_sender, previous_transaction_stage_action = self.call_repos(
+        _, previous_transaction_daily, previous_transaction_stage, _, previous_transaction_sender, previous_transaction_stage_action = self.call_repos(
             await repos_open_cif_get_previous_stage(
-                cif_id=cif_id,
+                booking_id=booking_id,
                 session=self.oracle_session
             ))
 
@@ -686,9 +700,9 @@ class CtrApproval(BaseController):
         previous_transaction_stage = None
 
         if business_type_id == BUSINESS_TYPE_INIT_CIF:
-            _, _, _, previous_transaction_stage, _, _, _ = self.call_repos(
+            _, _, previous_transaction_stage, _, _, _ = self.call_repos(
                 await repos_open_cif_get_previous_stage(
-                    cif_id=cif_id,
+                    booking_id=booking_id,
                     session=self.oracle_session
                 ))
         if business_type_id == BUSINESS_TYPE_OPEN_CASA:
@@ -999,39 +1013,30 @@ class CtrApproval(BaseController):
         )
 
         sla_id = None
-        sla_name = None
+        if current_stage_code in INIT_STAGES:
+            sla_id = SLA_CODE_CIF_TELLER
+        elif current_stage_code in APPROVE_SUPERVISOR_STAGES:
+            sla_id = SLA_CODE_CIF_SUPERVISOR
+        elif current_stage_code in APPROVE_AUDIT_STAGES:
+            sla_id = SLA_CODE_CIF_AUDIT
+        else:
+            self.response_exception(msg="Current Stage is not exist")
 
-        sla_deadline = None
-        if current_stage_code == CIF_STAGE_INIT:
-            sla_id = "CIF_GDV"
-            sla_name = "SLA GDV Mở CIF"
-            sla_deadline = 1
-        elif current_stage_code == CIF_STAGE_APPROVE_KSV:
-            sla_id = "CIF_KSV"
-            sla_name = "SLA KSV Mở CIF"
-            sla_deadline = 2
-        elif current_stage_code == CIF_STAGE_APPROVE_KSS:
-            sla_id = "CIF_KSS"
-            sla_name = "SLA KSS Mở CIF"
-            sla_deadline = 3
-        elif current_stage_code == CIF_STAGE_COMPLETED:
-            sla_id = "CIF_COMPLETED"
-            sla_name = "SLA Completed Mở CIF"
-            sla_deadline = 4
+        sla = await self.get_model_object_by_id(model_id=sla_id, model=Sla, loc=f"sla_id: {sla_id}")
 
-        sla_trans_parent_id = await repos_get_sla_transaction_parent_id_from_stage_transaction_id(
+        sla_trans_parent = self.call_repos(await repos_get_sla_transaction_parent_from_stage_transaction_id(
             stage_transaction_id=previous_transaction_stage.id, session=self.oracle_session
-        )
+        ))
 
         saving_sla_transaction = dict(
             id=saving_sla_transaction_id,
-            parent_id=sla_trans_parent_id,
+            parent_id=sla_trans_parent.id,
+            root_id=sla_trans_parent.root_id,
             sla_id=sla_id,
-            sla_name=sla_name,
-            sla_deadline=sla_deadline,
+            sla_name=sla.name,
+            sla_deadline=sla.deadline,
             active_flag=1,
             created_at=now()
-
         )
 
         saving_transaction_stage = dict(

@@ -41,6 +41,7 @@ GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_ID_FCC = '/users/v1.0/rest/selectUse
 GW_ENDPOINT_URL_PAYMENT_AMOUNT_BLOCK = "/payment/v1.0/rest/amountBlock"
 GW_ENDPOINT_URL_PAYMENT_AMOUNT_UNBLOCK = "/payment/v1.0/rest/amountUnBlock"
 GW_ENDPOINT_URL_PAY_IN_CASH = "/payment/v1.0/rest/payInCash"
+GW_ENDPOINT_URL_REDEEM_ACCOUNT = "/payment/v1.0/rest/redeemAccount"
 # ---------------------------------------------- USER ---------------------------------------------- #
 GW_ENDPOINT_URL_SELECT_USER_INFO = "/users/v1.0/rest/selectUserInfoByUserID"
 
@@ -75,8 +76,6 @@ GW_TRANSACTION_NAME_COLUMN_CHART_TD = "6M_BAL"
 
 GW_TRANSACTION_TYPE_SEND = "GUI"
 GW_TRANSACTION_TYPE_WITHDRAW = "RUT"
-
-BUSINESS_FORM_AMOUNT_BLOCK = "AMOUNT_BLOCK"
 
 GW_AUTHORIZED_REF_DATA_MGM_ACC_NUM = "AuthorizedRefDataMgmAccNum"
 

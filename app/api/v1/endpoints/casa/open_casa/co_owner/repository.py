@@ -22,10 +22,7 @@ from app.third_parties.oracle.models.master_data.customer import (
     CustomerRelationshipType
 )
 from app.utils.constant.cif import BUSINESS_FORM_TKTT_DSH, IMAGE_TYPE_SIGNATURE
-from app.utils.error_messages import (
-    ERROR_ACCOUNT_ID_DOES_NOT_EXIST, ERROR_CASA_ACCOUNT_ID_NOT_EXIST,
-    ERROR_DOCUMENT_ID_DOES_NOT_EXIST
-)
+from app.utils.error_messages import ERROR_CASA_ACCOUNT_ID_DOES_NOT_EXIST
 from app.utils.functions import now
 
 
@@ -36,9 +33,17 @@ async def repos_check_casa_account(account_id: str, session: Session) -> ReposRe
 
     if not casa_account:
         return ReposReturn(
-            is_error=True, msg=ERROR_CASA_ACCOUNT_ID_NOT_EXIST, loc=f"account_id: {account_id}"
+            is_error=True, msg=ERROR_CASA_ACCOUNT_ID_DOES_NOT_EXIST, loc=f"account_id: {account_id}"
         )
     return ReposReturn(data=casa_account)
+
+
+async def repos_check_file_id(file_uuid: str, session: Session) -> ReposReturn:
+    file_uuid_info = session.execute(
+        select(DocumentFile.id).filter(DocumentFile.file_uuid == file_uuid)
+    ).scalar()
+
+    return ReposReturn(data=file_uuid_info)
 
 
 @auto_commit
@@ -115,13 +120,6 @@ async def repos_account_co_owner(account_id: str, session: Session):
         ).filter(JointAccountHolderAgreementAuthorization.casa_account_id == account_id)
     ).scalar()
 
-    if not account_co_owner:
-        return ReposReturn(
-            loc="account_id_does_not_exit",
-            msg=ERROR_ACCOUNT_ID_DOES_NOT_EXIST,
-            detail=account_co_owner
-        )
-
     return ReposReturn(data=account_co_owner)
 
 
@@ -131,13 +129,6 @@ async def repos_get_uuid(document_id: str, session: Session):
             DocumentFile.file_uuid
         ).filter(DocumentFile.id == document_id)
     ).scalar()
-
-    if not get_uuid:
-        return ReposReturn(
-            loc="document_id_does_not_exit",
-            msg=ERROR_DOCUMENT_ID_DOES_NOT_EXIST,
-            detail=get_uuid
-        )
 
     return ReposReturn(data=get_uuid)
 

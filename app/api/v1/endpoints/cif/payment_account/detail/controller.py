@@ -1,8 +1,9 @@
 from app.api.base.controller import BaseController
+from app.api.v1.endpoints.casa.open_casa.open_casa.controller import CtrCasaOpenCasa
 from app.api.v1.endpoints.cif.payment_account.detail.repository import (
-    repos_check_casa_account, repos_check_exist_casa_account_number,
-    repos_detail_payment_account, repos_get_casa_account_from_soa,
-    repos_gw_check_exist_casa_account_number, repos_save_payment_account
+    repos_check_casa_account,
+    repos_detail_payment_account, repos_gw_check_exist_casa_account_number, repos_save_payment_account,
+    repos_check_exist_casa_account_number
 )
 from app.api.v1.endpoints.cif.payment_account.detail.schema import (
     SavePaymentAccountRequest
@@ -10,20 +11,18 @@ from app.api.v1.endpoints.cif.payment_account.detail.schema import (
 from app.api.v1.endpoints.cif.repository import (
     repos_get_booking, repos_get_initializing_customer
 )
-from app.api.v1.endpoints.repository import repos_get_acc_structure_type
+from app.api.v1.endpoints.config.account.repository import repos_get_account_classes
+from app.api.v1.endpoints.third_parties.gw.casa_account.repository import repos_gw_get_casa_account_info
 from app.api.v1.validator import validate_history_data
-from app.third_parties.oracle.models.master_data.account import (
-    AccountClass, AccountType
-)
+from app.third_parties.oracle.models.master_data.account import AccountType
 from app.third_parties.oracle.models.master_data.others import Currency
 from app.utils.constant.cif import (
-    ACC_STRUCTURE_TYPE_LEVEL_3,
     PROFILE_HISTORY_DESCRIPTIONS_INIT_PAYMENT_ACCOUNT,
     PROFILE_HISTORY_STATUS_INIT, STAFF_TYPE_BUSINESS_CODE
 )
 from app.utils.error_messages import (
-    ERROR_CASA_ACCOUNT_EXIST, ERROR_CASA_ACCOUNT_NOT_EXIST,
-    ERROR_INVALID_NUMBER, ERROR_NOT_NULL, MESSAGE_STATUS
+    ERROR_CASA_ACCOUNT_EXIST, ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_INVALID_NUMBER, ERROR_ACCOUNT_NUMBER_NOT_NULL,
+    ERROR_FIELD_REQUIRED, ERROR_ID_NOT_EXIST
 )
 from app.utils.functions import is_valid_number, now, orjson_dumps
 
@@ -47,10 +46,11 @@ class CtrPaymentAccount(BaseController):
                    cif_id: str,
                    payment_account_save_request: SavePaymentAccountRequest):
 
-        current_user = self.current_user.user_info
+        current_user = self.current_user
+        current_user_info = current_user.user_info
 
         # check cif đang tạo
-        self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
+        customer = self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
 
         # check TKTT đã tạo hay chưa
         is_created = True
@@ -62,64 +62,50 @@ class CtrPaymentAccount(BaseController):
         if casa_account.data:
             is_created = False
 
-        casa_account_number = cif_id[:12] + "0001"  # TODO: đợi rule cho CIF thông thường
-        account_structure_type_level_3_id = None
-        account_salary_organization_account_name = None
-
         # Nếu là Tài khoản yêu cầu
         self_selected_account_flag = payment_account_save_request.self_selected_account_flag
+        account_salary_organization_account = payment_account_save_request.account_salary_organization_account
+        account_structure_type_level_2_id = None
+        acc_salary_org_name = None
+
+        # Nếu tài khoản số đẹp phải truyền số TKTT
+        casa_account_number = None
         if self_selected_account_flag:
-            # TODO: Số tài khoản có thể có yêu cầu nghiệp vụ về độ dài tùy theo kiểu kiến trúc, VALIDATE
             casa_account_number = payment_account_save_request.casa_account_number
             if not casa_account_number:
+                return self.response_exception(msg=ERROR_ACCOUNT_NUMBER_NOT_NULL, loc=f"casa_account_number")
+
+        # Nếu là TKTT tự chọn
+        if self_selected_account_flag:
+            # check acc_structure_type_level_2_id exist
+            account_structure_type_level_2_id = payment_account_save_request.account_structure_type_level_2.id
+            if not account_structure_type_level_2_id:
                 return self.response_exception(
-                    msg=f"casa_account_number {MESSAGE_STATUS[ERROR_NOT_NULL]}",
-                    loc="casa_account_number"
+                    loc=f'account_info -> account_structure_type_level_2 -> id',
+                    msg=ERROR_FIELD_REQUIRED
                 )
 
-            # Kiểm tra tài khoản thanh toán đã tồn tại chưa
-            account_salary_organization = self.call_repos(await repos_get_casa_account_from_soa(
-                casa_account_number=casa_account_number,
-                loc="casa_account_number"
-            ))
-            if account_salary_organization['is_existed']:
+            # Kiểm tra STK có tồn tại trong GW chưa
+            is_existed = await CtrCasaOpenCasa(current_user=current_user).ctr_check_exist_casa_account(account_number=casa_account_number)
+            if is_existed:
                 return self.response_exception(
                     msg=ERROR_CASA_ACCOUNT_EXIST,
-                    detail=MESSAGE_STATUS[ERROR_CASA_ACCOUNT_EXIST],
-                    loc="casa_account_number"
+                    loc=f'casa_account_number'
                 )
 
-            if payment_account_save_request.account_structure_type_level_3.id:
-                # check acc_structure_type_level_3_id exist
-                # Trường hợp đặc biệt, phải check luôn cả loại kiến trúc là cấp 3 nên không dùng get_model_object_by_id
-                account_structure_type_level_3_id = payment_account_save_request.account_structure_type_level_3.id
-                self.call_repos(
-                    await repos_get_acc_structure_type(
-                        acc_structure_type_id=account_structure_type_level_3_id,
-                        level=ACC_STRUCTURE_TYPE_LEVEL_3,
-                        loc="account_structure_type_level_3",
-                        session=self.oracle_session
+            if account_salary_organization_account:
+                gw_account_organization_info = self.call_repos(await repos_gw_get_casa_account_info(
+                    account_number=account_salary_organization_account,
+                    current_user=self.current_user.user_info
+                ))
+                account_organization_info = \
+                gw_account_organization_info['retrieveCurrentAccountCASA_out']['data_output']['customer_info']
+                if account_organization_info['account_info']['account_num'] == '':
+                    return self.response_exception(
+                        msg=ERROR_CASA_ACCOUNT_NOT_EXIST,
+                        loc=f'account_salary_organization_account'
                     )
-                )
-
-        # Lấy thông tin Tài khoản của tổ chức chi lương
-        account_salary_organization_account_number = payment_account_save_request.account_salary_organization_account
-        if account_salary_organization_account_number:
-            account_salary_organization = self.call_repos(await repos_get_casa_account_from_soa(
-                casa_account_number=account_salary_organization_account_number,
-                loc="account_salary_organization_account"
-            ))
-
-            if not account_salary_organization['is_existed']:
-                return self.response_exception(
-                    msg=ERROR_CASA_ACCOUNT_NOT_EXIST,
-                    detail=MESSAGE_STATUS[ERROR_CASA_ACCOUNT_NOT_EXIST],
-                    loc="account_salary_organization_account"
-                )
-
-            account_salary_organization_account_name = account_salary_organization['retrieveCurrentAccountCASA_out']['accountInfo']['customerInfo']['fullname']
-
-        # Mở tài khoản thông thường, hiện tại không gửi data để lưu kiểu kiến trúc cấp 3
+                acc_salary_org_name = account_organization_info['full_name']
 
         # check currency exist
         await self.get_model_object_by_id(
@@ -136,11 +122,16 @@ class CtrPaymentAccount(BaseController):
         )
 
         # check account_class exist
-        await self.get_model_object_by_id(
-            model=AccountClass,
-            model_id=payment_account_save_request.account_class.id,
-            loc="account_class"
-        )
+        is_existed = self.call_repos(await repos_get_account_classes(
+            customer_category_id=customer.customer_category_id,
+            account_class_ids=[payment_account_save_request.account_class.id],
+            session=self.oracle_session
+        ))
+        if not is_existed:
+            return self.response_exception(
+                msg=ERROR_ID_NOT_EXIST,
+                loc="payment_account_save_request -> account_class -> id"
+            )
 
         data_insert = {
             "customer_id": cif_id,
@@ -148,15 +139,15 @@ class CtrPaymentAccount(BaseController):
             "currency_id": payment_account_save_request.currency.id,
             'acc_type_id': payment_account_save_request.account_type.id,
             'acc_class_id': payment_account_save_request.account_class.id,
-            'acc_structure_type_id': account_structure_type_level_3_id,
+            'acc_structure_type_id': account_structure_type_level_2_id,
             "staff_type_id": STAFF_TYPE_BUSINESS_CODE,
-            "acc_salary_org_name": account_salary_organization_account_name,
-            "acc_salary_org_acc": account_salary_organization_account_number,
-            "maker_id": current_user.code,
+            "acc_salary_org_name": acc_salary_org_name,
+            "acc_salary_org_acc": account_salary_organization_account,
+            "maker_id": current_user_info.code,
             "maker_at": now(),
-            "checker_id": 1,
+            "checker_id": None,
             "checker_at": None,
-            "approve_status": None,
+            "approve_status": 0,
             "self_selected_account_flag": self_selected_account_flag,
             "acc_active_flag": 1,
             "created_at": now(),
@@ -166,7 +157,7 @@ class CtrPaymentAccount(BaseController):
         history_datas = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_INIT_PAYMENT_ACCOUNT,
             history_status=PROFILE_HISTORY_STATUS_INIT,
-            current_user=current_user
+            current_user=current_user_info
         )
         # Validate history data
         is_success, history_response = validate_history_data(history_datas)
@@ -183,7 +174,7 @@ class CtrPaymentAccount(BaseController):
                 data_insert=data_insert,
                 log_data=payment_account_save_request.json(),
                 history_datas=orjson_dumps(history_datas),
-                created_by=current_user.username,
+                created_by=current_user_info.username,
                 session=self.oracle_session,
                 is_created=is_created
             ))

@@ -1,8 +1,8 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.repository import repos_get_approval_process
 from app.api.v1.endpoints.cif.repository import (
-    repos_customer_information, repos_get_cif_info,
-    repos_get_customer_working_infos, repos_get_initializing_customer,
+    repos_customer_information, repos_get_cif_id_by_cif_number,
+    repos_get_cif_info, repos_get_customer_working_infos,
     repos_profile_history, repos_validate_cif_number
 )
 from app.api.v1.endpoints.cif.schema import CustomerByCIFNumberRequest
@@ -92,7 +92,7 @@ class CtrCustomer(BaseController):
             log_details=log_details
         ) for created_at, log_details in response_datas.items()])
 
-    async def ctr_customer_information(self, cif_id: str):
+    async def ctr_customer_information(self, cif_id: str, booking_id):
         customer_information = self.call_repos(
             await repos_customer_information(cif_id=cif_id, session=self.oracle_session))
         first_row = customer_information[0]
@@ -104,7 +104,7 @@ class CtrCustomer(BaseController):
         #     )
         # )
 
-        transactions = self.call_repos((await repos_get_approval_process(cif_id=cif_id, session=self.oracle_session)))
+        transactions = self.call_repos((await repos_get_approval_process(booking_id=booking_id, session=self.oracle_session)))
 
         list_distinct_employee = []
         list_distinct_user_code = []
@@ -227,6 +227,7 @@ class CtrCustomer(BaseController):
             "nationality": dropdown(first_row.AddressCountry),
             "marital_status": dropdown(first_row.MaritalStatus) if first_row.MaritalStatus else DROPDOWN_NONE_DICT,
             "customer_type": dropdown(first_row.CustomerType) if first_row.CustomerType else DROPDOWN_NONE_DICT,
+            "customer_category": dropdown(first_row.CustomerCategory) if first_row.CustomerCategory else DROPDOWN_NONE_DICT,
             "credit_rating": None,
             "address": first_row.CustomerAddress.address,
             "total_employees": len(list_distinct_employee),
@@ -239,10 +240,10 @@ class CtrCustomer(BaseController):
         # validate cif_number
         self.call_repos(await repos_validate_cif_number(cif_number=cif_number))
 
-        # check_exist_info = self.call_repos(
-        #     await repos_check_exist_cif(cif_number=cif_number)
-        # )
-        # return self.response(data=check_exist_info)
+        cif_id = self.call_repos(await repos_get_cif_id_by_cif_number(
+            cif_number=cif_number, session=self.oracle_session
+        ))
+
         gw_check_exist_customer_detail_info = self.call_repos(await repos_gw_get_customer_info_detail(
             cif_number=cif_number,
             current_user=self.current_user,
@@ -252,18 +253,15 @@ class CtrCustomer(BaseController):
         customer_info = data_output['customer_info']['id_info']
 
         return self.response(data=dict(
-            is_existed=True if customer_info['id_num'] else False
+            is_existed=True if customer_info['id_num'] else False,
+            cif_id=cif_id
         ))
 
     async def ctr_retrieve_customer_information_by_cif_number(
             self,
-            cif_id: str,
             request: CustomerByCIFNumberRequest
     ):
         cif_number = request.cif_number
-
-        # check cif đang tạo
-        self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
 
         # check cif number is valid
         self.call_repos(await repos_validate_cif_number(cif_number=cif_number))

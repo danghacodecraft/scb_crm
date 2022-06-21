@@ -116,9 +116,7 @@ class GWDepositAccountByCIFNumberResponse(BaseGWSchema):
 
 
 class GWColumnChartDepositAccountRequest(BaseGWSchema):
-    account_number: str = Field(..., description="Số tài khoản", example="07051360001")
-    from_date: Optional[date] = Field(..., description="Từ ngày", example=None)
-    to_date: Optional[date] = Field(..., description="Đến ngày", example="2019-01-01")
+    cif_number: str = Field(..., description="Số cif", example="1000115")
 
 
 class GWColumnChartDepositAccountResponse(BaseGWSchema):

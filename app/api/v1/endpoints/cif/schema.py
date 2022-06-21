@@ -23,8 +23,9 @@ class CifInformationResponse(BaseSchema):
 
 
 class CheckExistCIFSuccessResponse(BaseSchema):
-    is_existed: bool = Field(...,
-                             description="Cờ đã tồn tại hay chưa <br>`True` => tồn tại <br>`False` => chưa tồn tại")
+    is_existed: bool = Field(..., description="CIF Number đã tồn tại trong `GW` chưa")
+    cif_id: Optional[str] = Field(..., description="`cif_id`=`value` nếu tồn tại trong DB, <br/>"
+                                                   "`cif_id`=`null` nếu không có trong DB")
 
 
 class CheckExistCIFRequest(BaseSchema):
@@ -92,6 +93,7 @@ class CifCustomerInformationResponse(BaseSchema):
     marital_status: OptionalDropdownResponse = Field(..., description="Tình trạng hôn nhân")
     # TODO: thông tin về loại khách hàng khi tạo CIF chưa có
     customer_type: OptionalDropdownResponse = Field(None, description="Loại khách hàng")
+    customer_category: OptionalDropdownResponse = Field(None, description="Nhóm khách hàng")
     # TODO: hạng tín dụng chưa có field trong customer
     credit_rating: Optional[str] = Field(..., description="Hạng tín dng")
     address: str = Field(..., description="Địa chỉ")
