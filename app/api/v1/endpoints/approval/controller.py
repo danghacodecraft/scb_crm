@@ -1013,20 +1013,20 @@ class CtrApproval(BaseController):
         )
 
         sla_id = None
-        if current_stage_code == CIF_STAGE_INIT:
+        if current_stage_code in INIT_STAGES:
             sla_id = SLA_CODE_CIF_TELLER
-        elif current_stage_code == CIF_STAGE_APPROVE_KSV:
+        elif current_stage_code in APPROVE_SUPERVISOR_STAGES:
             sla_id = SLA_CODE_CIF_SUPERVISOR
-        elif current_stage_code == CIF_STAGE_APPROVE_KSS:
+        elif current_stage_code in APPROVE_AUDIT_STAGES:
             sla_id = SLA_CODE_CIF_AUDIT
         else:
             self.response_exception(msg="Current Stage is not exist")
 
         sla = await self.get_model_object_by_id(model_id=sla_id, model=Sla, loc=f"sla_id: {sla_id}")
 
-        sla_trans_parent = await repos_get_sla_transaction_parent_from_stage_transaction_id(
+        sla_trans_parent = self.call_repos(await repos_get_sla_transaction_parent_from_stage_transaction_id(
             stage_transaction_id=previous_transaction_stage.id, session=self.oracle_session
-        )
+        ))
 
         saving_sla_transaction = dict(
             id=saving_sla_transaction_id,

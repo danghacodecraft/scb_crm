@@ -57,7 +57,7 @@ from app.utils.constant.cif import (
 from app.utils.constant.ekyc import EKYC_DATE_FORMAT
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_EKYC, ERROR_CALL_SERVICE_FILE, ERROR_CIF_ID_NOT_EXIST,
-    ERROR_COMPARE_IMAGE_IS_EXISTED
+    ERROR_COMPARE_IMAGE_IS_EXISTED, ERROR_SLA_TRANSACTION_NOT_EXIST
 )
 from app.utils.functions import (
     date_string_to_other_date_string_format, dropdown, generate_uuid, now
@@ -1205,7 +1205,7 @@ async def repos_compare_face(
 
 
 async def repos_get_sla_transaction_parent_from_stage_transaction_id(stage_transaction_id: str, session: Session):
-    sla_id = session.execute(
+    sla_transaction = session.execute(
         select(
             SlaTransaction
         )
@@ -1213,7 +1213,10 @@ async def repos_get_sla_transaction_parent_from_stage_transaction_id(stage_trans
         .filter(TransactionStage.id == stage_transaction_id)
     ).scalar()
 
-    return sla_id
+    if not sla_transaction:
+        return ReposReturn(is_error=True, msg=ERROR_SLA_TRANSACTION_NOT_EXIST)
+
+    return ReposReturn(data=sla_transaction)
 
 
 async def repos_get_previous_sla_transaction_from_current(sla_transaction_parent_id: str, session: Session):
