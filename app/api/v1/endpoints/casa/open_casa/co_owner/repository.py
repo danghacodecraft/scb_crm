@@ -38,6 +38,14 @@ async def repos_check_casa_account(account_id: str, session: Session) -> ReposRe
     return ReposReturn(data=casa_account)
 
 
+async def repos_check_file_id(file_uuid: str, session: Session) -> ReposReturn:
+    file_uuid_info = session.execute(
+        select(DocumentFile.id).filter(DocumentFile.file_uuid == file_uuid)
+    ).scalar()
+
+    return ReposReturn(data=file_uuid_info)
+
+
 @auto_commit
 async def repos_save_co_owner(
         save_info_co_owner,

@@ -1,7 +1,7 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.casa.open_casa.co_owner.repository import (
-    repos_account_co_owner, repos_check_casa_account, repos_get_co_owner,
-    repos_get_uuid, repos_save_co_owner
+    repos_account_co_owner, repos_check_casa_account, repos_check_file_id,
+    repos_get_co_owner, repos_get_uuid, repos_save_co_owner
 )
 from app.api.v1.endpoints.casa.open_casa.co_owner.schema import (
     AccountHolderRequest
@@ -10,7 +10,9 @@ from app.api.v1.endpoints.cif.payment_account.co_owner.repository import (
     repos_get_co_owner_signatures
 )
 from app.api.v1.endpoints.cif.repository import repos_get_booking_account
-from app.api.v1.endpoints.file.repository import repos_download_file
+from app.api.v1.endpoints.file.repository import (
+    repos_check_is_exist_multi_file, repos_download_file
+)
 from app.api.v1.endpoints.third_parties.gw.customer.controller import (
     CtrGWCustomer
 )
@@ -52,6 +54,21 @@ class CtrCoOwner(BaseController):
                 msg=ERROR_CASA_ACCOUNT_ID_DOES_NOT_EXIST, loc=account_id
             )
 
+        # Check exist file_id
+        file_id = self.call_repos(
+            await repos_check_file_id(
+                file_uuid=co_owner.file_uuid,
+                session=self.oracle_session))
+
+        if not file_id:
+            is_exist = self.call_repos(await repos_check_is_exist_multi_file(uuids=co_owner.file_uuid))
+            if not is_exist:
+                return self.response_exception(
+                    msg='',
+                    loc='file_uuid',
+                    detail='Can not found file in service file'
+                )
+
         # Lấy danh sách cif_number account request
         customer_relationship_not_exist_list = []
         for index, joint_account_holder in enumerate(co_owner.joint_account_holders):
@@ -77,7 +94,7 @@ class CtrCoOwner(BaseController):
             "in_scb_flag": co_owner.address_flag,
             "joint_acc_agree_document_address": co_owner.document_address,
             "casa_account_id": account_id,
-            "joint_acc_agree_document_file_id": co_owner.file_uuid
+            "joint_acc_agree_document_file_id": file_id
         }
         save_account_holder = [{
             "joint_account_holder_id": generate_uuid(),
@@ -122,7 +139,7 @@ class CtrCoOwner(BaseController):
 
         return self.response(data=co_owner_data)
 
-    async def ctr_co_owner(self, account_id: str, booking_id: str, ERROR_CASA_ACCOUNT_ID_NOT_EXIST=None):
+    async def ctr_co_owner(self, account_id: str, booking_id: str):
         # Check exist Booking
         await CtrBooking().ctr_get_booking_and_validate(
             business_type_code=BUSINESS_TYPE_OPEN_CASA,
