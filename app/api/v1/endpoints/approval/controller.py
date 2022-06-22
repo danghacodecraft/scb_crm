@@ -4,7 +4,8 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.common_repository import (
     repos_get_next_stage, repos_get_previous_transaction_daily,
     repos_get_stage_information, repos_get_stage_teller,
-    repos_open_casa_get_previous_stage, repos_open_cif_get_previous_stage, repos_get_stage_codes_in_business
+    repos_open_cif_get_previous_stage, repos_get_stage_codes_in_business,
+    repos_get_previous_stage
 )
 from app.api.v1.endpoints.approval.repository import (
     repos_approval_get_face_authentication, repos_approve,
@@ -708,7 +709,7 @@ class CtrApproval(BaseController):
         business_type_id = business_type.code
 
         _, _, previous_transaction_stage = self.call_repos(
-            await repos_open_casa_get_previous_stage(
+            await repos_get_previous_stage(
                 booking_id=booking_id,
                 session=self.oracle_session
             )
