@@ -1,15 +1,13 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.payment_account.co_owner.repository import (
     repos_account_co_owner, repos_check_cif_id, repos_check_file_id,
-    repos_detail_co_owner, repos_get_casa_account, repos_get_co_owner,
-    repos_get_co_owner_signatures, repos_get_file_uuid, repos_save_co_owner
+    repos_get_casa_account, repos_get_co_owner, repos_get_co_owner_signatures,
+    repos_get_file_uuid, repos_save_co_owner
 )
 from app.api.v1.endpoints.cif.payment_account.co_owner.schema import (
     AccountHolderRequest
 )
-from app.api.v1.endpoints.cif.repository import (
-    repos_get_booking, repos_validate_cif_number
-)
+from app.api.v1.endpoints.cif.repository import repos_get_booking
 from app.api.v1.endpoints.file.repository import (
     repos_check_is_exist_multi_file, repos_download_file
 )
@@ -52,7 +50,7 @@ class CtrCoOwner(BaseController):
                 session=self.oracle_session))
 
         if not file_id:
-            is_exist = self.call_repos(await repos_check_is_exist_multi_file(uuids=co_owner.file_uuid))
+            is_exist = self.call_repos(await repos_check_is_exist_multi_file(uuids=[co_owner.file_uuid]))
             if not is_exist:
                 return self.response_exception(
                     msg='',
@@ -282,209 +280,3 @@ class CtrCoOwner(BaseController):
             agreement_authorization=agreement_authorizations
         )
         return self.response(data=response_data)
-
-        # query db crm
-        # account_holders, list_cif_number = self.call_repos(
-        #     await repos_get_list_cif_number(cif_id=cif_id, session=self.oracle_session)
-        # )
-
-        # customers_by_list_cif = self.call_repos(
-        #     await repos_get_customer_by_cif_number(
-        #         list_cif_number=list_cif_number,
-        #         session=self.oracle_session
-        #     )
-        # )
-        # customer_address = self.call_repos(
-        #     await repos_get_customer_address(
-        #         list_cif_number=list_cif_number,
-        #         session=self.oracle_session
-        #     ))
-        #
-        # # lấy data address
-        # address_information = {}
-        # for row in customer_address:
-        #     if row.CustomerAddress.customer_id not in address_information:
-        #         address_information[row.CustomerAddress.customer_id] = {
-        #             "contact_address": None,
-        #             "resident_address": None
-        #         }
-        #
-        #     if row.CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE:
-        #         address_information[row.CustomerAddress.customer_id]["contact_address"] = row.CustomerAddress.address
-        #
-        #     if row.CustomerAddress.address_type_id == RESIDENT_ADDRESS_CODE:
-        #         address_information[row.CustomerAddress.customer_id]["resident_address"] = row.CustomerAddress.address
-        #
-        # # lấy data customer
-        # address = None
-        # signature = None
-        # customer__signature = {}
-        # account__holder = {}
-        # for customer in customers_by_list_cif:
-        #     if not customer.CustomerIndividualInfo:
-        #         return ReposReturn(is_error=True, msg=ERROR_CUSTOMER_INDIVIDUAL_INFO, loc=f'{customer.Customer.id}')
-        #
-        #     if not customer.CustomerIdentity:
-        #         return ReposReturn(is_error=True, msg=ERROR_CUSTOMER_IDENTITY, loc=f'{customer.Customer.id}')
-        #     # # gán lại giá trị cho address
-        #     for key, values in address_information.items():
-        #         if customer.Customer.id == key:
-        #             address = values
-        #
-        #     if not customer.CustomerIdentityImage:
-        #         return ReposReturn(is_error=True, msg=ERROR_CUSTOMER_IDENTITY_IMAGE, loc=f'{customer.Customer.id}')
-        #     # lấy danh sách chữ ký theo từng customer_id
-        #     if customer.Customer.id not in customer__signature:
-        #         customer__signature[customer.Customer.id] = []
-        #
-        #     customer__signature[customer.Customer.id].append({
-        #         "id": customer.CustomerIdentityImage.id,
-        #         "image_url": customer.CustomerIdentityImage.image_url
-        #     })
-        #     # gán giá trị cho chứ ký
-        #     for key, values in customer__signature.items():
-        #         if customer.Customer.id == key:
-        #             signature = values
-        #
-        #     if customer.Customer.id not in account__holder:
-        #         account__holder[customer.Customer.id] = {
-        #             "id": customer.Customer.id,
-        #             "full_name_vn": customer.Customer.full_name_vn,
-        #             "basic_information": {
-        #                 "cif_number": customer.Customer.cif_number,
-        #                 "full_name_vn": customer.Customer.full_name_vn,
-        #                 "customer_relationship": dropdown(customer.CustomerRelationshipType),
-        #                 "date_of_birth": customer.CustomerIndividualInfo.date_of_birth,
-        #                 "gender": dropdown(customer.CustomerGender),
-        #                 "nationality": dropdown(customer.AddressCountry),
-        #                 "mobile_number": customer.Customer.mobile_number,
-        #                 "signature": signature
-        #             },
-        #             "identity_document": {
-        #                 "identity_number": customer.CustomerIdentity.identity_num,
-        #                 "identity_type": dropdown(customer.CustomerIdentityType),
-        #                 "issued_date": customer.CustomerIdentity.issued_date,
-        #                 "expired_date": customer.CustomerIdentity.expired_date,
-        #                 "place_of_issue": dropdown(customer.PlaceOfIssue)
-        #             },
-        #             "address_information": address,
-        #         }
-        #
-        # agreement_authorizations = self.call_repos(
-        #     await repos_get_agreement_authorizations(session=self.oracle_session))
-        # agreement_authorization = [{
-        #     "id": item.id,
-        #     "code": item.code,
-        #     "name": item.name,
-        #     "active_flag": item.active_flag,
-        # } for item in agreement_authorizations]
-        #
-        # return self.response(data={
-        #     "joint_account_holder_flag": account_holders[0].JointAccountHolder.joint_account_holder_flag,
-        #     "number_of_joint_account_holder": len(account_holders),
-        #     "joint_account_holders": [customer for customer in account__holder.values()],
-        #     "agreement_authorization": agreement_authorization
-        # })
-
-    async def detail_co_owner(self, cif_id: str, cif_number_need_to_find: str):
-
-        # validate cif_number
-        self.call_repos(
-            await repos_validate_cif_number(cif_number=cif_number_need_to_find)
-        )
-
-        detail_co_owner = self.call_repos(
-            await repos_detail_co_owner(
-                cif_id=cif_id,
-                cif_number_need_to_find=cif_number_need_to_find,
-                session=self.oracle_session,
-            )
-        )
-
-        # resident_address = None
-        # contact_address = None
-        #
-        # for row in detail_co_owner:
-        #     if row.CustomerAddress.address_type_id == RESIDENT_ADDRESS_CODE:
-        #         resident_address = row.CustomerAddress.address
-        #     if row.CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE:
-        #         contact_address = row.CustomerAddress.address
-        #
-        # first_row = detail_co_owner[0]
-        #
-        # # lọc giá trị trùng chữ ký khi query
-        # customer__signature = {}
-        # for signature in detail_co_owner:
-        #     if signature.CustomerIdentityImage.id not in customer__signature:
-        #         customer__signature[signature.CustomerIdentityImage.id] = []
-        #         customer__signature[signature.CustomerIdentityImage.id].append({
-        #             'id': signature.CustomerIdentityImage.id,
-        #             'image_url': signature.CustomerIdentityImage.image_url
-        #         })
-        #
-        # signature = []
-        # for customer_signature in customer__signature.values():
-        #     signature.extend(customer_signature)
-
-        # response_data = {
-        #     "id": basic_information['cif_number'],
-        #     "basic_information": basic_information,
-        #     "identity_document": identity_document,
-        #     "address_information": address_information
-        # }
-        # detail_co_owner = self.call_repos(await repos_detail_co_owner(
-        #     cif_id=cif_id,
-        #     cif_number_need_to_find=cif_number_need_to_find,
-        #     session=self.oracle_session
-        # ))
-        #
-        # resident_address = None
-        # contact_address = None
-        #
-        # for row in detail_co_owner:
-        #     if row.CustomerAddress.address_type_id == RESIDENT_ADDRESS_CODE:
-        #         resident_address = row.CustomerAddress.address
-        #     if row.CustomerAddress.address_type_id == CONTACT_ADDRESS_CODE:
-        #         contact_address = row.CustomerAddress.address
-        #
-        # first_row = detail_co_owner[0]
-        #
-        # # lọc giá trị trùng chữ ký khi query
-        # customer__signature = {}
-        # for signature in detail_co_owner:
-        #     if signature.CustomerIdentityImage.id not in customer__signature:
-        #         customer__signature[signature.CustomerIdentityImage.id] = []
-        #         customer__signature[signature.CustomerIdentityImage.id].append({
-        #             'id': signature.CustomerIdentityImage.id,
-        #             'image_url': signature.CustomerIdentityImage.image_url
-        #         })
-        #
-        # signature = []
-        # for customer_signature in customer__signature.values():
-        #     signature.extend(customer_signature)
-        #
-        # response_data = {
-        #     "id": first_row.Customer.id,
-        #     "basic_information": {
-        #         "full_name_vn": first_row.Customer.full_name_vn,
-        #         "cif_number": first_row.Customer.cif_number,
-        #         "date_of_birth": first_row.CustomerIndividualInfo.date_of_birth,
-        #         "customer_relationship": dropdown(first_row.CustomerRelationshipType),
-        #         "nationality": dropdown(first_row.AddressCountry),
-        #         "gender": dropdown(first_row.CustomerGender),
-        #         "mobile_number": first_row.Customer.mobile_number,
-        #         "signature": signature
-        #     },
-        #     "identity_document": {
-        #         "identity_number": first_row.CustomerIdentity.identity_num,
-        #         "identity_type": dropdown(first_row.CustomerIdentityType),
-        #         "issued_date": first_row.CustomerIdentity.issued_date,
-        #         "expired_date": first_row.CustomerIdentity.expired_date,
-        #         "place_of_issue": dropdown(first_row.PlaceOfIssue)
-        #     },
-        #     "address_information": {
-        #         'contact_address': contact_address,
-        #         'resident_address': resident_address
-        #     }
-        # }
-        return self.response(data=detail_co_owner)
