@@ -13,7 +13,7 @@ from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
 )
 from app.third_parties.oracle.models.master_data.customer import (
-    CustomerGender, CustomerRelationshipType, CustomerType, CustomerCategory
+    CustomerCategory, CustomerGender, CustomerRelationshipType, CustomerType
 )
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import (
@@ -456,11 +456,11 @@ class CtrGWCustomer(BaseController):
                 to_format=GW_DATE_FORMAT
             )
 
-            job_name = job_info["professional_name"]
-            job_code = job_info["professional_code"]
+            career_name = job_info["professional_name"]
+            career_code = job_info["professional_code"]
 
-            dropdown_job = await self.dropdown_mapping_crm_model_or_dropdown_name(
-                model=Career, name=job_name, code=job_code
+            dropdown_career = await self.dropdown_mapping_crm_model_or_dropdown_name(
+                model=Career, name=career_name, code=career_code
             )
 
             return self.response(data=dict(
@@ -508,7 +508,14 @@ class CtrGWCustomer(BaseController):
                     district=dropdown_contact_address_district,
                     province=dropdown_contact_address_province
                 ),
-                job_info=dropdown_job,
+                job_info=dict(
+                    career=dropdown_career,
+                    position=job_info['position'],
+                    official_telephone=job_info['official_telephone'],
+                    official_name=job_info['official_name'],
+                    income_average=job_info['income_average'],
+                    contact_address_full=job_info['address_info']['contact_address_full']
+                ),
                 branch_info=dropdown_branch,
                 avatar_url=avatar_url['file_url'] if avatar_url else None
             ))
