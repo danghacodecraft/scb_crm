@@ -11,8 +11,8 @@ from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingBusinessForm, TransactionDaily, TransactionSender
 )
 from app.third_parties.oracle.models.master_data.others import (
-    TransactionStage, TransactionStageLane, TransactionStagePhase,
-    TransactionStageRole, TransactionStageStatus
+    SlaTransaction, TransactionStage, TransactionStageLane,
+    TransactionStagePhase, TransactionStageRole, TransactionStageStatus
 )
 from app.utils.constant.cif import (
     BUSINESS_FORM_AMOUNT_BLOCK, BUSINESS_FORM_AMOUNT_BLOCK_PD,
@@ -74,6 +74,7 @@ async def repos_payment_amount_block(
         booking_id,
         saving_transaction_stage_status,
         saving_transaction_stage,
+        saving_sla_transaction,
         saving_transaction_stage_lane,
         saving_transaction_stage_phase,
         saving_transaction_stage_role,
@@ -86,6 +87,7 @@ async def repos_payment_amount_block(
     session.add_all([
         TransactionStageStatus(**saving_transaction_stage_status),
         TransactionStage(**saving_transaction_stage),
+        SlaTransaction(**saving_sla_transaction),
         TransactionStageLane(**saving_transaction_stage_lane),
         TransactionStagePhase(**saving_transaction_stage_phase),
         TransactionStageRole(**saving_transaction_stage_role),
@@ -158,6 +160,7 @@ async def repos_payment_amount_unblock(
         saving_transaction_stage_status,
         saving_transaction_stage,
         saving_transaction_stage_lane,
+        saving_sla_transaction,
         saving_transaction_stage_phase,
         saving_transaction_stage_role,
         saving_transaction_daily,
@@ -170,6 +173,7 @@ async def repos_payment_amount_unblock(
         TransactionStageStatus(**saving_transaction_stage_status),
         TransactionStage(**saving_transaction_stage),
         TransactionStageLane(**saving_transaction_stage_lane),
+        SlaTransaction(**saving_sla_transaction),
         TransactionStagePhase(**saving_transaction_stage_phase),
         TransactionStageRole(**saving_transaction_stage_role),
         TransactionDaily(**saving_transaction_daily),
