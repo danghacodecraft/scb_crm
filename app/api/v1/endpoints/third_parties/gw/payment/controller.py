@@ -2,11 +2,13 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.repository import (
     repos_get_booking_business_form_by_booking_id
 )
+from app.api.v1.endpoints.cif.repository import (
+    repos_get_account_id_by_account_number
+)
 from app.api.v1.endpoints.third_parties.gw.payment.repository import (
     repos_create_booking_payment, repos_gw_pay_in_cash,
     repos_gw_payment_amount_block, repos_gw_payment_amount_unblock,
-    repos_gw_redeem_account, repos_payment_amount_block,
-    repos_payment_amount_unblock
+    repos_gw_redeem_account, repos_payment_amount_unblock
 )
 from app.api.v1.endpoints.third_parties.gw.payment.schema import (
     PayInCashRequest, RedeemAccountRequest
@@ -19,11 +21,10 @@ from app.utils.constant.business_type import (
 )
 from app.utils.constant.cif import (
     BUSINESS_FORM_AMOUNT_BLOCK, BUSINESS_FORM_AMOUNT_UNBLOCK,
-    PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_BLOCK,
     PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_UNBLOCK, PROFILE_HISTORY_STATUS_INIT
 )
 from app.utils.constant.gw import GW_CASA_RESPONSE_STATUS_SUCCESS
-from app.utils.functions import orjson_dumps, orjson_loads
+from app.utils.functions import now, orjson_dumps, orjson_loads
 
 
 class CtrGWPayment(BaseController):
@@ -33,7 +34,7 @@ class CtrGWPayment(BaseController):
             BOOKING_ID: str,
             account_amount_blocks: list
     ):
-        current_user = self.current_user
+        current_user = self.current_user # noqa
 
         # Kiểm tra booking
         await CtrBooking().ctr_get_booking_and_validate(
@@ -43,7 +44,9 @@ class CtrGWPayment(BaseController):
             loc=f'booking_id: {BOOKING_ID}'
         )
         request_datas = []
+        account_numbers = []
         for item in account_amount_blocks:
+            account_numbers.append(item.account_number)
             request_datas.append({
                 "account_info": {
                     "account_num": item.account_number
@@ -90,50 +93,71 @@ class CtrGWPayment(BaseController):
                 }
             })
 
-        # Tạo data TransactionDaily và các TransactionStage
-        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
-            business_type_id=BUSINESS_TYPE_AMOUNT_BLOCK
-        )
-        (
-            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
-            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
-            saving_transaction_daily, saving_transaction_sender
-        ) = transaction_datas
+        if len(set(account_numbers)) != len(account_amount_blocks):
+            return self.response_exception(msg="account_number duplicate")
+        saving_booking_account = []
+        saving_booking_customer = [] # noqa
+        for account_number in account_numbers:
+            # TODO check account_number in db crm
+            response_data = self.call_repos(
+                await repos_get_account_id_by_account_number(
+                    account_number=account_number,
+                    session=self.oracle_session
+                ))
 
-        history_datas = self.make_history_log_data(
-            description=PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_BLOCK,
-            history_status=PROFILE_HISTORY_STATUS_INIT,
-            current_user=current_user.user_info
-        )
+            saving_booking_account.append({
+                "booking_id": BOOKING_ID,
+                "account_id": response_data.get('account_id'),
+                "created_at": now()
+            })
 
-        # Validate history data
-        is_success, history_response = validate_history_data(history_datas)
-        if not is_success:
-            return self.response_exception(
-                msg=history_response['msg'],
-                loc=history_response['loc'],
-                detail=history_response['detail']
-            )
+            # saving_booking_customer.append({
+            #     "hmmm": account_id
+            # })
+        # # Tạo data TransactionDaily và các TransactionStage
+        # transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
+        #     business_type_id=BUSINESS_TYPE_AMOUNT_BLOCK
+        # )
+        # (
+        #     saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
+        #     saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
+        #     saving_transaction_daily, saving_transaction_sender
+        # ) = transaction_datas
+        #
+        # history_datas = self.make_history_log_data(
+        #     description=PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_BLOCK,
+        #     history_status=PROFILE_HISTORY_STATUS_INIT,
+        #     current_user=current_user.user_info
+        # )
+        #
+        # # Validate history data
+        # is_success, history_response = validate_history_data(history_datas)
+        # if not is_success:
+        #     return self.response_exception(
+        #         msg=history_response['msg'],
+        #         loc=history_response['loc'],
+        #         detail=history_response['detail']
+        #     )
+        #
+        # booking_id = self.call_repos(await repos_payment_amount_block(
+        #     booking_id=BOOKING_ID,
+        #     saving_transaction_stage_status=saving_transaction_stage_status,
+        #     saving_transaction_stage=saving_transaction_stage,
+        #     saving_transaction_stage_phase=saving_transaction_stage_phase,
+        #     saving_sla_transaction=saving_sla_transaction,
+        #     saving_transaction_stage_lane=saving_transaction_stage_lane,
+        #     saving_transaction_stage_role=saving_transaction_stage_role,
+        #     saving_transaction_daily=saving_transaction_daily,
+        #     saving_transaction_sender=saving_transaction_sender,
+        #     request_json=orjson_dumps(request_datas),
+        #     history_datas=orjson_dumps(history_datas),
+        #     session=self.oracle_session
+        # ))
+        # response_data = {
+        #     "booking_id": booking_id
+        # }
 
-        booking_id = self.call_repos(await repos_payment_amount_block(
-            booking_id=BOOKING_ID,
-            saving_transaction_stage_status=saving_transaction_stage_status,
-            saving_transaction_stage=saving_transaction_stage,
-            saving_transaction_stage_phase=saving_transaction_stage_phase,
-            saving_sla_transaction=saving_sla_transaction,
-            saving_transaction_stage_lane=saving_transaction_stage_lane,
-            saving_transaction_stage_role=saving_transaction_stage_role,
-            saving_transaction_daily=saving_transaction_daily,
-            saving_transaction_sender=saving_transaction_sender,
-            request_json=orjson_dumps(request_datas),
-            history_datas=orjson_dumps(history_datas),
-            session=self.oracle_session
-        ))
-        response_data = {
-            "booking_id": booking_id
-        }
-
-        return self.response(data=response_data)
+        return self.response(data=saving_booking_account)
 
     async def ctr_gw_payment_amount_block(self, BOOKING_ID: str):
         current_user = self.current_user

@@ -18,8 +18,12 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
 from app.third_parties.oracle.models.cif.basic_information.personal.model import (
     CustomerIndividualInfo
 )
+from app.third_parties.oracle.models.cif.e_banking.model import TdAccount
 from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingAccount, BookingBusinessForm, BookingCustomer
+)
+from app.third_parties.oracle.models.cif.payment_account.model import (
+    CasaAccount
 )
 from app.third_parties.oracle.models.master_data.address import AddressCountry
 from app.third_parties.oracle.models.master_data.customer import (
@@ -315,3 +319,41 @@ async def repos_get_customer_working_infos(
 async def repos_get_cif_id_by_cif_number(cif_number: str, session: Session):
     cif_id = session.execute(select(Customer.id).filter(Customer.cif_number == cif_number)).scalar()
     return ReposReturn(data=cif_id)
+
+
+async def repos_get_account_id_by_account_number(account_number: str, session: Session):
+    response_data = {}
+    casa_accounts = session.execute(
+        select(
+            CasaAccount,
+            Customer
+        ).join(Customer, CasaAccount.customer_id == Customer.id)
+        .filter(CasaAccount.casa_account_number == account_number)
+    ).all()
+
+    if casa_accounts:
+        for item in casa_accounts:
+            response_data.update({
+                "account_id": item.CasaAccount.id,
+                "customer_id": item.Customer.id
+            })
+        return ReposReturn(data=response_data)
+    else:
+        td_accounts = session.execute(
+            select(
+                TdAccount,
+                Customer
+            ).join(Customer, TdAccount.customer_id == Customer.id)
+            .filter(TdAccount.td_account_number == account_number)
+        ).all()
+
+    if td_accounts:
+        for item in td_accounts:
+            response_data.update({
+                "account_id": item.TdAccount.id,
+                "customer_id": item.Customer.id
+            })
+        return ReposReturn(data=response_data)
+
+    if not response_data:
+        return ReposReturn(is_error=True, msg="account_number is not exist")

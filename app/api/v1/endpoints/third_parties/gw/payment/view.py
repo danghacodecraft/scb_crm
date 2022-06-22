@@ -40,7 +40,7 @@ async def view_amount_block(
         account_amount_blocks=account_amount_blocks
     )
 
-    return ResponseData[PaymentSuccessResponse](**payment_amount_block)
+    return ResponseData(**payment_amount_block)
 
 
 @router.post(
