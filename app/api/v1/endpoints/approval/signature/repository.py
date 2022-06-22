@@ -108,32 +108,34 @@ async def repos_compare_signature(
             booking_id=booking_id
         )
 
-        if is_success:
-            response.update({
-                "image_url": signature.image_url
-            })
-            signature_compares.append(response)
-            data_compare_image = {
-                "id": generate_uuid(),
-                "identity_id": signature.identity_id,
-                "identity_image_id": signature.id,
-                "compare_image_url": uuid,
-                "similar_percent": response['similarity_percent'],
-                "maker_id": user_id,
-                "maker_at": now()
-            }
-            data_compare_image_trans = {
-                "compare_image_id": data_compare_image['id'],
-                "identity_image_id": data_compare_image['identity_image_id'],
-                "is_identity_compare": ACTIVE_FLAG_DISACTIVED,
-                "compare_image_url": data_compare_image['compare_image_url'],
-                "similar_percent": data_compare_image['similar_percent'],
-                "maker_id": data_compare_image['maker_id'],
-                "maker_at": data_compare_image['maker_at']
-            }
-            session.add_all([
-                CustomerCompareImage(**data_compare_image),
-                CustomerCompareImageTransaction(**data_compare_image_trans),
-            ])
+        if not is_success:
+            return ReposReturn(is_error=True, msg=str(response))
+
+        response.update({
+            "image_url": signature.image_url
+        })
+        signature_compares.append(response)
+        data_compare_image = {
+            "id": generate_uuid(),
+            "identity_id": signature.identity_id,
+            "identity_image_id": signature.id,
+            "compare_image_url": uuid,
+            "similar_percent": response['similarity_percent'],
+            "maker_id": user_id,
+            "maker_at": now()
+        }
+        data_compare_image_trans = {
+            "compare_image_id": data_compare_image['id'],
+            "identity_image_id": data_compare_image['identity_image_id'],
+            "is_identity_compare": ACTIVE_FLAG_DISACTIVED,
+            "compare_image_url": data_compare_image['compare_image_url'],
+            "similar_percent": data_compare_image['similar_percent'],
+            "maker_id": data_compare_image['maker_id'],
+            "maker_at": data_compare_image['maker_at']
+        }
+        session.add_all([
+            CustomerCompareImage(**data_compare_image),
+            CustomerCompareImageTransaction(**data_compare_image_trans),
+        ])
 
     return ReposReturn(data=signature_compares)
