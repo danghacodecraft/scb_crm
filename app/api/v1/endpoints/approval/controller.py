@@ -707,21 +707,12 @@ class CtrApproval(BaseController):
         business_type = await CtrBooking().ctr_get_business_type(booking_id=booking_id)
         business_type_id = business_type.code
 
-        previous_transaction_stage = None
-
-        if business_type_id == BUSINESS_TYPE_INIT_CIF:
-            _, _, previous_transaction_stage, _, _, _ = self.call_repos(
-                await repos_open_cif_get_previous_stage(
-                    booking_id=booking_id,
-                    session=self.oracle_session
-                ))
-        if business_type_id == BUSINESS_TYPE_OPEN_CASA:
-            _, _, previous_transaction_stage = self.call_repos(
-                await repos_open_casa_get_previous_stage(
-                    booking_id=booking_id,
-                    session=self.oracle_session
-                )
+        _, _, previous_transaction_stage = self.call_repos(
+            await repos_open_casa_get_previous_stage(
+                booking_id=booking_id,
+                session=self.oracle_session
             )
+        )
 
         if not previous_transaction_stage:
             return self.response_exception(msg="No Previous Transaction Stage")
