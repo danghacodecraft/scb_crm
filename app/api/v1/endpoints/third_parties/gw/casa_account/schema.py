@@ -204,8 +204,6 @@ class GWUdfInfoOpenCasaRequest(BaseGWSchema):
 
 class GWOpenCasaAccountRequest(BaseGWSchema):
     cif_number: str = CustomField().CIFNumberField
-    booking_parent_id: str = Field(..., description="Mã Booking Cha")
-    casa_accounts: List[GWAccountInfoOpenCasaRequest] = Field(..., description="Danh sách ID các tài khoản")
 
 
 class GWOpenCasaSucessResponse(BaseGWSchema):
