@@ -184,6 +184,7 @@ class CtrGWCasaAccount(BaseController):
             service_escrow=account_info['account_service_escrow'],
             amount_rate_close=account_info['account_amount_rate_close'],
             fee_close=account_info['account_fee_close'],
+            total=int(account_info['account_balance']) + int(account_info['account_amount_rate_close']),
             service_escrow_ex_date=string_to_date(account_info['account_service_escrow_ex_date'],
                                                   _format=DATETIME_INPUT_OUTPUT_FORMAT),
             lock_info=lock_info_response,
