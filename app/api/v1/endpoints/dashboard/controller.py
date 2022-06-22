@@ -158,7 +158,7 @@ class CtrDashboard(BaseController):
         if booking_ids:
             stage_infos = self.call_repos(await repos_get_senders(
                 booking_ids=tuple(booking_ids),
-                region_id=region_id, branch_id=branch_id, status_code=status_code,
+                region_id=region_id, branch_id=branch_id, status_code=status_code, business_type_id=business_type_id,
                 search_box=search_box, from_date=from_date, to_date=to_date, session=self.oracle_session
             ))
 
