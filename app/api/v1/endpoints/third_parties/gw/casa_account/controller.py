@@ -5,13 +5,13 @@ from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
     repos_get_customer_by_cif_number
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
-    repos_gw_get_casa_account_by_cif_number, repos_gw_get_casa_account_info,
-    repos_gw_get_close_casa_account,
+    repos_check_casa_account_approved, repos_gw_get_casa_account_by_cif_number,
+    repos_gw_get_casa_account_info, repos_gw_get_close_casa_account,
     repos_gw_get_column_chart_casa_account_info,
     repos_gw_get_pie_chart_casa_account_info,
     repos_gw_get_statements_casa_account_info, repos_gw_open_casa_account,
     repos_open_casa_get_casa_account_infos,
-    repos_update_casa_account_to_approved, repos_check_casa_account_approved
+    repos_update_casa_account_to_approved
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWOpenCasaAccountRequest, GWReportColumnChartHistoryAccountInfoRequest,
@@ -182,6 +182,8 @@ class CtrGWCasaAccount(BaseController):
             company_salary=account_info['account_company_salary'],
             company_salary_num=account_info['account_company_salary_num'],
             service_escrow=account_info['account_service_escrow'],
+            amount_rate_close=account_info['account_amount_rate_close'],
+            fee_close=account_info['account_fee_close'],
             service_escrow_ex_date=string_to_date(account_info['account_service_escrow_ex_date'],
                                                   _format=DATETIME_INPUT_OUTPUT_FORMAT),
             lock_info=lock_info_response,
