@@ -2,11 +2,14 @@ from datetime import date
 
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.dashboard.repository import (
-    repos_accounting_entry, repos_branch, repos_count_total_item,
-    repos_get_customer, repos_get_open_casa_info_from_booking,
+    repos_accounting_entry, repos_count_total_item, repos_get_customer,
+    repos_get_open_casa_info_from_booking,
     repos_get_open_cif_info_from_booking, repos_get_senders,
     repos_get_sla_transaction_infos, repos_get_total_item,
     repos_get_transaction_list, repos_region
+)
+from app.api.v1.endpoints.third_parties.gw.category.controller import (
+    CtrSelectCategory
 )
 from app.utils.constant.business_type import (
     BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA
@@ -15,6 +18,7 @@ from app.utils.constant.cif import (
     CIF_STAGE_ROLE_CODE_AUDIT, CIF_STAGE_ROLE_CODE_SUPERVISOR,
     CIF_STAGE_ROLE_CODE_TELLER, CIF_STAGE_ROLE_CODES
 )
+from app.utils.constant.gw import GW_TRANSACTION_NAME, GW_TRANSACTION_VALUE
 from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
 from app.utils.functions import dropdown
 
@@ -300,17 +304,21 @@ class CtrDashboard(BaseController):
                 loc="current_user"
             )
 
-        branch_code = current_user.hrm_branch_code
-
-        is_success, contract_info = self.call_repos(
-            await repos_branch(
-                branch_code=branch_code
-            )
+        gw_contract_infos = await CtrSelectCategory(current_user).ctr_select_category(
+            transaction_name=GW_TRANSACTION_NAME,
+            transaction_value=GW_TRANSACTION_VALUE
         )
-        if not is_success:
-            return self.response_exception(msg=str(contract_info))
+        if not gw_contract_infos:
+            return self.response_exception(msg=str(gw_contract_infos))
 
-        return self.response(data=contract_info)
+        contract_infos = gw_contract_infos['data']
+
+        response_data = [dict(
+            branch_code=contract_info['BRANCH_CODE'],
+            branch_name=contract_info['BRANCH_DESC'],
+        ) for contract_info in contract_infos]
+
+        return self.response(data=response_data)
 
     async def ctr_accounting_entry(self):
         current_user = self.current_user.user_info

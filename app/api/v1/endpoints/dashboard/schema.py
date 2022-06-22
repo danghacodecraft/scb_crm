@@ -59,18 +59,8 @@ class CustomerInfoResponse(BaseSchema):
 
 
 class BranchResponse(BaseSchema):
-    code: str = Field(..., description="Mã ")
-    id: str = Field(..., description="CIF id")
-    title: str = Field(..., description="Tiêu đề")
-    unit: str = Field(..., description="Đơn vị")
-    day: int = Field(..., description="Ngày")
-    week: int = Field(..., description="Tuần")
-    month: int = Field(..., description="Tháng")
-    accumulated: int = Field(..., description="Tích lũy")
-    amt_year: int = Field(..., description="amt năm")
-    amt_ky_truoc: int = Field(..., description="amt kỳ trước")
-    divisor_bal_lcl: int = Field(..., description="Divisor_bal_lcl")
-    divider_bal_lcl: int = Field(..., description="Divider_bal_lcl")
+    branch_code: str = Field(..., description="Mã chi nhánh")
+    branch_name: str = Field(..., description="Tên chi nhánh")
 
 
 class AccountingEntryResponse(BaseSchema):
