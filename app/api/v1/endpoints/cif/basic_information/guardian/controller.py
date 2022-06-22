@@ -232,17 +232,17 @@ class CtrGuardian(BaseController):
         if not guardians or len(guardian_cif_numbers) != len(guardians):
             # Nếu không có trong DB => Kiểm tra bên SOA
             for cif_number in guardian_cif_numbers:
-                is_success, response = await CtrGWCustomer(current_user).ctr_gw_check_exist_customer_detail_info(
+                response = await CtrGWCustomer(current_user).ctr_gw_check_exist_customer_detail_info(
                     cif_number=cif_number
                 )
 
-                if not is_success:
+                if response['errors']:
                     return self.response_exception(
                         msg=ERROR_CIF_NUMBER_NOT_COMPLETED,
                         loc="cif_number",
                     )
 
-                if not response.data['is_existed']:
+                if not response['data']['is_existed']:
                     return self.response_exception(
                         msg=ERROR_GUARDIAN_INFO_DOES_NOT_EXITS,
                         loc="guardian",
