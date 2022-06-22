@@ -400,14 +400,6 @@ async def repos_get_customer(
     return ReposReturn(data=customers)
 
 
-async def repos_branch(
-        branch_code: str,
-) -> ReposReturn:
-    data_response = await service_dwh.get_branch(branch_code=branch_code)
-
-    return ReposReturn(data=data_response)
-
-
 async def repos_accounting_entry(
         branch_code: str,
 ) -> ReposReturn:
