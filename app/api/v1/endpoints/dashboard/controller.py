@@ -202,14 +202,14 @@ class CtrDashboard(BaseController):
                 if booking.id == booking_id:
                     if stage_role_code == CIF_STAGE_ROLE_CODE_SUPERVISOR:
                         teller_sla_time = sla_transaction_parent.created_at - booking.created_at
-                        mapping_datas['booking_id']['teller'].update(
+                        mapping_datas[booking_id]['teller'].update(
                             name=sender_sla_trans_parent.user_fullname,
                             created_at=sla_transaction_parent.created_at,
                             sla_time=str(teller_sla_time),
                             sla_deadline=sla_transaction_parent.sla_deadline
                         )
-                        mapping_datas['booking_id']['supervisor'].update(
-                            sla_time=sla_transaction.created_at - sender_sla_trans_parent.created_at
+                        mapping_datas[booking_id]['supervisor'].update(
+                            sla_time=str(sla_transaction.created_at - sender_sla_trans_parent.created_at)
                         )
                     if stage_role_code == CIF_STAGE_ROLE_CODE_AUDIT:
                         teller_sla_time = sla_transaction_grandparent.created_at - booking.created_at
