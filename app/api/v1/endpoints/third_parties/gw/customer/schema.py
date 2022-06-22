@@ -87,6 +87,15 @@ class GWCustomerJobInfo(BaseGWSchema):
     code: Optional[str] = Field(..., description="Mã nghề nghiệp")
 
 
+class JobInfoResponse(BaseGWSchema):
+    career: OptionalDropdownResponse = Field(..., description="Nghề nghiệp")
+    position: Optional[str] = Field(..., description="Nghề nghiệp")
+    official_telephone: Optional[str] = Field(..., description="Điện thoại nơi làm việc")
+    official_name: Optional[str] = Field(..., description="Tên cơ quan")
+    income_average: Optional[str] = Field(..., description="Thu nhập bình quân 3 tháng")
+    contact_address_full: Optional[str] = Field(..., description="Địa chỉ liên lạc đầy đủ")
+
+
 class GWCustomerInfoDetailResponse(BaseGWSchema):
     fullname_vn: Optional[str] = Field(..., description="Họ và tên")
     short_name: Optional[str] = Field(..., description="Tên viết tắt")
@@ -115,7 +124,7 @@ class GWCustomerInfoDetailResponse(BaseGWSchema):
     id_info: GWCustomerIDInfoResponse = Field(..., description="Thông tin giấy tờ định danh")
     resident_address: GWCustomerDetailAddressInfo = Field(..., description="Thông tin địa chỉ thường trú")
     contact_address: GWCustomerDetailAddressInfo = Field(..., description="Thông tin địa chỉ liên hệ")
-    job_info: OptionalDropdownResponse = Field(..., description="Thông tin việc làm")
+    job_info: JobInfoResponse = Field(..., description="Thông tin việc làm")
     branch_info: OptionalDropdownResponse = Field(..., description="Thông tin đơn vị")
     avatar_url: Optional[str] = Field(..., description="URL hình ảnh đại diện của người dùng")
 
