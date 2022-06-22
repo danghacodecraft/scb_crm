@@ -300,7 +300,7 @@ async def repos_open_casa_get_previous_stage(booking_id: str, session: Session):
     ).first()
 
     if not previous_stage_info:
-        return ReposReturn(is_error=True, msg="ádsad")
+        return ReposReturn(is_error=True, msg="Previous Transaction Daily is not exist, please create")
 
     return ReposReturn(data=previous_stage_info)
 

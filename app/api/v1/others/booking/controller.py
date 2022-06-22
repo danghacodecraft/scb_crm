@@ -23,8 +23,7 @@ from app.utils.constant.idm import (
 from app.utils.error_messages import (
     ERROR_BOOKING_ALREADY_USED, ERROR_BOOKING_ID_NOT_EXIST,
     ERROR_BOOKING_INCORRECT, ERROR_BUSINESS_TYPE_CODE_INCORRECT,
-    ERROR_BUSINESS_TYPE_NOT_EXIST, ERROR_CIF_ID_NOT_EXIST, ERROR_PERMISSION, ERROR_CASA_ACCOUNT_NOT_EXIST,
-    ERROR_CASA_ACCOUNT_APPROVED
+    ERROR_BUSINESS_TYPE_NOT_EXIST, ERROR_CIF_ID_NOT_EXIST, ERROR_PERMISSION, ERROR_CASA_ACCOUNT_NOT_EXIST
 )
 
 
@@ -157,4 +156,4 @@ class CtrBooking(BaseController):
             if casa_account.approve_status == CASA_ACCOUNT_STATUS_APPROVED:
                 approved_casa_account_ids.append(casa_account.id)
 
-        return self.response(data=casa_accounts)
+        return casa_accounts
