@@ -14,6 +14,9 @@ from app.api.v1.endpoints.cif.basic_information.repository import (
 from app.api.v1.endpoints.cif.repository import (
     repos_get_booking, repos_get_initializing_customer
 )
+from app.api.v1.endpoints.third_parties.gw.customer.controller import (
+    CtrGWCustomer
+)
 from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.settings.event import service_gw
 from app.third_parties.oracle.models.master_data.address import (
@@ -27,7 +30,8 @@ from app.utils.constant.cif import (
 )
 from app.utils.constant.gw import GW_GENDER_FEMALE, GW_GENDER_MALE
 from app.utils.error_messages import (
-    ERROR_CIF_NUMBER_DUPLICATED, ERROR_RELATION_CUSTOMER_SELF_RELATED,
+    ERROR_CIF_NUMBER_DUPLICATED, ERROR_CIF_NUMBER_NOT_COMPLETED,
+    ERROR_GUARDIAN_INFO_DOES_NOT_EXITS, ERROR_RELATION_CUSTOMER_SELF_RELATED,
     ERROR_RELATIONSHIP_NOT_GUARDIAN
 )
 from app.utils.functions import dropdown, orjson_dumps, string_to_date
@@ -223,6 +227,35 @@ class CtrGuardian(BaseController):
             )
         )
 
+        # Kiểm tra có tồn tại người giám hộ và
+        # tất cả người giảm hộ gửi lên có trong db không?
+        if not guardians or len(guardian_cif_numbers) != len(guardians):
+            # Nếu không có trong DB => Kiểm tra bên SOA
+            for cif_number in guardian_cif_numbers:
+                response = await CtrGWCustomer(current_user).ctr_gw_check_exist_customer_detail_info(
+                    cif_number=cif_number
+                )
+
+                if response['errors']:
+                    return self.response_exception(
+                        msg=ERROR_CIF_NUMBER_NOT_COMPLETED,
+                        loc="cif_number",
+                    )
+
+                if not response['data']['is_existed']:
+                    return self.response_exception(
+                        msg=ERROR_GUARDIAN_INFO_DOES_NOT_EXITS,
+                        loc="guardian",
+                    )
+        # Nếu Người giám hộ chưa khởi tạo thành công thì không thể giảm hộ cho người khác được
+        not_completed_guardians = [guardian.Customer.cif_number for guardian in guardians if
+                                   guardian.Customer.complete_flag == 0]
+        if not_completed_guardians:
+            return self.response_exception(
+                msg=ERROR_CIF_NUMBER_NOT_COMPLETED,
+                loc="cif_number",
+                detail=f"CIF number(s) ({not_completed_guardians}) have not completed yet"
+            )
         # # check relationship types exist
         # await self.get_model_objects_by_ids(
         #     model=CustomerRelationshipType,

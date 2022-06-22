@@ -81,7 +81,7 @@ async def repos_gw_get_customer_info_detail(
         loc: str = "get_customer_info_detail"
 ):
     is_success, customer_info = await service_gw.get_customer_info_detail(
-        customer_cif_number=cif_number, current_user=current_user.user_info
+        customer_cif_number=cif_number, current_user=current_user
     )
     if not is_success:
         return ReposReturn(
