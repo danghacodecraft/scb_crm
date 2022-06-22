@@ -80,6 +80,7 @@ async def repos_gw_get_customer_info_detail(
         cif_number: str, current_user: AuthResponse,
         loc: str = "get_customer_info_detail"
 ):
+    current_user = current_user.user_info
     is_success, customer_info = await service_gw.get_customer_info_detail(
         customer_cif_number=cif_number, current_user=current_user
     )

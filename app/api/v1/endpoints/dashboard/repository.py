@@ -2,7 +2,7 @@ from datetime import date
 from typing import List, Optional
 
 from sqlalchemy import and_, desc, func, or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn
 from app.settings.event import service_dwh
@@ -217,7 +217,6 @@ async def repos_get_senders(
         TransactionStageRole,
         TransactionSender,
         Booking,
-        Booking.business_type_id,
         SlaTransaction
     ) \
         .outerjoin(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id) \
@@ -262,12 +261,54 @@ async def repos_get_senders(
                 Booking.created_at >= date_to_datetime(from_date),
                 Booking.created_at <= end_time_of_day(date_to_datetime(to_date))
             ))
-
     stage_infos = session.execute(
         sql
     ).all()
-
     return ReposReturn(data=stage_infos)
+
+
+async def repos_get_sla_transaction_infos(booking_ids: list, session: Session):
+    sla_transaction_parent = aliased(SlaTransaction, name="SlaTransParent")
+    sla_trans_daily_parent = aliased(TransactionDaily, name="SlaTransDailyParent")
+    sla_trans_stage_parent = aliased(TransactionStage, name="SlaTransStageParent")
+    sender_sla_trans_parent = aliased(TransactionSender, name="SenderSlaTransParent")
+
+    sla_transaction_grandparent = aliased(SlaTransaction, name="SlaTransGrandparent")
+    sla_trans_daily_grandparent = aliased(TransactionDaily, name="SlaTransDailyGrandparent")
+    sla_trans_stage_grandparent = aliased(TransactionStage, name="SlaTransStageGrandparent")
+    sender_sla_trans_grandparent = aliased(TransactionSender, name="SenderSlaTransGrandparent")
+
+    sla_transaction_infos = session.execute(
+        select(
+            Booking,
+            SlaTransaction,
+            sla_transaction_parent,
+            sender_sla_trans_parent,
+            sla_transaction_grandparent,
+            sender_sla_trans_grandparent
+        )
+        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
+        .join(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
+        .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id)
+        .join(SlaTransaction, TransactionStage.sla_transaction_id == SlaTransaction.id)
+        .outerjoin(sla_transaction_parent, SlaTransaction.parent_id == sla_transaction_parent.id)
+        .outerjoin(sla_trans_stage_parent, sla_transaction_parent.id == sla_trans_stage_parent.sla_transaction_id)
+        .outerjoin(sla_trans_daily_parent,
+                   sla_trans_stage_parent.id == sla_trans_daily_parent.transaction_stage_id)
+        .outerjoin(sender_sla_trans_parent,
+                   sla_trans_daily_parent.transaction_id == sender_sla_trans_parent.transaction_id)
+        .outerjoin(sla_transaction_grandparent,
+                   sla_transaction_parent.parent_id == sla_transaction_grandparent.id)
+        .outerjoin(sla_trans_stage_grandparent,
+                   sla_transaction_grandparent.id == sla_trans_stage_grandparent.sla_transaction_id)
+        .outerjoin(sla_trans_daily_grandparent,
+                   sla_trans_stage_grandparent.id == sla_trans_daily_grandparent.transaction_stage_id)
+        .outerjoin(sender_sla_trans_grandparent,
+                   sla_trans_daily_grandparent.transaction_id == sender_sla_trans_grandparent.transaction_id)
+        .filter(Booking.id.in_(booking_ids))
+    ).all()
+
+    return ReposReturn(data=sla_transaction_infos)
 
 
 async def repos_get_total_item(

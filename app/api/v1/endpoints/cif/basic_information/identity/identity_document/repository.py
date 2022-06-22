@@ -1217,23 +1217,3 @@ async def repos_get_sla_transaction_parent_from_stage_transaction_id(stage_trans
         return ReposReturn(is_error=True, msg=ERROR_SLA_TRANSACTION_NOT_EXIST)
 
     return ReposReturn(data=sla_transaction)
-
-
-async def repos_get_previous_sla_transaction_from_current(sla_transaction_parent_id: str, session: Session):
-    previous_sla_trans = session.execute(
-        select(
-            SlaTransaction,
-            TransactionStage,
-            TransactionDaily,
-            TransactionSender
-        )
-        .join(TransactionStage, SlaTransaction.id == TransactionStage.sla_transaction_id)
-        .join(TransactionDaily, TransactionStage.id == TransactionDaily.transaction_stage_id)
-        .join(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
-        .filter(SlaTransaction.id == sla_transaction_parent_id)
-    ).first()
-
-    if not previous_sla_trans:
-        return ReposReturn(is_error=True, msg="no previous sla transaction")
-
-    return ReposReturn(data=previous_sla_trans)

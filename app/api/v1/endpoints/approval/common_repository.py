@@ -287,7 +287,7 @@ async def repos_get_next_receiver(
     return ReposReturn(data=next_receiver)
 
 
-async def repos_open_casa_get_previous_stage(booking_id: str, session: Session):
+async def repos_get_previous_stage(booking_id: str, session: Session):
     previous_stage_info = session.execute(
         select(
             Booking,
