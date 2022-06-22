@@ -36,6 +36,7 @@ class DocumentFile(Base):
 
     id = Column('document_file_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "))
     booking_id = Column(ForeignKey('crm_booking.booking_id'), nullable=True)
+    customer_id = Column(ForeignKey('crm_customer.customer_id'), nullable=True)
     document_file_type_id = Column(ForeignKey('crm_document_file_type.document_file_type_id'), nullable=True)
     document_file_folder_id = Column(ForeignKey('crm_document_file_folder.document_file_folder_id'), nullable=True)
     parent_id = Column(VARCHAR(36), nullable=True, comment='Mã thư mục cấp cha')

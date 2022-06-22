@@ -11,11 +11,11 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingBusinessForm, BookingCustomer, BookingAccount
+    Booking, BookingBusinessForm, BookingCustomer
 )
-from app.third_parties.oracle.models.cif.payment_account.model import CasaAccount
-from app.utils.constant.cif import BUSINESS_FORM_TTCN_GTDD_GTDD, BUSINESS_TYPE_CODE_CIF, BUSINESS_TYPE_CODE_OPEN_CASA
-from app.utils.error_messages import ERROR_BOOKING_CODE_EXISTED, MESSAGE_STATUS, ERROR_BOOKING_ID_NOT_EXIST
+from app.utils.constant.cif import BUSINESS_FORM_TTCN_GTDD_GTDD
+from app.utils.error_messages import ERROR_BOOKING_CODE_EXISTED, MESSAGE_STATUS, ERROR_BOOKING_ID_NOT_EXIST, \
+    ERROR_CUSTOMER_NOT_EXIST
 from app.utils.functions import (
     date_to_datetime, datetime_to_string, end_time_of_day, generate_uuid, now,
     today
@@ -147,8 +147,7 @@ async def repos_check_exist_booking(
     return ReposReturn(data=booking)
 
 
-async def repos_get_customer_by_booking_id(booking_id: str, session: Session):
-    customer = None
+async def repos_get_customer_by_booking_id(booking_id: str, cif_number: Optional[str], session: Session):
     booking = session.execute(
         select(
             Booking
@@ -158,31 +157,45 @@ async def repos_get_customer_by_booking_id(booking_id: str, session: Session):
     if not booking:
         return ReposReturn(is_error=True, msg=ERROR_BOOKING_ID_NOT_EXIST, loc=f"booking_id: {booking_id}")
 
-    if booking.business_type.id == BUSINESS_TYPE_CODE_CIF:
-        customer = session.execute(
-            select(
-                Customer,
-                Booking,
-                BookingCustomer
-            )
-            .join(BookingCustomer, Booking.id == BookingCustomer.booking_id)
-            .join(Customer, BookingCustomer.customer_id == Customer.id)
-            .filter(Booking.id == booking_id)
-        ).scalar()
+    # if booking.business_type.id == BUSINESS_TYPE_CODE_CIF:
+    #     customer = session.execute(
+    #         select(
+    #             Customer,
+    #             Booking,
+    #             BookingCustomer
+    #         )
+    #         .join(BookingCustomer, Booking.id == BookingCustomer.booking_id)
+    #         .join(Customer, BookingCustomer.customer_id == Customer.id)
+    #         .filter(Booking.id == booking_id)
+    #     ).scalar()
+    #
+    # if booking.business_type.id == BUSINESS_TYPE_CODE_OPEN_CASA:
+    #     customer = session.execute(
+    #         select(
+    #             Customer,
+    #             Booking,
+    #             BookingAccount,
+    #             CasaAccount
+    #         )
+    #         .join(BookingAccount, Booking.id == BookingAccount.booking_id)
+    #         .join(CasaAccount, BookingAccount.account_id == CasaAccount.id)
+    #         .join(Customer, CasaAccount.customer_id == Customer.id)
+    #         .filter(Booking.parent_id == booking_id)
+    #     ).scalars().first()
 
-    if booking.business_type.id == BUSINESS_TYPE_CODE_OPEN_CASA:
-        customer = session.execute(
-            select(
-                Customer,
-                Booking,
-                BookingAccount,
-                CasaAccount
-            )
-            .join(BookingAccount, Booking.id == BookingAccount.booking_id)
-            .join(CasaAccount, BookingAccount.account_id == CasaAccount.id)
-            .join(Customer, CasaAccount.customer_id == Customer.id)
-            .filter(Booking.parent_id == booking_id)
-        ).scalars().first()
+    customer = session.execute(
+        select(
+            Customer
+        )
+        .filter(Customer.cif_number == cif_number)
+    ).scalar()
+
+    if not customer:
+        return ReposReturn(
+            is_error=True,
+            msg=ERROR_CUSTOMER_NOT_EXIST,
+            loc=f"booking_id: {booking_id}, cif_number: {cif_number}"
+        )
 
     return ReposReturn(data=customer)
 

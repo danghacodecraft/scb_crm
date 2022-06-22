@@ -112,19 +112,20 @@ class CtrBooking(BaseController):
 
         return self.response(data=is_used_booking)
 
-    async def ctr_get_customer_info(self, booking_id: str):
+    async def ctr_get_customer_info(self, booking_id: str, cif_number=None):
         """
         Lấy thông tin khách hàng bằng booking_id
         """
         customer_info = self.call_repos(await repos_get_customer_by_booking_id(
             booking_id=booking_id,
+            cif_number=cif_number,
             session=self.oracle_session
         ))
 
         if not customer_info:
             return self.response_exception(msg=ERROR_CIF_ID_NOT_EXIST, loc=f"header -> booking_id: {booking_id}")
 
-        return self.response(data=customer_info)
+        return customer_info
 
     async def ctr_get_business_type(self, booking_id: str):
         """

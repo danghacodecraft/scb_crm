@@ -24,10 +24,12 @@ async def view_document_file(
         file: UploadFile = File(..., description='File cần upload'),
         booking_id: str = Path(..., description='Booking ID'),
         ekyc_flag: bool = File(False, description='`true` is call ekyc'),
+        cif_number: str = File(None, description='Số CIF'),
         current_user=Depends(get_current_user_from_header()),
 ):
     document_file = await CtrDocumentFile(current_user).ctr_document_file(
         file,
+        cif_number=cif_number,
         ekyc_flag=ekyc_flag,
         booking_id=booking_id)
     return ResponseData(**document_file)
