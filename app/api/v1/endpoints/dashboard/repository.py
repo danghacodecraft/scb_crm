@@ -99,7 +99,7 @@ async def repos_get_transaction_list(region_id: Optional[str], branch_id: Option
         .join(Branch, Booking.branch_id == Branch.id) \
         .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
         .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
-        .join(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
+        .outerjoin(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
         .outerjoin(BookingCustomer, Booking.id == BookingCustomer.booking_id) \
         .outerjoin(Customer, BookingCustomer.customer_id == Customer.id) \
         .outerjoin(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
