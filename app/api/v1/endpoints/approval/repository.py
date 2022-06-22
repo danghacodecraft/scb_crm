@@ -13,7 +13,7 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
 )
 from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingBusinessForm, BookingCustomer, TransactionDaily,
-    TransactionSender
+    TransactionSender, BookingAccount
 )
 from app.third_parties.oracle.models.master_data.others import (
     BusinessJob, BusinessType, SlaTransaction, TransactionJob,
@@ -106,17 +106,19 @@ async def repos_approve(
     saving_transaction_daily_root_id = saving_transaction_daily['transaction_id']
 
     if not is_stage_init:
+        previous_transaction_daily = None
         # Lấy thông tin Transaction Daily trước đó
-        _, _, previous_transaction_daily = session.execute(
+        _, previous_transaction_daily = session.execute(
             select(
-                BookingCustomer,
                 Booking,
                 TransactionDaily
             )
-            .join(Booking, BookingCustomer.booking_id == Booking.id)
-            .outerjoin(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
-            .filter(BookingCustomer.customer_id == cif_id)
+            .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
+            .filter(Booking.id == booking_id)
         ).first()
+
+        if not previous_transaction_daily:
+            return ReposReturn(is_error=True, msg="No Previous Transaction Daily")
 
         saving_transaction_daily_parent_id = previous_transaction_daily.transaction_id
         saving_transaction_daily_root_id = previous_transaction_daily.transaction_root_id
@@ -125,7 +127,6 @@ async def repos_approve(
         transaction_parent_id=saving_transaction_daily_parent_id,
         transaction_root_id=saving_transaction_daily_root_id,
     ))
-    session.commit()
 
     session.add_all([
         TransactionStageStatus(**saving_transaction_stage_status),
@@ -136,8 +137,7 @@ async def repos_approve(
         TransactionStageLane(**saving_transaction_stage_lane),
         TransactionStagePhase(**saving_transaction_stage_phase),
         TransactionStageRole(**saving_transaction_stage_role),
-        TransactionSender(**saving_transaction_sender),
-        # TransactionReceiver(**saving_transaction_receiver)
+        TransactionSender(**saving_transaction_sender)
     ])
 
     if business_type_id not in BUSINESS_TYPES:
