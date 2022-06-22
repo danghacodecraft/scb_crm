@@ -324,6 +324,7 @@ class ServiceGW:
         """
         Mở tài khoản thanh toán
         """
+        account_num = casa_account_info.casa_account_number if casa_account_info.casa_account_number else ''
         data_input = {
             "customer_info": {
                 "cif_info": {
@@ -331,7 +332,7 @@ class ServiceGW:
                 },
                 "account_info": {
                     "acc_spl": GW_SELF_SELECTED_ACCOUNT_FLAG if self_selected_account_flag else GW_SELF_UNSELECTED_ACCOUNT_FLAG,
-                    "account_num": casa_account_info.casa_account_number,
+                    "account_num": account_num,
                     "account_currency": casa_account_info.currency_id,
                     "account_class_code": casa_account_info.acc_class_id
                 },

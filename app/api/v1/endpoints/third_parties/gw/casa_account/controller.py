@@ -22,6 +22,7 @@ from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
 from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.utils.constant.approval import CIF_STAGE_APPROVE_KSV
+from app.utils.constant.casa import CASA_ACCOUNT_STATUS_UNAPPROVED
 from app.utils.constant.gw import (
     GW_TRANSACTION_TYPE_SEND, GW_TRANSACTION_TYPE_WITHDRAW
 )
@@ -342,7 +343,7 @@ class CtrGWCasaAccount(BaseController):
             balance_available_vnd=balance_available_vnd if balance_available_vnd else None,
             report_casa_account=column_chart))
 
-    async def ctr_gw_open_casa_account(self, request: GWOpenCasaAccountRequest):
+    async def ctr_gw_open_casa_account(self, request: GWOpenCasaAccountRequest, booking_id: str):
         current_user = self.current_user
         current_user_info = current_user.user_info
         is_role_supervisor = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
@@ -366,13 +367,15 @@ class CtrGWCasaAccount(BaseController):
             session=self.oracle_session
         ))
 
-        # Kiểm tra Booking Account
-        booking_parent_id = request.booking_parent_id
-        await CtrBooking().ctr_get_casa_account_from_booking(booking_id=booking_parent_id, session=self.oracle_session)
-        casa_accounts = request.casa_accounts
+        # Kiểm tra Booking Account, Account lấy ra là những account chưa được phê duyệt
+        casa_accounts = await CtrBooking().ctr_get_casa_account_from_booking(
+            booking_id=booking_id, session=self.oracle_session
+        )
+
         casa_account_ids = []
         for casa_account in casa_accounts:
-            casa_account_ids.append(casa_account.id)
+            if casa_account.approve_status == CASA_ACCOUNT_STATUS_UNAPPROVED:
+                casa_account_ids.append(casa_account.id)
 
         # RULE: tài khoản đã được phê duyệt thì không cho phép phê duyệt
         self.call_repos(await repos_check_casa_account_approved(
@@ -397,7 +400,7 @@ class CtrGWCasaAccount(BaseController):
                 self_selected_account_flag=self_selected_account_flag,
                 casa_account_info=casa_account_info,
                 current_user=self.current_user,
-                booking_parent_id=booking_parent_id,
+                booking_parent_id=booking_id,
                 session=self.oracle_session
             )
             if not is_success:
