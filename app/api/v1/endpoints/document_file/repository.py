@@ -9,7 +9,7 @@ from app.utils.error_messages import ERROR_CALL_SERVICE_FILE
 
 
 async def repos_upload_file(file: bytes, name: str, ekyc_flag: bool, booking_id: Optional[str] = None) -> ReposReturn:
-    response = await service_file.upload_file(
+    is_success, response = await service_file.upload_file(
         file=file,
         name=name
     )
@@ -19,7 +19,7 @@ async def repos_upload_file(file: bytes, name: str, ekyc_flag: bool, booking_id:
         if not is_success:
             return ReposReturn(is_error=True, msg=f"{uuid_ekyc['response']['file']}")
         response.update({
-            "uuid_ekyc": uuid_ekyc['uuid']
+            "uuid_ekyc": response['uuid']
         })
 
     if not response:
@@ -32,4 +32,8 @@ async def repos_upload_file(file: bytes, name: str, ekyc_flag: bool, booking_id:
 async def repos_add_document_file(data, session: Session) -> ReposReturn:
     session.add(DocumentFile(**data))
 
-    return ReposReturn(data=data['id'])
+    return ReposReturn(data=dict(
+        document_file_id=data['id'],
+        service_file_id=data['file_uuid'],
+        cif_id=data['customer_id']
+    ))
