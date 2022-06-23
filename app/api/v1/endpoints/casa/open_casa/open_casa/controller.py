@@ -88,6 +88,8 @@ class CtrCasaOpenCasa(BaseController):
             cif_number=cif_number,
             session=self.oracle_session
         ))
+        cif_id = customer.id
+
         currency_ids = []
         acc_type_ids = []
         acc_class_ids = []
@@ -150,7 +152,7 @@ class CtrCasaOpenCasa(BaseController):
 
             saving_casa_accounts.append(dict(
                 id=casa_account_id,
-                customer_id=customer.id,
+                customer_id=cif_id,
                 casa_account_number=casa_account_number,
                 currency_id=currency_id,
                 acc_type_id=acc_type_id,
@@ -186,6 +188,7 @@ class CtrCasaOpenCasa(BaseController):
 
             saving_booking_accounts.append(dict(
                 booking_id=booking_id,
+                customer_id=cif_id,
                 account_id=casa_account_id,
                 created_at=now(),
                 updated_at=now()
