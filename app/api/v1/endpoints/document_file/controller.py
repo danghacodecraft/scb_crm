@@ -1,6 +1,7 @@
 from fastapi import UploadFile
 
 from app.api.base.controller import BaseController
+from app.api.v1.endpoints.casa.open_casa.open_casa.repository import repos_get_customer_by_cif_number
 from app.api.v1.endpoints.document_file.repository import (
     repos_add_document_file, repos_upload_file
 )
@@ -19,7 +20,7 @@ class CtrDocumentFile(BaseController):
         uuid = generate_uuid()
         cif_id = None
         if cif_number:
-            customer = await CtrBooking().ctr_get_customer_info(booking_id=booking_id, cif_number=cif_number)
+            customer = self.call_repos(await repos_get_customer_by_cif_number(cif_number=cif_number))
             cif_id = customer.id
 
         data_file_upload = await file_upload.read()

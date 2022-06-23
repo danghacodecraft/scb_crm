@@ -22,7 +22,6 @@ from app.api.v1.endpoints.third_parties.gw.employee.repository import (
     repos_gw_get_employee_info_from_code
 )
 from app.api.v1.others.booking.controller import CtrBooking
-from app.api.v1.others.booking.repository import repos_get_customer_by_booking_id
 from app.api.v1.others.permission.controller import PermissionController
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
@@ -138,10 +137,9 @@ class CtrApproval(BaseController):
 
         compare_face_uuid = None
 
-        customer_info = self.call_repos(await repos_get_customer_by_booking_id(
-            booking_id=booking_id,
-            session=self.oracle_session
-        ))
+        customer_info = await CtrBooking().ctr_get_customer_from_booking(
+            booking_id=booking_id
+        )
 
         if not customer_info:
             return self.response_exception(msg=ERROR_CIF_ID_NOT_EXIST, loc=f"booking_id {booking_id}")
