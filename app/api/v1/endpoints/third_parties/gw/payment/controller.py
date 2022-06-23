@@ -2,6 +2,9 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.repository import (
     repos_get_booking_business_form_by_booking_id
 )
+from app.api.v1.endpoints.cif.repository import (
+    repos_get_account_id_by_account_number
+)
 from app.api.v1.endpoints.third_parties.gw.payment.repository import (
     repos_create_booking_payment, repos_gw_pay_in_cash,
     repos_gw_payment_amount_block, repos_gw_payment_amount_unblock,
@@ -23,7 +26,7 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_UNBLOCK, PROFILE_HISTORY_STATUS_INIT
 )
 from app.utils.constant.gw import GW_CASA_RESPONSE_STATUS_SUCCESS
-from app.utils.functions import orjson_dumps, orjson_loads
+from app.utils.functions import now, orjson_dumps, orjson_loads
 
 
 class CtrGWPayment(BaseController):
@@ -33,7 +36,7 @@ class CtrGWPayment(BaseController):
             BOOKING_ID: str,
             account_amount_blocks: list
     ):
-        current_user = self.current_user
+        current_user = self.current_user # noqa
 
         # Kiểm tra booking
         await CtrBooking().ctr_get_booking_and_validate(
@@ -43,7 +46,9 @@ class CtrGWPayment(BaseController):
             loc=f'booking_id: {BOOKING_ID}'
         )
         request_datas = []
+        account_numbers = []
         for item in account_amount_blocks:
+            account_numbers.append(item.account_number)
             request_datas.append({
                 "account_info": {
                     "account_num": item.account_number
@@ -90,6 +95,30 @@ class CtrGWPayment(BaseController):
                 }
             })
 
+        if len(set(account_numbers)) != len(account_amount_blocks):
+            return self.response_exception(msg="account_number duplicate")
+
+        saving_booking_account = []
+        saving_booking_customer = [] # noqa
+
+        for account_number in account_numbers:
+            # TODO check account_number in db crm
+            response_data = self.call_repos(
+                await repos_get_account_id_by_account_number(
+                    account_number=account_number,
+                    session=self.oracle_session
+                ))
+
+            saving_booking_account.append({
+                "booking_id": BOOKING_ID,
+                "account_id": response_data.get('account_id'),
+                "created_at": now()
+            })
+
+            saving_booking_customer.append({
+                "booking_id": BOOKING_ID,
+                "customer_id": response_data.get('customer_id')
+            })
         # Tạo data TransactionDaily và các TransactionStage
         transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
             business_type_id=BUSINESS_TYPE_AMOUNT_BLOCK
@@ -125,6 +154,8 @@ class CtrGWPayment(BaseController):
             saving_transaction_stage_role=saving_transaction_stage_role,
             saving_transaction_daily=saving_transaction_daily,
             saving_transaction_sender=saving_transaction_sender,
+            saving_booking_account=saving_booking_account,
+            saving_booking_customer=saving_booking_customer,
             request_json=orjson_dumps(request_datas),
             history_datas=orjson_dumps(history_datas),
             session=self.oracle_session
