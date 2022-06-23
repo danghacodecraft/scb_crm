@@ -2,7 +2,8 @@ from datetime import date
 
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.dashboard.repository import (
-    repos_accounting_entry, repos_count_total_item, repos_get_customer,
+    repos_accounting_entry, repos_count_total_item,
+    repos_get_amount_block_from_booking, repos_get_customer,
     repos_get_open_casa_info_from_booking,
     repos_get_open_cif_info_from_booking, repos_get_senders,
     repos_get_sla_transaction_infos, repos_get_total_item,
@@ -12,7 +13,7 @@ from app.api.v1.endpoints.third_parties.gw.category.controller import (
     CtrSelectCategory
 )
 from app.utils.constant.business_type import (
-    BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA
+    BUSINESS_TYPE_AMOUNT_BLOCK, BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA
 )
 from app.utils.constant.cif import (
     CIF_STAGE_ROLE_CODE_AUDIT, CIF_STAGE_ROLE_CODE_SUPERVISOR,
@@ -59,7 +60,7 @@ class CtrDashboard(BaseController):
         booking_ids = []
         business_type_init_cifs = []
         business_type_open_casas = []
-
+        business_type_amount_block = []
         for transaction in transaction_list:
             booking, branch, status = transaction
 
@@ -78,6 +79,8 @@ class CtrDashboard(BaseController):
                 business_type_init_cifs.append(booking_id)
             if business_type_id == BUSINESS_TYPE_OPEN_CASA:
                 business_type_open_casas.append(booking_id)
+            if business_type_id == BUSINESS_TYPE_AMOUNT_BLOCK:
+                business_type_amount_block.append(booking_id)
             # TODO: còn các loại nghiệp vụ khác
 
             mapping_datas.update({
@@ -111,7 +114,21 @@ class CtrDashboard(BaseController):
                 )
             })
 
-        # Lấy thông tin các giao dịch Mở TKTT
+        # lấy thông tin các giao dịch aoumut_block
+        amount_blocks = self.call_repos(
+            await repos_get_amount_block_from_booking(
+                booking_ids=business_type_amount_block,
+                session=self.oracle_session
+            )
+        )
+        for booking, _, casa_account, customer in amount_blocks:
+            mapping_datas[booking.id].update(
+                full_name_vn=customer.full_name_vn,
+                cif_id=customer.id,
+                cif_number=customer.cif_number
+            )
+
+        # Lấy thông tin các giao dịch Mở TKTT\
         open_casa_infos = self.call_repos(
             await repos_get_open_casa_info_from_booking(booking_ids=business_type_open_casas,
                                                         session=self.oracle_session))
