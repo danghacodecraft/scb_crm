@@ -58,6 +58,9 @@ async def repos_download_file(uuid: str) -> ReposReturn:
 
 
 async def repos_download_multi_file(uuids: List[str]) -> ReposReturn:
+    if not uuids:
+        return ReposReturn(data=uuids)
+
     response = await service_file.download_multi_file(uuids=uuids)
     if not response:
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_FILE)
