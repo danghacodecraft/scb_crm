@@ -11,9 +11,11 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingBusinessForm, BookingCustomer, BookingAccount
+    Booking, BookingAccount, BookingBusinessForm, BookingCustomer
 )
-from app.third_parties.oracle.models.cif.payment_account.model import CasaAccount
+from app.third_parties.oracle.models.cif.payment_account.model import (
+    CasaAccount
+)
 from app.utils.constant.cif import BUSINESS_FORM_TTCN_GTDD_GTDD
 from app.utils.error_messages import (
     ERROR_BOOKING_CODE_EXISTED, ERROR_BOOKING_ID_NOT_EXIST, MESSAGE_STATUS
@@ -235,5 +237,21 @@ async def repos_get_customer_from_booking_account(booking_id: str, session: Sess
         .join(CasaAccount, BookingAccount.account_id == CasaAccount.id)
         .join(Customer, CasaAccount.customer_id == Customer.id)
         .filter(Booking.parent_id == booking_id)
+    ).scalars().first()
+    return ReposReturn(data=customer)
+
+
+async def repos_get_customer_from_booking_account_amount_block(booking_id: str, session: Session):
+    customer = session.execute(
+        select(
+            Customer,
+            Booking,
+            BookingAccount,
+            CasaAccount
+        )
+        .join(BookingAccount, Booking.id == BookingAccount.booking_id)
+        .join(CasaAccount, BookingAccount.account_id == CasaAccount.id)
+        .join(Customer, CasaAccount.customer_id == Customer.id)
+        .filter(Booking.id == booking_id)
     ).scalars().first()
     return ReposReturn(data=customer)
