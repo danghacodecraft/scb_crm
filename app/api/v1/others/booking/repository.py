@@ -149,7 +149,11 @@ async def repos_check_exist_booking(
     return ReposReturn(data=booking)
 
 
-async def repos_get_customer_by_booking_id(booking_id: str, cif_number: Optional[str], session: Session):
+async def repos_get_customer_by_booking_id(
+        booking_id: str,
+        session: Session,
+        cif_number: Optional[str] = None
+):
     booking = session.execute(
         select(
             Booking
@@ -185,12 +189,26 @@ async def repos_get_customer_by_booking_id(booking_id: str, cif_number: Optional
     #         .filter(Booking.parent_id == booking_id)
     #     ).scalars().first()
 
-    customer = session.execute(
-        select(
-            Customer
-        )
-        .filter(Customer.cif_number == cif_number)
-    ).scalar()
+    if cif_number:
+
+        customer = session.execute(
+            select(
+                Customer
+            )
+            .filter(Customer.cif_number == cif_number)
+        ).scalar()
+
+    else:
+        customer = session.execute(
+            select(
+                Customer,
+                Booking,
+                BookingCustomer
+            )
+            .join(BookingCustomer, Booking.id == BookingCustomer.booking_id)
+            .join(Customer, BookingCustomer.customer_id == Customer.id)
+            .filter(Booking.id == booking_id)
+        ).scalar()
 
     if not customer:
         return ReposReturn(
