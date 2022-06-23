@@ -16,7 +16,7 @@ router = APIRouter()
 
 
 @router.get(
-    path="/{booking_id}/",
+    path="/{cif_number}/",
     name="Document List",
     description="Danh sách tài liệu",
     responses=swagger_response(
@@ -25,13 +25,13 @@ router = APIRouter()
     )
 )
 async def view_document_list(
-        booking_id: str = Path(..., description='Booking ID'),
+        cif_number: str = Path(..., description='Số CIF'),
         current_user=Depends(get_current_user_from_header()),
         pagination_params: PaginationParams = Depends(),
 ):
     transaction_list_response = await CtrDocumentList(
         current_user=current_user,
         pagination_params=pagination_params,
-    ).ctr_document_list(booking_id=booking_id)
+    ).ctr_document_list(cif_number=cif_number)
 
     return PagingResponse[DocumentListResponse](**transaction_list_response)
