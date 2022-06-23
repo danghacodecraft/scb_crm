@@ -4,7 +4,8 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.common_repository import (
     repos_get_next_stage, repos_get_previous_transaction_daily,
     repos_get_stage_information, repos_get_stage_teller,
-    repos_open_casa_get_previous_stage, repos_open_cif_get_previous_stage
+    repos_open_cif_get_previous_stage, repos_get_stage_codes_in_business,
+    repos_get_previous_stage
 )
 from app.api.v1.endpoints.approval.repository import (
     repos_approval_get_face_authentication, repos_approve,
@@ -428,6 +429,12 @@ class CtrApproval(BaseController):
         #         error_status_code=status.HTTP_403_FORBIDDEN
         #     )
 
+        business_type = await CtrBooking().ctr_get_business_type(booking_id=booking_id)
+        stage_codes = self.call_repos(await repos_get_stage_codes_in_business(
+            business_type_code=business_type.code,
+            session=self.oracle_session
+        ))
+
         # Chưa có hồ sơ nào trước đó, GDV gửi hồ sơ đi
         if previous_stage_code in STAGE_BEGINS:
             # if not is_stage_teller:
@@ -473,11 +480,13 @@ class CtrApproval(BaseController):
                     audit_transaction_daily, audit_transaction_sender, audit_transaction_stage, _,
                     audit_transaction_stage_action
                 ) = audit_transaction
-                audit_stage_code = audit_transaction_stage.transaction_stage_phase_code
-                audit_content = orjson_loads(audit_transaction_daily.data)["content"]
-                audit_created_at = audit_transaction_daily.created_at
-                audit_created_by = audit_transaction_sender.user_fullname
-                dropdown_action_audit = dropdown(audit_transaction_stage_action)
+                audit_transaction_stage = audit_transaction_stage.transaction_stage_phase_code
+                if audit_transaction_stage in stage_codes:
+                    audit_stage_code = audit_transaction_stage
+                    audit_content = orjson_loads(audit_transaction_daily.data)["content"]
+                    audit_created_at = audit_transaction_daily.created_at
+                    audit_created_by = audit_transaction_sender.user_fullname
+                    dropdown_action_audit = dropdown(audit_transaction_stage_action)
 
                 supervisor_transaction = self.call_repos(await repos_get_previous_transaction_daily(
                     transaction_daily_id=audit_transaction_daily.transaction_id,
@@ -488,11 +497,13 @@ class CtrApproval(BaseController):
                         supervisor_transaction_daily, supervisor_transaction_sender, supervisor_transaction_stage, _,
                         supervisor_transaction_stage_action
                     ) = supervisor_transaction
-                    supervisor_stage_code = supervisor_transaction_stage.transaction_stage_phase_code
-                    supervisor_content = orjson_loads(supervisor_transaction_daily.data)["content"]
-                    supervisor_created_at = supervisor_transaction_daily.created_at
-                    supervisor_created_by = supervisor_transaction_sender.user_fullname
-                    dropdown_action_supervisor = dropdown(supervisor_transaction_stage_action)
+                    supervisor_transaction_stage_code = supervisor_transaction_stage.transaction_stage_phase_code
+                    if supervisor_transaction_stage_code in stage_codes:
+                        supervisor_stage_code = supervisor_transaction_stage_code
+                        supervisor_content = orjson_loads(supervisor_transaction_daily.data)["content"]
+                        supervisor_created_at = supervisor_transaction_daily.created_at
+                        supervisor_created_by = supervisor_transaction_sender.user_fullname
+                        dropdown_action_supervisor = dropdown(supervisor_transaction_stage_action)
 
         # KSV đã xử lý hồ sơ
         elif previous_stage_code in APPROVE_SUPERVISOR_STAGES:
@@ -697,21 +708,12 @@ class CtrApproval(BaseController):
         business_type = await CtrBooking().ctr_get_business_type(booking_id=booking_id)
         business_type_id = business_type.code
 
-        previous_transaction_stage = None
-
-        if business_type_id == BUSINESS_TYPE_INIT_CIF:
-            _, _, previous_transaction_stage, _, _, _ = self.call_repos(
-                await repos_open_cif_get_previous_stage(
-                    booking_id=booking_id,
-                    session=self.oracle_session
-                ))
-        if business_type_id == BUSINESS_TYPE_OPEN_CASA:
-            _, _, previous_transaction_stage = self.call_repos(
-                await repos_open_casa_get_previous_stage(
-                    booking_id=booking_id,
-                    session=self.oracle_session
-                )
+        _, _, previous_transaction_stage = self.call_repos(
+            await repos_get_previous_stage(
+                booking_id=booking_id,
+                session=self.oracle_session
             )
+        )
 
         if not previous_transaction_stage:
             return self.response_exception(msg="No Previous Transaction Stage")

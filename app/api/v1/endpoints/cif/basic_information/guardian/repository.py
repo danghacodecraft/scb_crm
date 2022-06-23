@@ -8,7 +8,6 @@ from app.api.base.repository import ReposReturn, auto_commit
 from app.api.v1.endpoints.repository import (
     write_transaction_log_and_update_booking
 )
-from app.settings.event import service_soa
 from app.third_parties.oracle.models.cif.basic_information.guardian_and_relationship.model import (
     CustomerPersonalRelationship
 )
@@ -19,9 +18,6 @@ from app.third_parties.oracle.models.master_data.customer import (
     CustomerRelationshipType
 )
 from app.utils.constant.cif import CUSTOMER_RELATIONSHIP_TYPE_GUARDIAN
-from app.utils.error_messages import (
-    ERROR_CIF_NUMBER_NOT_COMPLETED, ERROR_CIF_NUMBER_NOT_EXIST
-)
 from app.utils.functions import now
 
 
@@ -200,28 +196,5 @@ async def repos_get_guardians_by_cif_numbers(
             Customer.cif_number.in_(cif_numbers)
         )
     ).all()
-    # Kiểm tra có tồn tại người giám hộ và
-    # tất cả người giảm hộ gửi lên có trong db không?
-    if not guardians or len(cif_numbers) != len(guardians):
-        # Nếu không có trong DB => Kiểm tra bên SOA
-        for cif_number in cif_numbers:
-            is_success, response = await service_soa.retrieve_customer_ref_data_mgmt(cif_number=cif_number)
-            if not response["is_existed"]:
-                return ReposReturn(
-                    is_error=True,
-                    msg=ERROR_CIF_NUMBER_NOT_EXIST,
-                    loc="cif_number",
-                    detail=f"cif_number={cif_number}"
-                )
-
-    # Nếu Người giám hộ chưa khởi tạo thành công thì không thể giảm hộ cho người khác được
-    not_completed_guardians = [guardian.Customer.cif_number for guardian in guardians if guardian.Customer.complete_flag == 0]
-    if not_completed_guardians:
-        return ReposReturn(
-            is_error=True,
-            msg=ERROR_CIF_NUMBER_NOT_COMPLETED,
-            loc="cif_number",
-            detail=f"CIF number(s) ({not_completed_guardians}) have not completed yet"
-        )
 
     return ReposReturn(data=guardians)

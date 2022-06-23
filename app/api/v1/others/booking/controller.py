@@ -23,8 +23,7 @@ from app.utils.constant.idm import (
 from app.utils.error_messages import (
     ERROR_BOOKING_ALREADY_USED, ERROR_BOOKING_ID_NOT_EXIST,
     ERROR_BOOKING_INCORRECT, ERROR_BUSINESS_TYPE_CODE_INCORRECT,
-    ERROR_BUSINESS_TYPE_NOT_EXIST, ERROR_CIF_ID_NOT_EXIST, ERROR_PERMISSION, ERROR_CASA_ACCOUNT_NOT_EXIST,
-    ERROR_CASA_ACCOUNT_APPROVED
+    ERROR_BUSINESS_TYPE_NOT_EXIST, ERROR_CIF_ID_NOT_EXIST, ERROR_PERMISSION, ERROR_CASA_ACCOUNT_NOT_EXIST
 )
 
 
@@ -32,7 +31,7 @@ class CtrBooking(BaseController):
     async def ctr_create_booking(
             self,
             business_type_code: Optional[str] = None,
-            booking_code_flag: bool = False,
+            booking_code_flag: bool = True,
             transaction_id: Optional[str] = None
     ):
         is_stage_teller = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
@@ -113,19 +112,20 @@ class CtrBooking(BaseController):
 
         return self.response(data=is_used_booking)
 
-    async def ctr_get_customer_info(self, booking_id: str):
+    async def ctr_get_customer_info(self, booking_id: str, cif_number=None):
         """
         Lấy thông tin khách hàng bằng booking_id
         """
         customer_info = self.call_repos(await repos_get_customer_by_booking_id(
             booking_id=booking_id,
+            cif_number=cif_number,
             session=self.oracle_session
         ))
 
         if not customer_info:
             return self.response_exception(msg=ERROR_CIF_ID_NOT_EXIST, loc=f"header -> booking_id: {booking_id}")
 
-        return self.response(data=customer_info)
+        return customer_info
 
     async def ctr_get_business_type(self, booking_id: str):
         """
@@ -157,4 +157,4 @@ class CtrBooking(BaseController):
             if casa_account.approve_status == CASA_ACCOUNT_STATUS_APPROVED:
                 approved_casa_account_ids.append(casa_account.id)
 
-        return self.response(data=casa_accounts)
+        return casa_accounts

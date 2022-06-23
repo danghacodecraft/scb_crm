@@ -5,13 +5,13 @@ from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
     repos_get_customer_by_cif_number
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
-    repos_gw_get_casa_account_by_cif_number, repos_gw_get_casa_account_info,
-    repos_gw_get_close_casa_account,
+    repos_check_casa_account_approved, repos_gw_get_casa_account_by_cif_number,
+    repos_gw_get_casa_account_info, repos_gw_get_close_casa_account,
     repos_gw_get_column_chart_casa_account_info,
     repos_gw_get_pie_chart_casa_account_info,
     repos_gw_get_statements_casa_account_info, repos_gw_open_casa_account,
     repos_open_casa_get_casa_account_infos,
-    repos_update_casa_account_to_approved, repos_check_casa_account_approved
+    repos_update_casa_account_to_approved
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWOpenCasaAccountRequest, GWReportColumnChartHistoryAccountInfoRequest,
@@ -22,6 +22,7 @@ from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
 from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.utils.constant.approval import CIF_STAGE_APPROVE_KSV
+from app.utils.constant.casa import CASA_ACCOUNT_STATUS_UNAPPROVED
 from app.utils.constant.gw import (
     GW_TRANSACTION_TYPE_SEND, GW_TRANSACTION_TYPE_WITHDRAW
 )
@@ -182,6 +183,9 @@ class CtrGWCasaAccount(BaseController):
             company_salary=account_info['account_company_salary'],
             company_salary_num=account_info['account_company_salary_num'],
             service_escrow=account_info['account_service_escrow'],
+            amount_rate_close=account_info['account_amount_rate_close'],
+            fee_close=account_info['account_fee_close'],
+            total=int(account_info['account_balance']) + int(account_info['account_amount_rate_close']),
             service_escrow_ex_date=string_to_date(account_info['account_service_escrow_ex_date'],
                                                   _format=DATETIME_INPUT_OUTPUT_FORMAT),
             lock_info=lock_info_response,
@@ -340,7 +344,7 @@ class CtrGWCasaAccount(BaseController):
             balance_available_vnd=balance_available_vnd if balance_available_vnd else None,
             report_casa_account=column_chart))
 
-    async def ctr_gw_open_casa_account(self, request: GWOpenCasaAccountRequest):
+    async def ctr_gw_open_casa_account(self, request: GWOpenCasaAccountRequest, booking_id: str):
         current_user = self.current_user
         current_user_info = current_user.user_info
         is_role_supervisor = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
@@ -364,13 +368,15 @@ class CtrGWCasaAccount(BaseController):
             session=self.oracle_session
         ))
 
-        # Kiểm tra Booking Account
-        booking_parent_id = request.booking_parent_id
-        await CtrBooking().ctr_get_casa_account_from_booking(booking_id=booking_parent_id, session=self.oracle_session)
-        casa_accounts = request.casa_accounts
+        # Kiểm tra Booking Account, Account lấy ra là những account chưa được phê duyệt
+        casa_accounts = await CtrBooking().ctr_get_casa_account_from_booking(
+            booking_id=booking_id, session=self.oracle_session
+        )
+
         casa_account_ids = []
         for casa_account in casa_accounts:
-            casa_account_ids.append(casa_account.id)
+            if casa_account.approve_status == CASA_ACCOUNT_STATUS_UNAPPROVED:
+                casa_account_ids.append(casa_account.id)
 
         # RULE: tài khoản đã được phê duyệt thì không cho phép phê duyệt
         self.call_repos(await repos_check_casa_account_approved(
@@ -395,7 +401,7 @@ class CtrGWCasaAccount(BaseController):
                 self_selected_account_flag=self_selected_account_flag,
                 casa_account_info=casa_account_info,
                 current_user=self.current_user,
-                booking_parent_id=booking_parent_id,
+                booking_parent_id=booking_id,
                 session=self.oracle_session
             )
             if not is_success:

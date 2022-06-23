@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Body, Depends, Path
+from fastapi import APIRouter, Body, Depends, Path, Header
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -145,10 +145,12 @@ async def view_gw_get_statement_casa_account_info(
 )
 async def view_gw_open_casa_account(
         request: GWOpenCasaAccountRequest = Body(..., description="Thông tin tài khoản"),
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         current_user=Depends(get_current_user_from_header())
 ):
     gw_open_casa_account_info = await CtrGWCasaAccount(current_user).ctr_gw_open_casa_account(
-        request=request
+        request=request,
+        booking_id=BOOKING_ID
     )
     return ResponseData[GWOpenCasaAccountResponse](**gw_open_casa_account_info)
 

@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Body, Depends, Header, Path
+from fastapi import APIRouter, Body, Depends, Header
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -53,13 +53,11 @@ async def view_amount_block(
     )
 )
 async def view_gw_amount_block(
-        account_number: str = Path(..., description="Số tài khoản"),
         current_user=Depends(get_current_user_from_header()),
         BOOKING_ID: str = Header(..., description="Mã phiên giao dịch")
 ):
     gw_payment_amount_block = await CtrGWPayment(current_user).ctr_gw_payment_amount_block(
-        BOOKING_ID=BOOKING_ID,
-        account_number=account_number,
+        BOOKING_ID=BOOKING_ID
     )
 
     return ResponseData[AccountAmountBlockResponse](**gw_payment_amount_block)
@@ -67,21 +65,44 @@ async def view_gw_amount_block(
 
 @router.post(
     path="/amount-unblock/",
-    name="[GW] Amount Unblock",
+    name="Amount Unblock",
     description="Giải tỏa tài khoản",
     responses=swagger_response(
         response_model=ResponseData[PaymentSuccessResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
-async def view_gw_amount_unblock(
-        account_amount_unblock: AccountAmountUnblock = Body(...),
-        current_user=Depends(get_current_user_from_header())
+async def view_amount_unblock(
+        account_amount_unblocks: List[AccountAmountUnblock] = Body(...),
+        current_user=Depends(get_current_user_from_header()),
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch")
 ):
-    gw_payment_amount_unblock = await CtrGWPayment(current_user).ctr_gw_payment_amount_unblock(
-        account_amount_unblock=account_amount_unblock
+    payment_amount_unblock = await CtrGWPayment(current_user).ctr_payment_amount_unblock(
+        account_amount_unblocks=account_amount_unblocks,
+        booking_id=BOOKING_ID
     )
-    return ResponseData[PaymentSuccessResponse](**gw_payment_amount_unblock)
+
+    return ResponseData[PaymentSuccessResponse](**payment_amount_unblock)
+
+
+@router.post(
+    path="/amount-unblock-pd/",
+    name="[GW] Amount Unblock",
+    description="Giải tỏa tài khoản - Phê duyệt",
+    responses=swagger_response(
+        response_model=ResponseData[AccountAmountBlockResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_amount_unblock_pd(
+        current_user=Depends(get_current_user_from_header()),
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch")
+):
+    payment_amount_unblock_pd = await CtrGWPayment(current_user).ctr_gw_payment_amount_unblock(
+        BOOKING_ID=BOOKING_ID
+    )
+
+    return ResponseData[AccountAmountBlockResponse](**payment_amount_unblock_pd)
 
 
 @router.post(

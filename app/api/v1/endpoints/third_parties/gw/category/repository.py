@@ -12,7 +12,7 @@ async def repos_gw_select_category(
     is_success, select_category = await service_gw.get_select_category(
         transaction_name=transaction_name,
         transaction_value=transaction_value,
-        current_user=current_user.user_info
+        current_user=current_user
     )
 
     if not is_success:

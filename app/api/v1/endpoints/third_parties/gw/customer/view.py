@@ -119,6 +119,7 @@ async def view_gw_get_customer_info_detail(
         return ResponseData[DetailCoOwnerResponse](**gw_customer_info_detail)
 
     else:
+        # return ResponseData(**gw_customer_info_detail)
         return ResponseData[GWCustomerInfoDetailResponse](**gw_customer_info_detail)
 
 

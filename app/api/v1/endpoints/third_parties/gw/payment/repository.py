@@ -8,15 +8,16 @@ from app.api.base.repository import ReposReturn, auto_commit
 from app.api.v1.others.booking.repository import generate_booking_code
 from app.settings.event import service_gw
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingBusinessForm, TransactionDaily, TransactionSender
+    Booking, BookingAccount, BookingBusinessForm, BookingCustomer,
+    TransactionDaily, TransactionSender
 )
 from app.third_parties.oracle.models.master_data.others import (
-    TransactionStage, TransactionStageLane, TransactionStagePhase,
-    TransactionStageRole, TransactionStageStatus
+    SlaTransaction, TransactionStage, TransactionStageLane,
+    TransactionStagePhase, TransactionStageRole, TransactionStageStatus
 )
-from app.utils.constant.business_type import BUSINESS_TYPE_AMOUNT_UNBLOCK
 from app.utils.constant.cif import (
-    BUSINESS_FORM_AMOUNT_BLOCK, BUSINESS_FORM_AMOUNT_BLOCK_PD
+    BUSINESS_FORM_AMOUNT_BLOCK, BUSINESS_FORM_AMOUNT_BLOCK_PD,
+    BUSINESS_FORM_AMOUNT_UNBLOCK, BUSINESS_FORM_AMOUNT_UNBLOCK_PD
 )
 from app.utils.constant.gw import GW_CASA_RESPONSE_STATUS_SUCCESS
 from app.utils.error_messages import ERROR_BOOKING_CODE_EXISTED, MESSAGE_STATUS
@@ -74,11 +75,14 @@ async def repos_payment_amount_block(
         booking_id,
         saving_transaction_stage_status,
         saving_transaction_stage,
+        saving_sla_transaction,
         saving_transaction_stage_lane,
         saving_transaction_stage_phase,
         saving_transaction_stage_role,
         saving_transaction_daily,
         saving_transaction_sender,
+        saving_booking_account,
+        saving_booking_customer,
         request_json: json,
         history_datas: json,
         session
@@ -86,6 +90,7 @@ async def repos_payment_amount_block(
     session.add_all([
         TransactionStageStatus(**saving_transaction_stage_status),
         TransactionStage(**saving_transaction_stage),
+        SlaTransaction(**saving_sla_transaction),
         TransactionStageLane(**saving_transaction_stage_lane),
         TransactionStagePhase(**saving_transaction_stage_phase),
         TransactionStageRole(**saving_transaction_stage_role),
@@ -101,7 +106,8 @@ async def repos_payment_amount_block(
             log_data=history_datas
         ))
     ])
-
+    session.bulk_save_objects(BookingAccount(**account) for account in saving_booking_account)
+    session.bulk_save_objects(BookingCustomer(**customer) for customer in saving_booking_customer)
     # Update Booking
     session.execute(
         update(Booking)
@@ -115,51 +121,124 @@ async def repos_payment_amount_block(
 @auto_commit
 async def repos_gw_payment_amount_block(
     current_user,
-    data_input,
+    request_data_gw: list,
     booking_id,
     session: Session
 ):
-    is_success, gw_payment_amount_block, request_data = await service_gw.gw_payment_amount_block(
-        current_user=current_user.user_info, data_input=data_input
-    )
+    response_data = []
+    for item in request_data_gw:
+        is_success, gw_payment_amount_block, request_data = await service_gw.gw_payment_amount_block(
+            current_user=current_user.user_info, data_input=item
+        )
 
-    # lưu form data request GW
-    session.add(
+        # lưu form data request GW
+        session.add(
+            BookingBusinessForm(**dict(
+                booking_id=booking_id,
+                form_data=orjson_dumps(item),
+                business_form_id=BUSINESS_FORM_AMOUNT_BLOCK_PD,
+                save_flag=True,
+                created_at=now(),
+                log_data=orjson_dumps(gw_payment_amount_block)
+            ))
+        )
+        amount_block = gw_payment_amount_block.get('amountBlock_out').get('data_output')
+
+        if isinstance(amount_block, dict):
+            response_data.append({
+                'account_number': item.get('account_info').get('account_num'),
+                'account_ref_no': amount_block.get('account_info').get('blance_lock_info').get('account_ref_no')
+            })
+        else:
+            response_data.append({
+                'account_number': item.get('account_info').get('account_num'),
+                'account_ref_no': amount_block
+            })
+
+    return ReposReturn(data=response_data)
+
+
+@auto_commit
+async def repos_payment_amount_unblock(
+        booking_id,
+        saving_transaction_stage_status,
+        saving_transaction_stage,
+        saving_transaction_stage_lane,
+        saving_sla_transaction,
+        saving_transaction_stage_phase,
+        saving_transaction_stage_role,
+        saving_transaction_daily,
+        saving_transaction_sender,
+        request_json: json,
+        history_data: json,
+        session
+):
+    session.add_all([
+        TransactionStageStatus(**saving_transaction_stage_status),
+        TransactionStage(**saving_transaction_stage),
+        TransactionStageLane(**saving_transaction_stage_lane),
+        SlaTransaction(**saving_sla_transaction),
+        TransactionStagePhase(**saving_transaction_stage_phase),
+        TransactionStageRole(**saving_transaction_stage_role),
+        TransactionDaily(**saving_transaction_daily),
+        TransactionSender(**saving_transaction_sender),
+        # lưu form data request từ client
         BookingBusinessForm(**dict(
             booking_id=booking_id,
-            form_data=orjson_dumps(request_data),
-            business_form_id=BUSINESS_FORM_AMOUNT_BLOCK_PD,
+            form_data=request_json,
+            business_form_id=BUSINESS_FORM_AMOUNT_UNBLOCK,
             save_flag=True,
             created_at=now(),
-            log_data=orjson_dumps(gw_payment_amount_block)
+            log_data=history_data
         ))
+    ])
+
+    # Update Booking
+    session.execute(
+        update(Booking)
+        .filter(Booking.id == booking_id)
+        .values(transaction_id=saving_transaction_daily['transaction_id'])
     )
+    return ReposReturn(data=booking_id)
 
-    return ReposReturn(data=gw_payment_amount_block)
 
+@auto_commit
+async def repos_gw_payment_amount_unblock(
+        current_user,
+        request_data_gw: list,
+        booking_id,
+        session
+):
+    response_data = []
+    for item in request_data_gw:
+        print('item', item)
+        is_success, gw_payment_amount_unblock = await service_gw.gw_payment_amount_unblock(
+            data_input=item,
+            current_user=current_user.user_info
+        )
 
-async def repos_gw_payment_amount_unblock(current_user, data_input, session):
-    is_success, gw_payment_amount_unblock = await service_gw.gw_payment_amount_unblock(
-        data_input=data_input,
-        current_user=current_user.user_info
-    )
+        # lưu form data request GW
+        session.add(
+            BookingBusinessForm(**dict(
+                booking_id=booking_id,
+                form_data=orjson_dumps(item),
+                business_form_id=BUSINESS_FORM_AMOUNT_UNBLOCK_PD,
+                save_flag=True,
+                created_at=now(),
+                log_data=orjson_dumps(gw_payment_amount_unblock)
+            ))
+        )
+        amount_unblock = gw_payment_amount_unblock.get('amountUnBlock_out').get('transaction_info')
 
-    booking = await repos_create_booking_payment(
-        business_type_code=BUSINESS_TYPE_AMOUNT_UNBLOCK,
-        current_user=current_user.user_info,
-        form_data=data_input,
-        log_data=gw_payment_amount_unblock,
-        session=session
-    )
-    booking_id, booking_code = booking.data
+        response_data.append({
+            "account_number": item.get('account_info').get('balance_lock_info').get('account_ref_no'),
+            "transaction": {
+                "code": amount_unblock.get('transaction_error_code'),
+                "msg": amount_unblock.get('transaction_error_msg')
+            }
+        })
 
-    amount_unblock_out = gw_payment_amount_unblock.get('amountUnBlock_out', {})
-
-    # check trường hợp lỗi
-    if amount_unblock_out.get('transaction_info').get('transaction_error_code') != GW_CASA_RESPONSE_STATUS_SUCCESS:
-        return ReposReturn(is_error=True, msg=amount_unblock_out.get('transaction_info').get('transaction_error_msg'))
-
-    return ReposReturn(data=(booking_id, gw_payment_amount_unblock))
+    return ReposReturn(data=response_data)
 
 
 async def repos_gw_pay_in_cash(current_user, data_input):

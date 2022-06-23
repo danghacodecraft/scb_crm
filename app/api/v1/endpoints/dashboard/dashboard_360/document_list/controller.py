@@ -9,28 +9,21 @@ from app.utils.functions import dropdown
 
 
 class CtrDocumentList(BaseController):
-    async def ctr_document_list(self, booking_id: str):
-        # Check exist Booking
-        await CtrBooking().ctr_get_booking(
-            business_type_code=BUSINESS_TYPE_INIT_CIF,
-            booking_id=booking_id,
-            check_correct_booking_flag=False,
-            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
-        )
+    async def ctr_document_list(self, cif_number: str):
         limit = self.pagination_params.limit
         current_page = 1
         if self.pagination_params.page:
             current_page = self.pagination_params.page
 
         document_list = self.call_repos(await repos_get_document_list(
-            booking_id=booking_id,
+            cif_number=cif_number,
             limit=limit,
             page=current_page,
             session=self.oracle_session
         ))
 
         total_item = self.call_repos(await repos_count_document_item(
-            booking_id=booking_id,
+            cif_number=cif_number,
             session=self.oracle_session))
 
         total_page = 0

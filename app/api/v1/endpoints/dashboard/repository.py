@@ -41,13 +41,14 @@ async def repos_count_total_item(region_id: Optional[str], branch_id: Optional[s
     transaction_list = select(
         func.count(Booking.code)
     ) \
-        .join(BookingCustomer, Booking.id == BookingCustomer.booking_id) \
-        .join(Customer, BookingCustomer.customer_id == Customer.id) \
         .join(Branch, Booking.branch_id == Branch.id) \
-        .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
         .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
         .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
-        .join(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id)
+        .outerjoin(BookingCustomer, Booking.id == BookingCustomer.booking_id) \
+        .outerjoin(Customer, BookingCustomer.customer_id == Customer.id) \
+        .outerjoin(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
+        .outerjoin(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
+        .distinct()
 
     if region_id:
         transaction_list = transaction_list.filter(Branch.region_id == region_id)
@@ -90,22 +91,20 @@ async def repos_get_transaction_list(region_id: Optional[str], branch_id: Option
                                      business_type_id: Optional[str], status_code: Optional[str],
                                      search_box: Optional[str], from_date: Optional[date], to_date: Optional[date],
                                      limit: int, page: int, session: Session):
-    sla_transaction_root = aliased(SlaTransaction, name='SlaTransactionRoot')
-
     sql = select(
         Booking,
         Branch,
-        SlaTransaction,
-        sla_transaction_root,
         TransactionStageStatus.name.label('status')
     ) \
         .join(Branch, Booking.branch_id == Branch.id) \
         .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
         .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
-        .outerjoin(SlaTransaction, TransactionStage.sla_transaction_id == SlaTransaction.id) \
-        .outerjoin(sla_transaction_root, SlaTransaction.root_id == sla_transaction_root.root_id) \
-        .join(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
+        .outerjoin(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
+        .outerjoin(BookingCustomer, Booking.id == BookingCustomer.booking_id) \
+        .outerjoin(Customer, BookingCustomer.customer_id == Customer.id) \
+        .outerjoin(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
         .distinct()
+
     if region_id:
         sql = sql.filter(Branch.region_id == region_id)
 
@@ -148,14 +147,21 @@ async def repos_get_transaction_list(region_id: Optional[str], branch_id: Option
 async def repos_get_senders(
         booking_ids: tuple,
         region_id: Optional[str], branch_id: Optional[str], status_code: Optional[str],
-        search_box: Optional[str], from_date: Optional[date], to_date: Optional[date],
+        search_box: Optional[str], from_date: Optional[date], to_date: Optional[date], business_type_id: Optional[str],
         session: Session
 ):
     # Lấy tất cả các transaction
     sql = select(
         TransactionDaily.transaction_root_id,
         Booking
-    ).join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
+    ) \
+        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
+        .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
+        .join(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
+        .join(Branch, Booking.branch_id == Branch.id) \
+        .outerjoin(BookingCustomer, Booking.id == BookingCustomer.booking_id) \
+        .outerjoin(Customer, BookingCustomer.customer_id == Customer.id) \
+        .outerjoin(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
         .filter(Booking.id.in_(booking_ids))
 
     if region_id:
@@ -163,6 +169,9 @@ async def repos_get_senders(
 
     if branch_id:
         sql = sql.filter(Booking.branch_id == branch_id)
+
+    if business_type_id:
+        sql = sql.filter(Booking.business_type_id == business_type_id)
 
     if status_code:
         sql = sql.filter(TransactionStageStatus.code == status_code)
@@ -208,7 +217,6 @@ async def repos_get_senders(
         TransactionStageRole,
         TransactionSender,
         Booking,
-        Booking.business_type_id,
         SlaTransaction
     ) \
         .outerjoin(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id) \
@@ -216,6 +224,9 @@ async def repos_get_senders(
         .outerjoin(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
         .outerjoin(TransactionStageRole, TransactionStage.id == TransactionStageRole.transaction_stage_id) \
         .outerjoin(SlaTransaction, TransactionStage.sla_transaction_id == SlaTransaction.id) \
+        .outerjoin(BookingCustomer, Booking.id == BookingCustomer.booking_id) \
+        .outerjoin(Customer, BookingCustomer.customer_id == Customer.id) \
+        .outerjoin(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
         .filter(TransactionDaily.transaction_id.in_(transaction_daily_ids))
 
     if region_id:
@@ -223,6 +234,9 @@ async def repos_get_senders(
 
     if branch_id:
         sql = sql.filter(Booking.branch_id == branch_id)
+
+    if business_type_id:
+        sql = sql.filter(Booking.business_type_id == business_type_id)
 
     if status_code:
         sql = sql.filter(TransactionStageStatus.code == status_code)
@@ -247,12 +261,54 @@ async def repos_get_senders(
                 Booking.created_at >= date_to_datetime(from_date),
                 Booking.created_at <= end_time_of_day(date_to_datetime(to_date))
             ))
-
     stage_infos = session.execute(
         sql
     ).all()
-
     return ReposReturn(data=stage_infos)
+
+
+async def repos_get_sla_transaction_infos(booking_ids: list, session: Session):
+    sla_transaction_parent = aliased(SlaTransaction, name="SlaTransParent")
+    sla_trans_daily_parent = aliased(TransactionDaily, name="SlaTransDailyParent")
+    sla_trans_stage_parent = aliased(TransactionStage, name="SlaTransStageParent")
+    sender_sla_trans_parent = aliased(TransactionSender, name="SenderSlaTransParent")
+
+    sla_transaction_grandparent = aliased(SlaTransaction, name="SlaTransGrandparent")
+    sla_trans_daily_grandparent = aliased(TransactionDaily, name="SlaTransDailyGrandparent")
+    sla_trans_stage_grandparent = aliased(TransactionStage, name="SlaTransStageGrandparent")
+    sender_sla_trans_grandparent = aliased(TransactionSender, name="SenderSlaTransGrandparent")
+
+    sla_transaction_infos = session.execute(
+        select(
+            Booking,
+            SlaTransaction,
+            sla_transaction_parent,
+            sender_sla_trans_parent,
+            sla_transaction_grandparent,
+            sender_sla_trans_grandparent
+        )
+        .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
+        .join(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
+        .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id)
+        .join(SlaTransaction, TransactionStage.sla_transaction_id == SlaTransaction.id)
+        .outerjoin(sla_transaction_parent, SlaTransaction.parent_id == sla_transaction_parent.id)
+        .outerjoin(sla_trans_stage_parent, sla_transaction_parent.id == sla_trans_stage_parent.sla_transaction_id)
+        .outerjoin(sla_trans_daily_parent,
+                   sla_trans_stage_parent.id == sla_trans_daily_parent.transaction_stage_id)
+        .outerjoin(sender_sla_trans_parent,
+                   sla_trans_daily_parent.transaction_id == sender_sla_trans_parent.transaction_id)
+        .outerjoin(sla_transaction_grandparent,
+                   sla_transaction_parent.parent_id == sla_transaction_grandparent.id)
+        .outerjoin(sla_trans_stage_grandparent,
+                   sla_transaction_grandparent.id == sla_trans_stage_grandparent.sla_transaction_id)
+        .outerjoin(sla_trans_daily_grandparent,
+                   sla_trans_stage_grandparent.id == sla_trans_daily_grandparent.transaction_stage_id)
+        .outerjoin(sender_sla_trans_grandparent,
+                   sla_trans_daily_grandparent.transaction_id == sender_sla_trans_grandparent.transaction_id)
+        .filter(Booking.id.in_(booking_ids))
+    ).all()
+
+    return ReposReturn(data=sla_transaction_infos)
 
 
 async def repos_get_total_item(
@@ -342,14 +398,6 @@ async def repos_get_customer(
     ).all()
 
     return ReposReturn(data=customers)
-
-
-async def repos_branch(
-        branch_code: str,
-) -> ReposReturn:
-    data_response = await service_dwh.get_branch(branch_code=branch_code)
-
-    return ReposReturn(data=data_response)
 
 
 async def repos_accounting_entry(
