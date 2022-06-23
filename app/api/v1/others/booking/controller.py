@@ -6,17 +6,26 @@ from starlette import status
 
 from app.api.base.controller import BaseController
 from app.api.v1.others.booking.repository import (
-    repos_check_exist_booking, repos_create_booking, repos_is_correct_booking,
-    repos_is_used_booking, repos_get_business_type, repos_get_booking, repos_get_customer_from_booking_customer,
-    repos_get_customer_from_booking_account
+    repos_check_exist_booking, repos_create_booking, repos_get_booking,
+    repos_get_business_type, repos_get_customer_from_booking_account,
+    repos_get_customer_from_booking_account_amount_block,
+    repos_get_customer_from_booking_customer, repos_is_correct_booking,
+    repos_is_used_booking
 )
 from app.api.v1.others.permission.controller import PermissionController
-from app.third_parties.oracle.models.cif.form.model import Booking, BookingAccount
-from app.third_parties.oracle.models.cif.payment_account.model import CasaAccount
+from app.third_parties.oracle.models.cif.form.model import (
+    Booking, BookingAccount
+)
+from app.third_parties.oracle.models.cif.payment_account.model import (
+    CasaAccount
+)
 from app.utils.constant.approval import CIF_STAGE_INIT
 from app.utils.constant.business_type import BUSINESS_TYPES
 from app.utils.constant.casa import CASA_ACCOUNT_STATUS_APPROVED
-from app.utils.constant.cif import BUSINESS_TYPE_CODE_CIF, BUSINESS_TYPE_CODE_OPEN_CASA
+from app.utils.constant.cif import (
+    BUSINESS_TYPE_CODE_AMOUNT_BLOCK, BUSINESS_TYPE_CODE_CIF,
+    BUSINESS_TYPE_CODE_OPEN_CASA
+)
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_OPEN_CIF, IDM_MENU_CODE_OPEN_CIF,
     IDM_PERMISSION_CODE_OPEN_CIF
@@ -24,8 +33,8 @@ from app.utils.constant.idm import (
 from app.utils.error_messages import (
     ERROR_BOOKING_ALREADY_USED, ERROR_BOOKING_ID_NOT_EXIST,
     ERROR_BOOKING_INCORRECT, ERROR_BUSINESS_TYPE_CODE_INCORRECT,
-    ERROR_BUSINESS_TYPE_NOT_EXIST, ERROR_CIF_ID_NOT_EXIST, ERROR_PERMISSION, ERROR_CASA_ACCOUNT_NOT_EXIST,
-    ERROR_CUSTOMER_NOT_EXIST
+    ERROR_BUSINESS_TYPE_NOT_EXIST, ERROR_CASA_ACCOUNT_NOT_EXIST,
+    ERROR_CIF_ID_NOT_EXIST, ERROR_CUSTOMER_NOT_EXIST, ERROR_PERMISSION
 )
 
 
@@ -147,6 +156,12 @@ class CtrBooking(BaseController):
 
         if booking.business_type.id == BUSINESS_TYPE_CODE_OPEN_CASA:
             customer = self.call_repos(await repos_get_customer_from_booking_account(
+                booking_id=booking_id, session=self.oracle_session
+            ))
+
+        if booking.business_type.id == BUSINESS_TYPE_CODE_AMOUNT_BLOCK:
+
+            customer = self.call_repos(await repos_get_customer_from_booking_account_amount_block(
                 booking_id=booking_id, session=self.oracle_session
             ))
 
