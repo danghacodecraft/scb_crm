@@ -450,3 +450,22 @@ async def repos_get_open_cif_info_from_booking(
         .filter(Booking.id.in_(booking_ids))
     ).all()
     return ReposReturn(data=open_cif_infos)
+
+
+async def repos_get_amount_block_from_booking(
+        booking_ids: List,
+        session: Session
+):
+    response_data = session.execute(
+        select(
+            Booking,
+            BookingAccount,
+            CasaAccount,
+            Customer
+        )
+        .join(BookingAccount, Booking.id == BookingAccount.booking_id)
+        .join(CasaAccount, BookingAccount.account_id == CasaAccount.id)
+        .join(Customer, CasaAccount.customer_id == Customer.id)
+        .filter(Booking.id.in_(booking_ids))
+    ).all()
+    return ReposReturn(data=response_data)
