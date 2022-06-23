@@ -8,7 +8,8 @@ from app.api.base.repository import ReposReturn, auto_commit
 from app.api.v1.others.booking.repository import generate_booking_code
 from app.settings.event import service_gw
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingBusinessForm, TransactionDaily, TransactionSender
+    Booking, BookingAccount, BookingBusinessForm, BookingCustomer,
+    TransactionDaily, TransactionSender
 )
 from app.third_parties.oracle.models.master_data.others import (
     SlaTransaction, TransactionStage, TransactionStageLane,
@@ -80,6 +81,8 @@ async def repos_payment_amount_block(
         saving_transaction_stage_role,
         saving_transaction_daily,
         saving_transaction_sender,
+        saving_booking_account,
+        saving_booking_customer,
         request_json: json,
         history_datas: json,
         session
@@ -103,7 +106,8 @@ async def repos_payment_amount_block(
             log_data=history_datas
         ))
     ])
-
+    session.bulk_save_objects(BookingAccount(**account) for account in saving_booking_account)
+    session.bulk_save_objects(BookingCustomer(**customer) for customer in saving_booking_customer)
     # Update Booking
     session.execute(
         update(Booking)
