@@ -189,7 +189,7 @@ async def repos_get_customer_by_booking_id(booking_id: str, cif_number: Optional
         select(
             Customer
         )
-        .filter(Customer.id == cif_number)
+        .filter(Customer.cif_number == cif_number)
     ).scalar()
 
     if not customer:
