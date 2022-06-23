@@ -31,7 +31,7 @@ class CtrBooking(BaseController):
     async def ctr_create_booking(
             self,
             business_type_code: Optional[str] = None,
-            booking_code_flag: bool = False,
+            booking_code_flag: bool = True,
             transaction_id: Optional[str] = None
     ):
         is_stage_teller = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
