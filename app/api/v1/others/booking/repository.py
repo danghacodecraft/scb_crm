@@ -140,7 +140,6 @@ async def repos_check_exist_booking(
         booking_id: str,
         session: Session
 ):
-
     booking = session.execute(
         select(
             Booking
@@ -230,14 +229,26 @@ async def repos_get_customer_from_booking_account(booking_id: str, session: Sess
         select(
             Customer,
             Booking,
-            BookingAccount,
-            CasaAccount
+            BookingAccount
         )
         .join(BookingAccount, Booking.id == BookingAccount.booking_id)
-        .join(CasaAccount, BookingAccount.account_id == CasaAccount.id)
-        .join(Customer, CasaAccount.customer_id == Customer.id)
+        .join(Customer, BookingAccount.customer_id == Customer.id)
         .filter(Booking.parent_id == booking_id)
-    ).scalars().first()
+    )
+
+    if not customer:  # TODO: Tránh bị error hiện tại sử dụng thêm 1 câu query
+        customer = session.execute(
+            select(
+                Customer,
+                Booking,
+                BookingAccount,
+                CasaAccount
+            )
+                .join(BookingAccount, Booking.id == BookingAccount.booking_id)
+                .join(CasaAccount, BookingAccount.account_id == CasaAccount.id)
+                .join(Customer, CasaAccount.customer_id == Customer.id)
+                .filter(Booking.parent_id == booking_id)
+        ).scalars().first()
     return ReposReturn(data=customer)
 
 
