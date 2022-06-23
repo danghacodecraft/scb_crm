@@ -234,7 +234,7 @@ async def repos_get_customer_from_booking_account(booking_id: str, session: Sess
         .join(BookingAccount, Booking.id == BookingAccount.booking_id)
         .join(Customer, BookingAccount.customer_id == Customer.id)
         .filter(Booking.parent_id == booking_id)
-    )
+    ).scalars().first()
 
     if not customer:  # TODO: Tránh bị error hiện tại sử dụng thêm 1 câu query
         customer = session.execute(
