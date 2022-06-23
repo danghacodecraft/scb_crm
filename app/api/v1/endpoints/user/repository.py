@@ -90,9 +90,13 @@ async def repos_login(username: str, password: str) -> ReposReturn:
     gw_data_output = data_gw['selectUserInfoByUserID_out']['data_output']
     if gw_data_output:
         gw_data_output = gw_data_output[0]
-        data_idm['hrm_title_name'] = ['staff_info']['title_name']
+        data_idm['hrm_title_name'] = gw_data_output['staff_info']['title_name']
         data_idm['hrm_branch_name'] = gw_data_output['branch_info']['branch_code']
         data_idm['hrm_branch_name'] = gw_data_output['branch_info']['branch_name']
+
+        data_idm['user_info']['token'] = base64.b64encode(
+            zlib.compress(orjson.dumps(data_idm))
+        ).decode('utf-8')
 
     return ReposReturn(data=data_idm)
 
