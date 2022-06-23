@@ -50,7 +50,7 @@ async def repos_create_booking(
     business_type_code: str,
     session: Session,
     current_user: UserInfoResponse,
-    booking_code_flag: bool = False
+    booking_code_flag: bool = True
 ):
     """
     Input:
