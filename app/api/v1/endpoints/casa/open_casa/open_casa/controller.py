@@ -13,10 +13,10 @@ from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.validator import validate_history_data
 from app.third_parties.oracle.models.master_data.account import AccountType
 from app.third_parties.oracle.models.master_data.others import Currency
-from app.utils.constant.business_type import BUSINESS_TYPE_OPEN_CASA
+from app.utils.constant.business_type import BUSINESS_TYPE_OPEN_CASA, BUSINESS_TYPE_CLOSE_CASA
 from app.utils.constant.casa import CASA_ACCOUNT_STATUS_UNAPPROVED
 from app.utils.constant.cif import ACC_STRUCTURE_TYPE_LEVEL_2, STAFF_TYPE_BUSINESS_CODE, \
-    PROFILE_HISTORY_DESCRIPTIONS_INIT_PAYMENT_ACCOUNT, PROFILE_HISTORY_STATUS_INIT
+    PROFILE_HISTORY_DESCRIPTIONS_OPEN_CASA_ACCOUNT, PROFILE_HISTORY_STATUS_INIT
 from app.utils.error_messages import (
     ERROR_ACCOUNT_NUMBER_NOT_NULL, ERROR_CASA_ACCOUNT_EXIST,
     ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_FIELD_REQUIRED, ERROR_VALIDATE
@@ -239,7 +239,7 @@ class CtrCasaOpenCasa(BaseController):
 
         # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CASA
         transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
-            business_type_id=BUSINESS_TYPE_OPEN_CASA
+            business_type_id=BUSINESS_TYPE_CLOSE_CASA
         )
 
         (
@@ -249,7 +249,7 @@ class CtrCasaOpenCasa(BaseController):
         ) = transaction_datas
 
         history_datas = self.make_history_log_data(
-            description=PROFILE_HISTORY_DESCRIPTIONS_INIT_PAYMENT_ACCOUNT,
+            description=PROFILE_HISTORY_DESCRIPTIONS_OPEN_CASA_ACCOUNT,
             history_status=PROFILE_HISTORY_STATUS_INIT,
             current_user=current_user_info
         )

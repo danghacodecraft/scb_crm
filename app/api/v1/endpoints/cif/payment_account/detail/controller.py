@@ -17,7 +17,7 @@ from app.api.v1.validator import validate_history_data
 from app.third_parties.oracle.models.master_data.account import AccountType
 from app.third_parties.oracle.models.master_data.others import Currency
 from app.utils.constant.cif import (
-    PROFILE_HISTORY_DESCRIPTIONS_INIT_PAYMENT_ACCOUNT,
+    PROFILE_HISTORY_DESCRIPTIONS_OPEN_CASA_ACCOUNT,
     PROFILE_HISTORY_STATUS_INIT, STAFF_TYPE_BUSINESS_CODE
 )
 from app.utils.error_messages import (
@@ -155,7 +155,7 @@ class CtrPaymentAccount(BaseController):
         }
 
         history_datas = self.make_history_log_data(
-            description=PROFILE_HISTORY_DESCRIPTIONS_INIT_PAYMENT_ACCOUNT,
+            description=PROFILE_HISTORY_DESCRIPTIONS_OPEN_CASA_ACCOUNT,
             history_status=PROFILE_HISTORY_STATUS_INIT,
             current_user=current_user_info
         )
