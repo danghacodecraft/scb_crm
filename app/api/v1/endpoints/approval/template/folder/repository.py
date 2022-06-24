@@ -4,7 +4,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn
-from app.third_parties.oracle.models.document_file.model import DocumentFileFolder, DocumentFile
+from app.third_parties.oracle.models.document_file.model import (
+    DocumentFile, DocumentFileFolder
+)
 
 
 async def repos_get_approval_template_folder_info(
@@ -65,5 +67,6 @@ async def repos_get_files_from_folders(
             DocumentFile
         )
         .filter(DocumentFile.document_file_folder_id.in_(tuple(folder_ids)))
+        .order_by(DocumentFile.created_at)
     ).scalars().all()
     return ReposReturn(data=files)
