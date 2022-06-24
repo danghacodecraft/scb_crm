@@ -13,7 +13,7 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
 )
 from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingBusinessForm, BookingCustomer, TransactionDaily,
-    TransactionSender, BookingAccount
+    TransactionSender
 )
 from app.third_parties.oracle.models.master_data.others import (
     BusinessJob, BusinessType, SlaTransaction, TransactionJob,
@@ -21,7 +21,8 @@ from app.third_parties.oracle.models.master_data.others import (
     TransactionStagePhase, TransactionStageRole, TransactionStageStatus
 )
 from app.utils.constant.business_type import (
-    BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA, BUSINESS_TYPES
+    BUSINESS_TYPE_AMOUNT_BLOCK, BUSINESS_TYPE_INIT_CIF,
+    BUSINESS_TYPE_OPEN_CASA, BUSINESS_TYPES
 )
 from app.utils.constant.cif import IMAGE_TYPE_FACE
 from app.utils.error_messages import (
@@ -61,7 +62,7 @@ async def repos_get_approval_process(booking_id: str, session: Session) -> Repos
             .order_by(desc(trans_root_daily.created_at))
         ).all()
 
-    if booking.business_type_id == BUSINESS_TYPE_OPEN_CASA:
+    if booking.business_type_id == BUSINESS_TYPE_OPEN_CASA or booking.business_type_id == BUSINESS_TYPE_AMOUNT_BLOCK:
         transactions = session.execute(
             select(
                 TransactionDaily,
