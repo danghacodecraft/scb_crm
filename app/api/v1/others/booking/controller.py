@@ -168,7 +168,7 @@ class CtrBooking(BaseController):
         if not customer:
             return self.response_exception(
                 msg=ERROR_CUSTOMER_NOT_EXIST,
-                loc=f"booking_id: {booking_id}, cif_number: {customer.cif_number}"
+                loc=f"booking_id: {booking_id}"
             )
 
         return customer

@@ -6,7 +6,7 @@ from fastapi.security import (
 )
 
 from app.api.base.except_custom import ExceptionHandle
-from app.api.v1.endpoints.user.repository import repos_check_token
+from app.api.v1.endpoints.user.repository import repos_check_token, repos_get_user_info_core_fcc
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.utils.error_messages import ERROR_INVALID_TOKEN
 
