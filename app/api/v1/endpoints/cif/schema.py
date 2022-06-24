@@ -44,8 +44,8 @@ class ProfileHistoryOfDayResponse(BaseSchema):
     user_id: str = Field(..., description="ID nhân viên")
     user_name: str = Field(..., description="Tên nhân viên")
     position_id: str = Field(..., description="ID Chức vụ")
-    position_code: str = Field(..., description="Mã Chức vụ")
-    position_name: str = Field(..., description="Tên Chức vụ")
+    position_code: Optional[str] = Field(..., description="Mã Chức vụ")
+    position_name: Optional[str] = Field(..., description="Tên Chức vụ")
 
 
 class CifProfileHistoryResponse(BaseSchema):
