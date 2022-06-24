@@ -7,18 +7,48 @@ from app.api.v1.endpoints.approval.template.detail.repository import (
 from app.api.v1.endpoints.third_parties.gw.customer.controller import (
     CtrGWCustomer
 )
+from app.api.v1.others.booking.controller import CtrBooking
 from app.settings.config import DATE_INPUT_OUTPUT_EKYC_FORMAT
 from app.utils.constant.cif import CONTACT_ADDRESS_CODE, RESIDENT_ADDRESS_CODE
 from app.utils.constant.gw import GW_REQUEST_PARAMETER_CO_OWNER
 from app.utils.constant.tms_dms import (
-    PATH_FORM_1, PATH_FORM_2, PATH_FORM_3, PATH_FORM_4, PATH_FORM_5,
-    PATH_FORM_6, TMS_TRANSLATE_AVERAGE_INCOME_AMOUNT_FORM_1,
+    CIF_TEMPLATE_1, CIF_TEMPLATE_2, CIF_TEMPLATE_3, CIF_TEMPLATE_4,
+    CIF_TEMPLATE_5, CIF_TEMPLATE_6, CIF_TEMPLATES, PATH_FORM_1, PATH_FORM_2,
+    PATH_FORM_3, PATH_FORM_4, PATH_FORM_5, PATH_FORM_6,
+    TMS_TRANSLATE_AVERAGE_INCOME_AMOUNT_FORM_1,
     TMS_TRANSLATE_AVERAGE_INCOME_AMOUNT_FORM_2, TMS_TRANSLATE_CONTACT_TYPE_NAME
 )
 from app.utils.functions import datetime_to_string, today
 
 
 class CtrTemplateDetail(BaseController):
+    async def ctr_get_template_detail(self, template_id, booking_id):
+        customer = await CtrBooking().ctr_get_customer_from_booking(booking_id=booking_id)
+        cif_id = customer.id
+        template = None
+        if template_id not in CIF_TEMPLATES:
+            return self.response_exception(msg='template_id not exist', detail=f'template_id: {template_id}')
+
+        if template_id == CIF_TEMPLATE_1:
+            template = await self.ctr_form_1(cif_id)
+
+        if template_id == CIF_TEMPLATE_2:
+            template = await self.ctr_form_2(cif_id)
+
+        if template_id == CIF_TEMPLATE_3:
+            template = await self.ctr_form_3(cif_id)
+
+        if template_id == CIF_TEMPLATE_4:
+            template = await self.ctr_form_4(cif_id)
+
+        if template_id == CIF_TEMPLATE_5:
+            template = await self.ctr_form_5(cif_id)
+
+        if template_id == CIF_TEMPLATE_6:
+            template = await self.ctr_form_6(cif_id)
+
+        return self.response(template)
+
     async def ctr_form_1(self, cif_id: str):
         """
         Biểu mẫu 1
@@ -150,15 +180,22 @@ class CtrTemplateDetail(BaseController):
 
         # Thẻ ghi nợ (Thẻ chính - Thẻ phụ)
         if main_cards:
-            data_request.update({
-                "S1.A.1.10.10": main_cards[0].BrandOfCard.name,
-                "S1.A.1.10.3": [main_cards[0].CardIssuanceType.name],
-                "S1.A.1.10.16": main_cards[0].CasaAccount.casa_account_number,
-                "S1.A.1.10.14": {
-                    "value": main_cards[0].Customer.full_name,
-                    "type": "embossed_table"
-                }
-            })
+            if main_cards[0].BrandOfCard:
+                data_request.update({
+                    "S1.A.1.10.10": main_cards[0].BrandOfCard.name,
+                })
+            if main_cards[0].CardIssuanceType:
+                data_request.update({
+                    "S1.A.1.10.3": [main_cards[0].CardIssuanceType.name],
+                })
+            if main_cards[0].CasaAccount:
+                data_request.update({
+                    "S1.A.1.10.16": main_cards[0].CasaAccount.casa_account_number,
+                })
+            if main_cards[0].Customer:
+                data_request.update({
+                    "S1.A.1.10.14": main_cards[0].Customer.full_name,
+                })
 
         if sup_cards:
             sup_cards_res = [{
@@ -195,12 +232,12 @@ class CtrTemplateDetail(BaseController):
                 data_request.update({"S1.A.1.9.15.1": ["Tiền mặt"]})
 
         # Hình thức SCB liên lạc với khách hàng
-        if customer_contact_type_infos:
-            data_request.update({
-                "S1.A.1.2.5": [
-                    TMS_TRANSLATE_CONTACT_TYPE_NAME[customer_contact_type_info.CustomerContactType.name]
-                    for customer_contact_type_info in customer_contact_type_infos]
-            })
+        data_request["S1.A.1.2.5"] = []
+
+        for customer_contact_type_info in customer_contact_type_infos:
+            if customer_contact_type_info.CustomerContactType:
+                data_request["S1.A.1.2.5"].append(
+                    TMS_TRANSLATE_CONTACT_TYPE_NAME[customer_contact_type_info.CustomerContactType.name])
 
         # Fatca
         if fatca_info:
@@ -365,18 +402,25 @@ class CtrTemplateDetail(BaseController):
                                  "S1.A.1.8": ["Đồng chủ tài khoản/Joint account holder"]})
 
         # Thẻ ghi nợ (Thẻ chính - Thẻ phụ)
-        if main_cards:
-            data_request.update({
-                "S1.A.1.10.10": main_cards[0].BrandOfCard.name,
-                "S1.A.1.10.3": ["Thông thường/Regular"] if main_cards[0].CardIssuanceType.name == "THÔNG THƯỜNG" else [
-                    "Nhanh/Instant"],
-                "S1.A.1.10.16": main_cards[0].CasaAccount.casa_account_number,
-                "S1.A.1.10.14": {
-                    "value": main_cards[0].Customer.full_name,
-                    "type": "embossed_table"
 
-                }
-            })
+        if main_cards:
+            if main_cards[0].BrandOfCard:
+                data_request.update({
+                    "S1.A.1.10.10": main_cards[0].BrandOfCard.name,
+                })
+            if main_cards[0].CardIssuanceType:
+                data_request.update({
+                    "S1.A.1.10.3": ["Thông thường/Regular"]
+                    if main_cards[0].CardIssuanceType.name == "THÔNG THƯỜNG" else ["Nhanh/Instant"],
+                })
+            if main_cards[0].CasaAccount:
+                data_request.update({
+                    "S1.A.1.10.16": main_cards[0].CasaAccount.casa_account_number,
+                })
+            if main_cards[0].Customer:
+                data_request.update({
+                    "S1.A.1.10.14": main_cards[0].Customer.full_name,
+                })
 
         if sup_cards:
             sup_cards_res = [{
@@ -412,12 +456,12 @@ class CtrTemplateDetail(BaseController):
                 data_request.update({"S1.A.1.9.15.1": ["Tiền mặt/Cash"]})
 
         # Hình thức SCB liên lạc với khách hàng
-        if customer_contact_type_infos:
-            data_request.update({
-                "S1.A.1.2.5": [
-                    TMS_TRANSLATE_CONTACT_TYPE_NAME[customer_contact_type_info.CustomerContactType.name]
-                    for customer_contact_type_info in customer_contact_type_infos]
-            })
+        data_request["S1.A.1.2.5"] = []
+
+        for customer_contact_type_info in customer_contact_type_infos:
+            if customer_contact_type_info.CustomerContactType:
+                data_request["S1.A.1.2.5"].append(
+                    TMS_TRANSLATE_CONTACT_TYPE_NAME[customer_contact_type_info.CustomerContactType.name])
 
         # Fatca
         if fatca_info:
@@ -454,7 +498,7 @@ class CtrTemplateDetail(BaseController):
 
     async def ctr_form_3(self, cif_id: str):
         """
-            Biểu mẫu 3
+            Biểu mẫu 6
         """
 
         data_request = {}
@@ -469,7 +513,6 @@ class CtrTemplateDetail(BaseController):
                 staying_address = address
             if address.CustomerAddress.address_type_id == RESIDENT_ADDRESS_CODE:
                 resident_address = address
-
         if customer_db:
             cust = customer_db[0]
             data_request.update({
@@ -492,29 +535,26 @@ class CtrTemplateDetail(BaseController):
                 "S1.A.1.2.27": resident_address.AddressDistrict.name,
                 "S1.A.1.2.28": resident_address.AddressProvince.name,
                 "S1.A.1.2.29": resident_address.AddressCountry.name,
-                # TODO: Địa chỉ cư trú tại nước ngoài (chưa có)
-                "S1.A.1.2.30": "",
-                "S1.A.1.2.31": "",
-                "S1.A.1.2.32": "",
-                "S1.A.1.2.33": "",
                 "S1.A.1.2.1": cust.Customer.mobile_number,
                 "S1.A.1.5.4": cust.Career.name,
-
             })
             # Những field option
-            data_request.update({"S1.A.1.2.2": cust.Customer.telephone_number if cust.Customer.telephone_number else ''})
-            data_request.update({"S1.A.1.2.3": cust.Customer.email if cust.Customer.email else ''})
+            if cust.Customer.telephone_number:
+                data_request.update({"S1.A.1.2.2": cust.Customer.telephone_number})
+            if cust.Customer.email:
+                data_request.update({"S1.A.1.2.3": cust.Customer.email})
 
         # Cam kết
         time = today()
         data_request.update({
-            "S1.A.1.16.10": f'{time.day}',
-            "S1.A.1.16.11": f'{time.month}',
-            "S1.A.1.16.12": f'{time.year}',
+            "S1.A.1.11.10": f'{time.day}',
+            "S1.A.1.11.11": f'{time.month}',
+            "S1.A.1.11.12": f'{time.year}',
+
         })
 
         data_tms = self.call_repos(
-            await repo_form(data_request=data_request, path=PATH_FORM_3))
+            await repo_form(data_request=data_request, path=PATH_FORM_6))
         return self.response(data_tms)
 
     async def ctr_form_4(self, cif_id: str):
@@ -641,7 +681,7 @@ class CtrTemplateDetail(BaseController):
 
     async def ctr_form_6(self, cif_id: str):
         """
-            Biểu mẫu 6
+            Biểu mẫu 3
         """
 
         data_request = {}
@@ -656,6 +696,7 @@ class CtrTemplateDetail(BaseController):
                 staying_address = address
             if address.CustomerAddress.address_type_id == RESIDENT_ADDRESS_CODE:
                 resident_address = address
+
         if customer_db:
             cust = customer_db[0]
             data_request.update({
@@ -678,24 +719,27 @@ class CtrTemplateDetail(BaseController):
                 "S1.A.1.2.27": resident_address.AddressDistrict.name,
                 "S1.A.1.2.28": resident_address.AddressProvince.name,
                 "S1.A.1.2.29": resident_address.AddressCountry.name,
+                # TODO: Địa chỉ cư trú tại nước ngoài (chưa có)
+                "S1.A.1.2.30": "",
+                "S1.A.1.2.31": "",
+                "S1.A.1.2.32": "",
+                "S1.A.1.2.33": "",
                 "S1.A.1.2.1": cust.Customer.mobile_number,
                 "S1.A.1.5.4": cust.Career.name,
+
             })
             # Những field option
-            if cust.Customer.telephone_number:
-                data_request.update({"S1.A.1.2.2": cust.Customer.telephone_number})
-            if cust.Customer.email:
-                data_request.update({"S1.A.1.2.3": cust.Customer.email})
+            data_request.update({"S1.A.1.2.2": cust.Customer.telephone_number if cust.Customer.telephone_number else ''})
+            data_request.update({"S1.A.1.2.3": cust.Customer.email if cust.Customer.email else ''})
 
         # Cam kết
         time = today()
         data_request.update({
-            "S1.A.1.11.10": f'{time.day}',
-            "S1.A.1.11.11": f'{time.month}',
-            "S1.A.1.11.12": f'{time.year}',
-
+            "S1.A.1.16.10": f'{time.day}',
+            "S1.A.1.16.11": f'{time.month}',
+            "S1.A.1.16.12": f'{time.year}',
         })
 
         data_tms = self.call_repos(
-            await repo_form(data_request=data_request, path=PATH_FORM_6))
+            await repo_form(data_request=data_request, path=PATH_FORM_3))
         return self.response(data_tms)

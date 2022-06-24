@@ -9,6 +9,7 @@ async def repos_gw_select_category(
         transaction_value: str,
         current_user: AuthResponse
 ):
+    current_user = current_user.user_info
     is_success, select_category = await service_gw.get_select_category(
         transaction_name=transaction_name,
         transaction_value=transaction_value,
