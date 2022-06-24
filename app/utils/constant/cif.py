@@ -9,6 +9,7 @@ CIF_NUMBER_REGEX = r"^\d{7}$"
 
 BUSINESS_TYPE_CODE_CIF = "CIF"
 BUSINESS_TYPE_CODE_OPEN_CASA = "OPEN_CASA"
+BUSINESS_TYPE_CODE_CLOSE_CASA = "CLOSE_CASA"
 
 BUSINESS_TYPE_CODE_AMOUNT_BLOCK = "AMOUNT_BLOCK"
 BUSINESS_TYPE_CODE_AMOUNT_UNBLOCK = "AMOUNT_UNBLOCK"
@@ -232,7 +233,8 @@ PROFILE_HISTORY_STATUS = {
 
 PROFILE_HISTORY_DESCRIPTIONS_INIT_CIF = "Khởi tạo CIF"
 PROFILE_HISTORY_DESCRIPTIONS_EDIT_CIF = "Tu chỉnh CIF"
-PROFILE_HISTORY_DESCRIPTIONS_INIT_PAYMENT_ACCOUNT = "Mở tài khoản thanh toán"
+PROFILE_HISTORY_DESCRIPTIONS_OPEN_CASA_ACCOUNT = "Mở tài khoản thanh toán"
+PROFILE_HISTORY_DESCRIPTIONS_CLOSE_CASA_ACCOUNT = "Đóng tài khoản thanh toán"
 PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_ACCOUNT = "Mở tài khoản tiết kiệm"
 PROFILE_HISTORY_DESCRIPTIONS_INIT_DEBIT_CARD = "Tạo thẻ ghi nợ"
 PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING = "Tạo E-Banking"
@@ -248,9 +250,16 @@ PROFILE_HISTORY_DESCRIPTIONS = {
     },
     # PROFILE_HISTORY_DESCRIPTIONS_EDIT_CIF: "Tu chỉnh CIF",
     BUSINESS_TYPE_CODE_OPEN_CASA: {
-        'description': PROFILE_HISTORY_DESCRIPTIONS_INIT_PAYMENT_ACCOUNT,
+        'description': PROFILE_HISTORY_DESCRIPTIONS_OPEN_CASA_ACCOUNT,
         'content': "Giao dịch viên đang chuẩn bị hồ sơ. "
-                   "Mốc thời gian tính từ lúc GDV điền thông tin tab đầu tiên [Mở tài khoản thanh toán]"
+                   "Mốc thời gian tính từ lúc GDV điền thông tin tab đầu tiên "
+                   f"[{PROFILE_HISTORY_DESCRIPTIONS_OPEN_CASA_ACCOUNT}]"
+    },
+    BUSINESS_TYPE_CODE_CLOSE_CASA: {
+        'description': PROFILE_HISTORY_DESCRIPTIONS_CLOSE_CASA_ACCOUNT,
+        'content': "Giao dịch viên đang chuẩn bị hồ sơ. "
+                   "Mốc thời gian tính từ lúc GDV điền thông tin tab đầu tiên "
+                   f"[{PROFILE_HISTORY_DESCRIPTIONS_CLOSE_CASA_ACCOUNT}]"
     },
     # PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_ACCOUNT: "Mở tài khoản tiết kiệm",
     # PROFILE_HISTORY_DESCRIPTIONS_INIT_DEBIT_CARD: "Tạo thẻ ghi nợ",
