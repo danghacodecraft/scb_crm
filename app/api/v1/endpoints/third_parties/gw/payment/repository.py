@@ -214,7 +214,6 @@ async def repos_gw_payment_amount_unblock(
 ):
     response_data = []
     for item in request_data_gw:
-        print('item', item)
         is_success, gw_payment_amount_unblock = await service_gw.gw_payment_amount_unblock(
             data_input=item,
             current_user=current_user.user_info
@@ -234,7 +233,7 @@ async def repos_gw_payment_amount_unblock(
         amount_unblock = gw_payment_amount_unblock.get('amountUnBlock_out').get('transaction_info')
 
         response_data.append({
-            "account_number": item.get('account_info').get('balance_lock_info').get('account_ref_no'),
+            "account_ref": item.get('account_info').get('balance_lock_info').get('account_ref_no'),
             "transaction": {
                 "code": amount_unblock.get('transaction_error_code'),
                 "msg": amount_unblock.get('transaction_error_msg')

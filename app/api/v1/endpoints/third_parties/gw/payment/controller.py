@@ -198,6 +198,14 @@ class CtrGWPayment(BaseController):
             BOOKING_ID: str,
             account_amount_unblocks: list
     ):
+        # Kiểm tra booking
+        await CtrBooking().ctr_get_booking_and_validate(
+            booking_id=BOOKING_ID,
+            business_type_code=BUSINESS_TYPE_AMOUNT_UNBLOCK,
+            check_correct_booking_flag=False,
+            loc=f'booking_id: {BOOKING_ID}'
+        )
+
         current_user = self.current_user
         request_data = []
         account_ref = []
