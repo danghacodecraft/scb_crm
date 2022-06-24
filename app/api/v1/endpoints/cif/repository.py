@@ -356,4 +356,4 @@ async def repos_get_account_id_by_account_number(account_number: str, session: S
         return ReposReturn(data=response_data)
 
     if not response_data:
-        return ReposReturn(is_error=True, msg="account_number is not exist")
+        return ReposReturn(is_error=True, msg="account_number is not exist", detail=f"account_number: {account_number}")

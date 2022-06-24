@@ -12,8 +12,11 @@ from app.third_parties.oracle.models.cif.form.model import (
     TransactionDaily, TransactionSender
 )
 from app.third_parties.oracle.models.master_data.others import (
-    SlaTransaction, TransactionStage, TransactionStageLane,
+    SlaTransaction, TransactionJob, TransactionStage, TransactionStageLane,
     TransactionStagePhase, TransactionStageRole, TransactionStageStatus
+)
+from app.utils.constant.approval import (
+    BUSINESS_JOB_CODE_AMOUNT_BLOCK, BUSINESS_JOB_CODE_START_AMOUNT_BLOCK
 )
 from app.utils.constant.cif import (
     BUSINESS_FORM_AMOUNT_BLOCK, BUSINESS_FORM_AMOUNT_BLOCK_PD,
@@ -104,6 +107,15 @@ async def repos_payment_amount_block(
             save_flag=True,
             created_at=now(),
             log_data=history_datas
+        )),
+        TransactionJob(**dict(
+            transaction_id=generate_uuid(),
+            booking_id=booking_id,
+            business_job_id=BUSINESS_JOB_CODE_START_AMOUNT_BLOCK,
+            complete_flag=True,
+            error_code=None,
+            error_desc=None,
+            created_at=now()
         ))
     ])
     session.bulk_save_objects(BookingAccount(**account) for account in saving_booking_account)
@@ -142,6 +154,17 @@ async def repos_gw_payment_amount_block(
                 log_data=orjson_dumps(gw_payment_amount_block)
             ))
         )
+
+        session.add(TransactionJob(**dict(
+            transaction_id=generate_uuid(),
+            booking_id=booking_id,
+            business_job_id=BUSINESS_JOB_CODE_AMOUNT_BLOCK,
+            complete_flag=is_success,
+            error_code=gw_payment_amount_block.get('amountBlock_out').get('transaction_info').get('transaction_error_code'),
+            error_desc=gw_payment_amount_block.get('amountBlock_out').get('transaction_info').get('transaction_error_msg'),
+            created_at=now()
+        )))
+
         amount_block = gw_payment_amount_block.get('amountBlock_out').get('data_output')
 
         if isinstance(amount_block, dict):
