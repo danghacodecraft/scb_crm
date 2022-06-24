@@ -23,8 +23,8 @@ from app.utils.constant.approval import CIF_STAGE_INIT
 from app.utils.constant.business_type import BUSINESS_TYPES
 from app.utils.constant.casa import CASA_ACCOUNT_STATUS_APPROVED
 from app.utils.constant.cif import (
-    BUSINESS_TYPE_CODE_AMOUNT_BLOCK, BUSINESS_TYPE_CODE_CIF,
-    BUSINESS_TYPE_CODE_OPEN_CASA
+    BUSINESS_TYPE_CODE_AMOUNT_BLOCK, BUSINESS_TYPE_CODE_AMOUNT_UNBLOCK,
+    BUSINESS_TYPE_CODE_CIF, BUSINESS_TYPE_CODE_OPEN_CASA
 )
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_OPEN_CIF, IDM_MENU_CODE_OPEN_CIF,
@@ -159,7 +159,7 @@ class CtrBooking(BaseController):
                 booking_id=booking_id, session=self.oracle_session
             ))
 
-        if booking.business_type.id == BUSINESS_TYPE_CODE_AMOUNT_BLOCK:
+        if booking.business_type.id == BUSINESS_TYPE_CODE_AMOUNT_BLOCK or booking.business_type.id == BUSINESS_TYPE_CODE_AMOUNT_UNBLOCK:
 
             customer = self.call_repos(await repos_get_customer_from_booking_account_amount_block(
                 booking_id=booking_id, session=self.oracle_session
