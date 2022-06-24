@@ -24,3 +24,9 @@ TMS_TRANSLATE_AVERAGE_INCOME_AMOUNT_FORM_2 = {
     "TỪ 70 ĐẾN DƯỚI 100 TRIỆU": "70 triệu đến 100 triệu/70 - 100 million",
     "TRÊN 100 TRIỆU": "Trên 100 triệu/>100 million"
 }
+
+TMS_TRANSLATE_CONTACT_TYPE_NAME = {
+    "EMAIL": "Email",
+    "MOBILE": "Điện thoại/Telephone",
+    "POST": "Gửi thư/Post"
+}
