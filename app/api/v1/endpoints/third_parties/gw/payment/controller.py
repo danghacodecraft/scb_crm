@@ -195,13 +195,18 @@ class CtrGWPayment(BaseController):
 
     async def ctr_payment_amount_unblock(
             self,
-            booking_id: str,
+            BOOKING_ID: str,
             account_amount_unblocks: list
     ):
         current_user = self.current_user
         request_data = []
-        for item in account_amount_unblocks:
+        account_ref = []
+        account_numbers = []
+        for account_number in account_amount_unblocks:
+            if account_number.account_number in account_numbers:
+                return self.response_exception(msg="Duplicate Account_number", detail=f"Account_number {account_number.account_number}")
 
+            account_numbers.append(account_number.account_number)
             p_blk_detail = {
                 "AMOUNT": "",
                 "HOLD_CODE": "",
@@ -212,57 +217,81 @@ class CtrGWPayment(BaseController):
                     "ACCOUNT_CHARGE": ""
                 }
             }
+            for account_amount in account_number.account_amount_block:
+                if account_amount.account_ref_no in account_ref:
+                    return self.response_exception(msg="Duplicate Account_ref", detail=f"Account_ref {account_amount.account_ref_no}")
+                account_ref.append(account_amount.account_ref_no)
+                if account_amount.p_type_unblock == "P":
+                    if not account_amount.p_blk_detail:
+                        return self.response_exception(msg="type_unblock is not data")
 
-            if item.p_type_unblock == "P":
-                if not item.p_blk_detail:
-                    return self.response_exception(msg="type_unblock is not data")
-
-                p_blk_detail = {
-                    "AMOUNT": item.p_blk_detail.amount,
-                    "HOLD_CODE": item.p_blk_detail.hold_code,
-                    "EXPIRY_DATE": item.p_blk_detail.expiry_date,
-                    "REMARKS": item.p_blk_detail.remarks,
-                    "CHARGE_DETAIL": {
-                        "TYPE_CHARGE": "",
-                        "ACCOUNT_CHARGE": ""
-                    }
-                }
-
-            request_data.append({
-                "account_info": {
-                    "balance_lock_info": {
-                        "account_ref_no": item.account_ref_no
-                    }
-                },
-                "p_type_unblock": item.p_type_unblock,
-                "p_blk_detail": p_blk_detail,
-                # TODO hard core
-                "p_blk_charge": [
-                    {
-                        "CHARGE_NAME": "",
-                        "CHARGE_AMOUNT": 0,
-                        "WAIVED": "N"
-                    }
-                ],
-                # TODO hard core
-                "p_blk_udf": [
-                    {
-                        "UDF_NAME": "",
-                        "UDF_VALUE": "",
-                        "AMOUNT_UNBLOCK": {
-                            "UDF_NAME": "",
-                            "UDF_VALUE": ""
+                    p_blk_detail = {
+                        "AMOUNT": account_amount.p_blk_detail.amount,
+                        "HOLD_CODE": account_amount.p_blk_detail.hold_code,
+                        "EXPIRY_DATE": account_amount.p_blk_detail.expiry_date,
+                        "REMARKS": account_amount.p_blk_detail.remarks,
+                        "CHARGE_DETAIL": {
+                            "TYPE_CHARGE": "",
+                            "ACCOUNT_CHARGE": ""
                         }
                     }
-                ],
-                "staff_info_checker": {
+
+                request_data.append({
+                    "account_info": {
+                        "balance_lock_info": {
+                            "account_ref_no": account_amount.account_ref_no
+                        }
+                    },
+                    "p_type_unblock": account_amount.p_type_unblock,
+                    "p_blk_detail": p_blk_detail,
                     # TODO hard core
-                    "staff_name": "HOANT2"
-                },
-                "staff_info_maker": {
+                    "p_blk_charge": [
+                        {
+                            "CHARGE_NAME": "",
+                            "CHARGE_AMOUNT": 0,
+                            "WAIVED": "N"
+                        }
+                    ],
                     # TODO hard core
-                    "staff_name": "KHANHLQ"
-                }
+                    "p_blk_udf": [
+                        {
+                            "UDF_NAME": "",
+                            "UDF_VALUE": "",
+                            "AMOUNT_UNBLOCK": {
+                                "UDF_NAME": "",
+                                "UDF_VALUE": ""
+                            }
+                        }
+                    ],
+                    "staff_info_checker": {
+                        # TODO hard core
+                        "staff_name": "HOANT2"
+                    },
+                    "staff_info_maker": {
+                        # TODO hard core
+                        "staff_name": "KHANHLQ"
+                    }
+                })
+
+        saving_booking_account = []
+        saving_booking_customer = []
+
+        for account_number in account_numbers:
+            # TODO check account_number in db crm
+            response_data = self.call_repos(
+                await repos_get_account_id_by_account_number(
+                    account_number=account_number,
+                    session=self.oracle_session
+                ))
+            saving_booking_account.append({
+                "booking_id": BOOKING_ID,
+                "account_id": response_data.get('account_id'),
+                "created_at": now()
+            })
+
+            saving_booking_customer.append({
+                "booking_id": BOOKING_ID,
+                "customer_id": response_data.get('customer_id')
             })
         # Tạo data TransactionDaily và các TransactionStage
         transaction_data = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
@@ -290,12 +319,14 @@ class CtrGWPayment(BaseController):
             )
 
         booking_id = self.call_repos(await repos_payment_amount_unblock(
-            booking_id=booking_id,
+            booking_id=BOOKING_ID,
             saving_transaction_stage_status=saving_transaction_stage_status,
             saving_transaction_stage=saving_transaction_stage,
             saving_transaction_stage_phase=saving_transaction_stage_phase,
             saving_sla_transaction=saving_sla_transaction,
             saving_transaction_stage_lane=saving_transaction_stage_lane,
+            saving_booking_account=saving_booking_account,
+            saving_booking_customer=saving_booking_customer,
             saving_transaction_stage_role=saving_transaction_stage_role,
             saving_transaction_daily=saving_transaction_daily,
             saving_transaction_sender=saving_transaction_sender,
