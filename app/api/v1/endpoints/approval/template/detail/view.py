@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Depends, Header, Path
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -27,30 +27,12 @@ router = APIRouter()
 
 )
 async def view_form(
-        cif_id: str = Path(..., description='Cif_id'),
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         template_id: str = Path(..., description='template_id'),
         current_user=Depends(get_current_user_from_header())
 ):
-    if template_id == "1":
-        template = await CtrTemplateDetail(current_user).ctr_form_1(cif_id)
-        return ResponseData(**template)
-
-    if template_id == "2":
-        template = await CtrTemplateDetail(current_user).ctr_form_2(cif_id)
-        return ResponseData(**template)
-
-    if template_id == "3":
-        template = await CtrTemplateDetail(current_user).ctr_form_3(cif_id)
-        return ResponseData(**template)
-
-    if template_id == "4":
-        template = await CtrTemplateDetail(current_user).ctr_form_4(cif_id)
-        return ResponseData(**template)
-
-    if template_id == "5":
-        template = await CtrTemplateDetail(current_user).ctr_form_5(cif_id)
-        return ResponseData(**template)
-
-    if template_id == "6":
-        template = await CtrTemplateDetail(current_user).ctr_form_6(cif_id)
-        return ResponseData(**template)
+    template_detail_info = await CtrTemplateDetail(current_user).ctr_get_template_detail(
+        template_id=template_id,
+        booking_id=BOOKING_ID
+    )
+    return ResponseData(**template_detail_info)
