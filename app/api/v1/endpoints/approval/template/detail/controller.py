@@ -150,15 +150,22 @@ class CtrTemplateDetail(BaseController):
 
         # Thẻ ghi nợ (Thẻ chính - Thẻ phụ)
         if main_cards:
-            data_request.update({
-                "S1.A.1.10.10": main_cards[0].BrandOfCard.name,
-                "S1.A.1.10.3": [main_cards[0].CardIssuanceType.name],
-                "S1.A.1.10.16": main_cards[0].CasaAccount.casa_account_number,
-                "S1.A.1.10.14": {
-                    "value": main_cards[0].Customer.full_name,
-                    "type": "embossed_table"
-                }
-            })
+            if main_cards[0].BrandOfCard:
+                data_request.update({
+                    "S1.A.1.10.10": main_cards[0].BrandOfCard.name,
+                })
+            if main_cards[0].CardIssuanceType:
+                data_request.update({
+                    "S1.A.1.10.3": [main_cards[0].CardIssuanceType.name],
+                })
+            if main_cards[0].CasaAccount:
+                data_request.update({
+                    "S1.A.1.10.16": main_cards[0].CasaAccount.casa_account_number,
+                })
+            if main_cards[0].Customer:
+                data_request.update({
+                    "S1.A.1.10.14": main_cards[0].Customer.full_name,
+                })
 
         if sup_cards:
             sup_cards_res = [{
@@ -195,12 +202,12 @@ class CtrTemplateDetail(BaseController):
                 data_request.update({"S1.A.1.9.15.1": ["Tiền mặt"]})
 
         # Hình thức SCB liên lạc với khách hàng
-        if customer_contact_type_infos:
-            data_request.update({
-                "S1.A.1.2.5": [
-                    TMS_TRANSLATE_CONTACT_TYPE_NAME[customer_contact_type_info.CustomerContactType.name]
-                    for customer_contact_type_info in customer_contact_type_infos]
-            })
+        data_request["S1.A.1.2.5"] = []
+
+        for customer_contact_type_info in customer_contact_type_infos:
+            if customer_contact_type_info.CustomerContactType:
+                data_request["S1.A.1.2.5"].append(
+                    TMS_TRANSLATE_CONTACT_TYPE_NAME[customer_contact_type_info.CustomerContactType.name])
 
         # Fatca
         if fatca_info:
@@ -365,18 +372,25 @@ class CtrTemplateDetail(BaseController):
                                  "S1.A.1.8": ["Đồng chủ tài khoản/Joint account holder"]})
 
         # Thẻ ghi nợ (Thẻ chính - Thẻ phụ)
-        if main_cards:
-            data_request.update({
-                "S1.A.1.10.10": main_cards[0].BrandOfCard.name,
-                "S1.A.1.10.3": ["Thông thường/Regular"] if main_cards[0].CardIssuanceType.name == "THÔNG THƯỜNG" else [
-                    "Nhanh/Instant"],
-                "S1.A.1.10.16": main_cards[0].CasaAccount.casa_account_number,
-                "S1.A.1.10.14": {
-                    "value": main_cards[0].Customer.full_name,
-                    "type": "embossed_table"
 
-                }
-            })
+        if main_cards:
+            if main_cards[0].BrandOfCard:
+                data_request.update({
+                    "S1.A.1.10.10": main_cards[0].BrandOfCard.name,
+                })
+            if main_cards[0].CardIssuanceType:
+                data_request.update({
+                    "S1.A.1.10.3": ["Thông thường/Regular"]
+                    if main_cards[0].CardIssuanceType.name == "THÔNG THƯỜNG" else ["Nhanh/Instant"],
+                })
+            if main_cards[0].CasaAccount:
+                data_request.update({
+                    "S1.A.1.10.16": main_cards[0].CasaAccount.casa_account_number,
+                })
+            if main_cards[0].Customer:
+                data_request.update({
+                    "S1.A.1.10.14": main_cards[0].Customer.full_name,
+                })
 
         if sup_cards:
             sup_cards_res = [{
@@ -412,12 +426,12 @@ class CtrTemplateDetail(BaseController):
                 data_request.update({"S1.A.1.9.15.1": ["Tiền mặt/Cash"]})
 
         # Hình thức SCB liên lạc với khách hàng
-        if customer_contact_type_infos:
-            data_request.update({
-                "S1.A.1.2.5": [
-                    TMS_TRANSLATE_CONTACT_TYPE_NAME[customer_contact_type_info.CustomerContactType.name]
-                    for customer_contact_type_info in customer_contact_type_infos]
-            })
+        data_request["S1.A.1.2.5"] = []
+
+        for customer_contact_type_info in customer_contact_type_infos:
+            if customer_contact_type_info.CustomerContactType:
+                data_request["S1.A.1.2.5"].append(
+                    TMS_TRANSLATE_CONTACT_TYPE_NAME[customer_contact_type_info.CustomerContactType.name])
 
         # Fatca
         if fatca_info:
