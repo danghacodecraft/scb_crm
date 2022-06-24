@@ -168,6 +168,8 @@ async def repos_payment_amount_unblock(
         saving_transaction_stage_phase,
         saving_transaction_stage_role,
         saving_transaction_daily,
+        saving_booking_customer,
+        saving_booking_account,
         saving_transaction_sender,
         request_json: json,
         history_data: json,
@@ -192,7 +194,8 @@ async def repos_payment_amount_unblock(
             log_data=history_data
         ))
     ])
-
+    session.bulk_save_objects(BookingAccount(**account) for account in saving_booking_account)
+    session.bulk_save_objects(BookingCustomer(**customer) for customer in saving_booking_customer)
     # Update Booking
     session.execute(
         update(Booking)
