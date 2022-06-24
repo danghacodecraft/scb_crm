@@ -16,7 +16,7 @@ from app.third_parties.oracle.models.cif.form.model import (
     TransactionSender
 )
 from app.third_parties.oracle.models.master_data.others import (
-    BusinessJob, BusinessType, SlaTransaction, TransactionJob,
+    BusinessJob, BusinessType, TransactionJob,
     TransactionStage, TransactionStageAction, TransactionStageLane,
     TransactionStagePhase, TransactionStageRole, TransactionStageStatus
 )

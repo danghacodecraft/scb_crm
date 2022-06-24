@@ -15,9 +15,6 @@ from app.api.v1.endpoints.approval.repository import (
     repos_get_compare_image_transactions, repos_get_list_audit
 )
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
-from app.api.v1.endpoints.cif.basic_information.identity.identity_document.repository import (
-    repos_get_sla_transaction_parent_from_stage_transaction_id
-)
 from app.api.v1.endpoints.third_parties.gw.employee.repository import (
     repos_gw_get_employee_info_from_code
 )
@@ -29,7 +26,7 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
 from app.third_parties.oracle.models.master_data.identity import (
     CustomerIdentityType
 )
-from app.third_parties.oracle.models.master_data.others import BusinessJob, Sla
+from app.third_parties.oracle.models.master_data.others import BusinessJob
 from app.third_parties.services.idm import ServiceIDM
 from app.utils.constant.approval import (
     APPROVE_AUDIT_STAGES, APPROVE_SUPERVISOR_STAGES, CIF_STAGE_APPROVE_KSS,
@@ -47,9 +44,6 @@ from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_APPROVAL, IDM_GROUP_ROLE_CODE_OPEN_CIF,
     IDM_MENU_CODE_OPEN_CIF, IDM_PERMISSION_CODE_KSS, IDM_PERMISSION_CODE_KSV,
     IDM_PERMISSION_CODE_OPEN_CIF
-)
-from app.utils.constant.sla import (
-    SLA_CODE_CIF_AUDIT, SLA_CODE_CIF_SUPERVISOR, SLA_CODE_CIF_TELLER
 )
 from app.utils.error_messages import (
     ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
