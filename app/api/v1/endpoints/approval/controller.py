@@ -1012,32 +1012,20 @@ class CtrApproval(BaseController):
             updated_at=now()
         )
 
-        sla_id = None
-        if current_stage_code in INIT_STAGES:
-            sla_id = SLA_CODE_CIF_TELLER
-        elif current_stage_code in APPROVE_SUPERVISOR_STAGES:
-            sla_id = SLA_CODE_CIF_SUPERVISOR
-        elif current_stage_code in APPROVE_AUDIT_STAGES:
-            sla_id = SLA_CODE_CIF_AUDIT
-        else:
-            self.response_exception(msg="Current Stage is not exist")
-
-        sla = await self.get_model_object_by_id(model_id=sla_id, model=Sla, loc=f"sla_id: {sla_id}")
-
-        sla_trans_parent = self.call_repos(await repos_get_sla_transaction_parent_from_stage_transaction_id(
-            stage_transaction_id=previous_transaction_stage.id, session=self.oracle_session
-        ))
-
-        saving_sla_transaction = dict(
-            id=saving_sla_transaction_id,
-            parent_id=sla_trans_parent.id,
-            root_id=sla_trans_parent.root_id,
-            sla_id=sla_id,
-            sla_name=sla.name,
-            sla_deadline=sla.deadline,
-            active_flag=1,
-            created_at=now()
-        )
+        # sla_trans_parent = self.call_repos(await repos_get_sla_transaction_parent_from_stage_transaction_id(
+        #     stage_transaction_id=previous_transaction_stage.id, session=self.oracle_session
+        # ))
+        #
+        # saving_sla_transaction = dict(
+        #     id=saving_sla_transaction_id,
+        #     parent_id=sla_trans_parent.id,
+        #     root_id=sla_trans_parent.root_id,
+        #     sla_id=sla_id,
+        #     sla_name=sla.name,
+        #     sla_deadline=sla.deadline,
+        #     active_flag=1,
+        #     created_at=now()
+        # )
 
         saving_transaction_stage = dict(
             id=saving_transaction_stage_id,
@@ -1166,7 +1154,7 @@ class CtrApproval(BaseController):
             booking_id=booking_id,
             saving_transaction_stage_status=saving_transaction_stage_status,
             saving_transaction_stage_action=saving_transaction_stage_action,
-            saving_sla_transaction=saving_sla_transaction,
+            # saving_sla_transaction=saving_sla_transaction,
             saving_transaction_stage=saving_transaction_stage,
             saving_transaction_stage_lane=saving_transaction_stage_lane,
             saving_transaction_stage_phase=saving_transaction_stage_phase,

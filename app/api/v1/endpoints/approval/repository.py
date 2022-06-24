@@ -92,7 +92,7 @@ async def repos_approve(
         booking_id: str,
         saving_transaction_stage_status: dict,
         saving_transaction_stage_action: dict,
-        saving_sla_transaction: dict,
+        # saving_sla_transaction: dict,
         saving_transaction_stage: dict,
         saving_transaction_daily: dict,
         saving_transaction_stage_lane: dict,
@@ -132,7 +132,7 @@ async def repos_approve(
     session.add_all([
         TransactionStageStatus(**saving_transaction_stage_status),
         TransactionStageAction(**saving_transaction_stage_action),
-        SlaTransaction(**saving_sla_transaction),
+        # SlaTransaction(**saving_sla_transaction),
         TransactionStage(**saving_transaction_stage),
         TransactionDaily(**saving_transaction_daily),
         TransactionStageLane(**saving_transaction_stage_lane),
