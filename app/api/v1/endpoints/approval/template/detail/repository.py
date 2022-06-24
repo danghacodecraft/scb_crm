@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
-    CustomerAddress, CustomerProfessional
+    CustomerAddress, CustomerContactTypeData, CustomerProfessional
 )
 from app.third_parties.oracle.models.cif.basic_information.fatca.model import (
     CustomerFatca, CustomerFatcaDocument
@@ -32,7 +32,7 @@ from app.third_parties.oracle.models.master_data.card import (
     BrandOfCard, CardIssuanceType
 )
 from app.third_parties.oracle.models.master_data.customer import (
-    CustomerGender, CustomerRelationshipType
+    CustomerContactType, CustomerGender, CustomerRelationshipType
 )
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import (
@@ -83,7 +83,7 @@ async def repo_customer_info(cif_id: str, session: Session) -> ReposReturn:
             CustomerGender,
             AverageIncomeAmount,
             Position,
-            MaritalStatus,
+            MaritalStatus
         )
         .join(CustomerIndividualInfo, Customer.id == CustomerIndividualInfo.customer_id)
         .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id)
@@ -100,6 +100,22 @@ async def repo_customer_info(cif_id: str, session: Session) -> ReposReturn:
         .filter(Customer.id == cif_id)
     ).all()
     return ReposReturn(data=customer_info)
+
+
+async def repo_customer_contact_type_info(cif_id: str, session: Session) -> ReposReturn:
+    """
+    Lấy hình thức SCB liên hệ với khách hàng
+    """
+    customer_contact_type_info = session.execute(
+        select(
+            Customer,
+            CustomerContactType
+        )
+        .outerjoin(CustomerContactTypeData, Customer.id == CustomerContactTypeData.customer_id)
+        .outerjoin(CustomerContactType, CustomerContactTypeData.customer_contact_type_id == CustomerContactType.id)
+        .filter(Customer.id == cif_id)
+    ).all()
+    return ReposReturn(data=customer_contact_type_info)
 
 
 async def repo_customer_address(cif_id: str, session: Session) -> ReposReturn:
@@ -229,7 +245,7 @@ async def repos_fatca_info(cif_id: str, session: Session) -> ReposReturn:
     """
     data_fatca = session.execute(
         select(
-            CustomerFatca.value,
+            CustomerFatca,
             FatcaCategory,
             CustomerFatcaDocument
         ).join(
@@ -240,5 +256,5 @@ async def repos_fatca_info(cif_id: str, session: Session) -> ReposReturn:
         ).outerjoin(
             CustomerFatcaDocument, CustomerFatca.id == CustomerFatcaDocument.customer_fatca_id
         ).order_by(FatcaCategory.order_no)
-    ).all()
+    ).first()
     return ReposReturn(data=data_fatca)
