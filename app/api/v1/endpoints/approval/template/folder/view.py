@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Depends, Header
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -26,8 +26,10 @@ router = APIRouter()
     )
 )
 async def view_get_approval_template_folder_info(
-        cif_id=Path(...),
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         current_user=Depends(get_current_user_from_header())
 ):
-    template_folder_info = await CtrTemplateFolder(current_user).ctr_get_approval_template_folder_info(cif_id=cif_id)
+    template_folder_info = await CtrTemplateFolder(current_user).ctr_get_approval_template_folder_info(
+        booking_id=BOOKING_ID
+    )
     return ResponseData[List[ApprovalTemplateFolderResponse]](**template_folder_info)
