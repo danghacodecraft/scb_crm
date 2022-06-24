@@ -23,7 +23,7 @@ from app.utils.error_messages import ERROR_CIF_NUMBER_NOT_EXIST, ERROR_IDS_NOT_E
 from app.utils.functions import get_index_positions, now, generate_uuid
 
 
-# @auto_commit
+@auto_commit
 async def repos_save_casa_casa_account(
         saving_casa_accounts: List[dict],
         saving_bookings: List[dict],
