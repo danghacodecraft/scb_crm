@@ -168,6 +168,8 @@ async def repos_payment_amount_unblock(
         saving_transaction_stage_phase,
         saving_transaction_stage_role,
         saving_transaction_daily,
+        saving_booking_customer,
+        saving_booking_account,
         saving_transaction_sender,
         request_json: json,
         history_data: json,
@@ -192,7 +194,8 @@ async def repos_payment_amount_unblock(
             log_data=history_data
         ))
     ])
-
+    session.bulk_save_objects(BookingAccount(**account) for account in saving_booking_account)
+    session.bulk_save_objects(BookingCustomer(**customer) for customer in saving_booking_customer)
     # Update Booking
     session.execute(
         update(Booking)
@@ -211,7 +214,6 @@ async def repos_gw_payment_amount_unblock(
 ):
     response_data = []
     for item in request_data_gw:
-        print('item', item)
         is_success, gw_payment_amount_unblock = await service_gw.gw_payment_amount_unblock(
             data_input=item,
             current_user=current_user.user_info
@@ -231,7 +233,7 @@ async def repos_gw_payment_amount_unblock(
         amount_unblock = gw_payment_amount_unblock.get('amountUnBlock_out').get('transaction_info')
 
         response_data.append({
-            "account_number": item.get('account_info').get('balance_lock_info').get('account_ref_no'),
+            "account_ref": item.get('account_info').get('balance_lock_info').get('account_ref_no'),
             "transaction": {
                 "code": amount_unblock.get('transaction_error_code'),
                 "msg": amount_unblock.get('transaction_error_msg')

@@ -11,12 +11,14 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingBusinessForm, BookingCustomer
+    Booking, BookingAccount, BookingBusinessForm, BookingCustomer
+)
+from app.third_parties.oracle.models.cif.payment_account.model import (
+    CasaAccount
 )
 from app.utils.constant.cif import BUSINESS_FORM_TTCN_GTDD_GTDD
 from app.utils.error_messages import (
-    ERROR_BOOKING_CODE_EXISTED, ERROR_BOOKING_ID_NOT_EXIST,
-    ERROR_CUSTOMER_NOT_EXIST, MESSAGE_STATUS
+    ERROR_BOOKING_CODE_EXISTED, ERROR_BOOKING_ID_NOT_EXIST, MESSAGE_STATUS
 )
 from app.utils.functions import (
     date_to_datetime, datetime_to_string, end_time_of_day, generate_uuid, now,
@@ -138,7 +140,6 @@ async def repos_check_exist_booking(
         booking_id: str,
         session: Session
 ):
-
     booking = session.execute(
         select(
             Booking
@@ -147,77 +148,6 @@ async def repos_check_exist_booking(
     ).scalar()
 
     return ReposReturn(data=booking)
-
-
-async def repos_get_customer_by_booking_id(
-        booking_id: str,
-        session: Session,
-        cif_number: Optional[str] = None
-):
-    booking = session.execute(
-        select(
-            Booking
-        )
-        .filter(Booking.id == booking_id)
-    ).scalar()
-    if not booking:
-        return ReposReturn(is_error=True, msg=ERROR_BOOKING_ID_NOT_EXIST, loc=f"booking_id: {booking_id}")
-
-    # if booking.business_type.id == BUSINESS_TYPE_CODE_CIF:
-    #     customer = session.execute(
-    #         select(
-    #             Customer,
-    #             Booking,
-    #             BookingCustomer
-    #         )
-    #         .join(BookingCustomer, Booking.id == BookingCustomer.booking_id)
-    #         .join(Customer, BookingCustomer.customer_id == Customer.id)
-    #         .filter(Booking.id == booking_id)
-    #     ).scalar()
-    #
-    # if booking.business_type.id == BUSINESS_TYPE_CODE_OPEN_CASA:
-    #     customer = session.execute(
-    #         select(
-    #             Customer,
-    #             Booking,
-    #             BookingAccount,
-    #             CasaAccount
-    #         )
-    #         .join(BookingAccount, Booking.id == BookingAccount.booking_id)
-    #         .join(CasaAccount, BookingAccount.account_id == CasaAccount.id)
-    #         .join(Customer, CasaAccount.customer_id == Customer.id)
-    #         .filter(Booking.parent_id == booking_id)
-    #     ).scalars().first()
-
-    if cif_number:
-
-        customer = session.execute(
-            select(
-                Customer
-            )
-            .filter(Customer.cif_number == cif_number)
-        ).scalar()
-
-    else:
-        customer = session.execute(
-            select(
-                Customer,
-                Booking,
-                BookingCustomer
-            )
-            .join(BookingCustomer, Booking.id == BookingCustomer.booking_id)
-            .join(Customer, BookingCustomer.customer_id == Customer.id)
-            .filter(Booking.id == booking_id)
-        ).scalar()
-
-    if not customer:
-        return ReposReturn(
-            is_error=True,
-            msg=ERROR_CUSTOMER_NOT_EXIST,
-            loc=f"booking_id: {booking_id}, cif_number: {cif_number}"
-        )
-
-    return ReposReturn(data=customer)
 
 
 async def repos_get_business_type(booking_id: str, session: Session):
@@ -264,3 +194,75 @@ async def repos_is_used_booking(
         .filter(BookingCustomer.booking_id == booking_id)
     ).scalar()
     return True if is_used_booking else False
+
+
+async def repos_get_booking(
+        booking_id: str,
+        session: Session
+):
+    booking = session.execute(
+        select(
+            Booking
+        )
+        .filter(Booking.id == booking_id)
+    ).scalar()
+
+    return ReposReturn(data=booking)
+
+
+async def repos_get_customer_from_booking_customer(booking_id: str, session: Session):
+    customer = session.execute(
+        select(
+            Customer,
+            Booking,
+            BookingCustomer
+        )
+        .join(BookingCustomer, Booking.id == BookingCustomer.booking_id)
+        .join(Customer, BookingCustomer.customer_id == Customer.id)
+        .filter(Booking.id == booking_id)
+    ).scalar()
+    return ReposReturn(data=customer)
+
+
+async def repos_get_customer_from_booking_account(booking_id: str, session: Session):
+    customer = session.execute(
+        select(
+            Customer,
+            Booking,
+            BookingAccount
+        )
+        .join(BookingAccount, Booking.id == BookingAccount.booking_id)
+        .join(Customer, BookingAccount.customer_id == Customer.id)
+        .filter(Booking.parent_id == booking_id)
+    ).scalars().first()
+
+    if not customer:  # TODO: Tránh bị error hiện tại sử dụng thêm 1 câu query
+        customer = session.execute(
+            select(
+                Customer,
+                Booking,
+                BookingAccount,
+                CasaAccount
+            )
+                .join(BookingAccount, Booking.id == BookingAccount.booking_id)
+                .join(CasaAccount, BookingAccount.account_id == CasaAccount.id)
+                .join(Customer, CasaAccount.customer_id == Customer.id)
+                .filter(Booking.parent_id == booking_id)
+        ).scalars().first()
+    return ReposReturn(data=customer)
+
+
+async def repos_get_customer_from_booking_account_amount_block(booking_id: str, session: Session):
+    customer = session.execute(
+        select(
+            Customer,
+            Booking,
+            BookingAccount,
+            CasaAccount
+        )
+        .join(BookingAccount, Booking.id == BookingAccount.booking_id)
+        .join(CasaAccount, BookingAccount.account_id == CasaAccount.id)
+        .join(Customer, CasaAccount.customer_id == Customer.id)
+        .filter(Booking.id == booking_id)
+    ).scalars().first()
+    return ReposReturn(data=customer)

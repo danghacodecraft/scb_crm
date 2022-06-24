@@ -6,7 +6,8 @@ import orjson
 from starlette import status
 
 from app.api.base.repository import ReposReturn
-from app.settings.event import service_idm
+from app.api.v1.endpoints.user.schema import UserInfoResponse
+from app.settings.event import service_idm, service_gw
 from app.third_parties.services.idm import ServiceIDM
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_IDM, ERROR_INVALID_TOKEN, USER_ID_NOT_EXIST
@@ -76,6 +77,27 @@ async def repos_login(username: str, password: str) -> ReposReturn:
             detail="Permission Denied",
             error_status_code=status.HTTP_403_FORBIDDEN
         )
+
+    is_success, data_gw = await service_gw.gw_detail_user(
+        current_user=UserInfoResponse(**data_idm["user_info"]),
+        data_input={
+            "staff_info": {
+                "staff_code": data_idm['user_info']['code']
+            }
+        }
+    )
+
+    gw_data_output = data_gw['selectUserInfoByUserID_out']['data_output']
+    if gw_data_output:
+        gw_data_output = gw_data_output[0]
+        data_idm['hrm_title_name'] = gw_data_output['staff_info']['title_name']
+        data_idm['hrm_branch_name'] = gw_data_output['branch_info']['branch_code']
+        data_idm['hrm_branch_name'] = gw_data_output['branch_info']['branch_name']
+
+        data_idm['user_info']['token'] = base64.b64encode(
+            zlib.compress(orjson.dumps(data_idm))
+        ).decode('utf-8')
+
     return ReposReturn(data=data_idm)
 
 
@@ -101,3 +123,7 @@ async def repos_get_user_info(user_id: str) -> ReposReturn:
         return ReposReturn(data=USER_INFO)
     else:
         return ReposReturn(is_error=True, msg=USER_ID_NOT_EXIST, loc='user_id')
+
+
+async def repos_get_user_info_core_fcc(current_user):
+    service_gw.gw_detail_user(current_user=current_user)

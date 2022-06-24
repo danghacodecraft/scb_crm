@@ -6,16 +6,26 @@ from starlette import status
 
 from app.api.base.controller import BaseController
 from app.api.v1.others.booking.repository import (
-    repos_check_exist_booking, repos_create_booking,
-    repos_get_customer_by_booking_id, repos_is_correct_booking,
-    repos_is_used_booking, repos_get_business_type
+    repos_check_exist_booking, repos_create_booking, repos_get_booking,
+    repos_get_business_type, repos_get_customer_from_booking_account,
+    repos_get_customer_from_booking_account_amount_block,
+    repos_get_customer_from_booking_customer, repos_is_correct_booking,
+    repos_is_used_booking
 )
 from app.api.v1.others.permission.controller import PermissionController
-from app.third_parties.oracle.models.cif.form.model import Booking, BookingAccount
-from app.third_parties.oracle.models.cif.payment_account.model import CasaAccount
+from app.third_parties.oracle.models.cif.form.model import (
+    Booking, BookingAccount
+)
+from app.third_parties.oracle.models.cif.payment_account.model import (
+    CasaAccount
+)
 from app.utils.constant.approval import CIF_STAGE_INIT
 from app.utils.constant.business_type import BUSINESS_TYPES
 from app.utils.constant.casa import CASA_ACCOUNT_STATUS_APPROVED
+from app.utils.constant.cif import (
+    BUSINESS_TYPE_CODE_AMOUNT_BLOCK, BUSINESS_TYPE_CODE_CIF,
+    BUSINESS_TYPE_CODE_OPEN_CASA
+)
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_OPEN_CIF, IDM_MENU_CODE_OPEN_CIF,
     IDM_PERMISSION_CODE_OPEN_CIF
@@ -23,7 +33,8 @@ from app.utils.constant.idm import (
 from app.utils.error_messages import (
     ERROR_BOOKING_ALREADY_USED, ERROR_BOOKING_ID_NOT_EXIST,
     ERROR_BOOKING_INCORRECT, ERROR_BUSINESS_TYPE_CODE_INCORRECT,
-    ERROR_BUSINESS_TYPE_NOT_EXIST, ERROR_CIF_ID_NOT_EXIST, ERROR_PERMISSION, ERROR_CASA_ACCOUNT_NOT_EXIST
+    ERROR_BUSINESS_TYPE_NOT_EXIST, ERROR_CASA_ACCOUNT_NOT_EXIST,
+    ERROR_CIF_ID_NOT_EXIST, ERROR_CUSTOMER_NOT_EXIST, ERROR_PERMISSION
 )
 
 
@@ -112,21 +123,6 @@ class CtrBooking(BaseController):
 
         return self.response(data=is_used_booking)
 
-    async def ctr_get_customer_info(self, booking_id: str, cif_number=None):
-        """
-        Lấy thông tin khách hàng bằng booking_id
-        """
-        customer_info = self.call_repos(await repos_get_customer_by_booking_id(
-            booking_id=booking_id,
-            cif_number=cif_number,
-            session=self.oracle_session
-        ))
-
-        if not customer_info:
-            return self.response_exception(msg=ERROR_CIF_ID_NOT_EXIST, loc=f"header -> booking_id: {booking_id}")
-
-        return customer_info
-
     async def ctr_get_business_type(self, booking_id: str):
         """
         Lấy thông tin nghiệp vụ thông qua booking
@@ -136,6 +132,46 @@ class CtrBooking(BaseController):
             session=self.oracle_session
         ))
         return business_type
+
+    async def ctr_get_booking(self, booking_id: str):
+        """
+        Lấy thông tin nghiệp vụ thông qua booking
+        """
+        booking = self.call_repos(await repos_get_booking(
+            booking_id=booking_id,
+            session=self.oracle_session
+        ))
+        if not booking:
+            return self.response_exception(msg=ERROR_BOOKING_ID_NOT_EXIST, loc=f"booking_id: {booking_id}")
+        return booking
+
+    async def ctr_get_customer_from_booking(self, booking_id: str):
+        booking = await self.ctr_get_booking(booking_id=booking_id)
+        customer = None
+
+        if booking.business_type.id == BUSINESS_TYPE_CODE_CIF:
+            customer = self.call_repos(await repos_get_customer_from_booking_customer(
+                booking_id=booking_id, session=self.oracle_session
+            ))
+
+        if booking.business_type.id == BUSINESS_TYPE_CODE_OPEN_CASA:
+            customer = self.call_repos(await repos_get_customer_from_booking_account(
+                booking_id=booking_id, session=self.oracle_session
+            ))
+
+        if booking.business_type.id == BUSINESS_TYPE_CODE_AMOUNT_BLOCK:
+
+            customer = self.call_repos(await repos_get_customer_from_booking_account_amount_block(
+                booking_id=booking_id, session=self.oracle_session
+            ))
+
+        if not customer:
+            return self.response_exception(
+                msg=ERROR_CUSTOMER_NOT_EXIST,
+                loc=f"booking_id: {booking_id}"
+            )
+
+        return customer
 
     async def ctr_get_casa_account_from_booking(self, booking_id: str, session: Session):
         casa_accounts = session.execute(

@@ -135,6 +135,7 @@ class BookingAccount(Base):
     __table_args__ = {'comment': 'Tài khoản booking'}
 
     booking_id = Column('account_booking_id', ForeignKey('crm_booking.booking_id'))
+    customer_id = Column(VARCHAR(36), comment="Mã KH")
     account_id = Column('casa_account_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "))
     created_at = Column(DateTime, nullable=False)
     updated_at = Column(DateTime)
