@@ -14,8 +14,8 @@ from app.api.v1.endpoints.third_parties.gw.payment.example import (
 )
 from app.api.v1.endpoints.third_parties.gw.payment.schema import (
     AccountAmountBlockRequest, AccountAmountBlockResponse,
-    AccountAmountUnblock, PayInCashRequest, PaymentSuccessResponse,
-    RedeemAccountRequest
+    AccountAmountUnblock, AccountAmountUnblockRequest, PayInCashRequest,
+    PaymentSuccessResponse, RedeemAccountRequest
 )
 
 router = APIRouter()
@@ -73,13 +73,13 @@ async def view_gw_amount_block(
     )
 )
 async def view_amount_unblock(
-        account_amount_unblocks: List[AccountAmountUnblock] = Body(...),
+        account_amount_unblocks: List[AccountAmountUnblockRequest] = Body(...),
         current_user=Depends(get_current_user_from_header()),
         BOOKING_ID: str = Header(..., description="Mã phiên giao dịch")
 ):
     payment_amount_unblock = await CtrGWPayment(current_user).ctr_payment_amount_unblock(
         account_amount_unblocks=account_amount_unblocks,
-        booking_id=BOOKING_ID
+        BOOKING_ID=BOOKING_ID
     )
 
     return ResponseData[PaymentSuccessResponse](**payment_amount_unblock)

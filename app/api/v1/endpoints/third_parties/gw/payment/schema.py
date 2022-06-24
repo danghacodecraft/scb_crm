@@ -43,6 +43,11 @@ class AccountAmountUnblock(BaseSchema):
                                                         description="Chi tiết giải tỏa một phần (NULL nếu giải tỏa toàn phần)")
 
 
+class AccountAmountUnblockRequest(BaseSchema):
+    account_number: str = Field(...)
+    account_amount_block: List[AccountAmountUnblock] = Field(...)
+
+
 class PBlkChargeRequest(BaseSchema):
     charge_name: str = Field(..., description="Danh mục thu phí")
     charge_amount: int = Field(..., description="Số tiền thu phí")
