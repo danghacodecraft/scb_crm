@@ -17,11 +17,11 @@ class CtrOtherInfo(BaseController):
         # check cif đang tạo
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
 
-        hrm_employee_ids = []
-        if update_other_info_req.sale_staff:
-            hrm_employee_ids.append(update_other_info_req.sale_staff.id)
-        if update_other_info_req.indirect_sale_staff:
-            hrm_employee_ids.append(update_other_info_req.indirect_sale_staff.id)
+        # hrm_employee_ids = []
+        # if update_other_info_req.sale_staff:
+        #     hrm_employee_ids.append(update_other_info_req.sale_staff.id)
+        # if update_other_info_req.indirect_sale_staff:
+        #     hrm_employee_ids.append(update_other_info_req.indirect_sale_staff.id)
 
         # check exist hrm_employee_ids
         # await self.get_model_objects_by_ids(model_ids=hrm_employee_ids, model=HrmEmployee, loc='staff_id')

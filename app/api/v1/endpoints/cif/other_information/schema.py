@@ -8,7 +8,7 @@ from app.api.v1.schemas.utils import DropdownRequest
 
 class EmployeeDropdownResponse(BaseSchema):
     id: str = Field(..., description='`Mã nhân viên`')
-    fullname_vn: str = Field(..., description='`Tên nhân viên`')
+    fullname_vn: Optional[str] = Field(..., description='`Tên nhân viên`')
 
 
 class OtherInformationResponse(BaseSchema):
