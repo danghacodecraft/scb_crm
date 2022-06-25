@@ -182,7 +182,8 @@ class CtrGuardian(BaseController):
     async def save(self,
                    cif_id: str,
                    guardian_save_request: List[SaveGuardianRequest]):
-        current_user = self.current_user.user_info
+        current_user = self.current_user
+        current_user_info = self.current_user.user_info
         # check and get current customer
         current_customer = self.call_repos(
             await repos_get_initializing_customer(
@@ -290,7 +291,7 @@ class CtrGuardian(BaseController):
             await repos_save_guardians(
                 cif_id=cif_id,
                 list_data_insert=list_data_insert,
-                created_by=current_user.username,
+                created_by=current_user_info.username,
                 session=self.oracle_session,
                 log_data=orjson_dumps(log_data),
                 business_form_id=BUSINESS_FORM_TTCN_NGH
