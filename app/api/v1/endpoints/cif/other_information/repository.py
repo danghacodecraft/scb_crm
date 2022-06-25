@@ -15,9 +15,7 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
 from app.third_parties.oracle.models.cif.other_information.model import (
     CustomerEmployee
 )
-from app.third_parties.oracle.models.master_data.others import (
-    HrmEmployee, StaffType
-)
+from app.third_parties.oracle.models.master_data.others import StaffType
 from app.utils.constant.cif import (
     BUSINESS_FORM_TTK, STAFF_TYPE_BUSINESS_CODE, STAFF_TYPE_REFER_INDIRECT_CODE
 )
@@ -27,14 +25,13 @@ from app.utils.error_messages import ERROR_CIF_ID_NOT_EXIST, ERROR_NO_DATA
 async def repos_other_info(cif_id: str, session: Session) -> ReposReturn:
     customer_employee_engine = session.execute(
         select(
-            Customer, StaffType, HrmEmployee
+            Customer, StaffType, CustomerEmployee
         ).outerjoin(
             CustomerEmployee, Customer.id == CustomerEmployee.customer_id
         ).outerjoin(
             StaffType, CustomerEmployee.staff_type_id == StaffType.id
-        ).outerjoin(
-            HrmEmployee, CustomerEmployee.employee_id == HrmEmployee.id
-        ).filter(
+        )
+        .filter(
             Customer.id == cif_id,
             Customer.active_flag == 1
         )
@@ -48,16 +45,16 @@ async def repos_other_info(cif_id: str, session: Session) -> ReposReturn:
     indirect_sale_staff = None
 
     for _, staff_type, employee in customer_employee:
-        if staff_type is not None and employee is not None:
+        if staff_type and employee:
             if staff_type.code == STAFF_TYPE_BUSINESS_CODE:
                 sale_staff = {
-                    "id": employee.id,
-                    "fullname_vn": employee.fullname_vn
+                    "id": employee.employee_id,
+                    "fullname_vn": None
                 }
-            else:
+            if staff_type.code == STAFF_TYPE_REFER_INDIRECT_CODE:
                 indirect_sale_staff = {
-                    "id": employee.id,
-                    "fullname_vn": employee.fullname_vn
+                    "id": employee.employee_id,
+                    "fullname_vn": None
                 }
     legal_agreement_flag = customer_employee[0][0].legal_agreement_flag
     advertising_marketing_flag = customer_employee[0][0].advertising_marketing_flag
