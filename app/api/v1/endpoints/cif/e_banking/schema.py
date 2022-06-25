@@ -131,7 +131,7 @@ class EBankingResponse(BaseSchema):
 ################################################################
 class BalancePaymentAccountResponses(BaseSchema):
     id: str = Field(..., description='Mã định danh tài khoản thanh toán')
-    account_number: str = Field(..., description='Số tài khoản thanh toán')
+    account_number: Optional[str] = Field(..., description='Số tài khoản thanh toán')
     product_name: str = Field(..., description='Tên sản phẩm tài khoản thanh toán')
     # checked_flag: bool = Field(..., description='Trạng thái. `False`: Không. `True`: Có')
 
