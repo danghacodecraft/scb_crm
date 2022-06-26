@@ -1,27 +1,37 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
-    repos_get_customer_by_cif_number, repos_save_casa_casa_account, repos_get_acc_structure_types,
-    repos_get_casa_open_casa_info
+    repos_get_acc_structure_types, repos_get_casa_open_casa_info,
+    repos_get_customer_by_cif_number, repos_save_casa_casa_account
 )
-from app.api.v1.endpoints.casa.open_casa.open_casa.schema import CasaOpenCasaRequest
-from app.api.v1.endpoints.config.account.repository import repos_get_account_classes
+from app.api.v1.endpoints.casa.open_casa.open_casa.schema import (
+    CasaOpenCasaRequest
+)
+from app.api.v1.endpoints.config.account.repository import (
+    repos_get_account_classes
+)
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_get_casa_account_info
 )
-from app.api.v1.endpoints.third_parties.gw.customer.repository import repos_gw_get_customer_info_detail
+from app.api.v1.endpoints.third_parties.gw.customer.repository import (
+    repos_gw_get_customer_info_detail
+)
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.validator import validate_history_data
 from app.third_parties.oracle.models.master_data.account import AccountType
 from app.third_parties.oracle.models.master_data.others import Currency
-from app.utils.constant.business_type import BUSINESS_TYPE_OPEN_CASA, BUSINESS_TYPE_CLOSE_CASA
+from app.utils.constant.business_type import BUSINESS_TYPE_OPEN_CASA
 from app.utils.constant.casa import CASA_ACCOUNT_STATUS_UNAPPROVED
-from app.utils.constant.cif import ACC_STRUCTURE_TYPE_LEVEL_2, STAFF_TYPE_BUSINESS_CODE, \
-    PROFILE_HISTORY_DESCRIPTIONS_OPEN_CASA_ACCOUNT, PROFILE_HISTORY_STATUS_INIT
+from app.utils.constant.cif import (
+    ACC_STRUCTURE_TYPE_LEVEL_2, PROFILE_HISTORY_DESCRIPTIONS_OPEN_CASA_ACCOUNT,
+    PROFILE_HISTORY_STATUS_INIT, STAFF_TYPE_BUSINESS_CODE
+)
 from app.utils.error_messages import (
     ERROR_ACCOUNT_NUMBER_NOT_NULL, ERROR_CASA_ACCOUNT_EXIST,
     ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_FIELD_REQUIRED, ERROR_VALIDATE
 )
-from app.utils.functions import generate_uuid, now, dropdown, optional_dropdown, orjson_dumps
+from app.utils.functions import (
+    dropdown, generate_uuid, now, optional_dropdown, orjson_dumps
+)
 
 
 class CtrCasaOpenCasa(BaseController):
@@ -239,8 +249,7 @@ class CtrCasaOpenCasa(BaseController):
 
         # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CASA
         transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
-            business_type_id=BUSINESS_TYPE_CLOSE_CASA
-        )
+            business_type_id=BUSINESS_TYPE_OPEN_CASA)
 
         (
             saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
