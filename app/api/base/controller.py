@@ -423,7 +423,7 @@ class BaseController:
         saving_transaction_stage_role_id = generate_uuid()
         transaction_daily_id = generate_uuid()
 
-        begin_stage_status, begin_stage, _, begin_phase, _, begin_lane, begin_stage_role = self.call_repos(
+        begin_stage_status, begin_stage, _, begin_phase, _, begin_lane, begin_stage_role, begin_sla = self.call_repos(
             await repos_get_begin_stage(
                 business_type_id=business_type_id,
                 session=self.oracle_session
@@ -458,10 +458,10 @@ class BaseController:
             id=sla_transaction_id,
             parent_id=None,
             root_id=sla_transaction_id,
-            sla_id=None,
-            sla_name=None,
-            sla_deadline=None,
-            active_flag=1,
+            sla_id=begin_sla.id,
+            sla_name=begin_sla.name,
+            sla_deadline=begin_sla.deadline,
+            active_flag=begin_sla.active_flag,
             created_at=now()
         )
 

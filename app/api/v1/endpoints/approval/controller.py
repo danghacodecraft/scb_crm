@@ -15,6 +15,8 @@ from app.api.v1.endpoints.approval.repository import (
     repos_get_compare_image_transactions, repos_get_list_audit
 )
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
+from app.api.v1.endpoints.cif.basic_information.identity.identity_document.repository import \
+    repos_get_sla_transaction_parent_from_stage_transaction_id
 from app.api.v1.endpoints.third_parties.gw.employee.repository import (
     repos_gw_get_employee_info_from_code
 )
@@ -720,7 +722,7 @@ class CtrApproval(BaseController):
         is_give_back = False
         if previous_transaction_stage:
             is_stage_init = False
-            _, previous_stage, _, _, _, _, _, _ = self.call_repos(
+            _, previous_stage, _, _, _, _, _, _, _ = self.call_repos(
                 await repos_get_stage_information(
                     business_type_id=business_type_id,
                     stage_id=previous_transaction_stage.transaction_stage_phase_code,
@@ -853,7 +855,7 @@ class CtrApproval(BaseController):
 
         (
             current_stage_status, current_stage, _, current_lane, current_stage_phase, current_phase, current_stage_role,
-            current_stage_action
+            current_stage_action, current_stage_sla
         ) = self.call_repos(await repos_get_stage_information(
             business_type_id=business_type_id,
             stage_id=current_stage_code,
@@ -947,7 +949,7 @@ class CtrApproval(BaseController):
         next_stage_code = next_stage.code
         next_stage_role_code = None
         if next_stage_code not in COMPLETED_STAGES:
-            _, _, _, _, _, _, next_stage_role, _ = self.call_repos(await repos_get_stage_information(
+            _, _, _, _, _, _, next_stage_role, _, _ = self.call_repos(await repos_get_stage_information(
                 business_type_id=business_type_id,
                 stage_id=next_stage_code,
                 session=self.oracle_session,
@@ -1006,20 +1008,20 @@ class CtrApproval(BaseController):
             updated_at=now()
         )
 
-        # sla_trans_parent = self.call_repos(await repos_get_sla_transaction_parent_from_stage_transaction_id(
-        #     stage_transaction_id=previous_transaction_stage.id, session=self.oracle_session
-        # ))
-        #
-        # saving_sla_transaction = dict(
-        #     id=saving_sla_transaction_id,
-        #     parent_id=sla_trans_parent.id,
-        #     root_id=sla_trans_parent.root_id,
-        #     sla_id=sla_id,
-        #     sla_name=sla.name,
-        #     sla_deadline=sla.deadline,
-        #     active_flag=1,
-        #     created_at=now()
-        # )
+        sla_trans_parent = self.call_repos(await repos_get_sla_transaction_parent_from_stage_transaction_id(
+            stage_sla_transaction_id=previous_transaction_stage.sla_transaction_id, session=self.oracle_session
+        ))
+
+        saving_sla_transaction = dict(
+            id=saving_sla_transaction_id,
+            parent_id=sla_trans_parent.id,
+            root_id=sla_trans_parent.root_id,
+            sla_id=current_stage_sla.id,
+            sla_name=current_stage_sla.name,
+            sla_deadline=current_stage_sla.deadline,
+            active_flag=1,
+            created_at=now()
+        )
 
         saving_transaction_stage = dict(
             id=saving_transaction_stage_id,
@@ -1148,14 +1150,13 @@ class CtrApproval(BaseController):
             booking_id=booking_id,
             saving_transaction_stage_status=saving_transaction_stage_status,
             saving_transaction_stage_action=saving_transaction_stage_action,
-            # saving_sla_transaction=saving_sla_transaction,
+            saving_sla_transaction=saving_sla_transaction,
             saving_transaction_stage=saving_transaction_stage,
             saving_transaction_stage_lane=saving_transaction_stage_lane,
             saving_transaction_stage_phase=saving_transaction_stage_phase,
             saving_transaction_stage_role=saving_transaction_stage_role,
             saving_transaction_daily=saving_transaction_daily,
             saving_transaction_sender=saving_transaction_sender,
-            # saving_transaction_receiver=saving_transaction_receiver,
             is_stage_init=is_stage_init,
             session=self.oracle_session
         )))

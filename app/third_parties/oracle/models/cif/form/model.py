@@ -125,6 +125,8 @@ class Booking(Base):
     branch_id = Column(VARCHAR(50), comment='Mã đơn vị')
     created_at = Column(DateTime, comment='Ngày tạo')
     updated_at = Column(DateTime, comment='Ngày chỉnh sửa')
+    created_by = Column(DateTime, comment='Người tạo')
+    updated_by = Column(DateTime, comment='Người chỉnh sửa')
 
     business_type = relationship('BusinessType')
     transaction = relationship('TransactionDaily')
