@@ -14,8 +14,9 @@ from app.third_parties.oracle.models.cif.payment_account.model import (
     CasaAccount
 )
 from app.third_parties.oracle.models.master_data.account import AccountStructureType
+from app.third_parties.oracle.models.master_data.address import AddressCountry
 from app.third_parties.oracle.models.master_data.others import TransactionStageStatus, TransactionStage, \
-    TransactionStageLane, TransactionStagePhase, TransactionStageRole, TransactionJob, SlaTransaction
+    TransactionStageLane, TransactionStagePhase, TransactionStageRole, TransactionJob, SlaTransaction, Currency
 from app.utils.constant.approval import BUSINESS_JOB_CODE_START_CASA
 from app.utils.constant.casa import CASA_ACCOUNT_STATUS_APPROVED
 from app.utils.constant.cif import ACTIVE_FLAG_ACTIVED, BUSINESS_FORM_OPEN_CASA_OPEN_CASA
@@ -206,13 +207,16 @@ async def repos_get_casa_open_casa_info(booking_parent_id: str, session: Session
             Booking,
             BookingAccount,
             CasaAccount,
-            AccountStructureType  # Level 1
+            AccountStructureType,  # Level 1
+            Currency,
+            AddressCountry
         )
         .join(Booking, booking_parent.id == Booking.parent_id)
         .join(BookingAccount, Booking.id == BookingAccount.booking_id)
         .join(CasaAccount, BookingAccount.account_id == CasaAccount.id)
+        .join(Currency, CasaAccount.currency_id == Currency.id)
         .outerjoin(AccountStructureType, CasaAccount.acc_structure_type_id == AccountStructureType.parent_id)
+        .outerjoin(AddressCountry, Currency.country_code == AddressCountry.id)
         .filter(booking_parent.id == booking_parent_id)
-        .distinct()
     ).all()
     return ReposReturn(data=get_casa_open_casa_info)
