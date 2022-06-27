@@ -13,6 +13,8 @@ from app.third_parties.oracle.models.cif.form.model import (
 from app.third_parties.oracle.models.master_data.account import (
     AccountStructureType
 )
+from app.third_parties.oracle.models.master_data.address import AddressCountry
+from app.third_parties.oracle.models.master_data.others import Currency
 from app.utils.constant.cif import ACTIVE_FLAG_ACTIVED
 from app.utils.error_messages import ERROR_ID_NOT_EXIST, ERROR_INVALID_NUMBER
 from app.utils.functions import (
@@ -95,6 +97,18 @@ async def get_optional_model_object_by_code_or_name(
         statement = statement.filter(model.active_flag == 1)
 
     return session.execute(statement).scalar()
+
+
+async def repos_get_data_currency_config(session):
+    response_data = session.execute(
+        select(
+            Currency,
+            AddressCountry
+        ).join(
+            AddressCountry, Currency.country_code == AddressCountry.code
+        )
+    ).all()
+    return ReposReturn(data=response_data)
 
 
 async def repos_get_data_model_config(session: Session, model: Base, country_id: Optional[str] = None,

@@ -225,7 +225,7 @@ async def repos_get_stage_information(
         .outerjoin(StagePhase, Stage.id == StagePhase.stage_id)
         .outerjoin(Phase, StagePhase.phase_id == Phase.id)
         .outerjoin(StageRole, Stage.id == StageRole.stage_id)
-        .outerjoin(Sla, Stage.sla_id == Sla.id)
+        .join(Sla, Stage.sla_id == Sla.id)
         .outerjoin(StageAction, and_(
             Stage.id == StageAction.stage_id,
             StageAction.id == stage_action_id,
