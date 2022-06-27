@@ -1,7 +1,7 @@
 from datetime import date
 from typing import List, Optional
 
-from sqlalchemy import and_, desc, func, or_, select
+from sqlalchemy import and_, desc, distinct, func, or_, select
 from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn
@@ -39,22 +39,22 @@ async def repos_count_total_item(region_id: Optional[str], branch_id: Optional[s
                                  status_code: Optional[str], search_box: Optional[str], from_date: Optional[date],
                                  to_date: Optional[date], session: Session) -> ReposReturn:
     transaction_list = select(
-        func.count(Booking.code)
+        func.count(distinct(Booking.code))
     ) \
         .join(Branch, Booking.branch_id == Branch.id) \
         .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
         .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
+        .outerjoin(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
         .outerjoin(BookingCustomer, Booking.id == BookingCustomer.booking_id) \
         .outerjoin(Customer, BookingCustomer.customer_id == Customer.id) \
         .outerjoin(CustomerIdentity, Customer.id == CustomerIdentity.customer_id) \
-        .outerjoin(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
         .distinct()
 
     if region_id:
         transaction_list = transaction_list.filter(Branch.region_id == region_id)
 
     if branch_id:
-        transaction_list = transaction_list.filter(Booking.branch_id == branch_id)
+        transaction_list = transaction_list.filter(Branch.id == branch_id)
 
     if business_type_id:
         transaction_list = transaction_list.filter(Booking.business_type_id == business_type_id)
@@ -111,7 +111,7 @@ async def repos_get_transaction_list(region_id: Optional[str], branch_id: Option
         sql = sql.filter(Branch.region_id == region_id)
 
     if branch_id:
-        sql = sql.filter(Booking.branch_id == branch_id)
+        sql = sql.filter(Branch.id == branch_id)
 
     if business_type_id:
         sql = sql.filter(Booking.business_type_id == business_type_id)
