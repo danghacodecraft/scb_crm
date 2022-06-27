@@ -23,6 +23,7 @@ class PaymentAccountResponse(BaseSchema):
                                                               \nSố tài khoản thường => `False`
                                                               \nSố tài khoản yêu cầu => `True`""")
     currency: DropdownResponse = Field(..., description="Loại tiền")
+    country: DropdownResponse = Field(..., description="Loại Quốc gia")
     account_type: DropdownResponse = Field(..., description="Gói tài khoản")
     account_class: DropdownResponse = Field(..., description="Loại hình tài khoản")
     account_structure_type_level_1: OptionalDropdownResponse = Field(..., description="Kiểu kiến trúc cấp 1")
