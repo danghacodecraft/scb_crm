@@ -84,7 +84,8 @@ async def repos_create_booking(
             business_type_id=business_type_code,
             branch_id=current_user_branch_code,
             created_at=now(),
-            updated_at=now()
+            updated_at=now(),
+            created_by=current_user.code
         ),
         BookingBusinessForm(
             booking_id=booking_id,

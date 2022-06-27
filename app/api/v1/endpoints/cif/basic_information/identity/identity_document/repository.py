@@ -603,10 +603,11 @@ async def repos_save_identity(
         # Hiện tại Tab khuôn mặt không có chức năng lưu
         # vì api GTDD đã upload khuôn mặt nên Tab này coi như hoàn thành
     ])
+    session.flush()
 
     # update booking
     session.execute(update(Booking).filter(Booking.id == booking_id).values(
-        # code=booking_code,
+        updated_by=current_user.code,
         transaction_id=saving_transaction_daily['transaction_id']
     ))
 
@@ -1204,13 +1205,12 @@ async def repos_compare_face(
     })
 
 
-async def repos_get_sla_transaction_parent_from_stage_transaction_id(stage_transaction_id: str, session: Session):
+async def repos_get_sla_transaction_parent_from_stage_transaction_id(stage_sla_transaction_id: str, session: Session):
     sla_transaction = session.execute(
         select(
             SlaTransaction
         )
-        .join(TransactionStage, SlaTransaction.id == TransactionStage.sla_transaction_id)
-        .filter(TransactionStage.id == stage_transaction_id)
+        .filter(SlaTransaction.id == stage_sla_transaction_id)
     ).scalar()
 
     if not sla_transaction:
