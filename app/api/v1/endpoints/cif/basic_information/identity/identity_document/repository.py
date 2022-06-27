@@ -606,7 +606,7 @@ async def repos_save_identity(
 
     # update booking
     session.execute(update(Booking).filter(Booking.id == booking_id).values(
-        # code=booking_code,
+        updated_by=current_user.code,
         transaction_id=saving_transaction_daily['transaction_id']
     ))
 
