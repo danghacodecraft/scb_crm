@@ -46,12 +46,16 @@ class CtrCasaOpenCasa(BaseController):
 
         casa_accounts = []
 
-        for _, booking, booking_account, casa_account, acc_structure_type_level_1, currency, country in get_casa_open_casa_infos:
+        for _, booking, booking_account, casa_account, acc_structure_type_level_1, currency, country_code, country_name in get_casa_open_casa_infos:
             casa_accounts.append(dict(
                 id=casa_account.id,
                 self_selected_account_flag=casa_account.self_selected_account_flag,
                 currency=dropdown(currency),
-                country=dropdown(country),
+                country=dict(
+                    id=country_code,
+                    code=country_code,
+                    name=country_name
+                ),
                 account_type=dropdown(casa_account.account_type),
                 account_class=dropdown(casa_account.account_class),
                 account_structure_type_level_1=optional_dropdown(acc_structure_type_level_1),
