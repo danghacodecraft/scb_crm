@@ -94,11 +94,13 @@ async def repos_get_transaction_list(region_id: Optional[str], branch_id: Option
     sql = select(
         Booking,
         Branch,
-        TransactionStageStatus.name.label('status')
+        TransactionStageStatus.name.label('status'),
+        TransactionStageRole
     ) \
         .join(Branch, Booking.branch_id == Branch.id) \
         .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id) \
         .join(TransactionStage, TransactionDaily.transaction_stage_id == TransactionStage.id) \
+        .join(TransactionStageRole, TransactionStage.id == TransactionStageRole.transaction_stage_id) \
         .outerjoin(TransactionStageStatus, TransactionStage.status_id == TransactionStageStatus.id) \
         .outerjoin(BookingCustomer, Booking.id == BookingCustomer.booking_id) \
         .outerjoin(Customer, BookingCustomer.customer_id == Customer.id) \
@@ -267,7 +269,7 @@ async def repos_get_senders(
     return ReposReturn(data=stage_infos)
 
 
-async def repos_get_sla_transaction_infos(booking_ids: list, session: Session):
+async def repos_get_sla_transaction_infos(booking_ids: tuple, session: Session):
     sla_transaction_parent = aliased(SlaTransaction, name="SlaTransParent")
     sla_trans_daily_parent = aliased(TransactionDaily, name="SlaTransDailyParent")
     sla_trans_stage_parent = aliased(TransactionStage, name="SlaTransStageParent")
