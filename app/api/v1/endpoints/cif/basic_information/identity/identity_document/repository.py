@@ -1205,13 +1205,12 @@ async def repos_compare_face(
     })
 
 
-async def repos_get_sla_transaction_parent_from_stage_transaction_id(stage_transaction_id: str, session: Session):
+async def repos_get_sla_transaction_parent_from_stage_transaction_id(stage_sla_transaction_id: str, session: Session):
     sla_transaction = session.execute(
         select(
             SlaTransaction
         )
-        .join(TransactionStage, SlaTransaction.id == TransactionStage.sla_transaction_id)
-        .filter(TransactionStage.id == stage_transaction_id)
+        .filter(SlaTransaction.id == stage_sla_transaction_id)
     ).scalar()
 
     if not sla_transaction:
