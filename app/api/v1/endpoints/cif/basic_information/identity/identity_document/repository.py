@@ -603,6 +603,7 @@ async def repos_save_identity(
         # Hiện tại Tab khuôn mặt không có chức năng lưu
         # vì api GTDD đã upload khuôn mặt nên Tab này coi như hoàn thành
     ])
+    session.flush()
 
     # update booking
     session.execute(update(Booking).filter(Booking.id == booking_id).values(
