@@ -18,7 +18,7 @@ from app.third_parties.oracle.models.cif.form.model import (
 from app.third_parties.oracle.models.master_data.others import (
     BusinessJob, BusinessType, TransactionJob,
     TransactionStage, TransactionStageAction, TransactionStageLane,
-    TransactionStagePhase, TransactionStageRole, TransactionStageStatus
+    TransactionStagePhase, TransactionStageRole, TransactionStageStatus, SlaTransaction
 )
 from app.utils.constant.business_type import (
     BUSINESS_TYPE_AMOUNT_BLOCK, BUSINESS_TYPE_INIT_CIF,
@@ -92,14 +92,13 @@ async def repos_approve(
         booking_id: str,
         saving_transaction_stage_status: dict,
         saving_transaction_stage_action: dict,
-        # saving_sla_transaction: dict,
+        saving_sla_transaction: dict,
         saving_transaction_stage: dict,
         saving_transaction_daily: dict,
         saving_transaction_stage_lane: dict,
         saving_transaction_stage_phase: dict,
         saving_transaction_stage_role: dict,
         saving_transaction_sender: dict,
-        # saving_transaction_receiver: dict,
         is_stage_init: bool,
         session: Session
 ):
@@ -132,7 +131,7 @@ async def repos_approve(
     session.add_all([
         TransactionStageStatus(**saving_transaction_stage_status),
         TransactionStageAction(**saving_transaction_stage_action),
-        # SlaTransaction(**saving_sla_transaction),
+        SlaTransaction(**saving_sla_transaction),
         TransactionStage(**saving_transaction_stage),
         TransactionDaily(**saving_transaction_daily),
         TransactionStageLane(**saving_transaction_stage_lane),
