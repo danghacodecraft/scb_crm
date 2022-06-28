@@ -246,4 +246,4 @@ class DebitCardByCIFNumberResponse(BaseGWSchema):
 
 
 class CheckMobileNumRequest(BaseGWSchema):
-    mobile_number: str = Field("", description="Số điện thoại", regex=MOBILE_NUM_REGEX)
+    mobile_number: str = Field(..., description="Số điện thoại", regex=MOBILE_NUM_REGEX)
