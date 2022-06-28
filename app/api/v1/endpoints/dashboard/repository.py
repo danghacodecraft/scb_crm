@@ -284,6 +284,7 @@ async def repos_get_sla_transaction_infos(booking_ids: tuple, session: Session):
         select(
             Booking,
             SlaTransaction,
+            TransactionSender,
             sla_transaction_parent,
             sender_sla_trans_parent,
             sla_transaction_grandparent,
