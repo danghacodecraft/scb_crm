@@ -42,10 +42,12 @@ from app.utils.constant.gw import (
     GW_UDF_NAME, GW_YES, GW_YES_AGREEMENT_FLAG
 )
 from app.utils.error_messages import (
-    ERROR_CALL_SERVICE_GW, ERROR_VALIDATE_ONE_FIELD_REQUIRED
+    ERROR_CALL_SERVICE_GW, ERROR_PHONE_NUMBER,
+    ERROR_VALIDATE_ONE_FIELD_REQUIRED
 )
 from app.utils.functions import (
-    date_string_to_other_date_string_format, date_to_string, now
+    date_string_to_other_date_string_format, date_to_string,
+    is_valid_mobile_number, now
 )
 from app.utils.vietnamese_converter import (
     convert_to_unsigned_vietnamese, split_name
@@ -1026,6 +1028,10 @@ class CtrGWCustomer(BaseController):
         return self.response(data=response)
 
     async def ctr_check_mobile_num(self, request: CheckMobileNumRequest):
+
+        if not is_valid_mobile_number(mobile_number=request.mobile_number):
+            return self.response_exception(loc='mobile_number', msg=ERROR_PHONE_NUMBER)
+
         mobile_info = self.call_repos(
             await repos_check_mobile_num(
                 mobile_num=request.mobile_number,
