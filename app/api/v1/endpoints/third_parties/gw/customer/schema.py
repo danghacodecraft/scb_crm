@@ -6,6 +6,7 @@ from pydantic import Field
 from app.api.base.schema import BaseGWSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
 from app.api.v1.schemas.utils import OptionalDropdownResponse
+from app.utils.constant.cif import MOBILE_NUM_REGEX
 
 
 class CustomerInfoCIFResponse(BaseGWSchema):
@@ -242,3 +243,7 @@ class DebitCardByCIFNumberResponse(BaseGWSchema):
     name_on_card: NameOnCardResponse = Field(..., description="Tên trên thẻ")
     card_delivery_address: CardDeliveryAddressResponse = Field(..., description="Địa chỉ giao nhận thẻ")
     avatar_url: Optional[str] = Field(..., description="URL hình ảnh đại diện của người dùng")
+
+
+class CheckMobileNumRequest(BaseGWSchema):
+    mobile_number: str = Field("", description="Số điện thoại", regex=MOBILE_NUM_REGEX)

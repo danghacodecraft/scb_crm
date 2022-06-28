@@ -234,7 +234,6 @@ async def repos_get_customer_open_cif(
 
 
 async def repos_get_teller_info(booking_id: str, session: Session):
-
     transaction_daily = aliased(TransactionDaily, name="TransactionDailyRoot")
 
     teller = session.execute(
@@ -266,3 +265,13 @@ async def repos_get_customer_avatar_url_from_cif(cif_number: str, session: Sessi
     ).scalar()
 
     return ReposReturn(data=avatar_url)
+
+
+async def repos_check_mobile_num(mobile_num, session: Session):
+    mobile_num_info = session.execute(
+        select(
+            Customer.mobile_number
+        ).filter(Customer.mobile_number == mobile_num)
+    ).scalar()
+
+    return ReposReturn(data=mobile_num_info)
