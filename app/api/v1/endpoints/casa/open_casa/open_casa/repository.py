@@ -209,7 +209,8 @@ async def repos_get_casa_open_casa_info(booking_parent_id: str, session: Session
             CasaAccount,
             AccountStructureType,  # Level 1
             Currency,
-            AddressCountry
+            AddressCountry.code,
+            AddressCountry.name
         )
         .join(Booking, booking_parent.id == Booking.parent_id)
         .join(BookingAccount, Booking.id == BookingAccount.booking_id)
@@ -218,5 +219,6 @@ async def repos_get_casa_open_casa_info(booking_parent_id: str, session: Session
         .outerjoin(AccountStructureType, CasaAccount.acc_structure_type_id == AccountStructureType.parent_id)
         .outerjoin(AddressCountry, Currency.country_code == AddressCountry.id)
         .filter(booking_parent.id == booking_parent_id)
+        .distinct()
     ).all()
     return ReposReturn(data=get_casa_open_casa_info)

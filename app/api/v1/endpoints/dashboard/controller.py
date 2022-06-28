@@ -100,18 +100,9 @@ class CtrDashboard(BaseController):
                     branch_name=branch_name,
                     stage_role=stage_role.code,
                     status=status,
-                    teller=dict(
-                        name=None,
-                        created_at=None
-                    ),
-                    supervisor=dict(
-                        name=None,
-                        created_at=None
-                    ),
-                    audit=dict(
-                        name=None,
-                        created_at=None
-                    )
+                    teller=dict(),
+                    supervisor=dict(),
+                    audit=dict()
                 )
             })
 
@@ -207,45 +198,60 @@ class CtrDashboard(BaseController):
             booking_ids=tuple(booking_ids), session=self.oracle_session
         ))
 
-        for booking, sla_transaction, sla_transaction_parent, sender_sla_trans_parent, sla_transaction_grandparent, \
-                sender_sla_trans_grandparent in sla_transaction_infos:
+        for (
+            booking, sla_transaction, sender_sla_transaction, sla_transaction_parent, sender_sla_trans_parent,
+            sla_transaction_grandparent, sender_sla_trans_grandparent
+        ) in sla_transaction_infos:
             for booking_id, data in mapping_datas.items():
                 stage_role_code = data['stage_role']
-                if booking.id == booking_id:
-                    if stage_role_code == CIF_STAGE_ROLE_CODE_SUPERVISOR:
-                        teller_sla_time = sla_transaction_parent.created_at - booking.created_at
-                        mapping_datas[booking_id]['teller'].update(
-                            name=sender_sla_trans_parent.user_fullname,
-                            created_at=sla_transaction_parent.created_at,
-                            sla_time=str(teller_sla_time),
-                            sla_deadline=sla_transaction_parent.sla_deadline
-                        )
-                        supervisor_sla_time = sla_transaction.created_at - sender_sla_trans_parent.created_at
-                        mapping_datas[booking_id]['supervisor'].update(
-                            sla_time=str(supervisor_sla_time) if supervisor_sla_time else None
-                        )
-                    if stage_role_code == CIF_STAGE_ROLE_CODE_AUDIT:
-                        teller_sla_time = sla_transaction_grandparent.created_at - booking.created_at
-                        mapping_datas[booking_id]['teller'].update(
+
+                sla_transaction_created_at = sla_transaction.created_at
+                sla_transaction_info = dict(
+                    name=sender_sla_transaction.user_fullname,
+                    created_at=sla_transaction_created_at,
+                    sla_time=str(sla_transaction_created_at - booking.created_at),
+                    sla_deadline=sla_transaction.sla_deadline
+                )
+                sla_transaction_parent_info = dict(
+                    name=None,
+                    created_at=None,
+                    sla_time=None,
+                    sla_deadline=None
+                )
+                sla_transaction_grandparent_info = dict(
+                    name=None,
+                    created_at=None,
+                    sla_time=None,
+                    sla_deadline=None
+                )
+                if sender_sla_trans_parent:
+                    sla_transaction_parent_created_at = sla_transaction_parent.created_at
+                    sla_transaction_parent_info = dict(
+                        name=sender_sla_trans_parent.user_fullname,
+                        created_at=sla_transaction_parent_created_at,
+                        sla_time=str(sla_transaction_created_at - sla_transaction_parent_created_at),
+                        sla_deadline=sla_transaction_parent.sla_deadline
+                    )
+                    if sender_sla_trans_grandparent:
+                        sla_transaction_grandparent_created_at = sla_transaction_grandparent.created_at
+                        sla_transaction_grandparent_info = dict(
                             name=sender_sla_trans_grandparent.user_fullname,
-                            created_at=sla_transaction_grandparent.created_at,
-                            sla_time=str(teller_sla_time),
+                            created_at=sla_transaction_grandparent_created_at,
+                            sla_time=str(sla_transaction_parent_created_at - sla_transaction_grandparent_created_at),
                             sla_deadline=sla_transaction_grandparent.sla_deadline
                         )
-                        supervisor_sla_time = sla_transaction_parent.created_at - sla_transaction_grandparent.created_at
-                        mapping_datas[booking_id]['supervisor'].update(
-                            name=sender_sla_trans_parent.user_fullname,
-                            created_at=sla_transaction_parent.created_at,
-                            sla_time=str(supervisor_sla_time),
-                            sla_deadline=sla_transaction_parent.sla_deadline
-                        )
-                        audit_sla_time = sla_transaction.created_at - sla_transaction_parent.created_at
-                        mapping_datas[booking_id]['audit'].update(
-                            # name=sender.user_fullname,
-                            created_at=sla_transaction.created_at,
-                            sla_time=str(audit_sla_time) if audit_sla_time else None,
-                            sla_deadline=sla_transaction.sla_deadline
-                        )
+                if booking.id == booking_id:
+                    if stage_role_code == CIF_STAGE_ROLE_CODE_TELLER:
+                        mapping_datas[booking_id]['teller'].update(sla_transaction_info)
+
+                    if stage_role_code == CIF_STAGE_ROLE_CODE_SUPERVISOR:
+                        mapping_datas[booking_id]['teller'].update(sla_transaction_parent_info)
+                        mapping_datas[booking_id]['supervisor'].update(sla_transaction_info)
+
+                    if stage_role_code == CIF_STAGE_ROLE_CODE_AUDIT:
+                        mapping_datas[booking_id]['teller'].update(sla_transaction_grandparent_info)
+                        mapping_datas[booking_id]['supervisor'].update(sla_transaction_parent_info)
+                        mapping_datas[booking_id]['audit'].update(sla_transaction_info)
 
         return self.response_paging(
             data=[mapping_data for _, mapping_data in mapping_datas.items()],
