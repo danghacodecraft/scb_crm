@@ -15,15 +15,14 @@ from app.third_parties.oracle.models.cif.payment_account.model import (
 from app.third_parties.oracle.models.master_data.account import (
     AccountClass, AccountStructureType, AccountType
 )
+from app.third_parties.oracle.models.master_data.address import AddressCountry
 from app.third_parties.oracle.models.master_data.others import Currency
-from app.utils.constant.cif import (
-    BUSINESS_FORM_TKTT_CTTKTT, DROPDOWN_NONE_DICT
-)
+from app.utils.constant.cif import BUSINESS_FORM_TKTT_CTTKTT
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_GW, ERROR_CALL_SERVICE_SOA, ERROR_INVALID_NUMBER,
     ERROR_NO_DATA, MESSAGE_STATUS
 )
-from app.utils.functions import dropdown, is_valid_number, now
+from app.utils.functions import is_valid_number, now
 
 
 async def repos_detail_payment_account(cif_id: str, session: Session) -> ReposReturn:
@@ -38,8 +37,10 @@ async def repos_detail_payment_account(cif_id: str, session: Session) -> ReposRe
             AccountStructureType,
             account_structure_type_level_2,
             account_structure_type_level_1,
+            AddressCountry
         )
         .join(Currency, CasaAccount.currency_id == Currency.id)
+        .outerjoin(AddressCountry, Currency.country_code == AddressCountry.id)
         .join(AccountClass, CasaAccount.acc_class_id == AccountClass.id)
         .join(AccountType, CasaAccount.acc_type_id == AccountType.id)
         .outerjoin(AccountStructureType, CasaAccount.acc_structure_type_id == AccountStructureType.id)
@@ -57,27 +58,7 @@ async def repos_detail_payment_account(cif_id: str, session: Session) -> ReposRe
     if not detail:
         return ReposReturn(is_error=True, msg=ERROR_NO_DATA, detail=MESSAGE_STATUS[ERROR_NO_DATA])
 
-    account_structure_type_level_1 = detail.account_structure_type_level_1
-    account_structure_type_level_2 = detail.account_structure_type_level_2
-    account_structure_type_level_3 = detail.AccountStructureType
-
-    return ReposReturn(data={
-        "self_selected_account_flag": detail.CasaAccount.self_selected_account_flag,
-        "currency": dropdown(detail.Currency),
-        "account_type": dropdown(detail.AccountType),
-        "account_class": dropdown(detail.AccountClass),
-        "account_structure_type_level_1": dropdown(account_structure_type_level_1)
-        if account_structure_type_level_1 else DROPDOWN_NONE_DICT,
-        "account_structure_type_level_2": dropdown(account_structure_type_level_2)
-        if account_structure_type_level_2 else DROPDOWN_NONE_DICT,
-        "account_structure_type_level_3": dropdown(account_structure_type_level_3)
-        if account_structure_type_level_3 else DROPDOWN_NONE_DICT,
-        "casa_account_number": detail.CasaAccount.casa_account_number,
-        "account_salary_organization_account": detail.CasaAccount.acc_salary_org_acc,
-        "account_salary_organization_name": detail.CasaAccount.acc_salary_org_name,
-        "id": detail.CasaAccount.id,
-        "approve_status": detail.CasaAccount.approve_status,
-    })
+    return ReposReturn(data=detail)
 
 
 @auto_commit
@@ -141,7 +122,7 @@ async def repos_check_casa_account(cif_id: str, session: Session):
     return ReposReturn(data=casa_account)
 
 
-async def repos_check_exist_casa_account_number(casa_account_number: str, session: Session):
+async def repos_check_exist_casa_account_number(casa_account_number: str):
     """
         Kiểm tra số tài khoản thanh toán có tồn tại hay không
     """

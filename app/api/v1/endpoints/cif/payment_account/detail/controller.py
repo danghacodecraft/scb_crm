@@ -18,13 +18,13 @@ from app.third_parties.oracle.models.master_data.account import AccountType
 from app.third_parties.oracle.models.master_data.others import Currency
 from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_OPEN_CASA_ACCOUNT,
-    PROFILE_HISTORY_STATUS_INIT, STAFF_TYPE_BUSINESS_CODE
+    PROFILE_HISTORY_STATUS_INIT, STAFF_TYPE_BUSINESS_CODE, DROPDOWN_NONE_DICT
 )
 from app.utils.error_messages import (
     ERROR_CASA_ACCOUNT_EXIST, ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_INVALID_NUMBER, ERROR_ACCOUNT_NUMBER_NOT_NULL,
     ERROR_FIELD_REQUIRED, ERROR_ID_NOT_EXIST
 )
-from app.utils.functions import is_valid_number, now, orjson_dumps
+from app.utils.functions import is_valid_number, now, orjson_dumps, dropdown
 
 
 class CtrPaymentAccount(BaseController):
@@ -40,7 +40,28 @@ class CtrPaymentAccount(BaseController):
             )
         )
 
-        return self.response(detail_payment_account_info)
+        account_structure_type_level_1 = detail_payment_account_info.account_structure_type_level_1
+        account_structure_type_level_2 = detail_payment_account_info.account_structure_type_level_2
+        account_structure_type_level_3 = detail_payment_account_info.AccountStructureType
+
+        return self.response(data=dict(
+            self_selected_account_flag=detail_payment_account_info.CasaAccount.self_selected_account_flag,
+            currency=dropdown(detail_payment_account_info.Currency),
+            country=dropdown(detail_payment_account_info.AddressCountry),
+            account_type=dropdown(detail_payment_account_info.AccountType),
+            account_class=dropdown(detail_payment_account_info.AccountClass),
+            account_structure_type_level_1=dropdown(account_structure_type_level_1)
+            if account_structure_type_level_1 else DROPDOWN_NONE_DICT,
+            account_structure_type_level_2=dropdown(account_structure_type_level_2)
+            if account_structure_type_level_2 else DROPDOWN_NONE_DICT,
+            account_structure_type_level_3=dropdown(account_structure_type_level_3)
+            if account_structure_type_level_3 else DROPDOWN_NONE_DICT,
+            casa_account_number=detail_payment_account_info.CasaAccount.casa_account_number,
+            account_salary_organization_account=detail_payment_account_info.CasaAccount.acc_salary_org_acc,
+            account_salary_organization_name=detail_payment_account_info.CasaAccount.acc_salary_org_name,
+            id=detail_payment_account_info.CasaAccount.id,
+            approve_status=detail_payment_account_info.CasaAccount.approve_status,
+        ))
 
     async def save(self,
                    cif_id: str,
@@ -200,8 +221,7 @@ class CtrPaymentAccount(BaseController):
 
         casa_account_info = self.call_repos(
             await repos_check_exist_casa_account_number(
-                casa_account_number=casa_account_number,
-                session=self.oracle_session
+                casa_account_number=casa_account_number
             )
         )
         return self.response(data=casa_account_info)
