@@ -1,11 +1,14 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
-    repos_get_customer_avatar_url_from_cif,
+    repos_check_mobile_num, repos_get_customer_avatar_url_from_cif,
     repos_get_customer_ids_from_cif_numbers, repos_get_customer_open_cif,
     repos_get_teller_info, repos_gw_get_authorized, repos_gw_get_co_owner,
     repos_gw_get_customer_info_detail, repos_gw_get_customer_info_list,
     repos_gw_open_cif, repos_update_cif_number_customer
+)
+from app.api.v1.endpoints.third_parties.gw.customer.schema import (
+    CheckMobileNumRequest
 )
 from app.api.v1.others.booking.controller import CtrBooking
 from app.settings.event import service_file
@@ -39,10 +42,12 @@ from app.utils.constant.gw import (
     GW_UDF_NAME, GW_YES, GW_YES_AGREEMENT_FLAG
 )
 from app.utils.error_messages import (
-    ERROR_CALL_SERVICE_GW, ERROR_VALIDATE_ONE_FIELD_REQUIRED
+    ERROR_CALL_SERVICE_GW, ERROR_PHONE_NUMBER,
+    ERROR_VALIDATE_ONE_FIELD_REQUIRED
 )
 from app.utils.functions import (
-    date_string_to_other_date_string_format, date_to_string, now
+    date_string_to_other_date_string_format, date_to_string,
+    is_valid_mobile_number, now
 )
 from app.utils.vietnamese_converter import (
     convert_to_unsigned_vietnamese, split_name
@@ -868,7 +873,8 @@ class CtrGWCustomer(BaseController):
             "mobile_phone": customer.mobile_number if customer.mobile_number else GW_DEFAULT_VALUE,
             "email": customer.email if customer.email else GW_DEFAULT_VALUE,
             "place_of_birth": cust_individual.country_of_birth_id if cust_individual.country_of_birth_id else GW_DEFAULT_VALUE,
-            "birthday": date_to_string(cust_individual.date_of_birth, _format=GW_DATE_FORMAT) if cust_individual.date_of_birth else GW_DEFAULT_VALUE,
+            "birthday": date_to_string(cust_individual.date_of_birth,
+                                       _format=GW_DATE_FORMAT) if cust_individual.date_of_birth else GW_DEFAULT_VALUE,
             "tax": customer.tax_number if customer.tax_number else GW_DEFAULT_VALUE,
             # TODO hard core tình trạng cư trú (resident_status)
             "resident_status": "N",
@@ -984,10 +990,12 @@ class CtrGWCustomer(BaseController):
             )
         )
         # check open_cif success
-        if response_data.get('openCIFAuthorise_out').get('transaction_info').get('transaction_error_code') != GW_CASA_RESPONSE_STATUS_SUCCESS:
+        if response_data.get('openCIFAuthorise_out').get('transaction_info').get(
+                'transaction_error_code') != GW_CASA_RESPONSE_STATUS_SUCCESS:
             return self.response_exception(
                 msg=ERROR_CALL_SERVICE_GW,
-                detail=response_data.get('openCIFAuthorise_out', {}).get("transaction_info", {}).get('transaction_error_msg')
+                detail=response_data.get('openCIFAuthorise_out', {}).get("transaction_info", {}).get(
+                    'transaction_error_msg')
             )
 
         cif_number = response_data['openCIFAuthorise_out']['data_output']['customner_info']['cif_info']['cif_num']
@@ -1018,3 +1026,19 @@ class CtrGWCustomer(BaseController):
             "cif_number": cif_number
         }
         return self.response(data=response)
+
+    async def ctr_check_mobile_num(self, request: CheckMobileNumRequest):
+
+        if not is_valid_mobile_number(mobile_number=request.mobile_number):
+            return self.response_exception(loc='mobile_number', msg=ERROR_PHONE_NUMBER)
+
+        mobile_info = self.call_repos(
+            await repos_check_mobile_num(
+                mobile_num=request.mobile_number,
+                session=self.oracle_session
+            ))
+
+        if not mobile_info:
+            return self.response(data=False)
+
+        return self.response(data=True)
