@@ -1,23 +1,31 @@
 from datetime import date
-from typing import Optional, List
+from typing import List, Optional
 
 from pydantic import Field
 
 from app.api.base.schema import RequestSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
 from app.api.v1.schemas.utils import DropdownRequest
-from app.utils.regex import REGEX_NUMBER_ONLY, REGEX_TRANSFER_CONTENT, MAX_LENGTH_TRANSFER_CONTENT
+from app.utils.constant.casa import DENOMINATIONS__AMOUNTS
+from app.utils.functions import make_description_from_dict_to_list
+from app.utils.regex import (
+    MAX_LENGTH_TRANSFER_CONTENT, REGEX_NUMBER_ONLY, REGEX_TRANSFER_CONTENT
+)
 
 
 class FeeInfoRequest(RequestSchema):
-    payer: str = Field(..., description="Bên thanh toán phí")
-    fee_amount: str = Field(..., description="Số tiền phí")
+    is_transfer_payer: bool = Field(
+        ..., description="Bên thanh toán phí <br/>`true`: Bên chuyển <br/>`false`: Bên nhận"
+    )
+    fee_amount: int = Field(..., description="Số tiền phí")
     note: Optional[str] = Field(..., description="Ghi chú")
 
 
 class StatementInfoRequest(RequestSchema):
-    denominations: str = Field(..., description="Mệnh giá")
-    amount: str = Field(..., description="Số lượng", regex=REGEX_NUMBER_ONLY)
+    denominations: str = Field(
+        ..., description=f"Mệnh giá: {make_description_from_dict_to_list(DENOMINATIONS__AMOUNTS)}"
+    )
+    amount: int = Field(..., description="Số lượng")
 
 
 # Common
@@ -39,7 +47,7 @@ class PayInCashSCBToAccountRequest(PayInCashRequest):
     Trong SCB đến tài khoản
     """
     account_number: str = Field(..., description="Số tài khoản", regex=REGEX_NUMBER_ONLY)
-    amount: str = Field(..., description="Số tiền", regex=REGEX_NUMBER_ONLY)
+    amount: int = Field(..., description="Số tiền")
     content: Optional[str] = Field(
         ..., description="Nội dung chuyển tiền", regex=REGEX_TRANSFER_CONTENT, max_length=MAX_LENGTH_TRANSFER_CONTENT
     )
@@ -47,7 +55,7 @@ class PayInCashSCBToAccountRequest(PayInCashRequest):
 
 class PayInCashSCBByIdentity(PayInCashRequest):
     """
-        Trong SCB nhận bằng giấy tờ định danh
+    Trong SCB nhận bằng giấy tờ định danh
     """
     province: DropdownRequest = Field(..., description="Tỉnh/Thành phố")
     branch: DropdownRequest = Field(..., description="Đơn vị thụ hưởng")
@@ -57,7 +65,7 @@ class PayInCashSCBByIdentity(PayInCashRequest):
     place_of_issue: DropdownRequest = Field(..., description="Nơi cấp")
     mobile_number: Optional[str] = Field(..., description="Số điện thoại")
     address_full: str = Field(..., description="Địa chỉ", max_length=100)
-    amount: str = Field(..., description="Số tiền", regex=REGEX_NUMBER_ONLY)
+    amount: int = Field(..., description="Số tiền")
     content: str = Field(
         ..., description="Nội dung chuyển tiền", regex=REGEX_TRANSFER_CONTENT, max_length=MAX_LENGTH_TRANSFER_CONTENT
     )
