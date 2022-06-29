@@ -35,8 +35,8 @@ class PayInCashRequest(RequestSchema):
     is_fee: bool = Field(..., description="Có thu phí không")
     fee_info: Optional[FeeInfoRequest] = Field(..., description="Thông tin phí")
     statement: List[StatementInfoRequest] = Field(..., description="Thông tin bảng kê")
-    direct_staff: Optional[str] = Field(..., description="Mã nhân viên kinh doanh")
-    indirect_staff: Optional[str] = Field(..., description="Mã nhân viên quản lý gián tiếp")
+    direct_staff_code: Optional[str] = Field(..., description="Mã nhân viên kinh doanh")
+    indirect_staff_code: Optional[str] = Field(..., description="Mã nhân viên quản lý gián tiếp")
 
 
 ########################################################################################################################
