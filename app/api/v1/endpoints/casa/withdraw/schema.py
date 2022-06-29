@@ -84,7 +84,7 @@ class WithdrawResponse(BaseSchema):
 ########################################################################################################################
 # I.Tài khoản  nguồn
 class SourceAccountRequest(BaseSchema):
-    payment_account: str = Field(..., description="1. Tài khoản thanh toán")
+    account_num: str = Field(..., description="Số tài khoản")
 
 
 # II. Thông tin người hưởng thụ
@@ -93,28 +93,28 @@ class BeneficiaryInformationRequest(BaseSchema):
         ...,
         description='Cờ thông tin rút tiền , `true` = Rút tài khoản, `false` = Rút cheque'
     )
-    number_money: str = Field(..., description="2. Số tiền")
+    currency: OptionalDropdownRequest = Field(..., description="1. Loại tiền")
+    account_withdrawals_amount: int = Field(..., description="2. Số tiền")
     seri_cheque: OptionalDropdownRequest = Field(None, description="3. Seri Cheque")
     date_of_issue: Optional[date] = Field(None, description="4. Ngày ký phát")
     exchange_VND_flag: Optional[bool] = Field(None, description='5. Quy đổi VND')
-    exchange_rate: Optional[str] = Field(None, description="6. Tỷ giá")
-    exchanged_money_VND: Optional[str] = Field(None, description="7. Số tiền quy đổi VND")
+    exchange_rate: Optional[int] = Field(..., description="6. Tỉ giá")
+    exchanged_money_VND: Optional[int] = Field(None, description="7. Số tiền quy đổi VND")
     reciprocal_rate_headquarters: Optional[str] = Field(None, description="8. Tỷ giá đối ứng hội sở")
     withdrawal_content: str = Field(..., description="9. Nội dung rút tiền")
 
 
 # III. Thông tin phí
 class FeeInformationRequest(BaseSchema):
+    fees_same_transaction_flag: DropdownRequest = Field(..., description=' 1. Thu phí cùng giao dịch')
     fee_payer: DropdownRequest = Field(..., description="2. Bên thanh toán phí")
-    fee_amount: str = Field(..., description="3. Số tiền phí")
-    note: Optional[str] = Field(None, description="7. Ghi chú")
+    charge_amount: str = Field(..., description="3. Số tiền phí")
 
 
 # A. THÔNG TIN GIAO DỊCH
 class TransactionInformationRequest(BaseSchema):
-    source_accounts: SourceAccountRequest = Field(..., description="I. Tài khoản nguồn")
+    source_accounts: List[SourceAccountRequest] = Field(..., description="I. Tài khoản nguồn")
     beneficiary_information: BeneficiaryInformationRequest = Field(..., description="II. Thông tin người hưởng thụ")
-    fees_same_transaction_flag: DropdownRequest = Field(..., description='III -> 1. Thu phí cùng giao dịch')
     fee_information: Optional[FeeInformationRequest] = Field(None, description="III. Thông tin phí")
 
 
@@ -128,7 +128,7 @@ class TransactionalCustomerInformationRequest(BaseSchema):
 class WithdrawRequest(BaseSchema):
     transaction_information: List[TransactionInformationRequest] = Field(..., description="A. Thông tin giao dịch")
     cif_flag: bool = Field(..., description='B -> 1. Có CIF/ Chưa có CIF')
-    transactional_customer_information: Optional[TransactionalCustomerInformationRequest] = Field(
-        None,
-        description="B. Thông tin khách hàng giao dịch"
-    )
+    # transactional_customer_information: Optional[TransactionalCustomerInformationRequest] = Field(
+    #     None,
+    #     description="B. Thông tin khách hàng giao dịch"
+    # )

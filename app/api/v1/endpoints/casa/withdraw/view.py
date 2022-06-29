@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Body, Depends, Path
+from fastapi import APIRouter, Body, Depends, Header, Path
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -25,7 +25,7 @@ async def view_withdraw_info(
         cif_id: str = Path(..., description='Id CIF ảo'),
         current_user=Depends(get_current_user_from_header())  # noqa
 ):
-    casa_info = await CtrWithdraw().ctr_withdraw_info(cif_id=cif_id)
+    casa_info = await CtrWithdraw(current_user=current_user).ctr_withdraw_info(cif_id=cif_id)
     return ResponseData[WithdrawResponse](**casa_info)
 
 
@@ -39,12 +39,12 @@ async def view_withdraw_info(
     )
 )
 async def view_save_withdraw_info(
-        cif_id: str = Path(..., description='Id CIF ảo'),
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),
         request: WithdrawRequest = Body(..., description="abc"),
-        current_user=Depends(get_current_user_from_header())  # noqa
+        current_user=Depends(get_current_user_from_header())
 ):
-    casa_info = await CtrWithdraw().ctr_save_withdraw_info(
-        cif_id=cif_id,
+    casa_info = await CtrWithdraw(current_user).ctr_save_withdraw_info(
+        booking_id=BOOKING_ID,
         request=request
     )
     return ResponseData[WithdrawResponse](**casa_info)
