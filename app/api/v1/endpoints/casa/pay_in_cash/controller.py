@@ -5,7 +5,7 @@ from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
     repos_get_customer_by_cif_number
 )
 from app.api.v1.endpoints.casa.pay_in_cash.repository import (
-    repos_save_pay_in_cash_info
+    repos_save_pay_in_cash_info, repos_get_pay_in_cash_info
 )
 from app.api.v1.endpoints.casa.pay_in_cash.schema import (
     PayInCashSCBByIdentity, PayInCashSCBToAccountRequest,
@@ -22,7 +22,7 @@ from app.api.v1.others.permission.controller import PermissionController
 from app.utils.constant.approval import PAY_IN_CASH_STAGE_BEGIN
 from app.utils.constant.business_type import BUSINESS_TYPE_PAY_IN_CASH
 from app.utils.constant.casa import (
-    DENOMINATIONS__AMOUNTS, RECEIVING_METHOD_SCB_TO_ACCOUNT, RECEIVING_METHODS
+    DENOMINATIONS__AMOUNTS, RECEIVING_METHOD_SCB_TO_ACCOUNT, RECEIVING_METHODS, RECEIVING_METHOD__METHOD_TYPES
 )
 from app.utils.constant.gw import GW_REQUEST_DIRECT_INDIRECT
 from app.utils.constant.idm import (
@@ -33,9 +33,59 @@ from app.utils.error_messages import (
     ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_DENOMINATIONS_NOT_EXIST,
     ERROR_NOT_NULL, ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
 )
+from app.utils.functions import orjson_loads
 
 
 class CtrPayInCash(BaseController):
+    async def ctr_get_pay_in_cash_info(self, booking_id: str):
+        current_user = self.current_user
+        get_pay_in_cash_info = self.call_repos(await repos_get_pay_in_cash_info(
+            booking_id=booking_id,
+            session=self.oracle_session
+        ))
+        form_data = orjson_loads(get_pay_in_cash_info.form_data)
+        account_number = form_data['account_number']
+
+        gw_casa_account_info = await CtrGWCasaAccount(current_user=current_user).ctr_gw_get_casa_account_info(
+            account_number=account_number
+        )
+
+        gw_casa_account_info = gw_casa_account_info['data']
+
+        customer_info = gw_casa_account_info['customer_info']
+        account_info = gw_casa_account_info['account_info']
+
+        amount = form_data['amount']
+        receiving_method = form_data['receiving_method']
+        fee_info = form_data['fee_info']
+        fee_amount = fee_info['fee_amount']
+        vat_tax = fee_amount / 10
+        total = fee_amount + vat_tax
+        fee_info.update(dict(
+            vat_tax=vat_tax,
+            total=total,
+            actual_total=total + amount
+        ))
+        response_data = dict(
+            transfer_type=dict(
+                receiving_method_type=RECEIVING_METHOD__METHOD_TYPES[receiving_method],
+                receiving_method=receiving_method
+            ),
+            receiver=dict(
+                account_number=account_number,
+                fullname_vn=customer_info['fullname_vn'],
+                branch_info=account_info['branch_info']
+            ),
+            transfer=dict(
+                amount=amount,
+                content=form_data['content'],
+                entry_number=None,  # TODO: Số bút toán
+            ),
+            fee_info=fee_info
+        )
+
+        return self.response(response_data)
+
     async def ctr_save_pay_in_cash_scb_to_account(
             self,
             current_user: AuthResponse,

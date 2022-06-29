@@ -1,5 +1,6 @@
 import json
 
+from sqlalchemy import select, desc
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -18,3 +19,14 @@ async def repos_save_pay_in_cash_info(booking_id: str, form_data: json, session:
         save_flag=True
     ))
     return ReposReturn(data=form_data)
+
+
+async def repos_get_pay_in_cash_info(booking_id: str, session: Session):
+    get_pay_in_cash_info = session.execute(
+        select(
+            BookingBusinessForm
+        )
+        .filter(BookingBusinessForm.booking_id == booking_id)
+        .order_by(desc(BookingBusinessForm.created_at))
+    ).scalars().first()
+    return ReposReturn(data=get_pay_in_cash_info)

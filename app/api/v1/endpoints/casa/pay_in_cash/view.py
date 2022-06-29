@@ -20,11 +20,11 @@ router = APIRouter()
     name="Nộp tiền",
     description="Nộp tiền",
     responses=swagger_response(
-        response_model=ResponseData[PayInCashResponse],
+        response_model=ResponseData,
         success_status_code=status.HTTP_200_OK
     )
 )
-async def view_save_withdraw_info(
+async def view_save_pay_in_cash_info(
         BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         request: Union[
             PayInCashSCBToAccountRequest,
@@ -41,3 +41,23 @@ async def view_save_withdraw_info(
         request=request
     )
     return ResponseData(**pay_in_cash_info)
+
+
+@router.get(
+    path="/pay-in-cash/",
+    name="Nộp tiền",
+    description="Nộp tiền",
+    responses=swagger_response(
+        response_model=ResponseData[PayInCashResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_get_pay_in_cash_info(
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
+        current_user=Depends(get_current_user_from_header())
+):
+
+    get_pay_in_cash_info = await CtrPayInCash(current_user).ctr_get_pay_in_cash_info(
+        booking_id=BOOKING_ID
+    )
+    return ResponseData(**get_pay_in_cash_info)
