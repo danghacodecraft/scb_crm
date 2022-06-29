@@ -83,7 +83,21 @@ class TransactionFeePaymentInfoRequest(BaseSchema):
     # content: ContentRequest = Field(..., description="V. Ghi chú")
 
 
+class AccountInfoCloseCasaRequest(BaseSchema):
+    account_number: Optional[str] = Field(..., description="Số tài khoản chọn để khóa")
+
+
+class CloseCasaClosureResponse(BaseSchema):
+    close_mode: str = Field(..., description="""Loại khóa tài khoản
+    \n `CASA`: Khóa tài khoản nhận tiền tệ chuyển khoản,
+    trường hợp này yêu cầu nhập account_no
+    \n `CASH`: Khóa tài khoản nhận tiền tệ""")
+    account_number: Optional[str] = Field(..., description="Số tài khoản nhận tiền từ tài khoản bị đóng")
+
+
 class CloseCasaRequest(BaseSchema):
-    account_list: List[AccountListRequest] = Field(..., description="A. Danh sách tài khoản")
-    transaction_fee_payment_info: TransactionFeePaymentInfoRequest = \
-        Field(..., description="B. Thông tin thanh toán phí giao dịch")
+    account_info: AccountInfoCloseCasaRequest = Field(..., description="Thông tin tài khoản")
+    p_blk_closure: List[CloseCasaClosureResponse] = Field(..., description="Danh sách loại đóng tài khoản")
+    # TODO chưa có mô tả về phí giao dịch
+    # transaction_fee_payment_info: TransactionFeePaymentInfoRequest = \
+    #     Field(..., description="B. Thông tin thanh toán phí giao dịch")
