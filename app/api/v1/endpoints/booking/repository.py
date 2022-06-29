@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import asc, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -18,6 +18,7 @@ async def get_list_comment(session: Session, booking_id: str) -> ReposReturn:
             Comment
         ).filter(
             Comment.booking_id == booking_id
-        )).scalars()
+        ).order_by(asc(Comment.created_at))
+    ).scalars()
 
     return ReposReturn(data=query)

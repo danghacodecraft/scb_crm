@@ -23,7 +23,8 @@ from app.api.v1.endpoints.third_parties.gw.customer.example import (
     CUSTOMER_INFO_LIST_SUCCESS_EXAMPLE
 )
 from app.api.v1.endpoints.third_parties.gw.customer.schema import (
-    CustomerInfoListCIFRequest, DebitCardByCIFNumberResponse,
+    CheckMobileNumRequest, CustomerInfoListCIFRequest,
+    DebitCardByCIFNumberResponse,
     GuardianOrCustomerRelationshipByCIFNumberResponse,
     GWAuthorizedListResponse, GWCoOwnerListResponse,
     GWCustomerCheckExistRequest, GWCustomerCheckExistResponse,
@@ -98,9 +99,9 @@ async def view_gw_check_exist_casa_account_info(
     )
 )
 async def view_gw_get_customer_info_detail(
-    cif_number: str = CustomField().CIFNumberPath,
-    request: GWCustomerDetailRequest = Body(...),
-    current_user=Depends(get_current_user_from_header())
+        cif_number: str = CustomField().CIFNumberPath,
+        request: GWCustomerDetailRequest = Body(...),
+        current_user=Depends(get_current_user_from_header())
 ):
     parameter = request.parameter
 
@@ -182,3 +183,22 @@ async def view_gw_open_cif(
         BOOKING_ID=BOOKING_ID
     )
     return ResponseData[GWOpenCIFResponse](**gw_customer_open_cif)
+
+
+@router.get(
+    path="/check-mobile-num/",
+    name="Kiểm tra số điện thoại",
+    description="Kiểm tra số điện thoại",
+    responses=swagger_response(
+        response_model=ResponseData,
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_check_mobile_num(
+        request: CheckMobileNumRequest,
+        current_user=Depends(get_current_user_from_header())
+):
+    gw_customer_open_cif = await CtrGWCustomer(current_user).ctr_check_mobile_num(
+        request=request
+    )
+    return ResponseData(**gw_customer_open_cif)
