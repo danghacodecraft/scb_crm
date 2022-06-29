@@ -17,5 +17,4 @@ async def repos_save_pay_in_cash_info(booking_id: str, form_data: json, session:
         created_at=now(),
         save_flag=True
     ))
-    session.flush()
     return ReposReturn(data=form_data)

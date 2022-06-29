@@ -97,12 +97,6 @@ class CtrPayInCash(BaseController):
             return self.response_exception(msg=ERROR_NOT_NULL, loc="fee_info")
             # TODO: Case cho bên chuyển/ Bên nhận
 
-        if receiving_method not in RECEIVING_METHODS:
-            return self.response_exception(
-                msg=ERROR_RECEIVING_METHOD_NOT_EXIST,
-                loc=f'receiving_method: {receiving_method}'
-            )
-
         denominations__amounts = DENOMINATIONS__AMOUNTS
         denominations_errors = []
         for index, row in enumerate(statement):
@@ -166,6 +160,11 @@ class CtrPayInCash(BaseController):
                 session=self.oracle_session
             ))
 
+        if receiving_method not in RECEIVING_METHODS:
+            return self.response_exception(
+                msg=ERROR_RECEIVING_METHOD_NOT_EXIST,
+                loc=f'receiving_method: {receiving_method}'
+            )
         ################################################################################################################
 
         pay_in_cash_info = None
