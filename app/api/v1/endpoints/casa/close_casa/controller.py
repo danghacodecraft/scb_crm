@@ -4,6 +4,9 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.casa.close_casa.repository import (
     repos_save_close_casa_account
 )
+from app.api.v1.endpoints.cif.repository import (
+    repos_get_account_id_by_account_number
+)
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.validator import validate_history_data
 from app.utils.constant.business_type import BUSINESS_TYPE_CLOSE_CASA
@@ -11,7 +14,7 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_CLOSE_CASA_ACCOUNT,
     PROFILE_HISTORY_STATUS_INIT
 )
-from app.utils.functions import orjson_dumps
+from app.utils.functions import now, orjson_dumps
 
 
 class CtrCloseCasa(BaseController):
@@ -28,23 +31,28 @@ class CtrCloseCasa(BaseController):
             check_correct_booking_flag=False,
             loc=f'booking_id: {BOOKING_ID}'
         )
-        account_list = []
+        close_account_list = []
+        account_numbers = []
         blk_closure = {
             "CLOSE_MODE": "CASH",
             "ACCOUNT_NO": ""
         }
 
         for account in close_casa_request:
+            if account.account_info.account_number in account_numbers:
+                return self.response_exception(msg="Duplicate account_number")
+
+            account_numbers.append(account.account_info.account_number)
             for item in account.p_blk_closure:
                 if item.close_mode == "CASA":
                     if not item.account_number:
-                        return self.response_exception("CLOSE_MODE is not data")
+                        return self.response_exception(msg="CLOSE_MODE is not data")
 
                     blk_closure = {
                         "CLOSE_MODE": item.close_mode,
                         "ACCOUNT_NO": item.account_number
                     }
-            account_list.append({
+            close_account_list.append({
                 "account_info": {
                     "account_number": account.account_info.account_number
                 },
@@ -53,12 +61,34 @@ class CtrCloseCasa(BaseController):
                 "p_blk_charge_main": "",
                 "p_blk_charge_details": "",
                 "p_blk_udf": "",
+                # TODO hard core
                 "staff_info_checker": {
                     "staff_name": "HOANT2"
                 },
                 "staff_info_maker": {
                     "staff_name": "KHANHLQ"
                 }
+            })
+        saving_booking_account = []
+        saving_booking_customer = []  # noqa
+
+        for account_number in account_numbers:
+            # TODO check account_number in db crm
+            response_data = self.call_repos(
+                await repos_get_account_id_by_account_number(
+                    account_number=account_number,
+                    session=self.oracle_session
+                ))
+
+            saving_booking_account.append({
+                "booking_id": BOOKING_ID,
+                "account_id": response_data.get('account_id'),
+                "created_at": now()
+            })
+
+            saving_booking_customer.append({
+                "booking_id": BOOKING_ID,
+                "customer_id": response_data.get('customer_id')
             })
 
         # Tạo data TransactionDaily và các TransactionStage
@@ -86,7 +116,7 @@ class CtrCloseCasa(BaseController):
                 detail=history_response['detail']
             )
 
-        saving_close_casa_accounts = self.call_repos(await repos_save_close_casa_account(
+        booking_id = self.call_repos(await repos_save_close_casa_account(
             booking_id=BOOKING_ID,
             saving_transaction_stage_status=saving_transaction_stage_status,
             saving_transaction_stage=saving_transaction_stage,
@@ -96,8 +126,13 @@ class CtrCloseCasa(BaseController):
             saving_transaction_stage_role=saving_transaction_stage_role,
             saving_transaction_daily=saving_transaction_daily,
             saving_transaction_sender=saving_transaction_sender,
-            request_json=orjson_dumps(account_list),
+            saving_booking_account=saving_booking_account,
+            saving_booking_customer=saving_booking_customer,
+            request_json=orjson_dumps(close_account_list),
+            history_data=orjson_dumps(history_data),
             session=self.oracle_session
         ))
-
-        return self.response(data=saving_close_casa_accounts)
+        response_data = {
+            "booking_id": booking_id
+        }
+        return self.response(data=response_data)

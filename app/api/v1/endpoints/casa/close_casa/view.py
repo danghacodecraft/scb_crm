@@ -27,8 +27,8 @@ async def view_close_casa(
         current_user=Depends(get_current_user_from_header()),
         BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),
 ):
-    redeem_account_response = await CtrCloseCasa(current_user).ctr_close_casa(
+    close_casa_response = await CtrCloseCasa(current_user).ctr_close_casa(
         BOOKING_ID=BOOKING_ID,
         close_casa_request=close_casa_request
     )
-    return ResponseData(**redeem_account_response)
+    return ResponseData(**close_casa_response)
