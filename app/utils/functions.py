@@ -252,6 +252,10 @@ def make_description_from_dict(dictionary: dict):
     return "<br/>" + "<br/>".join(f'`{k}`: {v}' for k, v in dictionary.items())
 
 
+def make_description_from_dict_to_list(dictionary: dict):
+    return "<br/> [" + ", ".join(f'`{v}`' for v in dictionary.keys()) + "]"
+
+
 def get_index_positions(list_of_elements, element):
     """
     Trả về 1 danh sách index các element nằm trong list
@@ -265,6 +269,6 @@ def get_index_positions(list_of_elements, element):
             # Add the index position in list
             index_position_list.append(index_position)
             index_position += 1
-        except ValueError as e:
+        except ValueError:
             break
     return index_position_list

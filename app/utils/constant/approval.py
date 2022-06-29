@@ -149,6 +149,49 @@ AMOUNT_UNBLOCK_APPROVE_STAGES = {
     AMOUNT_UNBLOCK_STAGE_APPROVE_KSV: "Phê duyệt KSV",
     AMOUNT_UNBLOCK_STAGE_APPROVE_KSS: "Phê duyệt KSS"
 }
+########################################################################################################################
+
+
+########################################################################################################################
+# PAY_IN_CASH
+########################################################################################################################
+BUSINESS_JOB_CODE_PAY_IN_CASH = "PHONG_TOA_TAI_KHOAN"
+BUSINESS_JOB_CODE_START_PAY_IN_CASH = "BAT_DAT_PHONG_TOA_TAI_KHOAN"
+
+PAY_IN_CASH_STAGE_BEGIN = 'PAY_IN_CASH_BEGIN'
+PAY_IN_CASH_STAGE_INIT = "PAY_IN_CASH_KHOI_TAO_HO_SO"
+PAY_IN_CASH_STAGE_APPROVE_KSV = "PAY_IN_CASH_PHE_DUYET_KSV"
+PAY_IN_CASH_STAGE_APPROVE_KSS = "PAY_IN_CASH_PHE_DUYET_KSS"
+PAY_IN_CASH_STAGE_COMPLETED = "PAY_IN_CASH_KET_THUC_HO_SO"
+
+PAY_IN_CASH_ACTION_PHE_DUYET_KSS = "PAY_IN_CASH_PHE_DUYET_KSS"
+PAY_IN_CASH_ACTION_BSTTKXTL_KSS = "PAY_IN_CASH_BSTTKXTL_KSS"
+PAY_IN_CASH_ACTION_BSTTXTL_KSS = "PAY_IN_CASH_BSTTXTL_KSS"
+PAY_IN_CASH_ACTION_XTL_KSS = "PAY_IN_CASH_XTL_KSS"
+
+PAY_IN_CASH_ACTION_PHE_DUYET_KSV = "PAY_IN_CASH_PHE_DUYET_KSV"
+PAY_IN_CASH_ACTION_BSTTKXTL_KSV = "PAY_IN_CASH_BSTTKXTL_KSV"
+PAY_IN_CASH_ACTION_BSTTXTL_KSV = "PAY_IN_CASH_BSTTXTL_KSV"
+PAY_IN_CASH_ACTION_XTL_KSV = "PAY_IN_CASH_XTL_KSV"
+
+PAY_IN_CASH_ACTIONS = {
+    PAY_IN_CASH_ACTION_PHE_DUYET_KSS: "KSS Phê duyệt ",
+    PAY_IN_CASH_ACTION_BSTTKXTL_KSS: "KSS Bổ sung thông tin không cần xác thực lại",
+    PAY_IN_CASH_ACTION_BSTTXTL_KSS: "KSS Bổ sung thông tin và xác thực lại",
+    PAY_IN_CASH_ACTION_XTL_KSS: "KSS Yêu cầu xác thực lại khách hàng.",
+
+    PAY_IN_CASH_ACTION_PHE_DUYET_KSV: "KSV Phê duyệt",
+    PAY_IN_CASH_ACTION_BSTTKXTL_KSV: "KSV Bổ sung thông tin không cần xác thực lại",
+    PAY_IN_CASH_ACTION_BSTTXTL_KSV: "KSV Bổ sung thông tin và xác thực lại",
+    PAY_IN_CASH_ACTION_XTL_KSV: "KSV Yêu cầu xác thực lại khách hàng."
+}
+
+PAY_IN_CASH_APPROVE_STAGES = {
+    PAY_IN_CASH_STAGE_APPROVE_KSV: "Phê duyệt KSV",
+    PAY_IN_CASH_STAGE_APPROVE_KSS: "Phê duyệt KSS"
+}
+########################################################################################################################
+
 STAGE_BEGINS = [
     CIF_STAGE_BEGIN,
     OPEN_CASA_STAGE_BEGIN,

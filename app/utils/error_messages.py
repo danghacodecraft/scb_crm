@@ -1,6 +1,8 @@
 # status error
 from app.utils.constant.approval import CIF_APPROVE_STAGES
-from app.utils.constant.casa import ACCOUNT_ALLOW_NUMBER_LENGTH
+from app.utils.constant.casa import (
+    ACCOUNT_ALLOW_NUMBER_LENGTH, DENOMINATIONS__AMOUNTS, RECEIVING_METHODS
+)
 
 PAGING_ERROR = "PAGING_ERROR"
 VALIDATE_ERROR = "VALIDATE_ERROR"
@@ -133,6 +135,9 @@ ERROR_SLA_TRANSACTION_NOT_EXIST = 'ERROR_SLA_TRANSACTION_NOT_EXIST'
 ERROR_ACCOUNT_NUMBER_NOT_NULL = 'ERROR_ACCOUNT_NUMBER_NOT_NULL'
 ERROR_ACCOUNT_LENGTH_NOT_ALLOWED = 'ERROR_ACCOUNT_LENGTH_NOT_ALLOWED'
 
+ERROR_RECEIVING_METHOD_NOT_EXIST = 'ERROR_RECEIVING_METHOD_NOT_EXIST'
+ERROR_DENOMINATIONS_NOT_EXIST = 'ERROR_DENOMINATIONS_NOT_EXIST'
+
 MESSAGE_STATUS = {
     # general error
     PAGING_ERROR: "Can not found page!",
@@ -194,7 +199,7 @@ MESSAGE_STATUS = {
     ERROR_IDENTITY_DOCUMENT_TYPE_TYPE_NOT_EXIST: "Identity Document Type Type is not exist",
     ERROR_WRONG_TYPE_IDENTITY: "Identity Document Type Type is wrong",
 
-    ERROR_NOT_NULL: "is not null",
+    ERROR_NOT_NULL: " field is not null",
 
     ERROR_NO_DATA: "No data, please create data before get data",
 
@@ -244,5 +249,8 @@ MESSAGE_STATUS = {
     ERROR_SLA_TRANSACTION_NOT_EXIST: "SLA Transaction not exist",
 
     ERROR_ACCOUNT_NUMBER_NOT_NULL: 'Account number is not null',
-    ERROR_ACCOUNT_LENGTH_NOT_ALLOWED: f'Account number length must be in range {ACCOUNT_ALLOW_NUMBER_LENGTH}'
+    ERROR_ACCOUNT_LENGTH_NOT_ALLOWED: f'Account number length must be in range {ACCOUNT_ALLOW_NUMBER_LENGTH}',
+
+    ERROR_RECEIVING_METHOD_NOT_EXIST: f'Receiving method not in {RECEIVING_METHODS}',
+    ERROR_DENOMINATIONS_NOT_EXIST: f'Denominations not in {DENOMINATIONS__AMOUNTS.keys()}',
 }
