@@ -42,7 +42,7 @@ from app.utils.constant.gw import (
     GW_UDF_NAME, GW_YES, GW_YES_AGREEMENT_FLAG
 )
 from app.utils.error_messages import (
-    ERROR_CALL_SERVICE_GW, ERROR_PHONE_NUMBER,
+    ERROR_CALL_SERVICE_GW, ERROR_PHONE_NUMBER, ERROR_PHONE_NUMBER_NOT_EXITS,
     ERROR_VALIDATE_ONE_FIELD_REQUIRED
 )
 from app.utils.functions import (
@@ -1039,6 +1039,9 @@ class CtrGWCustomer(BaseController):
             ))
 
         if not mobile_info:
-            return self.response(data=False)
+            return self.response(data=dict(
+                mobile_number=False,
+                message=ERROR_PHONE_NUMBER_NOT_EXITS
+            ))
 
         return self.response(data=True)
