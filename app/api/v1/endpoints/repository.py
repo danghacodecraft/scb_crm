@@ -14,7 +14,7 @@ from app.third_parties.oracle.models.master_data.account import (
     AccountStructureType
 )
 from app.third_parties.oracle.models.master_data.address import AddressCountry
-from app.third_parties.oracle.models.master_data.others import Currency
+from app.third_parties.oracle.models.master_data.others import Currency, Branch
 from app.utils.constant.cif import ACTIVE_FLAG_ACTIVED
 from app.utils.error_messages import ERROR_ID_NOT_EXIST, ERROR_INVALID_NUMBER
 from app.utils.functions import (
@@ -280,3 +280,15 @@ async def repos_is_valid_number(string: str, loc: str):
         return ReposReturn(data=None)
 
     return ReposReturn(is_error=True, msg=ERROR_INVALID_NUMBER, loc=loc)
+
+
+async def repos_get_branch_in_province(branch_id:str, province_id:str, session: Session, loc: str):
+    branch = session.execute(
+        select(Branch)
+        .filter(and_(
+            Branch.id == branch_id, Branch.province_id == province_id
+        ))
+    ).scalar()
+    if not branch:
+        return ReposReturn(is_error=True, msg=ERROR_ID_NOT_EXIST, loc=loc)
+    return ReposReturn(data=branch)

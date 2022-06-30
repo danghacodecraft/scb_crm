@@ -12,6 +12,7 @@ from app.api.v1.endpoints.casa.pay_in_cash.schema import (
     PayInCashThirdParty247ToAccount, PayInCashThirdParty247ToCard,
     PayInCashThirdPartyByIdentity, PayInCashThirdPartyToAccount
 )
+from app.api.v1.endpoints.repository import repos_get_branch_in_province
 from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
     CtrGWCasaAccount
 )
@@ -23,6 +24,7 @@ from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
 from app.third_parties.oracle.models.master_data.address import AddressProvince
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
+from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.approval import PAY_IN_CASH_STAGE_BEGIN
 from app.utils.constant.business_type import BUSINESS_TYPE_PAY_IN_CASH
 from app.utils.constant.casa import (
@@ -195,6 +197,16 @@ class CtrPayInCash(BaseController):
         # validate province
         province_id = request.province.id
         await self.get_model_object_by_id(model_id=province_id, model=AddressProvince, loc='province -> id')
+
+        # validate branch
+        branch_id = request.branch.id
+        self.call_repos(await repos_get_branch_in_province(
+            branch_id=branch_id,
+            province_id=province_id,
+            session=self.oracle_session,
+            loc=f'branch_id: {branch_id}, province_id: {province_id}'
+        ))
+        await self.get_model_object_by_id(model_id=branch_id, model=Branch, loc='branch -> id')
 
         # validate issued_date
         issued_date = request.issued_date
