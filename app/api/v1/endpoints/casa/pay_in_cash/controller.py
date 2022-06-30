@@ -37,7 +37,7 @@ from app.utils.error_messages import (
     ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_DENOMINATIONS_NOT_EXIST,
     ERROR_NOT_NULL, ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST, ERROR_CIF_NUMBER_NOT_EXIST
 )
-from app.utils.functions import orjson_loads
+from app.utils.functions import orjson_loads, dropdown
 
 
 class CtrPayInCash(BaseController):
@@ -72,6 +72,19 @@ class CtrPayInCash(BaseController):
                     code=account_info['branch_info']['branch_code'],
                     name=account_info['branch_info']['branch_name']
                 )
+            )
+        if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
+            province = await self.get_model_object_by_id(
+                model_id=form_data['province']['id'], model=AddressProvince, loc='province_id'
+            )
+            branch_info = await self.get_model_object_by_id(
+                model_id=form_data['branch']['id'], model=Branch, loc='branch_id'
+            )
+            receiver_response = dict(
+                province=dropdown(province),
+                branch_info=dropdown(branch_info),
+                fullname_vn=form_data['fullname_vn'],
+                identity_number=form_data['identity_number'],
             )
 
         amount = form_data['amount']
