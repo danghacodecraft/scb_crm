@@ -21,16 +21,19 @@ from app.api.v1.endpoints.third_parties.gw.employee.controller import CtrGWEmplo
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
+from app.third_parties.oracle.models.master_data.address import AddressProvince
+from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.utils.constant.approval import PAY_IN_CASH_STAGE_BEGIN
 from app.utils.constant.business_type import BUSINESS_TYPE_PAY_IN_CASH
 from app.utils.constant.casa import (
-    DENOMINATIONS__AMOUNTS, RECEIVING_METHOD_SCB_TO_ACCOUNT, RECEIVING_METHODS, RECEIVING_METHOD__METHOD_TYPES
+    DENOMINATIONS__AMOUNTS, RECEIVING_METHOD_SCB_TO_ACCOUNT, RECEIVING_METHODS, RECEIVING_METHOD__METHOD_TYPES,
+    RECEIVING_METHOD_SCB_BY_IDENTITY
 )
 from app.utils.constant.gw import GW_REQUEST_DIRECT_INDIRECT
 from app.utils.constant.idm import IDM_PERMISSION_CODE_GDV, IDM_MENU_CODE_TTKH, IDM_GROUP_ROLE_CODE_GDV
 from app.utils.error_messages import (
     ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_DENOMINATIONS_NOT_EXIST,
-    ERROR_NOT_NULL, ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
+    ERROR_NOT_NULL, ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST, ERROR_CIF_NUMBER_NOT_EXIST
 )
 from app.utils.functions import orjson_loads
 
@@ -164,6 +167,10 @@ class CtrPayInCash(BaseController):
             current_user: AuthResponse,
             request: PayInCashSCBToAccountRequest
     ):
+        cif_number = request.cif_number
+        if not cif_number:
+            return self.response_exception(msg=ERROR_CIF_NUMBER_NOT_EXIST, loc=f"cif_number: {cif_number}")
+
         account_number = request.account_number
 
         # Kiểm tra số tài khoản có tồn tại hay không
@@ -172,6 +179,24 @@ class CtrPayInCash(BaseController):
         )
         if not casa_account['data']['is_existed']:
             return self.response_exception(msg=ERROR_CASA_ACCOUNT_NOT_EXIST, loc=f"account_number: {account_number}")
+
+        return request
+
+    async def ctr_save_pay_in_cash_scb_by_identity(
+            self,
+            request: PayInCashSCBByIdentity
+    ):
+        # validate province
+        province_id = request.province.id
+        await self.get_model_object_by_id(model_id=province_id, model=AddressProvince, loc='province -> id')
+
+        # validate issued_date
+        issued_date = request.issued_date
+        await self.validate_issued_date(issued_date=issued_date, loc='issued_date')
+
+        # validate place_of_issue
+        place_of_issue_id = request.place_of_issue.id
+        await self.get_model_object_by_id(model_id=place_of_issue_id, model=PlaceOfIssue, loc='place_of_issue -> id')
 
         return request
 
@@ -296,6 +321,8 @@ class CtrPayInCash(BaseController):
                 current_user=current_user,
                 request=request
             )
+        if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
+            pay_in_cash_info = await self.ctr_save_pay_in_cash_scb_by_identity(request=request)
 
         self.call_repos(await repos_save_pay_in_cash_info(
             booking_id=booking_id,

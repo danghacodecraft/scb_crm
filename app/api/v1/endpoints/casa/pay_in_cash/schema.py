@@ -61,13 +61,12 @@ class PayInCashSCBByIdentity(PayInCashRequest):
     Trong SCB nhận bằng giấy tờ định danh
     """
     province: DropdownRequest = Field(..., description="Tỉnh/Thành phố")
-    branch: DropdownRequest = Field(..., description="Đơn vị thụ hưởng")
     full_name_vn: str = Field(..., description="Họ tên người thụ hưởng")
     identity_number: str = Field(..., description="Số GTĐD", regex=REGEX_NUMBER_ONLY)
     issued_date: date = Field(..., description="Ngày cấp")
     place_of_issue: DropdownRequest = Field(..., description="Nơi cấp")
     mobile_number: Optional[str] = Field(..., description="Số điện thoại")
-    address_full: str = Field(..., description="Địa chỉ", max_length=100)
+    address_full: Optional[str] = Field(..., description="Địa chỉ", max_length=500)
     amount: int = Field(..., description="Số tiền")
     content: str = Field(
         ..., description="Nội dung chuyển tiền", regex=REGEX_TRANSFER_CONTENT, max_length=MAX_LENGTH_TRANSFER_CONTENT
