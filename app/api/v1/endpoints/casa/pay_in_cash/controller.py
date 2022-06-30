@@ -45,13 +45,12 @@ class CtrPayInCash(BaseController):
         account_number = form_data['account_number']
 
         gw_casa_account_info = await CtrGWCasaAccount(current_user=current_user).ctr_gw_get_casa_account_info(
-            account_number=account_number
+            account_number=account_number,
+            return_raw_data_flag=True
         )
 
-        gw_casa_account_info = gw_casa_account_info['data']
-
-        customer_info = gw_casa_account_info['customer_info']
-        account_info = gw_casa_account_info['account_info']
+        gw_casa_account_info_customer_info = gw_casa_account_info['customer_info']
+        account_info = gw_casa_account_info_customer_info['account_info']
 
         amount = form_data['amount']
         receiving_method = form_data['receiving_method']
@@ -60,10 +59,20 @@ class CtrPayInCash(BaseController):
         vat_tax = fee_amount / 10
         total = fee_amount + vat_tax
         actual_total = total + amount
+        is_transfer_payer = False
+        payer = None
+        if fee_info['is_transfer_payer'] is not None:
+            payer = "RECEIVER"
+            if fee_info['is_transfer_payer'] is True:
+                is_transfer_payer = True
+                payer = "SENDER"
+
         fee_info.update(dict(
             vat_tax=vat_tax,
             total=total,
-            actual_total=actual_total
+            actual_total=actual_total,
+            is_transfer_payer=is_transfer_payer,
+            payer=payer
         ))
         statement = DENOMINATIONS__AMOUNTS
         for row in form_data['statement']:
@@ -86,18 +95,18 @@ class CtrPayInCash(BaseController):
         )
         cif_number = form_data['cif_number']
         gw_customer_info = await CtrGWCustomer(current_user).ctr_gw_get_customer_info_detail(
-            cif_number=cif_number
+            cif_number=cif_number,
+            return_raw_data_flag=True
         )
-        gw_customer_info = gw_customer_info['data']
         gw_customer_info_identity_info = gw_customer_info['id_info']
         customer_response = dict(
             cif_number=cif_number,
-            fullname_vn=gw_customer_info['fullname_vn'],
-            address_full=gw_customer_info['contact_address']['address_full'],
+            fullname_vn=gw_customer_info['full_name'],
+            address_full=gw_customer_info['t_address_info']['contact_address_full'],
             identity_info=dict(
-                number=gw_customer_info_identity_info['number'],
-                issued_date=gw_customer_info_identity_info['issued_date'],
-                place_of_issue=gw_customer_info_identity_info['place_of_issue']
+                number=gw_customer_info_identity_info['id_num'],
+                issued_date=gw_customer_info_identity_info['id_issued_date'],
+                place_of_issue=gw_customer_info_identity_info['id_issued_location']
             ),
             mobile_phone=gw_customer_info['mobile_phone'],
             telephone=gw_customer_info['telephone'],
@@ -110,9 +119,13 @@ class CtrPayInCash(BaseController):
             ),
             receiver=dict(
                 account_number=account_number,
-                fullname_vn=customer_info['fullname_vn'],
-                currency=account_info['currency'],
-                branch_info=account_info['branch_info']
+                fullname_vn=gw_casa_account_info_customer_info['full_name'],
+                currency=account_info['account_currency'],
+                branch_info=dict(
+                    id=account_info['branch_info']['branch_code'],
+                    code=account_info['branch_info']['branch_code'],
+                    name=account_info['branch_info']['branch_name']
+                )
             ),
             transfer=dict(
                 amount=amount,
