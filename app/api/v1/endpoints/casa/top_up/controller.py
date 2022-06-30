@@ -65,7 +65,6 @@ class CtrCasaTopUp(BaseController):
         # Thông tin người thụ hưởng
         ################################################################################################################
         receiver_response = {}
-        print(form_data)
 
         if receiving_method not in RECEIVING_METHOD_IDENTITY_CASES:
             # account_number = form_data['account_number']
@@ -94,7 +93,11 @@ class CtrCasaTopUp(BaseController):
                 # branch_info = await self.get_model_object_by_id(model_id=form_data['branch']['id'], model=Branch, loc='')
                 branch_id = form_data['branch']['id']
                 receiver_response = dict(
-                    bank=form_data['bank'],
+                    # bank=form_data['bank'],
+                    bank=dict(
+                        code=branch_id,
+                        name=branch_id
+                    ),
                     # province=dropdown(branch_info.address_province),
                     province=dict(
                         code=branch_id,
