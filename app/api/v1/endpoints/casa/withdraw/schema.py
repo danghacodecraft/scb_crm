@@ -5,9 +5,7 @@ from pydantic import Field
 
 from app.api.base.schema import BaseSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
-from app.api.v1.schemas.utils import (
-    DropdownRequest, DropdownResponse, OptionalDropdownRequest
-)
+from app.api.v1.schemas.utils import DropdownResponse, OptionalDropdownRequest
 
 
 # I.Tài khoản  nguồn
@@ -97,18 +95,21 @@ class BeneficiaryInformationRequest(BaseSchema):
     account_withdrawals_amount: int = Field(..., description="2. Số tiền")
     seri_cheque: OptionalDropdownRequest = Field(None, description="3. Seri Cheque")
     date_of_issue: Optional[date] = Field(None, description="4. Ngày ký phát")
-    exchange_VND_flag: Optional[bool] = Field(None, description='5. Quy đổi VND')
+    exchange_VND_flag: Optional[int] = Field(None, description='5. Quy đổi VND')
     exchange_rate: Optional[int] = Field(..., description="6. Tỉ giá")
     exchanged_money_VND: Optional[int] = Field(None, description="7. Số tiền quy đổi VND")
-    reciprocal_rate_headquarters: Optional[str] = Field(None, description="8. Tỷ giá đối ứng hội sở")
-    withdrawal_content: str = Field(..., description="9. Nội dung rút tiền")
+    reciprocal_rate_headquarters: Optional[int] = Field(None, description="8. Tỷ giá đối ứng hội sở")
+    content: str = Field(..., description="9. Nội dung rút tiền")
 
 
 # III. Thông tin phí
 class FeeInformationRequest(BaseSchema):
-    fees_same_transaction_flag: DropdownRequest = Field(..., description=' 1. Thu phí cùng giao dịch')
-    fee_payer: DropdownRequest = Field(..., description="2. Bên thanh toán phí")
-    charge_amount: str = Field(..., description="3. Số tiền phí")
+    waived: bool = Field(
+        ...,
+        description=' 1. Cờ có thu phí hay không, `true`: Có thu phí, `false` = Không thu phí'
+    )
+    charge_name: Optional[str] = Field(..., description="2. Danh mục thu phí")
+    charge_amount: Optional[int] = Field(..., description="3. Số tiền phí")
 
 
 # A. THÔNG TIN GIAO DỊCH
@@ -126,8 +127,9 @@ class TransactionalCustomerInformationRequest(BaseSchema):
 
 # Giao dịch rút tiền
 class WithdrawRequest(BaseSchema):
-    transaction_information: List[TransactionInformationRequest] = Field(..., description="A. Thông tin giao dịch")
-    cif_flag: bool = Field(..., description='B -> 1. Có CIF/ Chưa có CIF')
+    transaction_information: TransactionInformationRequest = Field(..., description="A. Thông tin giao dịch")
+
+    # cif_flag: bool = Field(..., description='B -> 1. Có CIF/ Chưa có CIF')
     # transactional_customer_information: Optional[TransactionalCustomerInformationRequest] = Field(
     #     None,
     #     description="B. Thông tin khách hàng giao dịch"

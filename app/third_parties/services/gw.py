@@ -398,12 +398,12 @@ class ServiceGW:
         """
         data_input = {
             "account_info": {
-                "account_num": account_info.account_num
+                "account_num": account_info['account_num']
             },
             "p_blk_closure": [
                 {
-                    "CLOSE_MODE": item.close_mode,
-                    "ACCOUNT_NO": item.account_no
+                    "CLOSE_MODE": item['close_mode'],
+                    "ACCOUNT_NO": item['account_no']
                 }
                 for item in p_blk_closure],
             "p_blk_charge_main": None,  # TODO
