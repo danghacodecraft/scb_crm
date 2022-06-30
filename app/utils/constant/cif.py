@@ -10,6 +10,7 @@ CIF_NUMBER_REGEX = r"^\d{7}$"
 BUSINESS_TYPE_CODE_CIF = "CIF"
 BUSINESS_TYPE_CODE_OPEN_CASA = "OPEN_CASA"
 BUSINESS_TYPE_CODE_CLOSE_CASA = "CLOSE_CASA"
+BUSINESS_TYPE_CODE_WITHDRAW = "WITHDRAW"
 
 BUSINESS_TYPE_CODE_AMOUNT_BLOCK = "AMOUNT_BLOCK"
 BUSINESS_TYPE_CODE_AMOUNT_UNBLOCK = "AMOUNT_UNBLOCK"
@@ -282,7 +283,12 @@ PROFILE_HISTORY_DESCRIPTIONS = {
         'description': PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_UNBLOCK,
         'content': "Giao dịch viên đang chuẩn bị hồ sơ. "
                    "Mốc thời gian tính từ lúc GDV điền thông tin tab đầu tiên [Giải tỏa tài khoản]"
-    }
+    },
+    BUSINESS_TYPE_CODE_WITHDRAW: {
+        'description': PROFILE_HISTORY_DESCRIPTIONS_WITHDRAW,
+        'content': "Giao dịch viên đang chuẩn bị hồ sơ. "
+                   "Mốc thời gian tính từ lúc GDV điền thông tin tab đầu tiên [Thông tin cá nhân]"
+    },
 }
 
 EB_QUESTION_TYPE_BASIC_01 = 'BASIC_01'

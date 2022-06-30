@@ -1,7 +1,7 @@
 from sqlalchemy import update
 from sqlalchemy.orm import Session
 
-from app.api.base.repository import ReposReturn
+from app.api.base.repository import ReposReturn, auto_commit
 from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingBusinessForm, TransactionDaily, TransactionSender
 )
@@ -13,7 +13,7 @@ from app.utils.constant.approval import WITHDRAW_KHOI_TAO, WITHDRAW_UNBLOCK_PD
 from app.utils.functions import generate_uuid, now
 
 
-# @auto_commit
+@auto_commit
 async def repos_save_withdraw(
         booking_id,
         saving_transaction_stage_status,

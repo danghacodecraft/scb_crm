@@ -91,12 +91,11 @@ class BeneficiaryInformationRequest(BaseSchema):
         ...,
         description='Cờ thông tin rút tiền , `true` = Rút tài khoản, `false` = Rút cheque'
     )
-    currency: OptionalDropdownRequest = Field(..., description="1. Loại tiền")
-    account_withdrawals_amount: int = Field(..., description="2. Số tiền")
+    withdrawals_amount: int = Field(..., description="2. Số tiền")
     seri_cheque: OptionalDropdownRequest = Field(None, description="3. Seri Cheque")
     date_of_issue: Optional[date] = Field(None, description="4. Ngày ký phát")
     exchange_VND_flag: Optional[int] = Field(None, description='5. Quy đổi VND')
-    exchange_rate: Optional[int] = Field(..., description="6. Tỉ giá")
+    exchange_rate: Optional[int] = Field(None, description="6. Tỉ giá")
     exchanged_money_VND: Optional[int] = Field(None, description="7. Số tiền quy đổi VND")
     reciprocal_rate_headquarters: Optional[int] = Field(None, description="8. Tỷ giá đối ứng hội sở")
     content: str = Field(..., description="9. Nội dung rút tiền")
@@ -114,7 +113,7 @@ class FeeInformationRequest(BaseSchema):
 
 # A. THÔNG TIN GIAO DỊCH
 class TransactionInformationRequest(BaseSchema):
-    source_accounts: List[SourceAccountRequest] = Field(..., description="I. Tài khoản nguồn")
+    source_accounts: SourceAccountRequest = Field(..., description="I. Tài khoản nguồn")
     beneficiary_information: BeneficiaryInformationRequest = Field(..., description="II. Thông tin người hưởng thụ")
     fee_information: Optional[FeeInformationRequest] = Field(None, description="III. Thông tin phí")
 

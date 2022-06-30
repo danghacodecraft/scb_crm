@@ -5,9 +5,7 @@ from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.casa.withdraw.controller import CtrWithdraw
-from app.api.v1.endpoints.casa.withdraw.schema import (
-    WithdrawRequest, WithdrawResponse
-)
+from app.api.v1.endpoints.casa.withdraw.schema import WithdrawRequest
 
 router = APIRouter()
 
@@ -17,7 +15,7 @@ router = APIRouter()
     name="Rút tiền từ tài khoản thanh toán",
     description="Rút tiền từ tài khoản thanh toán",
     responses=swagger_response(
-        response_model=ResponseData[WithdrawResponse],
+        response_model=ResponseData,
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -30,4 +28,4 @@ async def view_save_withdraw_info(
         booking_id=BOOKING_ID,
         request=request
     )
-    return ResponseData[WithdrawResponse](**casa_info)
+    return ResponseData(**casa_info)

@@ -26,25 +26,16 @@ class CtrWithdraw(BaseController):
             loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_WITHDRAW}"
         )
 
-        source_account_list = []
-
-        for account in request.transaction_information.source_accounts:
-            source_account_list.append(account)
-
         beneficiary = request.transaction_information.beneficiary_information
         fee = request.transaction_information.fee_information
         if beneficiary.withdraw_account_flag:
             beneficiary_info = dict(
-                currency=beneficiary.currency,
-                account_withdrawals_amount=beneficiary.account_withdrawals_amount,
-                exchange_VND_flag=beneficiary.exchange_VND_flag,
-                exchange_rate=beneficiary.exchange_rate,
+                withdrawals_amount=beneficiary.withdrawals_amount,
                 content=beneficiary.content
             )
         else:
             beneficiary_info = dict(
-                currency=beneficiary.currency,
-                account_withdrawals_amount=beneficiary.account_withdrawals_amount,
+                withdrawals_amount=beneficiary.withdrawals_amount,
                 seri_cheque=beneficiary.seri_cheque,
                 date_of_issue=beneficiary.date_of_issue,
                 exchange_VND_flag=beneficiary.exchange_VND_flag,
@@ -55,7 +46,7 @@ class CtrWithdraw(BaseController):
             )
 
         transaction_info = dict(
-            source_accounts=source_account_list,
+            source_accounts=request.transaction_information.source_accounts.account_num,
             beneficiary_info=beneficiary_info,
             fee_info=dict(
                 charge_name=fee.charge_name,
@@ -102,5 +93,8 @@ class CtrWithdraw(BaseController):
             history_data=orjson_dumps(history_data),
             session=self.oracle_session
         ))
+        response_data = {
+            "booking_id": booking_id
+        }
 
-        return self.response(data=transaction_info)
+        return self.response(data=response_data)

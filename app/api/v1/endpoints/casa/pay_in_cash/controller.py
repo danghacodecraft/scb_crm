@@ -5,7 +5,7 @@ from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
     repos_get_customer_by_cif_number
 )
 from app.api.v1.endpoints.casa.pay_in_cash.repository import (
-    repos_save_pay_in_cash_info, repos_get_pay_in_cash_info
+    repos_get_pay_in_cash_info, repos_save_pay_in_cash_info
 )
 from app.api.v1.endpoints.casa.pay_in_cash.schema import (
     PayInCashSCBByIdentity, PayInCashSCBToAccountRequest,
@@ -15,20 +15,17 @@ from app.api.v1.endpoints.casa.pay_in_cash.schema import (
 from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
     CtrGWCasaAccount
 )
-from app.api.v1.endpoints.third_parties.gw.category.controller import CtrSelectCategory
+from app.api.v1.endpoints.third_parties.gw.category.controller import (
+    CtrSelectCategory
+)
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.api.v1.others.booking.controller import CtrBooking
-from app.api.v1.others.permission.controller import PermissionController
-from app.utils.constant.approval import PAY_IN_CASH_STAGE_BEGIN
 from app.utils.constant.business_type import BUSINESS_TYPE_PAY_IN_CASH
 from app.utils.constant.casa import (
-    DENOMINATIONS__AMOUNTS, RECEIVING_METHOD_SCB_TO_ACCOUNT, RECEIVING_METHODS, RECEIVING_METHOD__METHOD_TYPES
+    DENOMINATIONS__AMOUNTS, RECEIVING_METHOD__METHOD_TYPES,
+    RECEIVING_METHOD_SCB_TO_ACCOUNT, RECEIVING_METHODS
 )
 from app.utils.constant.gw import GW_REQUEST_DIRECT_INDIRECT
-from app.utils.constant.idm import (
-    IDM_GROUP_ROLE_CODE_OPEN_CIF, IDM_MENU_CODE_OPEN_CIF,
-    IDM_PERMISSION_CODE_OPEN_CIF
-)
 from app.utils.error_messages import (
     ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_DENOMINATIONS_NOT_EXIST,
     ERROR_NOT_NULL, ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
@@ -127,13 +124,13 @@ class CtrPayInCash(BaseController):
         # VALIDATE
         ################################################################################################################
         # check quyền user
-        self.call_repos(await PermissionController().ctr_approval_check_permission(
-            auth_response=current_user,
-            menu_code=IDM_MENU_CODE_OPEN_CIF,
-            group_role_code=IDM_GROUP_ROLE_CODE_OPEN_CIF,
-            permission_code=IDM_PERMISSION_CODE_OPEN_CIF,
-            stage_code=PAY_IN_CASH_STAGE_BEGIN
-        ))
+        # self.call_repos(await PermissionController().ctr_approval_check_permission(
+        #     auth_response=current_user,
+        #     menu_code=IDM_MENU_CODE_OPEN_CIF,
+        #     group_role_code=IDM_GROUP_ROLE_CODE_OPEN_CIF,
+        #     permission_code=IDM_PERMISSION_CODE_OPEN_CIF,
+        #     stage_code=PAY_IN_CASH_STAGE_BEGIN
+        # ))
 
         # Kiểm tra booking
         await CtrBooking().ctr_get_booking_and_validate(
