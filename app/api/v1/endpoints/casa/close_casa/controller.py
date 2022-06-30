@@ -39,10 +39,10 @@ class CtrCloseCasa(BaseController):
         }
 
         for account in close_casa_request:
-            if account.account_info.account_number in account_numbers:
+            if account.account_info.account_num in account_numbers:
                 return self.response_exception(msg="Duplicate account_number")
 
-            account_numbers.append(account.account_info.account_number)
+            account_numbers.append(account.account_info.account_num)
             for item in account.p_blk_closure:
                 if item.close_mode == "CASA":
                     if not item.account_number:
@@ -54,7 +54,7 @@ class CtrCloseCasa(BaseController):
                     }
             close_account_list.append({
                 "account_info": {
-                    "account_number": account.account_info.account_number
+                    "account_number": account.account_info.account_num
                 },
                 "p_blk_closure": blk_closure,
                 # TODO chưa được mô tả
