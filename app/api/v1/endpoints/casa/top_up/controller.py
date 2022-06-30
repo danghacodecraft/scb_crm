@@ -12,7 +12,6 @@ from app.api.v1.endpoints.casa.top_up.schema import (
     CasaTopUpThirdParty247ToAccount, CasaTopUpThirdParty247ToCard,
     CasaTopUpThirdPartyByIdentity, CasaTopUpThirdPartyToAccount
 )
-from app.api.v1.endpoints.repository import repos_get_branch_in_province
 from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
     CtrGWCasaAccount
 )
@@ -29,7 +28,7 @@ from app.utils.constant.approval import CASA_TOP_UP_STAGE_BEGIN
 from app.utils.constant.business_type import BUSINESS_TYPE_CASA_TOP_UP
 from app.utils.constant.casa import (
     DENOMINATIONS__AMOUNTS, RECEIVING_METHOD_SCB_TO_ACCOUNT, RECEIVING_METHODS, RECEIVING_METHOD__METHOD_TYPES,
-    RECEIVING_METHOD_SCB_BY_IDENTITY, RECEIVING_METHOD_IDENTITY_CASES
+    RECEIVING_METHOD_SCB_BY_IDENTITY, RECEIVING_METHOD_IDENTITY_CASES, RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT
 )
 from app.utils.constant.gw import GW_REQUEST_DIRECT_INDIRECT
 from app.utils.constant.idm import IDM_PERMISSION_CODE_GDV, IDM_MENU_CODE_TTKH, IDM_GROUP_ROLE_CODE_GDV
@@ -234,27 +233,28 @@ class CtrCasaTopUp(BaseController):
             self,
             request: CasaTopUpSCBByIdentity
     ):
-        # validate province
-        province_id = request.province.id
-        await self.get_model_object_by_id(model_id=province_id, model=AddressProvince, loc='province -> id')
-
         # validate branch
-        branch_id = request.branch.id
-        self.call_repos(await repos_get_branch_in_province(
-            branch_id=branch_id,
-            province_id=province_id,
-            session=self.oracle_session,
-            loc=f'branch_id: {branch_id}, province_id: {province_id}'
-        ))
-        await self.get_model_object_by_id(model_id=branch_id, model=Branch, loc='branch -> id')
+        await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
 
         # validate issued_date
-        issued_date = request.issued_date
-        await self.validate_issued_date(issued_date=issued_date, loc='issued_date')
+        await self.validate_issued_date(issued_date=request.issued_date, loc='issued_date')
 
         # validate place_of_issue
-        place_of_issue_id = request.place_of_issue.id
-        await self.get_model_object_by_id(model_id=place_of_issue_id, model=PlaceOfIssue, loc='place_of_issue -> id')
+        await self.get_model_object_by_id(
+            model_id=request.place_of_issue.id, model=PlaceOfIssue, loc='place_of_issue -> id'
+        )
+
+        return request
+
+    async def ctr_save_casa_top_up_third_party_to_account(
+            self,
+            request: CasaTopUpThirdPartyToAccount
+    ):
+        # validate bank
+        # TODO:
+
+        # validate branch
+        await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
 
         return request
 
@@ -379,16 +379,15 @@ class CtrCasaTopUp(BaseController):
                 current_user=current_user,
                 request=request
             )
+
         if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
             casa_top_up_info = await self.ctr_save_casa_top_up_scb_by_identity(request=request)
-        if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
-            casa_top_up_info = await self.ctr_save_casa_top_up_scb_to_account(
-                current_user=current_user,
-                request=request
-            )
+
+        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
+            casa_top_up_info = await self.ctr_save_casa_top_up_third_party_to_account(request=request)
+
         if not casa_top_up_info:
-            return self.response_exception(msg="")
-            
+            return self.response_exception(msg="No Casa Top Up")
 
         self.call_repos(await repos_save_casa_top_up_info(
             booking_id=booking_id,
