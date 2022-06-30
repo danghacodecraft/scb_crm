@@ -84,7 +84,7 @@ class TransactionFeePaymentInfoRequest(BaseSchema):
 
 
 class AccountInfoCloseCasaRequest(BaseSchema):
-    account_number: Optional[str] = Field(..., description="Số tài khoản chọn để khóa")
+    account_num: Optional[str] = Field(..., description="Số tài khoản chọn để khóa")
 
 
 class CloseCasaClosureResponse(BaseSchema):

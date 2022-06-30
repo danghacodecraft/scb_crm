@@ -390,36 +390,15 @@ class ServiceGW:
     async def get_close_casa_account(
             self,
             current_user: UserInfoResponse,
-            account_info,
-            p_blk_closure,
+            data_input
     ):
         """
-        Mở tài khoản thanh toán
+        Đóng tài khoản thanh toán
         """
-        data_input = {
-            "account_info": {
-                "account_num": account_info['account_num']
-            },
-            "p_blk_closure": [
-                {
-                    "CLOSE_MODE": item['close_mode'],
-                    "ACCOUNT_NO": item['account_no']
-                }
-                for item in p_blk_closure],
-            "p_blk_charge_main": None,  # TODO
-            "p_blk_charge_details": None,  # TODO
-            "p_blk_udf": None,  # TODO
-            "staff_info_checker": {
-                "staff_name": "HOANT2"  # TODO
-            },
-            "staff_info_maker": {
-                "staff_name": "KHANHLQ"  # TODO
-            }
-        }
+
         request_data = self.gw_create_request_body(
             current_user=current_user, function_name="closeCASA_in", data_input=data_input
         )
-
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_CLOSE_CASA_ACCOUNT}"
 
         return_errors = dict(
@@ -443,13 +422,13 @@ class ServiceGW:
                             status=response.status,
                             errors=return_error['errors']
                         )
-                    return False, return_data
+                    return False, return_data, request_data
                 else:
                     return_data = await response.json()
-                    return True, return_data
+                    return True, return_data, request_data
         except aiohttp.ClientConnectorError as ex:
             logger.error(str(ex))
-            return False, return_data
+            return False, return_data, request_data
 
     ####################################################################################################################
     # END --- CASA
