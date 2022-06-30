@@ -193,7 +193,12 @@ class CtrGWCustomer(BaseController):
 
         return self.response(data=response_data)
 
-    async def ctr_gw_get_customer_info_detail(self, cif_number: str, return_raw_data_flag = False):
+    async def ctr_gw_get_customer_info_detail(
+            self,
+            cif_number: str,
+            parameter: str = GW_REQUEST_PARAMETER_DEFAULT,
+            return_raw_data_flag=False
+    ):
         current_user = self.current_user
         customer_info_detail = self.call_repos(await repos_gw_get_customer_info_detail(
             cif_number=cif_number, current_user=current_user))
