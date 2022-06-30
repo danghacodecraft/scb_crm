@@ -14,8 +14,11 @@ from app.utils.regex import (
 
 
 class FeeInfoRequest(ResponseRequestSchema):
-    is_transfer_payer: bool = Field(
-        ..., description="Bên thanh toán phí <br/>`true`: Bên chuyển <br/>`false`: Bên nhận"
+    is_transfer_payer: Optional[bool] = Field(
+        ..., description="Bên thanh toán phí "
+                         "<br/>`true`: Bên chuyển "
+                         "<br/>`false`: Bên nhận "
+                         "<br/>`null`: Không thu phí cùng giao dịch"
     )
     fee_amount: int = Field(..., description="Số tiền phí")
     note: Optional[str] = Field(..., description="Ghi chú")

@@ -183,7 +183,7 @@ class CtrPayInCash(BaseController):
             loc=f'booking_id: {booking_id}'
         )
 
-        if is_fee and not fee_info:
+        if is_fee is not None and not fee_info:
             return self.response_exception(msg=ERROR_NOT_NULL, loc="fee_info")
             # TODO: Case cho bên chuyển/ Bên nhận
 
