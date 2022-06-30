@@ -2,10 +2,10 @@ from starlette import status
 
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.common_repository import (
-    repos_get_next_stage, repos_get_previous_transaction_daily,
+    repos_get_next_stage, repos_get_previous_stage,
+    repos_get_previous_transaction_daily, repos_get_stage_codes_in_business,
     repos_get_stage_information, repos_get_stage_teller,
-    repos_open_cif_get_previous_stage, repos_get_stage_codes_in_business,
-    repos_get_previous_stage
+    repos_open_cif_get_previous_stage
 )
 from app.api.v1.endpoints.approval.repository import (
     repos_approval_get_face_authentication, repos_approve,
@@ -15,8 +15,9 @@ from app.api.v1.endpoints.approval.repository import (
     repos_get_compare_image_transactions, repos_get_list_audit
 )
 from app.api.v1.endpoints.approval.schema import ApprovalRequest
-from app.api.v1.endpoints.cif.basic_information.identity.identity_document.repository import \
+from app.api.v1.endpoints.cif.basic_information.identity.identity_document.repository import (
     repos_get_sla_transaction_parent_from_stage_transaction_id
+)
 from app.api.v1.endpoints.third_parties.gw.employee.repository import (
     repos_gw_get_employee_info_from_code
 )
@@ -43,9 +44,8 @@ from app.utils.constant.cif import (
     IMAGE_TYPE_SIGNATURE
 )
 from app.utils.constant.idm import (
-    IDM_GROUP_ROLE_CODE_APPROVAL, IDM_GROUP_ROLE_CODE_OPEN_CIF,
-    IDM_MENU_CODE_OPEN_CIF, IDM_PERMISSION_CODE_KSS, IDM_PERMISSION_CODE_KSV,
-    IDM_PERMISSION_CODE_OPEN_CIF
+    IDM_GROUP_ROLE_CODE_GDV, IDM_GROUP_ROLE_CODE_KSV, IDM_MENU_CODE_TTKH,
+    IDM_PERMISSION_CODE_GDV, IDM_PERMISSION_CODE_KSS, IDM_PERMISSION_CODE_KSV
 )
 from app.utils.error_messages import (
     ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
@@ -54,8 +54,9 @@ from app.utils.error_messages import (
     ERROR_APPROVAL_NO_DATA_IN_IDENTITY_STEP,
     ERROR_APPROVAL_NO_SIGNATURE_IN_IDENTITY_STEP,
     ERROR_APPROVAL_UPLOAD_SIGNATURE, ERROR_BUSINESS_TYPE_NOT_EXIST,
-    ERROR_CONTENT_NOT_NULL, ERROR_PERMISSION, ERROR_STAGE_COMPLETED,
-    ERROR_VALIDATE, ERROR_WRONG_STAGE_ACTION, MESSAGE_STATUS, ERROR_CIF_ID_NOT_EXIST
+    ERROR_CIF_ID_NOT_EXIST, ERROR_CONTENT_NOT_NULL, ERROR_PERMISSION,
+    ERROR_STAGE_COMPLETED, ERROR_VALIDATE, ERROR_WRONG_STAGE_ACTION,
+    MESSAGE_STATUS
 )
 from app.utils.functions import (
     dropdown, generate_uuid, now, orjson_dumps, orjson_loads
@@ -391,23 +392,23 @@ class CtrApproval(BaseController):
 
         is_role_audit = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
             auth_response=auth_response,
-            menu_code=IDM_MENU_CODE_OPEN_CIF,
-            group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
+            menu_code=IDM_MENU_CODE_TTKH,
+            group_role_code=IDM_GROUP_ROLE_CODE_KSV,
             permission_code=IDM_PERMISSION_CODE_KSS,
             stage_code=CIF_STAGE_APPROVE_KSS
         ))
         is_role_supervisor = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
             auth_response=auth_response,
-            menu_code=IDM_MENU_CODE_OPEN_CIF,
-            group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
+            menu_code=IDM_MENU_CODE_TTKH,
+            group_role_code=IDM_GROUP_ROLE_CODE_KSV,
             permission_code=IDM_PERMISSION_CODE_KSV,
             stage_code=CIF_STAGE_APPROVE_KSV
         ))
         is_role_teller = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
             auth_response=auth_response,
-            menu_code=IDM_MENU_CODE_OPEN_CIF,
-            group_role_code=IDM_GROUP_ROLE_CODE_OPEN_CIF,
-            permission_code=IDM_PERMISSION_CODE_OPEN_CIF,
+            menu_code=IDM_MENU_CODE_TTKH,
+            group_role_code=IDM_GROUP_ROLE_CODE_GDV,
+            permission_code=IDM_PERMISSION_CODE_GDV,
             stage_code=CIF_STAGE_INIT
         ))
 
@@ -883,24 +884,24 @@ class CtrApproval(BaseController):
             if current_stage_code in INIT_STAGES:
                 self.call_repos(await PermissionController.ctr_approval_check_permission(
                     auth_response=auth_response,
-                    menu_code=IDM_MENU_CODE_OPEN_CIF,
-                    group_role_code=IDM_GROUP_ROLE_CODE_OPEN_CIF,
-                    permission_code=IDM_PERMISSION_CODE_OPEN_CIF,
+                    menu_code=IDM_MENU_CODE_TTKH,
+                    group_role_code=IDM_GROUP_ROLE_CODE_GDV,
+                    permission_code=IDM_PERMISSION_CODE_GDV,
                     stage_code=CIF_STAGE_INIT
                 ))
             elif current_stage_code in APPROVE_SUPERVISOR_STAGES:
                 self.call_repos(await PermissionController.ctr_approval_check_permission(
                     auth_response=auth_response,
-                    menu_code=IDM_MENU_CODE_OPEN_CIF,
-                    group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
+                    menu_code=IDM_MENU_CODE_TTKH,
+                    group_role_code=IDM_GROUP_ROLE_CODE_KSV,
                     permission_code=IDM_PERMISSION_CODE_KSV,
                     stage_code=CIF_STAGE_APPROVE_KSV
                 ))
             elif current_stage_code in APPROVE_AUDIT_STAGES:
                 self.call_repos(await PermissionController.ctr_approval_check_permission(
                     auth_response=auth_response,
-                    menu_code=IDM_MENU_CODE_OPEN_CIF,
-                    group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
+                    menu_code=IDM_MENU_CODE_TTKH,
+                    group_role_code=IDM_GROUP_ROLE_CODE_KSV,
                     permission_code=IDM_PERMISSION_CODE_KSS,
                     stage_code=CIF_STAGE_APPROVE_KSS
                 ))

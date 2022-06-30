@@ -27,8 +27,7 @@ from app.utils.constant.gw import (
     GW_TRANSACTION_TYPE_SEND, GW_TRANSACTION_TYPE_WITHDRAW
 )
 from app.utils.constant.idm import (
-    IDM_GROUP_ROLE_CODE_APPROVAL, IDM_MENU_CODE_OPEN_CIF,
-    IDM_PERMISSION_CODE_KSV
+    IDM_GROUP_ROLE_CODE_KSV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_KSV
 )
 from app.utils.error_messages import ERROR_CALL_SERVICE_GW, ERROR_PERMISSION
 from app.utils.functions import now, string_to_date
@@ -349,8 +348,8 @@ class CtrGWCasaAccount(BaseController):
         current_user_info = current_user.user_info
         is_role_supervisor = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
             auth_response=current_user,
-            menu_code=IDM_MENU_CODE_OPEN_CIF,
-            group_role_code=IDM_GROUP_ROLE_CODE_APPROVAL,
+            menu_code=IDM_MENU_CODE_TTKH,
+            group_role_code=IDM_GROUP_ROLE_CODE_KSV,
             permission_code=IDM_PERMISSION_CODE_KSV,
             stage_code=CIF_STAGE_APPROVE_KSV
         ))

@@ -27,8 +27,7 @@ from app.utils.constant.cif import (
     BUSINESS_TYPE_CODE_CIF, BUSINESS_TYPE_CODE_OPEN_CASA
 )
 from app.utils.constant.idm import (
-    IDM_GROUP_ROLE_CODE_OPEN_CIF, IDM_MENU_CODE_OPEN_CIF,
-    IDM_PERMISSION_CODE_OPEN_CIF
+    IDM_GROUP_ROLE_CODE_GDV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_GDV
 )
 from app.utils.error_messages import (
     ERROR_BOOKING_ALREADY_USED, ERROR_BOOKING_ID_NOT_EXIST,
@@ -47,16 +46,16 @@ class CtrBooking(BaseController):
     ):
         is_stage_teller = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
             auth_response=self.current_user,
-            menu_code=IDM_MENU_CODE_OPEN_CIF,
-            group_role_code=IDM_GROUP_ROLE_CODE_OPEN_CIF,
-            permission_code=IDM_PERMISSION_CODE_OPEN_CIF,
+            menu_code=IDM_MENU_CODE_TTKH,
+            group_role_code=IDM_GROUP_ROLE_CODE_GDV,
+            permission_code=IDM_PERMISSION_CODE_GDV,
             stage_code=CIF_STAGE_INIT
         ))
         if not is_stage_teller:
             return self.response_exception(
-                loc=f"IDM_MENU_CODE: {IDM_MENU_CODE_OPEN_CIF}, "
-                    f"IDM_GROUP_ROLE_CODE: {IDM_GROUP_ROLE_CODE_OPEN_CIF}, "
-                    f"IDM_PERMISSION_CODE: {IDM_PERMISSION_CODE_OPEN_CIF}",
+                loc=f"IDM_MENU_CODE: {IDM_MENU_CODE_TTKH}, "
+                    f"IDM_GROUP_ROLE_CODE: {IDM_GROUP_ROLE_CODE_GDV}, "
+                    f"IDM_PERMISSION_CODE: {IDM_PERMISSION_CODE_GDV}",
                 msg=ERROR_PERMISSION,
                 error_status_code=status.HTTP_403_FORBIDDEN
             )

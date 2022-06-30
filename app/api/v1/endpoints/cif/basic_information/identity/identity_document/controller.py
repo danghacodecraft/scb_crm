@@ -62,8 +62,7 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_STATUS_INIT, RESIDENT_ADDRESS_CODE
 )
 from app.utils.constant.idm import (
-    IDM_GROUP_ROLE_CODE_OPEN_CIF, IDM_MENU_CODE_OPEN_CIF,
-    IDM_PERMISSION_CODE_OPEN_CIF
+    IDM_GROUP_ROLE_CODE_GDV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_GDV
 )
 from app.utils.error_messages import (  # noqa
     ERROR_CALL_SERVICE_EKYC, ERROR_IDENTITY_DOCUMENT_NOT_EXIST,
@@ -194,9 +193,9 @@ class CtrIdentityDocument(BaseController):
         # check quyền user
         self.call_repos(await PermissionController.ctr_approval_check_permission(
             auth_response=self.current_user,
-            menu_code=IDM_MENU_CODE_OPEN_CIF,
-            group_role_code=IDM_GROUP_ROLE_CODE_OPEN_CIF,
-            permission_code=IDM_PERMISSION_CODE_OPEN_CIF,
+            menu_code=IDM_MENU_CODE_TTKH,
+            group_role_code=IDM_GROUP_ROLE_CODE_GDV,
+            permission_code=IDM_PERMISSION_CODE_GDV,
             stage_code=CIF_STAGE_BEGIN
         ))
 
