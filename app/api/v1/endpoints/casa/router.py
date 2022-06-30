@@ -15,9 +15,9 @@ router_module.include_router(router=views_withdraw_info.router)
 
 router_module.include_router(router=routers_open_casa.router_module)
 
+# router của thông tin Casa -> Nộp tiền mặt
+router_module.include_router(router=views_pay_in_cash.router)
+
 # router của thông tin Casa -> Đóng tài khoản
 
 router_module.include_router(router=view_close_casa.router)
-
-# router của thông tin Casa -> Nộp tiền mặt
-router_module.include_router(router=views_pay_in_cash.router)

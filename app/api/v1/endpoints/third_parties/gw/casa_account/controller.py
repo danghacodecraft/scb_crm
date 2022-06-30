@@ -92,14 +92,18 @@ class CtrGWCasaAccount(BaseController):
 
     async def ctr_gw_get_casa_account_info(
             self,
-            account_number: str
+            account_number: str,
+            return_raw_data_flag: bool = False
     ):
         gw_casa_account_info = self.call_repos(await repos_gw_get_casa_account_info(
             account_number=account_number,
             current_user=self.current_user.user_info
         ))
+        gw_casa_account_info_output = gw_casa_account_info['retrieveCurrentAccountCASA_out']['data_output']
+        if return_raw_data_flag:
+            return gw_casa_account_info_output
 
-        customer_info = gw_casa_account_info['retrieveCurrentAccountCASA_out']['data_output']['customer_info']
+        customer_info = gw_casa_account_info_output['customer_info']
         gw_casa_customer_info_response = dict(
             fullname_vn=customer_info['full_name'],
             date_of_birth=customer_info['birthday'],

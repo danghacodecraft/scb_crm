@@ -9,7 +9,8 @@ from app.third_parties.oracle.models.master_data.others import (
     SlaTransaction, TransactionJob, TransactionStage, TransactionStageLane,
     TransactionStagePhase, TransactionStageRole, TransactionStageStatus
 )
-from app.utils.constant.approval import WITHDRAW_KHOI_TAO, WITHDRAW_UNBLOCK_PD
+from app.utils.constant.approval import BUSINESS_JOB_CODE_WITHDRAW
+from app.utils.constant.cif import BUSINESS_FORM_WITHDRAW
 from app.utils.functions import generate_uuid, now
 
 
@@ -41,7 +42,7 @@ async def repos_save_withdraw(
         BookingBusinessForm(**dict(
             booking_id=booking_id,
             form_data=request_json,
-            business_form_id=WITHDRAW_KHOI_TAO,
+            business_form_id=BUSINESS_FORM_WITHDRAW,
             save_flag=True,
             log_data=history_data,
             created_at=now()
@@ -49,7 +50,7 @@ async def repos_save_withdraw(
         TransactionJob(**dict(
             transaction_id=generate_uuid(),
             booking_id=booking_id,
-            business_job_id=WITHDRAW_UNBLOCK_PD,
+            business_job_id=BUSINESS_JOB_CODE_WITHDRAW,
             complete_flag=True,
             error_code=None,
             error_desc=None,

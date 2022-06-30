@@ -16,7 +16,7 @@ router = APIRouter()
 
 
 @router.post(
-    path="/pay-in-cash/",
+    path="/top-up/",
     name="Nộp tiền",
     description="Nộp tiền",
     responses=swagger_response(
@@ -44,7 +44,7 @@ async def view_save_pay_in_cash_info(
 
 
 @router.get(
-    path="/pay-in-cash/",
+    path="/top-up/",
     name="Nộp tiền",
     description="Nộp tiền",
     responses=swagger_response(
@@ -60,4 +60,4 @@ async def view_get_pay_in_cash_info(
     get_pay_in_cash_info = await CtrPayInCash(current_user).ctr_get_pay_in_cash_info(
         booking_id=BOOKING_ID
     )
-    return ResponseData(**get_pay_in_cash_info)
+    return ResponseData[PayInCashResponse](**get_pay_in_cash_info)
