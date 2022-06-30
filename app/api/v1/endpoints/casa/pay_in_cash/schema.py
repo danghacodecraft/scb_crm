@@ -148,7 +148,7 @@ class FeeInfoResponse(ResponseRequestSchema):
                                                      "`null`: Không thu phí cùng giao dịch")
     payer: Optional[str] = Field(..., description="Bên thanh toán phí")
     fee_amount: Optional[int] = Field(..., description="Số tiền phí")
-    vat_tax: Optional[str] = Field(..., description="Thuế VAT")
+    vat_tax: Optional[float] = Field(..., description="Thuế VAT")
     total: Optional[float] = Field(..., description="Tổng số tiền phí")
     actual_total: Optional[float] = Field(..., description="Số tiền thực chuyển")
     note: Optional[str] = Field(..., description="Ghi chú")
