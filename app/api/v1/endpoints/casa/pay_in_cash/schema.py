@@ -132,7 +132,14 @@ class TransferTypeResponse(ResponseRequestSchema):
 class ReceiverResponse(ResponseRequestSchema):
     account_number: Optional[str] = Field(None, description="Số tài khoản")
     fullname_vn: Optional[str] = Field(None, description="Chủ tài khoản")
+    bank: DropdownCodeNameResponse = Field(None, description="Ngân hàng")
+    province: DropdownCodeNameResponse = Field(None, description="Tỉnh/Thành phố")
     branch_info: DropdownCodeNameResponse = Field(None, description="Đơn vị thụ hưởng")
+    identity_number: Optional[str] = Field(None, description="Số giấy tờ định danh")
+    issued_date: Optional[date] = Field(None, description="Ngày cấp")
+    place_of_issue: DropdownCodeNameResponse = Field(None, description="Nơi cấp")
+    mobile_phone: Optional[str] = Field(None, description="Số điện thoại")
+    address_full: Optional[str] = Field(None, description="Địa chỉ")
     currency: Optional[str] = Field(None, description="Loại tiền")
 
 

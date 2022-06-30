@@ -50,6 +50,9 @@ class CtrPayInCash(BaseController):
         form_data = orjson_loads(get_pay_in_cash_info.form_data)
         receiving_method = form_data['receiving_method']
 
+        ################################################################################################################
+        # Thông tin người thụ hưởng
+        ################################################################################################################
         receiver_response = {}
 
         if receiving_method not in RECEIVING_METHOD_IDENTITY_CASES:
@@ -80,14 +83,26 @@ class CtrPayInCash(BaseController):
             branch_info = await self.get_model_object_by_id(
                 model_id=form_data['branch']['id'], model=Branch, loc='branch_id'
             )
+            place_of_issue = await self.get_model_object_by_id(
+                model_id=form_data['place_of_issue']['id'], model=PlaceOfIssue, loc='place_of_issue_id'
+            )
             receiver_response = dict(
                 province=dropdown(province),
                 branch_info=dropdown(branch_info),
-                fullname_vn=form_data['fullname_vn'],
+                fullname_vn=form_data['full_name_vn'],
                 identity_number=form_data['identity_number'],
+                issued_date=form_data['issued_date'],
+                place_of_issue=dropdown(place_of_issue),
+                mobile_number=form_data['mobile_number'],
+                address_full=form_data['address_full']
             )
+        ################################################################################################################
 
         amount = form_data['amount']
+
+        ################################################################################################################
+        # Thông tin phí
+        ################################################################################################################
         fee_info = form_data['fee_info']
         fee_amount = fee_info['fee_amount']
         vat_tax = fee_amount / 10
@@ -108,6 +123,11 @@ class CtrPayInCash(BaseController):
             is_transfer_payer=is_transfer_payer,
             payer=payer
         ))
+        ################################################################################################################
+
+        ################################################################################################################
+        # Bảng kê
+        ################################################################################################################
         statement = DENOMINATIONS__AMOUNTS
         for row in form_data['statement']:
             statement.update({row['denominations']: row['amount']})
@@ -127,6 +147,11 @@ class CtrPayInCash(BaseController):
             total=total_amount,
             odd_difference=abs(actual_total - total_amount)
         )
+        ################################################################################################################
+
+        ################################################################################################################
+        # Thông tin khách hàng giao dịch
+        ################################################################################################################
         cif_number = form_data['cif_number']
         gw_customer_info = await CtrGWCustomer(current_user).ctr_gw_get_customer_info_detail(
             cif_number=cif_number,
@@ -163,6 +188,8 @@ class CtrPayInCash(BaseController):
             code=gw_indirect_staff['staff_code'],
             name=gw_indirect_staff['staff_name']
         )
+        ################################################################################################################
+
         response_data = dict(
             transfer_type=dict(
                 receiving_method_type=RECEIVING_METHOD__METHOD_TYPES[receiving_method],
