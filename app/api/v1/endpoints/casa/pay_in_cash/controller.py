@@ -115,18 +115,20 @@ class CtrPayInCash(BaseController):
         )
         controller_gw_employee = CtrGWEmployee(current_user)
         gw_direct_staff = await controller_gw_employee.ctr_gw_get_employee_info_from_code(
-            employee_code=form_data['direct_staff_code']
+            employee_code=form_data['direct_staff_code'],
+            return_raw_data_flag=True
         )
         direct_staff = dict(
-            code=gw_direct_staff['data']['staff_code'],
-            name=gw_direct_staff['data']['staff_name']
+            code=gw_direct_staff['staff_code'],
+            name=gw_direct_staff['staff_name']
         )
         gw_indirect_staff = await controller_gw_employee.ctr_gw_get_employee_info_from_code(
-            employee_code=form_data['indirect_staff_code']
+            employee_code=form_data['indirect_staff_code'],
+            return_raw_data_flag=True
         )
         indirect_staff = dict(
-            code=gw_indirect_staff['data']['staff_code'],
-            name=gw_indirect_staff['data']['staff_name']
+            code=gw_indirect_staff['staff_code'],
+            name=gw_indirect_staff['staff_name']
         )
         response_data = dict(
             transfer_type=dict(
