@@ -40,6 +40,7 @@ class CasaTopUpRequest(ResponseRequestSchema):
     statement: List[StatementInfoRequest] = Field(..., description="Thông tin bảng kê")
     direct_staff_code: Optional[str] = Field(..., description="Mã nhân viên kinh doanh")
     indirect_staff_code: Optional[str] = Field(..., description="Mã nhân viên quản lý gián tiếp")
+    amount: int = Field(..., description="Số tiền")
 
 
 ########################################################################################################################
@@ -50,7 +51,6 @@ class CasaTopUpSCBToAccountRequest(CasaTopUpRequest):
     Trong SCB đến tài khoản
     """
     account_number: str = Field(..., description="Số tài khoản", regex=REGEX_NUMBER_ONLY)
-    amount: int = Field(..., description="Số tiền")
     content: Optional[str] = Field(
         ..., description="Nội dung chuyển tiền", regex=REGEX_TRANSFER_CONTENT, max_length=MAX_LENGTH_TRANSFER_CONTENT
     )
@@ -68,7 +68,6 @@ class CasaTopUpSCBByIdentity(CasaTopUpRequest):
     place_of_issue: DropdownRequest = Field(..., description="Nơi cấp")
     mobile_number: Optional[str] = Field(..., description="Số điện thoại")
     address_full: Optional[str] = Field(..., description="Địa chỉ", max_length=500)
-    amount: int = Field(..., description="Số tiền")
     content: str = Field(
         ..., description="Nội dung chuyển tiền", regex=REGEX_TRANSFER_CONTENT, max_length=MAX_LENGTH_TRANSFER_CONTENT
     )

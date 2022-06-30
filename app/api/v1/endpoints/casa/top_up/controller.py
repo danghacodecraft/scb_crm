@@ -90,11 +90,19 @@ class CtrCasaTopUp(BaseController):
             #     )
 
             if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
-                branch_info = await self.get_model_object_by_id(model_id=form_data['branch']['id'], model=Branch, loc='')
+                # branch_info = await self.get_model_object_by_id(model_id=form_data['branch']['id'], model=Branch, loc='')
+                branch_id = form_data['branch']['id']
                 receiver_response = dict(
                     bank=form_data['bank'],
-                    province=dropdown(branch_info.address_province),
-                    branch_info=dropdown(branch_info),
+                    # province=dropdown(branch_info.address_province),
+                    province=dict(
+                        code=branch_id,
+                        name=branch_id
+                    ),
+                    branch_info=dict(
+                        code=branch_id,
+                        name=branch_id
+                    ),
                     account_number=form_data['account_number'],
                     fullname_vn=form_data['full_name_vn'],
                     address_full=form_data['address_full']
