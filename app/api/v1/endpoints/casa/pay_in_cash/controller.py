@@ -16,6 +16,7 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
     CtrGWCasaAccount
 )
 from app.api.v1.endpoints.third_parties.gw.category.controller import CtrSelectCategory
+from app.api.v1.endpoints.third_parties.gw.customer.controller import CtrGWCustomer
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
@@ -61,11 +62,50 @@ class CtrPayInCash(BaseController):
         fee_amount = fee_info['fee_amount']
         vat_tax = fee_amount / 10
         total = fee_amount + vat_tax
+        actual_total = total + amount
         fee_info.update(dict(
             vat_tax=vat_tax,
             total=total,
-            actual_total=total + amount
+            actual_total=actual_total
         ))
+        statement = DENOMINATIONS__AMOUNTS
+        for row in form_data['statement']:
+            statement.update({row['denominations']: row['amount']})
+
+        statements = []
+        total_amount = 0
+        for denominations, amount in statement.items():
+            into_money = int(denominations) * amount
+            statements.append(dict(
+                denominations=denominations,
+                amount=amount,
+                into_money=into_money
+            ))
+            total_amount += into_money
+        statement_response = dict(
+            statements=statements,
+            total=total_amount,
+            odd_difference=abs(actual_total - total_amount)
+        )
+        cif_number = form_data['cif_number']
+        gw_customer_info = await CtrGWCustomer(current_user).ctr_gw_get_customer_info_detail(
+            cif_number=cif_number
+        )
+        gw_customer_info = gw_customer_info['data']
+        gw_customer_info_identity_info = gw_customer_info['id_info']
+        customer_response = dict(
+            cif_number=cif_number,
+            fullname_vn=gw_customer_info['fullname_vn'],
+            address_full=gw_customer_info['contact_address']['address_full'],
+            identity_info=dict(
+                number=gw_customer_info_identity_info['number'],
+                issued_date=gw_customer_info_identity_info['issued_date'],
+                place_of_issue=gw_customer_info_identity_info['place_of_issue']
+            ),
+            mobile_phone=gw_customer_info['mobile_phone'],
+            telephone=gw_customer_info['telephone'],
+            otherphone=gw_customer_info['otherphone']
+        )
         response_data = dict(
             transfer_type=dict(
                 receiving_method_type=RECEIVING_METHOD__METHOD_TYPES[receiving_method],
@@ -81,7 +121,9 @@ class CtrPayInCash(BaseController):
                 content=form_data['content'],
                 entry_number=None,  # TODO: Số bút toán
             ),
-            fee_info=fee_info
+            fee_info=fee_info,
+            statement=statement_response,
+            customer=customer_response
         )
 
         return self.response(response_data)

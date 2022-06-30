@@ -39,7 +39,7 @@ from app.utils.constant.gw import (
     GW_NO_MARKETING_FLAG, GW_REQUEST_PARAMETER_CO_OWNER,
     GW_REQUEST_PARAMETER_DEBIT_CARD,
     GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP, GW_SELECT,
-    GW_UDF_NAME, GW_YES, GW_YES_AGREEMENT_FLAG
+    GW_UDF_NAME, GW_YES, GW_YES_AGREEMENT_FLAG, GW_REQUEST_PARAMETER_DEFAULT
 )
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_GW, ERROR_PHONE_NUMBER,
@@ -193,7 +193,7 @@ class CtrGWCustomer(BaseController):
 
         return self.response(data=response_data)
 
-    async def ctr_gw_get_customer_info_detail(self, cif_number: str, parameter: str):
+    async def ctr_gw_get_customer_info_detail(self, cif_number: str, parameter: str = GW_REQUEST_PARAMETER_DEFAULT):
         current_user = self.current_user
         customer_info_detail = self.call_repos(await repos_gw_get_customer_info_detail(
             cif_number=cif_number, current_user=current_user))
