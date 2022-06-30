@@ -24,7 +24,7 @@ router = APIRouter()
         success_status_code=status.HTTP_200_OK
     )
 )
-async def view_save_pay_in_cash_info(
+async def view_save_top_up_info(
         BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         request: Union[
             PayInCashSCBToAccountRequest,
@@ -36,11 +36,11 @@ async def view_save_pay_in_cash_info(
         ] = Body(...),
         current_user=Depends(get_current_user_from_header())
 ):
-    pay_in_cash_info = await CtrPayInCash(current_user).ctr_save_pay_in_cash_info(
+    top_up_info = await CtrPayInCash(current_user).ctr_save_top_up_info(
         booking_id=BOOKING_ID,
         request=request
     )
-    return ResponseData(**pay_in_cash_info)
+    return ResponseData(**top_up_info)
 
 
 @router.get(
@@ -52,12 +52,12 @@ async def view_save_pay_in_cash_info(
         success_status_code=status.HTTP_200_OK
     )
 )
-async def view_get_pay_in_cash_info(
+async def view_get_top_up_info(
         BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         current_user=Depends(get_current_user_from_header())
 ):
 
-    get_pay_in_cash_info = await CtrPayInCash(current_user).ctr_get_pay_in_cash_info(
+    get_top_up_info = await CtrPayInCash(current_user).ctr_get_top_up_info(
         booking_id=BOOKING_ID
     )
-    return ResponseData[PayInCashResponse](**get_pay_in_cash_info)
+    return ResponseData[PayInCashResponse](**get_top_up_info)

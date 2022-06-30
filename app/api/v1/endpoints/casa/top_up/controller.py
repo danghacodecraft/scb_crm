@@ -5,7 +5,7 @@ from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
     repos_get_customer_by_cif_number
 )
 from app.api.v1.endpoints.casa.top_up.repository import (
-    repos_save_pay_in_cash_info, repos_get_pay_in_cash_info
+    repos_save_top_up_info, repos_get_top_up_info
 )
 from app.api.v1.endpoints.casa.top_up.schema import (
     PayInCashSCBByIdentity, PayInCashSCBToAccountRequest,
@@ -25,8 +25,8 @@ from app.api.v1.others.permission.controller import PermissionController
 from app.third_parties.oracle.models.master_data.address import AddressProvince
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import Branch
-from app.utils.constant.approval import PAY_IN_CASH_STAGE_BEGIN
-from app.utils.constant.business_type import BUSINESS_TYPE_PAY_IN_CASH
+from app.utils.constant.approval import top_up_STAGE_BEGIN
+from app.utils.constant.business_type import BUSINESS_TYPE_top_up
 from app.utils.constant.casa import (
     DENOMINATIONS__AMOUNTS, RECEIVING_METHOD_SCB_TO_ACCOUNT, RECEIVING_METHODS, RECEIVING_METHOD__METHOD_TYPES,
     RECEIVING_METHOD_SCB_BY_IDENTITY, RECEIVING_METHOD_IDENTITY_CASES
@@ -41,13 +41,13 @@ from app.utils.functions import orjson_loads, dropdown
 
 
 class CtrPayInCash(BaseController):
-    async def ctr_get_pay_in_cash_info(self, booking_id: str):
+    async def ctr_get_top_up_info(self, booking_id: str):
         current_user = self.current_user
-        get_pay_in_cash_info = self.call_repos(await repos_get_pay_in_cash_info(
+        get_top_up_info = self.call_repos(await repos_get_top_up_info(
             booking_id=booking_id,
             session=self.oracle_session
         ))
-        form_data = orjson_loads(get_pay_in_cash_info.form_data)
+        form_data = orjson_loads(get_top_up_info.form_data)
         receiving_method = form_data['receiving_method']
 
         ################################################################################################################
@@ -210,7 +210,7 @@ class CtrPayInCash(BaseController):
 
         return self.response(response_data)
 
-    async def ctr_save_pay_in_cash_scb_to_account(
+    async def ctr_save_top_up_scb_to_account(
             self,
             current_user: AuthResponse,
             request: PayInCashSCBToAccountRequest
@@ -230,7 +230,7 @@ class CtrPayInCash(BaseController):
 
         return request
 
-    async def ctr_save_pay_in_cash_scb_by_identity(
+    async def ctr_save_top_up_scb_by_identity(
             self,
             request: PayInCashSCBByIdentity
     ):
@@ -258,7 +258,7 @@ class CtrPayInCash(BaseController):
 
         return request
 
-    async def ctr_save_pay_in_cash_info(
+    async def ctr_save_top_up_info(
             self,
             booking_id: str,
             request: Union[
@@ -288,13 +288,13 @@ class CtrPayInCash(BaseController):
             menu_code=IDM_MENU_CODE_TTKH,
             group_role_code=IDM_GROUP_ROLE_CODE_GDV,
             permission_code=IDM_PERMISSION_CODE_GDV,
-            stage_code=PAY_IN_CASH_STAGE_BEGIN
+            stage_code=top_up_STAGE_BEGIN
         ))
 
         # Kiểm tra booking
         await CtrBooking().ctr_get_booking_and_validate(
             booking_id=booking_id,
-            business_type_code=BUSINESS_TYPE_PAY_IN_CASH,
+            business_type_code=BUSINESS_TYPE_top_up,
             check_correct_booking_flag=False,
             loc=f'booking_id: {booking_id}'
         )
@@ -373,19 +373,27 @@ class CtrPayInCash(BaseController):
             )
         ################################################################################################################
 
-        pay_in_cash_info = None
+        top_up_info = None
         if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
-            pay_in_cash_info = await self.ctr_save_pay_in_cash_scb_to_account(
+            top_up_info = await self.ctr_save_top_up_scb_to_account(
                 current_user=current_user,
                 request=request
             )
         if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
-            pay_in_cash_info = await self.ctr_save_pay_in_cash_scb_by_identity(request=request)
+            top_up_info = await self.ctr_save_top_up_scb_by_identity(request=request)
+        if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
+            top_up_info = await self.ctr_save_top_up_scb_to_account(
+                current_user=current_user,
+                request=request
+            )
+        if not top_up_info:
+            return self.response_exception(msg="")
+            
 
-        self.call_repos(await repos_save_pay_in_cash_info(
+        self.call_repos(await repos_save_top_up_info(
             booking_id=booking_id,
-            form_data=pay_in_cash_info.json(),
+            form_data=top_up_info.json(),
             session=self.oracle_session
         ))
 
-        return self.response(data=pay_in_cash_info)
+        return self.response(data=top_up_info)
