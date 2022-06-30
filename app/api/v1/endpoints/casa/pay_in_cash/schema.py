@@ -129,10 +129,10 @@ class TransferTypeResponse(ResponseRequestSchema):
 
 
 class ReceiverResponse(ResponseRequestSchema):
-    account_number: Optional[str] = Field(..., description="Số tài khoản")
-    fullname_vn: Optional[str] = Field(..., description="Chủ tài khoản")
-    branch_info: DropdownCodeNameResponse = Field(..., description="Đơn vị thụ hưởng")
-    currency: Optional[str] = Field(..., description="Loại tiền")
+    account_number: Optional[str] = Field(None, description="Số tài khoản")
+    fullname_vn: Optional[str] = Field(None, description="Chủ tài khoản")
+    branch_info: DropdownCodeNameResponse = Field(None, description="Đơn vị thụ hưởng")
+    currency: Optional[str] = Field(None, description="Loại tiền")
 
 
 class TransferResponse(ResponseRequestSchema):

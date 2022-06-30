@@ -16,7 +16,7 @@ router = APIRouter()
 
 
 @router.post(
-    path="/pay-in-cash/",
+    path="/top-up/",
     name="Nộp tiền",
     description="Nộp tiền",
     responses=swagger_response(
@@ -44,7 +44,7 @@ async def view_save_pay_in_cash_info(
 
 
 @router.get(
-    path="/pay-in-cash/",
+    path="/top-up/",
     name="Nộp tiền",
     description="Nộp tiền",
     responses=swagger_response(
