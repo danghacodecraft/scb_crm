@@ -111,6 +111,7 @@ class CtrPayInCash(BaseController):
             receiver=dict(
                 account_number=account_number,
                 fullname_vn=customer_info['fullname_vn'],
+                currency=account_info['currency'],
                 branch_info=account_info['branch_info']
             ),
             transfer=dict(

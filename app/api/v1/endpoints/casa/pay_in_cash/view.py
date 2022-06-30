@@ -60,4 +60,4 @@ async def view_get_pay_in_cash_info(
     get_pay_in_cash_info = await CtrPayInCash(current_user).ctr_get_pay_in_cash_info(
         booking_id=BOOKING_ID
     )
-    return ResponseData(**get_pay_in_cash_info)
+    return ResponseData[PayInCashResponse](**get_pay_in_cash_info)

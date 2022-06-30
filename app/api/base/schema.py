@@ -46,7 +46,7 @@ class BaseGWSchema(BaseModel):
         object.__setattr__(self, 'uuid', uuid)
 
 
-class RequestSchema(BaseSchema):
+class ResponseRequestSchema(BaseSchema):
     """
     RequestSchema parse blank string to null
     """
