@@ -78,8 +78,8 @@ class CasaTopUpThirdPartyToAccount(CasaTopUpRequest):
     """
     Ngoài SCB đến tài khoản
     """
+    account_number: str = Field(..., description="Số tài khoản", regex=REGEX_NUMBER_ONLY)
     bank: DropdownRequest = Field(..., description="Ngân hàng")
-    province: DropdownRequest = Field(..., description="Tỉnh/Thành phố")
     branch: DropdownRequest = Field(..., description="Chi nhánh")
     full_name_vn: str = Field(..., description="Chủ tài khoản")
     address_full: str = Field(..., description="Địa chỉ", max_length=100)
