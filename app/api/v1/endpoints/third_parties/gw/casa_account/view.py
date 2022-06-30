@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Body, Depends, Path, Header
+from fastapi import APIRouter, Body, Depends, Header, Path
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -19,9 +19,9 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.example import (
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWCasaAccountByCIFNumberRequest, GWCasaAccountByCIFNumberResponse,
     GWCasaAccountCheckExistRequest, GWCasaAccountCheckExistResponse,
-    GWCasaAccountResponse, GWCloseCasaAccountRequest,
-    GWCloseCasaAccountResponse, GWOpenCasaAccountRequest,
-    GWOpenCasaAccountResponse, GWReportColumnChartHistoryAccountInfoRequest,
+    GWCasaAccountResponse, GWCloseCasaAccountResponse,
+    GWOpenCasaAccountRequest, GWOpenCasaAccountResponse,
+    GWReportColumnChartHistoryAccountInfoRequest,
     GWReportColumnChartHistoryAccountInfoResponse,
     GWReportPieChartHistoryAccountInfoRequest,
     GWReportPieChartHistoryAccountInfoResponse,
@@ -165,11 +165,11 @@ async def view_gw_open_casa_account(
     )
 )
 async def view_gw_get_close_casa_account(
-        request: GWCloseCasaAccountRequest = Body(..., description="Thông tin tài khoản"),
-        current_user=Depends(get_current_user_from_header())
+        current_user=Depends(get_current_user_from_header()),
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch")
 ):
     gw_close_casa_account_info = await CtrGWCasaAccount(current_user).ctr_gw_get_close_casa_account(
-        request=request
+        booking_id=BOOKING_ID
     )
     return ResponseData[GWCloseCasaAccountResponse](**gw_close_casa_account_info)
 

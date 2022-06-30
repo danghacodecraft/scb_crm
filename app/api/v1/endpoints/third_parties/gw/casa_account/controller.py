@@ -1,6 +1,9 @@
 from starlette import status
 
 from app.api.base.controller import BaseController
+from app.api.v1.endpoints.approval.repository import (
+    repos_get_booking_business_form_by_booking_id
+)
 from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
     repos_get_customer_by_cif_number
 )
@@ -23,6 +26,7 @@ from app.api.v1.others.permission.controller import PermissionController
 from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.utils.constant.approval import CIF_STAGE_APPROVE_KSV
 from app.utils.constant.casa import CASA_ACCOUNT_STATUS_UNAPPROVED
+from app.utils.constant.cif import BUSINESS_FORM_CLOSE_CASA
 from app.utils.constant.gw import (
     GW_TRANSACTION_TYPE_SEND, GW_TRANSACTION_TYPE_WITHDRAW
 )
@@ -31,7 +35,7 @@ from app.utils.constant.idm import (
     IDM_PERMISSION_CODE_KSV
 )
 from app.utils.error_messages import ERROR_CALL_SERVICE_GW, ERROR_PERMISSION
-from app.utils.functions import now, string_to_date
+from app.utils.functions import now, orjson_loads, string_to_date
 
 
 class CtrGWCasaAccount(BaseController):
@@ -436,21 +440,25 @@ class CtrGWCasaAccount(BaseController):
             errors=gw_errors
         ))
 
-    async def ctr_gw_get_close_casa_account(self, request):
-        gw_open_casa_account_info = self.call_repos(await repos_gw_get_close_casa_account(
-            account_info=request['account_info'],
-            p_blk_closure=request['p_blk_closure'],
-            current_user=self.current_user
+    async def ctr_gw_get_close_casa_account(self, booking_id):
+        booking_business_form = self.call_repos(await repos_get_booking_business_form_by_booking_id(
+            booking_id=booking_id,
+            business_form_id=BUSINESS_FORM_CLOSE_CASA,
+            session=self.oracle_session
         ))
+        request_data = orjson_loads(booking_business_form.form_data)
+        gw_close_casa_account = self.call_repos(await repos_gw_get_close_casa_account(
+            current_user=self.current_user,
+            booking_id=booking_id,
+            request_data_gw=request_data,
+            session=self.oracle_session
+        ))
+        response_data = {
+            "booking_id": booking_id,
+            "account_list": gw_close_casa_account
+        }
 
-        transaction_info = gw_open_casa_account_info['closeCASA_out']['transaction_info']
-
-        if transaction_info['transaction_error_code'] != "00":
-            return self.response_exception(
-                msg=transaction_info['transaction_error_msg'], loc=transaction_info['transaction_error_code'],
-                detail=ERROR_CALL_SERVICE_GW)
-
-        return self.response(data=dict(number=request['account_info']['account_num']))
+        return self.response(data=response_data)
 
     async def ctr_gw_get_statement_casa_account_info(self, request: GWReportStatementHistoryAccountInfoRequest):
         gw_report_statements_casa_account_info = self.call_repos(await repos_gw_get_statements_casa_account_info(
