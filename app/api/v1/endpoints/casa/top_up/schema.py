@@ -56,7 +56,7 @@ class CasaTopUpSCBToAccountRequest(CasaTopUpRequest):
     )
 
 
-class CasaTopUpSCBByIdentity(CasaTopUpRequest):
+class CasaTopUpSCBByIdentityRequest(CasaTopUpRequest):
     """
     Trong SCB nhận bằng giấy tờ định danh
     """
@@ -73,7 +73,7 @@ class CasaTopUpSCBByIdentity(CasaTopUpRequest):
     )
 
 
-class CasaTopUpThirdPartyToAccount(CasaTopUpRequest):
+class CasaTopUpThirdPartyToAccountRequest(CasaTopUpRequest):
     """
     Ngoài SCB đến tài khoản
     """
@@ -84,7 +84,7 @@ class CasaTopUpThirdPartyToAccount(CasaTopUpRequest):
     address_full: str = Field(..., description="Địa chỉ", max_length=100)
 
 
-class CasaTopUpThirdPartyByIdentity(CasaTopUpRequest):
+class CasaTopUpThirdPartyByIdentityRequest(CasaTopUpRequest):
     """
     Ngoài SCB nhận bằng giấy tờ định danh
     """
@@ -99,7 +99,7 @@ class CasaTopUpThirdPartyByIdentity(CasaTopUpRequest):
     address_full: str = Field(..., description="Địa chỉ", max_length=100)
 
 
-class CasaTopUpThirdParty247ToAccount(CasaTopUpRequest):
+class CasaTopUpThirdParty247ToAccountRequest(CasaTopUpRequest):
     """
     Ngoài SCB 24/7 tài khoản
     """
@@ -108,7 +108,7 @@ class CasaTopUpThirdParty247ToAccount(CasaTopUpRequest):
     address_full: str = Field(..., description="Địa chỉ", max_length=100)
 
 
-class CasaTopUpThirdParty247ToCard(CasaTopUpRequest):
+class CasaTopUpThirdParty247ToCardRequest(CasaTopUpRequest):
     """
     Ngoài SCB 24/7 số thẻ
     """

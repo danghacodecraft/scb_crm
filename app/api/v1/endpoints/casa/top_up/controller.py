@@ -8,9 +8,10 @@ from app.api.v1.endpoints.casa.top_up.repository import (
     repos_get_casa_top_up_info, repos_save_casa_top_up_info
 )
 from app.api.v1.endpoints.casa.top_up.schema import (
-    CasaTopUpSCBByIdentity, CasaTopUpSCBToAccountRequest,
-    CasaTopUpThirdParty247ToAccount, CasaTopUpThirdParty247ToCard,
-    CasaTopUpThirdPartyByIdentity, CasaTopUpThirdPartyToAccount
+    CasaTopUpSCBByIdentityRequest, CasaTopUpSCBToAccountRequest,
+    CasaTopUpThirdParty247ToAccountRequest,
+    CasaTopUpThirdParty247ToCardRequest, CasaTopUpThirdPartyByIdentityRequest,
+    CasaTopUpThirdPartyToAccountRequest
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
     CtrGWCasaAccount
@@ -44,7 +45,7 @@ from app.utils.constant.idm import (
 )
 from app.utils.error_messages import (
     ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_CIF_NUMBER_NOT_EXIST,
-    ERROR_DENOMINATIONS_NOT_EXIST, ERROR_NOT_NULL,
+    ERROR_DENOMINATIONS_NOT_EXIST, ERROR_MAPPING_MODEL, ERROR_NOT_NULL,
     ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
 )
 from app.utils.functions import dropdown, orjson_loads
@@ -247,6 +248,9 @@ class CtrCasaTopUp(BaseController):
             current_user: AuthResponse,
             request: CasaTopUpSCBToAccountRequest
     ):
+        if not isinstance(request, CasaTopUpSCBToAccountRequest):
+            return self.response_exception(msg=ERROR_MAPPING_MODEL, loc=f'model: {type(request)}')
+
         cif_number = request.cif_number
         if not cif_number:
             return self.response_exception(msg=ERROR_CIF_NUMBER_NOT_EXIST, loc=f"cif_number: {cif_number}")
@@ -264,8 +268,11 @@ class CtrCasaTopUp(BaseController):
 
     async def ctr_save_casa_top_up_scb_by_identity(
             self,
-            request: CasaTopUpSCBByIdentity
+            request: CasaTopUpSCBByIdentityRequest
     ):
+        if not isinstance(request, CasaTopUpSCBByIdentityRequest):
+            return self.response_exception(msg=ERROR_MAPPING_MODEL, loc=f'model: {type(request)}')
+
         # validate branch
         await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
 
@@ -281,12 +288,13 @@ class CtrCasaTopUp(BaseController):
 
     async def ctr_save_casa_top_up_third_party_to_account(
             self,
-            request: CasaTopUpThirdPartyToAccount
+            request: CasaTopUpThirdPartyToAccountRequest
     ):
+        if not isinstance(request, CasaTopUpThirdPartyToAccountRequest):
+            return self.response_exception(msg=ERROR_MAPPING_MODEL, loc=f'model: {type(request)}')
         # validate branch of bank
         # TODO:
         # await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
-
         return request
 
     async def ctr_save_casa_top_up_info(
@@ -294,11 +302,11 @@ class CtrCasaTopUp(BaseController):
             booking_id: str,
             request: Union[
                 CasaTopUpSCBToAccountRequest,
-                CasaTopUpSCBByIdentity,
-                CasaTopUpThirdPartyToAccount,
-                CasaTopUpThirdPartyByIdentity,
-                CasaTopUpThirdParty247ToAccount,
-                CasaTopUpThirdParty247ToCard
+                CasaTopUpSCBByIdentityRequest,
+                CasaTopUpThirdPartyToAccountRequest,
+                CasaTopUpThirdPartyByIdentityRequest,
+                CasaTopUpThirdParty247ToAccountRequest,
+                CasaTopUpThirdParty247ToCardRequest
             ]
     ):
         cif_number = request.cif_number

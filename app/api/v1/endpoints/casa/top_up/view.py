@@ -8,8 +8,10 @@ from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.casa.top_up.controller import CtrCasaTopUp
 from app.api.v1.endpoints.casa.top_up.schema import (
-    CasaTopUpResponse, CasaTopUpSCBToAccountRequest, CasaTopUpSCBByIdentity, CasaTopUpThirdPartyToAccount,
-    CasaTopUpThirdPartyByIdentity, CasaTopUpThirdParty247ToAccount, CasaTopUpThirdParty247ToCard
+    CasaTopUpResponse, CasaTopUpSCBByIdentityRequest,
+    CasaTopUpSCBToAccountRequest, CasaTopUpThirdParty247ToAccountRequest,
+    CasaTopUpThirdParty247ToCardRequest, CasaTopUpThirdPartyByIdentityRequest,
+    CasaTopUpThirdPartyToAccountRequest
 )
 
 router = APIRouter()
@@ -27,12 +29,12 @@ router = APIRouter()
 async def view_save_casa_top_up_info(
         BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         request: Union[
+            CasaTopUpThirdPartyToAccountRequest,
             CasaTopUpSCBToAccountRequest,
-            CasaTopUpSCBByIdentity,
-            CasaTopUpThirdPartyToAccount,
-            CasaTopUpThirdPartyByIdentity,
-            CasaTopUpThirdParty247ToAccount,
-            CasaTopUpThirdParty247ToCard
+            CasaTopUpSCBByIdentityRequest,
+            CasaTopUpThirdPartyByIdentityRequest,
+            CasaTopUpThirdParty247ToAccountRequest,
+            CasaTopUpThirdParty247ToCardRequest
         ] = Body(...),
         current_user=Depends(get_current_user_from_header())
 ):
