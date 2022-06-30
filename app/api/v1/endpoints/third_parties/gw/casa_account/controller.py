@@ -438,8 +438,8 @@ class CtrGWCasaAccount(BaseController):
 
     async def ctr_gw_get_close_casa_account(self, request):
         gw_open_casa_account_info = self.call_repos(await repos_gw_get_close_casa_account(
-            account_info=request.account_info,
-            p_blk_closure=request.p_blk_closure,
+            account_info=request['account_info'],
+            p_blk_closure=request['p_blk_closure'],
             current_user=self.current_user
         ))
 
@@ -450,7 +450,7 @@ class CtrGWCasaAccount(BaseController):
                 msg=transaction_info['transaction_error_msg'], loc=transaction_info['transaction_error_code'],
                 detail=ERROR_CALL_SERVICE_GW)
 
-        return self.response(data=dict(number=request.account_info.account_num))
+        return self.response(data=dict(number=request['account_info']['account_num']))
 
     async def ctr_gw_get_statement_casa_account_info(self, request: GWReportStatementHistoryAccountInfoRequest):
         gw_report_statements_casa_account_info = self.call_repos(await repos_gw_get_statements_casa_account_info(
