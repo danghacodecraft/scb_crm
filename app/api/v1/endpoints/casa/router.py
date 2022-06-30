@@ -3,7 +3,7 @@ from fastapi import APIRouter
 from app.api.v1.endpoints.casa.close_casa import view as view_close_casa
 from app.api.v1.endpoints.casa.open_casa import router as routers_open_casa
 from app.api.v1.endpoints.casa.withdraw import view as views_withdraw_info
-from app.api.v1.endpoints.casa.pay_in_cash import view as views_pay_in_cash
+from app.api.v1.endpoints.casa.top_up import view as views_pay_in_cash
 
 router_module = APIRouter()
 

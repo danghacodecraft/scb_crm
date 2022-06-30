@@ -4,10 +4,10 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
     repos_get_customer_by_cif_number
 )
-from app.api.v1.endpoints.casa.pay_in_cash.repository import (
+from app.api.v1.endpoints.casa.top_up.repository import (
     repos_save_pay_in_cash_info, repos_get_pay_in_cash_info
 )
-from app.api.v1.endpoints.casa.pay_in_cash.schema import (
+from app.api.v1.endpoints.casa.top_up.schema import (
     PayInCashSCBByIdentity, PayInCashSCBToAccountRequest,
     PayInCashThirdParty247ToAccount, PayInCashThirdParty247ToCard,
     PayInCashThirdPartyByIdentity, PayInCashThirdPartyToAccount
