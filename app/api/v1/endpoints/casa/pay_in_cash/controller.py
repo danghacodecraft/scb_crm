@@ -17,6 +17,7 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
 )
 from app.api.v1.endpoints.third_parties.gw.category.controller import CtrSelectCategory
 from app.api.v1.endpoints.third_parties.gw.customer.controller import CtrGWCustomer
+from app.api.v1.endpoints.third_parties.gw.employee.controller import CtrGWEmployee
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
@@ -112,6 +113,21 @@ class CtrPayInCash(BaseController):
             telephone=gw_customer_info['telephone'],
             otherphone=gw_customer_info['otherphone']
         )
+        controller_gw_employee = CtrGWEmployee(current_user)
+        gw_direct_staff = await controller_gw_employee.ctr_gw_get_employee_info_from_code(
+            employee_code=form_data['direct_staff_code']
+        )
+        direct_staff = dict(
+            code=gw_direct_staff['data']['staff_code'],
+            name=gw_direct_staff['data']['staff_name']
+        )
+        gw_indirect_staff = await controller_gw_employee.ctr_gw_get_employee_info_from_code(
+            employee_code=form_data['indirect_staff_code']
+        )
+        indirect_staff = dict(
+            code=gw_indirect_staff['data']['staff_code'],
+            name=gw_indirect_staff['data']['staff_name']
+        )
         response_data = dict(
             transfer_type=dict(
                 receiving_method_type=RECEIVING_METHOD__METHOD_TYPES[receiving_method],
@@ -134,7 +150,9 @@ class CtrPayInCash(BaseController):
             ),
             fee_info=fee_info,
             statement=statement_response,
-            customer=customer_response
+            customer=customer_response,
+            direct_staff=direct_staff,
+            indirect_staff=indirect_staff,
         )
 
         return self.response(response_data)

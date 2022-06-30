@@ -183,6 +183,11 @@ class CustomerResponse(ResponseRequestSchema):
     otherphone: Optional[str] = Field(..., description="SĐT")
 
 
+class StaffInfoResponse(ResponseRequestSchema):
+    code: Optional[str] = Field(..., description="Mã NV")
+    name: Optional[str] = Field(..., description="Tên NV")
+
+
 class PayInCashResponse(ResponseRequestSchema):
     transfer_type: TransferTypeResponse = Field(..., description="Loại chuyển")
     receiver: ReceiverResponse = Field(..., description="Thông tin người thụ hưởng")
@@ -190,3 +195,5 @@ class PayInCashResponse(ResponseRequestSchema):
     fee_info: FeeInfoResponse = Field(..., description="Thông tin phí")
     statement: StatementResponse = Field(..., description="Thông tin bảng kê")
     customer: CustomerResponse = Field(..., description="Thông tin khách hàng giao dịch")
+    direct_staff: StaffInfoResponse = Field(..., description="Thông tin khách hàng giao dịch")
+    indirect_staff: StaffInfoResponse = Field(..., description="Thông tin khách hàng giao dịch")
