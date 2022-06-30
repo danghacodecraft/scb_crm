@@ -5,7 +5,7 @@ from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
     repos_get_customer_by_cif_number
 )
 from app.api.v1.endpoints.casa.top_up.repository import (
-    repos_save_casa_top_up_info, repos_get_casa_top_up_info
+    repos_get_casa_top_up_info, repos_save_casa_top_up_info
 )
 from app.api.v1.endpoints.casa.top_up.schema import (
     CasaTopUpSCBByIdentity, CasaTopUpSCBToAccountRequest,
@@ -15,9 +15,15 @@ from app.api.v1.endpoints.casa.top_up.schema import (
 from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
     CtrGWCasaAccount
 )
-from app.api.v1.endpoints.third_parties.gw.category.controller import CtrSelectCategory
-from app.api.v1.endpoints.third_parties.gw.customer.controller import CtrGWCustomer
-from app.api.v1.endpoints.third_parties.gw.employee.controller import CtrGWEmployee
+from app.api.v1.endpoints.third_parties.gw.category.controller import (
+    CtrSelectCategory
+)
+from app.api.v1.endpoints.third_parties.gw.customer.controller import (
+    CtrGWCustomer
+)
+from app.api.v1.endpoints.third_parties.gw.employee.controller import (
+    CtrGWEmployee
+)
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
@@ -27,16 +33,21 @@ from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.approval import CASA_TOP_UP_STAGE_BEGIN
 from app.utils.constant.business_type import BUSINESS_TYPE_CASA_TOP_UP
 from app.utils.constant.casa import (
-    DENOMINATIONS__AMOUNTS, RECEIVING_METHOD_SCB_TO_ACCOUNT, RECEIVING_METHODS, RECEIVING_METHOD__METHOD_TYPES,
-    RECEIVING_METHOD_SCB_BY_IDENTITY, RECEIVING_METHOD_IDENTITY_CASES, RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT
+    DENOMINATIONS__AMOUNTS, RECEIVING_METHOD__METHOD_TYPES,
+    RECEIVING_METHOD_IDENTITY_CASES, RECEIVING_METHOD_SCB_BY_IDENTITY,
+    RECEIVING_METHOD_SCB_TO_ACCOUNT, RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT,
+    RECEIVING_METHODS
 )
 from app.utils.constant.gw import GW_REQUEST_DIRECT_INDIRECT
-from app.utils.constant.idm import IDM_PERMISSION_CODE_GDV, IDM_MENU_CODE_TTKH, IDM_GROUP_ROLE_CODE_GDV
-from app.utils.error_messages import (
-    ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_DENOMINATIONS_NOT_EXIST,
-    ERROR_NOT_NULL, ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST, ERROR_CIF_NUMBER_NOT_EXIST
+from app.utils.constant.idm import (
+    IDM_GROUP_ROLE_CODE_GDV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_GDV
 )
-from app.utils.functions import orjson_loads, dropdown
+from app.utils.error_messages import (
+    ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_CIF_NUMBER_NOT_EXIST,
+    ERROR_DENOMINATIONS_NOT_EXIST, ERROR_NOT_NULL,
+    ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
+)
+from app.utils.functions import dropdown, orjson_loads
 
 
 class CtrCasaTopUp(BaseController):
@@ -53,28 +64,43 @@ class CtrCasaTopUp(BaseController):
         # Thông tin người thụ hưởng
         ################################################################################################################
         receiver_response = {}
+        print(form_data)
 
         if receiving_method not in RECEIVING_METHOD_IDENTITY_CASES:
-            account_number = form_data['account_number']
+            # account_number = form_data['account_number']
+            #
+            # gw_casa_account_info = await CtrGWCasaAccount(current_user=current_user).ctr_gw_get_casa_account_info(
+            #     account_number=account_number,
+            #     return_raw_data_flag=True
+            # )
 
-            gw_casa_account_info = await CtrGWCasaAccount(current_user=current_user).ctr_gw_get_casa_account_info(
-                account_number=account_number,
-                return_raw_data_flag=True
-            )
+            # gw_casa_account_info_customer_info = gw_casa_account_info['customer_info']
+            # account_info = gw_casa_account_info_customer_info['account_info']
 
-            gw_casa_account_info_customer_info = gw_casa_account_info['customer_info']
-            account_info = gw_casa_account_info_customer_info['account_info']
+            # if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
+            #     receiver_response = dict(
+            #         account_number=account_number,
+            #         fullname_vn=gw_casa_account_info_customer_info['full_name'],
+            #         currency=account_info['account_currency'],
+            #         branch_info=dict(
+            #             id=account_info['branch_info']['branch_code'],
+            #             code=account_info['branch_info']['branch_code'],
+            #             name=account_info['branch_info']['branch_name']
+            #         )
+            #     )
 
-            receiver_response = dict(
-                account_number=account_number,
-                fullname_vn=gw_casa_account_info_customer_info['full_name'],
-                currency=account_info['account_currency'],
-                branch_info=dict(
-                    id=account_info['branch_info']['branch_code'],
-                    code=account_info['branch_info']['branch_code'],
-                    name=account_info['branch_info']['branch_name']
+            if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
+                # branch_info = self.call_repos(await repos_get_branch_and_others(branch_id=form_data['branch']['id'])
+                branch_info = await self.get_model_object_by_id(model_id=form_data['branch']['id'], model=Branch, loc='')
+                receiver_response = dict(
+                    bank=form_data['bank'],
+                    province=dropdown(branch_info.address_province),
+                    branch_info=dropdown(branch_info),
+                    account_number=form_data['account_number'],
+                    fullname_vn=form_data['full_name_vn'],
+                    address_full=form_data['address_full']
                 )
-            )
+
         if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
             province = await self.get_model_object_by_id(
                 model_id=form_data['province']['id'], model=AddressProvince, loc='province_id'
