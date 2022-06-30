@@ -116,9 +116,11 @@ AMOUNT_BLOCK_APPROVE_STAGES = {
 ########################################################################################################################
 # AMOUNT_UNBLOCK
 ########################################################################################################################
+BUSINESS_JOB_CODE_AMOUNT_UNBLOCK = "GIAI_TOA_TAI_KHOAN"
+BUSINESS_JOB_CODE_START_AMOUNT_UNBLOCK = "BAT_DAT_GIAI_TOA_TAI_KHOAN"
+
 AMOUNT_UNBLOCK_STAGE_BEGIN = 'AMOUNT_UNBLOCK_BEGIN'
 AMOUNT_UNBLOCK_STAGE_INIT = "AMOUNT_UNBLOCK_KHOI_TAO_HO_SO"
-
 AMOUNT_UNBLOCK_STAGE_APPROVE_KSV = "AMOUNT_UNBLOCK_PHE_DUYET_KSV"
 AMOUNT_UNBLOCK_STAGE_APPROVE_KSS = "AMOUNT_UNBLOCK_PHE_DUYET_KSS"
 AMOUNT_UNBLOCK_STAGE_COMPLETED = "AMOUNT_UNBLOCK_KET_THUC_HO_SO"
@@ -149,6 +151,46 @@ AMOUNT_UNBLOCK_APPROVE_STAGES = {
     AMOUNT_UNBLOCK_STAGE_APPROVE_KSV: "Phê duyệt KSV",
     AMOUNT_UNBLOCK_STAGE_APPROVE_KSS: "Phê duyệt KSS"
 }
+
+########################################################################################################################
+# CLOSE_CASA
+########################################################################################################################
+BUSINESS_JOB_CODE_CLOSE_CASA = "DONG_TAI_KHOAN"
+BUSINESS_JOB_CODE_START_CLOSE_CASA = "BAT_DAT_DONG_TAI_KHOAN"
+
+CLOSE_CASA_STAGE_BEGIN = 'CLOSE_CASA_BEGIN'
+CLOSE_CASA_STAGE_INIT = "CLOSE_CASA_KHOI_TAO_HO_SO"
+CLOSE_CASA_STAGE_APPROVE_KSV = "CLOSE_CASA_PHE_DUYET_KSV"
+CLOSE_CASA_STAGE_APPROVE_KSS = "CLOSE_CASA_PHE_DUYET_KSS"
+CLOSE_CASA_STAGE_COMPLETED = "CLOSE_CASA_KET_THUC_HO_SO"
+
+CLOSE_CASA_ACTION_PHE_DUYET_KSS = "CLOSE_CASA_PHE_DUYET_KSS"
+CLOSE_CASA_ACTION_BSTTKXTL_KSS = "CLOSE_CASA_BSTTKXTL_KSS"
+CLOSE_CASA_ACTION_BSTTXTL_KSS = "CLOSE_CASA_BSTTXTL_KSS"
+CLOSE_CASA_ACTION_XTL_KSS = "CLOSE_CASA_XTL_KSS"
+
+CLOSE_CASA_ACTION_PHE_DUYET_KSV = "CLOSE_CASA_PHE_DUYET_KSV"
+CLOSE_CASA_ACTION_BSTTKXTL_KSV = "CLOSE_CASA_BSTTKXTL_KSV"
+CLOSE_CASA_ACTION_BSTTXTL_KSV = "CLOSE_CASA_BSTTXTL_KSV"
+CLOSE_CASA_ACTION_XTL_KSV = "CLOSE_CASA_XTL_KSV"
+
+CLOSE_CASA_ACTIONS = {
+    CLOSE_CASA_ACTION_PHE_DUYET_KSS: "KSS Phê duyệt ",
+    CLOSE_CASA_ACTION_BSTTKXTL_KSS: "KSS Bổ sung thông tin không cần xác thực lại",
+    CLOSE_CASA_ACTION_BSTTXTL_KSS: "KSS Bổ sung thông tin và xác thực lại",
+    CLOSE_CASA_ACTION_XTL_KSS: "KSS Yêu cầu xác thực lại khách hàng.",
+
+    CLOSE_CASA_ACTION_PHE_DUYET_KSV: "KSV Phê duyệt",
+    CLOSE_CASA_ACTION_BSTTKXTL_KSV: "KSV Bổ sung thông tin không cần xác thực lại",
+    CLOSE_CASA_ACTION_BSTTXTL_KSV: "KSV Bổ sung thông tin và xác thực lại",
+    CLOSE_CASA_ACTION_XTL_KSV: "KSV Yêu cầu xác thực lại khách hàng."
+}
+
+CLOSE_CASA_APPROVE_STAGES = {
+    CLOSE_CASA_STAGE_APPROVE_KSV: "Phê duyệt KSV",
+    CLOSE_CASA_STAGE_APPROVE_KSS: "Phê duyệt KSS"
+}
+
 ########################################################################################################################
 
 
