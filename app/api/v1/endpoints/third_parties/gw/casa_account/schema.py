@@ -243,4 +243,5 @@ class GWCloseCasaAccountRequest(BaseGWSchema):
 
 
 class GWCloseCasaAccountResponse(BaseGWSchema):
-    number: str = Field(..., description="Số tài khoản thanh toán")
+    booking_id: str = Field(..., description="Booking")
+    account_list: Optional[List] = Field(..., description="Danh sách số tài khoản")

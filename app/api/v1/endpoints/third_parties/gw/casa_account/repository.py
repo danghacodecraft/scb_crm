@@ -1,13 +1,10 @@
 from datetime import date
 from typing import List
 
-from sqlalchemy import select, and_
+from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
-from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
-    GWAccountInfoCloseCasaRequest
-)
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.settings.event import service_gw
 from app.third_parties.oracle.models.cif.form.model import BookingBusinessForm
@@ -17,12 +14,16 @@ from app.third_parties.oracle.models.cif.payment_account.model import (
 from app.third_parties.oracle.models.master_data.others import TransactionJob
 from app.utils.constant.approval import BUSINESS_JOB_CODE_OPEN_CASA
 from app.utils.constant.casa import CASA_ACCOUNT_STATUS_APPROVED
-from app.utils.constant.cif import BUSINESS_FORM_OPEN_CASA_PD
+from app.utils.constant.cif import (
+    BUSINESS_FORM_CLOSE_CASA_PD, BUSINESS_FORM_OPEN_CASA_PD
+)
 from app.utils.constant.gw import (
     GW_TRANSACTION_NAME_COLUMN_CHART, GW_TRANSACTION_NAME_PIE_CHART,
     GW_TRANSACTION_NAME_STATEMENT
 )
-from app.utils.error_messages import ERROR_CALL_SERVICE_GW, ERROR_CASA_ACCOUNT_APPROVED
+from app.utils.error_messages import (
+    ERROR_CALL_SERVICE_GW, ERROR_CASA_ACCOUNT_APPROVED
+)
 from app.utils.functions import generate_uuid, now, orjson_dumps
 
 
@@ -159,25 +160,49 @@ async def repos_gw_open_casa_account(
 
 
 async def repos_gw_get_close_casa_account(
-        account_info: GWAccountInfoCloseCasaRequest,
-        p_blk_closure,
-        current_user: AuthResponse
+        current_user,
+        request_data_gw: list,
+        booking_id,
+        session
 ):
-    current_user = current_user.user_info
-    is_success, gw_close_casa_account_info = await service_gw.get_close_casa_account(
-        account_info=account_info,
-        p_blk_closure=p_blk_closure,
-        current_user=current_user
-    )
-    if not is_success:
-        return ReposReturn(
-            is_error=True,
-            loc="get_close_casa_account",
-            msg=ERROR_CALL_SERVICE_GW,
-            detail=str(gw_close_casa_account_info)
-        )
+    response_data = []
 
-    return ReposReturn(data=gw_close_casa_account_info)
+    current_user = current_user.user_info
+    for item in request_data_gw:
+
+        is_success, gw_close_casa_account, request_data = await service_gw.get_close_casa_account(
+            data_input=item,
+            current_user=current_user
+        )
+        # lưu form data request GW
+        session.add(
+            BookingBusinessForm(**dict(
+                booking_id=booking_id,
+                form_data=orjson_dumps(request_data),
+                business_form_id=BUSINESS_FORM_CLOSE_CASA_PD,
+                save_flag=True,
+                created_at=now(),
+                log_data=orjson_dumps(gw_close_casa_account)
+            ))
+        )
+        if is_success:
+            close_casa = gw_close_casa_account['closeCASA_out']['transaction_info']
+            response_data.append({
+                "transaction": {
+                    "account_number": item.get('account_info').get('account_number'),
+                    "code": close_casa.get('transaction_error_code'),
+                    "msg": close_casa.get('transaction_error_msg')
+                }
+            })
+        else:
+            response_data.append({
+                "transaction": {
+                    "account_number": item.get('account_info').get('account_number'),
+                    "code": ERROR_CALL_SERVICE_GW,
+                    "msg": ERROR_CALL_SERVICE_GW
+                }
+            })
+    return ReposReturn(data=response_data)
 
 
 async def repos_open_casa_get_casa_account_infos(
