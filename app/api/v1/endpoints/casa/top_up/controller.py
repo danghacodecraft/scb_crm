@@ -250,11 +250,9 @@ class CtrCasaTopUp(BaseController):
             self,
             request: CasaTopUpThirdPartyToAccount
     ):
-        # validate bank
+        # validate branch of bank
         # TODO:
-
-        # validate branch
-        await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
+        # await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
 
         return request
 
