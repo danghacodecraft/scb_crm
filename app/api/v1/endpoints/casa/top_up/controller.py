@@ -25,8 +25,8 @@ from app.api.v1.others.permission.controller import PermissionController
 from app.third_parties.oracle.models.master_data.address import AddressProvince
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import Branch
-from app.utils.constant.approval import top_up_STAGE_BEGIN
-from app.utils.constant.business_type import BUSINESS_TYPE_top_up
+from app.utils.constant.approval import TOP_UP_STAGE_BEGIN
+from app.utils.constant.business_type import BUSINESS_TYPE_TOP_UP
 from app.utils.constant.casa import (
     DENOMINATIONS__AMOUNTS, RECEIVING_METHOD_SCB_TO_ACCOUNT, RECEIVING_METHODS, RECEIVING_METHOD__METHOD_TYPES,
     RECEIVING_METHOD_SCB_BY_IDENTITY, RECEIVING_METHOD_IDENTITY_CASES
@@ -288,13 +288,13 @@ class CtrPayInCash(BaseController):
             menu_code=IDM_MENU_CODE_TTKH,
             group_role_code=IDM_GROUP_ROLE_CODE_GDV,
             permission_code=IDM_PERMISSION_CODE_GDV,
-            stage_code=top_up_STAGE_BEGIN
+            stage_code=TOP_UP_STAGE_BEGIN
         ))
 
         # Kiểm tra booking
         await CtrBooking().ctr_get_booking_and_validate(
             booking_id=booking_id,
-            business_type_code=BUSINESS_TYPE_top_up,
+            business_type_code=BUSINESS_TYPE_TOP_UP,
             check_correct_booking_flag=False,
             loc=f'booking_id: {booking_id}'
         )
