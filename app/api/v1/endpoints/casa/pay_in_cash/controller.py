@@ -26,10 +26,7 @@ from app.utils.constant.casa import (
     DENOMINATIONS__AMOUNTS, RECEIVING_METHOD_SCB_TO_ACCOUNT, RECEIVING_METHODS, RECEIVING_METHOD__METHOD_TYPES
 )
 from app.utils.constant.gw import GW_REQUEST_DIRECT_INDIRECT
-from app.utils.constant.idm import (
-    IDM_GROUP_ROLE_CODE_OPEN_CIF, IDM_MENU_CODE_OPEN_CIF,
-    IDM_PERMISSION_CODE_OPEN_CIF
-)
+from app.utils.constant.idm import IDM_PERMISSION_CODE_GDV, IDM_MENU_CODE_TTKH, IDM_GROUP_ROLE_CODE_GDV
 from app.utils.error_messages import (
     ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_DENOMINATIONS_NOT_EXIST,
     ERROR_NOT_NULL, ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
@@ -171,9 +168,9 @@ class CtrPayInCash(BaseController):
         # check quyền user
         self.call_repos(await PermissionController().ctr_approval_check_permission(
             auth_response=current_user,
-            menu_code=IDM_MENU_CODE_OPEN_CIF,
-            group_role_code=IDM_GROUP_ROLE_CODE_OPEN_CIF,
-            permission_code=IDM_PERMISSION_CODE_OPEN_CIF,
+            menu_code=IDM_MENU_CODE_TTKH,
+            group_role_code=IDM_GROUP_ROLE_CODE_GDV,
+            permission_code=IDM_PERMISSION_CODE_GDV,
             stage_code=PAY_IN_CASH_STAGE_BEGIN
         ))
 
