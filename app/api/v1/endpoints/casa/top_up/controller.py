@@ -90,7 +90,6 @@ class CtrCasaTopUp(BaseController):
             #     )
 
             if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
-                # branch_info = self.call_repos(await repos_get_branch_and_others(branch_id=form_data['branch']['id'])
                 branch_info = await self.get_model_object_by_id(model_id=form_data['branch']['id'], model=Branch, loc='')
                 receiver_response = dict(
                     bank=form_data['bank'],
