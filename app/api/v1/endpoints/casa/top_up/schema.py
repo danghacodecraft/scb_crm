@@ -32,7 +32,7 @@ class StatementInfoRequest(ResponseRequestSchema):
 
 
 # Common
-class PayInCashRequest(ResponseRequestSchema):
+class TopUpRequest(ResponseRequestSchema):
     cif_number: Optional[str] = CustomField().OptionalCIFNumberField
     receiving_method: str = Field(..., description="Hình thức nhận")
     is_fee: bool = Field(..., description="Có thu phí không")
@@ -45,7 +45,7 @@ class PayInCashRequest(ResponseRequestSchema):
 ########################################################################################################################
 # Thông tin người thụ hưởng
 ########################################################################################################################
-class PayInCashSCBToAccountRequest(PayInCashRequest):
+class TopUpSCBToAccountRequest(TopUpRequest):
     """
     Trong SCB đến tài khoản
     """
@@ -56,7 +56,7 @@ class PayInCashSCBToAccountRequest(PayInCashRequest):
     )
 
 
-class PayInCashSCBByIdentity(PayInCashRequest):
+class TopUpSCBByIdentity(TopUpRequest):
     """
     Trong SCB nhận bằng giấy tờ định danh
     """
@@ -74,7 +74,7 @@ class PayInCashSCBByIdentity(PayInCashRequest):
     )
 
 
-class PayInCashThirdPartyToAccount(PayInCashRequest):
+class TopUpThirdPartyToAccount(TopUpRequest):
     """
     Ngoài SCB đến tài khoản
     """
@@ -85,7 +85,7 @@ class PayInCashThirdPartyToAccount(PayInCashRequest):
     address_full: str = Field(..., description="Địa chỉ", max_length=100)
 
 
-class PayInCashThirdPartyByIdentity(PayInCashRequest):
+class TopUpThirdPartyByIdentity(TopUpRequest):
     """
     Ngoài SCB nhận bằng giấy tờ định danh
     """
@@ -100,7 +100,7 @@ class PayInCashThirdPartyByIdentity(PayInCashRequest):
     address_full: str = Field(..., description="Địa chỉ", max_length=100)
 
 
-class PayInCashThirdParty247ToAccount(PayInCashRequest):
+class TopUpThirdParty247ToAccount(TopUpRequest):
     """
     Ngoài SCB 24/7 tài khoản
     """
@@ -109,7 +109,7 @@ class PayInCashThirdParty247ToAccount(PayInCashRequest):
     address_full: str = Field(..., description="Địa chỉ", max_length=100)
 
 
-class PayInCashThirdParty247ToCard(PayInCashRequest):
+class TopUpThirdParty247ToCard(TopUpRequest):
     """
     Ngoài SCB 24/7 số thẻ
     """
@@ -195,7 +195,7 @@ class StaffInfoResponse(ResponseRequestSchema):
     name: Optional[str] = Field(..., description="Tên NV")
 
 
-class PayInCashResponse(ResponseRequestSchema):
+class TopUpResponse(ResponseRequestSchema):
     transfer_type: TransferTypeResponse = Field(..., description="Loại chuyển")
     receiver: ReceiverResponse = Field(..., description="Thông tin người thụ hưởng")
     transfer: TransferResponse = Field(..., description="Thông tin giao dịch")

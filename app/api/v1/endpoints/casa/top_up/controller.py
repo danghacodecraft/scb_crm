@@ -5,12 +5,12 @@ from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
     repos_get_customer_by_cif_number
 )
 from app.api.v1.endpoints.casa.top_up.repository import (
-    repos_save_top_up_info, repos_get_top_up_info
+    repos_save_casa_top_up_info, repos_get_casa_top_up_info
 )
 from app.api.v1.endpoints.casa.top_up.schema import (
-    PayInCashSCBByIdentity, PayInCashSCBToAccountRequest,
-    PayInCashThirdParty247ToAccount, PayInCashThirdParty247ToCard,
-    PayInCashThirdPartyByIdentity, PayInCashThirdPartyToAccount
+    TopUpSCBByIdentity, TopUpSCBToAccountRequest,
+    TopUpThirdParty247ToAccount, TopUpThirdParty247ToCard,
+    TopUpThirdPartyByIdentity, TopUpThirdPartyToAccount
 )
 from app.api.v1.endpoints.repository import repos_get_branch_in_province
 from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
@@ -25,8 +25,8 @@ from app.api.v1.others.permission.controller import PermissionController
 from app.third_parties.oracle.models.master_data.address import AddressProvince
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import Branch
-from app.utils.constant.approval import TOP_UP_STAGE_BEGIN
-from app.utils.constant.business_type import BUSINESS_TYPE_TOP_UP
+from app.utils.constant.approval import CASA_TOP_UP_STAGE_BEGIN
+from app.utils.constant.business_type import BUSINESS_TYPE_CASA_TOP_UP
 from app.utils.constant.casa import (
     DENOMINATIONS__AMOUNTS, RECEIVING_METHOD_SCB_TO_ACCOUNT, RECEIVING_METHODS, RECEIVING_METHOD__METHOD_TYPES,
     RECEIVING_METHOD_SCB_BY_IDENTITY, RECEIVING_METHOD_IDENTITY_CASES
@@ -40,14 +40,14 @@ from app.utils.error_messages import (
 from app.utils.functions import orjson_loads, dropdown
 
 
-class CtrPayInCash(BaseController):
-    async def ctr_get_top_up_info(self, booking_id: str):
+class CtrTopUp(BaseController):
+    async def ctr_get_casa_top_up_info(self, booking_id: str):
         current_user = self.current_user
-        get_top_up_info = self.call_repos(await repos_get_top_up_info(
+        get_casa_top_up_info = self.call_repos(await repos_get_casa_top_up_info(
             booking_id=booking_id,
             session=self.oracle_session
         ))
-        form_data = orjson_loads(get_top_up_info.form_data)
+        form_data = orjson_loads(get_casa_top_up_info.form_data)
         receiving_method = form_data['receiving_method']
 
         ################################################################################################################
@@ -210,10 +210,10 @@ class CtrPayInCash(BaseController):
 
         return self.response(response_data)
 
-    async def ctr_save_top_up_scb_to_account(
+    async def ctr_save_casa_top_up_scb_to_account(
             self,
             current_user: AuthResponse,
-            request: PayInCashSCBToAccountRequest
+            request: TopUpSCBToAccountRequest
     ):
         cif_number = request.cif_number
         if not cif_number:
@@ -230,9 +230,9 @@ class CtrPayInCash(BaseController):
 
         return request
 
-    async def ctr_save_top_up_scb_by_identity(
+    async def ctr_save_casa_top_up_scb_by_identity(
             self,
-            request: PayInCashSCBByIdentity
+            request: TopUpSCBByIdentity
     ):
         # validate province
         province_id = request.province.id
@@ -258,16 +258,16 @@ class CtrPayInCash(BaseController):
 
         return request
 
-    async def ctr_save_top_up_info(
+    async def ctr_save_casa_top_up_info(
             self,
             booking_id: str,
             request: Union[
-                PayInCashSCBToAccountRequest,
-                PayInCashSCBByIdentity,
-                PayInCashThirdPartyToAccount,
-                PayInCashThirdPartyByIdentity,
-                PayInCashThirdParty247ToAccount,
-                PayInCashThirdParty247ToCard
+                TopUpSCBToAccountRequest,
+                TopUpSCBByIdentity,
+                TopUpThirdPartyToAccount,
+                TopUpThirdPartyByIdentity,
+                TopUpThirdParty247ToAccount,
+                TopUpThirdParty247ToCard
             ]
     ):
         cif_number = request.cif_number
@@ -288,13 +288,13 @@ class CtrPayInCash(BaseController):
             menu_code=IDM_MENU_CODE_TTKH,
             group_role_code=IDM_GROUP_ROLE_CODE_GDV,
             permission_code=IDM_PERMISSION_CODE_GDV,
-            stage_code=TOP_UP_STAGE_BEGIN
+            stage_code=CASA_TOP_UP_STAGE_BEGIN
         ))
 
         # Kiểm tra booking
         await CtrBooking().ctr_get_booking_and_validate(
             booking_id=booking_id,
-            business_type_code=BUSINESS_TYPE_TOP_UP,
+            business_type_code=BUSINESS_TYPE_CASA_TOP_UP,
             check_correct_booking_flag=False,
             loc=f'booking_id: {booking_id}'
         )
@@ -373,27 +373,27 @@ class CtrPayInCash(BaseController):
             )
         ################################################################################################################
 
-        top_up_info = None
+        casa_top_up_info = None
         if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
-            top_up_info = await self.ctr_save_top_up_scb_to_account(
+            casa_top_up_info = await self.ctr_save_casa_top_up_scb_to_account(
                 current_user=current_user,
                 request=request
             )
         if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
-            top_up_info = await self.ctr_save_top_up_scb_by_identity(request=request)
+            casa_top_up_info = await self.ctr_save_casa_top_up_scb_by_identity(request=request)
         if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
-            top_up_info = await self.ctr_save_top_up_scb_to_account(
+            casa_top_up_info = await self.ctr_save_casa_top_up_scb_to_account(
                 current_user=current_user,
                 request=request
             )
-        if not top_up_info:
+        if not casa_top_up_info:
             return self.response_exception(msg="")
             
 
-        self.call_repos(await repos_save_top_up_info(
+        self.call_repos(await repos_save_casa_top_up_info(
             booking_id=booking_id,
-            form_data=top_up_info.json(),
+            form_data=casa_top_up_info.json(),
             session=self.oracle_session
         ))
 
-        return self.response(data=top_up_info)
+        return self.response(data=casa_top_up_info)
