@@ -32,7 +32,7 @@ class StatementInfoRequest(ResponseRequestSchema):
 
 
 # Common
-class TopUpRequest(ResponseRequestSchema):
+class CasaTopUpRequest(ResponseRequestSchema):
     cif_number: Optional[str] = CustomField().OptionalCIFNumberField
     receiving_method: str = Field(..., description="Hình thức nhận")
     is_fee: bool = Field(..., description="Có thu phí không")
@@ -45,7 +45,7 @@ class TopUpRequest(ResponseRequestSchema):
 ########################################################################################################################
 # Thông tin người thụ hưởng
 ########################################################################################################################
-class TopUpSCBToAccountRequest(TopUpRequest):
+class CasaTopUpSCBToAccountRequest(CasaTopUpRequest):
     """
     Trong SCB đến tài khoản
     """
@@ -56,7 +56,7 @@ class TopUpSCBToAccountRequest(TopUpRequest):
     )
 
 
-class TopUpSCBByIdentity(TopUpRequest):
+class CasaTopUpSCBByIdentity(CasaTopUpRequest):
     """
     Trong SCB nhận bằng giấy tờ định danh
     """
@@ -74,7 +74,7 @@ class TopUpSCBByIdentity(TopUpRequest):
     )
 
 
-class TopUpThirdPartyToAccount(TopUpRequest):
+class CasaTopUpThirdPartyToAccount(CasaTopUpRequest):
     """
     Ngoài SCB đến tài khoản
     """
@@ -85,7 +85,7 @@ class TopUpThirdPartyToAccount(TopUpRequest):
     address_full: str = Field(..., description="Địa chỉ", max_length=100)
 
 
-class TopUpThirdPartyByIdentity(TopUpRequest):
+class CasaTopUpThirdPartyByIdentity(CasaTopUpRequest):
     """
     Ngoài SCB nhận bằng giấy tờ định danh
     """
@@ -100,7 +100,7 @@ class TopUpThirdPartyByIdentity(TopUpRequest):
     address_full: str = Field(..., description="Địa chỉ", max_length=100)
 
 
-class TopUpThirdParty247ToAccount(TopUpRequest):
+class CasaTopUpThirdParty247ToAccount(CasaTopUpRequest):
     """
     Ngoài SCB 24/7 tài khoản
     """
@@ -109,7 +109,7 @@ class TopUpThirdParty247ToAccount(TopUpRequest):
     address_full: str = Field(..., description="Địa chỉ", max_length=100)
 
 
-class TopUpThirdParty247ToCard(TopUpRequest):
+class CasaTopUpThirdParty247ToCard(CasaTopUpRequest):
     """
     Ngoài SCB 24/7 số thẻ
     """
@@ -195,7 +195,7 @@ class StaffInfoResponse(ResponseRequestSchema):
     name: Optional[str] = Field(..., description="Tên NV")
 
 
-class TopUpResponse(ResponseRequestSchema):
+class CasaTopUpResponse(ResponseRequestSchema):
     transfer_type: TransferTypeResponse = Field(..., description="Loại chuyển")
     receiver: ReceiverResponse = Field(..., description="Thông tin người thụ hưởng")
     transfer: TransferResponse = Field(..., description="Thông tin giao dịch")

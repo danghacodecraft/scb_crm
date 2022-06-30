@@ -8,9 +8,9 @@ from app.api.v1.endpoints.casa.top_up.repository import (
     repos_save_casa_top_up_info, repos_get_casa_top_up_info
 )
 from app.api.v1.endpoints.casa.top_up.schema import (
-    TopUpSCBByIdentity, TopUpSCBToAccountRequest,
-    TopUpThirdParty247ToAccount, TopUpThirdParty247ToCard,
-    TopUpThirdPartyByIdentity, TopUpThirdPartyToAccount
+    CasaTopUpSCBByIdentity, CasaTopUpSCBToAccountRequest,
+    CasaTopUpThirdParty247ToAccount, CasaTopUpThirdParty247ToCard,
+    CasaTopUpThirdPartyByIdentity, CasaTopUpThirdPartyToAccount
 )
 from app.api.v1.endpoints.repository import repos_get_branch_in_province
 from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
@@ -40,7 +40,7 @@ from app.utils.error_messages import (
 from app.utils.functions import orjson_loads, dropdown
 
 
-class CtrTopUp(BaseController):
+class CtrCasaTopUp(BaseController):
     async def ctr_get_casa_top_up_info(self, booking_id: str):
         current_user = self.current_user
         get_casa_top_up_info = self.call_repos(await repos_get_casa_top_up_info(
@@ -213,7 +213,7 @@ class CtrTopUp(BaseController):
     async def ctr_save_casa_top_up_scb_to_account(
             self,
             current_user: AuthResponse,
-            request: TopUpSCBToAccountRequest
+            request: CasaTopUpSCBToAccountRequest
     ):
         cif_number = request.cif_number
         if not cif_number:
@@ -232,7 +232,7 @@ class CtrTopUp(BaseController):
 
     async def ctr_save_casa_top_up_scb_by_identity(
             self,
-            request: TopUpSCBByIdentity
+            request: CasaTopUpSCBByIdentity
     ):
         # validate province
         province_id = request.province.id
@@ -262,12 +262,12 @@ class CtrTopUp(BaseController):
             self,
             booking_id: str,
             request: Union[
-                TopUpSCBToAccountRequest,
-                TopUpSCBByIdentity,
-                TopUpThirdPartyToAccount,
-                TopUpThirdPartyByIdentity,
-                TopUpThirdParty247ToAccount,
-                TopUpThirdParty247ToCard
+                CasaTopUpSCBToAccountRequest,
+                CasaTopUpSCBByIdentity,
+                CasaTopUpThirdPartyToAccount,
+                CasaTopUpThirdPartyByIdentity,
+                CasaTopUpThirdParty247ToAccount,
+                CasaTopUpThirdParty247ToCard
             ]
     ):
         cif_number = request.cif_number

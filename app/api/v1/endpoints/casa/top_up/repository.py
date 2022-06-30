@@ -9,7 +9,7 @@ from app.utils.constant.cif import BUSINESS_FORM_CASA_TOP_UP
 from app.utils.functions import now
 
 
-# @auto_commit
+@auto_commit
 async def repos_save_casa_top_up_info(booking_id: str, form_data: json, session: Session):
     session.add(BookingBusinessForm(
         booking_id=booking_id,

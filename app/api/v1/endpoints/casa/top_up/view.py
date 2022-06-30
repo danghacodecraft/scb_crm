@@ -6,10 +6,10 @@ from starlette import status
 from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
-from app.api.v1.endpoints.casa.casa_top_up.controller import CtrPayInCash
-from app.api.v1.endpoints.casa.casa_top_up.schema import (
-    PayInCashResponse, PayInCashSCBToAccountRequest, PayInCashSCBByIdentity, PayInCashThirdPartyToAccount,
-    PayInCashThirdPartyByIdentity, PayInCashThirdParty247ToAccount, PayInCashThirdParty247ToCard
+from app.api.v1.endpoints.casa.top_up.controller import CtrCasaTopUp
+from app.api.v1.endpoints.casa.top_up.schema import (
+    CasaTopUpResponse, CasaTopUpSCBToAccountRequest, CasaTopUpSCBByIdentity, CasaTopUpThirdPartyToAccount,
+    CasaTopUpThirdPartyByIdentity, CasaTopUpThirdParty247ToAccount, CasaTopUpThirdParty247ToCard
 )
 
 router = APIRouter()
@@ -27,16 +27,16 @@ router = APIRouter()
 async def view_save_casa_top_up_info(
         BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         request: Union[
-            PayInCashSCBToAccountRequest,
-            PayInCashSCBByIdentity,
-            PayInCashThirdPartyToAccount,
-            PayInCashThirdPartyByIdentity,
-            PayInCashThirdParty247ToAccount,
-            PayInCashThirdParty247ToCard
+            CasaTopUpSCBToAccountRequest,
+            CasaTopUpSCBByIdentity,
+            CasaTopUpThirdPartyToAccount,
+            CasaTopUpThirdPartyByIdentity,
+            CasaTopUpThirdParty247ToAccount,
+            CasaTopUpThirdParty247ToCard
         ] = Body(...),
         current_user=Depends(get_current_user_from_header())
 ):
-    casa_top_up_info = await CtrPayInCash(current_user).ctr_save_casa_top_up_info(
+    casa_top_up_info = await CtrCasaTopUp(current_user).ctr_save_casa_top_up_info(
         booking_id=BOOKING_ID,
         request=request
     )
@@ -48,7 +48,7 @@ async def view_save_casa_top_up_info(
     name="Nộp tiền",
     description="Nộp tiền",
     responses=swagger_response(
-        response_model=ResponseData[PayInCashResponse],
+        response_model=ResponseData[CasaTopUpResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -57,7 +57,7 @@ async def view_get_casa_top_up_info(
         current_user=Depends(get_current_user_from_header())
 ):
 
-    get_casa_top_up_info = await CtrPayInCash(current_user).ctr_get_casa_top_up_info(
+    get_casa_top_up_info = await CtrCasaTopUp(current_user).ctr_get_casa_top_up_info(
         booking_id=BOOKING_ID
     )
-    return ResponseData[PayInCashResponse](**get_casa_top_up_info)
+    return ResponseData[CasaTopUpResponse](**get_casa_top_up_info)
