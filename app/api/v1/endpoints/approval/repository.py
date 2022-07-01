@@ -429,6 +429,7 @@ async def repos_get_business_job_codes(business_type_code: str, session: Session
             BusinessJob.business_type_id == business_type_code,
             BusinessJob.active_flag == 1
         ))
+        .order_by(BusinessJob.order_no)
     ).scalars().all()
     return ReposReturn(data=business_job_codes)
 
