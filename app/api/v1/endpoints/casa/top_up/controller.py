@@ -28,7 +28,6 @@ from app.api.v1.endpoints.third_parties.gw.employee.controller import (
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
-from app.third_parties.oracle.models.master_data.address import AddressProvince
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.approval import CASA_TOP_UP_STAGE_BEGIN
@@ -67,37 +66,36 @@ class CtrCasaTopUp(BaseController):
         receiver_response = {}
 
         if receiving_method not in RECEIVING_METHOD_IDENTITY_CASES:
-            # account_number = form_data['account_number']
-            #
-            # gw_casa_account_info = await CtrGWCasaAccount(current_user=current_user).ctr_gw_get_casa_account_info(
-            #     account_number=account_number,
-            #     return_raw_data_flag=True
-            # )
+            account_number = form_data['account_number']
 
-            # gw_casa_account_info_customer_info = gw_casa_account_info['customer_info']
-            # account_info = gw_casa_account_info_customer_info['account_info']
+            gw_casa_account_info = await CtrGWCasaAccount(current_user=current_user).ctr_gw_get_casa_account_info(
+                account_number=account_number,
+                return_raw_data_flag=True
+            )
 
-            # if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
-            #     receiver_response = dict(
-            #         account_number=account_number,
-            #         fullname_vn=gw_casa_account_info_customer_info['full_name'],
-            #         currency=account_info['account_currency'],
-            #         branch_info=dict(
-            #             id=account_info['branch_info']['branch_code'],
-            #             code=account_info['branch_info']['branch_code'],
-            #             name=account_info['branch_info']['branch_name']
-            #         )
-            #     )
+            gw_casa_account_info_customer_info = gw_casa_account_info['customer_info']
+            account_info = gw_casa_account_info_customer_info['account_info']
+
+            if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
+                receiver_response = dict(
+                    account_number=account_number,
+                    fullname_vn=gw_casa_account_info_customer_info['full_name'],
+                    currency=account_info['account_currency'],
+                    branch_info=dict(
+                        id=account_info['branch_info']['branch_code'],
+                        code=account_info['branch_info']['branch_code'],
+                        name=account_info['branch_info']['branch_name']
+                    )
+                )
 
             if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
-                # branch_info = await self.get_model_object_by_id(model_id=form_data['branch']['id'], model=Branch, loc='')
                 branch_id = form_data['branch']['id']
                 receiver_response = dict(
                     # bank=form_data['bank'],
                     bank=dict(
                         code=branch_id,
                         name=branch_id
-                    ),
+                    ),  # TODO: đợi e-bank
                     # province=dropdown(branch_info.address_province),
                     province=dict(
                         code=branch_id,
@@ -106,35 +104,60 @@ class CtrCasaTopUp(BaseController):
                     branch_info=dict(
                         code=branch_id,
                         name=branch_id
-                    ),
+                    ),  # TODO: đợi e-bank
                     account_number=form_data['account_number'],
                     fullname_vn=form_data['full_name_vn'],
                     address_full=form_data['address_full']
                 )
-
-        if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
-            province = await self.get_model_object_by_id(
-                model_id=form_data['province']['id'], model=AddressProvince, loc='province_id'
-            )
-            branch_info = await self.get_model_object_by_id(
-                model_id=form_data['branch']['id'], model=Branch, loc='branch_id'
-            )
+        else:
             place_of_issue = await self.get_model_object_by_id(
                 model_id=form_data['place_of_issue']['id'], model=PlaceOfIssue, loc='place_of_issue_id'
             )
-            receiver_response = dict(
-                province=dropdown(province),
-                branch_info=dropdown(branch_info),
-                fullname_vn=form_data['full_name_vn'],
-                identity_number=form_data['identity_number'],
-                issued_date=form_data['issued_date'],
-                place_of_issue=dropdown(place_of_issue),
-                mobile_number=form_data['mobile_number'],
-                address_full=form_data['address_full']
-            )
+
+            if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
+                branch_info = await self.get_model_object_by_id(
+                    model_id=form_data['branch']['id'], model=Branch, loc='branch_id'
+                )
+
+                receiver_response = dict(
+                    province=dropdown(branch_info.address_province),
+                    branch_info=dropdown(branch_info),
+                    fullname_vn=form_data['full_name_vn'],
+                    identity_number=form_data['identity_number'],
+                    issued_date=form_data['issued_date'],
+                    place_of_issue=dropdown(place_of_issue),
+                    mobile_number=form_data['mobile_number'],
+                    address_full=form_data['address_full']
+                )
+
+            if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
+                branch_id = form_data['branch']['id']
+                receiver_response = dict(
+                    # bank=form_data['bank'],
+                    bank=dict(
+                        code=branch_id,
+                        name=branch_id
+                    ),  # TODO: đợi e-bank
+                    # province=dropdown(branch_info.address_province),
+                    province=dict(
+                        code=branch_id,
+                        name=branch_id
+                    ),  # TODO: đợi e-bank
+                    branch_info=dict(
+                        code=branch_id,
+                        name=branch_id
+                    ),  # TODO: đợi e-bank
+                    fullname_vn=form_data['full_name_vn'],
+                    identity_number=form_data['identity_number'],
+                    issued_date=form_data['issued_date'],
+                    place_of_issue=dropdown(place_of_issue),
+                    mobile_number=form_data['mobile_number'],
+                    address_full=form_data['address_full']
+                )
+
         ################################################################################################################
 
-        amount = form_data['amount']
+        tranfer_amount = form_data['amount']
 
         ################################################################################################################
         # Thông tin phí
@@ -143,7 +166,7 @@ class CtrCasaTopUp(BaseController):
         fee_amount = fee_info['fee_amount']
         vat_tax = fee_amount / 10
         total = fee_amount + vat_tax
-        actual_total = total + amount
+        actual_total = total + tranfer_amount
         is_transfer_payer = False
         payer = None
         if fee_info['is_transfer_payer'] is not None:
@@ -233,7 +256,7 @@ class CtrCasaTopUp(BaseController):
             ),
             receiver=receiver_response,
             transfer=dict(
-                amount=amount,
+                amount=tranfer_amount,
                 content=form_data['content'],
                 entry_number=None,  # TODO: Số bút toán
             ),
