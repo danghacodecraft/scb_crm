@@ -1340,12 +1340,11 @@ class CtrApproval(BaseController):
 
         response_datas = []
         for business_job_id, value in mapping_datas.items():
+            job = dropdown(await self.get_model_object_by_id(
+                model=BusinessJob, model_id=business_job_id, loc=f'business_job_id: {business_job_id}'
+            ))
             response_datas.append(dict(
-                job=dropdown(
-                    await self.get_model_object_by_id(
-                        model=BusinessJob, model_id=business_job_id, loc=f'business_job_id: {business_job_id}'
-                    )
-                ),
+                job=job,
                 status=value['status'],
                 code=value['error_code'],
                 description=value['error_description']
