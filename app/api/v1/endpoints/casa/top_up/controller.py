@@ -36,7 +36,8 @@ from app.utils.constant.casa import (
     DENOMINATIONS__AMOUNTS, RECEIVING_METHOD__METHOD_TYPES,
     RECEIVING_METHOD_IDENTITY_CASES, RECEIVING_METHOD_SCB_BY_IDENTITY,
     RECEIVING_METHOD_SCB_TO_ACCOUNT, RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT,
-    RECEIVING_METHODS, RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY, RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT
+    RECEIVING_METHODS, RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY, RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT,
+    RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD
 )
 from app.utils.constant.gw import GW_REQUEST_DIRECT_INDIRECT
 from app.utils.constant.idm import (
@@ -357,6 +358,19 @@ class CtrCasaTopUp(BaseController):
         # await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
         return request
 
+    async def ctr_save_casa_top_up_third_party_247_to_card(
+            self,
+            request: CasaTopUpThirdParty247ToCardRequest
+    ):
+        if not isinstance(request, CasaTopUpThirdParty247ToCardRequest):
+            return self.response_exception(msg=ERROR_MAPPING_MODEL, loc=f'model: {type(request)}')
+        # TODO: validate branch of bank
+        # await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
+
+        # TODO: validate card number
+
+        return request
+
     async def ctr_save_casa_top_up_info(
             self,
             booking_id: str,
@@ -460,10 +474,16 @@ class CtrCasaTopUp(BaseController):
 
         # Kiểm tra số CIF có tồn tại trong CRM không
         if cif_number:
-            self.call_repos(await repos_get_customer_by_cif_number(
+            # self.call_repos(await repos_get_customer_by_cif_number(
+            #     cif_number=cif_number,
+            #     session=self.oracle_session
+            # ))
+            is_existed = await CtrGWCustomer(current_user).ctr_gw_check_exist_customer_detail_info(
                 cif_number=cif_number,
-                session=self.oracle_session
-            ))
+                return_raw_data_flag=True
+            )
+            if not is_existed:
+                return self.response_exception(msg=ERROR_CIF_NUMBER_NOT_EXIST, loc="cif_number")
 
         if receiving_method not in RECEIVING_METHODS:
             return self.response_exception(
@@ -490,6 +510,9 @@ class CtrCasaTopUp(BaseController):
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT:
             casa_top_up_info = await self.ctr_save_casa_top_up_third_party_247_to_account(request=request)
+
+        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD:
+            casa_top_up_info = await self.ctr_save_casa_top_up_third_party_247_to_card(request=request)
 
         if not casa_top_up_info:
             return self.response_exception(msg="No Casa Top Up")
