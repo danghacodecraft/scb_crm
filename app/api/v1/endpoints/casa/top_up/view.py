@@ -30,10 +30,10 @@ async def view_save_casa_top_up_info(
         BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         request: Union[
             CasaTopUpThirdPartyToAccountRequest,
+            CasaTopUpThirdParty247ToAccountRequest,
             CasaTopUpSCBToAccountRequest,
             CasaTopUpSCBByIdentityRequest,
             CasaTopUpThirdPartyByIdentityRequest,
-            CasaTopUpThirdParty247ToAccountRequest,
             CasaTopUpThirdParty247ToCardRequest
         ] = Body(...),
         current_user=Depends(get_current_user_from_header())
