@@ -75,6 +75,7 @@ class EmployeeResponse(BaseSchema):
 
 class CifCustomerInformationResponse(BaseSchema):
     customer_id: str = Field(..., description="Mã định danh khách hàng")
+    completed_flag: Optional[bool] = Field(..., description="CIF hoàn thành chưa")
     status: StatusResponse = Field(..., description="Trạng thái")
     cif_number: Optional[str] = CustomField().OptionalCIFNumberField
     avatar_url: Optional[str] = Field(..., description="Đường dẫn hình ảnh khách hàng")

@@ -210,6 +210,7 @@ class CtrCustomer(BaseController):
         uuid__link_downloads = await self.get_link_download_multi_file(uuids=[first_row.Customer.avatar_url])
         data_response = {
             "customer_id": first_row.Customer.id,
+            "completed_flag": first_row.Customer.complete_flag,
             "status": dropdownflag(first_row.CustomerStatus),
             "cif_number": first_row.Customer.cif_number,
             "avatar_url": ServiceFile().replace_with_cdn(uuid__link_downloads[first_row.Customer.avatar_url]),
