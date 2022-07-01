@@ -25,6 +25,7 @@ from app.api.v1.endpoints.third_parties.gw.employee.controller import (
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
+from app.api.v1.validator import validate_history_data
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.approval import CASA_TOP_UP_STAGE_BEGIN
@@ -36,6 +37,7 @@ from app.utils.constant.casa import (
     RECEIVING_METHODS, RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY, RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT,
     RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD, RECEIVING_METHOD_ACCOUNT_CASES
 )
+from app.utils.constant.cif import PROFILE_HISTORY_DESCRIPTIONS_TOP_UP_CASA_ACCOUNT, PROFILE_HISTORY_STATUS_INIT
 from app.utils.constant.gw import GW_REQUEST_DIRECT_INDIRECT
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_GDV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_GDV
@@ -45,7 +47,7 @@ from app.utils.error_messages import (
     ERROR_DENOMINATIONS_NOT_EXIST, ERROR_MAPPING_MODEL, ERROR_NOT_NULL,
     ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
 )
-from app.utils.functions import dropdown, orjson_loads
+from app.utils.functions import dropdown, orjson_loads, orjson_dumps
 
 
 class CtrCasaTopUp(BaseController):
@@ -525,10 +527,45 @@ class CtrCasaTopUp(BaseController):
         if not casa_top_up_info:
             return self.response_exception(msg="No Casa Top Up")
 
+        # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CASA
+        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
+            business_type_id=BUSINESS_TYPE_CASA_TOP_UP)
+
+        (
+            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
+            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
+            saving_transaction_daily, saving_transaction_sender
+        ) = transaction_datas
+
+        history_datas = self.make_history_log_data(
+            description=PROFILE_HISTORY_DESCRIPTIONS_TOP_UP_CASA_ACCOUNT,
+            history_status=PROFILE_HISTORY_STATUS_INIT,
+            current_user=current_user_info
+        )
+        # Validate history data
+        is_success, history_response = validate_history_data(history_datas)
+        if not is_success:
+            return self.response_exception(
+                msg=history_response['msg'],
+                loc=history_response['loc'],
+                detail=history_response['detail']
+            )
+
         self.call_repos(await repos_save_casa_top_up_info(
             booking_id=booking_id,
-            form_data=casa_top_up_info.json(),
+            saving_transaction_stage_status=saving_transaction_stage_status,
+            saving_sla_transaction=saving_sla_transaction,
+            saving_transaction_stage=saving_transaction_stage,
+            saving_transaction_stage_phase=saving_transaction_stage_phase,
+            saving_transaction_stage_lane=saving_transaction_stage_lane,
+            saving_transaction_stage_role=saving_transaction_stage_role,
+            saving_transaction_daily=saving_transaction_daily,
+            saving_transaction_sender=saving_transaction_sender,
+            request_json=casa_top_up_info.json(),
+            history_datas=orjson_dumps(history_datas),
             session=self.oracle_session
         ))
 
-        return self.response(data=casa_top_up_info)
+        return self.response(data=dict(
+            booking_id=booking_id
+        ))

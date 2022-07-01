@@ -197,8 +197,8 @@ CLOSE_CASA_APPROVE_STAGES = {
 ########################################################################################################################
 # CASA_TOP_UP
 ########################################################################################################################
-BUSINESS_JOB_CODE_CASA_TOP_UP = "PHONG_TOA_TAI_KHOAN"
-BUSINESS_JOB_CODE_START_CASA_TOP_UP = "BAT_DAT_PHONG_TOA_TAI_KHOAN"
+BUSINESS_JOB_CODE_START_CASA_TOP_UP = "CASA_TOP_UP_BAT_DAU"
+BUSINESS_JOB_CODE_CASA_TOP_UP = "CASA_TOP_UP_KHOI_TAO"
 
 CASA_TOP_UP_STAGE_BEGIN = 'CASA_TOP_UP_BEGIN'
 CASA_TOP_UP_STAGE_INIT = "CASA_TOP_UP_KHOI_TAO_HO_SO"
