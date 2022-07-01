@@ -37,7 +37,7 @@ from app.utils.constant.casa import (
     DENOMINATIONS__AMOUNTS, RECEIVING_METHOD__METHOD_TYPES,
     RECEIVING_METHOD_IDENTITY_CASES, RECEIVING_METHOD_SCB_BY_IDENTITY,
     RECEIVING_METHOD_SCB_TO_ACCOUNT, RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT,
-    RECEIVING_METHODS
+    RECEIVING_METHODS, RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY
 )
 from app.utils.constant.gw import GW_REQUEST_DIRECT_INDIRECT
 from app.utils.constant.idm import (
@@ -300,6 +300,17 @@ class CtrCasaTopUp(BaseController):
         # await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
         return request
 
+    async def ctr_save_casa_top_up_third_party_by_identity(
+            self,
+            request: CasaTopUpThirdPartyByIdentityRequest
+    ):
+        if not isinstance(request, CasaTopUpThirdPartyByIdentityRequest):
+            return self.response_exception(msg=ERROR_MAPPING_MODEL, loc=f'model: {type(request)}')
+        # validate branch of bank
+        # TODO:
+        # await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
+        return request
+
     async def ctr_save_casa_top_up_info(
             self,
             booking_id: str,
@@ -427,6 +438,9 @@ class CtrCasaTopUp(BaseController):
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
             casa_top_up_info = await self.ctr_save_casa_top_up_third_party_to_account(request=request)
+
+        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
+            casa_top_up_info = await self.ctr_save_casa_top_up_third_party_by_identity(request=request)
 
         if not casa_top_up_info:
             return self.response_exception(msg="No Casa Top Up")

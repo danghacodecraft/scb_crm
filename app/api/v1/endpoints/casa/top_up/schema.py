@@ -86,7 +86,6 @@ class CasaTopUpThirdPartyByIdentityRequest(CasaTopUpRequest):
     Ngoài SCB nhận bằng giấy tờ định danh
     """
     bank: DropdownRequest = Field(..., description="Ngân hàng")
-    province: DropdownRequest = Field(..., description="Tỉnh/Thành phố")
     branch: DropdownRequest = Field(..., description="Chi nhánh")
     full_name_vn: str = Field(..., description="Chủ tài khoản")
     identity_number: str = Field(..., description="Số GTĐD", regex=REGEX_NUMBER_ONLY)
@@ -141,7 +140,7 @@ class ReceiverResponse(ResponseRequestSchema):
 
 class TransferResponse(ResponseRequestSchema):
     amount: int = Field(..., description="Số tiền")
-    content: Optional[str] = Field(..., description="Nội dung chuyển tiền")
+    content: str = Field(..., description="Nội dung chuyển tiền")
     entry_number: Optional[str] = Field(..., description="Số bút toán")
 
 
