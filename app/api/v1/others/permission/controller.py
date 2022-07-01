@@ -72,14 +72,15 @@ class PermissionController(BaseController):
             filter_group_code = \
                 list(filter(lambda x: x.group_role_code == group_role_code, filter_code.group_role_list))[0]
         except IndexError:
-            return ReposReturn(
-                is_error=True,
-                msg=ERROR_PERMISSION,
-                loc=f"Stage: {stage_code}, User: {current_user.code}",
-                detail=MESSAGE_STATUS[ERROR_PERMISSION],
-                error_status_code=status.HTTP_403_FORBIDDEN,
-                data=False
-            )
+            return ReposReturn(data=False)
+            # return ReposReturn(
+            #     is_error=True,
+            #     msg=ERROR_PERMISSION,
+            #     loc=f"Stage: {stage_code}, User: {current_user.code}",
+            #     detail=MESSAGE_STATUS[ERROR_PERMISSION],
+            #     error_status_code=status.HTTP_403_FORBIDDEN,
+            #     data=False
+            # )
         filter_permission_code = list(filter(
             lambda x: x.permission_code == permission_code, filter_group_code.permission_list
         ))
