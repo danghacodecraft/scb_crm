@@ -1,9 +1,6 @@
 from typing import Union
 
 from app.api.base.controller import BaseController
-from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
-    repos_get_customer_by_cif_number
-)
 from app.api.v1.endpoints.casa.top_up.repository import (
     repos_get_casa_top_up_info, repos_save_casa_top_up_info
 )
@@ -37,7 +34,7 @@ from app.utils.constant.casa import (
     RECEIVING_METHOD_IDENTITY_CASES, RECEIVING_METHOD_SCB_BY_IDENTITY,
     RECEIVING_METHOD_SCB_TO_ACCOUNT, RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT,
     RECEIVING_METHODS, RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY, RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT,
-    RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD
+    RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD, RECEIVING_METHOD_ACCOUNT_CASES
 )
 from app.utils.constant.gw import GW_REQUEST_DIRECT_INDIRECT
 from app.utils.constant.idm import (
@@ -67,58 +64,69 @@ class CtrCasaTopUp(BaseController):
         receiver_response = {}
 
         if receiving_method not in RECEIVING_METHOD_IDENTITY_CASES:
-            account_number = form_data['account_number']
+            if receiving_method in RECEIVING_METHOD_ACCOUNT_CASES:
+                account_number = form_data['account_number']
 
-            # gw_casa_account_info = await CtrGWCasaAccount(current_user=current_user).ctr_gw_get_casa_account_info(
-            #     account_number=account_number,
-            #     return_raw_data_flag=True
-            # )
-            #
-            # gw_casa_account_info_customer_info = gw_casa_account_info['customer_info']
-            # account_info = gw_casa_account_info_customer_info['account_info']
-            #
-            # if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
-            #     receiver_response = dict(
-            #         account_number=account_number,
-            #         fullname_vn=gw_casa_account_info_customer_info['full_name'],
-            #         currency=account_info['account_currency'],
-            #         branch_info=dict(
-            #             id=account_info['branch_info']['branch_code'],
-            #             code=account_info['branch_info']['branch_code'],
-            #             name=account_info['branch_info']['branch_name']
-            #         )
-            #     )
-
-            if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
-                branch_id = form_data['branch']['id']
-                receiver_response = dict(
-                    # bank=form_data['bank'],
-                    bank=dict(
-                        code=branch_id,
-                        name=branch_id
-                    ),  # TODO: đợi e-bank
-                    # province=dropdown(branch_info.address_province),
-                    province=dict(
-                        code=branch_id,
-                        name=branch_id
-                    ),
-                    branch_info=dict(
-                        code=branch_id,
-                        name=branch_id
-                    ),  # TODO: đợi e-bank
-                    account_number=form_data['account_number'],
-                    fullname_vn=form_data['full_name_vn'],
-                    address_full=form_data['address_full']
+                gw_casa_account_info = await CtrGWCasaAccount(current_user=current_user).ctr_gw_get_casa_account_info(
+                    account_number=account_number,
+                    return_raw_data_flag=True
                 )
 
-            if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT:
+                gw_casa_account_info_customer_info = gw_casa_account_info['customer_info']
+                account_info = gw_casa_account_info_customer_info['account_info']
+
+                if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
+                    receiver_response = dict(
+                        account_number=account_number,
+                        fullname_vn=gw_casa_account_info_customer_info['full_name'],
+                        currency=account_info['account_currency'],
+                        branch_info=dict(
+                            id=account_info['branch_info']['branch_code'],
+                            code=account_info['branch_info']['branch_code'],
+                            name=account_info['branch_info']['branch_name']
+                        )
+                    )
+
+                if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
+                    branch_id = form_data['branch']['id']
+                    receiver_response = dict(
+                        # bank=form_data['bank'],
+                        bank=dict(
+                            code=branch_id,
+                            name=branch_id
+                        ),  # TODO: đợi e-bank
+                        # province=dropdown(branch_info.address_province),
+                        province=dict(
+                            code=branch_id,
+                            name=branch_id
+                        ),
+                        branch_info=dict(
+                            code=branch_id,
+                            name=branch_id
+                        ),  # TODO: đợi e-bank
+                        account_number=form_data['account_number'],
+                        fullname_vn=form_data['full_name_vn'],
+                        address_full=form_data['address_full']
+                    )
+
+                if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT:
+                    receiver_response = dict(
+                        # bank=form_data['bank'],
+                        bank=dict(
+                            code="branch_id",
+                            name="branch_id"
+                        ),  # TODO: đợi e-bank
+                        account_number=account_number,
+                        # fullname_vn=gw_casa_account_info_customer_info['full_name'],
+                        address_full=form_data['address_full']
+                    )
+            if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD:
                 receiver_response = dict(
-                    # bank=form_data['bank'],
                     bank=dict(
                         code="branch_id",
                         name="branch_id"
                     ),  # TODO: đợi e-bank
-                    account_number=account_number,
+                    account_number=form_data['card_number'],  # TODO: đợi e-bank
                     # fullname_vn=gw_casa_account_info_customer_info['full_name'],
                     address_full=form_data['address_full']
                 )
