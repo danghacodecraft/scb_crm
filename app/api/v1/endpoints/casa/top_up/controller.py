@@ -169,7 +169,7 @@ class CtrCasaTopUp(BaseController):
 
         ################################################################################################################
 
-        tranfer_amount = form_data['amount']
+        transfer_amount = form_data['amount']
 
         ################################################################################################################
         # Thông tin phí
@@ -178,7 +178,7 @@ class CtrCasaTopUp(BaseController):
         fee_amount = fee_info['fee_amount']
         vat_tax = fee_amount / 10
         total = fee_amount + vat_tax
-        actual_total = total + tranfer_amount
+        actual_total = total + transfer_amount
         is_transfer_payer = False
         payer = None
         if fee_info['is_transfer_payer'] is not None:
@@ -268,7 +268,7 @@ class CtrCasaTopUp(BaseController):
             ),
             receiver=receiver_response,
             transfer=dict(
-                amount=tranfer_amount,
+                amount=transfer_amount,
                 content=form_data['content'],
                 entry_number=None,  # TODO: Số bút toán
             ),
