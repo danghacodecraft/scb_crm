@@ -67,9 +67,6 @@ class PermissionController(BaseController):
         """
         current_user = auth_response.user_info
         menu_list = auth_response.menu_list
-        print(menu_code)
-        print(group_role_code)
-        print(permission_code)
         try:
             filter_code = list(filter(lambda x: x.menu_code == menu_code, menu_list))[0]
             filter_group_code = \
