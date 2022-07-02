@@ -46,6 +46,17 @@ class BaseGWSchema(BaseModel):
         object.__setattr__(self, 'uuid', uuid)
 
 
+class ResponseRequestSchema(BaseSchema):
+    """
+    RequestSchema parse blank string to null
+    """
+    @validator('*', pre=True)
+    def check_blank_str(string):
+        if string == '':
+            return None
+        return string
+
+
 class BaseGenericSchema(BaseSchema, GenericModel):
     pass
 
