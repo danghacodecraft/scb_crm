@@ -539,7 +539,8 @@ class CtrGWCustomer(BaseController):
 
     async def ctr_gw_check_exist_customer_detail_info(
             self,
-            cif_number: str
+            cif_number: str,
+            return_raw_data_flag=False
     ):
         gw_check_exist_customer_detail_info = self.call_repos(await repos_gw_get_customer_info_detail(
             cif_number=cif_number,
@@ -548,6 +549,8 @@ class CtrGWCustomer(BaseController):
         ))
         data_output = gw_check_exist_customer_detail_info['retrieveCustomerRefDataMgmt_out']['data_output']
         customer_info = data_output['customer_info']['id_info']
+        if return_raw_data_flag:
+            return True if customer_info['id_num'] else False
 
         return self.response(data=dict(
             is_existed=True if customer_info['id_num'] else False

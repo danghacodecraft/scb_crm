@@ -139,6 +139,8 @@ ERROR_DENOMINATIONS_NOT_EXIST = 'ERROR_DENOMINATIONS_NOT_EXIST'
 
 ERROR_ISSUED_DATE = 'ERROR_ISSUED_DATE'
 
+ERROR_MAPPING_MODEL = 'ERROR_MAPPING_MODEL'
+
 MESSAGE_STATUS = {
     # general error
     PAGING_ERROR: "Can not found page!",
@@ -256,4 +258,6 @@ MESSAGE_STATUS = {
     ERROR_DENOMINATIONS_NOT_EXIST: f'Denominations not in {DENOMINATIONS__AMOUNTS.keys()}',
 
     ERROR_ISSUED_DATE: 'Issue date must be lower than today',
+
+    ERROR_MAPPING_MODEL: 'Mapping model is wrong',
 }

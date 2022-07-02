@@ -85,7 +85,7 @@ class Branch(Base):
 
     id = Column('branch_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "), comment='ID đơn vị')
     region_id = Column('branch_region_id', VARCHAR(36), nullable=False, comment='ID đơn vị vùng')
-    province_id = Column('branch_province_id', VARCHAR(36), nullable=False, comment='ID tỉnh/thành')
+    province_id = Column('branch_province_id', ForeignKey('crm_address_province.province_id'), nullable=False, comment='ID tỉnh/thành')
     district_id = Column('branch_district_id', VARCHAR(36), nullable=False, comment='ID quận/huyện')
     ward_id = Column('branch_ward_id', VARCHAR(36), nullable=False, comment='ID phường/xã')
     code = Column('branch_code', VARCHAR(3), nullable=False, comment='Mã đơn vị')
@@ -95,6 +95,8 @@ class Branch(Base):
     phone_number = Column('branch_phone_num', VARCHAR(12), nullable=False, comment='Số điện thoại đơn vị')
     active_flag = Column('branch_active_flag', NUMBER(1, 0, False), nullable=False, comment='Trạng thái hoạt động')
     address = Column('branch_address', VARCHAR(255), nullable=False, comment='Địa chỉ đơn vị')
+
+    address_province = relationship("AddressProvince")
 
 
 class ResidentStatus(Base):

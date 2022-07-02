@@ -24,7 +24,7 @@ from app.utils.constant.business_type import BUSINESS_TYPES
 from app.utils.constant.casa import CASA_ACCOUNT_STATUS_APPROVED
 from app.utils.constant.cif import (
     BUSINESS_TYPE_CODE_AMOUNT_BLOCK, BUSINESS_TYPE_CODE_AMOUNT_UNBLOCK,
-    BUSINESS_TYPE_CODE_CIF, BUSINESS_TYPE_CODE_OPEN_CASA
+    BUSINESS_TYPE_CODE_CIF, BUSINESS_TYPE_CODE_OPEN_CASA, BUSINESS_TYPE_CODE_TOP_UP_CASA
 )
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_GDV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_GDV
@@ -147,19 +147,22 @@ class CtrBooking(BaseController):
     async def ctr_get_customer_from_booking(self, booking_id: str):
         booking = await self.ctr_get_booking(booking_id=booking_id)
         customer = None
+        business_type_id = booking.business_type.id
 
-        if booking.business_type.id == BUSINESS_TYPE_CODE_CIF:
+        # Mở CIF
+        if business_type_id == BUSINESS_TYPE_CODE_CIF:
             customer = self.call_repos(await repos_get_customer_from_booking_customer(
                 booking_id=booking_id, session=self.oracle_session
             ))
 
+        # Mở TKTT
         if booking.business_type.id == BUSINESS_TYPE_CODE_OPEN_CASA:
             customer = self.call_repos(await repos_get_customer_from_booking_account(
                 booking_id=booking_id, session=self.oracle_session
             ))
 
-        if booking.business_type.id == BUSINESS_TYPE_CODE_AMOUNT_BLOCK or booking.business_type.id == BUSINESS_TYPE_CODE_AMOUNT_UNBLOCK:
-
+        # Phong tỏa, giải tỏa
+        if business_type_id in [BUSINESS_TYPE_CODE_AMOUNT_BLOCK, BUSINESS_TYPE_CODE_AMOUNT_UNBLOCK, BUSINESS_TYPE_CODE_TOP_UP_CASA]:
             customer = self.call_repos(await repos_get_customer_from_booking_account_amount_block(
                 booking_id=booking_id, session=self.oracle_session
             ))
