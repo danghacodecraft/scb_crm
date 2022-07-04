@@ -31,10 +31,9 @@ from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.approval import CASA_TOP_UP_STAGE_BEGIN
 from app.utils.constant.business_type import BUSINESS_TYPE_CASA_TOP_UP
 from app.utils.constant.casa import (
-    DENOMINATIONS__AMOUNTS, RECEIVING_METHOD__METHOD_TYPES,
-    RECEIVING_METHOD_IDENTITY_CASES, RECEIVING_METHOD_SCB_BY_IDENTITY,
-    RECEIVING_METHOD_SCB_TO_ACCOUNT, RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT,
-    RECEIVING_METHODS, RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY, RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT,
+    DENOMINATIONS__AMOUNTS, RECEIVING_METHOD__METHOD_TYPES, RECEIVING_METHOD_SCB_BY_IDENTITY,
+    RECEIVING_METHOD_SCB_TO_ACCOUNT, RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT, RECEIVING_METHODS,
+    RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY, RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT,
     RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD, RECEIVING_METHOD_ACCOUNT_CASES
 )
 from app.utils.constant.cif import PROFILE_HISTORY_DESCRIPTIONS_TOP_UP_CASA_ACCOUNT, PROFILE_HISTORY_STATUS_INIT
@@ -65,32 +64,32 @@ class CtrCasaTopUp(BaseController):
         ################################################################################################################
         receiver_response = {}
 
-        if receiving_method not in RECEIVING_METHOD_IDENTITY_CASES:
-            if receiving_method in RECEIVING_METHOD_ACCOUNT_CASES:
-                account_number = form_data['account_number']
+        if receiving_method in RECEIVING_METHOD_ACCOUNT_CASES:
+            receiver_account_number = form_data['receiver_account_number']
 
-                gw_casa_account_info = await CtrGWCasaAccount(current_user=current_user).ctr_gw_get_casa_account_info(
-                    account_number=account_number,
+            if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
+                gw_casa_account_info = await CtrGWCasaAccount(
+                    current_user=current_user).ctr_gw_get_casa_account_info(
+                    account_number=receiver_account_number,
                     return_raw_data_flag=True
                 )
 
                 gw_casa_account_info_customer_info = gw_casa_account_info['customer_info']
                 account_info = gw_casa_account_info_customer_info['account_info']
 
-                if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
-                    receiver_response = dict(
-                        account_number=account_number,
-                        fullname_vn=gw_casa_account_info_customer_info['full_name'],
-                        currency=account_info['account_currency'],
-                        branch_info=dict(
-                            id=account_info['branch_info']['branch_code'],
-                            code=account_info['branch_info']['branch_code'],
-                            name=account_info['branch_info']['branch_name']
-                        )
+                receiver_response = dict(
+                    account_number=receiver_account_number,
+                    fullname_vn=gw_casa_account_info_customer_info['full_name'],
+                    currency=account_info['account_currency'],
+                    branch_info=dict(
+                        id=account_info['branch_info']['branch_code'],
+                        code=account_info['branch_info']['branch_code'],
+                        name=account_info['branch_info']['branch_name']
                     )
+                )
 
                 if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
-                    branch_id = form_data['branch']['id']
+                    branch_id = form_data['receiver_branch']['id']
                     receiver_response = dict(
                         # bank=form_data['bank'],
                         bank=dict(
@@ -106,51 +105,51 @@ class CtrCasaTopUp(BaseController):
                             code=branch_id,
                             name=branch_id
                         ),  # TODO: đợi e-bank
-                        account_number=form_data['account_number'],
-                        fullname_vn=form_data['full_name_vn'],
-                        address_full=form_data['address_full']
+                        account_number=form_data['receiver_account_number'],
+                        fullname_vn=form_data['receiver_full_name_vn'],
+                        address_full=form_data['receiver_address_full']
                     )
 
-                if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT:
-                    receiver_response = dict(
-                        # bank=form_data['bank'],
-                        bank=dict(
-                            code="branch_id",
-                            name="branch_id"
-                        ),  # TODO: đợi e-bank
-                        account_number=account_number,
-                        # fullname_vn=gw_casa_account_info_customer_info['full_name'],
-                        address_full=form_data['address_full']
-                    )
-            if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD:
+            if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT:
+                receiver_response = dict(
+                    # bank=form_data['bank'],
+                    bank=dict(
+                        code="branch_id",
+                        name="branch_id"
+                    ),  # TODO: đợi e-bank
+                    receiver_account_number=receiver_account_number,
+                    # fullname_vn=gw_casa_account_info_customer_info['full_name'],
+                    address_full=form_data['receiver_address_full']
+                )
+        elif receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD:
                 receiver_response = dict(
                     bank=dict(
                         code="branch_id",
                         name="branch_id"
                     ),  # TODO: đợi e-bank
-                    account_number=form_data['card_number'],  # TODO: đợi e-bank
+                    account_number=form_data['receiver_card_number'],  # TODO: đợi e-bank
                     # fullname_vn=gw_casa_account_info_customer_info['full_name'],
-                    address_full=form_data['address_full']
+                    address_full=form_data['receiver_address_full']
                 )
         else:
-            place_of_issue = await self.get_model_object_by_id(
-                model_id=form_data['place_of_issue']['id'], model=PlaceOfIssue, loc='place_of_issue_id'
+            receiver_place_of_issue_id = await self.get_model_object_by_id(
+                model_id=form_data['receiver_place_of_issue']['id'], model=PlaceOfIssue, loc='receiver_place_of_issue_id'
             )
 
             if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
-                branch_info = await self.get_model_object_by_id(
-                    model_id=form_data['branch']['id'], model=Branch, loc='branch_id'
+                receiver_branch_info = await self.get_model_object_by_id(
+                    model_id=form_data['receiver_branch']['id'], model=Branch, loc='receiver_branch_id'
                 )
 
                 receiver_response = dict(
-                    province=dropdown(branch_info.address_province),
-                    branch_info=dropdown(branch_info),
-                    fullname_vn=form_data['full_name_vn'],
-                    identity_number=form_data['identity_number'],
-                    issued_date=form_data['issued_date'],
-                    place_of_issue=dropdown(place_of_issue),
-                    mobile_number=form_data['mobile_number'],
-                    address_full=form_data['address_full']
+                    province=dropdown(receiver_branch_info.address_province),
+                    branch_info=dropdown(receiver_branch_info),
+                    fullname_vn=form_data['receiver_full_name_vn'],
+                    identity_number=form_data['receiver_identity_number'],
+                    issued_date=form_data['receiver_issued_date'],
+                    place_of_issue=dropdown(receiver_place_of_issue_id),
+                    mobile_number=form_data['receiver_mobile_number'],
+                    address_full=form_data['receiver_address_full']
                 )
 
             if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
@@ -173,7 +172,7 @@ class CtrCasaTopUp(BaseController):
                     fullname_vn=form_data['full_name_vn'],
                     identity_number=form_data['identity_number'],
                     issued_date=form_data['issued_date'],
-                    place_of_issue=dropdown(place_of_issue),
+                    place_of_issue=dropdown(receiver_place_of_issue_id),
                     mobile_number=form_data['mobile_number'],
                     address_full=form_data['address_full']
                 )
@@ -234,14 +233,14 @@ class CtrCasaTopUp(BaseController):
         ################################################################################################################
         # Thông tin khách hàng giao dịch
         ################################################################################################################
-        cif_number = form_data['cif_number']
+        sender_cif_number = form_data['sender_cif_number']
         gw_customer_info = await CtrGWCustomer(current_user).ctr_gw_get_customer_info_detail(
-            cif_number=cif_number,
+            cif_number="",
             return_raw_data_flag=True
         )
         gw_customer_info_identity_info = gw_customer_info['id_info']
-        customer_response = dict(
-            cif_number=cif_number,
+        sender_response = dict(
+            cif_number=sender_cif_number,
             fullname_vn=gw_customer_info['full_name'],
             address_full=gw_customer_info['t_address_info']['contact_address_full'],
             identity_info=dict(
@@ -253,6 +252,17 @@ class CtrCasaTopUp(BaseController):
             telephone=gw_customer_info['telephone'],
             otherphone=gw_customer_info['otherphone']
         )
+        if not sender_cif_number:
+            sender_response.update(
+                fullname_vn=form_data['sender_full_name_vn'],
+                address_full=form_data['sender_address_full'],
+                identity_info=dict(
+                    number=form_data['sender_identity_number'],
+                    issued_date=form_data['sender_place_of_issue'],
+                    place_of_issue=form_data['sender_place_of_issue']
+                ),
+                mobile_phone=form_data['sender_mobile_number']
+            )
         controller_gw_employee = CtrGWEmployee(current_user)
         gw_direct_staff = await controller_gw_employee.ctr_gw_get_employee_info_from_code(
             employee_code=form_data['direct_staff_code'],
@@ -285,7 +295,7 @@ class CtrCasaTopUp(BaseController):
             ),
             fee_info=fee_info,
             statement=statement_response,
-            customer=customer_response,
+            sender=sender_response,
             direct_staff=direct_staff,
             indirect_staff=indirect_staff,
         )
@@ -298,20 +308,26 @@ class CtrCasaTopUp(BaseController):
             request: CasaTopUpSCBToAccountRequest
     ):
         if not isinstance(request, CasaTopUpSCBToAccountRequest):
-            return self.response_exception(msg=ERROR_MAPPING_MODEL, loc=f'model: {type(request)}')
+            return self.response_exception(
+                msg=ERROR_MAPPING_MODEL,
+                loc=f'expect: CasaTopUpSCBToAccountRequest, request: {type(request)}'
+            )
 
-        cif_number = request.cif_number
-        if not cif_number:
-            return self.response_exception(msg=ERROR_CIF_NUMBER_NOT_EXIST, loc=f"cif_number: {cif_number}")
+        sender_cif_number = request.sender_cif_number
+        if not sender_cif_number:
+            return self.response_exception(msg=ERROR_CIF_NUMBER_NOT_EXIST, loc=f"cif_number: {sender_cif_number}")
 
-        account_number = request.account_number
+        receiver_account_number = request.receiver_account_number
 
         # Kiểm tra số tài khoản có tồn tại hay không
         casa_account = await CtrGWCasaAccount(current_user).ctr_gw_check_exist_casa_account_info(
-            account_number=account_number
+            account_number=receiver_account_number
         )
         if not casa_account['data']['is_existed']:
-            return self.response_exception(msg=ERROR_CASA_ACCOUNT_NOT_EXIST, loc=f"account_number: {account_number}")
+            return self.response_exception(
+                msg=ERROR_CASA_ACCOUNT_NOT_EXIST,
+                loc=f"account_number: {receiver_account_number}"
+            )
 
         return request
 
@@ -320,17 +336,20 @@ class CtrCasaTopUp(BaseController):
             request: CasaTopUpSCBByIdentityRequest
     ):
         if not isinstance(request, CasaTopUpSCBByIdentityRequest):
-            return self.response_exception(msg=ERROR_MAPPING_MODEL, loc=f'model: {type(request)}')
+            return self.response_exception(
+                msg=ERROR_MAPPING_MODEL,
+                loc=f'expect: CasaTopUpSCBByIdentityRequest, request: {type(request)}'
+            )
 
         # validate branch
-        await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
+        await self.get_model_object_by_id(model_id=request.receiver_branch.id, model=Branch, loc='branch -> id')
 
         # validate issued_date
-        await self.validate_issued_date(issued_date=request.issued_date, loc='issued_date')
+        await self.validate_issued_date(issued_date=request.receiver_issued_date, loc='issued_date')
 
         # validate place_of_issue
         await self.get_model_object_by_id(
-            model_id=request.place_of_issue.id, model=PlaceOfIssue, loc='place_of_issue -> id'
+            model_id=request.receiver_place_of_issue.id, model=PlaceOfIssue, loc='place_of_issue -> id'
         )
 
         return request
@@ -340,7 +359,10 @@ class CtrCasaTopUp(BaseController):
             request: CasaTopUpThirdPartyToAccountRequest
     ):
         if not isinstance(request, CasaTopUpThirdPartyToAccountRequest):
-            return self.response_exception(msg=ERROR_MAPPING_MODEL, loc=f'model: {type(request)}')
+            return self.response_exception(
+                msg=ERROR_MAPPING_MODEL,
+                loc=f'expect: CasaTopUpThirdPartyToAccountRequest, request: {type(request)}'
+            )
         # validate branch of bank
         # TODO:
         # await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
@@ -351,7 +373,10 @@ class CtrCasaTopUp(BaseController):
             request: CasaTopUpThirdPartyByIdentityRequest
     ):
         if not isinstance(request, CasaTopUpThirdPartyByIdentityRequest):
-            return self.response_exception(msg=ERROR_MAPPING_MODEL, loc=f'model: {type(request)}')
+            return self.response_exception(
+                msg=ERROR_MAPPING_MODEL,
+                loc=f'expect: CasaTopUpThirdPartyByIdentityRequest, request: {type(request)}'
+            )
         # validate branch of bank
         # TODO:
         # await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
@@ -362,7 +387,10 @@ class CtrCasaTopUp(BaseController):
             request: CasaTopUpThirdParty247ToAccountRequest
     ):
         if not isinstance(request, CasaTopUpThirdParty247ToAccountRequest):
-            return self.response_exception(msg=ERROR_MAPPING_MODEL, loc=f'model: {type(request)}')
+            return self.response_exception(
+                msg=ERROR_MAPPING_MODEL,
+                loc=f'expect: CasaTopUpThirdPartyByIdentityRequest, request: {type(request)}'
+            )
         # validate branch of bank
         # TODO:
         # await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
@@ -373,7 +401,10 @@ class CtrCasaTopUp(BaseController):
             request: CasaTopUpThirdParty247ToCardRequest
     ):
         if not isinstance(request, CasaTopUpThirdParty247ToCardRequest):
-            return self.response_exception(msg=ERROR_MAPPING_MODEL, loc=f'model: {type(request)}')
+            return self.response_exception(
+                msg=ERROR_MAPPING_MODEL,
+                loc=f'expect: CasaTopUpThirdParty247ToCardRequest, request: {type(request)}'
+            )
         # TODO: validate branch of bank
         # await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
 
@@ -393,7 +424,7 @@ class CtrCasaTopUp(BaseController):
                 CasaTopUpThirdParty247ToCardRequest
             ]
     ):
-        cif_number = request.cif_number
+        sender_cif_number = request.sender_cif_number
         receiving_method = request.receiving_method
         is_fee = request.is_fee
         fee_info = request.fee_info
@@ -483,13 +514,13 @@ class CtrCasaTopUp(BaseController):
                 )
 
         # Kiểm tra số CIF có tồn tại trong CRM không
-        if cif_number:
+        if sender_cif_number:
             # self.call_repos(await repos_get_customer_by_cif_number(
             #     cif_number=cif_number,
             #     session=self.oracle_session
             # ))
             is_existed = await CtrGWCustomer(current_user).ctr_gw_check_exist_customer_detail_info(
-                cif_number=cif_number,
+                cif_number=sender_cif_number,
                 return_raw_data_flag=True
             )
             if not is_existed:

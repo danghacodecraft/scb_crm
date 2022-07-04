@@ -32,9 +32,34 @@ class TdAccount(Base):
     maker_at = Column(DateTime, comment='ngày thực hiện')
     checker_id = Column(VARCHAR(36), comment='người phê duyệt')
     checker_at = Column(DateTime, comment='ngày phê duyệt')
-    approve_status = Column(VARCHAR(3), comment='trạng phái phê duyệt')
+    approve_status = Column('approve_status', NUMBER(1, 0, False), server_default=text("0 "), comment='trạng phái phê duyệt')
     active_flag = Column('acc_active_flag', NUMBER(1, 0, False), comment='trạng thái hoạt động')
     updated_at = Column(DateTime, comment='ngày cập nhật')
+    amount = Column('amount', NUMBER(), comment='Số dư hiện tại')
+    pay_in_amount = Column('pay_in_amount', NUMBER(), comment='Thông tin nguồn tiền đầu vào')
+    pay_in_casa_account = Column('pay_in_casa_account', VARCHAR(36), comment='Tài khoản nguồn tiền đầu vào')
+    pay_out_interest_casa_account = Column('pay_out_interest_casa_account', VARCHAR(36), comment='Tài khoản nhận lãi')
+    pay_out_casa_account = Column('pay_out_casa_account', VARCHAR(36), comment='Tài khoản nhận gốc')
+    td_contract_num = Column('td_contract_num', VARCHAR(50), comment='Số hợp đồng')
+    fcc_transaction_num = Column('fcc_transaction_num', VARCHAR(100), comment='Số bút toán (FCC)')
+    td_resign_type_id = Column('td_resign_type_id', VARCHAR(36), nullable=False, comment='Chỉ định tái ký')
+    maturity_date = Column(DateTime, nullable=False, comment='Ngày đáo hạn')
+    td_serial = Column('td_serial', VARCHAR(20), comment='Số serial')
+    td_interest_type = Column('td_interest_type', VARCHAR(20), comment='Hình thức lãi')
+    td_interest = Column('td_interest', VARCHAR(5), comment='Lãi suất tiết kiệm (%)')
+    td_rollover_type = Column('td_rollover_type', VARCHAR(2), comment='Chỉ định khi đến hạn:I = Tái ký gốc + lãi ,P = Tái ký gốc')
+
+
+class TdAccountResign(Base):
+    __tablename__ = 'crm_td_account_resign'
+    __table_args__ = {'comment': 'Thông tin tái ký'}
+
+    id = Column('td_account_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "),
+                comment='Liên kết với tài khoản tiết kiệm')
+    pay_out_casa_account_resign = Column('pay_out_casa_account', VARCHAR(36), comment='Tài khoản nhận lãi')
+    td_interest_class_resign = Column('td_interest_class', VARCHAR(36), comment='Hình thức lãi')
+    acc_class_id_resign = Column('acc_class_id', VARCHAR(50), comment='Loại hình tài khoản')
+    acc_type_id_resign = Column('acc_type_id', VARCHAR(50), comment='Loại nhóm sản phẩm (gói) tài khoản')
 
 
 class EBankingReceiverNotificationRelationship(Base):

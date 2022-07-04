@@ -7,6 +7,7 @@ from app.api.v1.endpoints.cif import router as routers_cif
 from app.api.v1.endpoints.config import router as routers_config
 from app.api.v1.endpoints.customer_service import view as view_customer_service
 from app.api.v1.endpoints.dashboard import router as routers_dashboard
+from app.api.v1.endpoints.deposit import router as router_deposit
 from app.api.v1.endpoints.document_file import view as view_document_file
 from app.api.v1.endpoints.file import view as views_file
 from app.api.v1.endpoints.mobile import view as router_mobile
@@ -43,3 +44,5 @@ router.include_router(router=view_scb_news.router, prefix="/news", tags=["[News]
 router.include_router(router=router_third_party.router_module, prefix="/third-party")
 
 router.include_router(router=router_mobile.router, prefix="/mobile", tags=["[Mobile]"])
+
+router.include_router(router=router_deposit.router_module, prefix="/deposit", tags=["[Deposit]"])
