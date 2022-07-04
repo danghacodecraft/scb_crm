@@ -5,6 +5,9 @@ from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
+from app.api.v1.endpoints.third_parties.gw.customer.repository import (
+    repos_get_casa_account_by_account_number
+)
 from app.api.v1.endpoints.user.schema import AuthResponse, UserInfoResponse
 from app.settings.event import service_gw
 from app.third_parties.oracle.models.cif.form.model import BookingBusinessForm
@@ -186,16 +189,19 @@ async def repos_gw_get_close_casa_account(
                 log_data=orjson_dumps(gw_close_casa_account)
             ))
         )
+        casa_account_number = item.get('account_info').get('account_num')
+        casa_account = await repos_get_casa_account_by_account_number(casa_account_number, session)
 
         if is_success:
             close_casa = gw_close_casa_account['closeCASA_out']['transaction_info']
             account_number.append({
-                "account_number": item.get('account_info').get('account_number'),
+                "id": casa_account.data,
+                "casa_account_number": casa_account_number,
                 "acc_active_flag": False
             })
             response_data.append({
                 "transaction": {
-                    "account_number": item.get('account_info').get('account_number'),
+                    "account_number": casa_account_number,
                     "code": close_casa.get('transaction_error_code'),
                     "msg": close_casa.get('transaction_error_msg')
                 }
@@ -203,7 +209,7 @@ async def repos_gw_get_close_casa_account(
         else:
             response_data.append({
                 "transaction": {
-                    "account_number": item.get('account_info').get('account_number'),
+                    "account_number": casa_account_number,
                     "code": ERROR_CALL_SERVICE_GW,
                     "msg": ERROR_CALL_SERVICE_GW
                 }
