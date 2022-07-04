@@ -50,6 +50,8 @@ class CasaTopUpRequest(ResponseRequestSchema):
     content: str = Field(
         ..., description="Nội dung chuyển tiền", regex=REGEX_TRANSFER_CONTENT, max_length=MAX_LENGTH_TRANSFER_CONTENT
     )
+    p_instrument_number: Optional[str] = Field(None, description="")
+    core_fcc_request: Optional[str] = Field(None, description="")
 
     @validator("sender_mobile_number")
     def check_valid_mobile_number(cls, v):

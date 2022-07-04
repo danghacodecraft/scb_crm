@@ -13,7 +13,7 @@ from app.utils.constant.cif import BUSINESS_FORM_CASA_TOP_UP
 from app.utils.functions import now, generate_uuid
 
 
-@auto_commit
+# @auto_commit
 async def repos_save_casa_top_up_info(
         booking_id: str,
         saving_transaction_stage_status: dict,

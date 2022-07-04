@@ -5,7 +5,7 @@ from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
-from app.api.v1.endpoints.user.schema import AuthResponse
+from app.api.v1.endpoints.user.schema import AuthResponse, UserInfoResponse
 from app.settings.event import service_gw
 from app.third_parties.oracle.models.cif.form.model import BookingBusinessForm
 from app.third_parties.oracle.models.cif.payment_account.model import (
@@ -159,6 +159,7 @@ async def repos_gw_open_casa_account(
     return is_success, gw_open_casa_account_info
 
 
+@auto_commit
 async def repos_gw_get_close_casa_account(
         current_user,
         request_data_gw: list,
@@ -166,7 +167,7 @@ async def repos_gw_get_close_casa_account(
         session
 ):
     response_data = []
-
+    account_number = []
     current_user = current_user.user_info
     for item in request_data_gw:
 
@@ -185,8 +186,13 @@ async def repos_gw_get_close_casa_account(
                 log_data=orjson_dumps(gw_close_casa_account)
             ))
         )
+
         if is_success:
             close_casa = gw_close_casa_account['closeCASA_out']['transaction_info']
+            account_number.append({
+                "account_number": item.get('account_info').get('account_number'),
+                "acc_active_flag": False
+            })
             response_data.append({
                 "transaction": {
                     "account_number": item.get('account_info').get('account_number'),
@@ -202,6 +208,10 @@ async def repos_gw_get_close_casa_account(
                     "msg": ERROR_CALL_SERVICE_GW
                 }
             })
+
+    # đóng trạng thái hoạt động của tài khoản
+    session.bulk_update_mappings(CasaAccount, account_number)
+
     return ReposReturn(data=response_data)
 
 
@@ -286,3 +296,19 @@ async def repos_check_casa_account_approved(casa_account_ids: List, session: Ses
         )
 
     return ReposReturn(data=casa_account_status_approved_ids)
+
+
+async def repos_gw_get_tele_transfer(current_user: UserInfoResponse, data_input):
+    is_success, tele_transfer = await service_gw.get_tele_transfer(
+        current_user=current_user,
+        data_input=data_input
+    )
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="repos_gw_get_tele_transfer",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(tele_transfer)
+        )
+
+    return ReposReturn(data=tele_transfer)
