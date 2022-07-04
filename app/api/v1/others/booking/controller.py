@@ -24,7 +24,8 @@ from app.utils.constant.business_type import BUSINESS_TYPES
 from app.utils.constant.casa import CASA_ACCOUNT_STATUS_APPROVED
 from app.utils.constant.cif import (
     BUSINESS_TYPE_CODE_AMOUNT_BLOCK, BUSINESS_TYPE_CODE_AMOUNT_UNBLOCK,
-    BUSINESS_TYPE_CODE_CIF, BUSINESS_TYPE_CODE_OPEN_CASA, BUSINESS_TYPE_CODE_TOP_UP_CASA
+    BUSINESS_TYPE_CODE_CIF, BUSINESS_TYPE_CODE_CLOSE_CASA,
+    BUSINESS_TYPE_CODE_OPEN_CASA, BUSINESS_TYPE_CODE_TOP_UP_CASA
 )
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_GDV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_GDV
@@ -162,7 +163,12 @@ class CtrBooking(BaseController):
             ))
 
         # Phong tỏa, giải tỏa
-        if business_type_id in [BUSINESS_TYPE_CODE_AMOUNT_BLOCK, BUSINESS_TYPE_CODE_AMOUNT_UNBLOCK, BUSINESS_TYPE_CODE_TOP_UP_CASA]:
+        if business_type_id in [
+            BUSINESS_TYPE_CODE_AMOUNT_BLOCK,
+            BUSINESS_TYPE_CODE_AMOUNT_UNBLOCK,
+            BUSINESS_TYPE_CODE_TOP_UP_CASA,
+            BUSINESS_TYPE_CODE_CLOSE_CASA
+        ]:
             customer = self.call_repos(await repos_get_customer_from_booking_account_amount_block(
                 booking_id=booking_id, session=self.oracle_session
             ))
