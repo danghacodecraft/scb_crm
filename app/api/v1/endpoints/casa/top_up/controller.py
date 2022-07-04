@@ -121,15 +121,15 @@ class CtrCasaTopUp(BaseController):
                     # fullname_vn=gw_casa_account_info_customer_info['full_name'],
                     address_full=form_data['receiver_address_full']
                 )
-            if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD:
+        elif receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD:
                 receiver_response = dict(
                     bank=dict(
                         code="branch_id",
                         name="branch_id"
                     ),  # TODO: đợi e-bank
-                    account_number=form_data['card_number'],  # TODO: đợi e-bank
+                    account_number=form_data['receiver_card_number'],  # TODO: đợi e-bank
                     # fullname_vn=gw_casa_account_info_customer_info['full_name'],
-                    address_full=form_data['address_full']
+                    address_full=form_data['receiver_address_full']
                 )
         else:
             receiver_place_of_issue_id = await self.get_model_object_by_id(
