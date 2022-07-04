@@ -1,13 +1,13 @@
 from datetime import date
 from typing import List, Optional
 
-from pydantic import Field
+from pydantic import Field, validator
 
 from app.api.base.schema import ResponseRequestSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
 from app.api.v1.schemas.utils import DropdownRequest
 from app.utils.constant.casa import DENOMINATIONS__AMOUNTS
-from app.utils.functions import make_description_from_dict_to_list
+from app.utils.functions import make_description_from_dict_to_list, is_valid_mobile_number
 from app.utils.regex import (
     MAX_LENGTH_TRANSFER_CONTENT, REGEX_NUMBER_ONLY, REGEX_TRANSFER_CONTENT
 )
@@ -33,7 +33,13 @@ class StatementInfoRequest(ResponseRequestSchema):
 
 # Common
 class CasaTopUpRequest(ResponseRequestSchema):
-    cif_number: Optional[str] = CustomField().OptionalCIFNumberField
+    sender_cif_number: Optional[str] = CustomField().OptionalCIFNumberField
+    sender_full_name_vn: Optional[str] = Field(None, description="Người giao dịch")
+    sender_identity_number: Optional[str] = Field(None, description="Giấy tờ định danh")
+    sender_issued_date: Optional[date] = Field(None, description="Ngày cấp")
+    sender_place_of_issue: Optional[str] = Field(None, description="Nơi cấp")
+    sender_address_full: Optional[str] = Field(None, description="Địa chỉ")
+    sender_mobile_number: Optional[str] = Field(None, description="Số điện thoại", regex=REGEX_NUMBER_ONLY)
     receiving_method: str = Field(..., description="Hình thức nhận")
     is_fee: bool = Field(..., description="Có thu phí không")
     fee_info: Optional[FeeInfoRequest] = Field(..., description="Thông tin phí")
@@ -45,6 +51,12 @@ class CasaTopUpRequest(ResponseRequestSchema):
         ..., description="Nội dung chuyển tiền", regex=REGEX_TRANSFER_CONTENT, max_length=MAX_LENGTH_TRANSFER_CONTENT
     )
 
+    @validator("sender_mobile_number")
+    def check_valid_mobile_number(cls, v):
+        if not is_valid_mobile_number(v):
+            raise TypeError('')
+        return v
+
 
 ########################################################################################################################
 # Thông tin người thụ hưởng
@@ -53,64 +65,76 @@ class CasaTopUpSCBToAccountRequest(CasaTopUpRequest):
     """
     Trong SCB đến tài khoản
     """
-    account_number: str = Field(..., description="Số tài khoản", regex=REGEX_NUMBER_ONLY)
+    receiver_account_number: str = Field(..., description="Số tài khoản", regex=REGEX_NUMBER_ONLY)
 
 
 class CasaTopUpSCBByIdentityRequest(CasaTopUpRequest):
     """
     Trong SCB nhận bằng giấy tờ định danh
     """
-    province: DropdownRequest = Field(..., description="Tỉnh/Thành phố")
-    branch: DropdownRequest = Field(..., description="Chi nhánh")
-    full_name_vn: str = Field(..., description="Họ tên người thụ hưởng")
-    identity_number: str = Field(..., description="Số GTĐD", regex=REGEX_NUMBER_ONLY)
-    issued_date: date = Field(..., description="Ngày cấp")
-    place_of_issue: DropdownRequest = Field(..., description="Nơi cấp")
-    mobile_number: Optional[str] = Field(..., description="Số điện thoại")
-    address_full: Optional[str] = Field(..., description="Địa chỉ", max_length=500)
+    receiver_province: DropdownRequest = Field(..., description="Tỉnh/Thành phố")
+    receiver_branch: DropdownRequest = Field(..., description="Chi nhánh")
+    receiver_full_name_vn: str = Field(..., description="Họ tên người thụ hưởng")
+    receiver_identity_number: str = Field(..., description="Số GTĐD", regex=REGEX_NUMBER_ONLY)
+    receiver_issued_date: date = Field(..., description="Ngày cấp")
+    receiver_place_of_issue: DropdownRequest = Field(..., description="Nơi cấp")
+    receiver_mobile_number: Optional[str] = Field(..., description="Số điện thoại")
+    receiver_address_full: Optional[str] = Field(..., description="Địa chỉ", max_length=500)
+
+    @validator("receiver_mobile_number")
+    def check_valid_mobile_number(cls, v):
+        if not is_valid_mobile_number(v):
+            raise TypeError('')
+        return v
 
 
 class CasaTopUpThirdPartyToAccountRequest(CasaTopUpRequest):
     """
     Ngoài SCB đến tài khoản
     """
-    account_number: str = Field(..., description="Số tài khoản", regex=REGEX_NUMBER_ONLY)
-    bank: DropdownRequest = Field(..., description="Ngân hàng")
-    branch: DropdownRequest = Field(..., description="Chi nhánh")
-    full_name_vn: str = Field(..., description="Chủ tài khoản")
-    address_full: str = Field(..., description="Địa chỉ", max_length=100)
+    receiver_account_number: str = Field(..., description="Số tài khoản", regex=REGEX_NUMBER_ONLY)
+    receiver_bank: DropdownRequest = Field(..., description="Ngân hàng")
+    receiver_branch: DropdownRequest = Field(..., description="Chi nhánh")
+    receiver_full_name_vn: str = Field(..., description="Chủ tài khoản")
+    receiver_address_full: str = Field(..., description="Địa chỉ", max_length=100)
 
 
 class CasaTopUpThirdPartyByIdentityRequest(CasaTopUpRequest):
     """
     Ngoài SCB nhận bằng giấy tờ định danh
     """
-    bank: DropdownRequest = Field(..., description="Ngân hàng")
-    branch: DropdownRequest = Field(..., description="Chi nhánh")
-    full_name_vn: str = Field(..., description="Chủ tài khoản")
-    identity_number: str = Field(..., description="Số GTĐD", regex=REGEX_NUMBER_ONLY)
-    issued_date: date = Field(..., description="Ngày cấp")
-    place_of_issue: DropdownRequest = Field(..., description="Nơi cấp")
-    mobile_number: Optional[str] = Field(..., description="Số điện thoại")
-    address_full: str = Field(..., description="Địa chỉ", max_length=100)
+    receiver_bank: DropdownRequest = Field(..., description="Ngân hàng")
+    receiver_branch: DropdownRequest = Field(..., description="Chi nhánh")
+    receiver_full_name_vn: str = Field(..., description="Chủ tài khoản")
+    receiver_identity_number: str = Field(..., description="Số GTĐD", regex=REGEX_NUMBER_ONLY)
+    receiver_issued_date: date = Field(..., description="Ngày cấp")
+    receiver_place_of_issue: DropdownRequest = Field(..., description="Nơi cấp")
+    receiver_mobile_number: Optional[str] = Field(..., description="Số điện thoại")
+    receiver_address_full: str = Field(..., description="Địa chỉ", max_length=100)
+
+    @validator("receiver_mobile_number")
+    def check_valid_mobile_number(cls, v):
+        if not is_valid_mobile_number(v):
+            raise TypeError('')
+        return v
 
 
 class CasaTopUpThirdParty247ToAccountRequest(CasaTopUpRequest):
     """
     Ngoài SCB 24/7 tài khoản
     """
-    bank: DropdownRequest = Field(..., description="Ngân hàng")
-    account_number: str = Field(..., description="Số tài khoản", regex=REGEX_NUMBER_ONLY)
-    address_full: str = Field(..., description="Địa chỉ", max_length=100)
+    receiver_bank: DropdownRequest = Field(..., description="Ngân hàng")
+    receiver_account_number: str = Field(..., description="Số tài khoản", regex=REGEX_NUMBER_ONLY)
+    receiver_address_full: str = Field(..., description="Địa chỉ", max_length=100)
 
 
 class CasaTopUpThirdParty247ToCardRequest(CasaTopUpRequest):
     """
     Ngoài SCB 24/7 số thẻ
     """
-    bank: DropdownRequest = Field(..., description="Ngân hàng")
-    card_number: str = Field(..., description="Số thẻ")
-    address_full: str = Field(..., description="Địa chỉ", max_length=100)
+    receiver_bank: DropdownRequest = Field(..., description="Ngân hàng")
+    receiver_card_number: str = Field(..., description="Số thẻ")
+    receiver_address_full: str = Field(..., description="Địa chỉ", max_length=100)
 
 
 ########################################################################################################################
