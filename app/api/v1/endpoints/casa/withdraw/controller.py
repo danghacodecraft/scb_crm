@@ -144,13 +144,13 @@ class CtrWithdraw(BaseController):
 
     async def ctr_source_account_info(self, cif_number: str, booking_id: str):
         current_user = self.current_user
-        # # Kiểm tra booking
-        # await CtrBooking().ctr_get_booking_and_validate(
-        #     booking_id=booking_id,
-        #     business_type_code=BUSINESS_TYPE_WITHDRAW,
-        #     check_correct_booking_flag=False,
-        #     loc=f'booking_id: {booking_id}'
-        # )
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking_and_validate(
+            booking_id=booking_id,
+            business_type_code=BUSINESS_TYPE_WITHDRAW,
+            check_correct_booking_flag=False,
+            loc=f'booking_id: {booking_id}'
+        )
 
         gw_account_info = await CtrGWCasaAccount(current_user).ctr_gw_get_casa_account_by_cif_number(
             cif_number=cif_number
@@ -198,6 +198,13 @@ class CtrWithdraw(BaseController):
             self,
             booking_id: str,
     ):
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking_and_validate(
+            booking_id=booking_id,
+            business_type_code=BUSINESS_TYPE_WITHDRAW,
+            check_correct_booking_flag=False,
+            loc=f'booking_id: {booking_id}'
+        )
         current_user = self.current_user
 
         get_pay_in_cash_info = self.call_repos(await repos_get_withdraw_info(
@@ -233,9 +240,7 @@ class CtrWithdraw(BaseController):
         ################################################################################################################
         # Thông tin phí
         ################################################################################################################
-        print('======================================')
         fee_info = form_data['transaction_info']['fee_info']
-        print(fee_info)
         fee_amount = fee_info['amount']
         vat_tax = fee_amount / 10
         total = fee_amount + vat_tax
