@@ -415,7 +415,7 @@ class CtrGWCasaAccount(BaseController):
                 gw_errors.append(dict(
                     id=casa_account_id,
                     msg=ERROR_CALL_SERVICE_GW,
-                    detail=str(gw_open_casa_account_info)
+                    detail=str(gw_open_casa_account_info['openCASA_out'])
                 ))
             else:
                 casa_account_successes.update({casa_account_id: gw_open_casa_account_info['openCASA_out']['data_output']['account_info']['account_num']})
