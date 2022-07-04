@@ -298,7 +298,10 @@ class CtrCasaTopUp(BaseController):
             request: CasaTopUpSCBToAccountRequest
     ):
         if not isinstance(request, CasaTopUpSCBToAccountRequest):
-            return self.response_exception(msg=ERROR_MAPPING_MODEL, loc=f'model: {type(request)}')
+            return self.response_exception(
+                msg=ERROR_MAPPING_MODEL,
+                loc=f'expect: CasaTopUpSCBToAccountRequest, request: {type(request)}'
+            )
 
         sender_cif_number = request.sender_cif_number
         if not sender_cif_number:
@@ -323,7 +326,10 @@ class CtrCasaTopUp(BaseController):
             request: CasaTopUpSCBByIdentityRequest
     ):
         if not isinstance(request, CasaTopUpSCBByIdentityRequest):
-            return self.response_exception(msg=ERROR_MAPPING_MODEL, loc=f'model: {type(request)}')
+            return self.response_exception(
+                msg=ERROR_MAPPING_MODEL,
+                loc=f'expect: CasaTopUpSCBByIdentityRequest, request: {type(request)}'
+            )
 
         # validate branch
         await self.get_model_object_by_id(model_id=request.receiver_branch.id, model=Branch, loc='branch -> id')
@@ -343,7 +349,10 @@ class CtrCasaTopUp(BaseController):
             request: CasaTopUpThirdPartyToAccountRequest
     ):
         if not isinstance(request, CasaTopUpThirdPartyToAccountRequest):
-            return self.response_exception(msg=ERROR_MAPPING_MODEL, loc=f'model: {type(request)}')
+            return self.response_exception(
+                msg=ERROR_MAPPING_MODEL,
+                loc=f'expect: CasaTopUpThirdPartyToAccountRequest, request: {type(request)}'
+            )
         # validate branch of bank
         # TODO:
         # await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
@@ -354,7 +363,10 @@ class CtrCasaTopUp(BaseController):
             request: CasaTopUpThirdPartyByIdentityRequest
     ):
         if not isinstance(request, CasaTopUpThirdPartyByIdentityRequest):
-            return self.response_exception(msg=ERROR_MAPPING_MODEL, loc=f'model: {type(request)}')
+            return self.response_exception(
+                msg=ERROR_MAPPING_MODEL,
+                loc=f'expect: CasaTopUpThirdPartyByIdentityRequest, request: {type(request)}'
+            )
         # validate branch of bank
         # TODO:
         # await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
@@ -365,7 +377,10 @@ class CtrCasaTopUp(BaseController):
             request: CasaTopUpThirdParty247ToAccountRequest
     ):
         if not isinstance(request, CasaTopUpThirdParty247ToAccountRequest):
-            return self.response_exception(msg=ERROR_MAPPING_MODEL, loc=f'model: {type(request)}')
+            return self.response_exception(
+                msg=ERROR_MAPPING_MODEL,
+                loc=f'expect: CasaTopUpThirdPartyByIdentityRequest, request: {type(request)}'
+            )
         # validate branch of bank
         # TODO:
         # await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
@@ -376,7 +391,10 @@ class CtrCasaTopUp(BaseController):
             request: CasaTopUpThirdParty247ToCardRequest
     ):
         if not isinstance(request, CasaTopUpThirdParty247ToCardRequest):
-            return self.response_exception(msg=ERROR_MAPPING_MODEL, loc=f'model: {type(request)}')
+            return self.response_exception(
+                msg=ERROR_MAPPING_MODEL,
+                loc=f'expect: CasaTopUpThirdParty247ToCardRequest, request: {type(request)}'
+            )
         # TODO: validate branch of bank
         # await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
 
