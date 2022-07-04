@@ -16,7 +16,7 @@ from app.third_parties.oracle.models.cif.form.model import (
 from app.third_parties.oracle.models.cif.payment_account.model import (
     CasaAccount
 )
-from app.utils.constant.cif import BUSINESS_FORM_TTCN_GTDD_GTDD
+from app.utils.constant.cif import BUSINESS_FORM_TTCN_GTDD_GTDD, BUSINESS_TYPE_CODE_CIF
 from app.utils.error_messages import (
     ERROR_BOOKING_CODE_EXISTED, ERROR_BOOKING_ID_NOT_EXIST, MESSAGE_STATUS
 )
@@ -76,7 +76,8 @@ async def repos_create_booking(
                 msg=ERROR_BOOKING_CODE_EXISTED + f", booking_code: {booking_code}",
                 detail=MESSAGE_STATUS[ERROR_BOOKING_CODE_EXISTED]
             )
-    session.add_all([
+
+    insert_list = [
         Booking(
             id=booking_id,
             transaction_id=transaction_id,
@@ -86,14 +87,16 @@ async def repos_create_booking(
             created_at=now(),
             updated_at=now(),
             created_by=current_user.code
-        ),
-        BookingBusinessForm(
+        )
+    ]
+    if business_type_code == BUSINESS_TYPE_CODE_CIF:
+        insert_list.append(BookingBusinessForm(
             booking_id=booking_id,
             business_form_id=BUSINESS_FORM_TTCN_GTDD_GTDD,
             save_flag=False,
             created_at=now()
-        )
-    ])
+        ))
+    session.add_all(insert_list)
     session.commit()
     return ReposReturn(data=(booking_id, booking_code))
 

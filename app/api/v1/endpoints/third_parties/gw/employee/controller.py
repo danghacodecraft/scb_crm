@@ -25,7 +25,8 @@ from app.utils.functions import (
 class CtrGWEmployee(BaseController):
     async def ctr_gw_get_employee_info_from_code(
             self,
-            employee_code: str
+            employee_code: str,
+            return_raw_data_flag=False
     ):
         current_user = self.current_user
         gw_employee_info = self.call_repos(await repos_gw_get_employee_info_from_code(
@@ -34,6 +35,8 @@ class CtrGWEmployee(BaseController):
         ))
 
         employee_info = gw_employee_info["selectEmployeeInfoFromCode_out"]["data_output"]["employee_info"]
+        if return_raw_data_flag:
+            return employee_info
 
         return self.response(data=dict(
             staff_code=employee_info['staff_code'],

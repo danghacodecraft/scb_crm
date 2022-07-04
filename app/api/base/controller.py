@@ -1,3 +1,4 @@
+from datetime import date
 from typing import List, Optional, Union
 
 from loguru import logger
@@ -23,11 +24,11 @@ from app.third_parties.oracle.base import Base, SessionLocal, SessionLocal_Task
 from app.utils.constant.cif import PROFILE_HISTORY_DESCRIPTIONS
 from app.utils.constant.ekyc import is_success
 from app.utils.error_messages import (
-    ERROR_GROUP_ROLE_CODE, ERROR_MENU_CODE, MESSAGE_STATUS
+    ERROR_GROUP_ROLE_CODE, ERROR_MENU_CODE, MESSAGE_STATUS, ERROR_ISSUED_DATE
 )
 from app.utils.functions import (
     datetime_to_string, dropdown, dropdown_name, generate_uuid, now,
-    orjson_dumps
+    orjson_dumps, today
 )
 
 
@@ -626,3 +627,8 @@ class BaseController:
             title_name=current_user.hrm_title_name
         )]
         return history_log_data
+
+    async def validate_issued_date(self, issued_date: date, loc: str):
+        if issued_date > today():
+            return self.response_exception(msg=ERROR_ISSUED_DATE, loc=loc)
+        return issued_date
