@@ -39,7 +39,7 @@ from app.utils.constant.gw import (
     GW_NO_MARKETING_FLAG, GW_REQUEST_PARAMETER_CO_OWNER,
     GW_REQUEST_PARAMETER_DEBIT_CARD,
     GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP, GW_SELECT,
-    GW_UDF_NAME, GW_YES, GW_YES_AGREEMENT_FLAG
+    GW_UDF_NAME, GW_YES, GW_YES_AGREEMENT_FLAG, GW_REQUEST_PARAMETER_DEFAULT
 )
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_GW, ERROR_PHONE_NUMBER, ERROR_PHONE_NUMBER_NOT_EXITS,
@@ -193,12 +193,19 @@ class CtrGWCustomer(BaseController):
 
         return self.response(data=response_data)
 
-    async def ctr_gw_get_customer_info_detail(self, cif_number: str, parameter: str):
+    async def ctr_gw_get_customer_info_detail(
+            self,
+            cif_number: str,
+            parameter: str = GW_REQUEST_PARAMETER_DEFAULT,
+            return_raw_data_flag=False
+    ):
         current_user = self.current_user
         customer_info_detail = self.call_repos(await repos_gw_get_customer_info_detail(
             cif_number=cif_number, current_user=current_user))
 
         customer_info = customer_info_detail['retrieveCustomerRefDataMgmt_out']['data_output']['customer_info']
+        if return_raw_data_flag:
+            return customer_info
 
         cif_info = customer_info['cif_info']
         cif_issued_date = date_string_to_other_date_string_format(
@@ -532,7 +539,8 @@ class CtrGWCustomer(BaseController):
 
     async def ctr_gw_check_exist_customer_detail_info(
             self,
-            cif_number: str
+            cif_number: str,
+            return_raw_data_flag=False
     ):
         gw_check_exist_customer_detail_info = self.call_repos(await repos_gw_get_customer_info_detail(
             cif_number=cif_number,
@@ -541,6 +549,8 @@ class CtrGWCustomer(BaseController):
         ))
         data_output = gw_check_exist_customer_detail_info['retrieveCustomerRefDataMgmt_out']['data_output']
         customer_info = data_output['customer_info']['id_info']
+        if return_raw_data_flag:
+            return True if customer_info['id_num'] else False
 
         return self.response(data=dict(
             is_existed=True if customer_info['id_num'] else False
