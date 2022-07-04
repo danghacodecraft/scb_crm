@@ -272,6 +272,48 @@ CASA_TOP_UP_APPROVE_STAGES = {
 }
 ########################################################################################################################
 
+########################################################################################################################
+# CASA_TRANSFER
+########################################################################################################################
+BUSINESS_JOB_CODE_START_CASA_TRANSFER = "TRANSFER_BAT_DAU"
+BUSINESS_JOB_CODE_CASA_TRANSFER = "TRANSFER_KHOI_TAO"
+
+CASA_TRANSFER_STAGE_BEGIN = 'TRANSFER_BEGIN'
+CASA_TRANSFER_STAGE_INIT = "TRANSFER_KHOI_TAO_HO_SO"
+CASA_TRANSFER_STAGE_APPROVE_KSV = "TRANSFER_PHE_DUYET_KSV"
+CASA_TRANSFER_STAGE_APPROVE_KSS = "TRANSFER_PHE_DUYET_KSS"
+CASA_TRANSFER_STAGE_COMPLETED = "TRANSFER_KET_THUC_HO_SO"
+
+CASA_TRANSFER_ACTION_PHE_DUYET_KSS = "TRANSFER_PHE_DUYET_KSS"
+CASA_TRANSFER_ACTION_BSTTKXTL_KSS = "TRANSFER_BSTTKXTL_KSS"
+CASA_TRANSFER_ACTION_BSTTXTL_KSS = "TRANSFER_BSTTXTL_KSS"
+CASA_TRANSFER_ACTION_XTL_KSS = "TRANSFER_XTL_KSS"
+
+CASA_TRANSFER_ACTION_PHE_DUYET_KSV = "TRANSFER_PHE_DUYET_KSV"
+CASA_TRANSFER_ACTION_BSTTKXTL_KSV = "TRANSFER_BSTTKXTL_KSV"
+CASA_TRANSFER_ACTION_BSTTXTL_KSV = "TRANSFER_BSTTXTL_KSV"
+CASA_TRANSFER_ACTION_XTL_KSV = "TRANSFER_XTL_KSV"
+
+CASA_TRANSFER_ACTIONS = {
+    CASA_TRANSFER_ACTION_PHE_DUYET_KSS: "KSS Phê duyệt ",
+    CASA_TRANSFER_ACTION_BSTTKXTL_KSS: "KSS Bổ sung thông tin không cần xác thực lại",
+    CASA_TRANSFER_ACTION_BSTTXTL_KSS: "KSS Bổ sung thông tin và xác thực lại",
+    CASA_TRANSFER_ACTION_XTL_KSS: "KSS Yêu cầu xác thực lại khách hàng.",
+
+    CASA_TRANSFER_ACTION_PHE_DUYET_KSV: "KSV Phê duyệt",
+    CASA_TRANSFER_ACTION_BSTTKXTL_KSV: "KSV Bổ sung thông tin không cần xác thực lại",
+    CASA_TRANSFER_ACTION_BSTTXTL_KSV: "KSV Bổ sung thông tin và xác thực lại",
+    CASA_TRANSFER_ACTION_XTL_KSV: "KSV Yêu cầu xác thực lại khách hàng."
+}
+
+CASA_TRANSFER_APPROVE_STAGES = {
+    CASA_TRANSFER_STAGE_APPROVE_KSV: "Phê duyệt KSV",
+    CASA_TRANSFER_STAGE_APPROVE_KSS: "Phê duyệt KSS"
+}
+
+########################################################################################################################
+
+
 STAGE_BEGINS = [
     CIF_STAGE_BEGIN,
     OPEN_CASA_STAGE_BEGIN,

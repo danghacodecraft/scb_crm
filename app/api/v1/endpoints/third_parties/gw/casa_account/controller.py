@@ -159,7 +159,7 @@ class CtrGWCasaAccount(BaseController):
                 ref_no=lock_info['account_ref_no'])
             if lock_dict != lock_none:
                 lock_info_response.append(lock_dict)
-
+        print('-----------')
         gw_casa_account_info_response = dict(
             number=account_info['account_num'],
             type=account_info['account_type'],
