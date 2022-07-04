@@ -47,7 +47,7 @@ class CasaTopUpRequest(ResponseRequestSchema):
     direct_staff_code: Optional[str] = Field(..., description="Mã nhân viên kinh doanh")
     indirect_staff_code: Optional[str] = Field(..., description="Mã nhân viên quản lý gián tiếp")
     amount: int = Field(..., description="Số tiền")
-    content: Optional[str] = Field(
+    content: str = Field(
         ..., description="Nội dung chuyển tiền", regex=REGEX_TRANSFER_CONTENT, max_length=MAX_LENGTH_TRANSFER_CONTENT
     )
 
@@ -220,6 +220,6 @@ class CasaTopUpResponse(ResponseRequestSchema):
     transfer: TransferResponse = Field(..., description="Thông tin giao dịch")
     fee_info: FeeInfoResponse = Field(..., description="Thông tin phí")
     statement: StatementResponse = Field(..., description="Thông tin bảng kê")
-    customer: CustomerResponse = Field(..., description="Thông tin khách hàng giao dịch")
+    sender: CustomerResponse = Field(..., description="Thông tin khách hàng giao dịch")
     direct_staff: StaffInfoResponse = Field(..., description="Thông tin khách hàng giao dịch")
     indirect_staff: StaffInfoResponse = Field(..., description="Thông tin khách hàng giao dịch")

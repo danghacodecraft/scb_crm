@@ -67,10 +67,10 @@ class CtrCasaTopUp(BaseController):
 
         if receiving_method not in RECEIVING_METHOD_IDENTITY_CASES:
             if receiving_method in RECEIVING_METHOD_ACCOUNT_CASES:
-                account_number = form_data['account_number']
+                receiver_account_number = form_data['receiver_account_number']
 
                 gw_casa_account_info = await CtrGWCasaAccount(current_user=current_user).ctr_gw_get_casa_account_info(
-                    account_number=account_number,
+                    account_number=receiver_account_number,
                     return_raw_data_flag=True
                 )
 
@@ -79,7 +79,7 @@ class CtrCasaTopUp(BaseController):
 
                 if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
                     receiver_response = dict(
-                        account_number=account_number,
+                        account_number=receiver_account_number,
                         fullname_vn=gw_casa_account_info_customer_info['full_name'],
                         currency=account_info['account_currency'],
                         branch_info=dict(
@@ -118,7 +118,7 @@ class CtrCasaTopUp(BaseController):
                             code="branch_id",
                             name="branch_id"
                         ),  # TODO: đợi e-bank
-                        account_number=account_number,
+                        receiver_account_number=receiver_account_number,
                         # fullname_vn=gw_casa_account_info_customer_info['full_name'],
                         address_full=form_data['address_full']
                     )
@@ -234,14 +234,14 @@ class CtrCasaTopUp(BaseController):
         ################################################################################################################
         # Thông tin khách hàng giao dịch
         ################################################################################################################
-        cif_number = form_data['cif_number']
+        sender_cif_number = form_data['sender_cif_number']
         gw_customer_info = await CtrGWCustomer(current_user).ctr_gw_get_customer_info_detail(
-            cif_number=cif_number,
+            cif_number=sender_cif_number,
             return_raw_data_flag=True
         )
         gw_customer_info_identity_info = gw_customer_info['id_info']
-        customer_response = dict(
-            cif_number=cif_number,
+        sender_response = dict(
+            cif_number=sender_cif_number,
             fullname_vn=gw_customer_info['full_name'],
             address_full=gw_customer_info['t_address_info']['contact_address_full'],
             identity_info=dict(
@@ -285,7 +285,7 @@ class CtrCasaTopUp(BaseController):
             ),
             fee_info=fee_info,
             statement=statement_response,
-            customer=customer_response,
+            sender=sender_response,
             direct_staff=direct_staff,
             indirect_staff=indirect_staff,
         )
@@ -326,14 +326,14 @@ class CtrCasaTopUp(BaseController):
             return self.response_exception(msg=ERROR_MAPPING_MODEL, loc=f'model: {type(request)}')
 
         # validate branch
-        await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
+        await self.get_model_object_by_id(model_id=request.receiver_branch.id, model=Branch, loc='branch -> id')
 
         # validate issued_date
-        await self.validate_issued_date(issued_date=request.issued_date, loc='issued_date')
+        await self.validate_issued_date(issued_date=request.receiver_issued_date, loc='issued_date')
 
         # validate place_of_issue
         await self.get_model_object_by_id(
-            model_id=request.place_of_issue.id, model=PlaceOfIssue, loc='place_of_issue -> id'
+            model_id=request.receiver_place_of_issue.id, model=PlaceOfIssue, loc='place_of_issue -> id'
         )
 
         return request
@@ -396,7 +396,7 @@ class CtrCasaTopUp(BaseController):
                 CasaTopUpThirdParty247ToCardRequest
             ]
     ):
-        cif_number = request.sender_cif_number
+        sender_cif_number = request.sender_cif_number
         receiving_method = request.receiving_method
         is_fee = request.is_fee
         fee_info = request.fee_info
@@ -486,13 +486,13 @@ class CtrCasaTopUp(BaseController):
                 )
 
         # Kiểm tra số CIF có tồn tại trong CRM không
-        if cif_number:
+        if sender_cif_number:
             # self.call_repos(await repos_get_customer_by_cif_number(
             #     cif_number=cif_number,
             #     session=self.oracle_session
             # ))
             is_existed = await CtrGWCustomer(current_user).ctr_gw_check_exist_customer_detail_info(
-                cif_number=cif_number,
+                cif_number=sender_cif_number,
                 return_raw_data_flag=True
             )
             if not is_existed:
