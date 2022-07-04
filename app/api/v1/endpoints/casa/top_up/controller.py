@@ -65,11 +65,12 @@ class CtrCasaTopUp(BaseController):
         ################################################################################################################
         receiver_response = {}
 
-        if receiving_method not in RECEIVING_METHOD_IDENTITY_CASES:
-            if receiving_method in RECEIVING_METHOD_ACCOUNT_CASES:
-                receiver_account_number = form_data['receiver_account_number']
+        if receiving_method in RECEIVING_METHOD_ACCOUNT_CASES:
+            receiver_account_number = form_data['receiver_account_number']
 
-                gw_casa_account_info = await CtrGWCasaAccount(current_user=current_user).ctr_gw_get_casa_account_info(
+            if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
+                gw_casa_account_info = await CtrGWCasaAccount(
+                    current_user=current_user).ctr_gw_get_casa_account_info(
                     account_number=receiver_account_number,
                     return_raw_data_flag=True
                 )
@@ -77,20 +78,19 @@ class CtrCasaTopUp(BaseController):
                 gw_casa_account_info_customer_info = gw_casa_account_info['customer_info']
                 account_info = gw_casa_account_info_customer_info['account_info']
 
-                if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
-                    receiver_response = dict(
-                        account_number=receiver_account_number,
-                        fullname_vn=gw_casa_account_info_customer_info['full_name'],
-                        currency=account_info['account_currency'],
-                        branch_info=dict(
-                            id=account_info['branch_info']['branch_code'],
-                            code=account_info['branch_info']['branch_code'],
-                            name=account_info['branch_info']['branch_name']
-                        )
+                receiver_response = dict(
+                    account_number=receiver_account_number,
+                    fullname_vn=gw_casa_account_info_customer_info['full_name'],
+                    currency=account_info['account_currency'],
+                    branch_info=dict(
+                        id=account_info['branch_info']['branch_code'],
+                        code=account_info['branch_info']['branch_code'],
+                        name=account_info['branch_info']['branch_name']
                     )
+                )
 
                 if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
-                    branch_id = form_data['branch']['id']
+                    branch_id = form_data['receiver_branch']['id']
                     receiver_response = dict(
                         # bank=form_data['bank'],
                         bank=dict(
@@ -106,9 +106,9 @@ class CtrCasaTopUp(BaseController):
                             code=branch_id,
                             name=branch_id
                         ),  # TODO: đợi e-bank
-                        account_number=form_data['account_number'],
-                        fullname_vn=form_data['full_name_vn'],
-                        address_full=form_data['address_full']
+                        account_number=form_data['receiver_account_number'],
+                        fullname_vn=form_data['receiver_full_name_vn'],
+                        address_full=form_data['receiver_address_full']
                     )
 
                 if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT:
@@ -134,7 +134,7 @@ class CtrCasaTopUp(BaseController):
                 )
         else:
             place_of_issue = await self.get_model_object_by_id(
-                model_id=form_data['place_of_issue']['id'], model=PlaceOfIssue, loc='place_of_issue_id'
+                model_id=form_data['sender_place_of_issue'], model=PlaceOfIssue, loc='place_of_issue_id'
             )
 
             if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
@@ -236,7 +236,7 @@ class CtrCasaTopUp(BaseController):
         ################################################################################################################
         sender_cif_number = form_data['sender_cif_number']
         gw_customer_info = await CtrGWCustomer(current_user).ctr_gw_get_customer_info_detail(
-            cif_number=sender_cif_number,
+            cif_number="",
             return_raw_data_flag=True
         )
         gw_customer_info_identity_info = gw_customer_info['id_info']
@@ -253,6 +253,17 @@ class CtrCasaTopUp(BaseController):
             telephone=gw_customer_info['telephone'],
             otherphone=gw_customer_info['otherphone']
         )
+        if not sender_cif_number:
+            sender_response.update(
+                fullname_vn=form_data['sender_full_name_vn'],
+                address_full=form_data['sender_address_full'],
+                identity_info=dict(
+                    number=form_data['sender_identity_number'],
+                    issued_date=form_data['sender_place_of_issue'],
+                    place_of_issue=form_data['sender_place_of_issue']
+                ),
+                mobile_phone=form_data['sender_mobile_number']
+            )
         controller_gw_employee = CtrGWEmployee(current_user)
         gw_direct_staff = await controller_gw_employee.ctr_gw_get_employee_info_from_code(
             employee_code=form_data['direct_staff_code'],
