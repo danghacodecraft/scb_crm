@@ -33,10 +33,12 @@ class CtrCloseCasa(BaseController):
         )
         close_account_list = []
         account_numbers = []
-        blk_closure = {
-            "CLOSE_MODE": "CASH",
-            "ACCOUNT_NO": ""
-        }
+        blk_closure = [
+            {
+                "CLOSE_MODE": "CASH",
+                "ACCOUNT_NO": ""
+            }
+        ]
 
         for account in close_casa_request:
             if account.account_info.account_num in account_numbers:
@@ -48,10 +50,12 @@ class CtrCloseCasa(BaseController):
                     if not item.account_number:
                         return self.response_exception(msg="CLOSE_MODE is not data")
 
-                    blk_closure = {
-                        "CLOSE_MODE": item.close_mode,
-                        "ACCOUNT_NO": item.account_number
-                    }
+                    blk_closure = [
+                        {
+                            "CLOSE_MODE": item.close_mode,
+                            "ACCOUNT_NO": item.account_number
+                        }
+                    ]
             close_account_list.append({
                 "account_info": {
                     "account_num": account.account_info.account_num
