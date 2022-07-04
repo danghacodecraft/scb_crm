@@ -28,7 +28,7 @@ async def view_save_deposit_open_td_account(
         current_user=Depends(get_current_user_from_header())
 ):
     save_deposit_account = await CtrDeposit(current_user=current_user).ctr_save_deposit_open_td_account(
-        booking_id=BOOKING_ID,
+        BOOKING_ID=BOOKING_ID,
         deposit_account_request=deposit_account_request
     )
     return ResponseData(**save_deposit_account)

@@ -5,13 +5,19 @@ from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
 from app.api.v1.endpoints.deposit.open_deposit.repository import (
     repos_save_td_account
 )
-from app.utils.functions import generate_uuid, now
+from app.api.v1.validator import validate_history_data
+from app.utils.constant.business_type import BUSINESS_TYPE_OPEN_TD_ACCOUNT
+from app.utils.constant.cif import (
+    PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_ACCOUNT,
+    PROFILE_HISTORY_STATUS_INIT
+)
+from app.utils.functions import generate_uuid, now, orjson_dumps
 
 
 class CtrDeposit(BaseController):
     async def ctr_save_deposit_open_td_account(
             self,
-            booking_id,
+            BOOKING_ID,
             deposit_account_request
     ):
         current_user = self.current_user
@@ -21,10 +27,12 @@ class CtrDeposit(BaseController):
                 session=self.oracle_session
             )
         )
+        td_account_ids = []
         td_accounts = []
         td_account_resigns = []
         for item in deposit_account_request.td_account:
             td_account_id = generate_uuid()
+            td_account_ids.append(td_account_id)
             td_accounts.append({
                 "id": td_account_id,
                 "customer_id": customer.id,
@@ -57,12 +65,67 @@ class CtrDeposit(BaseController):
                 "acc_type_id_resign": item.acc_type_id_resign
             })
 
-        td_account = self.call_repos(await repos_save_td_account(
+        saving_booking_account = []
+        saving_booking_customer = []
+        for account_id in td_account_ids:
+
+            saving_booking_account.append({
+                "booking_id": BOOKING_ID,
+                "account_id": account_id,
+                "created_at": now()
+            })
+
+            saving_booking_customer.append({
+                "booking_id": BOOKING_ID,
+                "customer_id": customer.id
+            })
+
+        # Tạo data TransactionDaily và các TransactionStage
+        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
+            business_type_id=BUSINESS_TYPE_OPEN_TD_ACCOUNT
+        )
+        (
+            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
+            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
+            saving_transaction_daily, saving_transaction_sender
+        ) = transaction_datas
+
+        history_datas = self.make_history_log_data(
+            description=PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_ACCOUNT,
+            history_status=PROFILE_HISTORY_STATUS_INIT,
+            current_user=current_user.user_info
+        )
+
+        # Validate history data
+        is_success, history_response = validate_history_data(history_datas)
+        if not is_success:
+            return self.response_exception(
+                msg=history_response['msg'],
+                loc=history_response['loc'],
+                detail=history_response['detail']
+            )
+
+        booking_id = self.call_repos(await repos_save_td_account(
+            booking_id=BOOKING_ID,
             td_accounts=td_accounts,
             td_account_resigns=td_account_resigns,
+            saving_transaction_stage_status=saving_transaction_stage_status,
+            saving_transaction_stage=saving_transaction_stage,
+            saving_transaction_stage_phase=saving_transaction_stage_phase,
+            saving_sla_transaction=saving_sla_transaction,
+            saving_transaction_stage_lane=saving_transaction_stage_lane,
+            saving_transaction_stage_role=saving_transaction_stage_role,
+            saving_transaction_daily=saving_transaction_daily,
+            saving_transaction_sender=saving_transaction_sender,
+            saving_booking_account=saving_booking_account,
+            saving_booking_customer=saving_booking_customer,
+            request_json=deposit_account_request.json(),
+            history_datas=orjson_dumps(history_datas),
             session=self.oracle_session
         ))
 
-        response_data = td_account
+        response_data = {
+            "booking_id": booking_id
+        }
 
         return self.response(data=response_data)

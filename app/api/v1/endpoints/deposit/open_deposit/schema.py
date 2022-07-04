@@ -23,6 +23,7 @@ class TdAccountRequest(BaseSchema):
     td_serial: str = Field(..., description='Số serial')
     td_interest_type: str = Field(..., description='Hình thức lãi')
     td_interest: str = Field(..., description='Lãi suất tiết kiệm')
+    td_rollover_type: Optional[str] = Field(..., description='Chỉ định khi đến hạn:I = Tái ký gốc + lãi ,P = Tái ký gốc')
     pay_out_casa_account_resign: Optional[str] = Field(..., description='Tài khoản nhận lãi tái ký')
     td_interest_class_resign: Optional[str] = Field(..., description='Hình thức lãi tái ký')
     acc_class_id_resign: Optional[str] = Field(..., description='Loại hình tài khoản tái ký')
