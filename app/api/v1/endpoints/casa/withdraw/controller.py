@@ -81,7 +81,6 @@ class CtrWithdraw(BaseController):
                 note=transactional_customer.note
             ) if transactional_customer.cif_flag else dict(
                 cif_flag=transactional_customer.cif_flag,
-                cif_number=transactional_customer.cif_number,
                 fullname_vn=transactional_customer.fullname_vn,
                 identity=transactional_customer.identity,
                 issued_date=transactional_customer.issued_date,
