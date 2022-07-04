@@ -133,24 +133,24 @@ class CtrCasaTopUp(BaseController):
                     address_full=form_data['address_full']
                 )
         else:
-            place_of_issue = await self.get_model_object_by_id(
-                model_id=form_data['sender_place_of_issue'], model=PlaceOfIssue, loc='place_of_issue_id'
+            receiver_place_of_issue_id = await self.get_model_object_by_id(
+                model_id=form_data['receiver_place_of_issue']['id'], model=PlaceOfIssue, loc='receiver_place_of_issue_id'
             )
 
             if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
-                branch_info = await self.get_model_object_by_id(
-                    model_id=form_data['branch']['id'], model=Branch, loc='branch_id'
+                receiver_branch_info = await self.get_model_object_by_id(
+                    model_id=form_data['receiver_branch']['id'], model=Branch, loc='receiver_branch_id'
                 )
 
                 receiver_response = dict(
-                    province=dropdown(branch_info.address_province),
-                    branch_info=dropdown(branch_info),
-                    fullname_vn=form_data['full_name_vn'],
-                    identity_number=form_data['identity_number'],
-                    issued_date=form_data['issued_date'],
-                    place_of_issue=dropdown(place_of_issue),
-                    mobile_number=form_data['mobile_number'],
-                    address_full=form_data['address_full']
+                    province=dropdown(receiver_branch_info.address_province),
+                    branch_info=dropdown(receiver_branch_info),
+                    fullname_vn=form_data['receiver_full_name_vn'],
+                    identity_number=form_data['receiver_identity_number'],
+                    issued_date=form_data['receiver_issued_date'],
+                    place_of_issue=dropdown(receiver_place_of_issue_id),
+                    mobile_number=form_data['receiver_mobile_number'],
+                    address_full=form_data['receiver_address_full']
                 )
 
             if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
@@ -173,7 +173,7 @@ class CtrCasaTopUp(BaseController):
                     fullname_vn=form_data['full_name_vn'],
                     identity_number=form_data['identity_number'],
                     issued_date=form_data['issued_date'],
-                    place_of_issue=dropdown(place_of_issue),
+                    place_of_issue=dropdown(receiver_place_of_issue_id),
                     mobile_number=form_data['mobile_number'],
                     address_full=form_data['address_full']
                 )
