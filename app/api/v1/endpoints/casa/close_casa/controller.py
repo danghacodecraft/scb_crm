@@ -54,7 +54,7 @@ class CtrCloseCasa(BaseController):
                     }
             close_account_list.append({
                 "account_info": {
-                    "account_number": account.account_info.account_num
+                    "account_num": account.account_info.account_num
                 },
                 "p_blk_closure": blk_closure,
                 # TODO chưa được mô tả
