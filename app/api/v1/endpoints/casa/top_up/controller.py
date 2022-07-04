@@ -300,18 +300,21 @@ class CtrCasaTopUp(BaseController):
         if not isinstance(request, CasaTopUpSCBToAccountRequest):
             return self.response_exception(msg=ERROR_MAPPING_MODEL, loc=f'model: {type(request)}')
 
-        cif_number = request.cif_number
-        if not cif_number:
-            return self.response_exception(msg=ERROR_CIF_NUMBER_NOT_EXIST, loc=f"cif_number: {cif_number}")
+        sender_cif_number = request.sender_cif_number
+        if not sender_cif_number:
+            return self.response_exception(msg=ERROR_CIF_NUMBER_NOT_EXIST, loc=f"cif_number: {sender_cif_number}")
 
-        account_number = request.account_number
+        receiver_account_number = request.receiver_account_number
 
         # Kiểm tra số tài khoản có tồn tại hay không
         casa_account = await CtrGWCasaAccount(current_user).ctr_gw_check_exist_casa_account_info(
-            account_number=account_number
+            account_number=receiver_account_number
         )
         if not casa_account['data']['is_existed']:
-            return self.response_exception(msg=ERROR_CASA_ACCOUNT_NOT_EXIST, loc=f"account_number: {account_number}")
+            return self.response_exception(
+                msg=ERROR_CASA_ACCOUNT_NOT_EXIST,
+                loc=f"account_number: {receiver_account_number}"
+            )
 
         return request
 
@@ -393,7 +396,7 @@ class CtrCasaTopUp(BaseController):
                 CasaTopUpThirdParty247ToCardRequest
             ]
     ):
-        cif_number = request.cif_number
+        cif_number = request.sender_cif_number
         receiving_method = request.receiving_method
         is_fee = request.is_fee
         fee_info = request.fee_info
