@@ -31,10 +31,9 @@ from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.approval import CASA_TOP_UP_STAGE_BEGIN
 from app.utils.constant.business_type import BUSINESS_TYPE_CASA_TOP_UP
 from app.utils.constant.casa import (
-    DENOMINATIONS__AMOUNTS, RECEIVING_METHOD__METHOD_TYPES,
-    RECEIVING_METHOD_IDENTITY_CASES, RECEIVING_METHOD_SCB_BY_IDENTITY,
-    RECEIVING_METHOD_SCB_TO_ACCOUNT, RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT,
-    RECEIVING_METHODS, RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY, RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT,
+    DENOMINATIONS__AMOUNTS, RECEIVING_METHOD__METHOD_TYPES, RECEIVING_METHOD_SCB_BY_IDENTITY,
+    RECEIVING_METHOD_SCB_TO_ACCOUNT, RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT, RECEIVING_METHODS,
+    RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY, RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT,
     RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD, RECEIVING_METHOD_ACCOUNT_CASES
 )
 from app.utils.constant.cif import PROFILE_HISTORY_DESCRIPTIONS_TOP_UP_CASA_ACCOUNT, PROFILE_HISTORY_STATUS_INIT
@@ -111,17 +110,17 @@ class CtrCasaTopUp(BaseController):
                         address_full=form_data['receiver_address_full']
                     )
 
-                if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT:
-                    receiver_response = dict(
-                        # bank=form_data['bank'],
-                        bank=dict(
-                            code="branch_id",
-                            name="branch_id"
-                        ),  # TODO: đợi e-bank
-                        receiver_account_number=receiver_account_number,
-                        # fullname_vn=gw_casa_account_info_customer_info['full_name'],
-                        address_full=form_data['address_full']
-                    )
+            if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT:
+                receiver_response = dict(
+                    # bank=form_data['bank'],
+                    bank=dict(
+                        code="branch_id",
+                        name="branch_id"
+                    ),  # TODO: đợi e-bank
+                    receiver_account_number=receiver_account_number,
+                    # fullname_vn=gw_casa_account_info_customer_info['full_name'],
+                    address_full=form_data['receiver_address_full']
+                )
             if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD:
                 receiver_response = dict(
                     bank=dict(
