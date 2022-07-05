@@ -40,14 +40,15 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_RETRIEVE_REPORT_STATEMENT_TD_ACCOUNT,
     GW_ENDPOINT_URL_RETRIEVE_REWARD_INFO_FROM_CODE,
     GW_ENDPOINT_URL_RETRIEVE_STAFF_OTHER_INFO_FROM_CODE,
+    GW_ENDPOINT_URL_RETRIEVE_TELE_TRANSFER_INFO,
     GW_ENDPOINT_URL_RETRIEVE_TOPIC_INFO_FROM_CODE,
     GW_ENDPOINT_URL_RETRIEVE_WORKING_PROCESS_INFO_FROM_CODE,
     GW_ENDPOINT_URL_SELECT_CATEGORY,
     GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE,
-    GW_ENDPOINT_URL_SELECT_USER_INFO, GW_FUNCTION_OPEN_CASA,
-    GW_HISTORY_ACCOUNT_NUM, GW_HISTORY_CHANGE_FIELD_ACCOUNT,
-    GW_RETRIEVE_CASA_ACCOUNT_DETAIL, GW_SELF_SELECTED_ACCOUNT_FLAG,
-    GW_SELF_UNSELECTED_ACCOUNT_FLAG, GW_ENDPOINT_URL_RETRIEVE_TELE_TRANSFER_INFO
+    GW_ENDPOINT_URL_SELECT_SERIAL_NUMBER, GW_ENDPOINT_URL_SELECT_USER_INFO,
+    GW_FUNCTION_OPEN_CASA, GW_HISTORY_ACCOUNT_NUM,
+    GW_HISTORY_CHANGE_FIELD_ACCOUNT, GW_RETRIEVE_CASA_ACCOUNT_DETAIL,
+    GW_SELF_SELECTED_ACCOUNT_FLAG, GW_SELF_UNSELECTED_ACCOUNT_FLAG
 )
 from app.utils.functions import date_to_string
 
@@ -1861,6 +1862,44 @@ class ServiceGW:
         try:
             async with self.session.post(url=api_url, json=request_data) as response:
                 logger.log("SERVICE", f"[GW][UserInfo] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data
+                else:
+                    return_data = await response.json()
+                    return True, return_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data
+
+    ####################################################################################################################
+    # START --- SERIAL
+    ####################################################################################################################
+    async def get_select_serial(self, current_user: UserInfoResponse, data_input):
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="retrieveSerialNumber_in", data_input=data_input
+        )
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_SERIAL_NUMBER}"
+
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW][Serial] {response.status} {api_url}")
                 if response.status != status.HTTP_200_OK:
                     if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
                         return_error = await response.json()

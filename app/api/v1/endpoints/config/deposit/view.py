@@ -8,7 +8,7 @@ from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.config.deposit.controller import CtrConfigDeposit
 from app.api.v1.endpoints.config.deposit.schema import (
-    AccClassRequest, AccClassResponse
+    AccClassRequest, AccClassResponse, SerialRequest, SerialResponse
 )
 from app.api.v1.schemas.utils import DropdownResponse
 
@@ -66,7 +66,7 @@ async def view_acc_type(
     return ResponseData(**acc_type)
 
 
-@router.get(
+@router.post(
     path="/acc_class/",
     name="Loại nhóm sản phẩm (gói) tài khoản",
     description="Loại nhóm sản phẩm (gói) tài khoản",
@@ -83,3 +83,22 @@ async def view_acc_class(
         acc_class_request=acc_class_request
     )
     return ResponseData[List[AccClassResponse]](**acc_class)
+
+
+@router.post(
+    path="/serial/",
+    name="Lấy số serial",
+    description="Lấy số serial",
+    responses=swagger_response(
+        response_model=ResponseData[SerialResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_serial(
+        serial_request: SerialRequest = Body(...),
+        current_user=Depends(get_current_user_from_header())  # noqa
+):
+    serial = await CtrConfigDeposit(current_user).ctr_get_serial(
+        serial_request=serial_request
+    )
+    return ResponseData[SerialResponse](**serial)
