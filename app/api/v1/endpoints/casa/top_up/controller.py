@@ -26,6 +26,7 @@ from app.api.v1.endpoints.user.schema import AuthResponse
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
 from app.api.v1.validator import validate_history_data
+from app.third_parties.oracle.models.master_data.bank import BankBranch
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.approval import CASA_TOP_UP_STAGE_BEGIN
@@ -372,8 +373,12 @@ class CtrCasaTopUp(BaseController):
                 loc=f'expect: CasaTopUpThirdPartyToAccountRequest, request: {type(request)}'
             )
         # validate branch of bank
-        # TODO:
-        # await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
+        receiver_bank_id = request.receiver_bank.id
+        await self.get_model_object_by_id(
+            model_id=request.receiver_bank.id,
+            model=BankBranch,
+            loc=f'receiver_bank -> id: {receiver_bank_id}'
+        )
         return request
 
     async def ctr_save_casa_top_up_third_party_by_identity(
@@ -386,8 +391,12 @@ class CtrCasaTopUp(BaseController):
                 loc=f'expect: CasaTopUpThirdPartyByIdentityRequest, request: {type(request)}'
             )
         # validate branch of bank
-        # TODO:
-        # await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
+        receiver_bank_id = request.receiver_bank.id
+        await self.get_model_object_by_id(
+            model_id=request.receiver_bank.id,
+            model=BankBranch,
+            loc=f'receiver_bank -> id: {receiver_bank_id}'
+        )
         return request
 
     async def ctr_save_casa_top_up_third_party_247_to_account(
@@ -400,8 +409,12 @@ class CtrCasaTopUp(BaseController):
                 loc=f'expect: CasaTopUpThirdPartyByIdentityRequest, request: {type(request)}'
             )
         # validate branch of bank
-        # TODO:
-        # await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
+        receiver_bank_id = request.receiver_bank.id
+        await self.get_model_object_by_id(
+            model_id=request.receiver_bank.id,
+            model=BankBranch,
+            loc=f'receiver_bank -> id: {receiver_bank_id}'
+        )
         return request
 
     async def ctr_save_casa_top_up_third_party_247_to_card(
