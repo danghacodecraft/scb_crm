@@ -33,10 +33,12 @@ class CtrCloseCasa(BaseController):
         )
         close_account_list = []
         account_numbers = []
-        blk_closure = {
-            "CLOSE_MODE": "CASH",
-            "ACCOUNT_NO": ""
-        }
+        blk_closure = [
+            {
+                "CLOSE_MODE": "CASH",
+                "ACCOUNT_NO": ""
+            }
+        ]
 
         for account in close_casa_request:
             if account.account_info.account_num in account_numbers:
@@ -48,13 +50,15 @@ class CtrCloseCasa(BaseController):
                     if not item.account_number:
                         return self.response_exception(msg="CLOSE_MODE is not data")
 
-                    blk_closure = {
-                        "CLOSE_MODE": item.close_mode,
-                        "ACCOUNT_NO": item.account_number
-                    }
+                    blk_closure = [
+                        {
+                            "CLOSE_MODE": item.close_mode,
+                            "ACCOUNT_NO": item.account_number
+                        }
+                    ]
             close_account_list.append({
                 "account_info": {
-                    "account_number": account.account_info.account_num
+                    "account_num": account.account_info.account_num
                 },
                 "p_blk_closure": blk_closure,
                 # TODO chưa được mô tả
@@ -92,7 +96,7 @@ class CtrCloseCasa(BaseController):
             })
 
         # Tạo data TransactionDaily và các TransactionStage
-        transaction_data = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
+        transaction_data = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
             business_type_id=BUSINESS_TYPE_CLOSE_CASA
         )
         (

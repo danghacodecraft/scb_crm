@@ -61,6 +61,7 @@ class Customer(Base):
     complete_flag = Column(NUMBER(1, 0, False), comment='Tạo CIF thành công')
 
     grade_name = Column(VARCHAR(100), comment='Xếp hạng tín dụng Khách hàng')
+    non_resident_flag = Column(NUMBER(1, 0, False), comment='Đánh dấu cif vãng lai')
 
     channel = relationship('Channel')
     customer_category = relationship('CustomerCategory')

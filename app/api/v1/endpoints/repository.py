@@ -111,11 +111,12 @@ async def repos_get_data_currency_config(session):
     return ReposReturn(data=response_data)
 
 
-async def repos_get_data_model_config(session: Session, model: Base, country_id: Optional[str] = None,
-                                      province_id: Optional[str] = None, district_id: Optional[str] = None,
-                                      region_id: Optional[str] = None, ward_id: Optional[str] = None,
-                                      level: Optional[str] = None, parent_id: Optional[str] = None,
-                                      is_special_dropdown: bool = False, type_id: Optional[str] = None):
+async def repos_get_data_model_config(
+        session: Session, model: Base, country_id: Optional[str] = None, province_id: Optional[str] = None,
+        district_id: Optional[str] = None, region_id: Optional[str] = None, ward_id: Optional[str] = None,
+        level: Optional[str] = None, parent_id: Optional[str] = None, is_special_dropdown: bool = False,
+        type_id: Optional[str] = None, napas_flag: bool = False, citad_flag: bool = False
+):
     list_data_engine = select(model)
     if hasattr(model, "country_id"):
         list_data_engine = list_data_engine.filter(model.country_id == country_id)
@@ -143,6 +144,13 @@ async def repos_get_data_model_config(session: Session, model: Base, country_id:
 
     if hasattr(model, 'type'):
         list_data_engine = list_data_engine.filter(model.type == type_id)
+
+    # Bank
+    if hasattr(model, 'napas_flag') and napas_flag:
+        list_data_engine = list_data_engine.filter(model.napas_flag == napas_flag)
+
+    if hasattr(model, 'citad_flag') and citad_flag:
+        list_data_engine = list_data_engine.filter(model.citad_flag == citad_flag)
 
     if hasattr(model, 'order_no'):
         list_data_engine = list_data_engine.order_by(model.order_no)

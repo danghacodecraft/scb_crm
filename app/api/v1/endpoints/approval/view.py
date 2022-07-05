@@ -18,7 +18,7 @@ router = APIRouter()
 router_special = APIRouter()
 
 
-@router.get(
+@router_special.get(
     path="/job/",
     description="Tổng số nghiệp vụ hoàn thành",
     name="Tổng số nghiệp vụ hoàn thành",
@@ -28,7 +28,7 @@ router_special = APIRouter()
     )
 )
 async def view_get_business_jobs(
-        cif_id: str = Path(..., description='Id CIF ảo'),
+        cif_id: str = Query(None, description='Id CIF ảo'),
         BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         business_type_code: str = Query(
             ..., description=f"Mã loại nghiệp vụ {make_description_from_dict(dictionary=BUSINESS_TYPES)}"
@@ -61,7 +61,7 @@ async def view_approval_process(
     return ResponseData[List[CifApprovalProcessResponse]](**approval_process)
 
 
-@router.post(
+@router_special.post(
     path="/",
     description="Phê duyệt - Phê duyệt biểu mẫu",
     name="Phê duyệt",
@@ -71,13 +71,12 @@ async def view_approval_process(
     )
 )
 async def view_approve(
-        cif_id: str = Path(..., description='Id CIF ảo'),
         BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         request: ApprovalRequest = Body(...),
         current_user=Depends(get_current_user_from_header())
 ):
     approve_info = await CtrApproval(current_user).ctr_approve(
-        cif_id=cif_id,
+        cif_id=request.cif_id,
         booking_id=BOOKING_ID,
         request=request
     )

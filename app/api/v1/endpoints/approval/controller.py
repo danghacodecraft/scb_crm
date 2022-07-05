@@ -37,8 +37,9 @@ from app.utils.constant.approval import (
     COMPLETED_STAGES, INIT_RESPONSE, INIT_STAGES, STAGE_BEGINS
 )
 from app.utils.constant.business_type import (
-    BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA, BUSINESS_TYPES
+    BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPES, BUSINESS_TYPE_NO_CIFS
 )
+from app.utils.constant.casa import RECEIVING_METHOD_IDENTITY_CASES
 from app.utils.constant.cif import (
     DROPDOWN_NONE_DICT, IMAGE_TYPE_FACE, IMAGE_TYPE_FINGERPRINT,
     IMAGE_TYPE_SIGNATURE
@@ -56,7 +57,7 @@ from app.utils.error_messages import (
     ERROR_APPROVAL_UPLOAD_SIGNATURE, ERROR_BUSINESS_TYPE_NOT_EXIST,
     ERROR_CIF_ID_NOT_EXIST, ERROR_CONTENT_NOT_NULL, ERROR_PERMISSION,
     ERROR_STAGE_COMPLETED, ERROR_VALIDATE, ERROR_WRONG_STAGE_ACTION,
-    MESSAGE_STATUS
+    MESSAGE_STATUS, ERROR_FIELD_REQUIRED
 )
 from app.utils.functions import (
     dropdown, generate_uuid, now, orjson_dumps, orjson_loads
@@ -133,218 +134,224 @@ class CtrApproval(BaseController):
         image_face_uuids = []
 
         compare_face_uuid = None
+        cif_id = None
+        authentication = None
+        business_type = await CtrBooking().ctr_get_business_type(booking_id=booking_id)
+        if business_type.code == BUSINESS_TYPE_INIT_CIF:
+            customer_info = await CtrBooking().ctr_get_customer_from_booking(
+                booking_id=booking_id
+            )
 
-        customer_info = await CtrBooking().ctr_get_customer_from_booking(
-            booking_id=booking_id
-        )
+            if not customer_info:
+                return self.response_exception(msg=ERROR_CIF_ID_NOT_EXIST, loc=f"booking_id {booking_id}")
 
-        if not customer_info:
-            return self.response_exception(msg=ERROR_CIF_ID_NOT_EXIST, loc=f"booking_id {booking_id}")
+            cif_id = customer_info.id
 
-        cif_id = customer_info.id
+            # check cif tồn tại
+            await self.get_model_object_by_id(model_id=cif_id, model=Customer, loc="cif_id")
 
-        # check cif tồn tại
-        await self.get_model_object_by_id(model_id=cif_id, model=Customer, loc="cif_id")
+            transactions = self.call_repos(await repos_get_approval_identity_images(
+                cif_id=cif_id,
+                session=self.oracle_session
+            ))
 
-        transactions = self.call_repos(await repos_get_approval_identity_images(
-            cif_id=cif_id,
-            session=self.oracle_session
-        ))
+            (
+                face_transactions, fingerprint_transactions, signature_transactions
+            ) = await self.check_data_in_identity_step_and_get_faces_fingerprints_signatures(transactions)
 
-        (
-            face_transactions, fingerprint_transactions, signature_transactions
-        ) = await self.check_data_in_identity_step_and_get_faces_fingerprints_signatures(transactions)
-
-        identity_image_ids = []
-        for identity, identity_image in face_transactions:
-            identity_face_uuid = identity_image.image_url
-            image_face_uuids.append(identity_face_uuid)
-            identity_image_ids.append(identity_image.id)
-
-        # Lấy hình ảnh so sánh, số nhiều nhưng cùng chung uuid
-        compare_image_transactions = self.call_repos(await repos_get_compare_image_transactions(
-            identity_image_ids=identity_image_ids,
-            session=self.oracle_session
-        ))
-
-        distinct_identity_images = {}
-        for compare_image, compare_image_transaction in compare_image_transactions:
-            compare_face_uuid = compare_image_transaction.compare_image_url
-            created_at = compare_image_transaction.maker_at
-            image_face_uuids.append(compare_image_transaction.compare_image_url)
+            identity_image_ids = []
             for identity, identity_image in face_transactions:
-                if compare_image_transaction.identity_image_id == identity_image.id:
-                    distinct_identity_images.update({
-                        identity_image.image_url: compare_image_transaction.similar_percent
-                    })
-                    identity_face_image_uuids.append(compare_image_transaction.compare_image_url)
-        image_face_uuids.extend(identity_face_image_uuids)
+                identity_face_uuid = identity_image.image_url
+                image_face_uuids.append(identity_face_uuid)
+                identity_image_ids.append(identity_image.id)
 
-        # gọi đến service file để lấy link download
-        uuid__link_downloads = await self.get_link_download_multi_file(uuids=image_face_uuids)
-
-        for distinct_identity_image in distinct_identity_images:
-            identity_face_images.append(dict(
-                url=uuid__link_downloads[distinct_identity_image],
-                similar_percent=distinct_identity_images[distinct_identity_image]
+            # Lấy hình ảnh so sánh, số nhiều nhưng cùng chung uuid
+            compare_image_transactions = self.call_repos(await repos_get_compare_image_transactions(
+                identity_image_ids=identity_image_ids,
+                session=self.oracle_session
             ))
 
-        # RULE: Nếu chưa upload -> Trả null hết (Lấy 2 hình mới nhất)
-        if not identity_face_images and not compare_face_uuid:
-            # for identity, identity_image in face_transactions:
-            #     init_identity_face_images.append(dict(
-            #         url=uuid__link_downloads[identity_image.image_url],
-            #         similar_percent=None
-            #     ))
-            identity_face_images = init_identity_face_images
+            distinct_identity_images = {}
+            for compare_image, compare_image_transaction in compare_image_transactions:
+                compare_face_uuid = compare_image_transaction.compare_image_url
+                created_at = compare_image_transaction.maker_at
+                image_face_uuids.append(compare_image_transaction.compare_image_url)
+                for identity, identity_image in face_transactions:
+                    if compare_image_transaction.identity_image_id == identity_image.id:
+                        distinct_identity_images.update({
+                            identity_image.image_url: compare_image_transaction.similar_percent
+                        })
+                        identity_face_image_uuids.append(compare_image_transaction.compare_image_url)
+            image_face_uuids.extend(identity_face_image_uuids)
+
+            # gọi đến service file để lấy link download
+            uuid__link_downloads = await self.get_link_download_multi_file(uuids=image_face_uuids)
+
+            for distinct_identity_image in distinct_identity_images:
+                identity_face_images.append(dict(
+                    url=uuid__link_downloads[distinct_identity_image],
+                    similar_percent=distinct_identity_images[distinct_identity_image]
+                ))
+
+            # RULE: Nếu chưa upload -> Trả null hết (Lấy 2 hình mới nhất)
+            if not identity_face_images and not compare_face_uuid:
+                # for identity, identity_image in face_transactions:
+                #     init_identity_face_images.append(dict(
+                #         url=uuid__link_downloads[identity_image.image_url],
+                #         similar_percent=None
+                #     ))
+                identity_face_images = init_identity_face_images
+                created_at = None
+
+            face_authentication = dict(
+                compare_url=uuid__link_downloads[compare_face_uuid] if compare_face_uuid else None,
+                # compare_face_url=compare_face_url,
+                compare_uuid=compare_face_uuid,
+                created_at=created_at,
+                identity_images=identity_face_images,
+            )
+
+            ############################################################################################################
+            # Chữ kí - signature
             created_at = None
+            init_identity_signature_images = []
+            identity_signature_images = []
+            identity_signature_image_uuids = []
+            image_signature_uuids = []
 
-        face_authentication = dict(
-            compare_url=uuid__link_downloads[compare_face_uuid] if compare_face_uuid else None,
-            # compare_face_url=compare_face_url,
-            compare_uuid=compare_face_uuid,
-            created_at=created_at,
-            identity_images=identity_face_images,
-        )
+            compare_signature_uuid = None
 
-        ################################################################################################################
-        # Chữ kí - signature
-        created_at = None
-        init_identity_signature_images = []
-        identity_signature_images = []
-        identity_signature_image_uuids = []
-        image_signature_uuids = []
-
-        compare_signature_uuid = None
-
-        identity_signature_image_ids = []
-        for identity, identity_image in signature_transactions:
-            identity_signature_uuid = identity_image.image_url
-            image_signature_uuids.append(identity_signature_uuid)
-            identity_signature_image_ids.append(identity_image.id)
-
-        # Lấy hình ảnh so sánh, số nhiều nhưng cùng chung uuid
-        compare_signature_image_transactions = self.call_repos(await repos_get_compare_image_transactions(
-            identity_image_ids=identity_signature_image_ids,
-            session=self.oracle_session
-        ))
-
-        distinct_signature_identity_images = {}
-        for compare_image, compare_image_transaction in compare_signature_image_transactions[:2]:
-            compare_signature_uuid = compare_image_transaction.compare_image_url
-            created_at = compare_image_transaction.maker_at
-            image_signature_uuids.append(compare_signature_uuid)
+            identity_signature_image_ids = []
             for identity, identity_image in signature_transactions:
-                if compare_image_transaction.identity_image_id == identity_image.id:
-                    distinct_signature_identity_images.update({
-                        identity_image.image_url: compare_image_transaction.similar_percent
-                    })
-                    identity_signature_image_uuids.append(compare_image_transaction.compare_image_url)
-        image_signature_uuids.extend(identity_signature_image_uuids)
+                identity_signature_uuid = identity_image.image_url
+                image_signature_uuids.append(identity_signature_uuid)
+                identity_signature_image_ids.append(identity_image.id)
 
-        # gọi đến service file để lấy link download
-        uuid_signature_link_downloads = await self.get_link_download_multi_file(uuids=image_signature_uuids)
-
-        for distinct_identity_image in distinct_signature_identity_images:
-            identity_signature_images.append(dict(
-                url=uuid_signature_link_downloads[distinct_identity_image],
-                similar_percent=distinct_signature_identity_images[distinct_identity_image]
+            # Lấy hình ảnh so sánh, số nhiều nhưng cùng chung uuid
+            compare_signature_image_transactions = self.call_repos(await repos_get_compare_image_transactions(
+                identity_image_ids=identity_signature_image_ids,
+                session=self.oracle_session
             ))
 
-        # RULE: Nếu chưa upload -> Lấy 2 hình mới nhất
-        if not identity_signature_images and not compare_signature_uuid:
-            for identity, identity_image in signature_transactions:
-                init_identity_signature_images.append(dict(
-                    # url=uuid_signature_link_downloads[identity_image.image_url],
-                    url=None,
-                    similar_percent=None
+            distinct_signature_identity_images = {}
+            for compare_image, compare_image_transaction in compare_signature_image_transactions[:2]:
+                compare_signature_uuid = compare_image_transaction.compare_image_url
+                created_at = compare_image_transaction.maker_at
+                image_signature_uuids.append(compare_signature_uuid)
+                for identity, identity_image in signature_transactions:
+                    if compare_image_transaction.identity_image_id == identity_image.id:
+                        distinct_signature_identity_images.update({
+                            identity_image.image_url: compare_image_transaction.similar_percent
+                        })
+                        identity_signature_image_uuids.append(compare_image_transaction.compare_image_url)
+            image_signature_uuids.extend(identity_signature_image_uuids)
+
+            # gọi đến service file để lấy link download
+            uuid_signature_link_downloads = await self.get_link_download_multi_file(uuids=image_signature_uuids)
+
+            for distinct_identity_image in distinct_signature_identity_images:
+                identity_signature_images.append(dict(
+                    url=uuid_signature_link_downloads[distinct_identity_image],
+                    similar_percent=distinct_signature_identity_images[distinct_identity_image]
                 ))
-            identity_signature_images = init_identity_signature_images
 
-        signature_authentication = dict(
-            compare_url=uuid_signature_link_downloads[compare_signature_uuid] if compare_signature_uuid else None,
-            compare_uuid=compare_signature_uuid,
-            created_at=created_at,
-            identity_images=identity_signature_images,
-        )
-        ################################################################################################################
-        # Vân tay - fingerprint
-        created_at = None
-        init_identity_fingerprint_images = []
-        identity_fingerprint_images = []
-        identity_fingerprint_image_uuids = []
-        image_fingerprint_uuids = []
+            # RULE: Nếu chưa upload -> Lấy 2 hình mới nhất
+            if not identity_signature_images and not compare_signature_uuid:
+                for identity, identity_image in signature_transactions: # noqa
+                    init_identity_signature_images.append(dict(
+                        # url=uuid_signature_link_downloads[identity_image.image_url],
+                        url=None,
+                        similar_percent=None
+                    ))
+                identity_signature_images = init_identity_signature_images
 
-        compare_fingerprint_uuid = None
+            signature_authentication = dict(
+                compare_url=uuid_signature_link_downloads[compare_signature_uuid] if compare_signature_uuid else None,
+                compare_uuid=compare_signature_uuid,
+                created_at=created_at,
+                identity_images=identity_signature_images,
+            )
+            ############################################################################################################
+            # Vân tay - fingerprint
+            created_at = None
+            init_identity_fingerprint_images = []
+            identity_fingerprint_images = []
+            identity_fingerprint_image_uuids = []
+            image_fingerprint_uuids = []
 
-        identity_fingerprint_image_ids = []
-        for _, identity_image in fingerprint_transactions:
-            identity_fingerprint_uuid = identity_image.image_url
-            image_fingerprint_uuids.append(identity_fingerprint_uuid)
-            identity_fingerprint_image_ids.append(identity_image.id)
+            compare_fingerprint_uuid = None
 
-        # Lấy hình ảnh so sánh, số nhiều nhưng cùng chung uuid
-        compare_fingerprint_image_transactions = self.call_repos(await repos_get_compare_image_transactions(
-            identity_image_ids=identity_fingerprint_image_ids,
-            session=self.oracle_session
-        ))
+            identity_fingerprint_image_ids = []
+            for _, identity_image in fingerprint_transactions:
+                identity_fingerprint_uuid = identity_image.image_url
+                image_fingerprint_uuids.append(identity_fingerprint_uuid)
+                identity_fingerprint_image_ids.append(identity_image.id)
 
-        distinct_fingerprint_identity_images = {}
-        # lấy 2 trong số các chữ ký query
-        for compare_image, compare_image_transaction in compare_fingerprint_image_transactions[:2]:
-            compare_fingerprint_uuid = compare_image_transaction.compare_image_url
-            created_at = compare_image_transaction.maker_at
-            image_fingerprint_uuids.append(compare_fingerprint_uuid)
-
-            for identity, identity_image in fingerprint_transactions:
-                if compare_image_transaction.identity_image_id == identity_image.id:
-                    distinct_fingerprint_identity_images.update({
-                        identity_image.image_url: compare_image_transaction.similar_percent
-                    })
-                    identity_fingerprint_image_uuids.append(compare_image_transaction.compare_image_url)
-
-        image_fingerprint_uuids.extend(identity_fingerprint_image_uuids)
-
-        # gọi đến service file để lấy link download
-        uuid_fingerprint_link_downloads = await self.get_link_download_multi_file(uuids=image_fingerprint_uuids)
-
-        for distinct_identity_image in distinct_fingerprint_identity_images:
-            identity_fingerprint_images.append(dict(
-                url=uuid_fingerprint_link_downloads[distinct_identity_image],
-                similar_percent=distinct_fingerprint_identity_images[distinct_identity_image]
+            # Lấy hình ảnh so sánh, số nhiều nhưng cùng chung uuid
+            compare_fingerprint_image_transactions = self.call_repos(await repos_get_compare_image_transactions(
+                identity_image_ids=identity_fingerprint_image_ids,
+                session=self.oracle_session
             ))
 
-        # RULE: Nếu chưa upload -> Lấy 2 hình mới nhất
-        if not identity_fingerprint_images and not compare_fingerprint_uuid:
-            for identity, identity_image in fingerprint_transactions:
-                init_identity_fingerprint_images.append(dict(
-                    # url=uuid_fingerprint_link_downloads[identity_image.image_url],
-                    url=None,
-                    similar_percent=None
+            distinct_fingerprint_identity_images = {}
+            # lấy 2 trong số các chữ ký query
+            for compare_image, compare_image_transaction in compare_fingerprint_image_transactions[:2]:
+                compare_fingerprint_uuid = compare_image_transaction.compare_image_url
+                created_at = compare_image_transaction.maker_at
+                image_fingerprint_uuids.append(compare_fingerprint_uuid)
+
+                for identity, identity_image in fingerprint_transactions:
+                    if compare_image_transaction.identity_image_id == identity_image.id:
+                        distinct_fingerprint_identity_images.update({
+                            identity_image.image_url: compare_image_transaction.similar_percent
+                        })
+                        identity_fingerprint_image_uuids.append(compare_image_transaction.compare_image_url)
+
+            image_fingerprint_uuids.extend(identity_fingerprint_image_uuids)
+
+            # gọi đến service file để lấy link download
+            uuid_fingerprint_link_downloads = await self.get_link_download_multi_file(uuids=image_fingerprint_uuids)
+
+            for distinct_identity_image in distinct_fingerprint_identity_images:
+                identity_fingerprint_images.append(dict(
+                    url=uuid_fingerprint_link_downloads[distinct_identity_image],
+                    similar_percent=distinct_fingerprint_identity_images[distinct_identity_image]
                 ))
-            identity_fingerprint_images = init_identity_fingerprint_images
 
-        fingerprint_authentication = dict(
-            compare_url=uuid_fingerprint_link_downloads[compare_fingerprint_uuid] if compare_fingerprint_uuid else None,
-            compare_uuid=compare_fingerprint_uuid,
-            created_at=created_at,
-            identity_images=identity_fingerprint_images,
-        )
+            # RULE: Nếu chưa upload -> Lấy 2 hình mới nhất
+            if not identity_fingerprint_images and not compare_fingerprint_uuid:
+                for identity, identity_image in fingerprint_transactions:   # noqa
+                    init_identity_fingerprint_images.append(dict(
+                        # url=uuid_fingerprint_link_downloads[identity_image.image_url],
+                        url=None,
+                        similar_percent=None
+                    ))
+                identity_fingerprint_images = init_identity_fingerprint_images
 
-        authentication = dict(
-            face=face_authentication,
-            signature=signature_authentication,
-            fingerprint=fingerprint_authentication
-        )
+            fingerprint_authentication = dict(
+                compare_url=uuid_fingerprint_link_downloads[compare_fingerprint_uuid] if compare_fingerprint_uuid else None,
+                compare_uuid=compare_fingerprint_uuid,
+                created_at=created_at,
+                identity_images=identity_fingerprint_images,
+            )
 
-        ################################################################################################################
+            authentication = dict(
+                face=face_authentication,
+                signature=signature_authentication,
+                fingerprint=fingerprint_authentication
+            )
+
+            ############################################################################################################
 
         ################################################################################################################
         # PHÊ DUYỆT
         ################################################################################################################
 
         # Kiểm tra xem đang ở bước nào của giao dịch
-        _, previous_transaction_daily, previous_transaction_stage, _, previous_transaction_sender, previous_transaction_stage_action = self.call_repos(
+        (
+            _, previous_transaction_daily, previous_transaction_stage, _, previous_transaction_sender,
+            previous_transaction_stage_action
+        ) = self.call_repos(
             await repos_open_cif_get_previous_stage(
                 booking_id=booking_id,
                 session=self.oracle_session
@@ -629,11 +636,94 @@ class CtrApproval(BaseController):
             booking_id: str,
             request: ApprovalRequest
     ):
-        # check cif tồn tại
-        await self.get_model_object_by_id(model_id=cif_id, model=Customer, loc="cif_id")
-
-        current_user = self.current_user.user_info
         auth_response = self.current_user
+        current_user = self.current_user.user_info
+        business_type = await CtrBooking().ctr_get_business_type(booking_id=booking_id)
+        business_type_id = business_type.code
+        no_cif_flag = False
+        face_authentications = []
+        fingerprint_authentications = []
+        signature_authentications = []
+
+        # TH1: Những nghiệp vụ cần truyền cif
+        if business_type_id not in BUSINESS_TYPE_NO_CIFS:
+            no_cif_flag = True
+            # check cif tồn tại
+            await self.get_model_object_by_id(model_id=cif_id, model=Customer, loc="cif_id")
+
+        # TH1: Những nghiệp vụ KHÔNG cần truyền cif
+        else:
+            booking_business_form = await CtrBooking().ctr_get_booking_business_form(
+                booking_id=booking_id, session=self.oracle_session
+            )
+            form_data = orjson_loads(booking_business_form.form_data)
+            # TH1: Method không có cif
+            if form_data['receiving_method'] in RECEIVING_METHOD_IDENTITY_CASES:
+                return self.response_exception(
+                    msg=f"{form_data['receiving_method']}",
+                    detail="Đang nâng cấp"
+                )
+            # TH2: Method BẮT BUỘC có cif
+            elif not cif_id:
+                return self.response_exception(
+                    msg=ERROR_FIELD_REQUIRED,
+                    loc='cif_id'
+                )
+
+        if not no_cif_flag:
+            ############################################################################################################
+            # THÔNG TIN XÁC THỰC
+            ############################################################################################################
+
+            # Lấy tất cả hình ảnh ở bước GTDD
+            transactions = self.call_repos(await repos_get_approval_identity_images(
+                cif_id=cif_id,
+                session=self.oracle_session
+            ))
+            await self.check_data_in_identity_step_and_get_faces_fingerprints_signatures(transactions)
+
+            ############################################################################################################
+            # Thông tin xác thực
+            authentications = self.call_repos(await repos_approval_get_face_authentication(
+                cif_id=cif_id,
+                session=self.oracle_session
+            ))
+
+            for _, identity_image, identity_image_transaction, _, compare_image_transaction in authentications:
+                if identity_image.image_type_id == IMAGE_TYPE_FACE:
+                    face_authentications.append({
+                        identity_image_transaction.image_url: compare_image_transaction.compare_image_url
+                    })
+                if identity_image.image_type_id == IMAGE_TYPE_FINGERPRINT:
+                    fingerprint_authentications.append({
+                        identity_image_transaction.image_url: compare_image_transaction.compare_image_url
+                    })
+                if identity_image.image_type_id == IMAGE_TYPE_SIGNATURE:
+                    signature_authentications.append({
+                        identity_image_transaction.image_url: compare_image_transaction.compare_image_url
+                    })
+
+            # # Kiểm tra xem khuôn mặt đã upload chưa
+            # if not face_authentications:
+            #     return self.response_exception(
+            #         msg=ERROR_APPROVAL_UPLOAD_FACE,
+            #         detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_FACE]
+            #     )
+
+            # # Kiểm tra xem VÂN TAY đã upload chưa
+            # if not fingerprint_authentications:
+            #     return self.response_exception(
+            #         msg=ERROR_APPROVAL_UPLOAD_FINGERPRINT,
+            #         detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_FINGERPRINT]
+            #     )
+
+            # Kiểm tra xem chữ ký đã upload chưa
+            if not signature_authentications:
+                return self.response_exception(
+                    msg=ERROR_APPROVAL_UPLOAD_SIGNATURE,
+                    detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_SIGNATURE]
+                )
+            ############################################################################################################
 
         ################################################################################################################
         # THÔNG TIN BIỂU MẪU
@@ -641,70 +731,11 @@ class CtrApproval(BaseController):
         # TODO: Kiểm tra số biểu mẫu gửi xuống có bằng với số biểu mẫu liên quan hay không
 
         ################################################################################################################
-        # THÔNG TIN XÁC THỰC
-        ################################################################################################################
-
-        # Lấy tất cả hình ảnh ở bước GTDD
-        transactions = self.call_repos(await repos_get_approval_identity_images(
-            cif_id=cif_id,
-            session=self.oracle_session
-        ))
-        await self.check_data_in_identity_step_and_get_faces_fingerprints_signatures(transactions)
-
-        ################################################################################################################
-        # Thông tin xác thực
-        authentications = self.call_repos(await repos_approval_get_face_authentication(
-            cif_id=cif_id,
-            session=self.oracle_session
-        ))
-
-        face_authentications = []
-        fingerprint_authentications = []
-        signature_authentications = []
-        for _, identity_image, identity_image_transaction, _, compare_image_transaction in authentications:
-            if identity_image.image_type_id == IMAGE_TYPE_FACE:
-                face_authentications.append({
-                    identity_image_transaction.image_url: compare_image_transaction.compare_image_url
-                })
-            if identity_image.image_type_id == IMAGE_TYPE_FINGERPRINT:
-                fingerprint_authentications.append({
-                    identity_image_transaction.image_url: compare_image_transaction.compare_image_url
-                })
-            if identity_image.image_type_id == IMAGE_TYPE_SIGNATURE:
-                signature_authentications.append({
-                    identity_image_transaction.image_url: compare_image_transaction.compare_image_url
-                })
-
-        # # Kiểm tra xem khuôn mặt đã upload chưa
-        # if not face_authentications:
-        #     return self.response_exception(
-        #         msg=ERROR_APPROVAL_UPLOAD_FACE,
-        #         detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_FACE]
-        #     )
-
-        # # Kiểm tra xem VÂN TAY đã upload chưa
-        # if not fingerprint_authentications:
-        #     return self.response_exception(
-        #         msg=ERROR_APPROVAL_UPLOAD_FINGERPRINT,
-        #         detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_FINGERPRINT]
-        #     )
-
-        # Kiểm tra xem chữ ký đã upload chưa
-        if not signature_authentications:
-            return self.response_exception(
-                msg=ERROR_APPROVAL_UPLOAD_SIGNATURE,
-                detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_SIGNATURE]
-            )
-        ################################################################################################################
-
-        ################################################################################################################
         # PHÊ DUYỆT
         ################################################################################################################
         content = request.approval.content
         reject_flag = request.approval.reject_flag
         action_id = request.approval.action_id
-        business_type = await CtrBooking().ctr_get_business_type(booking_id=booking_id)
-        business_type_id = business_type.code
 
         _, _, previous_transaction_stage = self.call_repos(
             await repos_get_previous_stage(
@@ -778,66 +809,66 @@ class CtrApproval(BaseController):
                         loc="authentication"
                     )
 
-                ########################################################################################################
-                # [Thông tin xác thực] Khuôn mặt
-                if face_authentications:
-                    if not request.authentication.face:
+                if not no_cif_flag:
+                    ####################################################################################################
+                    # [Thông tin xác thực] Khuôn mặt
+                    if face_authentications:
+                        if not request.authentication.face:
+                            return self.response_exception(
+                                msg=ERROR_VALIDATE,
+                                detail="Field required",
+                                loc="authentication -> face"
+                            )
+                        new_face_compare_image_transaction_uuid = list(face_authentications[0].values())[0]
+
+                        # Kiểm tra xem khuôn mặt gửi lên có đúng không
+                        # Hình ảnh kiểm tra sẽ là hình ảnh của lần Upload mới nhất
+                        if new_face_compare_image_transaction_uuid != request.authentication.face.compare_face_image_uuid:
+                            return self.response_exception(
+                                msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
+                                detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FACE],
+                                loc="authentication -> face -> compare_face_image_uuid"
+                            )
+                    ####################################################################################################
+
+                    ####################################################################################################
+                    # [Thông tin xác thực] Vân tay
+                    if fingerprint_authentications:
+                        if not request.authentication.fingerprint:
+                            return self.response_exception(
+                                msg=ERROR_VALIDATE,
+                                detail="Field required",
+                                loc="authentication -> fingerprint"
+                            )
+                        new_fingerprint_compare_image_transaction_uuid = list(fingerprint_authentications[0].values())[0]
+                        # Kiểm tra xem vân tay gửi lên có đúng không
+                        # Hình ảnh kiểm tra sẽ là hình ảnh của lần Upload mới nhất
+                        if new_fingerprint_compare_image_transaction_uuid != request.authentication.fingerprint.compare_face_image_uuid:
+                            return self.response_exception(
+                                msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT,
+                                detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT],
+                                loc="authentication -> fingerprint -> compare_face_image_uuid"
+                            )
+                    ####################################################################################################
+
+                    ####################################################################################################
+                    # [Thông tin xác thực] Chữ ký
+                    if not request.authentication.signature:
                         return self.response_exception(
                             msg=ERROR_VALIDATE,
                             detail="Field required",
-                            loc="authentication -> face"
+                            loc="authentication -> signature"
                         )
-                    new_face_compare_image_transaction_uuid = list(face_authentications[0].values())[0]
-
-                    # Kiểm tra xem khuôn mặt gửi lên có đúng không
+                    new_signature_compare_image_transaction_uuid = list(signature_authentications[0].values())[0]
+                    # Kiểm tra xem chữ ký gửi lên có đúng không
                     # Hình ảnh kiểm tra sẽ là hình ảnh của lần Upload mới nhất
-                    if new_face_compare_image_transaction_uuid != request.authentication.face.compare_face_image_uuid:
+                    if new_signature_compare_image_transaction_uuid != request.authentication.signature.compare_face_image_uuid:
                         return self.response_exception(
-                            msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
-                            detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FACE],
-                            loc="authentication -> face -> compare_face_image_uuid"
+                            msg=ERROR_APPROVAL_INCORRECT_UPLOAD_SIGNATURE,
+                            detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_SIGNATURE],
+                            loc="authentication -> signature -> compare_face_image_uuid"
                         )
-                ########################################################################################################
-
-                ########################################################################################################
-                # [Thông tin xác thực] Vân tay
-                if fingerprint_authentications:
-                    if not request.authentication.fingerprint:
-                        return self.response_exception(
-                            msg=ERROR_VALIDATE,
-                            detail="Field required",
-                            loc="authentication -> fingerprint"
-                        )
-                    new_fingerprint_compare_image_transaction_uuid = list(fingerprint_authentications[0].values())[0]
-                    # Kiểm tra xem vân tay gửi lên có đúng không
-                    # Hình ảnh kiểm tra sẽ là hình ảnh của lần Upload mới nhất
-                    if new_fingerprint_compare_image_transaction_uuid != request.authentication.fingerprint.compare_face_image_uuid:
-                        return self.response_exception(
-                            msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT,
-                            detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT],
-                            loc="authentication -> fingerprint -> compare_face_image_uuid"
-                        )
-                ########################################################################################################
-
-                ########################################################################################################
-                # [Thông tin xác thực] Chữ ký
-                if not request.authentication.signature:
-                    return self.response_exception(
-                        msg=ERROR_VALIDATE,
-                        detail="Field required",
-                        loc="authentication -> signature"
-                    )
-                new_signature_compare_image_transaction_uuid = list(signature_authentications[0].values())[0]
-                # Kiểm tra xem chữ ký gửi lên có đúng không
-                # Hình ảnh kiểm tra sẽ là hình ảnh của lần Upload mới nhất
-                if new_signature_compare_image_transaction_uuid != request.authentication.signature.compare_face_image_uuid:
-                    return self.response_exception(
-                        msg=ERROR_APPROVAL_INCORRECT_UPLOAD_SIGNATURE,
-                        detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_SIGNATURE],
-                        loc="authentication -> signature -> compare_face_image_uuid"
-                    )
-                ########################################################################################################
-
+                    ####################################################################################################
             else:
                 current_stage = self.call_repos(await repos_get_next_stage(
                     business_type_id=business_type_id,
@@ -1315,11 +1346,13 @@ class CtrApproval(BaseController):
 
         business_jobs = []
         if business_type_code == BUSINESS_TYPE_INIT_CIF:
+            if not cif_id:
+                return self.response_exception(msg=ERROR_CIF_ID_NOT_EXIST, loc="query -> cif_id")
             business_jobs = self.call_repos(await repos_get_business_jobs(
                 cif_id=cif_id,
                 session=self.oracle_session
             ))
-        if business_type_code == BUSINESS_TYPE_OPEN_CASA:
+        else:
             business_jobs = self.call_repos(await repos_get_business_jobs_by_open_casa(
                 booking_id=booking_id,
                 session=self.oracle_session

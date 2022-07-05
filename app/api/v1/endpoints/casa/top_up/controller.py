@@ -26,6 +26,7 @@ from app.api.v1.endpoints.user.schema import AuthResponse
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
 from app.api.v1.validator import validate_history_data
+from app.third_parties.oracle.models.master_data.bank import BankBranch
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.approval import CASA_TOP_UP_STAGE_BEGIN
@@ -36,7 +37,8 @@ from app.utils.constant.casa import (
     RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY, RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT,
     RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD, RECEIVING_METHOD_ACCOUNT_CASES
 )
-from app.utils.constant.cif import PROFILE_HISTORY_DESCRIPTIONS_TOP_UP_CASA_ACCOUNT, PROFILE_HISTORY_STATUS_INIT
+from app.utils.constant.cif import PROFILE_HISTORY_DESCRIPTIONS_TOP_UP_CASA_ACCOUNT, PROFILE_HISTORY_STATUS_INIT, \
+    IDENTITY_TYPE_CODE_NON_RESIDENT, ADDRESS_TYPE_CODE_UNDEFINDED
 from app.utils.constant.gw import GW_REQUEST_DIRECT_INDIRECT
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_GDV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_GDV
@@ -44,9 +46,10 @@ from app.utils.constant.idm import (
 from app.utils.error_messages import (
     ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_CIF_NUMBER_NOT_EXIST,
     ERROR_DENOMINATIONS_NOT_EXIST, ERROR_MAPPING_MODEL, ERROR_NOT_NULL,
-    ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
+    ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST, ERROR_FIELD_REQUIRED
 )
-from app.utils.functions import dropdown, orjson_loads, orjson_dumps
+from app.utils.functions import dropdown, orjson_loads, orjson_dumps, generate_uuid, now
+from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese, split_name, make_short_name
 
 
 class CtrCasaTopUp(BaseController):
@@ -347,10 +350,23 @@ class CtrCasaTopUp(BaseController):
         # validate issued_date
         await self.validate_issued_date(issued_date=request.receiver_issued_date, loc='issued_date')
 
-        # validate place_of_issue
-        await self.get_model_object_by_id(
-            model_id=request.receiver_place_of_issue.id, model=PlaceOfIssue, loc='place_of_issue -> id'
+        # validate receiver_place_of_issue
+        place_of_issue = await self.get_model_object_by_id(
+            model_id=request.receiver_place_of_issue.id, model=PlaceOfIssue, loc='receiver_place_of_issue -> id'
         )
+
+        # validate sender_place_of_issue
+        await self.get_model_object_by_id(
+            model_id=request.sender_place_of_issue.id, model=PlaceOfIssue, loc='sender_place_of_issue -> id'
+        )
+
+        # Lưu thông tin p_instrument_number cho bước phê duyệt
+        tele_transfer_info = await CtrGWCasaAccount(self.current_user).ctr_gw_get_tele_transfer(
+            request_data=request,
+            place_of_issue=place_of_issue
+        )
+        request.p_instrument_number = tele_transfer_info['data']['p_instrument_number']
+        request.core_fcc_request = tele_transfer_info['data']['data_input']
 
         return request
 
@@ -364,8 +380,12 @@ class CtrCasaTopUp(BaseController):
                 loc=f'expect: CasaTopUpThirdPartyToAccountRequest, request: {type(request)}'
             )
         # validate branch of bank
-        # TODO:
-        # await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
+        receiver_bank_id = request.receiver_bank.id
+        await self.get_model_object_by_id(
+            model_id=request.receiver_bank.id,
+            model=BankBranch,
+            loc=f'receiver_bank -> id: {receiver_bank_id}'
+        )
         return request
 
     async def ctr_save_casa_top_up_third_party_by_identity(
@@ -378,8 +398,17 @@ class CtrCasaTopUp(BaseController):
                 loc=f'expect: CasaTopUpThirdPartyByIdentityRequest, request: {type(request)}'
             )
         # validate branch of bank
-        # TODO:
-        # await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
+        receiver_bank_id = request.receiver_bank.id
+        await self.get_model_object_by_id(
+            model_id=request.receiver_bank.id,
+            model=BankBranch,
+            loc=f'receiver_bank -> id: {receiver_bank_id}'
+        )
+
+        # validate sender_place_of_issue
+        await self.get_model_object_by_id(
+            model_id=request.sender_place_of_issue.id, model=PlaceOfIssue, loc='sender_place_of_issue -> id'
+        )
         return request
 
     async def ctr_save_casa_top_up_third_party_247_to_account(
@@ -392,8 +421,12 @@ class CtrCasaTopUp(BaseController):
                 loc=f'expect: CasaTopUpThirdPartyByIdentityRequest, request: {type(request)}'
             )
         # validate branch of bank
-        # TODO:
-        # await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
+        receiver_bank_id = request.receiver_bank.id
+        await self.get_model_object_by_id(
+            model_id=request.receiver_bank.id,
+            model=BankBranch,
+            loc=f'receiver_bank -> id: {receiver_bank_id}'
+        )
         return request
 
     async def ctr_save_casa_top_up_third_party_247_to_card(
@@ -513,7 +546,7 @@ class CtrCasaTopUp(BaseController):
                     msg=USER_CODE_NOT_EXIST, loc=f'indirect_staff_code: {indirect_staff_code}'
                 )
 
-        # Kiểm tra số CIF có tồn tại trong CRM không
+        # TH1: có nhập cif -> Kiểm tra số CIF có tồn tại trong CRM không
         if sender_cif_number:
             # self.call_repos(await repos_get_customer_by_cif_number(
             #     cif_number=cif_number,
@@ -525,6 +558,30 @@ class CtrCasaTopUp(BaseController):
             )
             if not is_existed:
                 return self.response_exception(msg=ERROR_CIF_NUMBER_NOT_EXIST, loc="cif_number")
+        # TH2: Không nhập CIF
+        else:
+            sender_full_name_vn = request.sender_full_name_vn
+            sender_identity_number = request.sender_identity_number
+            sender_issued_date = request.sender_issued_date
+            sender_place_of_issue = request.sender_place_of_issue
+            sender_address_full = request.sender_address_full
+            sender_mobile_number = request.sender_mobile_number
+            errors = []
+            if not sender_full_name_vn:
+                errors.append(f'sender_full_name_vn: {sender_full_name_vn}')
+            if not sender_identity_number:
+                errors.append(f'sender_identity_number: {sender_identity_number}')
+            if not sender_issued_date:
+                errors.append(f'sender_issued_date: {sender_issued_date}')
+            if not sender_place_of_issue:
+                errors.append(f'sender_place_of_issue: {sender_place_of_issue}')
+            if not sender_address_full:
+                errors.append(f'sender_address_full: {sender_address_full}')
+            if not sender_mobile_number:
+                errors.append(f'sender_mobile_number: {sender_mobile_number}')
+
+            if errors:
+                return self.response_exception(msg=ERROR_FIELD_REQUIRED, loc=', '.join(errors))
 
         if receiving_method not in RECEIVING_METHODS:
             return self.response_exception(
@@ -540,14 +597,23 @@ class CtrCasaTopUp(BaseController):
                 request=request
             )
 
+        saving_customer = {}
+        saving_customer_identity = {}
+        saving_customer_address = {}
         if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
             casa_top_up_info = await self.ctr_save_casa_top_up_scb_by_identity(request=request)
+            (
+                saving_customer, saving_customer_identity, saving_customer_address
+            ) = await CtrCustomer(current_user).ctr_create_non_resident_customer(request=request)
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
             casa_top_up_info = await self.ctr_save_casa_top_up_third_party_to_account(request=request)
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
             casa_top_up_info = await self.ctr_save_casa_top_up_third_party_by_identity(request=request)
+            (
+                saving_customer, saving_customer_identity, saving_customer_address
+            ) = await CtrCustomer(current_user).ctr_create_non_resident_customer(request=request)
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT:
             casa_top_up_info = await self.ctr_save_casa_top_up_third_party_247_to_account(request=request)
@@ -557,16 +623,6 @@ class CtrCasaTopUp(BaseController):
 
         if not casa_top_up_info:
             return self.response_exception(msg="No Casa Top Up")
-
-        # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CASA
-        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
-            business_type_id=BUSINESS_TYPE_CASA_TOP_UP)
-
-        (
-            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
-            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
-            saving_transaction_daily, saving_transaction_sender
-        ) = transaction_datas
 
         history_datas = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_TOP_UP_CASA_ACCOUNT,
@@ -582,6 +638,20 @@ class CtrCasaTopUp(BaseController):
                 detail=history_response['detail']
             )
 
+        # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CASA
+        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
+            business_type_id=BUSINESS_TYPE_CASA_TOP_UP,
+            booking_id=booking_id,
+            request_json=casa_top_up_info.json(),
+            history_datas=orjson_dumps(history_datas),
+        )
+
+        (
+            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
+            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
+            saving_transaction_daily, saving_transaction_sender, saving_transaction_job, saving_booking_business_form
+        ) = transaction_datas
+
         self.call_repos(await repos_save_casa_top_up_info(
             booking_id=booking_id,
             saving_transaction_stage_status=saving_transaction_stage_status,
@@ -592,11 +662,68 @@ class CtrCasaTopUp(BaseController):
             saving_transaction_stage_role=saving_transaction_stage_role,
             saving_transaction_daily=saving_transaction_daily,
             saving_transaction_sender=saving_transaction_sender,
-            request_json=casa_top_up_info.json(),
-            history_datas=orjson_dumps(history_datas),
+            saving_transaction_job=saving_transaction_job,
+            saving_booking_business_form=saving_booking_business_form,
+            saving_customer=saving_customer,
+            saving_customer_identity=saving_customer_identity,
+            saving_customer_address=saving_customer_address,
             session=self.oracle_session
         ))
 
         return self.response(data=dict(
             booking_id=booking_id
         ))
+
+
+class CtrCustomer(BaseController):
+    async def ctr_create_non_resident_customer(
+            self,
+            request: Union[CasaTopUpSCBByIdentityRequest, CasaTopUpThirdPartyByIdentityRequest],
+    ):
+        current_user_info = self.current_user.user_info
+        full_name_vn = request.sender_full_name_vn
+        sender_place_of_issue_id = request.sender_place_of_issue.id
+        customer_id = generate_uuid()
+        first_name, middle_name, last_name = split_name(full_name_vn)
+        if not last_name:
+            return self.response_exception(msg="Full name at least 2 words")
+
+        short_name = make_short_name(first_name, middle_name, last_name)
+        saving_customer = dict(
+            id=customer_id,
+            full_name=convert_to_unsigned_vietnamese(full_name_vn),
+            full_name_vn=full_name_vn,
+            first_name=first_name,
+            middle_name=middle_name,
+            last_name=last_name,
+            short_name=short_name,
+            mobile_number=request.sender_mobile_number,
+            open_branch_id=current_user_info.hrm_branch_code,
+            non_resident_flag=True,
+            active_flag=True,
+            open_cif_at=now(),
+            self_selected_cif_flag=False,
+            kyc_level_id='EKYC_1',
+            nationality_id="VN",
+            customer_classification_id='I_11',
+            customer_status_id='1',
+            channel_id='TAI_QUAY',
+            complete_flag=False
+        )
+        saving_customer_identity = dict(
+            id=generate_uuid(),
+            identity_type_id=IDENTITY_TYPE_CODE_NON_RESIDENT,
+            customer_id=customer_id,
+            identity_num=request.sender_identity_number,
+            issued_date=request.sender_issued_date,
+            place_of_issue_id=sender_place_of_issue_id,
+            maker_id=current_user_info.code,
+            maker_at=now()
+        )
+        saving_customer_address = dict(
+            id=generate_uuid(),
+            customer_id=customer_id,
+            address=request.sender_address_full,
+            address_type_id=ADDRESS_TYPE_CODE_UNDEFINDED
+        )
+        return saving_customer, saving_customer_identity, saving_customer_address

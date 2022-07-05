@@ -20,10 +20,7 @@ from app.third_parties.oracle.models.master_data.others import (
     TransactionStage, TransactionStageAction, TransactionStageLane,
     TransactionStagePhase, TransactionStageRole, TransactionStageStatus, SlaTransaction
 )
-from app.utils.constant.business_type import (
-    BUSINESS_TYPE_AMOUNT_BLOCK, BUSINESS_TYPE_INIT_CIF,
-    BUSINESS_TYPE_OPEN_CASA, BUSINESS_TYPES
-)
+from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPES
 from app.utils.constant.cif import IMAGE_TYPE_FACE
 from app.utils.error_messages import (
     ERROR_BOOKING_ID_NOT_EXIST, ERROR_BOOKING_TRANSACTION_NOT_EXIST
@@ -39,7 +36,6 @@ async def repos_get_approval_process(booking_id: str, session: Session) -> Repos
     if not booking:
         return ReposReturn(is_error=True, msg=ERROR_BOOKING_ID_NOT_EXIST, loc=f'header -> booking_id: {booking_id}')
 
-    transactions = []
     trans_root_daily = aliased(TransactionDaily, name='TransactionDaily')
 
     if booking.business_type_id == BUSINESS_TYPE_INIT_CIF:
@@ -61,8 +57,7 @@ async def repos_get_approval_process(booking_id: str, session: Session) -> Repos
             .filter(Booking.id == booking_id)
             .order_by(desc(trans_root_daily.created_at))
         ).all()
-
-    if booking.business_type_id == BUSINESS_TYPE_OPEN_CASA or booking.business_type_id == BUSINESS_TYPE_AMOUNT_BLOCK:
+    else:
         transactions = session.execute(
             select(
                 TransactionDaily,
@@ -85,7 +80,7 @@ async def repos_get_approval_process(booking_id: str, session: Session) -> Repos
     return ReposReturn(data=transactions)
 
 
-@auto_commit
+# @auto_commit
 async def repos_approve(
         cif_id: str,
         business_type_id: str,
