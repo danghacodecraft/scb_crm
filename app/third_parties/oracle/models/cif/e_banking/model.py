@@ -62,6 +62,15 @@ class TdAccountResign(Base):
     acc_type_id_resign = Column('acc_type_id', VARCHAR(50), comment='Loại nhóm sản phẩm (gói) tài khoản')
 
 
+class TdInterestType(Base):
+    __tablename__ = 'crm_td_interest_type'
+    __table_args__ = {'comment': 'Hình thức lãi'}
+
+    id = Column('td_interest_type_id', VARCHAR(50), primary_key=True, comment='ID hình thức lãi')
+    code = Column('td_interest_type_code', VARCHAR(50), comment='Code hình thức lãi')
+    name = Column('td_interest_type_name', VARCHAR(50), comment='Name hình thức lãi')
+
+
 class EBankingReceiverNotificationRelationship(Base):
     __tablename__ = 'crm_eb_receiver_noti_relationship'
     __table_args__ = {'comment': 'Mối quan hệ thông tin nhận thông báo: Bố mẹ,vợ chồng,...'}
