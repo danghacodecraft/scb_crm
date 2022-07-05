@@ -408,7 +408,7 @@ class BaseController:
 
         return parent_temp
 
-    async def ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
+    async def ctr_create_transaction_daily_and_transaction_stage_for_init(
             self,
             business_type_id: str,
             booking_id: str,

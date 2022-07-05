@@ -96,7 +96,7 @@ class CtrCloseCasa(BaseController):
             })
 
         # Tạo data TransactionDaily và các TransactionStage
-        transaction_data = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
+        transaction_data = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
             business_type_id=BUSINESS_TYPE_CLOSE_CASA
         )
         (
