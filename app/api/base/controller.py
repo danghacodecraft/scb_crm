@@ -1,3 +1,4 @@
+import json
 from datetime import date
 from typing import List, Optional, Union
 
@@ -407,9 +408,12 @@ class BaseController:
 
         return parent_temp
 
-    async def ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
+    async def ctr_create_transaction_daily_and_transaction_stage_for_init(
             self,
-            business_type_id: str
+            business_type_id: str,
+            booking_id: str,
+            request_json: json,
+            history_datas: json
     ):
         """
         Tạo data TransactionDaily và các TransactionStage khác cho bước mở CIF khi tạo giấy tờ định danh
@@ -423,8 +427,12 @@ class BaseController:
         saving_transaction_stage_lane_id = generate_uuid()
         saving_transaction_stage_role_id = generate_uuid()
         transaction_daily_id = generate_uuid()
+        transaction_job_id = generate_uuid()
 
-        begin_stage_status, begin_stage, _, begin_phase, _, begin_lane, begin_stage_role, begin_sla = self.call_repos(
+        (
+            begin_stage_status, begin_stage, _, begin_phase, _, begin_lane, begin_stage_role, begin_sla, begin_job,
+            begin_business_form
+        ) = self.call_repos(
             await repos_get_begin_stage(
                 business_type_id=business_type_id,
                 session=self.oracle_session
@@ -525,6 +533,23 @@ class BaseController:
             created_at=now()
         )
 
+        saving_transaction_job = dict(
+            transaction_id=transaction_job_id,
+            booking_id=booking_id,
+            business_job_id=begin_job.id,
+            complete_flag=True,
+            created_at=now()
+        )
+
+        saving_booking_business_form = dict(
+            booking_id=booking_id,
+            form_data=request_json,
+            business_form_id=begin_business_form.id,
+            created_at=now(),
+            save_flag=True,
+            log_data=history_datas
+        )
+
         # receiver = self.call_repos(await repos_get_next_receiver(
         #     business_type_id=business_type_id,
         #     current_stage_id=begin_stage.id,
@@ -560,9 +585,11 @@ class BaseController:
         #     position_name=current_user.hrm_position_name
         # )
 
-        return (saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
-                saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
-                saving_transaction_daily, saving_transaction_sender)
+        return (
+            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
+            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
+            saving_transaction_daily, saving_transaction_sender, saving_transaction_job, saving_booking_business_form
+        )
 
     @staticmethod
     def check_permission(current_user: AuthResponse, menu_code: str, group_role_code: str):
