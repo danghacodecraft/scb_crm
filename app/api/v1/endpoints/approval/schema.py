@@ -64,14 +64,14 @@ class FaceAuthenticationResponse(BaseSchema):
 
 
 class AuthenticationResponse(BaseSchema):
-    face: Optional[FaceAuthenticationResponse]
-    fingerprint: Optional[FaceAuthenticationResponse]
-    signature: Optional[FaceAuthenticationResponse]
+    face: FaceAuthenticationResponse
+    fingerprint: FaceAuthenticationResponse
+    signature: FaceAuthenticationResponse
 
 
 class CifApprovalSuccessResponse(BaseSchema):
     cif_id: Optional[str] = Field(..., description="Cif ID")
-    authentication: AuthenticationResponse = Field(..., description="Thông tin xác thực")
+    authentication: Optional[AuthenticationResponse] = Field(..., description="Thông tin xác thực")
     stages: List[CIFStageResponse] = Field(..., description="Thông tin các bước phê duyệt")
     is_open_cif: bool = Field(..., description="Được phép mở CIF không?")
 

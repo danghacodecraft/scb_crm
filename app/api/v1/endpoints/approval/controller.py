@@ -37,7 +37,7 @@ from app.utils.constant.approval import (
     COMPLETED_STAGES, INIT_RESPONSE, INIT_STAGES, STAGE_BEGINS
 )
 from app.utils.constant.business_type import (
-    BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA, BUSINESS_TYPES
+    BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPES
 )
 from app.utils.constant.cif import (
     DROPDOWN_NONE_DICT, IMAGE_TYPE_FACE, IMAGE_TYPE_FINGERPRINT,
@@ -134,11 +134,7 @@ class CtrApproval(BaseController):
 
         compare_face_uuid = None
         cif_id = None
-        authentication = dict(
-            face=None,
-            signature=None,
-            fingerprint=None
-        )
+        authentication = None
         business_type = await CtrBooking().ctr_get_business_type(booking_id=booking_id)
         if business_type.code == BUSINESS_TYPE_INIT_CIF:
             customer_info = await CtrBooking().ctr_get_customer_from_booking(
@@ -338,7 +334,7 @@ class CtrApproval(BaseController):
                 identity_images=identity_fingerprint_images,
             )
 
-            authentication.update(
+            authentication = dict(
                 face=face_authentication,
                 signature=signature_authentication,
                 fingerprint=fingerprint_authentication
