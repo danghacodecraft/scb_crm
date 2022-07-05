@@ -1321,7 +1321,7 @@ class CtrApproval(BaseController):
                 cif_id=cif_id,
                 session=self.oracle_session
             ))
-        if business_type_code == BUSINESS_TYPE_OPEN_CASA:
+        else:
             business_jobs = self.call_repos(await repos_get_business_jobs_by_open_casa(
                 booking_id=booking_id,
                 session=self.oracle_session
