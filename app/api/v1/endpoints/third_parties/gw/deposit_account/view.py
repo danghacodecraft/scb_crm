@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Body, Depends, Path
+from fastapi import APIRouter, Body, Depends, Header, Path
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -89,6 +89,23 @@ async def view_gw_get_column_chart_deposit_account_info(
 
 
 @router.post(
+    path="/openTD/",
+    name="[Tài khoản tiết kiệm] Khởi tạo tài khoản tiết kiệm",
+    description="Khởi tạo tài khoản tiết kiệm",
+    responses=swagger_response(
+        response_model=ResponseData[GWDepositOpenAccountTD],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_deposit_open_account_td(
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),
+        current_user=Depends(get_current_user_from_header())
+):
+    gw_deposit_open_account_td = await CtrGWDepositAccount(current_user).ctr_gw_deposit_open_account_td(BOOKING_ID=BOOKING_ID)
+    return ResponseData(**gw_deposit_open_account_td)
+
+
+@router.post(
     path="/{account_number}/",
     name="[Thông tin tài khoản] Chi tiết tài khoản tiết kiệm",
     description="Lấy chi tiết thông tin TK tiền gửi theo Số tài khoản",
@@ -106,22 +123,3 @@ async def view_gw_get_deposit_account_td(
         account_number=account_number
     )
     return ResponseData[GWDepositAccountTDResponse](**gw_deposit_account_td)
-
-
-@router.post(
-    path="/open-td/",
-    name="[Tài khoản tiết kiệm] Khởi tạo tài khoản tiết kiệm",
-    description="Khởi tạo tài khoản tiết kiệm",
-    responses=swagger_response(
-        response_model=ResponseData[GWDepositAccountTDResponse],
-        success_examples=DEPOSIT_ACCOUNT_TD_SUCCESS_EXAMPLE,
-        success_status_code=status.HTTP_200_OK
-    ),
-    deprecated=True
-)
-async def view_gw_deposit_open_account_td(
-        request: GWDepositOpenAccountTD = Body(...),
-        current_user=Depends(get_current_user_from_header())
-):
-    gw_deposit_open_account_td = await CtrGWDepositAccount(current_user).ctr_gw_deposit_open_account_td(request=request)
-    return ResponseData(**gw_deposit_open_account_td)

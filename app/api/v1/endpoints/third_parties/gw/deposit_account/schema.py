@@ -132,4 +132,4 @@ class GWReportStatementHistoryTDAccountInfoRequest(BaseGWSchema):
 
 
 class GWDepositOpenAccountTD(BaseGWSchema):
-    cif_number: str = Field(..., description="Số CIF")
+    booking_id: str = Field(..., description="Booking_id")
