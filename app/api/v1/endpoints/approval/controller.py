@@ -1315,6 +1315,8 @@ class CtrApproval(BaseController):
 
         business_jobs = []
         if business_type_code == BUSINESS_TYPE_INIT_CIF:
+            if not cif_id:
+                return self.response_exception(msg=ERROR_CIF_ID_NOT_EXIST, loc="query -> cif_id")
             business_jobs = self.call_repos(await repos_get_business_jobs(
                 cif_id=cif_id,
                 session=self.oracle_session

@@ -8,7 +8,7 @@ from app.third_parties.oracle.models.cif.form.model import (
 from app.third_parties.oracle.models.master_data.others import (
     Lane, Phase, Stage, StageAction, StageLane, StagePhase, StageRole,
     StageStatus, TransactionStage, TransactionStageAction,
-    TransactionStageStatus, BusinessType, Sla
+    TransactionStageStatus, BusinessType, Sla, BusinessJob, BusinessForm
 )
 from app.utils.constant.approval import (
     CIF_STAGE_APPROVE_KSS, CIF_STAGE_BEGIN, CIF_STAGE_INIT, INIT_STAGES
@@ -30,7 +30,9 @@ async def repos_get_begin_stage(business_type_id: str, session: Session):
             StageLane,
             Lane,
             StageRole,
-            Sla
+            Sla,
+            BusinessJob,
+            BusinessForm
         )
         .join(StageStatus, Stage.status_id == StageStatus.id)
         .join(Lane, Stage.business_type_id == Lane.business_type_id)
@@ -39,6 +41,14 @@ async def repos_get_begin_stage(business_type_id: str, session: Session):
         .join(Phase, StagePhase.phase_id == Phase.id)
         .join(StageRole, Stage.id == StageRole.stage_id)
         .join(Sla, Stage.sla_id == Sla.id)
+        .join(BusinessJob, and_(
+            Stage.business_type_id == BusinessJob.business_type_id,
+            BusinessJob.order_no == 1
+        ))
+        .join(BusinessForm, and_(
+            Stage.business_type_id == BusinessForm.business_type_id,
+            BusinessForm.order_no == 1
+        ))
         .filter(and_(
             Stage.parent_id.is_(None),
             Stage.business_type_id == business_type_id

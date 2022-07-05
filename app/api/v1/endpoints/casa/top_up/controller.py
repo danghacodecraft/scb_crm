@@ -579,16 +579,6 @@ class CtrCasaTopUp(BaseController):
         if not casa_top_up_info:
             return self.response_exception(msg="No Casa Top Up")
 
-        # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CASA
-        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
-            business_type_id=BUSINESS_TYPE_CASA_TOP_UP)
-
-        (
-            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
-            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
-            saving_transaction_daily, saving_transaction_sender
-        ) = transaction_datas
-
         history_datas = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_TOP_UP_CASA_ACCOUNT,
             history_status=PROFILE_HISTORY_STATUS_INIT,
@@ -603,6 +593,20 @@ class CtrCasaTopUp(BaseController):
                 detail=history_response['detail']
             )
 
+        # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CASA
+        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
+            business_type_id=BUSINESS_TYPE_CASA_TOP_UP,
+            booking_id=booking_id,
+            request_json=casa_top_up_info.json(),
+            history_datas=orjson_dumps(history_datas),
+        )
+
+        (
+            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
+            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
+            saving_transaction_daily, saving_transaction_sender, saving_transaction_job, saving_booking_business_form
+        ) = transaction_datas
+
         self.call_repos(await repos_save_casa_top_up_info(
             booking_id=booking_id,
             saving_transaction_stage_status=saving_transaction_stage_status,
@@ -613,8 +617,8 @@ class CtrCasaTopUp(BaseController):
             saving_transaction_stage_role=saving_transaction_stage_role,
             saving_transaction_daily=saving_transaction_daily,
             saving_transaction_sender=saving_transaction_sender,
-            request_json=casa_top_up_info.json(),
-            history_datas=orjson_dumps(history_datas),
+            saving_transaction_job=saving_transaction_job,
+            saving_booking_business_form=saving_booking_business_form,
             session=self.oracle_session
         ))
 
