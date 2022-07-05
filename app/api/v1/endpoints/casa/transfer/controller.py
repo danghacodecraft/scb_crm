@@ -28,6 +28,8 @@ from app.api.v1.endpoints.user.schema import AuthResponse
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
 from app.api.v1.validator import validate_history_data
+from app.third_parties.oracle.models.master_data.address import AddressProvince
+from app.third_parties.oracle.models.master_data.bank import Bank
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.approval import CASA_TRANSFER_STAGE_BEGIN
@@ -49,9 +51,9 @@ from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_GDV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_GDV
 )
 from app.utils.error_messages import (
-    ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_CASA_ACCOUNT_SAME_ACCOUNT_NUMBER,
-    ERROR_CIF_NUMBER_NOT_EXIST, ERROR_MAPPING_MODEL, ERROR_NOT_NULL,
-    ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
+    ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_CIF_NUMBER_NOT_EXIST,
+    ERROR_MAPPING_MODEL, ERROR_NOT_NULL, ERROR_RECEIVING_METHOD_NOT_EXIST,
+    USER_CODE_NOT_EXIST
 )
 from app.utils.functions import dropdown, orjson_dumps, orjson_loads
 
@@ -95,27 +97,20 @@ class CtrCasaTransfer(BaseController):
                     )
                 )
 
-                if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
-                    branch_id = form_data['receiver_branch']['id']
-                    receiver_response = dict(
-                        # bank=form_data['bank'],
-                        bank=dict(
-                            code=branch_id,
-                            name=branch_id
-                        ),  # TODO: đợi e-bank
-                        # province=dropdown(branch_info.address_province),
-                        province=dict(
-                            code=branch_id,
-                            name=branch_id
-                        ),
-                        branch_info=dict(
-                            code=branch_id,
-                            name=branch_id
-                        ),  # TODO: đợi e-bank
-                        account_number=form_data['receiver_account_number'],
-                        fullname_vn=form_data['receiver_full_name_vn'],
-                        address_full=form_data['receiver_address_full']
-                    )
+            if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
+                bank_id = form_data['receiver_bank']['id']
+                bank_info = self.get_model_object_by_id(model_id=bank_id, model=Bank, loc='receiver_bank_id')
+                province_id = form_data['receiver_province']['id']
+                province_info = self.get_model_object_by_id(model_id=province_id, model=AddressProvince,
+                                                            loc='receiver_province_id')
+                receiver_response = dict(
+                    bank=dropdown(bank_info),
+                    # province=dropdown(branch_info.address_province),
+                    province=dropdown(province_info),
+                    account_number=form_data['receiver_account_number'],
+                    fullname_vn=form_data['receiver_full_name_vn'],
+                    address_full=form_data['receiver_address_full'],
+                )
 
             if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT:
                 receiver_response = dict(
@@ -155,12 +150,12 @@ class CtrCasaTransfer(BaseController):
                     identity_number=form_data['receiver_identity_number'],
                     issued_date=form_data['receiver_issued_date'],
                     place_of_issue=dropdown(receiver_place_of_issue_id),
-                    mobile_number=form_data['receiver_mobile_number'],
+                    mobile_phone=form_data['receiver_mobile_number'],
                     address_full=form_data['receiver_address_full']
                 )
 
             if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
-                branch_id = form_data['branch']['id']
+                branch_id = form_data['receiver_branch']['id']
                 receiver_response = dict(
                     # bank=form_data['bank'],
                     bank=dict(
@@ -176,12 +171,12 @@ class CtrCasaTransfer(BaseController):
                         code=branch_id,
                         name=branch_id
                     ),  # TODO: đợi e-bank
-                    fullname_vn=form_data['full_name_vn'],
-                    identity_number=form_data['identity_number'],
-                    issued_date=form_data['issued_date'],
+                    fullname_vn=form_data['receiver_full_name_vn'],
+                    identity_number=form_data['receiver_identity_number'],
+                    issued_date=form_data['receiver_issued_date'],
                     place_of_issue=dropdown(receiver_place_of_issue_id),
-                    mobile_number=form_data['mobile_number'],
-                    address_full=form_data['address_full']
+                    mobile_number=form_data['receiver_mobile_number'],
+                    address_full=form_data['receiver_address_full']
                 )
 
         ################################################################################################################
@@ -246,6 +241,7 @@ class CtrCasaTransfer(BaseController):
                 ),
                 mobile_phone=form_data['sender_mobile_number']
             )
+        sender_response.update(account_number=form_data['sender_account_number'])
         controller_gw_employee = CtrGWEmployee(current_user)
         gw_direct_staff = await controller_gw_employee.ctr_gw_get_employee_info_from_code(
             employee_code=form_data['direct_staff_code'],
@@ -422,7 +418,7 @@ class CtrCasaTransfer(BaseController):
         if not isinstance(request, CasaTransferThirdParty247ToAccountRequest):
             return self.response_exception(
                 msg=ERROR_MAPPING_MODEL,
-                loc=f'expect: CasaTransferThirdPartyByIdentityRequest, request: {type(request)}'
+                loc=f'expect: CasaTransferThirdParty247ToAccountRequest, request: {type(request)}'
             )
         sender_account_number = request.sender_account_number
 
@@ -480,17 +476,15 @@ class CtrCasaTransfer(BaseController):
             self,
             booking_id: str,
             request: Union[
+                CasaTransferThirdPartyToAccountRequest,
                 CasaTransferSCBToAccountRequest,
                 CasaTransferSCBByIdentityRequest,
-                CasaTransferThirdPartyToAccountRequest,
                 CasaTransferThirdPartyByIdentityRequest,
                 CasaTransferThirdParty247ToAccountRequest,
                 CasaTransferThirdParty247ToCardRequest
             ]
     ):
         sender_cif_number = request.sender_cif_number
-        sender_account_number = request.sender_account_number
-        receiver_account_number = request.receiver_account_number
         receiving_method = request.receiving_method
         is_fee = request.is_fee
         fee_info = request.fee_info
@@ -578,12 +572,6 @@ class CtrCasaTransfer(BaseController):
                 msg=ERROR_RECEIVING_METHOD_NOT_EXIST,
                 loc=f'receiving_method: {receiving_method}'
             )
-        # Check trùng số tài khoản sender và receiver
-        if sender_account_number == receiver_account_number:
-            return self.response_exception(
-                msg=ERROR_CASA_ACCOUNT_SAME_ACCOUNT_NUMBER,
-                loc="sender_account_number and receiver_account_number are the same"
-            )
 
         ################################################################################################################
 
@@ -617,16 +605,6 @@ class CtrCasaTransfer(BaseController):
         if not casa_transfer_info:
             return self.response_exception(msg="No Casa Transfer")
 
-        # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CASA
-        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
-            business_type_id=BUSINESS_TYPE_CASA_TRANSFER)
-
-        (
-            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
-            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
-            saving_transaction_daily, saving_transaction_sender
-        ) = transaction_datas
-
         history_datas = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_TRANSFER_CASA_ACCOUNT,
             history_status=PROFILE_HISTORY_STATUS_INIT,
@@ -641,6 +619,20 @@ class CtrCasaTransfer(BaseController):
                 detail=history_response['detail']
             )
 
+        # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CASA
+        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
+            business_type_id=BUSINESS_TYPE_CASA_TRANSFER,
+            booking_id=booking_id,
+            request_json=casa_transfer_info.json(),
+            history_datas=orjson_dumps(history_datas)
+        )
+
+        (
+            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
+            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
+            saving_transaction_daily, saving_transaction_sender, saving_transaction_job, saving_booking_business_form
+        ) = transaction_datas
+
         self.call_repos(await repos_save_casa_transfer_info(
             booking_id=booking_id,
             saving_transaction_stage_status=saving_transaction_stage_status,
@@ -651,8 +643,8 @@ class CtrCasaTransfer(BaseController):
             saving_transaction_stage_role=saving_transaction_stage_role,
             saving_transaction_daily=saving_transaction_daily,
             saving_transaction_sender=saving_transaction_sender,
-            request_json=casa_transfer_info.json(),
-            history_datas=orjson_dumps(history_datas),
+            saving_transaction_job=saving_transaction_job,
+            saving_booking_business_form=saving_booking_business_form,
             session=self.oracle_session
         ))
 

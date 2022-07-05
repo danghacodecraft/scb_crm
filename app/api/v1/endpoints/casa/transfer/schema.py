@@ -42,6 +42,8 @@ class CasaTransferRequest(ResponseRequestSchema):
     content: str = Field(
         ..., description="Nội dung chuyển tiền", regex=REGEX_TRANSFER_CONTENT, max_length=MAX_LENGTH_TRANSFER_CONTENT
     )
+    p_instrument_number: Optional[str] = Field(None, description="")
+    core_fcc_request: Optional[str] = Field(None, description="")
 
     @validator("sender_mobile_number")
     def check_valid_mobile_number(cls, v):
@@ -80,29 +82,29 @@ class CasaTransferSCBByIdentityRequest(CasaTransferRequest):
         return v
 
 
-class CasaTransferThirdPartyToAccountRequest(CasaTransferRequest):
+class CasaTransferThirdPartyRequest(CasaTransferRequest):
+    receiver_bank: str = Field(..., description="Ngân hàng")
+    receiver_address_full: str = Field(..., description="Địa chỉ", max_length=100)
+
+
+class CasaTransferThirdPartyToAccountRequest(CasaTransferThirdPartyRequest):
     """
     Ngoài SCB đến tài khoản
     """
     receiver_account_number: str = Field(..., description="Số tài khoản người thụ hưởng", regex=REGEX_NUMBER_ONLY)
-    receiver_bank: DropdownRequest = Field(..., description="Ngân hàng")
-    receiver_branch: DropdownRequest = Field(..., description="Chi nhánh")
+    receiver_province: DropdownRequest = Field(..., description="Tỉnh/Thành phố")
     receiver_full_name_vn: str = Field(..., description="Chủ tài khoản")
-    receiver_address_full: str = Field(..., description="Địa chỉ", max_length=100)
 
 
-class CasaTransferThirdPartyByIdentityRequest(CasaTransferRequest):
+class CasaTransferThirdPartyByIdentityRequest(CasaTransferThirdPartyRequest):
     """
     Ngoài SCB nhận bằng giấy tờ định danh
     """
-    receiver_bank: DropdownRequest = Field(..., description="Ngân hàng")
-    receiver_branch: DropdownRequest = Field(..., description="Chi nhánh")
     receiver_full_name_vn: str = Field(..., description="Chủ tài khoản")
     receiver_identity_number: str = Field(..., description="Số GTĐD", regex=REGEX_NUMBER_ONLY)
     receiver_issued_date: date = Field(..., description="Ngày cấp")
     receiver_place_of_issue: DropdownRequest = Field(..., description="Nơi cấp")
     receiver_mobile_number: Optional[str] = Field(..., description="Số điện thoại")
-    receiver_address_full: str = Field(..., description="Địa chỉ", max_length=100)
 
     @validator("receiver_mobile_number")
     def check_valid_mobile_number(cls, v):
@@ -111,22 +113,19 @@ class CasaTransferThirdPartyByIdentityRequest(CasaTransferRequest):
         return v
 
 
-class CasaTransferThirdParty247ToAccountRequest(CasaTransferRequest):
+class CasaTransferThirdParty247ToAccountRequest(CasaTransferThirdPartyRequest):
     """
     Ngoài SCB 24/7 tài khoản
     """
-    receiver_bank: DropdownRequest = Field(..., description="Ngân hàng")
     receiver_account_number: str = Field(..., description="Số tài khoản", regex=REGEX_NUMBER_ONLY)
-    receiver_address_full: str = Field(..., description="Địa chỉ", max_length=100)
+    receiver_full_name_vn: str = Field(..., description="")
 
 
-class CasaTransferThirdParty247ToCardRequest(CasaTransferRequest):
+class CasaTransferThirdParty247ToCardRequest(CasaTransferThirdPartyRequest):
     """
     Ngoài SCB 24/7 số thẻ
     """
-    receiver_bank: DropdownRequest = Field(..., description="Ngân hàng")
     receiver_card_number: str = Field(..., description="Số thẻ")
-    receiver_address_full: str = Field(..., description="Địa chỉ", max_length=100)
 
 
 ########################################################################################################################
@@ -141,7 +140,7 @@ class TransferTypeResponse(ResponseRequestSchema):
 
 
 class ReceiverResponse(ResponseRequestSchema):
-    account_number: Optional[str] = Field(None, description="Số tài khoản")
+    account_number: Optional[str] = Field(None, description="Số tài khoản người nhận")
     fullname_vn: Optional[str] = Field(None, description="Chủ tài khoản")
     bank: DropdownCodeNameResponse = Field(None, description="Ngân hàng")
     province: DropdownCodeNameResponse = Field(None, description="Tỉnh/Thành phố")
@@ -179,6 +178,7 @@ class IdentityInfoResponse(ResponseRequestSchema):
 
 
 class CustomerResponse(ResponseRequestSchema):
+    account_number: str = Field(..., description="Tài khoản người chuyển tiền")
     cif_number: Optional[str] = Field(..., description="Số CIF")
     fullname_vn: Optional[str] = Field(..., description="Người giao dịch")
     address_full: Optional[str] = Field(..., description="Địa chỉ")
