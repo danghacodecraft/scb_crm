@@ -651,6 +651,26 @@ class CtrApproval(BaseController):
             # check cif tồn tại
             await self.get_model_object_by_id(model_id=cif_id, model=Customer, loc="cif_id")
 
+        # TH1: Những nghiệp vụ KHÔNG cần truyền cif
+        else:
+            booking_business_form = await CtrBooking().ctr_get_booking_business_form(
+                booking_id=booking_id, session=self.oracle_session
+            )
+            form_data = orjson_loads(booking_business_form.form_data)
+            # TH1: Method không có cif
+            if form_data['receiving_method'] in RECEIVING_METHOD_IDENTITY_CASES:
+                return self.response_exception(
+                    msg=f"{form_data['receiving_method']}",
+                    detail="Đang nâng cấp"
+                )
+            # TH2: Method BẮT BUỘC có cif
+            elif not cif_id:
+                return self.response_exception(
+                    msg=ERROR_FIELD_REQUIRED,
+                    loc='cif_id'
+                )
+
+        if not no_cif_flag:
             ############################################################################################################
             # THÔNG TIN XÁC THỰC
             ############################################################################################################
@@ -704,24 +724,6 @@ class CtrApproval(BaseController):
                     detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_SIGNATURE]
                 )
             ############################################################################################################
-        # TH1: Những nghiệp vụ KHÔNG cần truyền cif
-        else:
-            booking_business_form = await CtrBooking().ctr_get_booking_business_form(
-                booking_id=booking_id, session=self.oracle_session
-            )
-            form_data = orjson_loads(booking_business_form.form_data)
-            # TH1: Method không có cif
-            if form_data['receiving_method'] in RECEIVING_METHOD_IDENTITY_CASES:
-                return self.response_exception(
-                    msg=f"{form_data['receiving_method']}",
-                    detail="Đang nâng cấp"
-                )
-            # TH1: Method BẮT BUỘC có cif
-            elif not cif_id:
-                return self.response_exception(
-                    msg=ERROR_FIELD_REQUIRED,
-                    loc='cif_id'
-                )
 
         ################################################################################################################
         # THÔNG TIN BIỂU MẪU
