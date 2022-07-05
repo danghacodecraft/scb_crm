@@ -185,14 +185,14 @@ async def repos_update_cif_number_customer(
     return ReposReturn(data=cif_id)
 
 
-async def repos_get_casa_account(
-        cif_id: str,
+async def repos_get_casa_account_by_account_number(
+        account_number: str,
         session: Session
 ):
     casa_account = session.execute(
         select(
-            CasaAccount
-        ).filter(CasaAccount.customer_id == cif_id)
+            CasaAccount.id
+        ).filter(CasaAccount.casa_account_number == account_number)
     ).scalar()
 
     return ReposReturn(data=casa_account)

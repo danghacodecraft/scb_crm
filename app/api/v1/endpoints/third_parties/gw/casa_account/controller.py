@@ -12,8 +12,8 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_get_casa_account_info, repos_gw_get_close_casa_account,
     repos_gw_get_column_chart_casa_account_info,
     repos_gw_get_pie_chart_casa_account_info,
-    repos_gw_get_statements_casa_account_info, repos_gw_open_casa_account,
-    repos_open_casa_get_casa_account_infos,
+    repos_gw_get_statements_casa_account_info, repos_gw_get_tele_transfer,
+    repos_gw_open_casa_account, repos_open_casa_get_casa_account_infos,
     repos_update_casa_account_to_approved
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
@@ -34,7 +34,9 @@ from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_KSV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_KSV
 )
 from app.utils.error_messages import ERROR_CALL_SERVICE_GW, ERROR_PERMISSION
-from app.utils.functions import now, orjson_loads, string_to_date
+from app.utils.functions import (
+    date_to_string, now, orjson_loads, string_to_date
+)
 
 
 class CtrGWCasaAccount(BaseController):
@@ -192,7 +194,8 @@ class CtrGWCasaAccount(BaseController):
             service_escrow=account_info['account_service_escrow'],
             amount_rate_close=account_info['account_amount_rate_close'],
             fee_close=account_info['account_fee_close'],
-            total=int(account_info['account_balance']) + int(account_info['account_amount_rate_close']),
+            total=int(account_info['account_balance']) + int(account_info['account_amount_rate_close'])
+            if account_info['account_amount_rate_close'] and account_info['account_balance'] else None,
             service_escrow_ex_date=string_to_date(account_info['account_service_escrow_ex_date'],
                                                   _format=DATETIME_INPUT_OUTPUT_FORMAT),
             lock_info=lock_info_response,
@@ -415,7 +418,7 @@ class CtrGWCasaAccount(BaseController):
                 gw_errors.append(dict(
                     id=casa_account_id,
                     msg=ERROR_CALL_SERVICE_GW,
-                    detail=str(gw_open_casa_account_info)
+                    detail=str(gw_open_casa_account_info['openCASA_out'])
                 ))
             else:
                 casa_account_successes.update({casa_account_id: gw_open_casa_account_info['openCASA_out']['data_output']['account_info']['account_num']})
@@ -498,3 +501,58 @@ class CtrGWCasaAccount(BaseController):
             ))
 
         return self.response(data=statements)
+
+    async def ctr_gw_get_tele_transfer(self, request_data, place_of_issue):
+        data_input = {
+            "p_tt_type": "C",
+            "p_details": {
+                "TT_DETAILS": {
+                    "TT_CURRENCY": "VND",  # TODO
+                    "TT_AMOUNT": request_data.amount,
+                    "TRANSACTION_CURRENCY": "VND"  # TODO
+                },
+                "BENEFICIARY_DETAILS": {
+                    "BENEFICIARY_NAME": request_data.receiver_full_name_vn,
+                    "BENEFICIARY_PHONE_NO": request_data.receiver_mobile_number,
+                    "BENEFICIARY_ID_NO": request_data.receiver_identity_number,
+                    "ID_ISSUE_DATE": date_to_string(request_data.receiver_issued_date),
+                    "ID_ISSUER": place_of_issue.name,
+                    "ADDRESS": request_data.receiver_address_full
+                },
+                "REMITTER_DETAILS": {
+                    "REMITTER_NAME": request_data.sender_full_name_vn,
+                    "REMITTER_PHONE_NO": request_data.sender_mobile_number,
+                    "REMITTER_ID_NO": request_data.sender_identity_number,
+                    "ID_ISSUE_DATE": date_to_string(request_data.sender_issued_date),
+                    "ID_ISSUER": request_data.sender_place_of_issue,
+                    "ADDRESS": request_data.sender_address_full
+                },
+                "ADDITIONAL_DETAILS": {
+                    "NARRATIVE": "NARRATIVE"
+                }
+            },
+            "p_denomination": "",
+            "p_charges": [],
+            "p_mis": "",
+            "p_udf": [
+                {
+                    "UDF_NAME": "",
+                    "UDF_VALUE": ""
+                }
+            ],
+            "staff_info_checker": {
+                "staff_name": "HOANT2"  # TODO
+            },
+            "staff_info_maker": {
+                "staff_name": "KHANHLQ"  # TODO
+            }
+        }
+        tele_transfer = self.call_repos(await repos_gw_get_tele_transfer(
+            current_user=self.current_user.user_info,
+            data_input=data_input
+        ))
+        tele_transfer_info = tele_transfer['teleTransfer_out']['data_output']
+        tele_transfer_info.update(
+            data_input=data_input
+        )
+        return self.response(data=tele_transfer_info)

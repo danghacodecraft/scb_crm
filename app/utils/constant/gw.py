@@ -35,6 +35,7 @@ GW_ENDPOINT_URL_SELECT_CATEGORY = "/category/v1.0/rest/selectCategory"
 GW_ENDPOINT_URL_HISTORY_CHANGE_FIELD = "/history/v1.0/rest/historyChangeFieldAccount"
 GW_ENDPOINT_URL_RETRIEVE_CUS_OPEN_CIF = '/customer/v1.0/rest/openCIFAuthorise'
 GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_ID_FCC = '/users/v1.0/rest/selectUserInfoByUserID'
+GW_ENDPOINT_URL_RETRIEVE_TELE_TRANSFER_INFO = '/payment/v1.0/rest/teleTransfer'
 
 # ---------------------------------------------- PAYMENT ---------------------------------------------- #
 

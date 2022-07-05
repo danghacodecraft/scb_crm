@@ -7,7 +7,9 @@ from app.api.base.schema import ResponseRequestSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
 from app.api.v1.schemas.utils import DropdownRequest
 from app.utils.constant.casa import DENOMINATIONS__AMOUNTS
-from app.utils.functions import make_description_from_dict_to_list, is_valid_mobile_number
+from app.utils.functions import (
+    is_valid_mobile_number, make_description_from_dict_to_list
+)
 from app.utils.regex import (
     MAX_LENGTH_TRANSFER_CONTENT, REGEX_NUMBER_ONLY, REGEX_TRANSFER_CONTENT
 )
@@ -50,6 +52,8 @@ class CasaTopUpRequest(ResponseRequestSchema):
     content: str = Field(
         ..., description="Nội dung chuyển tiền", regex=REGEX_TRANSFER_CONTENT, max_length=MAX_LENGTH_TRANSFER_CONTENT
     )
+    p_instrument_number: Optional[str] = Field(None, description="")
+    core_fcc_request: Optional[str] = Field(None, description="")
 
     @validator("sender_mobile_number")
     def check_valid_mobile_number(cls, v):
@@ -88,29 +92,30 @@ class CasaTopUpSCBByIdentityRequest(CasaTopUpRequest):
         return v
 
 
-class CasaTopUpThirdPartyToAccountRequest(CasaTopUpRequest):
+class CasaTopUpThirdPartyRequest(CasaTopUpRequest):
+    receiver_bank: DropdownRequest = Field(..., description="Ngân hàng")
+    receiver_address_full: str = Field(..., description="Địa chỉ", max_length=100)
+
+
+class CasaTopUpThirdPartyToAccountRequest(CasaTopUpThirdPartyRequest):
     """
     Ngoài SCB đến tài khoản
     """
     receiver_account_number: str = Field(..., description="Số tài khoản", regex=REGEX_NUMBER_ONLY)
-    receiver_bank: DropdownRequest = Field(..., description="Ngân hàng")
     receiver_branch: DropdownRequest = Field(..., description="Chi nhánh")
     receiver_full_name_vn: str = Field(..., description="Chủ tài khoản")
-    receiver_address_full: str = Field(..., description="Địa chỉ", max_length=100)
 
 
-class CasaTopUpThirdPartyByIdentityRequest(CasaTopUpRequest):
+class CasaTopUpThirdPartyByIdentityRequest(CasaTopUpThirdPartyRequest):
     """
     Ngoài SCB nhận bằng giấy tờ định danh
     """
-    receiver_bank: DropdownRequest = Field(..., description="Ngân hàng")
     receiver_branch: DropdownRequest = Field(..., description="Chi nhánh")
     receiver_full_name_vn: str = Field(..., description="Chủ tài khoản")
     receiver_identity_number: str = Field(..., description="Số GTĐD", regex=REGEX_NUMBER_ONLY)
     receiver_issued_date: date = Field(..., description="Ngày cấp")
     receiver_place_of_issue: DropdownRequest = Field(..., description="Nơi cấp")
     receiver_mobile_number: Optional[str] = Field(..., description="Số điện thoại")
-    receiver_address_full: str = Field(..., description="Địa chỉ", max_length=100)
 
     @validator("receiver_mobile_number")
     def check_valid_mobile_number(cls, v):
@@ -119,22 +124,18 @@ class CasaTopUpThirdPartyByIdentityRequest(CasaTopUpRequest):
         return v
 
 
-class CasaTopUpThirdParty247ToAccountRequest(CasaTopUpRequest):
+class CasaTopUpThirdParty247ToAccountRequest(CasaTopUpThirdPartyRequest):
     """
     Ngoài SCB 24/7 tài khoản
     """
-    receiver_bank: DropdownRequest = Field(..., description="Ngân hàng")
     receiver_account_number: str = Field(..., description="Số tài khoản", regex=REGEX_NUMBER_ONLY)
-    receiver_address_full: str = Field(..., description="Địa chỉ", max_length=100)
 
 
-class CasaTopUpThirdParty247ToCardRequest(CasaTopUpRequest):
+class CasaTopUpThirdParty247ToCardRequest(CasaTopUpThirdPartyRequest):
     """
     Ngoài SCB 24/7 số thẻ
     """
-    receiver_bank: DropdownRequest = Field(..., description="Ngân hàng")
     receiver_card_number: str = Field(..., description="Số thẻ")
-    receiver_address_full: str = Field(..., description="Địa chỉ", max_length=100)
 
 
 ########################################################################################################################
