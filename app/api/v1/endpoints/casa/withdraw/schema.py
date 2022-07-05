@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import List, Optional
 
 from pydantic import Field
@@ -54,7 +54,7 @@ class SenderInfoResponse(BaseSchema):
     cif_number: Optional[str] = Field(None, description="Mã khách hàng giao dịch")
     fullname_vn: Optional[str] = Field(None, description="Người giao dịch")
     identity: Optional[str] = Field(None, description="Giấy tờ định danh")
-    issued_date: Optional[date] = Field(None, description="Ngày cấp")
+    issued_date: Optional[datetime] = Field(None, description="Ngày cấp")
     place_of_issue: Optional[str] = Field(None, description="Nơi cấp")
     address_full: Optional[str] = Field(None, description="Địa chỉ")
     mobile_phone: Optional[str] = Field(None, description="Điện thoại")
@@ -98,7 +98,7 @@ class SourceAccountRequest(BaseSchema):
 
 
 # II. Thông tin người hưởng thụ
-class ReceiverInformationRequest(BaseSchema):
+class ReceiverInfoRequest(BaseSchema):
     withdraw_account_flag: bool = Field(
         ...,
         description='Cờ thông tin rút tiền , `true` = Rút tài khoản, `false` = Rút cheque'
@@ -114,20 +114,20 @@ class ReceiverInformationRequest(BaseSchema):
 
 
 # III. Thông tin phí
-class FeeInformationRequest(BaseSchema):
+class FeeInfoRequest(BaseSchema):
     is_transfer_payer: bool = Field(
         ...,
         description=' 1. Cờ có thu phí hay không, `true`: Có thu phí, `false` = Không thu phí'
     )
-    payer: Optional[str] = Field(..., description="Bên thanh toán phí")
-    fee_amount: Optional[int] = Field(..., description="3. Số tiền phí")
+    payer: Optional[str] = Field(None, description="Bên thanh toán phí")
+    fee_amount: Optional[int] = Field(None, description="3. Số tiền phí")
 
 
 # A. THÔNG TIN GIAO DỊCH
-class TransactionInformationRequest(BaseSchema):
+class TransactionInfoRequest(BaseSchema):
     source_accounts: SourceAccountRequest = Field(..., description="I. Tài khoản nguồn")
-    receiver_information: ReceiverInformationRequest = Field(..., description="II. Thông tin người hưởng thụ")
-    fee_information: Optional[FeeInformationRequest] = Field(None, description="III. Thông tin phí")
+    receiver_info: ReceiverInfoRequest = Field(..., description="II. Thông tin người hưởng thụ")
+    fee_info: Optional[FeeInfoRequest] = Field(..., description="III. Thông tin phí")
 
 
 # I. Thông tin quản lý
@@ -137,7 +137,7 @@ class ManagementInfoRequest(BaseSchema):
 
 
 # II. Thông tin khách hàng giao dịch
-class TransactionalCustomerInfoRequest(BaseSchema):
+class SenderInfoRequest(BaseSchema):
     cif_flag: bool = Field(..., description="Cờ có CIF chưa, `true` = Có CIF, `false` = Chưa có CIF")
     cif_number: Optional[str] = Field(None, description="Số CIF")
     fullname_vn: Optional[str] = Field(None, description="Người giao dịch")
@@ -152,13 +152,13 @@ class TransactionalCustomerInfoRequest(BaseSchema):
 
 
 # B. THÔNG TIN KHÁCH HÀNG GIAO DỊCH
-class CustomerInformationRequest(BaseSchema):
+class CustomerInfoRequest(BaseSchema):
     management_info: ManagementInfoRequest = Field(..., description="I. Thông tin quản lý")
-    transactional_customer_info: TransactionalCustomerInfoRequest = \
+    sender_info: SenderInfoRequest = \
         Field(..., description="II. Thông tin khách hàng giao dịch")
 
 
 # Giao dịch rút tiền
 class WithdrawRequest(BaseSchema):
-    transaction_information: TransactionInformationRequest = Field(..., description="A. Thông tin giao dịch")
-    customer_information: CustomerInformationRequest = Field(..., description="B. Thông tin khách hàng giao dịch")
+    transaction_info: TransactionInfoRequest = Field(..., description="A. Thông tin giao dịch")
+    customer_info: CustomerInfoRequest = Field(..., description="B. Thông tin khách hàng giao dịch")

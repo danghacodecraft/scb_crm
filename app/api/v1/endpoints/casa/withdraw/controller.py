@@ -18,6 +18,7 @@ from app.utils.constant.business_type import BUSINESS_TYPE_WITHDRAW
 from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_WITHDRAW, PROFILE_HISTORY_STATUS_INIT
 )
+from app.utils.error_messages import ERROR_CASA_ACCOUNT_NOT_EXIST
 from app.utils.functions import orjson_dumps, orjson_loads
 
 
@@ -37,10 +38,22 @@ class CtrWithdraw(BaseController):
             loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_WITHDRAW}"
         )
 
-        receiver = request.transaction_information.receiver_information
-        fee = request.transaction_information.fee_information
-        management = request.customer_information.management_info
-        transactional_customer = request.customer_information.transactional_customer_info
+        casa_account_number = request.transaction_info.source_accounts.account_num
+
+        # Kiểm tra số tài khoản có tồn tại hay không
+        casa_account = await CtrGWCasaAccount(current_user).ctr_gw_check_exist_casa_account_info(
+            account_number=casa_account_number
+        )
+        if not casa_account['data']['is_existed']:
+            return self.response_exception(
+                msg=ERROR_CASA_ACCOUNT_NOT_EXIST,
+                loc=f"account_number: {casa_account_number}"
+            )
+
+        receiver = request.transaction_info.receiver_info
+        fee = request.transaction_info.fee_info
+        management = request.customer_info.management_info
+        transactional_customer = request.customer_info.sender_info
         if receiver.withdraw_account_flag:
             receiver_info = dict(
                 withdraw_account_flag=True,
@@ -61,7 +74,7 @@ class CtrWithdraw(BaseController):
             )
 
         transaction_info = dict(
-            source_accounts=request.transaction_information.source_accounts.account_num,
+            source_accounts=request.transaction_info.source_accounts.account_num,
             receiver_info=receiver_info,
             fee_info=dict(
                 is_transfer_payer=fee.is_transfer_payer,
@@ -75,7 +88,7 @@ class CtrWithdraw(BaseController):
                 direct_staff_code=management.direct_staff_code,
                 indirect_staff_code=management.indirect_staff_code
             ),
-            transactional_customer_info=dict(
+            sender_info=dict(
                 cif_flag=transactional_customer.cif_flag,
                 cif_number=transactional_customer.cif_number,
                 note=transactional_customer.note
@@ -212,6 +225,8 @@ class CtrWithdraw(BaseController):
         ))
 
         form_data = orjson_loads(get_pay_in_cash_info.form_data)
+        print('-------------------------------------')
+        print(form_data)
         ################################################################################################################
         # Thông tin người thụ hưởng
         ################################################################################################################
@@ -285,38 +300,40 @@ class CtrWithdraw(BaseController):
         ################################################################################################################
         # Thông tin khách hàng giao dịch
         ################################################################################################################
-        cif_flag = form_data['transactional_customer_info']['transactional_customer_info']['cif_flag']
-        cif_number = form_data['transactional_customer_info']['transactional_customer_info']['cif_number']
-        customer_info = form_data['transactional_customer_info']['transactional_customer_info']
+        cif_flag = form_data['transactional_customer_info']['sender_info']['cif_flag']
+        sender_response = {}
+        customer_info = form_data['transactional_customer_info']['sender_info']
 
-        gw_customer_info = await CtrGWCustomer(current_user).ctr_gw_get_customer_info_detail(
-            cif_number=cif_number,
-            return_raw_data_flag=True
-        )
-
-        gw_customer_info_identity_info = gw_customer_info['id_info']
-        gw_customer_info_address_info = gw_customer_info['p_address_info']
-
-        sender_response = dict(
-            cif_flag=cif_flag,
-            cif_number=cif_number,
-            fullname_vn=gw_customer_info['full_name'],
-            address_full=gw_customer_info_address_info['address_full'],
-            identity=gw_customer_info_identity_info['id_num'],
-            issued_date=gw_customer_info_identity_info['id_issued_date'],
-            place_of_issue=gw_customer_info_identity_info['id_issued_location'],
-            mobile_phone=gw_customer_info['mobile_phone'],
-        ) if cif_flag else dict(
-            cif_flag=cif_flag,
-            cif_number=cif_number,
-            fullname_vn=customer_info['fullname_vn'],
-            address_full=customer_info['address_full'],
-            identity=customer_info['identity'],
-            issued_date=customer_info['issued_date'],
-            place_of_issue=customer_info['place_of_issue'],
-            mobile_phone=customer_info['mobile_phone'],
-            note=customer_info['note']
-        )
+        if cif_flag:
+            cif_number = form_data['transactional_customer_info']['sender_info']['cif_number']
+            gw_customer_info = await CtrGWCustomer(current_user).ctr_gw_get_customer_info_detail(
+                cif_number=cif_number,
+                return_raw_data_flag=True
+            )
+            gw_customer_info_identity_info = gw_customer_info['id_info']
+            gw_customer_info_address_info = gw_customer_info['p_address_info']
+            sender_response.update(
+                cif_flag=cif_flag,
+                cif_number=cif_number,
+                fullname_vn=gw_customer_info['full_name'],
+                address_full=gw_customer_info_address_info['address_full'],
+                identity=gw_customer_info_identity_info['id_num'],
+                issued_date=gw_customer_info_identity_info['id_issued_date'],
+                place_of_issue=gw_customer_info_identity_info['id_issued_location'],
+                mobile_phone=gw_customer_info['mobile_phone'],
+                note=customer_info['note']
+            )
+        else:
+            sender_response.update(
+                cif_flag=cif_flag,
+                fullname_vn=customer_info['fullname_vn'],
+                address_full=customer_info['address_full'],
+                identity=customer_info['identity'],
+                issued_date=customer_info['issued_date'],
+                place_of_issue=customer_info['place_of_issue'],
+                mobile_phone=customer_info['mobile_phone'],
+                note=customer_info['note']
+            )
 
         response_data = dict(
             transaction_response=dict(
