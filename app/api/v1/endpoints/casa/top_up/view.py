@@ -29,8 +29,8 @@ router = APIRouter()
 async def view_save_casa_top_up_info(
         BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         request: Union[
-            CasaTopUpSCBByIdentityRequest,
             CasaTopUpThirdPartyByIdentityRequest,
+            CasaTopUpSCBByIdentityRequest,
             CasaTopUpThirdPartyToAccountRequest,
             CasaTopUpThirdParty247ToAccountRequest,
             CasaTopUpSCBToAccountRequest,
