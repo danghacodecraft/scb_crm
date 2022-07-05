@@ -14,7 +14,7 @@ from app.api.v1.others.booking.repository import (
 )
 from app.api.v1.others.permission.controller import PermissionController
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingAccount
+    Booking, BookingAccount, BookingBusinessForm
 )
 from app.third_parties.oracle.models.cif.payment_account.model import (
     CasaAccount
@@ -34,7 +34,7 @@ from app.utils.error_messages import (
     ERROR_BOOKING_ALREADY_USED, ERROR_BOOKING_ID_NOT_EXIST,
     ERROR_BOOKING_INCORRECT, ERROR_BUSINESS_TYPE_CODE_INCORRECT,
     ERROR_BUSINESS_TYPE_NOT_EXIST, ERROR_CASA_ACCOUNT_NOT_EXIST,
-    ERROR_CIF_ID_NOT_EXIST, ERROR_CUSTOMER_NOT_EXIST, ERROR_PERMISSION
+    ERROR_CIF_ID_NOT_EXIST, ERROR_CUSTOMER_NOT_EXIST, ERROR_PERMISSION, ERROR_BOOKING_BUSINESS_FORM_NOT_EXIST
 )
 
 
@@ -202,3 +202,19 @@ class CtrBooking(BaseController):
                 approved_casa_account_ids.append(casa_account.id)
 
         return casa_accounts
+
+    async def ctr_get_booking_business_form(self, booking_id: str, session: Session):
+        booking_business_form = session.execute(
+            select(
+                BookingBusinessForm,
+                Booking
+            )
+            .join(BookingBusinessForm, Booking.id == BookingBusinessForm.booking_id)
+            .filter(Booking.id == booking_id)
+            .order_by(BookingBusinessForm.created_at)
+        ).scalars().first()
+
+        if not booking_business_form:
+            return self.response_exception(msg=ERROR_BOOKING_BUSINESS_FORM_NOT_EXIST, loc=f"booking_id: {booking_id}")
+
+        return booking_business_form

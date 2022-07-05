@@ -91,6 +91,7 @@ class AuthenticationInfosRequest(BaseSchema):
 
 
 class ApprovalRequest(BaseSchema):
+    cif_id: Optional[str] = Field(..., description='Id CIF ảo')
     approval: CifApproveRequest = Field(..., description="Thông tin các TAB phê duyệt")
     authentication: Optional[AuthenticationInfosRequest] = Field(None, description="Thông tin xác thực")
 

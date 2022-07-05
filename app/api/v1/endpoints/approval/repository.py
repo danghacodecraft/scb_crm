@@ -80,7 +80,7 @@ async def repos_get_approval_process(booking_id: str, session: Session) -> Repos
     return ReposReturn(data=transactions)
 
 
-@auto_commit
+# @auto_commit
 async def repos_approve(
         cif_id: str,
         business_type_id: str,
