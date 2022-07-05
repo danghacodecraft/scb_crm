@@ -29,6 +29,8 @@ async def repos_save_withdraw(
         saving_transaction_stage_role,
         saving_transaction_daily,
         saving_transaction_sender,
+        saving_transaction_job,
+        saving_booking_business_form,
         request_json,
         history_data,
         session: Session
@@ -42,6 +44,8 @@ async def repos_save_withdraw(
         TransactionStageRole(**saving_transaction_stage_role),
         TransactionDaily(**saving_transaction_daily),
         TransactionSender(**saving_transaction_sender),
+        TransactionJob(**saving_transaction_job),
+        BookingBusinessForm(**saving_booking_business_form),
         # lưu form data request từ client
         BookingBusinessForm(**dict(
             booking_id=booking_id,

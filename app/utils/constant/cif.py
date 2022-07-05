@@ -299,7 +299,7 @@ PROFILE_HISTORY_DESCRIPTIONS = {
     BUSINESS_TYPE_CODE_WITHDRAW: {
         'description': PROFILE_HISTORY_DESCRIPTIONS_WITHDRAW,
         'content': "Giao dịch viên đang chuẩn bị hồ sơ. "
-                   "Mốc thời gian tính từ lúc GDV điền thông tin tab đầu tiên [Thông tin cá nhân]"
+                   f"Mốc thời gian tính từ lúc GDV điền thông tin tab đầu tiên [{PROFILE_HISTORY_DESCRIPTIONS_WITHDRAW}]"
     }
 }
 

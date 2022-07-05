@@ -109,21 +109,24 @@ class CtrWithdraw(BaseController):
             transactional_customer_info=transactional_customer_info
         )
 
-        # Tạo data TransactionDaily và các TransactionStage
-        transaction_data = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
-            business_type_id=BUSINESS_TYPE_WITHDRAW
-        )
-        (
-            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
-            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
-            saving_transaction_daily, saving_transaction_sender
-        ) = transaction_data
-
         history_data = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_WITHDRAW,
             history_status=PROFILE_HISTORY_STATUS_INIT,
             current_user=current_user.user_info
         )
+
+        # Tạo data TransactionDaily và các TransactionStage
+        transaction_data = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
+            business_type_id=BUSINESS_TYPE_WITHDRAW,
+            booking_id=booking_id,
+            request_json=request.json(),
+            history_datas=orjson_dumps(history_data)
+        )
+        (
+            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
+            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
+            saving_transaction_daily, saving_transaction_sender, saving_transaction_job, saving_booking_business_form
+        ) = transaction_data
 
         # Validate history data
         is_success, history_response = validate_history_data(history_data)
@@ -144,6 +147,8 @@ class CtrWithdraw(BaseController):
             saving_transaction_stage_role=saving_transaction_stage_role,
             saving_transaction_daily=saving_transaction_daily,
             saving_transaction_sender=saving_transaction_sender,
+            saving_transaction_job=saving_transaction_job,
+            saving_booking_business_form=saving_booking_business_form,
             request_json=orjson_dumps(data_request),
             history_data=orjson_dumps(history_data),
             session=self.oracle_session
@@ -246,7 +251,6 @@ class CtrWithdraw(BaseController):
         )
 
         ################################################################################################################
-
         amount = receiver_response['amount']
 
         ################################################################################################################
