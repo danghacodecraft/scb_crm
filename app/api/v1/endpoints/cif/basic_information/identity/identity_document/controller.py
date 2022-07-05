@@ -785,7 +785,7 @@ class CtrIdentityDocument(BaseController):
         )
         ################################################################################################################
         # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CIF
-        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
+        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
             business_type_id=BUSINESS_TYPE_INIT_CIF
         )
 

@@ -120,7 +120,7 @@ class CtrGWPayment(BaseController):
                 "customer_id": response_data.get('customer_id')
             })
         # Tạo data TransactionDaily và các TransactionStage
-        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
+        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
             business_type_id=BUSINESS_TYPE_AMOUNT_BLOCK
         )
         (
@@ -302,7 +302,7 @@ class CtrGWPayment(BaseController):
                 "customer_id": response_data.get('customer_id')
             })
         # Tạo data TransactionDaily và các TransactionStage
-        transaction_data = await self.ctr_create_transaction_daily_and_transaction_stage_for_init_cif(
+        transaction_data = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
             business_type_id=BUSINESS_TYPE_AMOUNT_UNBLOCK
         )
         (
