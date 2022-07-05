@@ -18,7 +18,7 @@ router = APIRouter()
 router_special = APIRouter()
 
 
-@router.get(
+@router_special.get(
     path="/job/",
     description="Tổng số nghiệp vụ hoàn thành",
     name="Tổng số nghiệp vụ hoàn thành",
@@ -28,7 +28,7 @@ router_special = APIRouter()
     )
 )
 async def view_get_business_jobs(
-        cif_id: str = Path(..., description='Id CIF ảo'),
+        cif_id: str = Query(None, description='Id CIF ảo'),
         BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         business_type_code: str = Query(
             ..., description=f"Mã loại nghiệp vụ {make_description_from_dict(dictionary=BUSINESS_TYPES)}"
