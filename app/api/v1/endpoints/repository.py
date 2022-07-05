@@ -147,11 +147,9 @@ async def repos_get_data_model_config(
 
     # Bank
     if hasattr(model, 'napas_flag') and napas_flag:
-        print(napas_flag)
         list_data_engine = list_data_engine.filter(model.napas_flag == napas_flag)
 
     if hasattr(model, 'citad_flag') and citad_flag:
-        print(citad_flag)
         list_data_engine = list_data_engine.filter(model.citad_flag == citad_flag)
 
     if hasattr(model, 'order_no'):

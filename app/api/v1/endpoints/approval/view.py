@@ -61,7 +61,7 @@ async def view_approval_process(
     return ResponseData[List[CifApprovalProcessResponse]](**approval_process)
 
 
-@router.post(
+@router_special.post(
     path="/",
     description="Phê duyệt - Phê duyệt biểu mẫu",
     name="Phê duyệt",
@@ -71,13 +71,12 @@ async def view_approval_process(
     )
 )
 async def view_approve(
-        cif_id: str = Path(..., description='Id CIF ảo'),
         BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         request: ApprovalRequest = Body(...),
         current_user=Depends(get_current_user_from_header())
 ):
     approve_info = await CtrApproval(current_user).ctr_approve(
-        cif_id=cif_id,
+        cif_id=request.cif_id,
         booking_id=BOOKING_ID,
         request=request
     )
