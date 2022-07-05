@@ -12,9 +12,9 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_get_casa_account_info, repos_gw_get_close_casa_account,
     repos_gw_get_column_chart_casa_account_info,
     repos_gw_get_pie_chart_casa_account_info,
-    repos_gw_get_statements_casa_account_info, repos_gw_open_casa_account,
-    repos_open_casa_get_casa_account_infos,
-    repos_update_casa_account_to_approved, repos_gw_get_tele_transfer
+    repos_gw_get_statements_casa_account_info, repos_gw_get_tele_transfer,
+    repos_gw_open_casa_account, repos_open_casa_get_casa_account_infos,
+    repos_update_casa_account_to_approved
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWOpenCasaAccountRequest, GWReportColumnChartHistoryAccountInfoRequest,
@@ -34,7 +34,9 @@ from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_KSV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_KSV
 )
 from app.utils.error_messages import ERROR_CALL_SERVICE_GW, ERROR_PERMISSION
-from app.utils.functions import now, orjson_loads, string_to_date, date_to_string
+from app.utils.functions import (
+    date_to_string, now, orjson_loads, string_to_date
+)
 
 
 class CtrGWCasaAccount(BaseController):
@@ -192,7 +194,8 @@ class CtrGWCasaAccount(BaseController):
             service_escrow=account_info['account_service_escrow'],
             amount_rate_close=account_info['account_amount_rate_close'],
             fee_close=account_info['account_fee_close'],
-            total=int(account_info['account_balance']) + int(account_info['account_amount_rate_close']),
+            total=int(account_info['account_balance']) + int(account_info['account_amount_rate_close'])
+            if account_info['account_amount_rate_close'] and account_info['account_balance'] else None,
             service_escrow_ex_date=string_to_date(account_info['account_service_escrow_ex_date'],
                                                   _format=DATETIME_INPUT_OUTPUT_FORMAT),
             lock_info=lock_info_response,
