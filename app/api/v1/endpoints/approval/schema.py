@@ -70,8 +70,8 @@ class AuthenticationResponse(BaseSchema):
 
 
 class CifApprovalSuccessResponse(BaseSchema):
-    cif_id: str = Field(..., description="Cif ID")
-    authentication: AuthenticationResponse = Field(..., description="Thông tin xác thực")
+    cif_id: Optional[str] = Field(..., description="Cif ID")
+    authentication: Optional[AuthenticationResponse] = Field(..., description="Thông tin xác thực")
     stages: List[CIFStageResponse] = Field(..., description="Thông tin các bước phê duyệt")
     is_open_cif: bool = Field(..., description="Được phép mở CIF không?")
 
@@ -91,6 +91,7 @@ class AuthenticationInfosRequest(BaseSchema):
 
 
 class ApprovalRequest(BaseSchema):
+    cif_id: Optional[str] = Field(..., description='Id CIF ảo')
     approval: CifApproveRequest = Field(..., description="Thông tin các TAB phê duyệt")
     authentication: Optional[AuthenticationInfosRequest] = Field(None, description="Thông tin xác thực")
 

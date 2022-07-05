@@ -1,6 +1,7 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.config.deposit.repository import (
-    repos_get_acc_class, repos_get_acc_type, repos_get_interest_type_by_id
+    repos_get_acc_class, repos_get_acc_type, repos_get_account_detail,
+    repos_get_interest_type_by_id, repos_get_serial
 )
 from app.api.v1.endpoints.repository import repos_get_data_model_config
 from app.third_parties.oracle.models.cif.e_banking.model import TdInterestType
@@ -68,3 +69,21 @@ class CtrConfigDeposit(BaseController):
         )
 
         return self.response(data=acc_class)
+
+    async def ctr_get_serial(self, serial_request):
+        current = self.current_user
+        account_class = serial_request.account_class
+        account_detail = self.call_repos(
+            await repos_get_account_detail(
+                account_class=account_class,
+                current_user=current.user_info
+            )
+        )
+        serial = self.call_repos(
+            await repos_get_serial(
+                serial_prefix=account_detail['MAKYHIEU'],
+                serial_key=account_detail['MAANCHI'],
+                current_user=current.user_info
+            )
+        )
+        return self.response(data=serial)

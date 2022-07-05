@@ -524,7 +524,7 @@ class CtrGWCasaAccount(BaseController):
                     "REMITTER_PHONE_NO": request_data.sender_mobile_number,
                     "REMITTER_ID_NO": request_data.sender_identity_number,
                     "ID_ISSUE_DATE": date_to_string(request_data.sender_issued_date),
-                    "ID_ISSUER": request_data.sender_place_of_issue,
+                    "ID_ISSUER": request_data.sender_place_of_issue.id,
                     "ADDRESS": request_data.sender_address_full
                 },
                 "ADDITIONAL_DETAILS": {

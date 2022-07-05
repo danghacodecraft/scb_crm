@@ -14,7 +14,6 @@ class CtrConfigBank(BaseController):
         return self.response(bank_branch_info)
 
     async def ctr_get_bank(self, napas_flag: bool, citad_flag: bool):
-        print(napas_flag, citad_flag)
         bank_branch_info = self.call_repos(
             await repos_get_data_model_config(
                 session=self.oracle_session,

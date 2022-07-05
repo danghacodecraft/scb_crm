@@ -39,7 +39,8 @@ async def repos_get_acc_type(
     if acc_type['selectCategory_out']['transaction_info']['transaction_error_code'] == GW_CASA_RESPONSE_STATUS_SUCCESS:
         response_data = acc_type['selectCategory_out']['data_output']
     else:
-        return ReposReturn(is_error=True, msg=acc_type['selectCategory_out']['transaction_info']['transaction_error_msg'])
+        return ReposReturn(is_error=True,
+                           msg=acc_type['selectCategory_out']['transaction_info']['transaction_error_msg'])
     return ReposReturn(data=response_data)
 
 
@@ -68,6 +69,48 @@ async def repos_get_acc_class(
     if acc_class['selectCategory_out']['transaction_info']['transaction_error_code'] == GW_CASA_RESPONSE_STATUS_SUCCESS:
         response_data = acc_class['selectCategory_out']['data_output']
     else:
-        return ReposReturn(is_error=True, msg=acc_type['selectCategory_out']['transaction_info']['transaction_error_msg'])
+        return ReposReturn(is_error=True,
+                           msg=acc_type['selectCategory_out']['transaction_info']['transaction_error_msg'])
+
+    return ReposReturn(data=response_data)
+
+
+async def repos_get_account_detail(account_class, current_user):
+    transaction_value = [
+        {
+            "param1": account_class
+        }
+    ]
+    is_success, account_detail = await service_gw.get_select_category(
+        current_user=current_user,
+        transaction_name="DM_ACCLASS_DETAIL",
+        transaction_value=transaction_value
+    )
+    response_data = account_detail['selectCategory_out']['data_output'][0]
+    return ReposReturn(data=response_data)
+
+
+async def repos_get_serial(serial_prefix, serial_key, current_user):
+    data_input = {
+        "serial_info": {
+            "serial_prefix": serial_prefix,
+            "serial_key": serial_key
+        },
+        "maker_info": {
+            "staff_name": current_user.username
+        },
+        "branch_info": {
+            "branch_code": current_user.hrm_branch_code
+        }
+    }
+    is_success, serial = await service_gw.get_select_serial(
+        data_input=data_input,
+        current_user=current_user,
+    )
+    serial_out = serial['retrieveSerialNumber_out']['transaction_info']
+    if serial_out['transaction_error_code'] != GW_CASA_RESPONSE_STATUS_SUCCESS:
+        ReposReturn(is_error=True, msg=serial_out['transaction_error_msg'], loc="SERIAL")
+
+    response_data = serial['retrieveSerialNumber_out']['data_output']['serial_info']
 
     return ReposReturn(data=response_data)

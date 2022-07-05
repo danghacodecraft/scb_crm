@@ -5,7 +5,7 @@ from pydantic import Field, validator
 
 from app.api.base.schema import ResponseRequestSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
-from app.api.v1.schemas.utils import DropdownRequest
+from app.api.v1.schemas.utils import DropdownRequest, OptionalDropdownResponse, DropdownResponse
 from app.utils.constant.casa import DENOMINATIONS__AMOUNTS
 from app.utils.functions import (
     is_valid_mobile_number, make_description_from_dict_to_list
@@ -39,7 +39,7 @@ class CasaTopUpRequest(ResponseRequestSchema):
     sender_full_name_vn: Optional[str] = Field(None, description="Người giao dịch")
     sender_identity_number: Optional[str] = Field(None, description="Giấy tờ định danh")
     sender_issued_date: Optional[date] = Field(None, description="Ngày cấp")
-    sender_place_of_issue: Optional[str] = Field(None, description="Nơi cấp")
+    sender_place_of_issue: Optional[DropdownRequest] = Field(None, description="Nơi cấp")
     sender_address_full: Optional[str] = Field(None, description="Địa chỉ")
     sender_mobile_number: Optional[str] = Field(None, description="Số điện thoại", regex=REGEX_NUMBER_ONLY)
     receiving_method: str = Field(..., description="Hình thức nhận")

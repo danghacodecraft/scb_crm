@@ -21,3 +21,8 @@ BUSINESS_TYPES = {
     BUSINESS_TYPE_OPEN_TD_ACCOUNT: "Mở mới tài khoản tiết kiệm",
     BUSINESS_TYPE_CASA_TRANSFER: "Chuyển khoản tài khoản thanh toán"
 }
+
+# Những business type không cần dùng cif
+BUSINESS_TYPE_NO_CIFS = [
+    BUSINESS_TYPE_CASA_TOP_UP
+]

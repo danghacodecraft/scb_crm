@@ -178,7 +178,7 @@ class CtrIdentityMobile(BaseController):
             "active_flag": True,
             "open_cif_at": now(),
             "open_branch_id": current_user.user_info.hrm_branch_code,
-            "kyc_level_id": "KYC_1",  # TODO
+            "kyc_level_id": "EKYC_1",  # TODO
             "customer_category_id": "D0682B44BEB3830EE0530100007F1DDC",  # TODO
             "customer_economic_profession_id": None,
             "nationality_id": nationality_id,
