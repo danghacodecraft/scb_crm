@@ -119,7 +119,7 @@ class CtrWithdraw(BaseController):
         transaction_data = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
             business_type_id=BUSINESS_TYPE_WITHDRAW,
             booking_id=booking_id,
-            request_json=request.json(),
+            request_json=orjson_dumps(data_request),
             history_datas=orjson_dumps(history_data)
         )
         (
@@ -149,8 +149,6 @@ class CtrWithdraw(BaseController):
             saving_transaction_sender=saving_transaction_sender,
             saving_transaction_job=saving_transaction_job,
             saving_booking_business_form=saving_booking_business_form,
-            request_json=orjson_dumps(data_request),
-            history_data=orjson_dumps(history_data),
             session=self.oracle_session
         ))
         response_data = {

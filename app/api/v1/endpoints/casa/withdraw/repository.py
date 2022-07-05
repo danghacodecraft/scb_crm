@@ -12,30 +12,27 @@ from app.third_parties.oracle.models.master_data.others import (
     SlaTransaction, TransactionJob, TransactionStage, TransactionStageLane,
     TransactionStagePhase, TransactionStageRole, TransactionStageStatus
 )
-from app.utils.constant.approval import BUSINESS_JOB_CODE_WITHDRAW
-from app.utils.constant.cif import BUSINESS_FORM_WITHDRAW
 from app.utils.error_messages import ERROR_BOOKING_ID_NOT_EXIST
-from app.utils.functions import generate_uuid, now
 
 
 @auto_commit
 async def repos_save_withdraw(
-        booking_id,
-        saving_transaction_stage_status,
-        saving_transaction_stage,
-        saving_transaction_stage_lane,
-        saving_sla_transaction,
-        saving_transaction_stage_phase,
-        saving_transaction_stage_role,
-        saving_transaction_daily,
-        saving_transaction_sender,
-        saving_transaction_job,
-        saving_booking_business_form,
-        request_json,
-        history_data,
+        booking_id: str,
+        saving_transaction_stage_status: dict,
+        saving_transaction_stage: dict,
+        saving_transaction_stage_lane: dict,
+        saving_sla_transaction: dict,
+        saving_transaction_stage_phase: dict,
+        saving_transaction_stage_role: dict,
+        saving_transaction_daily: dict,
+        saving_transaction_sender: dict,
+        saving_transaction_job: dict,
+        saving_booking_business_form: dict,
         session: Session
 ) -> ReposReturn:
+    # Lưu log vào DB
     session.add_all([
+        # Tạo BOOKING, CRM_TRANSACTION_DAILY -> CRM_BOOKING -> BOOKING_CUSTOMER -> BOOKING_BUSINESS_FORM
         TransactionStageStatus(**saving_transaction_stage_status),
         TransactionStage(**saving_transaction_stage),
         TransactionStageLane(**saving_transaction_stage_lane),
@@ -45,25 +42,7 @@ async def repos_save_withdraw(
         TransactionDaily(**saving_transaction_daily),
         TransactionSender(**saving_transaction_sender),
         TransactionJob(**saving_transaction_job),
-        BookingBusinessForm(**saving_booking_business_form),
-        # lưu form data request từ client
-        BookingBusinessForm(**dict(
-            booking_id=booking_id,
-            form_data=request_json,
-            business_form_id=BUSINESS_FORM_WITHDRAW,
-            save_flag=True,
-            log_data=history_data,
-            created_at=now()
-        )),
-        TransactionJob(**dict(
-            transaction_id=generate_uuid(),
-            booking_id=booking_id,
-            business_job_id=BUSINESS_JOB_CODE_WITHDRAW,
-            complete_flag=True,
-            error_code=None,
-            error_desc=None,
-            created_at=now()
-        ))
+        BookingBusinessForm(**saving_booking_business_form)
     ])
     # Update Booking
     session.execute(
