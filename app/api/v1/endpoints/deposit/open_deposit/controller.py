@@ -80,16 +80,6 @@ class CtrDeposit(BaseController):
                 "customer_id": customer.id
             })
 
-        # Tạo data TransactionDaily và các TransactionStage
-        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
-            business_type_id=BUSINESS_TYPE_OPEN_TD_ACCOUNT
-        )
-        (
-            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
-            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
-            saving_transaction_daily, saving_transaction_sender
-        ) = transaction_datas
-
         history_datas = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_ACCOUNT,
             history_status=PROFILE_HISTORY_STATUS_INIT,
@@ -105,22 +95,35 @@ class CtrDeposit(BaseController):
                 detail=history_response['detail']
             )
 
+        # Tạo data TransactionDaily và các TransactionStage
+        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
+            business_type_id=BUSINESS_TYPE_OPEN_TD_ACCOUNT,
+            booking_id=BOOKING_ID,
+            request_json=deposit_account_request.json(),
+            history_datas=orjson_dumps(history_datas),
+        )
+        (
+            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
+            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
+            saving_transaction_daily, saving_transaction_sender, saving_transaction_job, saving_booking_business_form
+        ) = transaction_datas
+
         booking_id = self.call_repos(await repos_save_td_account(
             booking_id=BOOKING_ID,
             td_accounts=td_accounts,
             td_account_resigns=td_account_resigns,
             saving_transaction_stage_status=saving_transaction_stage_status,
+            saving_sla_transaction=saving_sla_transaction,
             saving_transaction_stage=saving_transaction_stage,
             saving_transaction_stage_phase=saving_transaction_stage_phase,
-            saving_sla_transaction=saving_sla_transaction,
             saving_transaction_stage_lane=saving_transaction_stage_lane,
             saving_transaction_stage_role=saving_transaction_stage_role,
             saving_transaction_daily=saving_transaction_daily,
             saving_transaction_sender=saving_transaction_sender,
+            saving_transaction_job=saving_transaction_job,
+            saving_booking_business_form=saving_booking_business_form,
             saving_booking_account=saving_booking_account,
             saving_booking_customer=saving_booking_customer,
-            request_json=deposit_account_request.json(),
-            history_datas=orjson_dumps(history_datas),
             session=self.oracle_session
         ))
 
