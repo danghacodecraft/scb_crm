@@ -602,18 +602,18 @@ class CtrCasaTopUp(BaseController):
         saving_customer_address = {}
         if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
             casa_top_up_info = await self.ctr_save_casa_top_up_scb_by_identity(request=request)
-            (
-                saving_customer, saving_customer_identity, saving_customer_address
-            ) = await CtrCustomer(current_user).ctr_create_non_resident_customer(request=request)
+            # (
+            #     saving_customer, saving_customer_identity, saving_customer_address
+            # ) = await CtrCustomer(current_user).ctr_create_non_resident_customer(request=request)
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
             casa_top_up_info = await self.ctr_save_casa_top_up_third_party_to_account(request=request)
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
             casa_top_up_info = await self.ctr_save_casa_top_up_third_party_by_identity(request=request)
-            (
-                saving_customer, saving_customer_identity, saving_customer_address
-            ) = await CtrCustomer(current_user).ctr_create_non_resident_customer(request=request)
+            # (
+            #     saving_customer, saving_customer_identity, saving_customer_address
+            # ) = await CtrCustomer(current_user).ctr_create_non_resident_customer(request=request)
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT:
             casa_top_up_info = await self.ctr_save_casa_top_up_third_party_247_to_account(request=request)
@@ -664,9 +664,9 @@ class CtrCasaTopUp(BaseController):
             saving_transaction_sender=saving_transaction_sender,
             saving_transaction_job=saving_transaction_job,
             saving_booking_business_form=saving_booking_business_form,
-            saving_customer=saving_customer,
-            saving_customer_identity=saving_customer_identity,
-            saving_customer_address=saving_customer_address,
+            # saving_customer=saving_customer,
+            # saving_customer_identity=saving_customer_identity,
+            # saving_customer_address=saving_customer_address,
             session=self.oracle_session
         ))
 
