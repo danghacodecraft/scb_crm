@@ -43,7 +43,7 @@ async def view_save_casa_top_up_info(
         booking_id=BOOKING_ID,
         request=request
     )
-    return ResponseData[SaveSuccessResponse](**casa_top_up_info)
+    return ResponseData(**casa_top_up_info)
 
 
 @router.get(
