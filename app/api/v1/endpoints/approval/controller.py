@@ -647,22 +647,22 @@ class CtrApproval(BaseController):
         # check cif tồn tại
         await self.get_model_object_by_id(model_id=cif_id, model=Customer, loc="cif_id")
 
-        booking_business_form = await CtrBooking().ctr_get_booking_business_form(
-            booking_id=booking_id, session=self.oracle_session
-        )
-        form_data = orjson_loads(booking_business_form.form_data)
-        # TH1: Method không có cif
-        if form_data['receiving_method'] in RECEIVING_METHOD_IDENTITY_CASES:
-            return self.response_exception(
-                msg=f"{form_data['receiving_method']}",
-                detail="Đang nâng cấp"
-            )
-        # TH2: Method BẮT BUỘC có cif
-        elif not cif_id:
-            return self.response_exception(
-                msg=ERROR_FIELD_REQUIRED,
-                loc='cif_id'
-            )
+        # booking_business_form = await CtrBooking().ctr_get_booking_business_form(
+        #     booking_id=booking_id, session=self.oracle_session
+        # )
+        # form_data = orjson_loads(booking_business_form.form_data)
+        # # TH1: Method không có cif
+        # if form_data['receiving_method'] in RECEIVING_METHOD_IDENTITY_CASES:
+        #     return self.response_exception(
+        #         msg=f"{form_data['receiving_method']}",
+        #         detail="Đang nâng cấp"
+        #     )
+        # # TH2: Method BẮT BUỘC có cif
+        # elif not cif_id:
+        #     return self.response_exception(
+        #         msg=ERROR_FIELD_REQUIRED,
+        #         loc='cif_id'
+        #     )
 
         ############################################################################################################
         # THÔNG TIN XÁC THỰC
