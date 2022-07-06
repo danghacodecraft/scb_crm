@@ -2,9 +2,6 @@ from sqlalchemy import select, desc, update
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
-from app.third_parties.oracle.models.cif.basic_information.contact.model import CustomerAddress
-from app.third_parties.oracle.models.cif.basic_information.identity.model import CustomerIdentity
-from app.third_parties.oracle.models.cif.basic_information.model import Customer
 from app.third_parties.oracle.models.cif.form.model import BookingBusinessForm, TransactionDaily, TransactionSender, \
     Booking
 from app.third_parties.oracle.models.master_data.others import TransactionStageStatus, TransactionStage, SlaTransaction, \
