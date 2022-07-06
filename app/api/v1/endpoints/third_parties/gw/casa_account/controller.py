@@ -225,8 +225,11 @@ class CtrGWCasaAccount(BaseController):
     ):
         gw_check_exist_casa_account_info = self.call_repos(await repos_gw_get_casa_account_info(
             account_number=account_number,
+            error_flag=False,
             current_user=self.current_user.user_info
         ))
+        if not gw_check_exist_casa_account_info:
+            return self.response(data=dict(is_existed=False))
         account_info = gw_check_exist_casa_account_info['retrieveCurrentAccountCASA_out']['data_output']['customer_info'][
             'account_info']
 

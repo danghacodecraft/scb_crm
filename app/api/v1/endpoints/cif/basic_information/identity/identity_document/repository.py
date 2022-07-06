@@ -1,3 +1,4 @@
+import json
 from typing import List, Optional
 
 from loguru import logger
@@ -342,9 +343,9 @@ async def repos_save_identity(
         # saving_transaction_receiver: dict,
         avatar_image_uuid_service,
         identity_avatar_image_uuid_ekyc: str,
-        request_data: dict,
+        request_data: json,
         booking_id: str,
-        history_datas: List,
+        history_datas: json,
         current_user: UserInfoResponse,
         session: Session
 ) -> ReposReturn:

@@ -784,16 +784,6 @@ class CtrIdentityDocument(BaseController):
             booking_id=booking_id
         )
         ################################################################################################################
-        # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CIF
-        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
-            business_type_id=BUSINESS_TYPE_INIT_CIF
-        )
-
-        (
-            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
-            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
-            saving_transaction_daily, saving_transaction_sender
-        ) = transaction_datas
 
         request_data = await parse_identity_model_to_dict(
             request=identity_document_request,
@@ -814,6 +804,23 @@ class CtrIdentityDocument(BaseController):
                 loc=history_response['loc'],
                 detail=history_response['detail']
             )
+
+        request_data = orjson_dumps(request_data)
+        history_datas = orjson_dumps(history_datas)
+
+        # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CIF
+        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
+            business_type_id=BUSINESS_TYPE_INIT_CIF,
+            booking_id=booking_id,
+            history_datas=history_datas,
+            request_json=request_data
+        )
+
+        (
+            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
+            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
+            saving_transaction_daily, saving_transaction_sender, _, _
+        ) = transaction_datas
 
         info_save_document = self.call_repos(
             await repos_save_identity(
@@ -839,8 +846,8 @@ class CtrIdentityDocument(BaseController):
                 avatar_image_uuid_service=avatar_image_uuid_service,
                 identity_avatar_image_uuid_ekyc=identity_avatar_image_uuid,
                 booking_id=booking_id,
-                request_data=orjson_dumps(request_data),
-                history_datas=orjson_dumps(history_datas),
+                request_data=request_data,
+                history_datas=history_datas,
                 current_user=current_user,
                 session=self.oracle_session
             )
