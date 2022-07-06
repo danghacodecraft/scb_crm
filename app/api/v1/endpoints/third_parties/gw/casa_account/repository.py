@@ -50,12 +50,16 @@ async def repos_gw_get_casa_account_by_cif_number(
 
 async def repos_gw_get_casa_account_info(
         account_number: str,
-        current_user: str
+        current_user: str,
+        error_flag: bool = True,
 ):
     is_success, gw_casa_account_info = await service_gw.get_casa_account(
         current_user=current_user,
         account_number=account_number
     )
+    if not error_flag:
+        return ReposReturn(data=gw_casa_account_info)
+
     if not is_success:
         return ReposReturn(
             is_error=True,
