@@ -460,7 +460,7 @@ class CtrApproval(BaseController):
             teller_content = orjson_loads(previous_transaction_daily.data)["content"]
             teller_created_at = previous_transaction_daily.created_at
             teller_created_by = previous_transaction_sender.user_fullname
-            teller_is_disable = False
+            teller_is_disable = True
 
             if is_role_supervisor:
                 # return self.response_exception(
@@ -473,8 +473,6 @@ class CtrApproval(BaseController):
                 #     error_status_code=status.HTTP_403_FORBIDDEN
                 # )
                 supervisor_is_disable = False
-                teller_is_disable = True
-                audit_is_disable = True
 
             audit_transaction = self.call_repos(await repos_get_previous_transaction_daily(
                 transaction_daily_id=previous_transaction_daily.transaction_id,
