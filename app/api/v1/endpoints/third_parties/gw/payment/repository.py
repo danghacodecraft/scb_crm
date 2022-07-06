@@ -1,4 +1,3 @@
-import json
 from typing import Optional
 
 from sqlalchemy import update
@@ -15,12 +14,9 @@ from app.third_parties.oracle.models.master_data.others import (
     SlaTransaction, TransactionJob, TransactionStage, TransactionStageLane,
     TransactionStagePhase, TransactionStageRole, TransactionStageStatus
 )
-from app.utils.constant.approval import (
-    BUSINESS_JOB_CODE_AMOUNT_BLOCK, BUSINESS_JOB_CODE_START_AMOUNT_BLOCK
-)
+from app.utils.constant.approval import BUSINESS_JOB_CODE_AMOUNT_BLOCK
 from app.utils.constant.cif import (
-    BUSINESS_FORM_AMOUNT_BLOCK, BUSINESS_FORM_AMOUNT_BLOCK_PD,
-    BUSINESS_FORM_AMOUNT_UNBLOCK, BUSINESS_FORM_AMOUNT_UNBLOCK_PD
+    BUSINESS_FORM_AMOUNT_BLOCK_PD, BUSINESS_FORM_AMOUNT_UNBLOCK_PD
 )
 from app.utils.constant.gw import GW_CASA_RESPONSE_STATUS_SUCCESS
 from app.utils.error_messages import ERROR_BOOKING_CODE_EXISTED, MESSAGE_STATUS
@@ -86,8 +82,8 @@ async def repos_payment_amount_block(
         saving_transaction_sender,
         saving_booking_account,
         saving_booking_customer,
-        request_json: json,
-        history_datas: json,
+        saving_transaction_job,
+        saving_booking_business_form,
         session
 ):
     session.add_all([
@@ -100,23 +96,8 @@ async def repos_payment_amount_block(
         TransactionDaily(**saving_transaction_daily),
         TransactionSender(**saving_transaction_sender),
         # lưu form data request từ client
-        BookingBusinessForm(**dict(
-            booking_id=booking_id,
-            form_data=request_json,
-            business_form_id=BUSINESS_FORM_AMOUNT_BLOCK,
-            save_flag=True,
-            created_at=now(),
-            log_data=history_datas
-        )),
-        TransactionJob(**dict(
-            transaction_id=generate_uuid(),
-            booking_id=booking_id,
-            business_job_id=BUSINESS_JOB_CODE_START_AMOUNT_BLOCK,
-            complete_flag=True,
-            error_code=None,
-            error_desc=None,
-            created_at=now()
-        ))
+        BookingBusinessForm(**saving_booking_business_form),
+        TransactionJob(**saving_transaction_job)
     ])
     session.bulk_save_objects(BookingAccount(**account) for account in saving_booking_account)
     session.bulk_save_objects(BookingCustomer(**customer) for customer in saving_booking_customer)
@@ -194,8 +175,9 @@ async def repos_payment_amount_unblock(
         saving_booking_customer,
         saving_booking_account,
         saving_transaction_sender,
-        request_json: json,
-        history_data: json,
+        saving_transaction_job,
+        saving_booking_business_form,
+
         session
 ):
     session.add_all([
@@ -208,14 +190,8 @@ async def repos_payment_amount_unblock(
         TransactionDaily(**saving_transaction_daily),
         TransactionSender(**saving_transaction_sender),
         # lưu form data request từ client
-        BookingBusinessForm(**dict(
-            booking_id=booking_id,
-            form_data=request_json,
-            business_form_id=BUSINESS_FORM_AMOUNT_UNBLOCK,
-            save_flag=True,
-            created_at=now(),
-            log_data=history_data
-        ))
+        TransactionJob(**saving_transaction_job),
+        BookingBusinessForm(**saving_booking_business_form)
     ])
     session.bulk_save_objects(BookingAccount(**account) for account in saving_booking_account)
     session.bulk_save_objects(BookingCustomer(**customer) for customer in saving_booking_customer)

@@ -1,7 +1,17 @@
 from datetime import date
+from typing import List
+
+from sqlalchemy import select
 
 from app.api.base.repository import ReposReturn
 from app.settings.event import service_gw
+from app.third_parties.oracle.models.cif.basic_information.model import (
+    Customer
+)
+from app.third_parties.oracle.models.cif.e_banking.model import (
+    TdAccount, TdAccountResign
+)
+from app.third_parties.oracle.models.cif.form.model import BookingAccount
 from app.utils.constant.gw import (
     GW_ENDPOINT_URL_RETRIEVE_REPORT_TD_FROM_CIF,
     GW_TRANSACTION_NAME_COLUMN_CHART_TD, GW_TRANSACTION_NAME_STATEMENT
@@ -90,3 +100,37 @@ async def repos_gw_deposit_open_account_td(current_user, data_input):
         data_input=data_input
     )
     return ReposReturn(data=gw_deposit_open_account_td)
+
+
+async def repos_get_booking_account_by_booking(booking_id, session):
+    booking_account = session.execute(
+        select(
+            BookingAccount.account_id
+        ).filter(BookingAccount.booking_id == booking_id)
+    ).scalars().all()
+
+    return ReposReturn(data=booking_account)
+
+
+async def repos_get_customer_by_booking_account(td_accounts: List, session):
+    customer = session.execute(
+        select(
+            Customer,
+            TdAccount
+        )
+        .join(Customer, TdAccount.customer_id == Customer.id)
+        .filter(TdAccount.id.in_(td_accounts))
+    ).all()
+    return ReposReturn(data=customer)
+
+
+async def repos_get_td_account(td_accounts: List, session):
+    td_account = session.execute(
+        select(
+            TdAccount,
+            TdAccountResign
+        )
+        .join(TdAccountResign, TdAccount.id == TdAccountResign.id)
+        .filter(TdAccount.id.in_(td_accounts))
+    ).all()
+    return ReposReturn(data=td_account)
