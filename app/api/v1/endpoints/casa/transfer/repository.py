@@ -2,6 +2,12 @@ from sqlalchemy import desc, select, update
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
+from app.third_parties.oracle.models.cif.basic_information.identity.model import (
+    CustomerIdentity
+)
+from app.third_parties.oracle.models.cif.basic_information.model import (
+    Customer
+)
 from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingBusinessForm, TransactionDaily, TransactionSender
 )
@@ -27,45 +33,13 @@ async def repos_save_casa_transfer_info(
         saving_transaction_sender: dict,
         saving_transaction_job: dict,
         saving_booking_business_form: dict,
+        saving_customer: dict,
+        saving_customer_identity: dict,
+        saving_customer_address: dict,
         session: Session
 ):
-    print('------------------------')
-    print('booking_id')
-    print(booking_id)
-    print('------------------------')
-    print('saving_transaction_stage_status')
-    print(saving_transaction_stage_status)
-    print('------------------------')
-    print('saving_sla_transaction')
-    print(saving_sla_transaction)
-    print('------------------------')
-    print('saving_transaction_stage')
-    print(saving_transaction_stage)
-    print('------------------------')
-    print('saving_transaction_stage_phase')
-    print(saving_transaction_stage_phase)
-    print('------------------------')
-    print('saving_transaction_stage_lane')
-    print(saving_transaction_stage_lane)
-    print('------------------------')
-    print('saving_transaction_stage_role')
-    print(saving_transaction_stage_role)
-    print('------------------------')
-    print('saving_transaction_daily')
-    print(saving_transaction_daily)
-    print('------------------------')
-    print('saving_transaction_sender')
-    print(saving_transaction_sender)
-    print('------------------------')
-    print('saving_transaction_job')
-    print(saving_transaction_job)
-    print('------------------------')
-    print('saving_booking_business_form')
-    print(saving_booking_business_form)
-    print('------------------------')
-
     # Lưu log vào DB
-    session.add_all([
+    insert_list = [
         # Tạo BOOKING, CRM_TRANSACTION_DAILY -> CRM_BOOKING -> BOOKING_CUSTOMER -> BOOKING_BUSINESS_FORM
         TransactionStageStatus(**saving_transaction_stage_status),
         SlaTransaction(**saving_sla_transaction),
@@ -77,7 +51,15 @@ async def repos_save_casa_transfer_info(
         TransactionSender(**saving_transaction_sender),
         TransactionJob(**saving_transaction_job),
         BookingBusinessForm(**saving_booking_business_form)
-    ])
+    ]
+    if saving_customer and saving_customer_identity and saving_customer_address:
+        insert_list.extend([
+            Customer(**saving_customer),
+            CustomerIdentity(**saving_customer_identity)
+        ])
+
+    # Lưu log vào DB
+    session.add_all(insert_list)
 
     # Update Booking
     session.execute(

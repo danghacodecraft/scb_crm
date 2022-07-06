@@ -31,11 +31,11 @@ router = APIRouter()
 async def view_save_casa_transfer_info(
         BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         request: Union[
-            CasaTransferSCBByIdentityRequest,
             CasaTransferThirdPartyByIdentityRequest,
+            CasaTransferSCBByIdentityRequest,
             CasaTransferThirdPartyToAccountRequest,
-            CasaTransferSCBToAccountRequest,
             CasaTransferThirdParty247ToAccountRequest,
+            CasaTransferSCBToAccountRequest,
             CasaTransferThirdParty247ToCardRequest
         ] = Body(...),
         current_user=Depends(get_current_user_from_header())

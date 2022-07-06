@@ -30,7 +30,7 @@ class CasaTransferRequest(ResponseRequestSchema):
     sender_full_name_vn: Optional[str] = Field(None, description="Người giao dịch")
     sender_identity_number: Optional[str] = Field(None, description="Giấy tờ định danh")
     sender_issued_date: Optional[date] = Field(None, description="Ngày cấp")
-    sender_place_of_issue: Optional[str] = Field(None, description="Nơi cấp")
+    sender_place_of_issue: Optional[DropdownRequest] = Field(None, description="Nơi cấp")
     sender_address_full: Optional[str] = Field(None, description="Địa chỉ")
     sender_mobile_number: Optional[str] = Field(None, description="Số điện thoại", regex=REGEX_NUMBER_ONLY)
     receiving_method: str = Field(..., description="Hình thức nhận")
@@ -83,7 +83,7 @@ class CasaTransferSCBByIdentityRequest(CasaTransferRequest):
 
 
 class CasaTransferThirdPartyRequest(CasaTransferRequest):
-    receiver_bank: str = Field(..., description="Ngân hàng")
+    receiver_bank: DropdownRequest = Field(..., description="Ngân hàng")
     receiver_address_full: str = Field(..., description="Địa chỉ", max_length=100)
 
 
@@ -100,6 +100,8 @@ class CasaTransferThirdPartyByIdentityRequest(CasaTransferThirdPartyRequest):
     """
     Ngoài SCB nhận bằng giấy tờ định danh
     """
+    receiver_branch: DropdownRequest = Field(..., description="Chi nhánh")
+    receiver_province: DropdownRequest = Field(..., description="Tỉnh/Thành phố")
     receiver_full_name_vn: str = Field(..., description="Chủ tài khoản")
     receiver_identity_number: str = Field(..., description="Số GTĐD", regex=REGEX_NUMBER_ONLY)
     receiver_issued_date: date = Field(..., description="Ngày cấp")
@@ -118,7 +120,6 @@ class CasaTransferThirdParty247ToAccountRequest(CasaTransferThirdPartyRequest):
     Ngoài SCB 24/7 tài khoản
     """
     receiver_account_number: str = Field(..., description="Số tài khoản", regex=REGEX_NUMBER_ONLY)
-    receiver_full_name_vn: str = Field(..., description="")
 
 
 class CasaTransferThirdParty247ToCardRequest(CasaTransferThirdPartyRequest):
@@ -141,6 +142,7 @@ class TransferTypeResponse(ResponseRequestSchema):
 
 class ReceiverResponse(ResponseRequestSchema):
     account_number: Optional[str] = Field(None, description="Số tài khoản người nhận")
+    card_number: Optional[str] = Field(None, description="Số thẻ người nhận")
     fullname_vn: Optional[str] = Field(None, description="Chủ tài khoản")
     bank: DropdownCodeNameResponse = Field(None, description="Ngân hàng")
     province: DropdownCodeNameResponse = Field(None, description="Tỉnh/Thành phố")
