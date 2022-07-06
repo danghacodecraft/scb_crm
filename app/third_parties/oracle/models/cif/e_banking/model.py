@@ -42,7 +42,6 @@ class TdAccount(Base):
     pay_out_casa_account = Column('pay_out_casa_account', VARCHAR(36), comment='Tài khoản nhận gốc')
     td_contract_num = Column('td_contract_num', VARCHAR(50), comment='Số hợp đồng')
     fcc_transaction_num = Column('fcc_transaction_num', VARCHAR(100), comment='Số bút toán (FCC)')
-    td_resign_type_id = Column('td_resign_type_id', VARCHAR(36), nullable=False, comment='Chỉ định tái ký')
     maturity_date = Column(DateTime, nullable=False, comment='Ngày đáo hạn')
     td_serial = Column('td_serial', VARCHAR(20), comment='Số serial')
     td_interest_type = Column('td_interest_type', VARCHAR(20), comment='Hình thức lãi')

@@ -18,7 +18,6 @@ class TdAccountRequest(BaseSchema):
     pay_out_casa_account: str = Field(..., description='Tài khoản nhận gốc')
     td_contract_num: str = Field(..., description='Số hợp đồng')
     fcc_transaction_num: str = Field(None, description='Số bút toán (FCC)')
-    td_resign_type_id: Optional[str] = Field(None, description='Chỉ định tái ký')
     maturity_date: date = Field(..., description='Ngày đáo hạn')
     td_serial: str = Field(..., description='Số serial')
     td_interest_type: str = Field(..., description='Hình thức lãi')
