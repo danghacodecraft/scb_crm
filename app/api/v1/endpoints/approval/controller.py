@@ -37,7 +37,7 @@ from app.utils.constant.approval import (
     COMPLETED_STAGES, INIT_RESPONSE, INIT_STAGES, STAGE_BEGINS
 )
 from app.utils.constant.business_type import (
-    BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPES
+    BUSINESS_TYPE_CASA_TOP_UP, BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPES
 )
 from app.utils.constant.casa import RECEIVING_METHOD_IDENTITY_CASES
 from app.utils.constant.cif import (
@@ -641,80 +641,92 @@ class CtrApproval(BaseController):
         face_authentications = []
         fingerprint_authentications = []
         signature_authentications = []
+        no_cif_flag = False
 
-        # check cif tồn tại
-        await self.get_model_object_by_id(model_id=cif_id, model=Customer, loc="cif_id")
-
-        # booking_business_form = await CtrBooking().ctr_get_booking_business_form(
-        #     booking_id=booking_id, session=self.oracle_session
-        # )
-        # form_data = orjson_loads(booking_business_form.form_data)
-        # # TH1: Method không có cif
-        # if form_data['receiving_method'] in RECEIVING_METHOD_IDENTITY_CASES:
-        #     return self.response_exception(
-        #         msg=f"{form_data['receiving_method']}",
-        #         detail="Đang nâng cấp"
-        #     )
-        # # TH2: Method BẮT BUỘC có cif
-        # elif not cif_id:
-        #     return self.response_exception(
-        #         msg=ERROR_FIELD_REQUIRED,
-        #         loc='cif_id'
-        #     )
-
-        ############################################################################################################
-        # THÔNG TIN XÁC THỰC
-        ############################################################################################################
-
-        # Lấy tất cả hình ảnh ở bước GTDD
-        transactions = self.call_repos(await repos_get_approval_identity_images(
-            cif_id=cif_id,
-            session=self.oracle_session
-        ))
-        await self.check_data_in_identity_step_and_get_faces_fingerprints_signatures(transactions)
-
-        ############################################################################################################
-        # Thông tin xác thực
-        authentications = self.call_repos(await repos_approval_get_face_authentication(
-            cif_id=cif_id,
-            session=self.oracle_session
-        ))
-
-        for _, identity_image, identity_image_transaction, _, compare_image_transaction in authentications:
-            if identity_image.image_type_id == IMAGE_TYPE_FACE:
-                face_authentications.append({
-                    identity_image_transaction.image_url: compare_image_transaction.compare_image_url
-                })
-            if identity_image.image_type_id == IMAGE_TYPE_FINGERPRINT:
-                fingerprint_authentications.append({
-                    identity_image_transaction.image_url: compare_image_transaction.compare_image_url
-                })
-            if identity_image.image_type_id == IMAGE_TYPE_SIGNATURE:
-                signature_authentications.append({
-                    identity_image_transaction.image_url: compare_image_transaction.compare_image_url
-                })
-
-        # # Kiểm tra xem khuôn mặt đã upload chưa
-        # if not face_authentications:
-        #     return self.response_exception(
-        #         msg=ERROR_APPROVAL_UPLOAD_FACE,
-        #         detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_FACE]
-        #     )
-
-        # # Kiểm tra xem VÂN TAY đã upload chưa
-        # if not fingerprint_authentications:
-        #     return self.response_exception(
-        #         msg=ERROR_APPROVAL_UPLOAD_FINGERPRINT,
-        #         detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_FINGERPRINT]
-        #     )
-
-        # Kiểm tra xem chữ ký đã upload chưa
-        if not signature_authentications:
-            return self.response_exception(
-                msg=ERROR_APPROVAL_UPLOAD_SIGNATURE,
-                detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_SIGNATURE]
+        # Nghiệp vụ không cần cif
+        if business_type_id == BUSINESS_TYPE_CASA_TOP_UP:
+            no_cif_flag = True
+            booking_business_form = await CtrBooking().ctr_get_booking_business_form(
+                booking_id=booking_id, session=self.oracle_session
             )
-        ############################################################################################################
+            form_data = orjson_loads(booking_business_form.form_data)
+
+            # TH1: Method không có cif
+            if form_data['receiving_method'] in RECEIVING_METHOD_IDENTITY_CASES:
+                return self.response_exception(
+                    msg=f"{form_data['receiving_method']}",
+                    detail="Đang nâng cấp"
+                )
+            # TH2: Method BẮT BUỘC có cif
+            elif not cif_id:
+                return self.response_exception(
+                    msg=ERROR_FIELD_REQUIRED,
+                    loc=f'cif_id, business_type_id:{business_type_id}'
+                )
+
+        # Nghiệp vụ khác
+        else:
+            if not cif_id:
+                return self.response_exception(
+                    msg=ERROR_FIELD_REQUIRED,
+                    loc=f'cif_id, business_type_id:{business_type_id}'
+                )
+            # check cif tồn tại
+            await self.get_model_object_by_id(model_id=cif_id, model=Customer, loc="cif_id")
+
+            ############################################################################################################
+            # THÔNG TIN XÁC THỰC
+            ############################################################################################################
+
+            # Lấy tất cả hình ảnh ở bước GTDD
+            transactions = self.call_repos(await repos_get_approval_identity_images(
+                cif_id=cif_id,
+                session=self.oracle_session
+            ))
+            await self.check_data_in_identity_step_and_get_faces_fingerprints_signatures(transactions)
+
+            ############################################################################################################
+            # Thông tin xác thực
+            authentications = self.call_repos(await repos_approval_get_face_authentication(
+                cif_id=cif_id,
+                session=self.oracle_session
+            ))
+
+            for _, identity_image, identity_image_transaction, _, compare_image_transaction in authentications:
+                if identity_image.image_type_id == IMAGE_TYPE_FACE:
+                    face_authentications.append({
+                        identity_image_transaction.image_url: compare_image_transaction.compare_image_url
+                    })
+                if identity_image.image_type_id == IMAGE_TYPE_FINGERPRINT:
+                    fingerprint_authentications.append({
+                        identity_image_transaction.image_url: compare_image_transaction.compare_image_url
+                    })
+                if identity_image.image_type_id == IMAGE_TYPE_SIGNATURE:
+                    signature_authentications.append({
+                        identity_image_transaction.image_url: compare_image_transaction.compare_image_url
+                    })
+
+            # # Kiểm tra xem khuôn mặt đã upload chưa
+            # if not face_authentications:
+            #     return self.response_exception(
+            #         msg=ERROR_APPROVAL_UPLOAD_FACE,
+            #         detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_FACE]
+            #     )
+
+            # # Kiểm tra xem VÂN TAY đã upload chưa
+            # if not fingerprint_authentications:
+            #     return self.response_exception(
+            #         msg=ERROR_APPROVAL_UPLOAD_FINGERPRINT,
+            #         detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_FINGERPRINT]
+            #     )
+
+            # Kiểm tra xem chữ ký đã upload chưa
+            if not signature_authentications:
+                return self.response_exception(
+                    msg=ERROR_APPROVAL_UPLOAD_SIGNATURE,
+                    detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_SIGNATURE]
+                )
+            ############################################################################################################
 
         ################################################################################################################
         # THÔNG TIN BIỂU MẪU
@@ -800,65 +812,66 @@ class CtrApproval(BaseController):
                         loc="authentication"
                     )
 
-                ####################################################################################################
-                # [Thông tin xác thực] Khuôn mặt
-                if face_authentications:
-                    if not request.authentication.face:
+                if not no_cif_flag:
+                    ####################################################################################################
+                    # [Thông tin xác thực] Khuôn mặt
+                    if face_authentications:
+                        if not request.authentication.face:
+                            return self.response_exception(
+                                msg=ERROR_VALIDATE,
+                                detail="Field required",
+                                loc="authentication -> face"
+                            )
+                        new_face_compare_image_transaction_uuid = list(face_authentications[0].values())[0]
+
+                        # Kiểm tra xem khuôn mặt gửi lên có đúng không
+                        # Hình ảnh kiểm tra sẽ là hình ảnh của lần Upload mới nhất
+                        if new_face_compare_image_transaction_uuid != request.authentication.face.compare_face_image_uuid:
+                            return self.response_exception(
+                                msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
+                                detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FACE],
+                                loc="authentication -> face -> compare_face_image_uuid"
+                            )
+                    ####################################################################################################
+
+                    ####################################################################################################
+                    # [Thông tin xác thực] Vân tay
+                    if fingerprint_authentications:
+                        if not request.authentication.fingerprint:
+                            return self.response_exception(
+                                msg=ERROR_VALIDATE,
+                                detail="Field required",
+                                loc="authentication -> fingerprint"
+                            )
+                        new_fingerprint_compare_image_transaction_uuid = list(fingerprint_authentications[0].values())[0]
+                        # Kiểm tra xem vân tay gửi lên có đúng không
+                        # Hình ảnh kiểm tra sẽ là hình ảnh của lần Upload mới nhất
+                        if new_fingerprint_compare_image_transaction_uuid != request.authentication.fingerprint.compare_face_image_uuid:
+                            return self.response_exception(
+                                msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT,
+                                detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT],
+                                loc="authentication -> fingerprint -> compare_face_image_uuid"
+                            )
+                    ####################################################################################################
+
+                    ####################################################################################################
+                    # [Thông tin xác thực] Chữ ký
+                    if not request.authentication.signature:
                         return self.response_exception(
                             msg=ERROR_VALIDATE,
                             detail="Field required",
-                            loc="authentication -> face"
+                            loc="authentication -> signature"
                         )
-                    new_face_compare_image_transaction_uuid = list(face_authentications[0].values())[0]
-
-                    # Kiểm tra xem khuôn mặt gửi lên có đúng không
+                    new_signature_compare_image_transaction_uuid = list(signature_authentications[0].values())[0]
+                    # Kiểm tra xem chữ ký gửi lên có đúng không
                     # Hình ảnh kiểm tra sẽ là hình ảnh của lần Upload mới nhất
-                    if new_face_compare_image_transaction_uuid != request.authentication.face.compare_face_image_uuid:
+                    if new_signature_compare_image_transaction_uuid != request.authentication.signature.compare_face_image_uuid:
                         return self.response_exception(
-                            msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
-                            detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FACE],
-                            loc="authentication -> face -> compare_face_image_uuid"
+                            msg=ERROR_APPROVAL_INCORRECT_UPLOAD_SIGNATURE,
+                            detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_SIGNATURE],
+                            loc="authentication -> signature -> compare_face_image_uuid"
                         )
-                ####################################################################################################
-
-                ####################################################################################################
-                # [Thông tin xác thực] Vân tay
-                if fingerprint_authentications:
-                    if not request.authentication.fingerprint:
-                        return self.response_exception(
-                            msg=ERROR_VALIDATE,
-                            detail="Field required",
-                            loc="authentication -> fingerprint"
-                        )
-                    new_fingerprint_compare_image_transaction_uuid = list(fingerprint_authentications[0].values())[0]
-                    # Kiểm tra xem vân tay gửi lên có đúng không
-                    # Hình ảnh kiểm tra sẽ là hình ảnh của lần Upload mới nhất
-                    if new_fingerprint_compare_image_transaction_uuid != request.authentication.fingerprint.compare_face_image_uuid:
-                        return self.response_exception(
-                            msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT,
-                            detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT],
-                            loc="authentication -> fingerprint -> compare_face_image_uuid"
-                        )
-                ####################################################################################################
-
-                ####################################################################################################
-                # [Thông tin xác thực] Chữ ký
-                if not request.authentication.signature:
-                    return self.response_exception(
-                        msg=ERROR_VALIDATE,
-                        detail="Field required",
-                        loc="authentication -> signature"
-                    )
-                new_signature_compare_image_transaction_uuid = list(signature_authentications[0].values())[0]
-                # Kiểm tra xem chữ ký gửi lên có đúng không
-                # Hình ảnh kiểm tra sẽ là hình ảnh của lần Upload mới nhất
-                if new_signature_compare_image_transaction_uuid != request.authentication.signature.compare_face_image_uuid:
-                    return self.response_exception(
-                        msg=ERROR_APPROVAL_INCORRECT_UPLOAD_SIGNATURE,
-                        detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_SIGNATURE],
-                        loc="authentication -> signature -> compare_face_image_uuid"
-                    )
-                ####################################################################################################
+                    ####################################################################################################
             else:
                 current_stage = self.call_repos(await repos_get_next_stage(
                     business_type_id=business_type_id,
@@ -1168,6 +1181,14 @@ class CtrApproval(BaseController):
         #         title_code=current_user.hrm_title_code,
         #         title_name=current_user.hrm_title_name
         #     )
+        print('saving_transaction_stage_status', saving_transaction_stage_status)
+        print('saving_sla_transaction', saving_sla_transaction)
+        print('saving_transaction_stage', saving_transaction_stage)
+        print('saving_transaction_stage_phase', saving_transaction_stage_phase)
+        print('saving_transaction_stage_lane', saving_transaction_stage_lane)
+        print('saving_transaction_stage_role', saving_transaction_stage_role)
+        print('saving_transaction_daily', saving_transaction_daily)
+        print('saving_transaction_sender', saving_transaction_sender)
 
         approval_process = self.call_repos((await repos_approve(
             cif_id=cif_id,
