@@ -109,7 +109,7 @@ async def repos_get_serial(serial_prefix, serial_key, current_user):
     )
     serial_out = serial['retrieveSerialNumber_out']['transaction_info']
     if serial_out['transaction_error_code'] != GW_CASA_RESPONSE_STATUS_SUCCESS:
-        ReposReturn(is_error=True, msg=serial_out['transaction_error_msg'], loc="SERIAL")
+        return ReposReturn(is_error=True, msg=serial_out['transaction_error_msg'], loc="SERIAL")
 
     response_data = serial['retrieveSerialNumber_out']['data_output']['serial_info']
 
