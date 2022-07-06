@@ -51,11 +51,11 @@ class CtrDeposit(BaseController):
                 "pay_out_casa_account": item.pay_out_casa_account,
                 "td_contract_num": item.td_contract_num,
                 "fcc_transaction_num": item.fcc_transaction_num,
-                "td_resign_type_id": item.td_resign_type_id,
                 "maturity_date": item.maturity_date,
                 "td_serial": item.td_serial,
                 "td_interest_type": item.td_interest_type,
                 "td_interest": item.td_interest,
+                "td_rollover_type": item.td_rollover_type
             })
             td_account_resigns.append({
                 "id": td_account_id,
