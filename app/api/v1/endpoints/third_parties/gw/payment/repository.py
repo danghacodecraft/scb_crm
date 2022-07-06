@@ -1,4 +1,3 @@
-import json
 from typing import Optional
 
 from sqlalchemy import update
@@ -17,8 +16,7 @@ from app.third_parties.oracle.models.master_data.others import (
 )
 from app.utils.constant.approval import BUSINESS_JOB_CODE_AMOUNT_BLOCK
 from app.utils.constant.cif import (
-    BUSINESS_FORM_AMOUNT_BLOCK_PD, BUSINESS_FORM_AMOUNT_UNBLOCK,
-    BUSINESS_FORM_AMOUNT_UNBLOCK_PD
+    BUSINESS_FORM_AMOUNT_BLOCK_PD, BUSINESS_FORM_AMOUNT_UNBLOCK_PD
 )
 from app.utils.constant.gw import GW_CASA_RESPONSE_STATUS_SUCCESS
 from app.utils.error_messages import ERROR_BOOKING_CODE_EXISTED, MESSAGE_STATUS
@@ -178,9 +176,8 @@ async def repos_payment_amount_unblock(
         saving_booking_account,
         saving_transaction_sender,
         saving_transaction_job,
-        saving_booking_business_form: dict,
-        request_json: json,
-        history_data: json,
+        saving_booking_business_form,
+
         session
 ):
     session.add_all([
@@ -193,14 +190,6 @@ async def repos_payment_amount_unblock(
         TransactionDaily(**saving_transaction_daily),
         TransactionSender(**saving_transaction_sender),
         # lưu form data request từ client
-        BookingBusinessForm(**dict(
-            booking_id=booking_id,
-            form_data=request_json,
-            business_form_id=BUSINESS_FORM_AMOUNT_UNBLOCK,
-            save_flag=True,
-            created_at=now(),
-            log_data=history_data
-        )),
         TransactionJob(**saving_transaction_job),
         BookingBusinessForm(**saving_booking_business_form)
     ])
