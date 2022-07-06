@@ -14,7 +14,7 @@ from app.api.v1.endpoints.third_parties.gw.category.controller import (
 )
 from app.utils.constant.business_type import (
     BUSINESS_TYPE_AMOUNT_BLOCK, BUSINESS_TYPE_AMOUNT_UNBLOCK,
-    BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA
+    BUSINESS_TYPE_CLOSE_CASA, BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA
 )
 from app.utils.constant.cif import (
     CIF_STAGE_ROLE_CODE_AUDIT, CIF_STAGE_ROLE_CODE_SUPERVISOR,
@@ -80,7 +80,9 @@ class CtrDashboard(BaseController):
                 business_type_init_cifs.append(booking_id)
             if business_type_id == BUSINESS_TYPE_OPEN_CASA:
                 business_type_open_casas.append(booking_id)
-            if business_type_id == BUSINESS_TYPE_AMOUNT_BLOCK or business_type_id == BUSINESS_TYPE_AMOUNT_UNBLOCK:
+            if business_type_id == BUSINESS_TYPE_AMOUNT_BLOCK \
+                    or business_type_id == BUSINESS_TYPE_AMOUNT_UNBLOCK\
+                    or business_type_id == BUSINESS_TYPE_CLOSE_CASA:
                 business_type_amount_block.append(booking_id)
             # TODO: còn các loại nghiệp vụ khác
 
