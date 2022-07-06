@@ -181,7 +181,7 @@ async def repos_gw_payment_amount_block(
     return ReposReturn(data=response_data)
 
 
-# @auto_commit
+@auto_commit
 async def repos_payment_amount_unblock(
         booking_id,
         saving_transaction_stage_status,
@@ -232,7 +232,7 @@ async def repos_payment_amount_unblock(
     return ReposReturn(data=booking_id)
 
 
-# @auto_commit
+@auto_commit
 async def repos_gw_payment_amount_unblock(
         current_user,
         request_data_gw: list,
