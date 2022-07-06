@@ -119,16 +119,6 @@ class CtrGWPayment(BaseController):
                 "booking_id": BOOKING_ID,
                 "customer_id": response_data.get('customer_id')
             })
-        # Tạo data TransactionDaily và các TransactionStage
-        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
-            business_type_id=BUSINESS_TYPE_AMOUNT_BLOCK
-        )
-        (
-            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
-            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
-            saving_transaction_daily, saving_transaction_sender, saving_transaction_job, saving_booking_business_form
-        ) = transaction_datas
-
         history_datas = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_BLOCK,
             history_status=PROFILE_HISTORY_STATUS_INIT,
@@ -144,20 +134,33 @@ class CtrGWPayment(BaseController):
                 detail=history_response['detail']
             )
 
+        # Tạo data TransactionDaily và các TransactionStage
+        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
+            business_type_id=BUSINESS_TYPE_AMOUNT_BLOCK,
+            booking_id=BOOKING_ID,
+            request_json=orjson_dumps(request_datas),
+            history_datas=orjson_dumps(history_datas),
+        )
+        (
+            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
+            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
+            saving_transaction_daily, saving_transaction_sender, saving_transaction_job, saving_booking_business_form
+        ) = transaction_datas
+
         booking_id = self.call_repos(await repos_payment_amount_block(
             booking_id=BOOKING_ID,
             saving_transaction_stage_status=saving_transaction_stage_status,
+            saving_sla_transaction=saving_sla_transaction,
             saving_transaction_stage=saving_transaction_stage,
             saving_transaction_stage_phase=saving_transaction_stage_phase,
-            saving_sla_transaction=saving_sla_transaction,
             saving_transaction_stage_lane=saving_transaction_stage_lane,
             saving_transaction_stage_role=saving_transaction_stage_role,
             saving_transaction_daily=saving_transaction_daily,
             saving_transaction_sender=saving_transaction_sender,
-            saving_booking_account=saving_booking_account,
-            saving_booking_customer=saving_booking_customer,
             saving_transaction_job=saving_transaction_job,
             saving_booking_business_form=saving_booking_business_form,
+            saving_booking_account=saving_booking_account,
+            saving_booking_customer=saving_booking_customer,
             session=self.oracle_session
         ))
         response_data = {
@@ -301,15 +304,6 @@ class CtrGWPayment(BaseController):
                 "booking_id": BOOKING_ID,
                 "customer_id": response_data.get('customer_id')
             })
-        # Tạo data TransactionDaily và các TransactionStage
-        transaction_data = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
-            business_type_id=BUSINESS_TYPE_AMOUNT_UNBLOCK
-        )
-        (
-            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
-            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
-            saving_transaction_daily, saving_transaction_sender, saving_transaction_job, saving_booking_business_form
-        ) = transaction_data
 
         history_data = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_UNBLOCK,
@@ -326,22 +320,33 @@ class CtrGWPayment(BaseController):
                 detail=history_response['detail']
             )
 
+        # Tạo data TransactionDaily và các TransactionStage
+        transaction_data = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
+            business_type_id=BUSINESS_TYPE_AMOUNT_UNBLOCK,
+            booking_id=BOOKING_ID,
+            request_json=orjson_dumps(request_data),
+            history_datas=orjson_dumps(history_data),
+        )
+        (
+            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
+            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
+            saving_transaction_daily, saving_transaction_sender, saving_transaction_job, saving_booking_business_form
+        ) = transaction_data
+
         booking_id = self.call_repos(await repos_payment_amount_unblock(
             booking_id=BOOKING_ID,
             saving_transaction_stage_status=saving_transaction_stage_status,
+            saving_sla_transaction=saving_sla_transaction,
             saving_transaction_stage=saving_transaction_stage,
             saving_transaction_stage_phase=saving_transaction_stage_phase,
-            saving_sla_transaction=saving_sla_transaction,
             saving_transaction_stage_lane=saving_transaction_stage_lane,
-            saving_booking_account=saving_booking_account,
-            saving_booking_customer=saving_booking_customer,
             saving_transaction_stage_role=saving_transaction_stage_role,
             saving_transaction_daily=saving_transaction_daily,
             saving_transaction_sender=saving_transaction_sender,
             saving_transaction_job=saving_transaction_job,
             saving_booking_business_form=saving_booking_business_form,
-            request_json=orjson_dumps(request_data),
-            history_data=orjson_dumps(history_data),
+            saving_booking_account=saving_booking_account,
+            saving_booking_customer=saving_booking_customer,
             session=self.oracle_session
         ))
 
