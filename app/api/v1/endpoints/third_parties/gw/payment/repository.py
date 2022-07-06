@@ -181,7 +181,7 @@ async def repos_gw_payment_amount_block(
     return ReposReturn(data=response_data)
 
 
-@auto_commit
+# @auto_commit
 async def repos_payment_amount_unblock(
         booking_id,
         saving_transaction_stage_status,
@@ -194,6 +194,8 @@ async def repos_payment_amount_unblock(
         saving_booking_customer,
         saving_booking_account,
         saving_transaction_sender,
+        saving_transaction_job,
+        saving_booking_business_form: dict,
         request_json: json,
         history_data: json,
         session
@@ -215,7 +217,9 @@ async def repos_payment_amount_unblock(
             save_flag=True,
             created_at=now(),
             log_data=history_data
-        ))
+        )),
+        TransactionJob(**saving_transaction_job),
+        BookingBusinessForm(**saving_booking_business_form)
     ])
     session.bulk_save_objects(BookingAccount(**account) for account in saving_booking_account)
     session.bulk_save_objects(BookingCustomer(**customer) for customer in saving_booking_customer)
@@ -228,7 +232,7 @@ async def repos_payment_amount_unblock(
     return ReposReturn(data=booking_id)
 
 
-@auto_commit
+# @auto_commit
 async def repos_gw_payment_amount_unblock(
         current_user,
         request_data_gw: list,

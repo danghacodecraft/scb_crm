@@ -308,7 +308,7 @@ class CtrGWPayment(BaseController):
         (
             saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
             saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
-            saving_transaction_daily, saving_transaction_sender
+            saving_transaction_daily, saving_transaction_sender, saving_transaction_job, saving_booking_business_form
         ) = transaction_data
 
         history_data = self.make_history_log_data(
@@ -338,6 +338,8 @@ class CtrGWPayment(BaseController):
             saving_transaction_stage_role=saving_transaction_stage_role,
             saving_transaction_daily=saving_transaction_daily,
             saving_transaction_sender=saving_transaction_sender,
+            saving_transaction_job=saving_transaction_job,
+            saving_booking_business_form=saving_booking_business_form,
             request_json=orjson_dumps(request_data),
             history_data=orjson_dumps(history_data),
             session=self.oracle_session
