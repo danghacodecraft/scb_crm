@@ -13,7 +13,6 @@ from app.api.v1.endpoints.casa.top_up.schema import (
     CasaTopUpThirdParty247ToCardRequest, CasaTopUpThirdPartyByIdentityRequest,
     CasaTopUpThirdPartyToAccountRequest
 )
-from app.api.v1.schemas.utils import SaveSuccessResponse
 
 router = APIRouter()
 
