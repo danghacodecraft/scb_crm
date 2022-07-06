@@ -1,27 +1,34 @@
-import json
 from typing import List
 
-from sqlalchemy import select, and_, delete, update
+from sqlalchemy import and_, delete, select, update
 from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn, auto_commit
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
 )
-from app.third_parties.oracle.models.cif.form.model import BookingAccount, Booking, BookingBusinessForm, \
-    TransactionDaily, TransactionSender
+from app.third_parties.oracle.models.cif.form.model import (
+    Booking, BookingAccount, BookingBusinessForm, TransactionDaily,
+    TransactionSender
+)
 from app.third_parties.oracle.models.cif.payment_account.model import (
     CasaAccount
 )
-from app.third_parties.oracle.models.master_data.account import AccountStructureType
+from app.third_parties.oracle.models.master_data.account import (
+    AccountStructureType
+)
 from app.third_parties.oracle.models.master_data.address import AddressCountry
-from app.third_parties.oracle.models.master_data.others import TransactionStageStatus, TransactionStage, \
-    TransactionStageLane, TransactionStagePhase, TransactionStageRole, TransactionJob, SlaTransaction, Currency
-from app.utils.constant.approval import BUSINESS_JOB_CODE_START_CASA
+from app.third_parties.oracle.models.master_data.others import (
+    Currency, SlaTransaction, TransactionJob, TransactionStage,
+    TransactionStageLane, TransactionStagePhase, TransactionStageRole,
+    TransactionStageStatus
+)
 from app.utils.constant.casa import CASA_ACCOUNT_STATUS_APPROVED
-from app.utils.constant.cif import ACTIVE_FLAG_ACTIVED, BUSINESS_FORM_OPEN_CASA_OPEN_CASA
-from app.utils.error_messages import ERROR_CIF_NUMBER_NOT_EXIST, ERROR_IDS_NOT_EXIST
-from app.utils.functions import get_index_positions, now, generate_uuid
+from app.utils.constant.cif import ACTIVE_FLAG_ACTIVED
+from app.utils.error_messages import (
+    ERROR_CIF_NUMBER_NOT_EXIST, ERROR_IDS_NOT_EXIST
+)
+from app.utils.functions import get_index_positions
 
 
 @auto_commit
@@ -38,8 +45,8 @@ async def repos_save_casa_casa_account(
         saving_transaction_stage_role: dict,
         saving_transaction_daily: dict,
         saving_transaction_sender: dict,
-        request_json: json,
-        history_datas: json,
+        saving_transaction_job: dict,
+        saving_booking_business_form: dict,
         session: Session
 ):
     # Lấy Những Account có thể xóa được
@@ -86,23 +93,8 @@ async def repos_save_casa_casa_account(
         TransactionStageRole(**saving_transaction_stage_role),
         TransactionDaily(**saving_transaction_daily),
         TransactionSender(**saving_transaction_sender),
-        BookingBusinessForm(**dict(
-            booking_id=booking_parent_id,
-            form_data=request_json,
-            business_form_id=BUSINESS_FORM_OPEN_CASA_OPEN_CASA,
-            save_flag=True,
-            created_at=now(),
-            log_data=history_datas
-        )),
-        TransactionJob(**dict(
-            transaction_id=generate_uuid(),
-            booking_id=booking_parent_id,
-            business_job_id=BUSINESS_JOB_CODE_START_CASA,
-            complete_flag=True,
-            error_code=None,
-            error_desc=None,
-            created_at=now()
-        ))
+        BookingBusinessForm(**saving_booking_business_form),
+        TransactionJob(**saving_transaction_job)
     ])
 
     # Update Booking

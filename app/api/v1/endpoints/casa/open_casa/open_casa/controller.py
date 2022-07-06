@@ -252,16 +252,6 @@ class CtrCasaOpenCasa(BaseController):
             )
         )
 
-        # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CASA
-        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
-            business_type_id=BUSINESS_TYPE_OPEN_CASA)
-
-        (
-            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
-            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
-            saving_transaction_daily, saving_transaction_sender
-        ) = transaction_datas
-
         history_datas = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_OPEN_CASA_ACCOUNT,
             history_status=PROFILE_HISTORY_STATUS_INIT,
@@ -275,6 +265,22 @@ class CtrCasaOpenCasa(BaseController):
                 loc=history_response['loc'],
                 detail=history_response['detail']
             )
+        request_json = open_casa_request.json()
+        history_datas = orjson_dumps(history_datas)
+
+        # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CASA
+        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
+            business_type_id=BUSINESS_TYPE_OPEN_CASA,
+            booking_id=booking_id,
+            request_json=request_json,
+            history_datas=history_datas
+        )
+
+        (
+            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
+            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
+            saving_transaction_daily, saving_transaction_sender, saving_transaction_job, saving_booking_business_form
+        ) = transaction_datas
 
         self.call_repos(await repos_save_casa_casa_account(
             saving_casa_accounts=saving_casa_accounts,
@@ -289,8 +295,8 @@ class CtrCasaOpenCasa(BaseController):
             saving_transaction_stage_role=saving_transaction_stage_role,
             saving_transaction_daily=saving_transaction_daily,
             saving_transaction_sender=saving_transaction_sender,
-            request_json=open_casa_request.json(),
-            history_datas=orjson_dumps(history_datas),
+            saving_transaction_job=saving_transaction_job,
+            saving_booking_business_form=saving_booking_business_form,
             session=self.oracle_session
         ))
 
