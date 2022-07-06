@@ -6,9 +6,9 @@ from app.third_parties.oracle.models.cif.basic_information.contact.model import 
 from app.third_parties.oracle.models.cif.basic_information.identity.model import CustomerIdentity
 from app.third_parties.oracle.models.cif.basic_information.model import Customer
 from app.third_parties.oracle.models.cif.form.model import BookingBusinessForm, TransactionDaily, TransactionSender, \
-    Booking
-from app.third_parties.oracle.models.master_data.others import TransactionStageStatus, TransactionStage, SlaTransaction, \
-    TransactionStageLane, TransactionStagePhase, TransactionStageRole, TransactionJob
+    Booking, BookingCustomer
+from app.third_parties.oracle.models.master_data.others import TransactionStageStatus, TransactionStage, \
+    SlaTransaction, TransactionStageLane, TransactionStagePhase, TransactionStageRole, TransactionJob
 
 
 @auto_commit
@@ -47,7 +47,11 @@ async def repos_save_casa_top_up_info(
         insert_list.extend([
             Customer(**saving_customer),
             CustomerIdentity(**saving_customer_identity),
-            CustomerAddress(**saving_customer_address)
+            CustomerAddress(**saving_customer_address),
+            BookingCustomer(
+                booking_id=booking_id,
+                customer_id=saving_customer['id']
+            )
         ])
 
     # Lưu log vào DB

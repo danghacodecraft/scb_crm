@@ -13,6 +13,7 @@ from app.api.v1.endpoints.casa.top_up.schema import (
     CasaTopUpThirdParty247ToCardRequest, CasaTopUpThirdPartyByIdentityRequest,
     CasaTopUpThirdPartyToAccountRequest
 )
+from app.api.v1.schemas.utils import SaveSuccessResponse
 
 router = APIRouter()
 
@@ -42,7 +43,7 @@ async def view_save_casa_top_up_info(
         booking_id=BOOKING_ID,
         request=request
     )
-    return ResponseData(**casa_top_up_info)
+    return ResponseData[SaveSuccessResponse](**casa_top_up_info)
 
 
 @router.get(

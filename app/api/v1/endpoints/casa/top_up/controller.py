@@ -671,7 +671,10 @@ class CtrCasaTopUp(BaseController):
         ))
 
         return self.response(data=dict(
-            booking_id=booking_id
+            booking=dict(
+                id=booking_id
+            ),
+            cif_id=saving_customer['id'] if saving_customer else None
         ))
 
 
