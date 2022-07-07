@@ -87,7 +87,7 @@ async def repos_save_casa_transfer_info(
     return ReposReturn(data=booking_id)
 
 
-# @auto_commit
+@auto_commit
 async def repos_gw_save_casa_transfer_info(
         current_user,
         receiving_method: str,

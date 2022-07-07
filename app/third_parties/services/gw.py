@@ -1886,7 +1886,6 @@ class ServiceGW:
     async def gw_payment_internal_transfer(self, current_user: UserInfoResponse, data_input):
         request_data = self.gw_create_request_body(
             current_user=current_user, function_name="internal_transfer_in", data_input=data_input)
-        print(request_data)
         api_url = f"{self.url}{GW_ENDPOINT_URL_INTERNAL_TRANSFER}"
 
         return_errors = dict(

@@ -29,7 +29,7 @@ from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
 from app.api.v1.validator import validate_history_data
 from app.third_parties.oracle.models.master_data.address import AddressProvince
-from app.third_parties.oracle.models.master_data.bank import Bank
+from app.third_parties.oracle.models.master_data.bank import Bank, BankBranch
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.approval import CASA_TRANSFER_STAGE_BEGIN
@@ -105,7 +105,7 @@ class CtrCasaTransfer(BaseController):
 
             if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
                 bank_id = form_data['receiver_bank']['id']
-                bank_info = await self.get_model_object_by_id(model_id=bank_id, model=Bank, loc='receiver_bank_id')
+                bank_info = await self.get_model_object_by_id(model_id=bank_id, model=BankBranch, loc='receiver_bank_id')
                 province_id = form_data['receiver_province']['id']
                 province_info = await self.get_model_object_by_id(model_id=province_id, model=AddressProvince,
                                                                   loc='receiver_province_id')
@@ -385,10 +385,8 @@ class CtrCasaTransfer(BaseController):
                 msg=ERROR_CASA_ACCOUNT_NOT_EXIST,
                 loc=f"sender_account_number: {sender_account_number}"
             )
+        await self.get_model_object_by_id(model_id=request.receiver_bank.id, model=BankBranch, loc='bank -> id')
 
-        # validate branch of bank
-        # TODO:
-        # await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
         return request
 
     async def ctr_save_casa_transfer_third_party_by_identity(
@@ -751,11 +749,12 @@ class CtrCasaTransfer(BaseController):
             booking_id=BOOKING_ID
         )
         casa_transfer_info_data = casa_transfer_info['data']
-
+        transfer = casa_transfer_info_data['transfer']
         receiving_method = casa_transfer_info_data['transfer_type']["receiving_method"]
-        actual_total = casa_transfer_info_data['fee_info']['actual_total']
-        sender = casa_transfer_info_data['sender']['account_number']
-        receiver = casa_transfer_info_data['receiver']['account_number']
+        fee_info = casa_transfer_info_data['fee_info']
+        actual_total = fee_info['actual_total']
+        sender = casa_transfer_info_data['sender']
+        receiver = casa_transfer_info_data['receiver']
         request_data = {}
 
         if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
@@ -763,11 +762,11 @@ class CtrCasaTransfer(BaseController):
                 "data_input": {
                     "p_blk_detail": {
                         "FROM_ACCOUNT_DETAILS": {
-                            "FROM_ACCOUNT_NUMBER": sender,
+                            "FROM_ACCOUNT_NUMBER": sender['account_number'],
                             "FROM_ACCOUNT_AMOUNT": int(actual_total)
                         },
                         "TO_ACCOUNT_DETAILS": {
-                            "TO_ACCOUNT_NUMBER": receiver
+                            "TO_ACCOUNT_NUMBER": receiver['account_number']
                         }
                     },
                     "p_blk_charge": [],  # TODO thông tin phí
@@ -827,16 +826,84 @@ class CtrCasaTransfer(BaseController):
                 }
             }
 
-        is_error, repos_gw_save_casa_transfer = self.call_repos(await repos_gw_save_casa_transfer_info(
+        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
+            request_data = {
+                "data_input": {
+                    "account_info": {
+                        "account_bank_code": receiver["bank"]["code"],
+                        "account_product_package": "FT01"
+                    },
+                    "staff_info_checker": {
+                        "staff_name": "HOANT2"
+                    },
+                    "staff_info_maker": {
+                        "staff_name": "KHANHLQ"
+                    },
+                    "p_blk_mis": "",
+                    "p_blk_udf": "",
+                    "p_blk_refinance_rates": "",
+                    "p_blk_amendment_rate": "",
+                    "p_blk_main": {
+                        "PRODUCT": {
+                            "DETAILS_OF_CHARGE": "Y" if fee_info['is_transfer_payer'] else "O",
+                            "PAYMENT_FACILITY": "O"
+                        },
+                        "TRANSACTION_LEG": {
+                            "ACCOUNT": sender['account_number'],
+                            "AMOUNT": int(actual_total)
+                        },
+                        "RATE": {
+                            "EXCHANGE_RATE": 0,
+                            "LCY_EXCHANGE_RATE": 0,
+                            "LCY_AMOUNT": 0
+                        },
+                        "ADDITIONAL_INFO": {
+                            "RELATED_CUSTOMER": sender["cif_number"],
+                            "NARRATIVE": transfer["content"]
+                        }
+                    },
+                    "p_blk_charge": [
+                        {
+                            "CHARGE_NAME": "PHI DV TT TRONG NUOC  711003001",
+                            "CHARGE_AMOUNT": 0,
+                            "WAIVED": "N"
+                        },
+                        {
+                            "CHARGE_NAME": "THUE VAT",
+                            "CHARGE_AMOUNT": 0,
+                            "WAIVED": "N"
+                        }
+                    ],
+                    "p_blk_settlement_detail": {
+                        "SETTLEMENTS": {
+                            "TRANSFER_DETAIL": {
+                                "BENEFICIARY_ACCOUNT_NUMBER": receiver['account_number'],
+                                "BENEFICIARY_NAME": receiver['fullname_vn'],
+                                "BENEFICIARY_ADRESS": receiver['province']['name'],
+                                "ID_NO": "",
+                                "ISSUE_DATE": "",
+                                "ISSUER": ""
+                            },
+                            "ORDERING_CUSTOMER": {
+                                "ORDERING_ACC_NO": receiver['account_number'],
+                                "ORDERING_NAME": receiver['fullname_vn'],
+                                "ORDERING_ADDRESS": receiver['province']['name'],
+                                "ID_NO": "",
+                                "ISSUE_DATE": "",
+                                "ISSUER": ""
+                            }
+                        }
+                    }
+                }
+            }
+
+        self.call_repos(await repos_gw_save_casa_transfer_info(
             current_user=self.current_user,
             receiving_method=receiving_method,
             booking_id=BOOKING_ID,
             request_data=request_data,
             session=self.oracle_session
         ))
-
-        if is_error:
-            return self.response_exception(msg=repos_gw_save_casa_transfer)
 
         response_data = {
             "booking_id": BOOKING_ID,
