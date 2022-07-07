@@ -245,3 +245,8 @@ class GWCloseCasaAccountRequest(BaseGWSchema):
 class GWCloseCasaAccountResponse(BaseGWSchema):
     booking_id: str = Field(..., description="Booking")
     account_list: Optional[List] = Field(..., description="Danh sách số tài khoản")
+
+
+class GWTopUpCasaAccountResponse(BaseGWSchema):
+    booking_id: str = Field(..., description="Booking")
+    xref: Optional[str] = Field(..., description="Số bút toán")
