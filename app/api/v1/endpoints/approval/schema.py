@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import List, Optional
 
-from pydantic import Field
+from pydantic import Field, validator
 
 from app.api.base.schema import BaseSchema
 from app.api.v1.schemas.utils import DropdownResponse, OptionalDropdownResponse
@@ -82,6 +82,12 @@ class AuthenticationRequest(BaseSchema):
 
 class OptionalAuthenticationRequest(BaseSchema):
     compare_face_image_uuid: Optional[str] = Field(..., description="UUID hình ảnh upload")
+
+    @validator('*')
+    def check_blank_str(string):
+        if string == '':
+            return None
+        return string
 
 
 class AuthenticationInfosRequest(BaseSchema):
