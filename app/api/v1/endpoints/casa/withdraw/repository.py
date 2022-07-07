@@ -2,7 +2,6 @@ from sqlalchemy import desc, select, update
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
-from app.settings.event import service_gw
 from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingBusinessForm, TransactionDaily, TransactionSender
 )
@@ -13,10 +12,7 @@ from app.third_parties.oracle.models.master_data.others import (
     SlaTransaction, TransactionJob, TransactionStage, TransactionStageLane,
     TransactionStagePhase, TransactionStageRole, TransactionStageStatus
 )
-from app.utils.constant.approval import BUSINESS_JOB_CODE_WITHDRAW
-from app.utils.constant.cif import BUSINESS_FORM_WITHDRAW_PD
 from app.utils.error_messages import ERROR_BOOKING_ID_NOT_EXIST
-from app.utils.functions import generate_uuid, now, orjson_dumps
 
 
 @auto_commit
@@ -59,56 +55,57 @@ async def repos_save_withdraw(
     return ReposReturn(data=booking_id)
 
 
-@auto_commit
-async def repos_gw_withdraw(
-        current_user,
-        request_data_gw,
-        booking_id,
-        session: Session
-):
-    response_data = []
-    is_success, gw_withdraw, request_data = await service_gw.gw_withdraw(
-        current_user=current_user.user_info, data_input=request_data_gw
-    )
-
-    # lưu form data request GW
-    session.add(
-        BookingBusinessForm(**dict(
-            booking_id=booking_id,
-            form_data=orjson_dumps(request_data_gw),
-            business_form_id=BUSINESS_FORM_WITHDRAW_PD,
-            save_flag=True,
-            created_at=now(),
-            log_data=orjson_dumps(gw_withdraw)
-        ))
-    )
-
-    session.add(TransactionJob(**dict(
-        transaction_id=generate_uuid(),
-        booking_id=booking_id,
-        business_job_id=BUSINESS_JOB_CODE_WITHDRAW,
-        complete_flag=is_success,
-        error_code=gw_withdraw.get('cashWithdrawals_out').get('transaction_info').get(
-            'transaction_error_code'),
-        error_desc=gw_withdraw.get('cashWithdrawals_out').get('transaction_info').get(
-            'transaction_error_msg'),
-        created_at=now()
-    )))
-
-    withdraw = gw_withdraw.get('cashWithdrawals_out').get('data_output')
-
-    if isinstance(withdraw, dict):
-        response_data.append({
-            'account_number': request_data_gw.get('account_info').get('account_num'),
-            'account_withdrawals_amount': request_data_gw.get('account_info').get('account_withdrawals_amount')
-        })
-    else:
-        response_data.append({
-            'account_number': request_data_gw.get('account_info').get('account_num'),
-            'account_withdrawals_amount': withdraw
-        })
-
-    return ReposReturn(data=response_data)
+#
+# @auto_commit
+# async def repos_gw_withdraw(
+#         current_user,
+#         request_data_gw,
+#         booking_id,
+#         session: Session
+# ):
+#     response_data = []
+#     is_success, gw_withdraw, request_data = await service_gw.gw_withdraw(
+#         current_user=current_user.user_info, data_input=request_data_gw
+#     )
+#
+#     # lưu form data request GW
+#     session.add(
+#         BookingBusinessForm(**dict(
+#             booking_id=booking_id,
+#             form_data=orjson_dumps(request_data_gw),
+#             business_form_id=BUSINESS_FORM_WITHDRAW_PD,
+#             save_flag=True,
+#             created_at=now(),
+#             log_data=orjson_dumps(gw_withdraw)
+#         ))
+#     )
+#
+#     session.add(TransactionJob(**dict(
+#         transaction_id=generate_uuid(),
+#         booking_id=booking_id,
+#         business_job_id=BUSINESS_JOB_CODE_WITHDRAW,
+#         complete_flag=is_success,
+#         error_code=gw_withdraw.get('cashWithdrawals_out').get('transaction_info').get(
+#             'transaction_error_code'),
+#         error_desc=gw_withdraw.get('cashWithdrawals_out').get('transaction_info').get(
+#             'transaction_error_msg'),
+#         created_at=now()
+#     )))
+#
+#     withdraw = gw_withdraw.get('cashWithdrawals_out').get('data_output')
+#
+#     if isinstance(withdraw, dict):
+#         response_data.append({
+#             'account_number': request_data_gw.get('account_info').get('account_num'),
+#             'account_withdrawals_amount': request_data_gw.get('account_info').get('account_withdrawals_amount')
+#         })
+#     else:
+#         response_data.append({
+#             'account_number': request_data_gw.get('account_info').get('account_num'),
+#             'account_withdrawals_amount': withdraw
+#         })
+#
+#     return ReposReturn(data=response_data)
 
 
 async def repos_get_withdraw_info(booking_id: str, session: Session):

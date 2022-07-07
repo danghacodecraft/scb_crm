@@ -1,10 +1,6 @@
 from app.api.base.controller import BaseController
-from app.api.v1.endpoints.approval.repository import (
-    repos_get_booking_business_form_by_booking_id
-)
 from app.api.v1.endpoints.casa.withdraw.repository import (
-    repos_get_acc_types, repos_get_withdraw_info, repos_gw_withdraw,
-    repos_save_withdraw
+    repos_get_acc_types, repos_get_withdraw_info, repos_save_withdraw
 )
 from app.api.v1.endpoints.casa.withdraw.schema import WithdrawRequest
 from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
@@ -20,8 +16,7 @@ from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.validator import validate_history_data
 from app.utils.constant.business_type import BUSINESS_TYPE_WITHDRAW
 from app.utils.constant.cif import (
-    BUSINESS_FORM_WITHDRAW, PROFILE_HISTORY_DESCRIPTIONS_WITHDRAW,
-    PROFILE_HISTORY_STATUS_INIT
+    PROFILE_HISTORY_DESCRIPTIONS_WITHDRAW, PROFILE_HISTORY_STATUS_INIT
 )
 from app.utils.error_messages import ERROR_CASA_ACCOUNT_NOT_EXIST
 from app.utils.functions import orjson_dumps, orjson_loads
@@ -162,55 +157,55 @@ class CtrWithdraw(BaseController):
 
         return self.response(data=response_data)
 
-    async def ctr_gw_withdraw(self, booking_id: str):
-
-        current_user = self.current_user
-        booking_business_form = self.call_repos(
-            await repos_get_booking_business_form_by_booking_id(
-                booking_id=booking_id,
-                business_form_id=BUSINESS_FORM_WITHDRAW,
-                session=self.oracle_session
-
-            ))
-
-        request_data_gw = orjson_loads(booking_business_form.form_data)
-        p_blk_udf = []
-        p_blk_udf.append(dict(
-            UDF_NAME='MUC_DICH_GIAO_DICH',
-            UDF_VALUE='MUC_DICH_KHAC'
-        ))
-
-        data_input = dict(
-            account_info=dict(
-                account_num=request_data_gw['transaction_info']['source_accounts'],
-                account_currency='VND',
-                account_withdrawals_amount=request_data_gw['transaction_info']['receiver_info']['amount']
-            ),
-            staff_info_checker=dict(
-                staff_name='DIEMNTK'
-            ),
-            staff_info_maker=dict(
-                staff_name='DIEPTTN1'
-            ),
-            p_blk_detail="",
-            p_blk_mis="",
-            p_blk_udf=p_blk_udf,
-            p_blk_charge=""
-        )
-
-        gw_payment_amount_block = self.call_repos(await repos_gw_withdraw(
-            current_user=current_user,
-            booking_id=booking_id,
-            request_data_gw=data_input,
-            session=self.oracle_session
-        ))
-
-        response_data = {
-            "booking_id": booking_id,
-            "account": gw_payment_amount_block
-        }
-
-        return self.response(data=response_data)
+    # async def ctr_gw_withdraw(self, booking_id: str):
+    #
+    #     current_user = self.current_user
+    #     booking_business_form = self.call_repos(
+    #         await repos_get_booking_business_form_by_booking_id(
+    #             booking_id=booking_id,
+    #             business_form_id=BUSINESS_FORM_WITHDRAW,
+    #             session=self.oracle_session
+    #
+    #         ))
+    #
+    #     request_data_gw = orjson_loads(booking_business_form.form_data)
+    #     p_blk_udf = []
+    #     p_blk_udf.append(dict(
+    #         UDF_NAME='MUC_DICH_GIAO_DICH',
+    #         UDF_VALUE='MUC_DICH_KHAC'
+    #     ))
+    #
+    #     data_input = dict(
+    #         account_info=dict(
+    #             account_num=request_data_gw['transaction_info']['source_accounts'],
+    #             account_currency='VND',
+    #             account_withdrawals_amount=request_data_gw['transaction_info']['receiver_info']['amount']
+    #         ),
+    #         staff_info_checker=dict(
+    #             staff_name='DIEMNTK'
+    #         ),
+    #         staff_info_maker=dict(
+    #             staff_name='DIEPTTN1'
+    #         ),
+    #         p_blk_detail="",
+    #         p_blk_mis="",
+    #         p_blk_udf=p_blk_udf,
+    #         p_blk_charge=""
+    #     )
+    #
+    #     gw_payment_amount_block = self.call_repos(await repos_gw_withdraw(
+    #         current_user=current_user,
+    #         booking_id=booking_id,
+    #         request_data_gw=data_input,
+    #         session=self.oracle_session
+    #     ))
+    #
+    #     response_data = {
+    #         "booking_id": booking_id,
+    #         "account": gw_payment_amount_block
+    #     }
+    #
+    #     return self.response(data=response_data)
 
     async def ctr_source_account_info(self, cif_number: str, booking_id: str):
         current_user = self.current_user
