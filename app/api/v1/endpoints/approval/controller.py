@@ -815,18 +815,19 @@ class CtrApproval(BaseController):
                 if not no_cif_flag:
                     ####################################################################################################
                     # [Thông tin xác thực] Khuôn mặt
-                    if face_authentications:
-                        if not request.authentication.face:
-                            return self.response_exception(
-                                msg=ERROR_VALIDATE,
-                                detail="Field required",
-                                loc="authentication -> face"
-                            )
+                    face_compare_image_uuid = request.authentication.face.compare_face_image_uuid
+                    if face_authentications and face_compare_image_uuid:
+                        # if not request.authentication.face:
+                        #     return self.response_exception(
+                        #         msg=ERROR_VALIDATE,
+                        #         detail="Field required",
+                        #         loc="authentication -> face"
+                        #     )
                         new_face_compare_image_transaction_uuid = list(face_authentications[0].values())[0]
 
                         # Kiểm tra xem khuôn mặt gửi lên có đúng không
                         # Hình ảnh kiểm tra sẽ là hình ảnh của lần Upload mới nhất
-                        if new_face_compare_image_transaction_uuid != request.authentication.face.compare_face_image_uuid:
+                        if new_face_compare_image_transaction_uuid != face_compare_image_uuid:
                             return self.response_exception(
                                 msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
                                 detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FACE],
@@ -836,17 +837,18 @@ class CtrApproval(BaseController):
 
                     ####################################################################################################
                     # [Thông tin xác thực] Vân tay
-                    if fingerprint_authentications:
-                        if not request.authentication.fingerprint:
-                            return self.response_exception(
-                                msg=ERROR_VALIDATE,
-                                detail="Field required",
-                                loc="authentication -> fingerprint"
-                            )
+                    fingerprint_compare_image_uuid = request.authentication.fingerprint.compare_face_image_uuid
+                    if fingerprint_authentications and request.authentication.fingerprint.compare_face_image_uuid:
+                        # if not request.authentication.fingerprint:
+                        #     return self.response_exception(
+                        #         msg=ERROR_VALIDATE,
+                        #         detail="Field required",
+                        #         loc="authentication -> fingerprint"
+                        #     )
                         new_fingerprint_compare_image_transaction_uuid = list(fingerprint_authentications[0].values())[0]
                         # Kiểm tra xem vân tay gửi lên có đúng không
                         # Hình ảnh kiểm tra sẽ là hình ảnh của lần Upload mới nhất
-                        if new_fingerprint_compare_image_transaction_uuid != request.authentication.fingerprint.compare_face_image_uuid:
+                        if new_fingerprint_compare_image_transaction_uuid != fingerprint_compare_image_uuid:
                             return self.response_exception(
                                 msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT,
                                 detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT],
@@ -1181,14 +1183,6 @@ class CtrApproval(BaseController):
         #         title_code=current_user.hrm_title_code,
         #         title_name=current_user.hrm_title_name
         #     )
-        print('saving_transaction_stage_status', saving_transaction_stage_status)
-        print('saving_sla_transaction', saving_sla_transaction)
-        print('saving_transaction_stage', saving_transaction_stage)
-        print('saving_transaction_stage_phase', saving_transaction_stage_phase)
-        print('saving_transaction_stage_lane', saving_transaction_stage_lane)
-        print('saving_transaction_stage_role', saving_transaction_stage_role)
-        print('saving_transaction_daily', saving_transaction_daily)
-        print('saving_transaction_sender', saving_transaction_sender)
 
         approval_process = self.call_repos((await repos_approve(
             cif_id=cif_id,

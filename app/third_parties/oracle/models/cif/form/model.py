@@ -1,5 +1,5 @@
 from sqlalchemy import VARCHAR, Column, DateTime, ForeignKey, text
-from sqlalchemy.dialects.oracle import BLOB, NCLOB, NUMBER
+from sqlalchemy.dialects.oracle import BLOB, CLOB, NCLOB, NUMBER
 from sqlalchemy.orm import relationship
 
 from app.third_parties.oracle.base import Base
@@ -165,7 +165,8 @@ class BookingBusinessForm(Base):
     save_flag = Column(NUMBER(1, 0, False), nullable=False)
     created_at = Column(DateTime, nullable=False)
     updated_at = Column(DateTime)
-    form_data = Column(BLOB, comment='Dữ liệu template nhập')
+    form_data = Column(BLOB, comment='Dữ liệu template nhập', default=orjson_dumps([]))
     log_data = Column(BLOB, comment='Data lưu Lịch sử hồ sơ', default=orjson_dumps([]))
+    out_data = Column(CLOB, comment='Data GW trả về', default=orjson_dumps([]))
     booking = relationship('Booking')
     business_form = relationship('BusinessForm')

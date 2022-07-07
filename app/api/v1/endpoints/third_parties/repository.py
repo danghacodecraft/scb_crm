@@ -1,10 +1,11 @@
+import json
 import re
 from typing import List
 
 from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
-from app.api.base.repository import ReposReturn
+from app.api.base.repository import ReposReturn, auto_commit
 from app.settings.event import service_soa
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
     CustomerAddress
@@ -34,7 +35,7 @@ from app.utils.error_messages import (
     ERROR_CALL_SERVICE_SOA, ERROR_CIF_ID_NOT_EXIST, ERROR_CIF_NUMBER_EXIST,
     ERROR_CIF_NUMBER_INVALID, ERROR_CIF_NUMBER_NOT_EXIST, MESSAGE_STATUS
 )
-from app.utils.functions import dropdown
+from app.utils.functions import dropdown, now
 
 
 async def repos_get_initializing_customer(cif_id: str, session: Session) -> ReposReturn:
@@ -223,3 +224,21 @@ async def repos_retrieve_customer_information_by_cif_number(
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_SOA, detail=customer_information["message"])
 
     return ReposReturn(data=customer_information)
+
+
+@auto_commit
+async def repos_save_gw_output_data(
+        booking_id: str,
+        business_type_id: str,
+        gw_output_data: json,
+        session: Session
+):
+    session.add(BookingBusinessForm(
+        booking_id=booking_id,
+        business_form_id=f"{business_type_id}_GW",
+        save_flag=True,
+        created_at=now(),
+        out_data=gw_output_data
+    ))
+    session.flush()
+    return ReposReturn(data=None)
