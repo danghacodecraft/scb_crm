@@ -553,9 +553,7 @@ class CtrCasaTopUp(BaseController):
                 )
 
         # TH1: có nhập cif -> Kiểm tra số CIF có tồn tại trong CRM không
-        print(sender_cif_number)
         if sender_cif_number:
-            print("abc")
             # self.call_repos(await repos_get_customer_by_cif_number(
             #     cif_number=cif_number,
             #     session=self.oracle_session
@@ -568,7 +566,6 @@ class CtrCasaTopUp(BaseController):
                 return self.response_exception(msg=ERROR_CIF_NUMBER_NOT_EXIST, loc="sender_cif_number")
         # TH2: Không nhập CIF
         else:
-            print("def")
             sender_full_name_vn = request.sender_full_name_vn
             sender_identity_number = request.sender_identity_number
             sender_issued_date = request.sender_issued_date
