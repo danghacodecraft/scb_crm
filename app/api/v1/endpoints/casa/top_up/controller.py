@@ -326,10 +326,6 @@ class CtrCasaTopUp(BaseController):
                 loc=f'expect: CasaTopUpSCBToAccountRequest, request: {type(request)}'
             )
 
-        sender_cif_number = request.sender_cif_number
-        if not sender_cif_number:
-            return self.response_exception(msg=ERROR_CIF_NUMBER_NOT_EXIST, loc=f"cif_number: {sender_cif_number}")
-
         receiver_account_number = request.receiver_account_number
 
         # Kiểm tra số tài khoản có tồn tại hay không
