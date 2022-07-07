@@ -26,7 +26,7 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWReportPieChartHistoryAccountInfoRequest,
     GWReportPieChartHistoryAccountInfoResponse,
     GWReportStatementHistoryAccountInfoRequest,
-    GWReportStatementHistoryAccountInfoResponse
+    GWReportStatementHistoryAccountInfoResponse, GWTopUpCasaAccountResponse
 )
 
 router = APIRouter()
@@ -172,6 +172,25 @@ async def view_gw_get_close_casa_account(
         booking_id=BOOKING_ID
     )
     return ResponseData[GWCloseCasaAccountResponse](**gw_close_casa_account_info)
+
+
+@router.post(
+    path="/top-up/",
+    name="[GW] Nộp tiền",
+    description="[GW] Nộp tiền",
+    responses=swagger_response(
+        response_model=ResponseData[GWTopUpCasaAccountResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_top_up_casa_account(
+        current_user=Depends(get_current_user_from_header()),
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch")
+):
+    top_up_casa_account_info = await CtrGWCasaAccount(current_user=current_user).ctr_gw_top_up_casa_account(
+        booking_id=BOOKING_ID
+    )
+    return ResponseData[GWTopUpCasaAccountResponse](**top_up_casa_account_info)
 
 
 @router.post(

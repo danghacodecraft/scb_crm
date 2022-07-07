@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import select
+from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 from starlette import status
 
@@ -31,10 +31,11 @@ from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_GDV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_GDV
 )
 from app.utils.error_messages import (
-    ERROR_BOOKING_ALREADY_USED, ERROR_BOOKING_ID_NOT_EXIST,
-    ERROR_BOOKING_INCORRECT, ERROR_BUSINESS_TYPE_CODE_INCORRECT,
-    ERROR_BUSINESS_TYPE_NOT_EXIST, ERROR_CASA_ACCOUNT_NOT_EXIST,
-    ERROR_CIF_ID_NOT_EXIST, ERROR_CUSTOMER_NOT_EXIST, ERROR_PERMISSION, ERROR_BOOKING_BUSINESS_FORM_NOT_EXIST
+    ERROR_BOOKING_ALREADY_USED, ERROR_BOOKING_BUSINESS_FORM_NOT_EXIST,
+    ERROR_BOOKING_ID_NOT_EXIST, ERROR_BOOKING_INCORRECT,
+    ERROR_BUSINESS_TYPE_CODE_INCORRECT, ERROR_BUSINESS_TYPE_NOT_EXIST,
+    ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_CIF_ID_NOT_EXIST,
+    ERROR_CUSTOMER_NOT_EXIST, ERROR_PERMISSION
 )
 
 
@@ -211,10 +212,8 @@ class CtrBooking(BaseController):
             )
             .join(BookingBusinessForm, Booking.id == BookingBusinessForm.booking_id)
             .filter(Booking.id == booking_id)
-            .order_by(BookingBusinessForm.created_at)
-        ).scalars().first()
-
+            .order_by(desc(BookingBusinessForm.created_at))
+        ).scalars().all()
         if not booking_business_form:
             return self.response_exception(msg=ERROR_BOOKING_BUSINESS_FORM_NOT_EXIST, loc=f"booking_id: {booking_id}")
-
-        return booking_business_form
+        return booking_business_form[0]
