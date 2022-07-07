@@ -6,9 +6,9 @@ from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingCustomer, TransactionDaily, TransactionSender
 )
 from app.third_parties.oracle.models.master_data.others import (
-    Lane, Phase, Stage, StageAction, StageLane, StagePhase, StageRole,
-    StageStatus, TransactionStage, TransactionStageAction,
-    TransactionStageStatus, BusinessType, Sla, BusinessJob, BusinessForm
+    BusinessForm, BusinessJob, BusinessType, Lane, Phase, Sla, Stage,
+    StageAction, StageLane, StagePhase, StageRole, StageStatus,
+    TransactionStage, TransactionStageAction, TransactionStageStatus
 )
 from app.utils.constant.approval import (
     CIF_STAGE_APPROVE_KSS, CIF_STAGE_BEGIN, CIF_STAGE_INIT, INIT_STAGES
@@ -16,7 +16,7 @@ from app.utils.constant.approval import (
 from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.error_messages import (
     ERROR_BEGIN_STAGE_NOT_EXIST, ERROR_NEXT_RECEIVER_NOT_EXIST,
-    ERROR_NEXT_STAGE_NOT_EXIST
+    ERROR_NEXT_STAGE_NOT_EXIST, PREVIOUS_STAGE_NOT_EXIST
 )
 
 
@@ -144,6 +144,8 @@ async def repos_open_cif_get_previous_stage(
         .filter(Booking.id == booking_id)
         .order_by(desc(TransactionDaily.created_at))
     ).first()
+    if not previous_stage_info:
+        return ReposReturn(is_error=True, msg=PREVIOUS_STAGE_NOT_EXIST, loc=f'booking_id: {booking_id}')
 
     return ReposReturn(data=previous_stage_info)
 
