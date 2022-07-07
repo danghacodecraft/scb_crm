@@ -1,4 +1,3 @@
-import json
 from typing import List
 
 from sqlalchemy import update
@@ -16,9 +15,6 @@ from app.third_parties.oracle.models.master_data.others import (
     SlaTransaction, TransactionJob, TransactionStage, TransactionStageLane,
     TransactionStagePhase, TransactionStageRole, TransactionStageStatus
 )
-from app.utils.constant.approval import BUSINESS_JOB_CODE_START_OPEN_TD_ACCOUNT
-from app.utils.constant.cif import BUSINESS_FORM_OPEN_TD_OPEN_TD_ACCOUNT
-from app.utils.functions import generate_uuid, now
 
 
 @auto_commit
@@ -36,41 +32,43 @@ async def repos_save_td_account(
         saving_transaction_stage_role: dict,
         saving_transaction_daily: dict,
         saving_transaction_sender: dict,
-        request_json: json,
-        history_datas: json,
+        saving_transaction_job: dict,
+        saving_booking_business_form: dict,
         session: Session
 ):
-    session.bulk_save_objects([TdAccount(**item) for item in td_accounts])
 
-    session.bulk_save_objects([TdAccountResign(**item) for item in td_account_resigns])
     session.add_all([
         TransactionStageStatus(**saving_transaction_stage_status),
-        TransactionStage(**saving_transaction_stage),
         SlaTransaction(**saving_sla_transaction),
+        TransactionStage(**saving_transaction_stage),
         TransactionStageLane(**saving_transaction_stage_lane),
         TransactionStagePhase(**saving_transaction_stage_phase),
         TransactionStageRole(**saving_transaction_stage_role),
         TransactionDaily(**saving_transaction_daily),
         TransactionSender(**saving_transaction_sender),
+        TransactionJob(**saving_transaction_job),
+        BookingBusinessForm(**saving_booking_business_form),
         # lưu form data request từ client
-        BookingBusinessForm(**dict(
-            booking_id=booking_id,
-            form_data=request_json,
-            business_form_id=BUSINESS_FORM_OPEN_TD_OPEN_TD_ACCOUNT,
-            save_flag=True,
-            created_at=now(),
-            log_data=history_datas
-        )),
-        TransactionJob(**dict(
-            transaction_id=generate_uuid(),
-            booking_id=booking_id,
-            business_job_id=BUSINESS_JOB_CODE_START_OPEN_TD_ACCOUNT,
-            complete_flag=True,
-            error_code=None,
-            error_desc=None,
-            created_at=now()
-        ))
+        # BookingBusinessForm(**dict(
+        #     booking_id=booking_id,
+        #     form_data=request_json,
+        #     business_form_id=BUSINESS_FORM_OPEN_TD_OPEN_TD_ACCOUNT,
+        #     save_flag=True,
+        #     created_at=now(),
+        #     log_data=history_datas
+        # )),
+        # TransactionJob(**dict(
+        #     transaction_id=generate_uuid(),
+        #     booking_id=booking_id,
+        #     business_job_id=BUSINESS_JOB_CODE_START_OPEN_TD_ACCOUNT,
+        #     complete_flag=True,
+        #     error_code=None,
+        #     error_desc=None,
+        #     created_at=now()
+        # ))
     ])
+    session.bulk_save_objects([TdAccount(**item) for item in td_accounts])
+    session.bulk_save_objects([TdAccountResign(**item) for item in td_account_resigns])
     session.bulk_save_objects(BookingAccount(**account) for account in saving_booking_account)
     session.bulk_save_objects(BookingCustomer(**customer) for customer in saving_booking_customer)
     # Update Booking
