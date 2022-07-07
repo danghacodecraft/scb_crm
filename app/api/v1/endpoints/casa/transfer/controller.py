@@ -3,7 +3,7 @@ from typing import Union
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.casa.transfer.repository import (
     repos_get_acc_types, repos_get_casa_transfer_info,
-    repos_save_casa_transfer_info
+    repos_gw_save_casa_transfer_info, repos_save_casa_transfer_info
 )
 from app.api.v1.endpoints.casa.transfer.schema import (
     CasaTransferSCBByIdentityRequest, CasaTransferSCBToAccountRequest,
@@ -621,8 +621,6 @@ class CtrCasaTransfer(BaseController):
         saving_customer = {}
         saving_customer_identity = {}
         saving_customer_address = {}
-        print(request.receiving_method)
-        print('dailb')
         if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
             casa_transfer_info = await self.ctr_save_casa_transfer_scb_by_identity(
                 current_user=current_user, request=request)
@@ -646,7 +644,6 @@ class CtrCasaTransfer(BaseController):
                 current_user=current_user, request=request)
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD:
-            print('dailb2')
             casa_transfer_info = await self.ctr_save_casa_transfer_third_party_247_to_card(
                 current_user=current_user, request=request)
 
@@ -747,6 +744,104 @@ class CtrCasaTransfer(BaseController):
                     break
 
         return self.response(source_accounts)
+
+    async def ctr_gw_save_casa_transfer_info(self, BOOKING_ID: str):
+
+        casa_transfer_info = await self.ctr_get_casa_transfer_info(
+            booking_id=BOOKING_ID
+        )
+        casa_transfer_info_data = casa_transfer_info['data']
+
+        receiving_method = casa_transfer_info_data['transfer_type']["receiving_method"]
+        actual_total = casa_transfer_info_data['fee_info']['actual_total']
+        sender = casa_transfer_info_data['sender']['account_number']
+        receiver = casa_transfer_info_data['receiver']['account_number']
+        request_data = {}
+
+        if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
+            request_data = {
+                "data_input": {
+                    "p_blk_detail": {
+                        "FROM_ACCOUNT_DETAILS": {
+                            "FROM_ACCOUNT_NUMBER": sender,
+                            "FROM_ACCOUNT_AMOUNT": int(actual_total)
+                        },
+                        "TO_ACCOUNT_DETAILS": {
+                            "TO_ACCOUNT_NUMBER": receiver
+                        }
+                    },
+                    "p_blk_charge": [],  # TODO thông tin phí
+                    "p_blk_mis": "",
+                    "p_blk_udf": [
+                        {
+                            "UDF_NAME": "",
+                            "UDF_VALUE": ""
+                        }
+                    ],
+                    "p_blk_project": "",
+                    # TODO
+                    "staff_info_checker": {
+                        "staff_name": "HOANT2"
+                    },
+                    # TODO
+                    "staff_info_maker": {
+                        "staff_name": "KHANHLQ"
+                    }
+                }
+            }
+
+        if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
+            request_data = {
+                "data_input": {
+                    "p_liquidation_type": "C",
+                    "p_liquidation_details": "",
+                    "branch_info": {
+                        "branch_code": "001"
+                    },
+                    "p_instrument_number": "123245678",
+                    "p_instrument_status": "LIQD",
+                    "account_info": {
+                        "account_num": "123456787912",
+                        "account_currency": "VND"
+                    },
+                    "p_charges": [
+                        {
+                            "CHARGE_NAME": "",
+                            "CHARGE_AMOUNT": 0,
+                            "WAIVED": "N"
+                        }
+                    ],
+                    "p_mis": "",
+                    "p_udf": [
+                        {
+                            "UDF_NAME": "",
+                            "UDF_VALUE": ""
+                        }
+                    ],
+                    "staff_info_checker": {
+                        "staff_name": "HOANT2"
+                    },
+                    "staff_info_maker": {
+                        "staff_name": "KHANHLQ"
+                    }
+                }
+            }
+
+        is_error, repos_gw_save_casa_transfer = self.call_repos(await repos_gw_save_casa_transfer_info(
+            current_user=self.current_user,
+            receiving_method=receiving_method,
+            booking_id=BOOKING_ID,
+            request_data=request_data,
+            session=self.oracle_session
+        ))
+
+        if is_error:
+            return self.response_exception(msg=repos_gw_save_casa_transfer)
+
+        response_data = {
+            "booking_id": BOOKING_ID,
+        }
+        return self.response(data=response_data)
 
 
 class CtrCustomer(BaseController):
