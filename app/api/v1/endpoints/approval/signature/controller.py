@@ -10,7 +10,6 @@ from app.api.v1.endpoints.cif.repository import (
 )
 from app.api.v1.endpoints.file.repository import repos_upload_file
 from app.api.v1.others.booking.controller import CtrBooking
-from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import (
     ACTIVE_FLAG_CREATE_SIGNATURE, IMAGE_TYPE_SIGNATURE
 )
@@ -114,13 +113,9 @@ class CtrSignature(BaseController):
 
     async def ctr_compare_signature(self, cif_id: str, signature_img, booking_id: Optional[str]):
 
-        business_type = await CtrBooking().ctr_get_business_type(booking_id=booking_id)
         # Check exist Booking
-        await CtrBooking().ctr_get_booking_and_validate(
-            business_type_code=business_type.code,
-            booking_id=booking_id,
-            cif_id=cif_id,
-            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        await CtrBooking().ctr_get_booking(
+            booking_id=booking_id
         )
 
         current_user = self.current_user.user_info

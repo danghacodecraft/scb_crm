@@ -80,7 +80,7 @@ class CasaAccountsResponse(BaseSchema):
     fullname_vn: str = Field(..., description="Tên chủ tài khoản")
     balance_available: int = Field(..., description="Số dư khả dụng")
     currency: str = Field(..., description="Loại tiền")
-    account_type: str = Field(..., description="Loại tài khoản")
+    account_type: Optional[str] = Field(None, description="Loại tài khoản")
 
 
 # Danh sách tài khoản nguồn

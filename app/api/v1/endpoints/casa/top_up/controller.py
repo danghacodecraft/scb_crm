@@ -32,24 +32,34 @@ from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.approval import CASA_TOP_UP_STAGE_BEGIN
 from app.utils.constant.business_type import BUSINESS_TYPE_CASA_TOP_UP
 from app.utils.constant.casa import (
-    DENOMINATIONS__AMOUNTS, RECEIVING_METHOD__METHOD_TYPES, RECEIVING_METHOD_SCB_BY_IDENTITY,
-    RECEIVING_METHOD_SCB_TO_ACCOUNT, RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT, RECEIVING_METHODS,
-    RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY, RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT,
-    RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD, RECEIVING_METHOD_ACCOUNT_CASES
+    DENOMINATIONS__AMOUNTS, RECEIVING_METHOD__METHOD_TYPES,
+    RECEIVING_METHOD_ACCOUNT_CASES, RECEIVING_METHOD_SCB_BY_IDENTITY,
+    RECEIVING_METHOD_SCB_TO_ACCOUNT,
+    RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT,
+    RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD,
+    RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY,
+    RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT, RECEIVING_METHODS
 )
-from app.utils.constant.cif import PROFILE_HISTORY_DESCRIPTIONS_TOP_UP_CASA_ACCOUNT, PROFILE_HISTORY_STATUS_INIT, \
-    IDENTITY_TYPE_CODE_NON_RESIDENT, ADDRESS_TYPE_CODE_UNDEFINDED
+from app.utils.constant.cif import (
+    ADDRESS_TYPE_CODE_UNDEFINDED, IDENTITY_TYPE_CODE_NON_RESIDENT,
+    PROFILE_HISTORY_DESCRIPTIONS_TOP_UP_CASA_ACCOUNT,
+    PROFILE_HISTORY_STATUS_INIT
+)
 from app.utils.constant.gw import GW_REQUEST_DIRECT_INDIRECT
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_GDV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_GDV
 )
 from app.utils.error_messages import (
     ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_CIF_NUMBER_NOT_EXIST,
-    ERROR_DENOMINATIONS_NOT_EXIST, ERROR_MAPPING_MODEL, ERROR_NOT_NULL,
-    ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST, ERROR_FIELD_REQUIRED
+    ERROR_DENOMINATIONS_NOT_EXIST, ERROR_FIELD_REQUIRED, ERROR_MAPPING_MODEL,
+    ERROR_NOT_NULL, ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
 )
-from app.utils.functions import dropdown, orjson_loads, orjson_dumps, generate_uuid, now
-from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese, split_name, make_short_name
+from app.utils.functions import (
+    dropdown, generate_uuid, now, orjson_dumps, orjson_loads
+)
+from app.utils.vietnamese_converter import (
+    convert_to_unsigned_vietnamese, make_short_name, split_name
+)
 
 
 class CtrCasaTopUp(BaseController):
@@ -125,15 +135,15 @@ class CtrCasaTopUp(BaseController):
                     address_full=form_data['receiver_address_full']
                 )
         elif receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD:
-                receiver_response = dict(
-                    bank=dict(
-                        code="branch_id",
-                        name="branch_id"
-                    ),  # TODO: đợi e-bank
-                    account_number=form_data['receiver_card_number'],  # TODO: đợi e-bank
-                    # fullname_vn=gw_casa_account_info_customer_info['full_name'],
-                    address_full=form_data['receiver_address_full']
-                )
+            receiver_response = dict(
+                bank=dict(
+                    code="branch_id",
+                    name="branch_id"
+                ),  # TODO: đợi e-bank
+                account_number=form_data['receiver_card_number'],  # TODO: đợi e-bank
+                # fullname_vn=gw_casa_account_info_customer_info['full_name'],
+                address_full=form_data['receiver_address_full']
+            )
         else:
             receiver_place_of_issue_id = await self.get_model_object_by_id(
                 model_id=form_data['receiver_place_of_issue']['id'], model=PlaceOfIssue, loc='receiver_place_of_issue_id'
@@ -315,10 +325,6 @@ class CtrCasaTopUp(BaseController):
                 msg=ERROR_MAPPING_MODEL,
                 loc=f'expect: CasaTopUpSCBToAccountRequest, request: {type(request)}'
             )
-
-        sender_cif_number = request.sender_cif_number
-        if not sender_cif_number:
-            return self.response_exception(msg=ERROR_CIF_NUMBER_NOT_EXIST, loc=f"cif_number: {sender_cif_number}")
 
         receiver_account_number = request.receiver_account_number
 
@@ -557,7 +563,7 @@ class CtrCasaTopUp(BaseController):
                 return_raw_data_flag=True
             )
             if not is_existed:
-                return self.response_exception(msg=ERROR_CIF_NUMBER_NOT_EXIST, loc="cif_number")
+                return self.response_exception(msg=ERROR_CIF_NUMBER_NOT_EXIST, loc="sender_cif_number")
         # TH2: Không nhập CIF
         else:
             sender_full_name_vn = request.sender_full_name_vn
@@ -597,9 +603,9 @@ class CtrCasaTopUp(BaseController):
                 request=request
             )
 
-        saving_customer = {}
-        saving_customer_identity = {}
-        saving_customer_address = {}
+        # saving_customer = {}
+        # saving_customer_identity = {}
+        # saving_customer_address = {}
         if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
             casa_top_up_info = await self.ctr_save_casa_top_up_scb_by_identity(request=request)
             # (

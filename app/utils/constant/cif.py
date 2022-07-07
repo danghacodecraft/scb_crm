@@ -257,6 +257,7 @@ PROFILE_HISTORY_DESCRIPTIONS_OPEN_CASA_ACCOUNT = "Mở tài khoản thanh toán"
 PROFILE_HISTORY_DESCRIPTIONS_TOP_UP_CASA_ACCOUNT = "Nộp tiền vào tài khoản thanh toán"
 PROFILE_HISTORY_DESCRIPTIONS_CLOSE_CASA_ACCOUNT = "Đóng tài khoản thanh toán"
 PROFILE_HISTORY_DESCRIPTIONS_WITHDRAW = "Rút tiền TKTT"
+PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_TD_ACCOUNT = "Mở tài khoản tiết kiệm"
 PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_ACCOUNT = "Mở tài khoản tiết kiệm"
 PROFILE_HISTORY_DESCRIPTIONS_INIT_DEBIT_CARD = "Tạo thẻ ghi nợ"
 PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING = "Tạo E-Banking"
@@ -292,7 +293,13 @@ PROFILE_HISTORY_DESCRIPTIONS = {
                    "Mốc thời gian tính từ lúc GDV điền thông tin tab đầu tiên "
                    f"[{PROFILE_HISTORY_DESCRIPTIONS_TOP_UP_CASA_ACCOUNT}]"
     },
-    # PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_ACCOUNT: "Mở tài khoản tiết kiệm",
+    BUSINESS_TYPE_CODE_OPEN_TD_ACCOUNT: {
+        'description': PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_TD_ACCOUNT,
+        'content': "Giao dịch viên đang chuẩn bị hồ sơ. "
+                   "Mốc thời gian tính từ lúc GDV điền thông tin tab đầu tiên "
+                   f"[{PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_TD_ACCOUNT}]"
+    },
+    # PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_TD_ACCOUNT: "Mở tài khoản tiết kiệm",
     # PROFILE_HISTORY_DESCRIPTIONS_INIT_DEBIT_CARD: "Tạo thẻ ghi nợ",
     # PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING: "Tạo E-Banking"
 

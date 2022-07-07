@@ -8,7 +8,7 @@ from app.api.v1.endpoints.deposit.open_deposit.repository import (
 from app.api.v1.validator import validate_history_data
 from app.utils.constant.business_type import BUSINESS_TYPE_OPEN_TD_ACCOUNT
 from app.utils.constant.cif import (
-    PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_ACCOUNT,
+    PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_TD_ACCOUNT,
     PROFILE_HISTORY_STATUS_INIT
 )
 from app.utils.functions import generate_uuid, now, orjson_dumps
@@ -81,7 +81,7 @@ class CtrDeposit(BaseController):
             })
 
         history_datas = self.make_history_log_data(
-            description=PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_ACCOUNT,
+            description=PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_TD_ACCOUNT,
             history_status=PROFILE_HISTORY_STATUS_INIT,
             current_user=current_user.user_info
         )
