@@ -80,10 +80,10 @@ async def repos_payment_amount_block(
         saving_transaction_stage_role,
         saving_transaction_daily,
         saving_transaction_sender,
-        saving_booking_account,
-        saving_booking_customer,
         saving_transaction_job,
         saving_booking_business_form,
+        saving_booking_account,
+        saving_booking_customer,
         session
 ):
     session.add_all([
@@ -164,20 +164,19 @@ async def repos_gw_payment_amount_block(
 
 @auto_commit
 async def repos_payment_amount_unblock(
-        booking_id,
-        saving_transaction_stage_status,
-        saving_transaction_stage,
-        saving_transaction_stage_lane,
-        saving_sla_transaction,
-        saving_transaction_stage_phase,
-        saving_transaction_stage_role,
-        saving_transaction_daily,
+        booking_id: str,
+        saving_transaction_stage_status: dict,
+        saving_sla_transaction: dict,
+        saving_transaction_stage: dict,
+        saving_transaction_stage_phase: dict,
+        saving_transaction_stage_lane: dict,
+        saving_transaction_stage_role: dict,
+        saving_transaction_daily: dict,
+        saving_transaction_sender: dict,
+        saving_transaction_job: dict,
+        saving_booking_business_form: dict,
         saving_booking_customer,
         saving_booking_account,
-        saving_transaction_sender,
-        saving_transaction_job,
-        saving_booking_business_form,
-
         session
 ):
     session.add_all([

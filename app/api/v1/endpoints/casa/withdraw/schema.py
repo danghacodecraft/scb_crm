@@ -50,7 +50,7 @@ class SenderInfoResponse(BaseSchema):
     cif_flag: bool = Field(
         ...,
         description="Cờ kiểm tra có CIF chưa, `true` = Có, `false` = Không"
-    ),
+    )
     cif_number: Optional[str] = Field(None, description="Mã khách hàng giao dịch")
     fullname_vn: Optional[str] = Field(None, description="Người giao dịch")
     identity: Optional[str] = Field(None, description="Giấy tờ định danh")

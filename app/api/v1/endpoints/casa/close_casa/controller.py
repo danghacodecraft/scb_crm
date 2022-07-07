@@ -94,17 +94,6 @@ class CtrCloseCasa(BaseController):
                 "booking_id": BOOKING_ID,
                 "customer_id": response_data.get('customer_id')
             })
-
-        # Tạo data TransactionDaily và các TransactionStage
-        transaction_data = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
-            business_type_id=BUSINESS_TYPE_CLOSE_CASA
-        )
-        (
-            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
-            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
-            saving_transaction_daily, saving_transaction_sender
-        ) = transaction_data
-
         history_data = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_CLOSE_CASA_ACCOUNT,
             history_status=PROFILE_HISTORY_STATUS_INIT,
@@ -113,12 +102,25 @@ class CtrCloseCasa(BaseController):
 
         # Validate history data
         is_success, history_response = validate_history_data(history_data)
+
         if not is_success:
             return self.response_exception(
                 msg=history_response['msg'],
                 loc=history_response['loc'],
                 detail=history_response['detail']
             )
+        # Tạo data TransactionDaily và các TransactionStage
+        transaction_data = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
+            business_type_id=BUSINESS_TYPE_CLOSE_CASA,
+            booking_id=BOOKING_ID,
+            request_json=orjson_dumps(close_account_list),
+            history_datas=orjson_dumps(history_data),
+        )
+        (
+            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
+            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
+            saving_transaction_daily, saving_transaction_sender, saving_transaction_job, saving_booking_business_form
+        ) = transaction_data
 
         booking_id = self.call_repos(await repos_save_close_casa_account(
             booking_id=BOOKING_ID,
@@ -130,10 +132,10 @@ class CtrCloseCasa(BaseController):
             saving_transaction_stage_role=saving_transaction_stage_role,
             saving_transaction_daily=saving_transaction_daily,
             saving_transaction_sender=saving_transaction_sender,
+            saving_transaction_job=saving_transaction_job,
+            saving_booking_business_form=saving_booking_business_form,
             saving_booking_account=saving_booking_account,
             saving_booking_customer=saving_booking_customer,
-            request_json=orjson_dumps(close_account_list),
-            history_data=orjson_dumps(history_data),
             session=self.oracle_session
         ))
         response_data = {
