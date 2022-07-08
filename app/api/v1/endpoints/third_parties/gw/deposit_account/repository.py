@@ -115,12 +115,13 @@ async def repos_get_booking_account_by_booking(booking_id, session):
 async def repos_get_customer_by_booking_account(td_accounts: List, session):
     customer = session.execute(
         select(
-            Customer,
-            TdAccount
+            Customer
         )
-        .join(Customer, TdAccount.customer_id == Customer.id)
-        .filter(TdAccount.id.in_(td_accounts))
-    ).all()
+        .join(TdAccount, Customer.id == TdAccount.customer_id)
+        .filter(
+            TdAccount.id.in_(td_accounts)
+        )
+    ).scalar()
     return ReposReturn(data=customer)
 
 

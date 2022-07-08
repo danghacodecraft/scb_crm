@@ -95,7 +95,8 @@ async def view_gw_get_column_chart_deposit_account_info(
     responses=swagger_response(
         response_model=ResponseData[GWDepositOpenAccountTD],
         success_status_code=status.HTTP_200_OK
-    )
+    ),
+    deprecated=True
 )
 async def view_gw_deposit_open_account_td(
         BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),
