@@ -5,7 +5,7 @@ from pydantic import Field, validator
 
 from app.api.base.schema import ResponseRequestSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
-from app.api.v1.schemas.utils import DropdownRequest
+from app.api.v1.schemas.utils import DropdownRequest, DropdownResponse
 from app.utils.constant.casa import DENOMINATIONS__AMOUNTS
 from app.utils.functions import (
     is_valid_mobile_number, make_description_from_dict_to_list
@@ -195,8 +195,8 @@ class StatementResponse(ResponseRequestSchema):
 
 class IdentityInfoResponse(ResponseRequestSchema):
     number: Optional[str] = Field(..., description="Số GTDD")
-    issued_date: Optional[str] = Field(..., description="Ngày cấp")
-    place_of_issue: Optional[str] = Field(..., description="Nơi cấp")
+    issued_date: Optional[date] = Field(..., description="Ngày cấp")
+    place_of_issue: Optional[DropdownResponse] = Field(..., description="Nơi cấp")
 
 
 class CustomerResponse(ResponseRequestSchema):
