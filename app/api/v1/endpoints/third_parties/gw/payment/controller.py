@@ -582,7 +582,7 @@ class CtrGWPayment(BaseController):
         data_input = {
             "customer_info": {
                 "full_name": form_data['sender_full_name_vn'],
-                "birthday": form_data['sender_birthday']  # TODO
+                "birthday": form_data['sender_issued_date']  # TODO
             },
             "id_info": {
                 "id_num": form_data['sender_identity_number']
