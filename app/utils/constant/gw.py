@@ -42,6 +42,7 @@ GW_ENDPOINT_URL_RETRIEVE_TELE_TRANSFER_INFO = '/payment/v1.0/rest/teleTransfer'
 GW_ENDPOINT_URL_PAYMENT_AMOUNT_BLOCK = "/payment/v1.0/rest/amountBlock"
 GW_ENDPOINT_URL_PAYMENT_AMOUNT_UNBLOCK = "/payment/v1.0/rest/amountUnBlock"
 GW_ENDPOINT_URL_PAY_IN_CASH = "/payment/v1.0/rest/payInCash"
+GW_ENDPOINT_URL_PAY_IN_CASH_247_BY_ACCOUNT_NUMBER = "/payment/v1.0/rest/payInCash247byAccNum"
 GW_ENDPOINT_URL_REDEEM_ACCOUNT = "/payment/v1.0/rest/redeemAccount"
 GW_ENDPOINT_URL_WITHDRAW = "/payment/v1.0/rest/cashWithdrawals"
 # ---------------------------------------------- USER ---------------------------------------------- #
