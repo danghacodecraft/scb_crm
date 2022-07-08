@@ -1,5 +1,5 @@
 from datetime import date
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from pydantic import Field, validator
 
@@ -24,7 +24,7 @@ class FeeInfoRequest(ResponseRequestSchema):
 
 
 # Common
-class CasaTransferRequest(ResponseRequestSchema):
+class CasaTransferCommonRequest(ResponseRequestSchema):
     sender_account_number: str = Field(..., description="Số tài khoản người chuyển khoản")
     sender_cif_number: Optional[str] = CustomField().OptionalCIFNumberField
     sender_full_name_vn: Optional[str] = Field(None, description="Người giao dịch")
@@ -55,14 +55,14 @@ class CasaTransferRequest(ResponseRequestSchema):
 ########################################################################################################################
 # Thông tin người thụ hưởng
 ########################################################################################################################
-class CasaTransferSCBToAccountRequest(CasaTransferRequest):
+class CasaTransferSCBToAccountRequest(CasaTransferCommonRequest):
     """
     Trong SCB đến tài khoản
     """
     receiver_account_number: str = Field(..., description="Số tài khoản", regex=REGEX_NUMBER_ONLY)
 
 
-class CasaTransferSCBByIdentityRequest(CasaTransferRequest):
+class CasaTransferSCBByIdentityRequest(CasaTransferCommonRequest):
     """
     Trong SCB nhận bằng giấy tờ định danh
     """
@@ -82,7 +82,7 @@ class CasaTransferSCBByIdentityRequest(CasaTransferRequest):
         return v
 
 
-class CasaTransferThirdPartyRequest(CasaTransferRequest):
+class CasaTransferThirdPartyRequest(CasaTransferCommonRequest):
     receiver_bank: DropdownRequest = Field(..., description="Ngân hàng")
     receiver_address_full: str = Field(..., description="Địa chỉ", max_length=100)
 
@@ -127,6 +127,18 @@ class CasaTransferThirdParty247ToCardRequest(CasaTransferThirdPartyRequest):
     Ngoài SCB 24/7 số thẻ
     """
     receiver_card_number: str = Field(..., description="Số thẻ")
+
+
+class CasaTransferRequest(ResponseRequestSchema):
+    receiving_method: str = Field(..., description="Hình thức nhận")
+    data: Union[
+        CasaTransferSCBByIdentityRequest,
+        CasaTransferThirdPartyByIdentityRequest,
+        CasaTransferThirdPartyToAccountRequest,
+        CasaTransferThirdParty247ToAccountRequest,
+        CasaTransferSCBToAccountRequest,
+        CasaTransferThirdParty247ToCardRequest
+    ] = Field(..., description="Nội dung")
 
 
 ########################################################################################################################

@@ -1,5 +1,3 @@
-from typing import Union
-
 from fastapi import APIRouter, Body, Depends, Header, Path
 from starlette import status
 
@@ -8,12 +6,8 @@ from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.casa.transfer.controller import CtrCasaTransfer
 from app.api.v1.endpoints.casa.transfer.schema import (
-    CasaTransferResponse, CasaTransferSCBByIdentityRequest,
-    CasaTransferSCBToAccountRequest, CasaTransferSourceAccountListResponse,
-    CasaTransferThirdParty247ToAccountRequest,
-    CasaTransferThirdParty247ToCardRequest,
-    CasaTransferThirdPartyByIdentityRequest,
-    CasaTransferThirdPartyToAccountRequest
+    CasaTransferRequest, CasaTransferResponse,
+    CasaTransferSourceAccountListResponse
 )
 
 router = APIRouter()
@@ -30,14 +24,7 @@ router = APIRouter()
 )
 async def view_save_casa_transfer_info(
         BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
-        request: Union[
-            CasaTransferThirdPartyByIdentityRequest,
-            CasaTransferSCBByIdentityRequest,
-            CasaTransferThirdPartyToAccountRequest,
-            CasaTransferThirdParty247ToAccountRequest,
-            CasaTransferSCBToAccountRequest,
-            CasaTransferThirdParty247ToCardRequest
-        ] = Body(...),
+        request: CasaTransferRequest = Body(...),
         current_user=Depends(get_current_user_from_header())
 ):
     casa_transfer_info = await CtrCasaTransfer(current_user).ctr_save_casa_transfer_info(
@@ -48,7 +35,7 @@ async def view_save_casa_transfer_info(
 
 
 @router.post(
-    path="/casa-transfer-pd/",
+    path="/transfer-pd/",
     name="Phê duyệt chuyển khoản",
     description="Chuyển khoản - Phê duyệt",
     responses=swagger_response(
