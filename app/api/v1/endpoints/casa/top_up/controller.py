@@ -26,7 +26,7 @@ from app.api.v1.endpoints.user.schema import AuthResponse
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
 from app.api.v1.validator import validate_history_data
-from app.third_parties.oracle.models.master_data.bank import BankBranch
+from app.third_parties.oracle.models.master_data.bank import Bank
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.approval import CASA_TOP_UP_STAGE_BEGIN
@@ -400,7 +400,7 @@ class CtrCasaTopUp(BaseController):
         receiver_bank_id = data.receiver_bank.id
         await self.get_model_object_by_id(
             model_id=data.receiver_bank.id,
-            model=BankBranch,
+            model=Bank,
             loc=f'receiver_bank -> id: {receiver_bank_id}'
         )
 
@@ -422,7 +422,7 @@ class CtrCasaTopUp(BaseController):
         receiver_bank_id = data.receiver_bank.id
         await self.get_model_object_by_id(
             model_id=data.receiver_bank.id,
-            model=BankBranch,
+            model=Bank,
             loc=f'receiver_bank -> id: {receiver_bank_id}'
         )
 
@@ -449,7 +449,7 @@ class CtrCasaTopUp(BaseController):
         receiver_bank_id = data.receiver_bank.id
         await self.get_model_object_by_id(
             model_id=data.receiver_bank.id,
-            model=BankBranch,
+            model=Bank,
             loc=f'receiver_bank -> id: {receiver_bank_id}'
         )
         data.receiving_method = receiving_method
