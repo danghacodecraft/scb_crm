@@ -12,6 +12,8 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_get_casa_account_info, repos_gw_get_close_casa_account,
     repos_gw_get_column_chart_casa_account_info,
     repos_gw_get_pie_chart_casa_account_info,
+    repos_gw_get_retrieve_ben_name_by_account_number,
+    repos_gw_get_retrieve_ben_name_by_card_number,
     repos_gw_get_statements_casa_account_info, repos_gw_get_tele_transfer,
     repos_gw_open_casa_account, repos_gw_pay_in_cash_casa_account,
     repos_open_casa_get_casa_account_infos,
@@ -27,7 +29,9 @@ from app.api.v1.endpoints.third_parties.repository import (
 )
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
-from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
+from app.settings.config import (
+    DATETIME_INPUT_OUTPUT_FORMAT, DATETIME_INPUT_OUTPUT_REVERT_FORMAT
+)
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.utils.constant.approval import CIF_STAGE_APPROVE_KSV
 from app.utils.constant.business_type import BUSINESS_TYPE_CASA_TOP_UP
@@ -43,7 +47,8 @@ from app.utils.constant.idm import (
 )
 from app.utils.error_messages import ERROR_CALL_SERVICE_GW, ERROR_PERMISSION
 from app.utils.functions import (
-    date_to_string, now, orjson_dumps, orjson_loads, string_to_date
+    date_to_string, datetime_to_string, now, orjson_dumps, orjson_loads,
+    string_to_date
 )
 
 
@@ -705,3 +710,77 @@ class CtrGWCasaAccount(BaseController):
             data_input=data_input
         )
         return self.response(data=tele_transfer_info)
+
+    async def ctr_gw_get_retrieve_ben_name_by_account_number(self, account_number: str):
+        current_user = self.current_user
+        data_input = {
+            "account_to_info": {
+                "account_num": account_number
+            },
+            # TODO
+            "account_from_info": {
+                "account_num": "20625700001"
+            },
+            # TODO
+            "ben_id": "970436",
+            "trans_date": datetime_to_string(_time=now()),
+            "time_stamp": datetime_to_string(_time=now(), _format=DATETIME_INPUT_OUTPUT_REVERT_FORMAT),
+            "trans_id": "20220629160002159368",
+            # TODO
+            "staff_maker": {
+                "staff_code": "annvh"
+            },
+            # TODO
+            "staff_checker": {
+                "staff_code": "THUYTP"
+            },
+            # TODO
+            "branch_info": {
+                "branch_code": "001",
+                "branch_name": "CN CONG QUYNH"
+            }
+        }
+
+        gw_ben_name = self.call_repos(await repos_gw_get_retrieve_ben_name_by_account_number(
+            current_user=current_user.user_info, data_input=data_input))
+
+        ben_name = gw_ben_name['retrieveBenNameByAccNum_out']['data_output']['customer_info']
+
+        return self.response(data=ben_name)
+
+    async def ctr_gw_get_retrieve_ben_name_by_card_number(self, card_number: str):
+        current_user = self.current_user.user_info
+        data_input = {
+            "card_to_info": {
+                "card_num": card_number
+            },
+            # TODO
+            "account_from_info": {
+                "account_num": "20625700001"
+            },
+            # TODO
+            "ben_id": "970436",
+            "trans_date": datetime_to_string(_time=now()),
+            "time_stamp": datetime_to_string(_time=now(), _format=DATETIME_INPUT_OUTPUT_REVERT_FORMAT),
+            "trans_id": "20220629160002159368",
+            # TODO
+            "staff_maker": {
+                "staff_code": "annvh"
+            },
+            # TODO
+            "staff_checker": {
+                "staff_code": "THUYTP"
+            },
+            # TODO
+            "branch_info": {
+                "branch_code": "001",
+                "branch_name": "CN CONG QUYNH"
+            }
+        }
+
+        gw_ben_name = self.call_repos(await repos_gw_get_retrieve_ben_name_by_card_number(
+            current_user=current_user, data_input=data_input))
+
+        ben_name = gw_ben_name['retrieveBenNameByCardNum_out']['data_output']['customer_info']
+
+        return self.response(data=ben_name)

@@ -28,6 +28,7 @@ from app.api.v1.endpoints.user.schema import AuthResponse
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
 from app.api.v1.validator import validate_history_data
+from app.settings.config import DATETIME_INPUT_OUTPUT_REVERT_FORMAT
 from app.third_parties.oracle.models.master_data.address import AddressProvince
 from app.third_parties.oracle.models.master_data.bank import Bank, BankBranch
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
@@ -57,7 +58,8 @@ from app.utils.error_messages import (
     ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
 )
 from app.utils.functions import (
-    dropdown, generate_uuid, now, orjson_dumps, orjson_loads
+    datetime_to_string, dropdown, generate_uuid, now, orjson_dumps,
+    orjson_loads
 )
 from app.utils.vietnamese_converter import (
     convert_to_unsigned_vietnamese, make_short_name, split_name
@@ -120,7 +122,7 @@ class CtrCasaTransfer(BaseController):
             if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT:
                 bank_id = form_data['receiver_bank']['id']
                 bank_info = await self.get_model_object_by_id(
-                    model_id=bank_id, model=Bank, loc='receiver_bank'
+                    model_id=bank_id, model=BankBranch, loc='receiver_bank'
                 )
                 receiver_response = dict(
                     bank=dropdown(bank_info),
@@ -146,7 +148,7 @@ class CtrCasaTransfer(BaseController):
 
             if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
                 receiver_branch_info = await self.get_model_object_by_id(
-                    model_id=form_data['receiver_branch']['id'], model=Branch, loc='receiver_branch_id'
+                    model_id=form_data['receiver_branch']['id'], model=BankBranch, loc='receiver_branch_id'
                 )
 
                 receiver_response = dict(
@@ -446,9 +448,8 @@ class CtrCasaTransfer(BaseController):
                 loc=f"sender_account_number: {sender_account_number}"
             )
 
-        # validate branch of bank
-        # TODO:
-        # await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
+        # validate bank
+        await self.get_model_object_by_id(model_id=request.receiver_bank.id, model=BankBranch, loc='branch -> id')
         return request
 
     async def ctr_save_casa_transfer_third_party_247_to_card(
@@ -481,6 +482,8 @@ class CtrCasaTransfer(BaseController):
                 loc=f"sender_account_number: {sender_account_number}"
             )
 
+        # validate bank
+        await self.get_model_object_by_id(model_id=request.receiver_bank.id, model=BankBranch, loc='branch -> id')
         return request
 
     async def ctr_save_casa_transfer_info(
@@ -896,6 +899,67 @@ class CtrCasaTransfer(BaseController):
                     }
                 }
             }
+
+            if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT:
+                request_data = {
+                    "data_input": {
+                        "ben_id": "970436",
+                        "trans_date": datetime_to_string(_time=now()),
+                        "time_stamp": datetime_to_string(_time=now(), _format=DATETIME_INPUT_OUTPUT_REVERT_FORMAT),
+                        "trans_id": "20220629160002159368",
+                        "amount": "100000",
+                        "description": "Chuyển khoản thanh toán",
+                        "account_to_info": {
+                            "account_num": "20625700001"
+                        },
+                        "account_from_info": {
+                            "account_num": "20625700001"
+                        },
+                        "customer_info": {
+                            "full_name": "LE THANH HIEN TEST"
+                        },
+                        "staff_maker": {
+                            "staff_code": "annvh"
+                        },
+                        "staff_checker": {
+                            "staff_code": "THUYTP"
+                        },
+                        "branch_info": {
+                            "branch_code": "001"
+                        }
+                    }
+                }
+
+            if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD:
+                request_data = {
+                    "data_input": {
+                        "ben_id": "970436",
+                        "trans_date": datetime_to_string(_time=now()),
+                        "time_stamp": datetime_to_string(_time=now(), _format=DATETIME_INPUT_OUTPUT_REVERT_FORMAT),
+                        "trans_id": "20220629160002159368",
+                        "amount": "100000",
+                        "description": "Chuyển khoản thanh toán",
+                        "account_from_info": {
+                            "account_num": "20625700001"
+                        },
+                        "customer_info": {
+                            "full_name": "LE THANH HIEN TEST"
+                        },
+                        "staff_maker": {
+                            "staff_code": "annvh"
+                        },
+                        "staff_checker": {
+                            "staff_code": "THUYTP"
+                        },
+                        "branch_info": {
+                            "branch_code": "001"
+                        },
+                        "card_to_info": {
+                            "card_num": "4536180593355659"
+                        }
+                    }
+
+                }
 
         self.call_repos(await repos_gw_save_casa_transfer_info(
             current_user=self.current_user,

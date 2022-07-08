@@ -119,12 +119,12 @@ async def repos_gw_save_casa_transfer_info(
         )
         function_out = 'tt_liquidation_out'
     if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT:
-        is_success, gw_casa_transfer = await service_gw.gw_payment_tt_liquidation(
+        is_success, gw_casa_transfer = await service_gw.gw_payment_interbank_transfer_247_by_account_number(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )
         function_out = 'interbankTransfer247ByAccNum_out'
     if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD:
-        is_success, gw_casa_transfer = await service_gw.gw_payment_tt_liquidation(
+        is_success, gw_casa_transfer = await service_gw.gw_payment_interbank_transfer_247_by_card_number(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )
         function_out = 'interbankTransfer247ByCardNum_out'

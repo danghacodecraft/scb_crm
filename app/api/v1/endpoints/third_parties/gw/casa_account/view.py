@@ -17,11 +17,11 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.example import (
     CASA_ACCOUNT_NUMBER_REQUEST, CASA_CIF_NUMBER_REQUEST
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
-    GWCasaAccountByCIFNumberRequest, GWCasaAccountByCIFNumberResponse,
-    GWCasaAccountCheckExistRequest, GWCasaAccountCheckExistResponse,
-    GWCasaAccountResponse, GWCloseCasaAccountResponse,
-    GWOpenCasaAccountRequest, GWOpenCasaAccountResponse,
-    GWReportColumnChartHistoryAccountInfoRequest,
+    GWBenNameResponse, GWCasaAccountByCIFNumberRequest,
+    GWCasaAccountByCIFNumberResponse, GWCasaAccountCheckExistRequest,
+    GWCasaAccountCheckExistResponse, GWCasaAccountResponse,
+    GWCloseCasaAccountResponse, GWOpenCasaAccountRequest,
+    GWOpenCasaAccountResponse, GWReportColumnChartHistoryAccountInfoRequest,
     GWReportColumnChartHistoryAccountInfoResponse,
     GWReportPieChartHistoryAccountInfoRequest,
     GWReportPieChartHistoryAccountInfoResponse,
@@ -211,3 +211,41 @@ async def view_gw_get_casa_account_info(
         account_number=account_number
     )
     return ResponseData[GWCasaAccountResponse](**gw_casa_account_info)
+
+
+@router.post(
+    path="/ben-name-by-account-number/{account_number}/",
+    name="[GW] Lấy tên người thụ hưởng",
+    description="[GW] Lấy tên người thụ hưởng thông qua số tài khoản ngoài SCB",
+    responses=swagger_response(
+        response_model=ResponseData[GWBenNameResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_get_ben_name_by_account_number(
+        account_number: str = Path(..., description="Số tài khoản"),
+        current_user=Depends(get_current_user_from_header())
+):
+    ben_name = await CtrGWCasaAccount(current_user).ctr_gw_get_retrieve_ben_name_by_account_number(
+        account_number=account_number
+    )
+    return ResponseData[GWBenNameResponse](**ben_name)
+
+
+@router.post(
+    path="/ben-name-by-card-number/{card_number}/",
+    name="[GW] Lấy tên người thụ hưởng",
+    description="[GW] Lấy tên người thụ hưởng thông qua số tài khoản ngoài SCB",
+    responses=swagger_response(
+        response_model=ResponseData[GWBenNameResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_get_ben_name_by_card_number(
+        card_number: str = Path(..., description="Số thẻ"),
+        current_user=Depends(get_current_user_from_header())
+):
+    ben_name = await CtrGWCasaAccount(current_user).ctr_gw_get_retrieve_ben_name_by_card_number(
+        card_number=card_number
+    )
+    return ResponseData[GWBenNameResponse](**ben_name)

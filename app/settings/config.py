@@ -22,6 +22,7 @@ APPLICATION = {
 }
 
 DATETIME_INPUT_OUTPUT_FORMAT = '%Y-%m-%d %H:%M:%S'
+DATETIME_INPUT_OUTPUT_REVERT_FORMAT = '%d-%m-%Y %H:%M:%S'
 
 DATE_INPUT_OUTPUT_FORMAT = '%Y-%m-%d'
 
@@ -59,7 +60,6 @@ if os.getenv("DEBUG", True):
         logger.info("Start Query:")
         logger.debug(f"\n{statement}")
         logger.debug(parameters)
-
 
     @event.listens_for(Engine, "after_cursor_execute")
     def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
