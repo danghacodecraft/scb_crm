@@ -306,25 +306,6 @@ async def repos_check_casa_account_approved(casa_account_ids: List, session: Ses
     return ReposReturn(data=casa_account_status_approved_ids)
 
 
-async def repos_gw_pay_in_cash_casa_account(
-    current_user: UserInfoResponse,
-    data_input
-):
-    is_success, pay_in_cash_info = await service_gw.gw_pay_in_cash(
-        current_user=current_user,
-        data_input=data_input
-    )
-
-    if not is_success:
-        return ReposReturn(
-            is_error=True,
-            loc="repos_gw_pay_in_cash_casa_account",
-            msg=ERROR_CALL_SERVICE_GW,
-            detail=str(pay_in_cash_info)
-        )
-    return ReposReturn(data=pay_in_cash_info)
-
-
 async def repos_gw_get_tele_transfer(current_user: UserInfoResponse, data_input):
     is_success, tele_transfer = await service_gw.get_tele_transfer(
         current_user=current_user,
