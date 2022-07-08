@@ -574,9 +574,16 @@ class CtrCasaTopUp(BaseController):
             sender_full_name_vn = request.sender_full_name_vn
             sender_identity_number = request.sender_identity_number
             sender_issued_date = request.sender_issued_date
-            sender_place_of_issue = request.sender_place_of_issue
             sender_address_full = request.sender_address_full
             sender_mobile_number = request.sender_mobile_number
+
+            sender_place_of_issue_id = request.sender_place_of_issue.id
+            await self.get_model_object_by_id(
+                model_id=sender_place_of_issue_id,
+                model=PlaceOfIssue,
+                loc=f'sender_place_of_issue_id: {sender_place_of_issue_id}'
+            )
+
             errors = []
             if not sender_full_name_vn:
                 errors.append(f'sender_full_name_vn: {sender_full_name_vn}')
@@ -584,8 +591,6 @@ class CtrCasaTopUp(BaseController):
                 errors.append(f'sender_identity_number: {sender_identity_number}')
             if not sender_issued_date:
                 errors.append(f'sender_issued_date: {sender_issued_date}')
-            if not sender_place_of_issue:
-                errors.append(f'sender_place_of_issue: {sender_place_of_issue}')
             if not sender_address_full:
                 errors.append(f'sender_address_full: {sender_address_full}')
             if not sender_mobile_number:
