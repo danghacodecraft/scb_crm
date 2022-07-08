@@ -41,7 +41,8 @@ from app.utils.constant.casa import (
     RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT, RECEIVING_METHODS
 )
 from app.utils.constant.cif import (
-    ADDRESS_TYPE_CODE_UNDEFINDED, IDENTITY_TYPE_CODE_NON_RESIDENT,
+    ADDRESS_TYPE_CODE_UNDEFINDED, DROPDOWN_NONE_DICT,
+    IDENTITY_TYPE_CODE_NON_RESIDENT,
     PROFILE_HISTORY_DESCRIPTIONS_TOP_UP_CASA_ACCOUNT,
     PROFILE_HISTORY_STATUS_INIT
 )
@@ -269,11 +270,14 @@ class CtrCasaTopUp(BaseController):
             telephone=gw_customer_info['telephone'],
             otherphone=gw_customer_info['otherphone']
         )
-        identity_place_of_issue = await self.get_model_object_by_id(
-            model_id=form_data['sender_place_of_issue']['id'],
-            model=PlaceOfIssue,
-            loc='sender_place_of_issue -> id'
-        )
+        sender_place_of_issue = form_data['sender_place_of_issue']
+        identity_place_of_issue = DROPDOWN_NONE_DICT
+        if form_data['sender_place_of_issue']:
+            identity_place_of_issue = await self.get_model_object_by_id(
+                model_id=sender_place_of_issue['id'],
+                model=PlaceOfIssue,
+                loc='sender_place_of_issue -> id'
+            )
         if not sender_cif_number:
             sender_response.update(
                 fullname_vn=form_data['sender_full_name_vn'],
@@ -400,7 +404,7 @@ class CtrCasaTopUp(BaseController):
                 msg=ERROR_MAPPING_MODEL,
                 loc=f'expect: CasaTopUpThirdPartyToAccountRequest, request: {type(data)}'
             )
-        # validate branch of bank
+        # validate bank
         receiver_bank_id = data.receiver_bank.id
         await self.get_model_object_by_id(
             model_id=data.receiver_bank.id,
@@ -422,7 +426,7 @@ class CtrCasaTopUp(BaseController):
                 msg=ERROR_MAPPING_MODEL,
                 loc=f'expect: CasaTopUpThirdPartyByIdentityRequest, request: {type(data)}'
             )
-        # validate branch of bank
+        # validate bank
         receiver_bank_id = data.receiver_bank.id
         await self.get_model_object_by_id(
             model_id=data.receiver_bank.id,
@@ -449,7 +453,7 @@ class CtrCasaTopUp(BaseController):
                 msg=ERROR_MAPPING_MODEL,
                 loc=f'expect: CasaTopUpThirdPartyByIdentityRequest, request: {type(data)}'
             )
-        # validate branch of bank
+        # validate bank
         receiver_bank_id = data.receiver_bank.id
         await self.get_model_object_by_id(
             model_id=data.receiver_bank.id,
@@ -469,9 +473,14 @@ class CtrCasaTopUp(BaseController):
                 msg=ERROR_MAPPING_MODEL,
                 loc=f'expect: CasaTopUpThirdParty247ToCardRequest, request: {type(data)}'
             )
-        # TODO: validate branch of bank
-        # await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
 
+        # validate bank
+        receiver_bank_id = data.receiver_bank.id
+        await self.get_model_object_by_id(
+            model_id=data.receiver_bank.id,
+            model=Bank,
+            loc=f'receiver_bank -> id: {receiver_bank_id}'
+        )
         # TODO: validate card number
 
         data.receiving_method = receiving_method
