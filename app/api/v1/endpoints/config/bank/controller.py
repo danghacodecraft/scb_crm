@@ -4,11 +4,12 @@ from app.third_parties.oracle.models.master_data.bank import Bank, BankBranch
 
 
 class CtrConfigBank(BaseController):
-    async def ctr_get_bank_branch(self):
+    async def ctr_get_bank_branch(self, bank_id=None):
         bank_branch_info = self.call_repos(
             await repos_get_data_model_config(
                 session=self.oracle_session,
-                model=BankBranch
+                model=BankBranch,
+                bank_id=bank_id
             )
         )
         return self.response(bank_branch_info)

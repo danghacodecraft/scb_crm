@@ -5,11 +5,12 @@ from app.api.v1.endpoints.approval.repository import (
 from app.api.v1.endpoints.cif.repository import (
     repos_get_account_id_by_account_number
 )
+from app.api.v1.endpoints.config.bank.controller import CtrConfigBank
 from app.api.v1.endpoints.third_parties.gw.payment.repository import (
     repos_create_booking_payment, repos_gw_pay_in_cash,
     repos_gw_payment_amount_block, repos_gw_payment_amount_unblock,
-    repos_gw_redeem_account, repos_payment_amount_block,
-    repos_payment_amount_unblock
+    repos_gw_redeem_account, repos_pay_in_cash_247_by_acc_num,
+    repos_payment_amount_block, repos_payment_amount_unblock
 )
 from app.api.v1.endpoints.third_parties.gw.payment.schema import (
     RedeemAccountRequest
@@ -27,7 +28,9 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_UNBLOCK, PROFILE_HISTORY_STATUS_INIT
 )
 from app.utils.constant.gw import GW_CASA_RESPONSE_STATUS_SUCCESS
-from app.utils.functions import now, orjson_dumps, orjson_loads
+from app.utils.functions import (
+    datetime_to_string, now, orjson_dumps, orjson_loads
+)
 
 
 class CtrGWPayment(BaseController):
@@ -383,6 +386,75 @@ class CtrGWPayment(BaseController):
         }
         return self.response(data=response_data)
 
+    async def ctr_gw_redeem_account(self, redeem_account: RedeemAccountRequest):
+        current_user = self.current_user
+        payout_details = [{
+            "payout_component": item.payout_component,
+            "payout_mode": item.payout_mode,
+            "payout_amount": item.payout_amount,
+            "offset_account": item.offset_account
+        } for item in redeem_account.p_payout_detail.payout_details]
+        data_input = {
+            "account_info": {
+                "account_num": redeem_account.account_info.account_number,
+            },
+            "p_payout_detail": {
+                "redemption_details": {
+                    "redemption_mode": redeem_account.p_payout_detail.redemption_details.redemption_mode,
+                    "redemption_amount": redeem_account.p_payout_detail.redemption_details.redemption_amount,
+                    "waive_penalty": redeem_account.p_payout_detail.redemption_details.waive_penalty,
+                    "waive_interest": redeem_account.p_payout_detail.redemption_details.waive_interest
+                },
+                "payout_details": payout_details
+            },
+            # TODO hard core
+            "p_denominated_deposit": "",
+            "p_addl_payout_detail": "",
+            "p_charges": "",
+            "p_denomination": "",
+            "p_mis": "",
+            "p_udf": [
+                {
+                    "UDF_NAME": "",
+                    "UDF_VALUE": ""
+                }
+            ],
+            # TODO hard core
+            "staff_info_checker": {
+                "staff_name": "HOANT2"
+            },
+            # TODO hard core
+            "staff_info_maker": {
+                "staff_name": "KHANHLQ"
+            }
+        }
+        request_data, gw_payment_redeem_account = self.call_repos(
+            await repos_gw_redeem_account(
+                current_user=current_user,
+                data_input=data_input,
+            )
+        )
+
+        booking_id, booking_code = self.call_repos(await repos_create_booking_payment(
+            business_type_code=BUSINESS_TYPE_REDEEM_ACCOUNT,
+            current_user=current_user.user_info,
+            form_data=request_data,
+            log_data=gw_payment_redeem_account,
+            session=self.oracle_session
+        ))
+
+        redeem_account = gw_payment_redeem_account.get('redeemAccount_out', {})
+        # check trường hợp lỗi
+        if redeem_account.get('transaction_info').get('transaction_error_code') != GW_CASA_RESPONSE_STATUS_SUCCESS:
+            return self.response_exception(msg=redeem_account.get('transaction_info').get('transaction_error_msg'))
+        response_data = {
+            "booking_id": booking_id,
+        }
+        return self.response(data=response_data)
+
+    ####################################################################################################################
+    # Nộp tiền
+    ####################################################################################################################
     async def ctr_gw_pay_in_cash(
             self,
             form_data
@@ -497,68 +569,52 @@ class CtrGWPayment(BaseController):
         ))
         return self.response(data=gw_pay_in_cash)
 
-    async def ctr_gw_redeem_account(self, redeem_account: RedeemAccountRequest):
+    async def ctr_gw_pay_in_cash_247_by_acc_num(
+            self,
+            booking_id: str,
+            form_data: dict
+    ):
         current_user = self.current_user
-        payout_details = [{
-            "payout_component": item.payout_component,
-            "payout_mode": item.payout_mode,
-            "payout_amount": item.payout_amount,
-            "offset_account": item.offset_account
-        } for item in redeem_account.p_payout_detail.payout_details]
+        current_user_info = current_user.user_info
+
+        ben = await CtrConfigBank(current_user).ctr_get_bank_branch(bank_id=form_data['receiver_bank']['id'])
+
         data_input = {
-            "account_info": {
-                "account_num": redeem_account.account_info.account_number,
+            "customer_info": {
+                "full_name": form_data['sender_full_name_vn'],
+                "birthday": form_data['sender_birthday']  # TODO
             },
-            "p_payout_detail": {
-                "redemption_details": {
-                    "redemption_mode": redeem_account.p_payout_detail.redemption_details.redemption_mode,
-                    "redemption_amount": redeem_account.p_payout_detail.redemption_details.redemption_amount,
-                    "waive_penalty": redeem_account.p_payout_detail.redemption_details.waive_penalty,
-                    "waive_interest": redeem_account.p_payout_detail.redemption_details.waive_interest
-                },
-                "payout_details": payout_details
+            "id_info": {
+                "id_num": form_data['sender_identity_number']
             },
-            # TODO hard core
-            "p_denominated_deposit": "",
-            "p_addl_payout_detail": "",
-            "p_charges": "",
-            "p_denomination": "",
-            "p_mis": "",
-            "p_udf": [
-                {
-                    "UDF_NAME": "",
-                    "UDF_VALUE": ""
-                }
-            ],
-            # TODO hard core
-            "staff_info_checker": {
-                "staff_name": "HOANT2"
+            "address_info": {
+                "address_full": form_data['sender_address_full']
             },
-            # TODO hard core
-            "staff_info_maker": {
-                "staff_name": "KHANHLQ"
+            "trans_date": datetime_to_string(now()),
+            "time_stamp": datetime_to_string(now()),
+            "trans_id": booking_id,
+            "amount": form_data['amount'],
+            "description": form_data['content'],
+            "account_to_info": {
+                "account_num": form_data['receiver_account_number']
+            },
+            "ben_id": ben['data'][0]['id'],
+            "account_from_info": {
+                "account_num": "101101001"
+            },
+            "staff_maker": {
+                "staff_code": "annvh"   # TODO
+            },
+            "staff_checker": {
+                "staff_code": "THUYTP"  # TODO
+            },
+            "branch_info": {
+                "branch_code": current_user_info.hrm_branch_code
             }
         }
-        request_data, gw_payment_redeem_account = self.call_repos(
-            await repos_gw_redeem_account(
-                current_user=current_user,
-                data_input=data_input,
-            )
-        )
-
-        booking_id, booking_code = self.call_repos(await repos_create_booking_payment(
-            business_type_code=BUSINESS_TYPE_REDEEM_ACCOUNT,
-            current_user=current_user.user_info,
-            form_data=request_data,
-            log_data=gw_payment_redeem_account,
-            session=self.oracle_session
+        gw_pay_in_cash = self.call_repos(await repos_pay_in_cash_247_by_acc_num(
+            data_input=data_input,
+            current_user=current_user
         ))
-
-        redeem_account = gw_payment_redeem_account.get('redeemAccount_out', {})
-        # check trường hợp lỗi
-        if redeem_account.get('transaction_info').get('transaction_error_code') != GW_CASA_RESPONSE_STATUS_SUCCESS:
-            return self.response_exception(msg=redeem_account.get('transaction_info').get('transaction_error_msg'))
-        response_data = {
-            "booking_id": booking_id,
-        }
-        return self.response(data=response_data)
+        return self.response(data=gw_pay_in_cash)
+    ####################################################################################################################
