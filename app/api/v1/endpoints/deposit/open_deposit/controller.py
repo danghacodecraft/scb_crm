@@ -3,7 +3,10 @@ from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
     repos_get_customer_by_cif_number
 )
 from app.api.v1.endpoints.deposit.open_deposit.repository import (
-    repos_save_td_account
+    repos_save_td_account, repos_update_td_account
+)
+from app.api.v1.endpoints.third_parties.gw.deposit_account.repository import (
+    repos_get_booking_account_by_booking
 )
 from app.api.v1.validator import validate_history_data
 from app.utils.constant.business_type import BUSINESS_TYPE_OPEN_TD_ACCOUNT
@@ -68,10 +71,10 @@ class CtrDeposit(BaseController):
         saving_booking_account = []
         saving_booking_customer = []
         for account_id in td_account_ids:
-
             saving_booking_account.append({
                 "booking_id": BOOKING_ID,
-                "account_id": account_id,
+                "td_account_id": account_id,
+                "customer_id": customer.id,
                 "created_at": now()
             })
 
@@ -132,3 +135,22 @@ class CtrDeposit(BaseController):
         }
 
         return self.response(data=response_data)
+
+    async def ctr_save_deposit_pay_in(self, BOOKING_ID, deposit_pay_in_request):
+        booking_accounts = self.call_repos(await repos_get_booking_account_by_booking(
+            booking_id=BOOKING_ID,
+            session=self.oracle_session
+        ))
+        update_td_account = []
+        for item in booking_accounts:
+            update_td_account.append({
+                "id": item.id,
+                "pay_in_casa_account": deposit_pay_in_request.account_form.pay_in_form.account_number,
+                "pay_in_type": deposit_pay_in_request.account_form.pay_in_form.pay_in,
+            })
+        booking_id = self.call_repos(await repos_update_td_account(
+            BOOKING_ID,
+            update_td_account=update_td_account,
+            session=self.oracle_session
+        ))
+        return self.response(data=booking_id)
