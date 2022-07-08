@@ -12,10 +12,11 @@ from app.api.v1.endpoints.third_parties.gw.payment.repository import (
     repos_payment_amount_unblock
 )
 from app.api.v1.endpoints.third_parties.gw.payment.schema import (
-    PayInCashRequest, RedeemAccountRequest
+    RedeemAccountRequest
 )
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.validator import validate_history_data
+from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.utils.constant.business_type import (
     BUSINESS_TYPE_AMOUNT_BLOCK, BUSINESS_TYPE_AMOUNT_UNBLOCK,
     BUSINESS_TYPE_REDEEM_ACCOUNT
@@ -382,40 +383,57 @@ class CtrGWPayment(BaseController):
         }
         return self.response(data=response_data)
 
-    async def ctr_gw_pay_in_cash(self, pay_in_cash: PayInCashRequest):
+    async def ctr_gw_pay_in_cash(
+            self,
+            form_data
+    ):
         current_user = self.current_user
+        sender_place_of_issue_id = form_data['sender_place_of_issue']['id']
+        sender_place_of_issue = await self.get_model_object_by_id(
+            model_id=sender_place_of_issue_id,
+            model=PlaceOfIssue,
+            loc=f"sender_place_of_issue_id: {sender_place_of_issue_id}"
+        )
 
         data_input = {
             "account_info": {
-                "account_num": pay_in_cash.account_number,
-                "account_currency": pay_in_cash.account_currency,
-                "account_opening_amount": pay_in_cash.account_opening_amount
+                # "account_num": form_data['receiver_account_number'],
+                "account_num": form_data['receiver_account_number'],
+                "account_currency": "VND",  # TODO: hiện tại chuyển tiền chỉ dùng tiền tệ VN
+                "account_opening_amount": form_data['amount']
             },
             "p_blk_denomination": "",
-            "p_blk_charge": pay_in_cash.p_blk_charge,
+            "p_blk_charge": [
+                {
+                    "CHARGE_TYPE": "CASH",
+                    "CHARGE_ACCOUNT": "",
+                    "CHARGE_NAME": "PHI DV TT TRONG NUOC  711003001",
+                    "CHARGE_AMOUNT": 100000,
+                    "WAIVED": "N"
+                }
+            ],
             "p_blk_project": "",
             "p_blk_mis": "",
-            # TODO hard core
             "p_blk_udf": [
                 {
                     "UDF_NAME": "NGUOI_GIAO_DICH",
-                    "UDF_VALUE": ""
+                    "UDF_VALUE": self.current_user.user_info.name
                 },
                 {
                     "UDF_NAME": "CMND_PASSPORT",
-                    "UDF_VALUE": ""
+                    "UDF_VALUE": form_data['sender_identity_number']
                 },
                 {
                     "UDF_NAME": "NGAY_CAP",
-                    "UDF_VALUE": ""
+                    "UDF_VALUE": form_data['sender_issued_date']
                 },
                 {
                     "UDF_NAME": "NOI_CAP",
-                    "UDF_VALUE": ""
+                    "UDF_VALUE": sender_place_of_issue.name
                 },
                 {
                     "UDF_NAME": "DIA_CHI",
-                    "UDF_VALUE": ""
+                    "UDF_VALUE": form_data['sender_address_full']
                 },
                 {
                     "UDF_NAME": "THU_PHI_DICH_VU",
@@ -423,7 +441,7 @@ class CtrGWPayment(BaseController):
                 },
                 {
                     "UDF_NAME": "TEN_KHACH_HANG",
-                    "UDF_VALUE": ""
+                    "UDF_VALUE": form_data['sender_full_name_vn']
                 },
                 {
                     "UDF_NAME": "TY_GIA_GD_DOI_UNG_HO",
@@ -466,11 +484,9 @@ class CtrGWPayment(BaseController):
                     "UDF_VALUE": ""
                 }
             ],
-            # TODO hard core
             "staff_info_checker": {
                 "staff_name": "HOANT2"
             },
-            # TODO hard core
             "staff_info_maker": {
                 "staff_name": "KHANHLQ"
             }
