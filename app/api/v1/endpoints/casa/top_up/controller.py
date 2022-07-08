@@ -26,6 +26,7 @@ from app.api.v1.endpoints.user.schema import AuthResponse
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
 from app.api.v1.validator import validate_history_data
+from app.third_parties.oracle.models.master_data.address import AddressProvince
 from app.third_parties.oracle.models.master_data.bank import Bank
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import Branch
@@ -96,8 +97,7 @@ class CtrCasaTopUp(BaseController):
 
                 gw_casa_account_info_customer_info = gw_casa_account_info['customer_info']
                 account_info = gw_casa_account_info_customer_info['account_info']
-
-                receiver_response = dict(
+                receiver_response.update(
                     account_number=receiver_account_number,
                     fullname_vn=gw_casa_account_info_customer_info['full_name'],
                     currency=account_info['account_currency'],
@@ -108,34 +108,30 @@ class CtrCasaTopUp(BaseController):
                     )
                 )
 
-                if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
-                    branch_id = form_data['receiver_branch']['id']
-                    receiver_response = dict(
-                        # bank=form_data['bank'],
-                        bank=dropdown_bank,
-                        # province=dropdown(branch_info.address_province),
-                        province=dict(
-                            code=branch_id,
-                            name=branch_id
-                        ),
-                        branch_info=dict(
-                            code=branch_id,
-                            name=branch_id
-                        ),  # TODO: đợi e-bank
-                        account_number=form_data['receiver_account_number'],
-                        fullname_vn=form_data['receiver_full_name_vn'],
-                        address_full=form_data['receiver_address_full']
-                    )
+            if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
+                receiver_province_id = form_data['receiver_province']['id']
+                province = await self.get_model_object_by_id(
+                    model_id=receiver_province_id,
+                    model=AddressProvince,
+                    loc=f'receiver_province_id: {receiver_province_id}'
+                )
+                receiver_response.update(
+                    bank=dropdown_bank,
+                    province=dropdown(province),
+                    account_number=form_data['receiver_account_number'],
+                    fullname_vn=form_data['receiver_full_name_vn'],
+                    address_full=form_data['receiver_address_full']
+                )
 
             if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
-                receiver_response = dict(
+                receiver_response.update(
                     bank=dropdown_bank,
                     fullname_vn="abc",   # TODO: Lấy Họ tên từ E-bank
                     account_number=receiver_account_number,
                     address_full=form_data['receiver_address_full']
                 )
         elif receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
-            receiver_response = dict(
+            receiver_response.update(
                 bank=dropdown_bank,  # TODO: đợi e-bank
                 account_number=form_data['receiver_card_number'],  # TODO: đợi e-bank
                 # fullname_vn=gw_casa_account_info_customer_info['full_name'],
@@ -151,7 +147,7 @@ class CtrCasaTopUp(BaseController):
                     model_id=form_data['receiver_branch']['id'], model=Branch, loc='receiver_branch_id'
                 )
 
-                receiver_response = dict(
+                receiver_response.update(
                     province=dropdown(receiver_branch_info.address_province),
                     branch_info=dropdown(receiver_branch_info),
                     fullname_vn=form_data['receiver_full_name_vn'],
@@ -164,7 +160,7 @@ class CtrCasaTopUp(BaseController):
 
             if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
                 branch_id = form_data['branch']['id']
-                receiver_response = dict(
+                receiver_response.update(
                     # bank=form_data['bank'],
                     bank=dict(
                         code=branch_id,
