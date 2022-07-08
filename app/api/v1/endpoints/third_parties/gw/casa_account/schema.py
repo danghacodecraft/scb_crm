@@ -254,3 +254,7 @@ class GWTopUpCasaAccountResponse(BaseGWSchema):
 
 class GWBenNameResponse(BaseGWSchema):
     full_name: str = Field(..., description="Họ và tên người thụ hưởng")
+
+
+class GWThirdPartyAccountCheckExistResponse(BaseGWSchema):
+    is_existed: bool = Field(..., description="Cờ có tồn tại không")

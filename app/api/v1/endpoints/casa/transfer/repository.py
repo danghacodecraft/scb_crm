@@ -113,7 +113,8 @@ async def repos_gw_save_casa_transfer_info(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )
         function_out = 'interbankTransfer_out'
-    if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
+    if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY and \
+            receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
         is_success, gw_casa_transfer = await service_gw.gw_payment_tt_liquidation(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )

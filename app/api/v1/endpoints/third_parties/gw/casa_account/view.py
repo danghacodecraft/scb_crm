@@ -26,7 +26,8 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWReportPieChartHistoryAccountInfoRequest,
     GWReportPieChartHistoryAccountInfoResponse,
     GWReportStatementHistoryAccountInfoRequest,
-    GWReportStatementHistoryAccountInfoResponse, GWTopUpCasaAccountResponse
+    GWReportStatementHistoryAccountInfoResponse,
+    GWThirdPartyAccountCheckExistResponse, GWTopUpCasaAccountResponse
 )
 
 router = APIRouter()
@@ -233,6 +234,27 @@ async def view_gw_get_ben_name_by_account_number(
 
 
 @router.post(
+    path="/check-exist-third-party-account-number/{account_number}/",
+    name="[GW] Kiểm tra số tài khoản ngoài SCB có tồn tại không",
+    description="[GW] Kiểm tra số tài khoản ngoài SCB có tồn tại không",
+    responses=swagger_response(
+        response_model=ResponseData[GWThirdPartyAccountCheckExistResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_check_exist_third_party_account_number(
+        account_number: str = Path(..., description="Số tài khoản"),
+        current_user=Depends(get_current_user_from_header())
+):
+    ben_name = await CtrGWCasaAccount(current_user).ctr_gw_get_retrieve_ben_name_by_account_number(
+        account_number=account_number
+    )
+    response = {"data": dict(is_existed=True if ben_name['data']['full_name'] else False)}
+
+    return ResponseData(**response)
+
+
+@router.post(
     path="/ben-name-by-card-number/{card_number}/",
     name="[GW] Lấy tên người thụ hưởng",
     description="[GW] Lấy tên người thụ hưởng thông qua số tài khoản ngoài SCB",
@@ -249,3 +271,24 @@ async def view_gw_get_ben_name_by_card_number(
         card_number=card_number
     )
     return ResponseData[GWBenNameResponse](**ben_name)
+
+
+@router.post(
+    path="/check-exist-third-party-card-number/{card_number}/",
+    name="[GW] Kiểm tra số thẻ ngoài SCB có tồn tại không",
+    description="[GW] Kiểm tra số thẻ ngoài SCB có tồn tại không",
+    responses=swagger_response(
+        response_model=ResponseData[GWThirdPartyAccountCheckExistResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_check_exist_third_party_card_number(
+        card_number: str = Path(..., description="Số thẻ"),
+        current_user=Depends(get_current_user_from_header())
+):
+    ben_name = await CtrGWCasaAccount(current_user).ctr_gw_get_retrieve_ben_name_by_card_number(
+        card_number=card_number
+    )
+    response = {"data": dict(is_existed=True if ben_name['data']['full_name'] else False)}
+
+    return ResponseData(**response)

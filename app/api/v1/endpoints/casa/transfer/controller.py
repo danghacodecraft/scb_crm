@@ -74,6 +74,8 @@ class CtrCasaTransfer(BaseController):
             session=self.oracle_session
         ))
         form_data = orjson_loads(get_casa_transfer_info.form_data)
+        print(form_data)
+        print('1233543543')
         receiving_method = form_data['receiving_method']
         ################################################################################################################
         # Thông tin người thụ hưởng
@@ -132,7 +134,7 @@ class CtrCasaTransfer(BaseController):
                 )
                 receiver_response = dict(
                     bank=dropdown(bank_info),
-                    receiver_account_number=receiver_account_number,
+                    account_number=receiver_account_number,
                     fullname_vn=full_name,
                     address_full=form_data['receiver_address_full']
                 )
@@ -397,7 +399,7 @@ class CtrCasaTransfer(BaseController):
                 msg=ERROR_CASA_ACCOUNT_NOT_EXIST,
                 loc=f"sender_account_number: {sender_account_number}"
             )
-        await self.get_model_object_by_id(model_id=data.receiver_bank.id, model=BankBranch, loc='bank -> id')
+        await self.get_model_object_by_id(model_id=data.receiver_bank.id, model=Bank, loc='bank -> id')
 
         return data
 
@@ -459,7 +461,7 @@ class CtrCasaTransfer(BaseController):
             )
 
         # validate bank
-        await self.get_model_object_by_id(model_id=data.receiver_bank.id, model=BankBranch, loc='branch -> id')
+        await self.get_model_object_by_id(model_id=data.receiver_bank.id, model=Bank, loc='bank -> id')
         return data
 
     async def ctr_save_casa_transfer_third_party_247_to_card(
@@ -493,7 +495,7 @@ class CtrCasaTransfer(BaseController):
             )
 
         # validate bank
-        await self.get_model_object_by_id(model_id=data.receiver_bank.id, model=BankBranch, loc='branch -> id')
+        await self.get_model_object_by_id(model_id=data.receiver_bank.id, model=Bank, loc='bank -> id')
         return data
 
     async def ctr_save_casa_transfer_info(
@@ -668,8 +670,6 @@ class CtrCasaTransfer(BaseController):
                 loc=history_response['loc'],
                 detail=history_response['detail']
             )
-        print(casa_transfer_info.json())
-        print('hadh2')
         # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CASA
         transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
             business_type_id=BUSINESS_TYPE_CASA_TRANSFER,
@@ -797,7 +797,8 @@ class CtrCasaTransfer(BaseController):
                 }
             }
 
-        if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
+        if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY and \
+                receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
             request_data = {
                 "data_input": {
                     "p_liquidation_type": "C",
@@ -905,66 +906,71 @@ class CtrCasaTransfer(BaseController):
                 }
             }
 
-            if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT:
-                request_data = {
-                    "data_input": {
-                        "ben_id": "970436",
-                        "trans_date": datetime_to_string(_time=now()),
-                        "time_stamp": datetime_to_string(_time=now(), _format=DATETIME_INPUT_OUTPUT_REVERT_FORMAT),
-                        "trans_id": "20220629160002159368",
-                        "amount": "100000",
-                        "description": "Chuyển khoản thanh toán",
-                        "account_to_info": {
-                            "account_num": "20625700001"
-                        },
-                        "account_from_info": {
-                            "account_num": "20625700001"
-                        },
-                        "customer_info": {
-                            "full_name": "LE THANH HIEN TEST"
-                        },
-                        "staff_maker": {
-                            "staff_code": "annvh"
-                        },
-                        "staff_checker": {
-                            "staff_code": "THUYTP"
-                        },
-                        "branch_info": {
-                            "branch_code": "001"
-                        }
+        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT:
+            request_data = {
+                "data_input": {
+                    "ben_id": "970436",
+                    "trans_date": datetime_to_string(_time=now()),
+                    "time_stamp": datetime_to_string(_time=now(), _format=DATETIME_INPUT_OUTPUT_REVERT_FORMAT),
+                    "trans_id": "20220629160002159368",
+                    "amount": int(actual_total),
+                    "description": transfer["content"],
+                    "account_to_info": {
+                        "account_num": receiver["account_number"]
+                    },
+                    "account_from_info": {
+                        "account_num": sender["account_number"]
+                    },
+                    "customer_info": {
+                        "full_name": sender["fullname_vn"]
+                    },
+                    # TODO
+                    "staff_maker": {
+                        "staff_code": "annvh"
+                    },
+                    # TODO
+                    "staff_checker": {
+                        "staff_code": "THUYTP"
+                    },
+                    # TODO
+                    "branch_info": {
+                        "branch_code": "001"
                     }
                 }
+            }
 
-            if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD:
-                request_data = {
-                    "data_input": {
-                        "ben_id": "970436",
-                        "trans_date": datetime_to_string(_time=now()),
-                        "time_stamp": datetime_to_string(_time=now(), _format=DATETIME_INPUT_OUTPUT_REVERT_FORMAT),
-                        "trans_id": "20220629160002159368",
-                        "amount": "100000",
-                        "description": "Chuyển khoản thanh toán",
-                        "account_from_info": {
-                            "account_num": "20625700001"
-                        },
-                        "customer_info": {
-                            "full_name": "LE THANH HIEN TEST"
-                        },
-                        "staff_maker": {
-                            "staff_code": "annvh"
-                        },
-                        "staff_checker": {
-                            "staff_code": "THUYTP"
-                        },
-                        "branch_info": {
-                            "branch_code": "001"
-                        },
-                        "card_to_info": {
-                            "card_num": "4536180593355659"
-                        }
+        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD:
+            request_data = {
+                "data_input": {
+                    "ben_id": "970436",
+                    "trans_date": datetime_to_string(_time=now()),
+                    "time_stamp": datetime_to_string(_time=now(), _format=DATETIME_INPUT_OUTPUT_REVERT_FORMAT),
+                    "trans_id": "20220629160002159368",
+                    "amount": int(actual_total),
+                    "description": transfer["content"],
+                    "account_from_info": {
+                        "account_num": sender["account_number"]
+                    },
+                    "customer_info": {
+                        "full_name": sender["full_name_vn"]
+                    },
+                    # TODO
+                    "staff_maker": {
+                        "staff_code": "annvh"
+                    },
+                    # TODO
+                    "staff_checker": {
+                        "staff_code": "THUYTP"
+                    },
+                    # TODO
+                    "branch_info": {
+                        "branch_code": "001"
+                    },
+                    "card_to_info": {
+                        "card_num": receiver["card_number"]
                     }
-
                 }
+            }
 
         self.call_repos(await repos_gw_save_casa_transfer_info(
             current_user=self.current_user,
