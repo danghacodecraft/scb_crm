@@ -3,7 +3,7 @@ from typing import Union
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.casa.transfer.repository import (
     repos_get_acc_types, repos_get_casa_transfer_info,
-    repos_gw_save_casa_transfer_info, repos_save_casa_transfer_info
+    repos_save_casa_transfer_info
 )
 from app.api.v1.endpoints.casa.transfer.schema import (
     CasaTransferRequest, CasaTransferSCBByIdentityRequest,
@@ -28,7 +28,6 @@ from app.api.v1.endpoints.user.schema import AuthResponse
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
 from app.api.v1.validator import validate_history_data
-from app.settings.config import DATETIME_INPUT_OUTPUT_REVERT_FORMAT
 from app.third_parties.oracle.models.master_data.address import AddressProvince
 from app.third_parties.oracle.models.master_data.bank import Bank, BankBranch
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
@@ -58,8 +57,7 @@ from app.utils.error_messages import (
     ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
 )
 from app.utils.functions import (
-    datetime_to_string, dropdown, generate_uuid, now, orjson_dumps,
-    orjson_loads
+    dropdown, generate_uuid, now, orjson_dumps, orjson_loads
 )
 from app.utils.vietnamese_converter import (
     convert_to_unsigned_vietnamese, make_short_name, split_name
@@ -74,8 +72,6 @@ class CtrCasaTransfer(BaseController):
             session=self.oracle_session
         ))
         form_data = orjson_loads(get_casa_transfer_info.form_data)
-        print(form_data)
-        print('1233543543')
         receiving_method = form_data['receiving_method']
         ################################################################################################################
         # Thông tin người thụ hưởng
@@ -750,240 +746,6 @@ class CtrCasaTransfer(BaseController):
                     break
 
         return self.response(source_accounts)
-
-    async def ctr_gw_save_casa_transfer_info(self, BOOKING_ID: str):
-
-        casa_transfer_info = await self.ctr_get_casa_transfer_info(
-            booking_id=BOOKING_ID
-        )
-        casa_transfer_info_data = casa_transfer_info['data']
-        transfer = casa_transfer_info_data['transfer']
-        receiving_method = casa_transfer_info_data['transfer_type']["receiving_method"]
-        fee_info = casa_transfer_info_data['fee_info']
-        actual_total = fee_info['actual_total']
-        sender = casa_transfer_info_data['sender']
-        receiver = casa_transfer_info_data['receiver']
-        request_data = {}
-
-        if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
-            request_data = {
-                "data_input": {
-                    "p_blk_detail": {
-                        "FROM_ACCOUNT_DETAILS": {
-                            "FROM_ACCOUNT_NUMBER": sender['account_number'],
-                            "FROM_ACCOUNT_AMOUNT": int(actual_total)
-                        },
-                        "TO_ACCOUNT_DETAILS": {
-                            "TO_ACCOUNT_NUMBER": receiver['account_number']
-                        }
-                    },
-                    "p_blk_charge": [],  # TODO thông tin phí
-                    "p_blk_mis": "",
-                    "p_blk_udf": [
-                        {
-                            "UDF_NAME": "",
-                            "UDF_VALUE": ""
-                        }
-                    ],
-                    "p_blk_project": "",
-                    # TODO
-                    "staff_info_checker": {
-                        "staff_name": "HOANT2"
-                    },
-                    # TODO
-                    "staff_info_maker": {
-                        "staff_name": "KHANHLQ"
-                    }
-                }
-            }
-
-        if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY and \
-                receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
-            request_data = {
-                "data_input": {
-                    "p_liquidation_type": "C",
-                    "p_liquidation_details": "",
-                    "branch_info": {
-                        "branch_code": "001"
-                    },
-                    "p_instrument_number": "123245678",
-                    "p_instrument_status": "LIQD",
-                    "account_info": {
-                        "account_num": "123456787912",
-                        "account_currency": "VND"
-                    },
-                    "p_charges": [
-                        {
-                            "CHARGE_NAME": "",
-                            "CHARGE_AMOUNT": 0,
-                            "WAIVED": "N"
-                        }
-                    ],
-                    "p_mis": "",
-                    "p_udf": [
-                        {
-                            "UDF_NAME": "",
-                            "UDF_VALUE": ""
-                        }
-                    ],
-                    "staff_info_checker": {
-                        "staff_name": "HOANT2"
-                    },
-                    "staff_info_maker": {
-                        "staff_name": "KHANHLQ"
-                    }
-                }
-            }
-
-        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
-            request_data = {
-                "data_input": {
-                    "account_info": {
-                        "account_bank_code": receiver["bank"]["code"],
-                        "account_product_package": "FT01"
-                    },
-                    "staff_info_checker": {
-                        "staff_name": "HOANT2"
-                    },
-                    "staff_info_maker": {
-                        "staff_name": "KHANHLQ"
-                    },
-                    "p_blk_mis": "",
-                    "p_blk_udf": "",
-                    "p_blk_refinance_rates": "",
-                    "p_blk_amendment_rate": "",
-                    "p_blk_main": {
-                        "PRODUCT": {
-                            "DETAILS_OF_CHARGE": "Y" if fee_info['is_transfer_payer'] else "O",
-                            "PAYMENT_FACILITY": "O"
-                        },
-                        "TRANSACTION_LEG": {
-                            "ACCOUNT": sender['account_number'],
-                            "AMOUNT": int(actual_total)
-                        },
-                        "RATE": {
-                            "EXCHANGE_RATE": 0,
-                            "LCY_EXCHANGE_RATE": 0,
-                            "LCY_AMOUNT": 0
-                        },
-                        "ADDITIONAL_INFO": {
-                            "RELATED_CUSTOMER": sender["cif_number"],
-                            "NARRATIVE": transfer["content"]
-                        }
-                    },
-                    "p_blk_charge": [
-                        {
-                            "CHARGE_NAME": "PHI DV TT TRONG NUOC  711003001",
-                            "CHARGE_AMOUNT": 0,
-                            "WAIVED": "N"
-                        },
-                        {
-                            "CHARGE_NAME": "THUE VAT",
-                            "CHARGE_AMOUNT": 0,
-                            "WAIVED": "N"
-                        }
-                    ],
-                    "p_blk_settlement_detail": {
-                        "SETTLEMENTS": {
-                            "TRANSFER_DETAIL": {
-                                "BENEFICIARY_ACCOUNT_NUMBER": receiver['account_number'],
-                                "BENEFICIARY_NAME": receiver['fullname_vn'],
-                                "BENEFICIARY_ADRESS": receiver['province']['name'],
-                                "ID_NO": "",
-                                "ISSUE_DATE": "",
-                                "ISSUER": ""
-                            },
-                            "ORDERING_CUSTOMER": {
-                                "ORDERING_ACC_NO": receiver['account_number'],
-                                "ORDERING_NAME": receiver['fullname_vn'],
-                                "ORDERING_ADDRESS": receiver['province']['name'],
-                                "ID_NO": "",
-                                "ISSUE_DATE": "",
-                                "ISSUER": ""
-                            }
-                        }
-                    }
-                }
-            }
-
-        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT:
-            request_data = {
-                "data_input": {
-                    "ben_id": "970436",
-                    "trans_date": datetime_to_string(_time=now()),
-                    "time_stamp": datetime_to_string(_time=now(), _format=DATETIME_INPUT_OUTPUT_REVERT_FORMAT),
-                    "trans_id": "20220629160002159368",
-                    "amount": int(actual_total),
-                    "description": transfer["content"],
-                    "account_to_info": {
-                        "account_num": receiver["account_number"]
-                    },
-                    "account_from_info": {
-                        "account_num": sender["account_number"]
-                    },
-                    "customer_info": {
-                        "full_name": sender["fullname_vn"]
-                    },
-                    # TODO
-                    "staff_maker": {
-                        "staff_code": "annvh"
-                    },
-                    # TODO
-                    "staff_checker": {
-                        "staff_code": "THUYTP"
-                    },
-                    # TODO
-                    "branch_info": {
-                        "branch_code": "001"
-                    }
-                }
-            }
-
-        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD:
-            request_data = {
-                "data_input": {
-                    "ben_id": "970436",
-                    "trans_date": datetime_to_string(_time=now()),
-                    "time_stamp": datetime_to_string(_time=now(), _format=DATETIME_INPUT_OUTPUT_REVERT_FORMAT),
-                    "trans_id": "20220629160002159368",
-                    "amount": int(actual_total),
-                    "description": transfer["content"],
-                    "account_from_info": {
-                        "account_num": sender["account_number"]
-                    },
-                    "customer_info": {
-                        "full_name": sender["full_name_vn"]
-                    },
-                    # TODO
-                    "staff_maker": {
-                        "staff_code": "annvh"
-                    },
-                    # TODO
-                    "staff_checker": {
-                        "staff_code": "THUYTP"
-                    },
-                    # TODO
-                    "branch_info": {
-                        "branch_code": "001"
-                    },
-                    "card_to_info": {
-                        "card_num": receiver["card_number"]
-                    }
-                }
-            }
-
-        self.call_repos(await repos_gw_save_casa_transfer_info(
-            current_user=self.current_user,
-            receiving_method=receiving_method,
-            booking_id=BOOKING_ID,
-            request_data=request_data,
-            session=self.oracle_session
-        ))
-
-        response_data = {
-            "booking_id": BOOKING_ID,
-        }
-        return self.response(data=response_data)
 
 
 class CtrCustomer(BaseController):

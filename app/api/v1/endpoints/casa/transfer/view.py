@@ -34,26 +34,6 @@ async def view_save_casa_transfer_info(
     return ResponseData(**casa_transfer_info)
 
 
-@router.post(
-    path="/transfer-pd/",
-    name="Phê duyệt chuyển khoản",
-    description="Chuyển khoản - Phê duyệt",
-    responses=swagger_response(
-        response_model=ResponseData,
-        success_status_code=status.HTTP_200_OK
-    )
-)
-async def view_casa_transfer_pd(
-        current_user=Depends(get_current_user_from_header()),
-        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch")
-):
-    casa_transfer_pd = await CtrCasaTransfer(current_user).ctr_gw_save_casa_transfer_info(
-        BOOKING_ID=BOOKING_ID
-    )
-
-    return ResponseData(**casa_transfer_pd)
-
-
 @router.get(
     path="/{cif_number}/transfer/source-accounts",
     name="Danh sách tài khoản nguồn chuyển khoản",
