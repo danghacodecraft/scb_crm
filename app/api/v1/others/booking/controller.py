@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import desc, select
+from sqlalchemy import and_, desc, select
 from sqlalchemy.orm import Session
 from starlette import status
 
@@ -210,7 +210,10 @@ class CtrBooking(BaseController):
                 BookingBusinessForm,
                 Booking
             )
-            .join(BookingBusinessForm, Booking.id == BookingBusinessForm.booking_id)
+            .join(BookingBusinessForm, and_(
+                Booking.id == BookingBusinessForm.booking_id,
+                BookingBusinessForm.business_form_id.notilike('%_GW')
+            ))
             .filter(Booking.id == booking_id)
             .order_by(desc(BookingBusinessForm.created_at))
         ).scalars().all()
