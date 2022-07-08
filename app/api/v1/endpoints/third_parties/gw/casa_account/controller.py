@@ -34,7 +34,8 @@ from app.utils.constant.approval import CIF_STAGE_APPROVE_KSV
 from app.utils.constant.business_type import BUSINESS_TYPE_CASA_TOP_UP
 from app.utils.constant.casa import (
     CASA_ACCOUNT_STATUS_UNAPPROVED, RECEIVING_METHOD_SCB_TO_ACCOUNT,
-    RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT
+    RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT,
+    RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD
 )
 from app.utils.constant.cif import BUSINESS_FORM_CLOSE_CASA
 from app.utils.constant.gw import (
@@ -531,7 +532,7 @@ class CtrGWCasaAccount(BaseController):
             if not is_success:
                 return self.response_exception(
                     msg=ERROR_CALL_SERVICE_GW,
-                    detail=str(response_data['payInCash_out'])
+                    detail=str(response_data)
                 )
             xref = response_data['data']['payInCash_out']['data_output']['xref']['p_xref']
 
@@ -543,8 +544,20 @@ class CtrGWCasaAccount(BaseController):
             if not is_success:
                 return self.response_exception(
                     msg=ERROR_CALL_SERVICE_GW,
-                    detail=str(response_data['payInCash247byAccNum_out'])
+                    detail=str(response_data)
                 )
+
+        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
+            is_success, gw_response_data = await CtrGWPayment(current_user).ctr_gw_pay_in_cash_247_by_card_num(
+                booking_id=booking_id,
+                form_data=form_data
+            )
+            if not is_success:
+                return self.response_exception(
+                    msg=ERROR_CALL_SERVICE_GW,
+                    detail=str(gw_response_data)
+                )
+            response_data = gw_response_data
 
         if not response_data:
             return self.response_exception(msg="GW return None", loc=f'response_data: {response_data}')

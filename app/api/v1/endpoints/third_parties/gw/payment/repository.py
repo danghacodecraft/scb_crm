@@ -274,3 +274,14 @@ async def repos_pay_in_cash_247_by_acc_num(
     )
 
     return ReposReturn(data=gw_pay_in_cash_247_by_acc_num)
+
+
+async def repos_pay_in_cash_247_by_card_num(
+        current_user: AuthResponse, data_input: dict
+):
+    gw_pay_in_cash_247_by_card_num = await service_gw.gw_pay_in_cash_247_by_card_num(
+        data_input=data_input,
+        current_user=current_user.user_info
+    )
+
+    return ReposReturn(data=gw_pay_in_cash_247_by_card_num)
