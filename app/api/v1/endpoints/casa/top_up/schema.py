@@ -1,11 +1,11 @@
 from datetime import date
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from pydantic import Field, validator
 
 from app.api.base.schema import ResponseRequestSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
-from app.api.v1.schemas.utils import DropdownRequest
+from app.api.v1.schemas.utils import DropdownRequest, DropdownResponse
 from app.utils.constant.casa import DENOMINATIONS__AMOUNTS
 from app.utils.functions import (
     is_valid_mobile_number, make_description_from_dict_to_list
@@ -34,7 +34,7 @@ class StatementInfoRequest(ResponseRequestSchema):
 
 
 # Common
-class CasaTopUpRequest(ResponseRequestSchema):
+class CasaTopUpCommonRequest(ResponseRequestSchema):
     sender_cif_number: Optional[str] = CustomField().OptionalCIFNumberField
     sender_full_name_vn: Optional[str] = Field(None, description="Người giao dịch")
     sender_identity_number: Optional[str] = Field(None, description="Giấy tờ định danh")
@@ -42,7 +42,7 @@ class CasaTopUpRequest(ResponseRequestSchema):
     sender_place_of_issue: Optional[DropdownRequest] = Field(None, description="Nơi cấp")
     sender_address_full: Optional[str] = Field(None, description="Địa chỉ")
     sender_mobile_number: Optional[str] = Field(None, description="Số điện thoại", regex=REGEX_NUMBER_ONLY)
-    receiving_method: str = Field(..., description="Hình thức nhận")
+    receiving_method: str = Field(None, description="Hình thức nhận")
     is_fee: bool = Field(..., description="Có thu phí không")
     fee_info: Optional[FeeInfoRequest] = Field(..., description="Thông tin phí")
     statement: List[StatementInfoRequest] = Field(..., description="Thông tin bảng kê")
@@ -65,14 +65,14 @@ class CasaTopUpRequest(ResponseRequestSchema):
 ########################################################################################################################
 # Thông tin người thụ hưởng
 ########################################################################################################################
-class CasaTopUpSCBToAccountRequest(CasaTopUpRequest):
+class CasaTopUpSCBToAccountRequest(CasaTopUpCommonRequest):
     """
     Trong SCB đến tài khoản
     """
     receiver_account_number: str = Field(..., description="Số tài khoản", regex=REGEX_NUMBER_ONLY)
 
 
-class CasaTopUpSCBByIdentityRequest(CasaTopUpRequest):
+class CasaTopUpSCBByIdentityRequest(CasaTopUpCommonRequest):
     """
     Trong SCB nhận bằng giấy tờ định danh
     """
@@ -92,21 +92,20 @@ class CasaTopUpSCBByIdentityRequest(CasaTopUpRequest):
         return v
 
 
-class CasaTopUpThirdPartyRequest(CasaTopUpRequest):
+class CasaTopUpThirdPartyCommonRequest(CasaTopUpCommonRequest):
     receiver_bank: DropdownRequest = Field(..., description="Ngân hàng")
     receiver_address_full: str = Field(..., description="Địa chỉ", max_length=100)
 
 
-class CasaTopUpThirdPartyToAccountRequest(CasaTopUpThirdPartyRequest):
+class CasaTopUpThirdPartyToAccountRequest(CasaTopUpThirdPartyCommonRequest):
     """
     Ngoài SCB đến tài khoản
     """
     receiver_account_number: str = Field(..., description="Số tài khoản", regex=REGEX_NUMBER_ONLY)
-    receiver_branch: DropdownRequest = Field(..., description="Chi nhánh")
     receiver_full_name_vn: str = Field(..., description="Chủ tài khoản")
 
 
-class CasaTopUpThirdPartyByIdentityRequest(CasaTopUpThirdPartyRequest):
+class CasaTopUpThirdPartyByIdentityRequest(CasaTopUpThirdPartyCommonRequest):
     """
     Ngoài SCB nhận bằng giấy tờ định danh
     """
@@ -124,18 +123,30 @@ class CasaTopUpThirdPartyByIdentityRequest(CasaTopUpThirdPartyRequest):
         return v
 
 
-class CasaTopUpThirdParty247ToAccountRequest(CasaTopUpThirdPartyRequest):
+class CasaTopUpThirdParty247ToAccountRequest(CasaTopUpThirdPartyCommonRequest):
     """
     Ngoài SCB 24/7 tài khoản
     """
     receiver_account_number: str = Field(..., description="Số tài khoản", regex=REGEX_NUMBER_ONLY)
 
 
-class CasaTopUpThirdParty247ToCardRequest(CasaTopUpThirdPartyRequest):
+class CasaTopUpThirdParty247ToCardRequest(CasaTopUpThirdPartyCommonRequest):
     """
     Ngoài SCB 24/7 số thẻ
     """
     receiver_card_number: str = Field(..., description="Số thẻ")
+
+
+class CasaTopUpRequest(ResponseRequestSchema):
+    receiving_method: str = Field(..., description="Hình thức nhận")
+    data: Union[
+        CasaTopUpSCBByIdentityRequest,
+        CasaTopUpThirdPartyByIdentityRequest,
+        CasaTopUpThirdPartyToAccountRequest,
+        CasaTopUpThirdParty247ToAccountRequest,
+        CasaTopUpSCBToAccountRequest,
+        CasaTopUpThirdParty247ToCardRequest
+    ] = Field(..., description="Nội dung")
 
 
 ########################################################################################################################
@@ -196,8 +207,8 @@ class StatementResponse(ResponseRequestSchema):
 
 class IdentityInfoResponse(ResponseRequestSchema):
     number: Optional[str] = Field(..., description="Số GTDD")
-    issued_date: Optional[str] = Field(..., description="Ngày cấp")
-    place_of_issue: Optional[str] = Field(..., description="Nơi cấp")
+    issued_date: Optional[date] = Field(..., description="Ngày cấp")
+    place_of_issue: Optional[DropdownResponse] = Field(..., description="Nơi cấp")
 
 
 class CustomerResponse(ResponseRequestSchema):

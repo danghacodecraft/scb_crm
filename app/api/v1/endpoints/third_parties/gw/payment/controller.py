@@ -5,17 +5,19 @@ from app.api.v1.endpoints.approval.repository import (
 from app.api.v1.endpoints.cif.repository import (
     repos_get_account_id_by_account_number
 )
+from app.api.v1.endpoints.config.bank.controller import CtrConfigBank
 from app.api.v1.endpoints.third_parties.gw.payment.repository import (
     repos_create_booking_payment, repos_gw_pay_in_cash,
     repos_gw_payment_amount_block, repos_gw_payment_amount_unblock,
-    repos_gw_redeem_account, repos_payment_amount_block,
-    repos_payment_amount_unblock
+    repos_gw_redeem_account, repos_pay_in_cash_247_by_acc_num,
+    repos_payment_amount_block, repos_payment_amount_unblock
 )
 from app.api.v1.endpoints.third_parties.gw.payment.schema import (
-    PayInCashRequest, RedeemAccountRequest
+    RedeemAccountRequest
 )
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.validator import validate_history_data
+from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.utils.constant.business_type import (
     BUSINESS_TYPE_AMOUNT_BLOCK, BUSINESS_TYPE_AMOUNT_UNBLOCK,
     BUSINESS_TYPE_REDEEM_ACCOUNT
@@ -26,7 +28,9 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_UNBLOCK, PROFILE_HISTORY_STATUS_INIT
 )
 from app.utils.constant.gw import GW_CASA_RESPONSE_STATUS_SUCCESS
-from app.utils.functions import now, orjson_dumps, orjson_loads
+from app.utils.functions import (
+    datetime_to_string, now, orjson_dumps, orjson_loads
+)
 
 
 class CtrGWPayment(BaseController):
@@ -382,105 +386,6 @@ class CtrGWPayment(BaseController):
         }
         return self.response(data=response_data)
 
-    async def ctr_gw_pay_in_cash(self, pay_in_cash: PayInCashRequest):
-        current_user = self.current_user
-
-        data_input = {
-            "account_info": {
-                "account_num": pay_in_cash.account_number,
-                "account_currency": pay_in_cash.account_currency,
-                "account_opening_amount": pay_in_cash.account_opening_amount
-            },
-            "p_blk_denomination": "",
-            "p_blk_charge": pay_in_cash.p_blk_charge,
-            "p_blk_project": "",
-            "p_blk_mis": "",
-            # TODO hard core
-            "p_blk_udf": [
-                {
-                    "UDF_NAME": "NGUOI_GIAO_DICH",
-                    "UDF_VALUE": ""
-                },
-                {
-                    "UDF_NAME": "CMND_PASSPORT",
-                    "UDF_VALUE": ""
-                },
-                {
-                    "UDF_NAME": "NGAY_CAP",
-                    "UDF_VALUE": ""
-                },
-                {
-                    "UDF_NAME": "NOI_CAP",
-                    "UDF_VALUE": ""
-                },
-                {
-                    "UDF_NAME": "DIA_CHI",
-                    "UDF_VALUE": ""
-                },
-                {
-                    "UDF_NAME": "THU_PHI_DICH_VU",
-                    "UDF_VALUE": ""
-                },
-                {
-                    "UDF_NAME": "TEN_KHACH_HANG",
-                    "UDF_VALUE": ""
-                },
-                {
-                    "UDF_NAME": "TY_GIA_GD_DOI_UNG_HO",
-                    "UDF_VALUE": "1"
-                },
-                {
-                    "UDF_NAME": "MUC_DICH_GIAO_DICH",
-                    "UDF_VALUE": "MUC_DICH_KHAC"
-                },
-                {
-                    "UDF_NAME": "NGHIEP_VU_GDQT",
-                    "UDF_VALUE": ""
-                },
-                {
-                    "UDF_NAME": "NGAY_CHOT_TY_GIA",
-                    "UDF_VALUE": ""
-                },
-                {
-                    "UDF_NAME": "GIO_PHUT_CHOT_TY_GIA",
-                    "UDF_VALUE": ""
-                },
-                {
-                    "UDF_NAME": "REF_BAO_CO_1",
-                    "UDF_VALUE": ""
-                },
-                {
-                    "UDF_NAME": "REF_BAO_CO_2",
-                    "UDF_VALUE": ""
-                },
-                {
-                    "UDF_NAME": "REF_BAO_CO_3",
-                    "UDF_VALUE": ""
-                },
-                {
-                    "UDF_NAME": "REF_BAO_CO_4",
-                    "UDF_VALUE": ""
-                },
-                {
-                    "UDF_NAME": "REF_BAO_CO_5",
-                    "UDF_VALUE": ""
-                }
-            ],
-            # TODO hard core
-            "staff_info_checker": {
-                "staff_name": "HOANT2"
-            },
-            # TODO hard core
-            "staff_info_maker": {
-                "staff_name": "KHANHLQ"
-            }
-        }
-        gw_pay_in_cash = self.call_repos(await repos_gw_pay_in_cash(
-            data_input=data_input,
-            current_user=current_user
-        ))
-        return self.response(data=gw_pay_in_cash)
-
     async def ctr_gw_redeem_account(self, redeem_account: RedeemAccountRequest):
         current_user = self.current_user
         payout_details = [{
@@ -546,3 +451,170 @@ class CtrGWPayment(BaseController):
             "booking_id": booking_id,
         }
         return self.response(data=response_data)
+
+    ####################################################################################################################
+    # Nộp tiền
+    ####################################################################################################################
+    async def ctr_gw_pay_in_cash(
+            self,
+            form_data
+    ):
+        current_user = self.current_user
+        sender_place_of_issue_id = form_data['sender_place_of_issue']['id']
+        sender_place_of_issue = await self.get_model_object_by_id(
+            model_id=sender_place_of_issue_id,
+            model=PlaceOfIssue,
+            loc=f"sender_place_of_issue_id: {sender_place_of_issue_id}"
+        )
+
+        data_input = {
+            "account_info": {
+                # "account_num": form_data['receiver_account_number'],
+                "account_num": form_data['receiver_account_number'],
+                "account_currency": "VND",  # TODO: hiện tại chuyển tiền chỉ dùng tiền tệ VN
+                "account_opening_amount": form_data['amount']
+            },
+            "p_blk_denomination": "",
+            "p_blk_charge": [
+                {
+                    "CHARGE_TYPE": "CASH",
+                    "CHARGE_ACCOUNT": "",
+                    "CHARGE_NAME": "PHI DV TT TRONG NUOC  711003001",
+                    "CHARGE_AMOUNT": 100000,
+                    "WAIVED": "N"
+                }
+            ],
+            "p_blk_project": "",
+            "p_blk_mis": "",
+            "p_blk_udf": [
+                {
+                    "UDF_NAME": "NGUOI_GIAO_DICH",
+                    "UDF_VALUE": self.current_user.user_info.name
+                },
+                {
+                    "UDF_NAME": "CMND_PASSPORT",
+                    "UDF_VALUE": form_data['sender_identity_number']
+                },
+                {
+                    "UDF_NAME": "NGAY_CAP",
+                    "UDF_VALUE": form_data['sender_issued_date']
+                },
+                {
+                    "UDF_NAME": "NOI_CAP",
+                    "UDF_VALUE": sender_place_of_issue.name
+                },
+                {
+                    "UDF_NAME": "DIA_CHI",
+                    "UDF_VALUE": form_data['sender_address_full']
+                },
+                {
+                    "UDF_NAME": "THU_PHI_DICH_VU",
+                    "UDF_VALUE": ""
+                },
+                {
+                    "UDF_NAME": "TEN_KHACH_HANG",
+                    "UDF_VALUE": form_data['sender_full_name_vn']
+                },
+                {
+                    "UDF_NAME": "TY_GIA_GD_DOI_UNG_HO",
+                    "UDF_VALUE": "1"
+                },
+                {
+                    "UDF_NAME": "MUC_DICH_GIAO_DICH",
+                    "UDF_VALUE": "MUC_DICH_KHAC"
+                },
+                {
+                    "UDF_NAME": "NGHIEP_VU_GDQT",
+                    "UDF_VALUE": ""
+                },
+                {
+                    "UDF_NAME": "NGAY_CHOT_TY_GIA",
+                    "UDF_VALUE": ""
+                },
+                {
+                    "UDF_NAME": "GIO_PHUT_CHOT_TY_GIA",
+                    "UDF_VALUE": ""
+                },
+                {
+                    "UDF_NAME": "REF_BAO_CO_1",
+                    "UDF_VALUE": ""
+                },
+                {
+                    "UDF_NAME": "REF_BAO_CO_2",
+                    "UDF_VALUE": ""
+                },
+                {
+                    "UDF_NAME": "REF_BAO_CO_3",
+                    "UDF_VALUE": ""
+                },
+                {
+                    "UDF_NAME": "REF_BAO_CO_4",
+                    "UDF_VALUE": ""
+                },
+                {
+                    "UDF_NAME": "REF_BAO_CO_5",
+                    "UDF_VALUE": ""
+                }
+            ],
+            "staff_info_checker": {
+                "staff_name": "HOANT2"
+            },
+            "staff_info_maker": {
+                "staff_name": "KHANHLQ"
+            }
+        }
+        gw_pay_in_cash = self.call_repos(await repos_gw_pay_in_cash(
+            data_input=data_input,
+            current_user=current_user
+        ))
+        return self.response(data=gw_pay_in_cash)
+
+    async def ctr_gw_pay_in_cash_247_by_acc_num(
+            self,
+            booking_id: str,
+            form_data: dict
+    ):
+        current_user = self.current_user
+        current_user_info = current_user.user_info
+
+        ben = await CtrConfigBank(current_user).ctr_get_bank_branch(bank_id=form_data['receiver_bank']['id'])
+
+        data_input = {
+            "customer_info": {
+                "full_name": form_data['sender_full_name_vn'],
+                "birthday": form_data['sender_birthday']  # TODO
+            },
+            "id_info": {
+                "id_num": form_data['sender_identity_number']
+            },
+            "address_info": {
+                "address_full": form_data['sender_address_full']
+            },
+            "trans_date": datetime_to_string(now()),
+            "time_stamp": datetime_to_string(now()),
+            "trans_id": booking_id,
+            "amount": form_data['amount'],
+            "description": form_data['content'],
+            "account_to_info": {
+                "account_num": form_data['receiver_account_number']
+            },
+            "ben_id": ben['data'][0]['id'],
+            "account_from_info": {
+                "account_num": "101101001"
+            },
+            "staff_maker": {
+                "staff_code": "annvh"   # TODO
+            },
+            "staff_checker": {
+                "staff_code": "THUYTP"  # TODO
+            },
+            "branch_info": {
+                "branch_code": current_user_info.hrm_branch_code
+            }
+        }
+        gw_pay_in_cash = self.call_repos(await repos_pay_in_cash_247_by_acc_num(
+            data_input=data_input,
+            current_user=current_user
+        ))
+        return self.response(data=gw_pay_in_cash)
+    ####################################################################################################################

@@ -248,7 +248,7 @@ class CtrGWDepositAccount(BaseController):
                 session=self.oracle_session
             )
         )
-        customer = self.call_repos( # noqa
+        customer = self.call_repos(
             await repos_get_customer_by_booking_account(
                 td_accounts=booking_account,
                 session=self.oracle_session
@@ -265,12 +265,13 @@ class CtrGWDepositAccount(BaseController):
             data_input = {
                 "customer_info": {
                     "cif_info": {
-                        "cif_num": item
+                        "cif_num": customer.cif_number
                     },
                     "account_info": {
-                        "account_currency": "VND",
-                        "account_class_code": "CAI025",
-                        "account_saving_serials": "",
+                        "account_currency": item.TdAccount.currency_id,
+                        "account_class_code": item.TdAccount.account_class_id,
+                        "account_saving_serials": item.TdAccount.td_serial,
+                        # TODO hard core
                         "p_blk_cust_account": [
                             {
                                 "ACCOUNT_TYPE": "S",
@@ -289,14 +290,7 @@ class CtrGWDepositAccount(BaseController):
                         "p_blk_acctxnres": "",
                         "p_blk_authbicdetails": "",
                         "p_blk_acstatuslines": "",
-                        "p_blk_jointholders": [
-                            {
-                                "JOINT_HOLDER_CODE": "",
-                                "JOINT_HOLDER": "",
-                                "START_DATE": "",
-                                "END_DATE": ""
-                            }
-                        ],
+                        "p_blk_jointholders": "",
                         "p_blk_acccrdrlmts": "",
                         "p_blk_intdetails": "",
                         "p_blk_intprodmap": "",
@@ -310,17 +304,11 @@ class CtrGWDepositAccount(BaseController):
                         "p_blk_dcdmaster": "",
                         "p_blk_tdpayindetails": [
                             {
-                                "TD_AMOUNT": "100000000",
-                                "ROLLOVER_TYPE": "I"
+                                "TD_AMOUNT": int(item.TdAccount.pay_in_amount),
+                                "ROLLOVER_TYPE": item.TdAccount.td_rollover_type
                             }
                         ],
-                        "p_blk_tdpayoutdetails": [
-                            {
-                                "PAYOUT_TYPE": "",
-                                "PAYOUT_BRN": "",
-                                "PAYOUT_ACC": ""
-                            }
-                        ],
+                        "p_blk_tdpayoutdetails": "",
                         "p_blk_tod_renew": "",
                         "p_blk_od_limit": "",
                         "p_blk_doctype_checklist": "",
@@ -335,13 +323,7 @@ class CtrGWDepositAccount(BaseController):
                         "p_blk_accls_rollover": "",
                         "p_blk_promotions": "",
                         "p_blk_link_pricing": "",
-                        "p_blk_linkedentities": [
-                            {
-                                "CUSTOMER": "",
-                                "RELATIONSHIP": "",
-                                "INCLUDE_RELATIONSHIP": ""
-                            }
-                        ],
+                        "p_blk_linkedentities": "",
                         "p_blk_custacc_icccspcn": "",
                         "p_blk_custacc_icchspcn": "",
                         "p_blk_custacc_iccinstr": "",
@@ -369,10 +351,11 @@ class CtrGWDepositAccount(BaseController):
                         "staff_name": "KHANHLQ"
                     },
                     "udf_info": {
+                        # TODO hard core
                         "udf_json_array": [
                             {
                                 "UDF_NAME": "01_MANV_KINH_DOANH",
-                                "UDF_VALUE": "00563"
+                                "UDF_VALUE": "99999"
                             }
                         ]
                     }
@@ -383,5 +366,5 @@ class CtrGWDepositAccount(BaseController):
                 data_input=data_input
             ))
 
-        return self.response(data=booking_account)
+        return self.response(data=(data_input, customer, booking_account))
         # return self.response(data=gw_deposit_open_account_td)

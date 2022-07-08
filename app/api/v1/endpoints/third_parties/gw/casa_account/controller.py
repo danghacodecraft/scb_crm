@@ -22,11 +22,21 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWReportPieChartHistoryAccountInfoRequest,
     GWReportStatementHistoryAccountInfoRequest
 )
+from app.api.v1.endpoints.third_parties.gw.payment.controller import (
+    CtrGWPayment
+)
+from app.api.v1.endpoints.third_parties.repository import (
+    repos_save_gw_output_data
+)
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
 from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.utils.constant.approval import CIF_STAGE_APPROVE_KSV
-from app.utils.constant.casa import CASA_ACCOUNT_STATUS_UNAPPROVED
+from app.utils.constant.business_type import BUSINESS_TYPE_CASA_TOP_UP
+from app.utils.constant.casa import (
+    CASA_ACCOUNT_STATUS_UNAPPROVED, RECEIVING_METHOD_SCB_TO_ACCOUNT,
+    RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT
+)
 from app.utils.constant.cif import (
     BUSINESS_FORM_CLOSE_CASA, BUSINESS_FORM_WITHDRAW
 )
@@ -223,8 +233,8 @@ class CtrGWCasaAccount(BaseController):
         ))
 
     async def ctr_gw_check_exist_casa_account_info(
-        self,
-        account_number: str
+            self,
+            account_number: str
     ):
         gw_check_exist_casa_account_info = self.call_repos(await repos_gw_get_casa_account_info(
             account_number=account_number,
@@ -232,8 +242,9 @@ class CtrGWCasaAccount(BaseController):
         ))
         if not gw_check_exist_casa_account_info:
             return self.response(data=dict(is_existed=False))
-        account_info = gw_check_exist_casa_account_info['retrieveCurrentAccountCASA_out']['data_output']['customer_info'][
-            'account_info']
+        account_info = \
+            gw_check_exist_casa_account_info['retrieveCurrentAccountCASA_out']['data_output']['customer_info'][
+                'account_info']
 
         return self.response(data=dict(
             is_existed=True if account_info['account_num'] else False
@@ -426,7 +437,8 @@ class CtrGWCasaAccount(BaseController):
                     detail=str(gw_open_casa_account_info['openCASA_out'])
                 ))
             else:
-                casa_account_successes.update({casa_account_id: gw_open_casa_account_info['openCASA_out']['data_output']['account_info']['account_num']})
+                casa_account_successes.update({casa_account_id:
+                                               gw_open_casa_account_info['openCASA_out']['data_output']['account_info']['account_num']})
 
         update_casa_accounts = []
         for casa_account_id, casa_account_number in casa_account_successes.items():
@@ -447,7 +459,7 @@ class CtrGWCasaAccount(BaseController):
             successes=[dict(
                 id=casa_account_id,
                 number=casa_account_number
-            )for casa_account_id, casa_account_number in casa_account_successes.items()],
+            ) for casa_account_id, casa_account_number in casa_account_successes.items()],
             errors=gw_errors
         ))
 
@@ -479,7 +491,8 @@ class CtrGWCasaAccount(BaseController):
             to_date=request.to_date
         ))
         report_casa_accounts = \
-            gw_report_statements_casa_account_info['selectReportStatementCaSaFromAcc_out']['data_output']['report_info']['report_casa_account']
+            gw_report_statements_casa_account_info['selectReportStatementCaSaFromAcc_out']['data_output'][
+                'report_info']['report_casa_account']
         statements = []
 
         for report_casa_account in report_casa_accounts:
@@ -506,6 +519,48 @@ class CtrGWCasaAccount(BaseController):
             ))
 
         return self.response(data=statements)
+
+    async def ctr_gw_top_up_casa_account(self, booking_id: str):
+        current_user = self.current_user
+        booking_business_form = await CtrBooking(
+            current_user=current_user
+        ).ctr_get_booking_business_form(
+            booking_id=booking_id, session=self.oracle_session
+        )
+        form_data = orjson_loads(booking_business_form.form_data)
+        receiving_method = form_data['receiving_method']
+        response_data = None
+        xref = None
+
+        if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
+            response_data = await CtrGWPayment(current_user=current_user).ctr_gw_pay_in_cash(form_data=form_data)
+            xref = response_data['data']['payInCash_out']['data_output']['xref']['p_xref']
+
+        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT:
+            is_success, response_data = await CtrGWPayment(current_user=current_user).ctr_gw_pay_in_cash_247_by_acc_num(
+                booking_id=booking_id,
+                form_data=form_data
+            )
+            if not is_success:
+                return self.response_exception(
+                    msg=ERROR_CALL_SERVICE_GW,
+                    detail=str(response_data['payInCash247byAccNum_out'])
+                )
+
+        if not response_data:
+            return self.response_exception(msg="GW return None", loc=f'response_data: {response_data}')
+
+        self.call_repos(await repos_save_gw_output_data(
+            booking_id=booking_id,
+            business_type_id=BUSINESS_TYPE_CASA_TOP_UP,
+            gw_output_data=orjson_dumps(response_data),
+            session=self.oracle_session
+        ))
+
+        return self.response(data=dict(
+            booking_id=booking_id,
+            xref=xref
+        ))
 
     async def ctr_gw_get_tele_transfer(self, request_data, place_of_issue):
         data_input = {
