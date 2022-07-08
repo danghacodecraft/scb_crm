@@ -265,14 +265,19 @@ class CtrCasaTopUp(BaseController):
             telephone=gw_customer_info['telephone'],
             otherphone=gw_customer_info['otherphone']
         )
+        identity_place_of_issue = await self.get_model_object_by_id(
+            model_id=form_data['sender_place_of_issue']['id'],
+            model=PlaceOfIssue,
+            loc='sender_place_of_issue -> id'
+        )
         if not sender_cif_number:
             sender_response.update(
                 fullname_vn=form_data['sender_full_name_vn'],
                 address_full=form_data['sender_address_full'],
                 identity_info=dict(
                     number=form_data['sender_identity_number'],
-                    issued_date=form_data['sender_place_of_issue'],
-                    place_of_issue=form_data['sender_place_of_issue']
+                    issued_date=form_data['sender_issued_date'],
+                    place_of_issue=dropdown(identity_place_of_issue)
                 ),
                 mobile_phone=form_data['sender_mobile_number']
             )
