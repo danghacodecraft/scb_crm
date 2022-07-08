@@ -14,8 +14,7 @@ from app.api.v1.endpoints.third_parties.gw.payment.example import (
 )
 from app.api.v1.endpoints.third_parties.gw.payment.schema import (
     AccountAmountBlockRequest, AccountAmountBlockResponse,
-    AccountAmountUnblock, AccountAmountUnblockRequest, PayInCashRequest,
-    PaymentSuccessResponse, RedeemAccountRequest
+    AccountAmountUnblockRequest, PaymentSuccessResponse, RedeemAccountRequest
 )
 
 router = APIRouter()
@@ -105,21 +104,21 @@ async def view_amount_unblock_pd(
     return ResponseData[AccountAmountBlockResponse](**payment_amount_unblock_pd)
 
 
-@router.post(
-    path="/pay-in-cash/",
-    name="[GW] Pay In Cash",
-    description="Nộp tiền mặt vô tài khoản thanh toán",
-    responses=swagger_response(
-        response_model=ResponseData[AccountAmountUnblock],
-        success_status_code=status.HTTP_200_OK
-    )
-)
-async def gw_pay_in_cash(
-        pay_in_cash: PayInCashRequest = Body(...),
-        current_user=Depends(get_current_user_from_header())
-):
-    pay_in_cash = await CtrGWPayment(current_user).ctr_gw_pay_in_cash(pay_in_cash=pay_in_cash)
-    return ResponseData(**pay_in_cash)
+# @router.post(
+#     path="/pay-in-cash/",
+#     name="[GW] Pay In Cash",
+#     description="Nộp tiền mặt vô tài khoản thanh toán",
+#     responses=swagger_response(
+#         response_model=ResponseData[AccountAmountUnblock],
+#         success_status_code=status.HTTP_200_OK
+#     )
+# )
+# async def gw_pay_in_cash(
+#         pay_in_cash: PayInCashRequest = Body(...),
+#         current_user=Depends(get_current_user_from_header())
+# ):
+#     pay_in_cash = await CtrGWPayment(current_user).ctr_gw_pay_in_cash(pay_in_cash=pay_in_cash)
+#     return ResponseData(**pay_in_cash)
 
 
 @router.post(
