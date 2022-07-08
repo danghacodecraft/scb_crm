@@ -527,7 +527,12 @@ class CtrGWCasaAccount(BaseController):
         xref = None
 
         if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
-            response_data = await CtrGWPayment(current_user=current_user).ctr_gw_pay_in_cash(form_data=form_data)
+            is_success, response_data = await CtrGWPayment(current_user=current_user).ctr_gw_pay_in_cash(form_data=form_data)
+            if not is_success:
+                return self.response_exception(
+                    msg=ERROR_CALL_SERVICE_GW,
+                    detail=str(response_data['payInCash_out'])
+                )
             xref = response_data['data']['payInCash_out']['data_output']['xref']['p_xref']
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT:

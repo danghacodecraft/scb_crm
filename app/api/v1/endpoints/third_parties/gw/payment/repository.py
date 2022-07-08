@@ -19,10 +19,7 @@ from app.utils.constant.approval import BUSINESS_JOB_CODE_AMOUNT_BLOCK
 from app.utils.constant.cif import (
     BUSINESS_FORM_AMOUNT_BLOCK_PD, BUSINESS_FORM_AMOUNT_UNBLOCK_PD
 )
-from app.utils.constant.gw import GW_CASA_RESPONSE_STATUS_SUCCESS
-from app.utils.error_messages import (
-    ERROR_BOOKING_CODE_EXISTED, ERROR_CALL_SERVICE_GW, MESSAGE_STATUS
-)
+from app.utils.error_messages import ERROR_BOOKING_CODE_EXISTED, MESSAGE_STATUS
 from app.utils.functions import generate_uuid, now, orjson_dumps
 
 
@@ -260,19 +257,10 @@ async def repos_gw_redeem_account(current_user, data_input):
 async def repos_gw_pay_in_cash(
         current_user: AuthResponse, data_input: dict
 ):
-    is_success, gw_pay_in_cash = await service_gw.gw_pay_in_cash(
+    gw_pay_in_cash = await service_gw.gw_pay_in_cash(
         data_input=data_input,
         current_user=current_user.user_info
     )
-    pay_in_cash = gw_pay_in_cash.get('payInCash_out', {})
-    # check trường hợp lỗi
-    if pay_in_cash['transaction_info']['transaction_error_code'] != GW_CASA_RESPONSE_STATUS_SUCCESS:
-        return ReposReturn(
-            is_error=True,
-            msg=ERROR_CALL_SERVICE_GW,
-            detail=str(gw_pay_in_cash),
-            loc='repos_gw_pay_in_cash'
-        )
 
     return ReposReturn(data=gw_pay_in_cash)
 
