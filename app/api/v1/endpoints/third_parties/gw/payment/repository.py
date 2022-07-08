@@ -4,6 +4,7 @@ from sqlalchemy import update
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
+from app.api.v1.endpoints.user.schema import AuthResponse
 from app.api.v1.others.booking.repository import generate_booking_code
 from app.settings.event import service_gw
 from app.third_parties.oracle.models.cif.form.model import (
@@ -19,7 +20,9 @@ from app.utils.constant.cif import (
     BUSINESS_FORM_AMOUNT_BLOCK_PD, BUSINESS_FORM_AMOUNT_UNBLOCK_PD
 )
 from app.utils.constant.gw import GW_CASA_RESPONSE_STATUS_SUCCESS
-from app.utils.error_messages import ERROR_BOOKING_CODE_EXISTED, MESSAGE_STATUS
+from app.utils.error_messages import (
+    ERROR_BOOKING_CODE_EXISTED, ERROR_CALL_SERVICE_GW, MESSAGE_STATUS
+)
 from app.utils.functions import generate_uuid, now, orjson_dumps
 
 
@@ -241,23 +244,6 @@ async def repos_gw_payment_amount_unblock(
     return ReposReturn(data=response_data)
 
 
-async def repos_gw_pay_in_cash(current_user, data_input):
-    is_success, gw_pay_in_cash = await service_gw.gw_pay_in_cash(
-        data_input=data_input,
-        current_user=current_user.user_info
-    )
-    pay_in_cash = gw_pay_in_cash.get('payInCash_out', {})
-    # check trường hợp lỗi
-    if pay_in_cash['transaction_info']['transaction_error_code'] != GW_CASA_RESPONSE_STATUS_SUCCESS:
-        return ReposReturn(
-            is_error=True,
-            msg=pay_in_cash.get('transaction_info').get('transaction_error_msg'),
-            loc='repos_gw_pay_in_cash'
-        )
-
-    return ReposReturn(data=gw_pay_in_cash)
-
-
 async def repos_gw_redeem_account(current_user, data_input):
     request_data = service_gw.gw_create_request_body(
         current_user=current_user.user_info,
@@ -269,3 +255,34 @@ async def repos_gw_redeem_account(current_user, data_input):
     )
 
     return ReposReturn(data=(request_data, gw_payment_redeem_account))
+
+
+async def repos_gw_pay_in_cash(
+        current_user: AuthResponse, data_input: dict
+):
+    is_success, gw_pay_in_cash = await service_gw.gw_pay_in_cash(
+        data_input=data_input,
+        current_user=current_user.user_info
+    )
+    pay_in_cash = gw_pay_in_cash.get('payInCash_out', {})
+    # check trường hợp lỗi
+    if pay_in_cash['transaction_info']['transaction_error_code'] != GW_CASA_RESPONSE_STATUS_SUCCESS:
+        return ReposReturn(
+            is_error=True,
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(gw_pay_in_cash),
+            loc='repos_gw_pay_in_cash'
+        )
+
+    return ReposReturn(data=gw_pay_in_cash)
+
+
+async def repos_pay_in_cash_247_by_acc_num(
+        current_user: AuthResponse, data_input: dict
+):
+    gw_pay_in_cash_247_by_acc_num = await service_gw.gw_pay_in_cash_247_by_acc_num(
+        data_input=data_input,
+        current_user=current_user.user_info
+    )
+
+    return ReposReturn(data=gw_pay_in_cash_247_by_acc_num)
