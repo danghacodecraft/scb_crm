@@ -242,15 +242,18 @@ async def repos_gw_payment_amount_unblock(
 
 
 async def repos_gw_pay_in_cash(current_user, data_input):
-    is_success, gw_pay_in_cash = await service_gw.gw_payment_amount_unblock(
+    is_success, gw_pay_in_cash = await service_gw.gw_pay_in_cash(
         data_input=data_input,
         current_user=current_user.user_info
     )
-    pay_in_cash = gw_pay_in_cash.get('amountUnBlock_out', {})
-
+    pay_in_cash = gw_pay_in_cash.get('payInCash_out', {})
     # check trường hợp lỗi
-    if pay_in_cash.get('transaction_info').get('transaction_error_code') != GW_CASA_RESPONSE_STATUS_SUCCESS:
-        return ReposReturn(is_error=True, msg=pay_in_cash.get('transaction_info').get('transaction_error_msg'))
+    if pay_in_cash['transaction_info']['transaction_error_code'] != GW_CASA_RESPONSE_STATUS_SUCCESS:
+        return ReposReturn(
+            is_error=True,
+            msg=pay_in_cash.get('transaction_info').get('transaction_error_msg'),
+            loc='repos_gw_pay_in_cash'
+        )
 
     return ReposReturn(data=gw_pay_in_cash)
 

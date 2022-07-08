@@ -45,7 +45,9 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_TOP_UP_CASA_ACCOUNT,
     PROFILE_HISTORY_STATUS_INIT
 )
-from app.utils.constant.gw import GW_REQUEST_DIRECT_INDIRECT
+from app.utils.constant.gw import (
+    GW_DATE_FORMAT, GW_DATETIME_FORMAT, GW_REQUEST_DIRECT_INDIRECT
+)
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_GDV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_GDV
 )
@@ -55,7 +57,8 @@ from app.utils.error_messages import (
     ERROR_NOT_NULL, ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
 )
 from app.utils.functions import (
-    dropdown, generate_uuid, now, orjson_dumps, orjson_loads
+    date_string_to_other_date_string_format, dropdown, generate_uuid, now,
+    orjson_dumps, orjson_loads
 )
 from app.utils.vietnamese_converter import (
     convert_to_unsigned_vietnamese, make_short_name, split_name
@@ -76,6 +79,9 @@ class CtrCasaTopUp(BaseController):
         # Thông tin người thụ hưởng
         ################################################################################################################
         receiver_response = {}
+        bank_id = form_data['receiver_bank']['id']
+        bank = await self.get_model_object_by_id(model_id=bank_id, model=Bank, loc=f'bank_id: {bank_id}')
+        dropdown_bank = dropdown(bank)
 
         if receiving_method in RECEIVING_METHOD_ACCOUNT_CASES:
             receiver_account_number = form_data['receiver_account_number']
@@ -105,10 +111,7 @@ class CtrCasaTopUp(BaseController):
                     branch_id = form_data['receiver_branch']['id']
                     receiver_response = dict(
                         # bank=form_data['bank'],
-                        bank=dict(
-                            code=branch_id,
-                            name=branch_id
-                        ),  # TODO: đợi e-bank
+                        bank=dropdown_bank,
                         # province=dropdown(branch_info.address_province),
                         province=dict(
                             code=branch_id,
@@ -125,21 +128,14 @@ class CtrCasaTopUp(BaseController):
 
             if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT:
                 receiver_response = dict(
-                    # bank=form_data['bank'],
-                    bank=dict(
-                        code="branch_id",
-                        name="branch_id"
-                    ),  # TODO: đợi e-bank
-                    receiver_account_number=receiver_account_number,
-                    # fullname_vn=gw_casa_account_info_customer_info['full_name'],
+                    bank=dropdown_bank,
+                    fullname_vn="abc",   # TODO: Lấy Họ tên từ E-bank
+                    account_number=receiver_account_number,
                     address_full=form_data['receiver_address_full']
                 )
         elif receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD:
             receiver_response = dict(
-                bank=dict(
-                    code="branch_id",
-                    name="branch_id"
-                ),  # TODO: đợi e-bank
+                bank=dropdown_bank,  # TODO: đợi e-bank
                 account_number=form_data['receiver_card_number'],  # TODO: đợi e-bank
                 # fullname_vn=gw_casa_account_info_customer_info['full_name'],
                 address_full=form_data['receiver_address_full']
@@ -248,7 +244,7 @@ class CtrCasaTopUp(BaseController):
         ################################################################################################################
         sender_cif_number = form_data['sender_cif_number']
         gw_customer_info = await CtrGWCustomer(current_user).ctr_gw_get_customer_info_detail(
-            cif_number="",
+            cif_number=sender_cif_number,
             return_raw_data_flag=True
         )
         gw_customer_info_identity_info = gw_customer_info['id_info']
@@ -258,8 +254,16 @@ class CtrCasaTopUp(BaseController):
             address_full=gw_customer_info['t_address_info']['contact_address_full'],
             identity_info=dict(
                 number=gw_customer_info_identity_info['id_num'],
-                issued_date=gw_customer_info_identity_info['id_issued_date'],
-                place_of_issue=gw_customer_info_identity_info['id_issued_location']
+                issued_date=date_string_to_other_date_string_format(
+                    gw_customer_info_identity_info['id_issued_date'],
+                    from_format=GW_DATETIME_FORMAT,
+                    to_format=GW_DATE_FORMAT
+                ),
+                place_of_issue=dict(
+                    id=gw_customer_info_identity_info['id_issued_location'],
+                    code=gw_customer_info_identity_info['id_issued_location'],
+                    name=gw_customer_info_identity_info['id_issued_location']
+                )
             ),
             mobile_phone=gw_customer_info['mobile_phone'],
             telephone=gw_customer_info['telephone'],

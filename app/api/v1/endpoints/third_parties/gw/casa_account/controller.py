@@ -15,14 +15,16 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_get_retrieve_ben_name_by_account_number,
     repos_gw_get_retrieve_ben_name_by_card_number,
     repos_gw_get_statements_casa_account_info, repos_gw_get_tele_transfer,
-    repos_gw_open_casa_account, repos_gw_pay_in_cash_casa_account,
-    repos_open_casa_get_casa_account_infos,
+    repos_gw_open_casa_account, repos_open_casa_get_casa_account_infos,
     repos_update_casa_account_to_approved
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWOpenCasaAccountRequest, GWReportColumnChartHistoryAccountInfoRequest,
     GWReportPieChartHistoryAccountInfoRequest,
     GWReportStatementHistoryAccountInfoRequest
+)
+from app.api.v1.endpoints.third_parties.gw.payment.controller import (
+    CtrGWPayment
 )
 from app.api.v1.endpoints.third_parties.repository import (
     repos_save_gw_output_data
@@ -32,7 +34,6 @@ from app.api.v1.others.permission.controller import PermissionController
 from app.settings.config import (
     DATETIME_INPUT_OUTPUT_FORMAT, DATETIME_INPUT_OUTPUT_REVERT_FORMAT
 )
-from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.utils.constant.approval import CIF_STAGE_APPROVE_KSV
 from app.utils.constant.business_type import BUSINESS_TYPE_CASA_TOP_UP
 from app.utils.constant.casa import (
@@ -517,119 +518,10 @@ class CtrGWCasaAccount(BaseController):
 
         return self.response(data=statements)
 
-    async def ctr_gw_pay_in_cash_casa_account(self, form_data: dict):
-        sender_place_of_issue_id = form_data['sender_place_of_issue']['id']
-        sender_place_of_issue = await self.get_model_object_by_id(
-            model_id=sender_place_of_issue_id,
-            model=PlaceOfIssue,
-            loc=f"sender_place_of_issue_id: {sender_place_of_issue_id}"
-        )
-
-        data_input = {
-            "account_info": {
-                # "account_num": form_data['receiver_account_number'],
-                "account_num": '16742131993',
-                "account_currency": "VND",  # TODO: hiện tại chuyển tiền chỉ dùng tiền tệ VN
-                "account_opening_amount": form_data['amount']
-            },
-            "p_blk_denomination": "",
-            "p_blk_charge": [
-                {
-                    "CHARGE_TYPE": "CASH",
-                    "CHARGE_ACCOUNT": "",
-                    "CHARGE_NAME": "PHI DV TT TRONG NUOC  711003001",
-                    "CHARGE_AMOUNT": 100000,
-                    "WAIVED": "N"
-                }
-            ],
-            "p_blk_project": "",
-            "p_blk_mis": "",
-            "p_blk_udf": [
-                {
-                    "UDF_NAME": "NGUOI_GIAO_DICH",
-                    "UDF_VALUE": self.current_user.user_info.name
-                },
-                {
-                    "UDF_NAME": "CMND_PASSPORT",
-                    "UDF_VALUE": form_data['sender_identity_number']
-                },
-                {
-                    "UDF_NAME": "NGAY_CAP",
-                    "UDF_VALUE": form_data['sender_issued_date']
-                },
-                {
-                    "UDF_NAME": "NOI_CAP",
-                    "UDF_VALUE": sender_place_of_issue.name
-                },
-                {
-                    "UDF_NAME": "DIA_CHI",
-                    "UDF_VALUE": form_data['sender_address_full']
-                },
-                {
-                    "UDF_NAME": "THU_PHI_DICH_VU",
-                    "UDF_VALUE": ""
-                },
-                {
-                    "UDF_NAME": "TEN_KHACH_HANG",
-                    "UDF_VALUE": form_data['sender_full_name_vn']
-                },
-                {
-                    "UDF_NAME": "TY_GIA_GD_DOI_UNG_HO",
-                    "UDF_VALUE": "1"
-                },
-                {
-                    "UDF_NAME": "MUC_DICH_GIAO_DICH",
-                    "UDF_VALUE": "MUC_DICH_KHAC"
-                },
-                {
-                    "UDF_NAME": "NGHIEP_VU_GDQT",
-                    "UDF_VALUE": ""
-                },
-                {
-                    "UDF_NAME": "NGAY_CHOT_TY_GIA",
-                    "UDF_VALUE": ""
-                },
-                {
-                    "UDF_NAME": "GIO_PHUT_CHOT_TY_GIA",
-                    "UDF_VALUE": ""
-                },
-                {
-                    "UDF_NAME": "REF_BAO_CO_1",
-                    "UDF_VALUE": ""
-                },
-                {
-                    "UDF_NAME": "REF_BAO_CO_2",
-                    "UDF_VALUE": ""
-                },
-                {
-                    "UDF_NAME": "REF_BAO_CO_3",
-                    "UDF_VALUE": ""
-                },
-                {
-                    "UDF_NAME": "REF_BAO_CO_4",
-                    "UDF_VALUE": ""
-                },
-                {
-                    "UDF_NAME": "REF_BAO_CO_5",
-                    "UDF_VALUE": ""
-                }
-            ],
-            "staff_info_checker": {
-                "staff_name": "HOANT2"
-            },
-            "staff_info_maker": {
-                "staff_name": "KHANHLQ"
-            }
-        }
-        pay_in_cash_info = self.call_repos(await repos_gw_pay_in_cash_casa_account(
-            current_user=self.current_user.user_info,
-            data_input=data_input
-        ))
-        return pay_in_cash_info
-
     async def ctr_gw_top_up_casa_account(self, booking_id: str):
+        current_user = self.current_user
         booking_business_form = await CtrBooking(
-            current_user=self.current_user
+            current_user=current_user
         ).ctr_get_booking_business_form(
             booking_id=booking_id, session=self.oracle_session
         )
@@ -638,8 +530,8 @@ class CtrGWCasaAccount(BaseController):
         response_data = None
         xref = None
         if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
-            response_data = await self.ctr_gw_pay_in_cash_casa_account(form_data=form_data)
-            xref = response_data['payInCash_out']['data_output']['xref']['p_xref']
+            response_data = await CtrGWPayment(current_user=current_user).ctr_gw_pay_in_cash(form_data=form_data)
+            xref = response_data['data']['payInCash_out']['data_output']['xref']['p_xref']
 
         if not response_data:
             return self.response_exception(msg="GW return None", loc=f'response_data: {response_data}')
