@@ -5,8 +5,8 @@ from app.api.v1.endpoints.casa.top_up.repository import (
     repos_get_casa_top_up_info, repos_save_casa_top_up_info
 )
 from app.api.v1.endpoints.casa.top_up.schema import (
-    CasaTopUpSCBByIdentityRequest, CasaTopUpSCBToAccountRequest,
-    CasaTopUpThirdParty247ToAccountRequest,
+    CasaTopUpRequest, CasaTopUpSCBByIdentityRequest,
+    CasaTopUpSCBToAccountRequest, CasaTopUpThirdParty247ToAccountRequest,
     CasaTopUpThirdParty247ToCardRequest, CasaTopUpThirdPartyByIdentityRequest,
     CasaTopUpThirdPartyToAccountRequest
 )
@@ -322,16 +322,17 @@ class CtrCasaTopUp(BaseController):
 
     async def ctr_save_casa_top_up_scb_to_account(
             self,
+            receiving_method: str,
             current_user: AuthResponse,
-            request: CasaTopUpSCBToAccountRequest
+            data: CasaTopUpSCBToAccountRequest
     ):
-        if not isinstance(request, CasaTopUpSCBToAccountRequest):
+        if not isinstance(data, CasaTopUpSCBToAccountRequest):
             return self.response_exception(
                 msg=ERROR_MAPPING_MODEL,
-                loc=f'expect: CasaTopUpSCBToAccountRequest, request: {type(request)}'
+                loc=f'expect: CasaTopUpSCBToAccountRequest, request: {type(data)}'
             )
 
-        receiver_account_number = request.receiver_account_number
+        receiver_account_number = data.receiver_account_number
 
         # Kiểm tra số tài khoản có tồn tại hay không
         casa_account = await CtrGWCasaAccount(current_user).ctr_gw_check_exist_casa_account_info(
@@ -343,138 +344,148 @@ class CtrCasaTopUp(BaseController):
                 loc=f"account_number: {receiver_account_number}"
             )
 
-        return request
+        data.receiving_method = receiving_method
+
+        return data
 
     async def ctr_save_casa_top_up_scb_by_identity(
             self,
-            request: CasaTopUpSCBByIdentityRequest
+            receiving_method: str,
+            data: CasaTopUpSCBByIdentityRequest
     ):
-        if not isinstance(request, CasaTopUpSCBByIdentityRequest):
+        if not isinstance(data, CasaTopUpSCBByIdentityRequest):
             return self.response_exception(
                 msg=ERROR_MAPPING_MODEL,
-                loc=f'expect: CasaTopUpSCBByIdentityRequest, request: {type(request)}'
+                loc=f'expect: CasaTopUpSCBByIdentityRequest, request: {type(data)}'
             )
 
         # validate branch
-        await self.get_model_object_by_id(model_id=request.receiver_branch.id, model=Branch, loc='branch -> id')
+        await self.get_model_object_by_id(model_id=data.receiver_branch.id, model=Branch, loc='branch -> id')
 
         # validate issued_date
-        await self.validate_issued_date(issued_date=request.receiver_issued_date, loc='issued_date')
+        await self.validate_issued_date(issued_date=data.receiver_issued_date, loc='issued_date')
 
         # validate receiver_place_of_issue
         place_of_issue = await self.get_model_object_by_id(
-            model_id=request.receiver_place_of_issue.id, model=PlaceOfIssue, loc='receiver_place_of_issue -> id'
+            model_id=data.receiver_place_of_issue.id, model=PlaceOfIssue, loc='receiver_place_of_issue -> id'
         )
 
         # validate sender_place_of_issue
         await self.get_model_object_by_id(
-            model_id=request.sender_place_of_issue.id, model=PlaceOfIssue, loc='sender_place_of_issue -> id'
+            model_id=data.sender_place_of_issue.id, model=PlaceOfIssue, loc='sender_place_of_issue -> id'
         )
 
         # Lưu thông tin p_instrument_number cho bước phê duyệt
         tele_transfer_info = await CtrGWCasaAccount(self.current_user).ctr_gw_get_tele_transfer(
-            request_data=request,
+            request_data=data,
             place_of_issue=place_of_issue
         )
-        request.p_instrument_number = tele_transfer_info['data']['p_instrument_number']
-        request.core_fcc_request = tele_transfer_info['data']['data_input']
+        data.p_instrument_number = tele_transfer_info['data']['p_instrument_number']
+        data.core_fcc_request = tele_transfer_info['data']['data_input']
+        data.receiving_method = receiving_method
 
-        return request
+        return data
 
     async def ctr_save_casa_top_up_third_party_to_account(
             self,
-            request: CasaTopUpThirdPartyToAccountRequest
+            receiving_method: str,
+            data: CasaTopUpThirdPartyToAccountRequest
     ):
-        if not isinstance(request, CasaTopUpThirdPartyToAccountRequest):
+        if not isinstance(data, CasaTopUpThirdPartyToAccountRequest):
             return self.response_exception(
                 msg=ERROR_MAPPING_MODEL,
-                loc=f'expect: CasaTopUpThirdPartyToAccountRequest, request: {type(request)}'
+                loc=f'expect: CasaTopUpThirdPartyToAccountRequest, request: {type(data)}'
             )
         # validate branch of bank
-        receiver_bank_id = request.receiver_bank.id
+        receiver_bank_id = data.receiver_bank.id
         await self.get_model_object_by_id(
-            model_id=request.receiver_bank.id,
+            model_id=data.receiver_bank.id,
             model=BankBranch,
             loc=f'receiver_bank -> id: {receiver_bank_id}'
         )
-        return request
+
+        data.receiving_method = receiving_method
+
+        return data
 
     async def ctr_save_casa_top_up_third_party_by_identity(
             self,
-            request: CasaTopUpThirdPartyByIdentityRequest
+            receiving_method: str,
+            data: CasaTopUpThirdPartyByIdentityRequest
     ):
-        if not isinstance(request, CasaTopUpThirdPartyByIdentityRequest):
+        if not isinstance(data, CasaTopUpThirdPartyByIdentityRequest):
             return self.response_exception(
                 msg=ERROR_MAPPING_MODEL,
-                loc=f'expect: CasaTopUpThirdPartyByIdentityRequest, request: {type(request)}'
+                loc=f'expect: CasaTopUpThirdPartyByIdentityRequest, request: {type(data)}'
             )
         # validate branch of bank
-        receiver_bank_id = request.receiver_bank.id
+        receiver_bank_id = data.receiver_bank.id
         await self.get_model_object_by_id(
-            model_id=request.receiver_bank.id,
+            model_id=data.receiver_bank.id,
             model=BankBranch,
             loc=f'receiver_bank -> id: {receiver_bank_id}'
         )
 
         # validate sender_place_of_issue
         await self.get_model_object_by_id(
-            model_id=request.sender_place_of_issue.id, model=PlaceOfIssue, loc='sender_place_of_issue -> id'
+            model_id=data.sender_place_of_issue.id, model=PlaceOfIssue, loc='sender_place_of_issue -> id'
         )
-        return request
+
+        data.receiving_method = receiving_method
+
+        return data
 
     async def ctr_save_casa_top_up_third_party_247_to_account(
             self,
-            request: CasaTopUpThirdParty247ToAccountRequest
+            receiving_method: str,
+            data: CasaTopUpThirdParty247ToAccountRequest
     ):
-        if not isinstance(request, CasaTopUpThirdParty247ToAccountRequest):
+        if not isinstance(data, CasaTopUpThirdParty247ToAccountRequest):
             return self.response_exception(
                 msg=ERROR_MAPPING_MODEL,
-                loc=f'expect: CasaTopUpThirdPartyByIdentityRequest, request: {type(request)}'
+                loc=f'expect: CasaTopUpThirdPartyByIdentityRequest, request: {type(data)}'
             )
         # validate branch of bank
-        receiver_bank_id = request.receiver_bank.id
+        receiver_bank_id = data.receiver_bank.id
         await self.get_model_object_by_id(
-            model_id=request.receiver_bank.id,
+            model_id=data.receiver_bank.id,
             model=BankBranch,
             loc=f'receiver_bank -> id: {receiver_bank_id}'
         )
-        return request
+        data.receiving_method = receiving_method
+        return data
 
     async def ctr_save_casa_top_up_third_party_247_to_card(
             self,
-            request: CasaTopUpThirdParty247ToCardRequest
+            receiving_method: str,
+            data: CasaTopUpThirdParty247ToCardRequest
     ):
-        if not isinstance(request, CasaTopUpThirdParty247ToCardRequest):
+        if not isinstance(data, CasaTopUpThirdParty247ToCardRequest):
             return self.response_exception(
                 msg=ERROR_MAPPING_MODEL,
-                loc=f'expect: CasaTopUpThirdParty247ToCardRequest, request: {type(request)}'
+                loc=f'expect: CasaTopUpThirdParty247ToCardRequest, request: {type(data)}'
             )
         # TODO: validate branch of bank
         # await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
 
         # TODO: validate card number
 
-        return request
+        data.receiving_method = receiving_method
+        return data
 
     async def ctr_save_casa_top_up_info(
             self,
             booking_id: str,
-            request: Union[
-                CasaTopUpSCBToAccountRequest,
-                CasaTopUpSCBByIdentityRequest,
-                CasaTopUpThirdPartyToAccountRequest,
-                CasaTopUpThirdPartyByIdentityRequest,
-                CasaTopUpThirdParty247ToAccountRequest,
-                CasaTopUpThirdParty247ToCardRequest
-            ]
+            request: CasaTopUpRequest
     ):
-        sender_cif_number = request.sender_cif_number
+        data = request.data
         receiving_method = request.receiving_method
-        is_fee = request.is_fee
-        fee_info = request.fee_info
-        statement = request.statement
-        direct_staff_code = request.direct_staff_code
-        indirect_staff_code = request.indirect_staff_code
+        sender_cif_number = data.sender_cif_number
+        is_fee = data.is_fee
+        fee_info = data.fee_info
+        statement = data.statement
+        direct_staff_code = data.direct_staff_code
+        indirect_staff_code = data.indirect_staff_code
         current_user = self.current_user
         current_user_info = current_user.user_info
         ################################################################################################################
@@ -571,13 +582,13 @@ class CtrCasaTopUp(BaseController):
                 return self.response_exception(msg=ERROR_CIF_NUMBER_NOT_EXIST, loc="sender_cif_number")
         # TH2: Không nhập CIF
         else:
-            sender_full_name_vn = request.sender_full_name_vn
-            sender_identity_number = request.sender_identity_number
-            sender_issued_date = request.sender_issued_date
-            sender_address_full = request.sender_address_full
-            sender_mobile_number = request.sender_mobile_number
+            sender_full_name_vn = data.sender_full_name_vn
+            sender_identity_number = data.sender_identity_number
+            sender_issued_date = data.sender_issued_date
+            sender_address_full = data.sender_address_full
+            sender_mobile_number = data.sender_mobile_number
 
-            sender_place_of_issue_id = request.sender_place_of_issue.id
+            sender_place_of_issue_id = data.sender_place_of_issue.id
             await self.get_model_object_by_id(
                 model_id=sender_place_of_issue_id,
                 model=PlaceOfIssue,
@@ -610,32 +621,48 @@ class CtrCasaTopUp(BaseController):
         if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
             casa_top_up_info = await self.ctr_save_casa_top_up_scb_to_account(
                 current_user=current_user,
-                request=request
+                receiving_method=receiving_method,
+                data=data
             )
 
         # saving_customer = {}
         # saving_customer_identity = {}
         # saving_customer_address = {}
         if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
-            casa_top_up_info = await self.ctr_save_casa_top_up_scb_by_identity(request=request)
+            casa_top_up_info = await self.ctr_save_casa_top_up_scb_by_identity(
+                receiving_method=receiving_method,
+                data=data
+            )
             # (
             #     saving_customer, saving_customer_identity, saving_customer_address
             # ) = await CtrCustomer(current_user).ctr_create_non_resident_customer(request=request)
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
-            casa_top_up_info = await self.ctr_save_casa_top_up_third_party_to_account(request=request)
+            casa_top_up_info = await self.ctr_save_casa_top_up_third_party_to_account(
+                receiving_method=receiving_method,
+                data=data
+            )
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
-            casa_top_up_info = await self.ctr_save_casa_top_up_third_party_by_identity(request=request)
+            casa_top_up_info = await self.ctr_save_casa_top_up_third_party_by_identity(
+                receiving_method=receiving_method,
+                data=data
+            )
             # (
             #     saving_customer, saving_customer_identity, saving_customer_address
             # ) = await CtrCustomer(current_user).ctr_create_non_resident_customer(request=request)
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT:
-            casa_top_up_info = await self.ctr_save_casa_top_up_third_party_247_to_account(request=request)
+            casa_top_up_info = await self.ctr_save_casa_top_up_third_party_247_to_account(
+                receiving_method=receiving_method,
+                data=data
+            )
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD:
-            casa_top_up_info = await self.ctr_save_casa_top_up_third_party_247_to_card(request=request)
+            casa_top_up_info = await self.ctr_save_casa_top_up_third_party_247_to_card(
+                receiving_method=receiving_method,
+                data=data
+            )
 
         if not casa_top_up_info:
             return self.response_exception(msg="No Casa Top Up")

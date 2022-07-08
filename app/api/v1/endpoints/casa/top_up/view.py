@@ -1,5 +1,3 @@
-from typing import Union
-
 from fastapi import APIRouter, Body, Depends, Header
 from starlette import status
 
@@ -8,10 +6,7 @@ from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.casa.top_up.controller import CtrCasaTopUp
 from app.api.v1.endpoints.casa.top_up.schema import (
-    CasaTopUpResponse, CasaTopUpSCBByIdentityRequest,
-    CasaTopUpSCBToAccountRequest, CasaTopUpThirdParty247ToAccountRequest,
-    CasaTopUpThirdParty247ToCardRequest, CasaTopUpThirdPartyByIdentityRequest,
-    CasaTopUpThirdPartyToAccountRequest
+    CasaTopUpRequest, CasaTopUpResponse
 )
 
 router = APIRouter()
@@ -28,14 +23,7 @@ router = APIRouter()
 )
 async def view_save_casa_top_up_info(
         BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
-        request: Union[
-            CasaTopUpSCBByIdentityRequest,
-            CasaTopUpThirdPartyByIdentityRequest,
-            CasaTopUpThirdPartyToAccountRequest,
-            CasaTopUpThirdParty247ToAccountRequest,
-            CasaTopUpSCBToAccountRequest,
-            CasaTopUpThirdParty247ToCardRequest
-        ] = Body(...),
+        request: CasaTopUpRequest = Body(...),
         current_user=Depends(get_current_user_from_header())
 ):
     casa_top_up_info = await CtrCasaTopUp(current_user).ctr_save_casa_top_up_info(
