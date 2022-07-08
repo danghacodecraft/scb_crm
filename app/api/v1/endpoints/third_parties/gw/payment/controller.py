@@ -27,7 +27,9 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_BLOCK,
     PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_UNBLOCK, PROFILE_HISTORY_STATUS_INIT
 )
-from app.utils.constant.gw import GW_CASA_RESPONSE_STATUS_SUCCESS
+from app.utils.constant.gw import (
+    GW_CASA_RESPONSE_STATUS_SUCCESS, GW_GL_BRANCH_CODE
+)
 from app.utils.functions import (
     datetime_to_string, now, orjson_dumps, orjson_loads
 )
@@ -600,7 +602,7 @@ class CtrGWPayment(BaseController):
             },
             "ben_id": ben['data'][0]['id'],
             "account_from_info": {
-                "account_num": "101101001"
+                "account_num": GW_GL_BRANCH_CODE
             },
             "staff_maker": {
                 "staff_code": "annvh"   # TODO
