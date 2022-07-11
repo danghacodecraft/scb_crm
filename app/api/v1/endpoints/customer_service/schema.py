@@ -241,3 +241,4 @@ class CustomerDetailResponse(BaseSchema):
         None,
         description='Tỷ lệ phần trăm giống nhau giữa hình ảnh trên giấy tờ và hình ảnh thật')
     extra_info: dict = Field(None, description='Thông tin khác')
+    ekyc_level: Optional[str] = Field(..., description="Level ekyc")
