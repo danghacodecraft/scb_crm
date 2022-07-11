@@ -40,6 +40,7 @@ class CasaAccountByCIFNumberResponse(BaseGWSchema):
 class GWCasaAccountByCIFNumberResponse(BaseGWSchema):
     total_balances: int = Field(..., description="Tổng số dư")
     total_items: int = Field(..., description="Số lượng tài khoản")
+    full_name_vn: str = Field(..., description="Họ tên chủ tài khoản")
     account_info_list: List[CasaAccountByCIFNumberResponse] = Field(..., description="Chi tiết tài khoản")
 
 
