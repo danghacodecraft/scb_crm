@@ -60,7 +60,6 @@ if os.getenv("DEBUG", True):
         logger.debug(f"\n{statement}")
         logger.debug(parameters)
 
-
     @event.listens_for(Engine, "after_cursor_execute")
     def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
         total = time.time() - conn.info['query_start_time'].pop(-1)

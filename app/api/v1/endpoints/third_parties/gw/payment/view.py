@@ -137,3 +137,23 @@ async def gw_redeem_account(
 ):
     redeem_account_response = await CtrGWPayment(current_user).ctr_gw_redeem_account(redeem_account=redeem_account)
     return ResponseData[PaymentSuccessResponse](**redeem_account_response)
+
+
+@router.post(
+    path="/transfer-pd/",
+    name="[GW] Chuyển khoản",
+    description="Chuyển khoản - Phê duyệt",
+    responses=swagger_response(
+        response_model=ResponseData[PaymentSuccessResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_casa_transfer_pd(
+        current_user=Depends(get_current_user_from_header()),
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch")
+):
+    casa_transfer_pd = await CtrGWPayment(current_user).ctr_gw_save_casa_transfer_info(
+        BOOKING_ID=BOOKING_ID
+    )
+
+    return ResponseData[PaymentSuccessResponse](**casa_transfer_pd)

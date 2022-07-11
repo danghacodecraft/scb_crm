@@ -320,3 +320,33 @@ async def repos_gw_get_tele_transfer(current_user: UserInfoResponse, data_input)
         )
 
     return ReposReturn(data=tele_transfer)
+
+
+async def repos_gw_get_retrieve_ben_name_by_account_number(current_user: UserInfoResponse, data_input):
+    is_success, ben_name = await service_gw.get_ben_name_by_account_number(
+        current_user=current_user,
+        data_input=data_input
+    )
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="repos_gw_get_retrieve_ben_name_by_account_number",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(ben_name)
+        )
+    return ReposReturn(data=ben_name)
+
+
+async def repos_gw_get_retrieve_ben_name_by_card_number(current_user: UserInfoResponse, data_input):
+    is_success, ben_name = await service_gw.get_ben_name_by_card_number(
+        current_user=current_user,
+        data_input=data_input
+    )
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="repos_gw_get_retrieve_ben_name_by_card_number",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(ben_name)
+        )
+    return ReposReturn(data=ben_name)
