@@ -650,6 +650,10 @@ class CtrGWPayment(BaseController):
         vat_tax = fee_amount / 10
         total = fee_amount + vat_tax
         actual_total = int(total + transfer_amount)
+        is_transfer_payer = False
+        if fee_info['is_transfer_payer'] is not None:
+            if fee_info['is_transfer_payer'] is True:
+                is_transfer_payer = True
 
         request_data = {}
 
@@ -744,7 +748,7 @@ class CtrGWPayment(BaseController):
                     "p_blk_amendment_rate": "",
                     "p_blk_main": {
                         "PRODUCT": {
-                            "DETAILS_OF_CHARGE": "Y" if fee_info['is_transfer_payer'] else "O",
+                            "DETAILS_OF_CHARGE": "Y" if is_transfer_payer else "O",
                             "PAYMENT_FACILITY": "O"
                         },
                         "TRANSACTION_LEG": {
@@ -777,7 +781,7 @@ class CtrGWPayment(BaseController):
                         "SETTLEMENTS": {
                             "TRANSFER_DETAIL": {
                                 "BENEFICIARY_ACCOUNT_NUMBER": form_data['receiver_account_number'],
-                                "BENEFICIARY_NAME": form_data['receiver_fullname_vn'],
+                                "BENEFICIARY_NAME": form_data['receiver_full_name_vn'],
                                 "BENEFICIARY_ADRESS": form_data['receiver_province']['name'],
                                 "ID_NO": "",
                                 "ISSUE_DATE": "",
@@ -785,7 +789,7 @@ class CtrGWPayment(BaseController):
                             },
                             "ORDERING_CUSTOMER": {
                                 "ORDERING_ACC_NO": form_data['receiver_account_number'],
-                                "ORDERING_NAME": form_data['receiver_fullname_vn'],
+                                "ORDERING_NAME": form_data['receiver_full_name_vn'],
                                 "ORDERING_ADDRESS": form_data['receiver_province']['name'],
                                 "ID_NO": "",
                                 "ISSUE_DATE": "",
@@ -812,7 +816,7 @@ class CtrGWPayment(BaseController):
                         "account_num": form_data["sender_account_number"]
                     },
                     "customer_info": {
-                        "full_name": form_data["sender_fullname_vn"]
+                        "full_name": form_data["sender_full_name_vn"]
                     },
                     # TODO
                     "staff_maker": {
@@ -836,7 +840,7 @@ class CtrGWPayment(BaseController):
                     "trans_date": datetime_to_string(_time=now()),
                     "time_stamp": datetime_to_string(_time=now(), _format=DATETIME_INPUT_OUTPUT_REVERT_FORMAT),
                     "trans_id": "20220629160002159368",
-                    "amount": int(actual_total),
+                    "amount": actual_total,
                     "description": form_data["content"],
                     "account_from_info": {
                         "account_num": form_data["sender_account_number"]
@@ -861,7 +865,6 @@ class CtrGWPayment(BaseController):
                     }
                 }
             }
-
         self.call_repos(await repos_gw_save_casa_transfer_info(
             current_user=self.current_user,
             receiving_method=receiving_method,
