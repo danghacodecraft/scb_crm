@@ -21,7 +21,6 @@ from app.api.v1.endpoints.third_parties.gw.payment.schema import (
 )
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.validator import validate_history_data
-from app.settings.config import DATETIME_INPUT_OUTPUT_REVERT_FORMAT
 from app.third_parties.oracle.models.master_data.bank import BankBranch
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.utils.constant.business_type import (
@@ -863,8 +862,8 @@ class CtrGWPayment(BaseController):
             request_data = {
                 "data_input": {
                     "ben_id": "970436",
-                    "trans_date": datetime_to_string(_time=now()),
-                    "time_stamp": datetime_to_string(_time=now(), _format=DATETIME_INPUT_OUTPUT_REVERT_FORMAT),
+                    "trans_date": datetime_to_string(now()),
+                    "time_stamp": datetime_to_string(now()),
                     "trans_id": "20220629160002159368",
                     "amount": actual_total,
                     "description": form_data["content"],
@@ -896,8 +895,8 @@ class CtrGWPayment(BaseController):
             request_data = {
                 "data_input": {
                     "ben_id": "970436",
-                    "trans_date": datetime_to_string(_time=now()),
-                    "time_stamp": datetime_to_string(_time=now(), _format=DATETIME_INPUT_OUTPUT_REVERT_FORMAT),
+                    "trans_date": datetime_to_string(now()),
+                    "time_stamp": datetime_to_string(now()),
                     "trans_id": "20220629160002159368",
                     "amount": actual_total,
                     "description": form_data["content"],
