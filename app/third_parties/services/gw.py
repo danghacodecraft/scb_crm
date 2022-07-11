@@ -15,12 +15,17 @@ from app.utils.constant.gw import (
     GW_EMPLOYEE_FROM_NAME, GW_EMPLOYEES,
     GW_ENDPOINT_URL_CHECK_EXITS_ACCOUNT_CASA,
     GW_ENDPOINT_URL_DEPOSIT_OPEN_ACCOUNT_TD,
-    GW_ENDPOINT_URL_HISTORY_CHANGE_FIELD, GW_ENDPOINT_URL_PAY_IN_CASH,
+    GW_ENDPOINT_URL_HISTORY_CHANGE_FIELD, GW_ENDPOINT_URL_INTERBANK_TRANSFER,
+    GW_ENDPOINT_URL_INTERBANK_TRANSFER_247_BY_ACCOUNT_NUMBER,
+    GW_ENDPOINT_URL_INTERBANK_TRANSFER_247_BY_CARD_NUMBER,
+    GW_ENDPOINT_URL_INTERNAL_TRANSFER, GW_ENDPOINT_URL_PAY_IN_CASH,
     GW_ENDPOINT_URL_PAY_IN_CASH_247_BY_ACCOUNT_NUMBER,
     GW_ENDPOINT_URL_PAY_IN_CASH_247_BY_CARD_NUMBER,
     GW_ENDPOINT_URL_PAYMENT_AMOUNT_BLOCK,
     GW_ENDPOINT_URL_PAYMENT_AMOUNT_UNBLOCK, GW_ENDPOINT_URL_REDEEM_ACCOUNT,
     GW_ENDPOINT_URL_RETRIEVE_AUTHORIZED_ACCOUNT_NUM,
+    GW_ENDPOINT_URL_RETRIEVE_BEN_NAME_BY_ACCOUNT_NUMBER,
+    GW_ENDPOINT_URL_RETRIEVE_BEN_NAME_BY_CARD_NUMBER,
     GW_ENDPOINT_URL_RETRIEVE_CLOSE_CASA_ACCOUNT,
     GW_ENDPOINT_URL_RETRIEVE_CO_OWNER_ACCOUNT_NUM,
     GW_ENDPOINT_URL_RETRIEVE_CURRENT_ACCOUNT_CASA,
@@ -48,7 +53,8 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_SELECT_CATEGORY,
     GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE,
     GW_ENDPOINT_URL_SELECT_SERIAL_NUMBER, GW_ENDPOINT_URL_SELECT_USER_INFO,
-    GW_ENDPOINT_URL_WITHDRAW, GW_FUNCTION_OPEN_CASA, GW_HISTORY_ACCOUNT_NUM,
+    GW_ENDPOINT_URL_TT_LIQUIDATION, GW_ENDPOINT_URL_WITHDRAW,
+    GW_FUNCTION_OPEN_CASA, GW_HISTORY_ACCOUNT_NUM,
     GW_HISTORY_CHANGE_FIELD_ACCOUNT, GW_RETRIEVE_CASA_ACCOUNT_DETAIL,
     GW_SELF_SELECTED_ACCOUNT_FLAG, GW_SELF_UNSELECTED_ACCOUNT_FLAG
 )
@@ -501,6 +507,86 @@ class ServiceGW:
         )
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_TELE_TRANSFER_INFO}"
+
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data
+                else:
+                    return_data = await response.json()
+                    return True, return_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data
+
+    async def get_ben_name_by_account_number(
+            self,
+            current_user: UserInfoResponse,
+            data_input
+    ):
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="retrieveBenNameByAccNum_in", data_input=data_input
+        )
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_BEN_NAME_BY_ACCOUNT_NUMBER}"
+
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data
+                else:
+                    return_data = await response.json()
+                    return True, return_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data
+
+    async def get_ben_name_by_card_number(
+            self,
+            current_user: UserInfoResponse,
+            data_input
+    ):
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="retrieveBenNameByCardNum_in", data_input=data_input
+        )
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_BEN_NAME_BY_CARD_NUMBER}"
 
         return_errors = dict(
             loc="SERVICE GW",
@@ -1146,10 +1232,10 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
-    async def get_working_process_info_from_code(self, current_user: UserInfoResponse, staff_code):
+    async def get_working_process_info_from_code(self, current_user: UserInfoResponse):
         data_input = {
             "employee_info": {
-                "staff_code": staff_code
+                "staff_code": current_user.code
             }
         }
         request_data = self.gw_create_request_body(
@@ -1187,10 +1273,10 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
-    async def get_reward_info_from_code(self, current_user: UserInfoResponse, staff_code):
+    async def get_reward_info_from_code(self, current_user: UserInfoResponse):
         data_input = {
             "employee_info": {
-                "staff_code": staff_code,
+                "staff_code": current_user.code,
                 "staff_type": "KHEN_THUONG",
                 "department_info": {
                     "department_code": "ALL"
@@ -1235,10 +1321,10 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
-    async def get_discipline_info_from_code(self, current_user: UserInfoResponse, staff_code):
+    async def get_discipline_info_from_code(self, current_user: UserInfoResponse):
         data_input = {
             "employee_info": {
-                "staff_code": staff_code,
+                "staff_code": current_user.code,
                 "staff_type": "KY_LUAT",
                 "department_info": {
                     "department_code": "ALL"
@@ -1283,10 +1369,10 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
-    async def get_topic_info_from_code(self, current_user: UserInfoResponse, staff_code):
+    async def get_topic_info_from_code(self, current_user: UserInfoResponse):
         data_input = {
             "employee_info": {
-                "staff_code": staff_code,
+                "staff_code": current_user.code,
                 "staff_type": "DAO_TAO_NOI_BO",
                 "department_info": {
                     "department_code": "ALL"
@@ -1331,10 +1417,10 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
-    async def get_kpis_info_from_code(self, current_user: UserInfoResponse, staff_code):
+    async def get_kpis_info_from_code(self, current_user: UserInfoResponse):
         data_input = {
             "employee_info": {
-                "staff_code": staff_code
+                "staff_code": str(int(current_user.code))
             }
         }
         request_data = self.gw_create_request_body(
@@ -1372,10 +1458,10 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
-    async def get_staff_other_info_from_code(self, current_user: UserInfoResponse, staff_code):
+    async def get_staff_other_info_from_code(self, current_user: UserInfoResponse):
         data_input = {
             "employee_info": {
-                "staff_code": staff_code,
+                "staff_code": current_user.code,
                 "staff_type": "OTHER_INFO",
                 "department_info": {
                     "department_code": "ALL"
@@ -1887,6 +1973,175 @@ class ServiceGW:
             current_user=current_user, function_name="payInCash247byAccNum_in", data_input=data_input
         )
         api_url = f"{self.url}{GW_ENDPOINT_URL_PAY_IN_CASH_247_BY_ACCOUNT_NUMBER}"
+
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW][Payment] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data
+                else:
+                    return_data = await response.json()
+                    return True, return_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data
+
+    async def gw_payment_internal_transfer(self, current_user: UserInfoResponse, data_input):
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="internal_transfer_in", data_input=data_input)
+        api_url = f"{self.url}{GW_ENDPOINT_URL_INTERNAL_TRANSFER}"
+
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW][Payment] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data
+                else:
+                    return_data = await response.json()
+                    return True, return_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data
+
+    async def gw_payment_tt_liquidation(self, current_user: UserInfoResponse, data_input):
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="ttLiquidation_in", data_input=data_input)
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_TT_LIQUIDATION}"
+
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW][Payment] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data
+                else:
+                    return_data = await response.json()
+                    return True, return_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data
+
+    async def gw_payment_interbank_transfer(self, current_user: UserInfoResponse, data_input):
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="interbankTransfer_in", data_input=data_input)
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_INTERBANK_TRANSFER}"
+
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW][Payment] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data
+                else:
+                    return_data = await response.json()
+                    return True, return_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data
+
+    async def gw_payment_interbank_transfer_247_by_account_number(self, current_user: UserInfoResponse, data_input):
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="interbankTransfer247ByAccNum_in", data_input=data_input)
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_INTERBANK_TRANSFER_247_BY_ACCOUNT_NUMBER}"
+
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW][Payment] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data
+                else:
+                    return_data = await response.json()
+                    return True, return_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data
+
+    async def gw_payment_interbank_transfer_247_by_card_number(self, current_user: UserInfoResponse, data_input):
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="interbankTransfer247ByCardNum_in", data_input=data_input)
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_INTERBANK_TRANSFER_247_BY_CARD_NUMBER}"
 
         return_errors = dict(
             loc="SERVICE GW",

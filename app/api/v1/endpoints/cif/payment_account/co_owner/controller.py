@@ -20,7 +20,7 @@ from app.third_parties.oracle.models.master_data.customer import CustomerGender
 from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.gw import GW_REQUEST_PARAMETER_CO_OWNER
 from app.utils.error_messages import (
-    ERROR_ACCOUNT_ID_DOES_NOT_EXIST, ERROR_CIF_ID_DOES_NOT_EXIST,
+    ERROR_ACCOUNT_ID_DOES_NOT_EXIST, ERROR_CIF_ID_NOT_EXIST,
     ERROR_CIF_NUMBER_NOT_EXIST, ERROR_DOCUMENT_ID_DOES_NOT_EXIST
 )
 from app.utils.functions import dropdown, generate_uuid
@@ -145,7 +145,7 @@ class CtrCoOwner(BaseController):
 
         if not account_id:
             return self.response_exception(
-                msg=ERROR_CIF_ID_DOES_NOT_EXIST, loc=account_id
+                msg=ERROR_CIF_ID_NOT_EXIST, loc=account_id
             )
 
         account_co_owner = self.call_repos(await repos_account_co_owner(

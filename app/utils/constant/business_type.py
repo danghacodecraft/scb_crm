@@ -8,6 +8,7 @@ BUSINESS_TYPE_AMOUNT_BLOCK = "AMOUNT_BLOCK"
 BUSINESS_TYPE_AMOUNT_UNBLOCK = "AMOUNT_UNBLOCK"
 BUSINESS_TYPE_REDEEM_ACCOUNT = "REDEEM_ACCOUNT"
 BUSINESS_TYPE_CASA_TOP_UP = "CASA_TOP_UP"
+BUSINESS_TYPE_CASA_TRANSFER = "TRANSFER"
 
 BUSINESS_TYPES = {
     BUSINESS_TYPE_INIT_CIF: "Mở CIF",
@@ -19,7 +20,8 @@ BUSINESS_TYPES = {
     BUSINESS_TYPE_AMOUNT_UNBLOCK: "Giải tỏa tài khoản",
     BUSINESS_TYPE_REDEEM_ACCOUNT: "Tất toán tài khoản",
     BUSINESS_TYPE_CASA_TOP_UP: "Nộp tiền mặt vào tài khoản thanh toán",
-    BUSINESS_TYPE_OPEN_TD_ACCOUNT: "Mở mới tài khoản tiết kiệm"
+    BUSINESS_TYPE_OPEN_TD_ACCOUNT: "Mở mới tài khoản tiết kiệm",
+    BUSINESS_TYPE_CASA_TRANSFER: "Chuyển khoản tài khoản thanh toán"
 }
 
 # Những business type không cần dùng cif
