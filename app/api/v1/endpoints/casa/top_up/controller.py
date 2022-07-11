@@ -446,9 +446,9 @@ class CtrCasaTopUp(BaseController):
             loc=f'receiver_province -> id: {receiver_province_id}'
         )
 
-        # validate sender_place_of_issue
+        # validate receiver_place_of_issue
         await self.get_model_object_by_id(
-            model_id=data.sender_place_of_issue.id, model=PlaceOfIssue, loc='sender_place_of_issue -> id'
+            model_id=data.receiver_place_of_issue.id, model=PlaceOfIssue, loc='receiver_place_of_issue -> id'
         )
 
         data.receiving_method = receiving_method
