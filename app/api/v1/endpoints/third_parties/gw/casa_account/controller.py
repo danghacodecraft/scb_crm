@@ -64,8 +64,9 @@ class CtrGWCasaAccount(BaseController):
         ))
         response_data = {}
         total_balances = 0
-        account_info_list = account_info['selectCurrentAccountFromCIF_out']['data_output']['customer_info'][
-            'account_info_list']
+        customer_info = account_info['selectCurrentAccountFromCIF_out']['data_output']['customer_info']
+        account_info_list = customer_info['account_info_list']
+        full_name_vn = customer_info['full_name']
         account_infos = []
         for account in account_info_list:
             account_info_item = account['account_info_item']
@@ -101,6 +102,7 @@ class CtrGWCasaAccount(BaseController):
 
         response_data.update(dict(
             total_balances=total_balances,
+            full_name_vn=full_name_vn,
             total_items=len(account_infos),
             account_info_list=account_infos
         ))
