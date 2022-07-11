@@ -10,7 +10,8 @@ from app.api.v1.endpoints.third_parties.gw.payment.repository import (
     repos_create_booking_payment, repos_gw_pay_in_cash,
     repos_gw_payment_amount_block, repos_gw_payment_amount_unblock,
     repos_gw_redeem_account, repos_pay_in_cash_247_by_acc_num,
-    repos_payment_amount_block, repos_payment_amount_unblock
+    repos_pay_in_cash_247_by_card_num, repos_payment_amount_block,
+    repos_payment_amount_unblock
 )
 from app.api.v1.endpoints.third_parties.gw.payment.schema import (
     RedeemAccountRequest
@@ -27,9 +28,13 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_BLOCK,
     PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_UNBLOCK, PROFILE_HISTORY_STATUS_INIT
 )
-from app.utils.constant.gw import GW_CASA_RESPONSE_STATUS_SUCCESS
+from app.utils.constant.gw import (
+    GW_CASA_RESPONSE_STATUS_SUCCESS, GW_DATE_FORMAT, GW_DATETIME_FORMAT,
+    GW_GL_BRANCH_CODE
+)
 from app.utils.functions import (
-    datetime_to_string, now, orjson_dumps, orjson_loads
+    date_string_to_other_date_string_format, datetime_to_string, now,
+    orjson_dumps, orjson_loads
 )
 
 
@@ -567,7 +572,7 @@ class CtrGWPayment(BaseController):
             data_input=data_input,
             current_user=current_user
         ))
-        return self.response(data=gw_pay_in_cash)
+        return gw_pay_in_cash
 
     async def ctr_gw_pay_in_cash_247_by_acc_num(
             self,
@@ -582,7 +587,11 @@ class CtrGWPayment(BaseController):
         data_input = {
             "customer_info": {
                 "full_name": form_data['sender_full_name_vn'],
-                "birthday": form_data['sender_birthday']  # TODO
+                "birthday": date_string_to_other_date_string_format(
+                    date_input=form_data['sender_issued_date'],
+                    from_format=GW_DATETIME_FORMAT,
+                    to_format=GW_DATE_FORMAT
+                )
             },
             "id_info": {
                 "id_num": form_data['sender_identity_number']
@@ -600,6 +609,59 @@ class CtrGWPayment(BaseController):
             },
             "ben_id": ben['data'][0]['id'],
             "account_from_info": {
+                "account_num": GW_GL_BRANCH_CODE
+            },
+            "staff_maker": {
+                "staff_code": "annvh"   # TODO
+            },
+            "staff_checker": {
+                "staff_code": "THUYTP"  # TODO
+            },
+            "branch_info": {
+                "branch_code": current_user_info.hrm_branch_code
+            }
+        }
+        gw_pay_in_cash_247_by_acc_num = self.call_repos(await repos_pay_in_cash_247_by_acc_num(
+            data_input=data_input,
+            current_user=current_user
+        ))
+        return gw_pay_in_cash_247_by_acc_num
+
+    async def ctr_gw_pay_in_cash_247_by_card_num(
+            self,
+            booking_id: str,
+            form_data: dict
+    ):
+        current_user = self.current_user
+        current_user_info = current_user.user_info
+
+        ben = await CtrConfigBank(current_user).ctr_get_bank_branch(bank_id=form_data['receiver_bank']['id'])
+
+        data_input = {
+            "customer_info": {
+                "full_name": form_data['sender_full_name_vn'],
+                "birthday": date_string_to_other_date_string_format(
+                    date_input=form_data['sender_issued_date'],
+                    from_format=GW_DATETIME_FORMAT,
+                    to_format=GW_DATE_FORMAT
+                )
+            },
+            "id_info": {
+                "id_num": form_data['sender_identity_number']
+            },
+            "address_info": {
+                "address_full": form_data['sender_address_full']
+            },
+            "trans_date": datetime_to_string(now()),
+            "time_stamp": datetime_to_string(now()),
+            "trans_id": booking_id,
+            "amount": form_data['amount'],
+            "description": form_data['content'],
+            "card_to_info": {
+                "card_num": form_data['receiver_card_number']
+            },
+            "ben_id": ben['data'][0]['id'],
+            "account_from_info": {
                 "account_num": "101101001"
             },
             "staff_maker": {
@@ -612,9 +674,9 @@ class CtrGWPayment(BaseController):
                 "branch_code": current_user_info.hrm_branch_code
             }
         }
-        gw_pay_in_cash = self.call_repos(await repos_pay_in_cash_247_by_acc_num(
+        gw_pay_in_cash_247_by_card_num = self.call_repos(await repos_pay_in_cash_247_by_card_num(
             data_input=data_input,
             current_user=current_user
         ))
-        return self.response(data=gw_pay_in_cash)
+        return gw_pay_in_cash_247_by_card_num
     ####################################################################################################################

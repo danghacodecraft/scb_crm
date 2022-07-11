@@ -50,4 +50,5 @@ async def view_get_casa_top_up_info(
     get_casa_top_up_info = await CtrCasaTopUp(current_user).ctr_get_casa_top_up_info(
         booking_id=BOOKING_ID
     )
+    return ResponseData(**get_casa_top_up_info)
     return ResponseData[CasaTopUpResponse](**get_casa_top_up_info)
