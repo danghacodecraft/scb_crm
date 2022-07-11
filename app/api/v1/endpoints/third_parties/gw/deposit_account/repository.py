@@ -105,7 +105,7 @@ async def repos_gw_deposit_open_account_td(current_user, data_input):
 async def repos_get_booking_account_by_booking(booking_id, session):
     booking_account = session.execute(
         select(
-            BookingAccount.account_id
+            BookingAccount.td_account_id
         ).filter(BookingAccount.booking_id == booking_id)
     ).scalars().all()
 

@@ -537,7 +537,7 @@ class CtrGWCasaAccount(BaseController):
                     msg=ERROR_CALL_SERVICE_GW,
                     detail=str(response_data)
                 )
-            xref = response_data['data']['payInCash_out']['data_output']['xref']['p_xref']
+            xref = response_data['payInCash_out']['data_output']['xref']['p_xref']
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
             is_success, response_data = await CtrGWPayment(current_user).ctr_gw_pay_in_cash_247_by_acc_num(

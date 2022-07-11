@@ -78,3 +78,14 @@ async def repos_save_td_account(
         .values(transaction_id=saving_transaction_daily['transaction_id'])
     )
     return ReposReturn(data=booking_id)
+
+
+@auto_commit
+async def repos_update_td_account(
+    booking_id,
+    update_td_account,
+    session
+):
+    session.bulk_update_mappings(TdAccount, update_td_account)
+
+    return ReposReturn(data=booking_id)
