@@ -710,33 +710,28 @@ class CtrCasaTransfer(BaseController):
         )
         account_list = gw_account_info['data']
         account_info_list = account_list['account_info_list']
+        full_name_vn = account_list['full_name_vn']
 
-        source_accounts = dict(
-            total_items=account_list['total_items'],
-            casa_accounts=[dict(
-                number=account["number"],
-            ) for account in account_info_list]
-        )
+        total_items = account_list['total_items']
+
+        casa_accounts = []
         numbers = []
-        for account in source_accounts['casa_accounts']:
-            number = account["number"]
-            gw_account_detail = await CtrGWCasaAccount(current_user).ctr_gw_get_casa_account_info(account_number=number)
-            account_detail = gw_account_detail['data']
-            customer_info = account_detail['customer_info']
-            account_info = account_detail['account_info']
-            numbers.append(number)
-            account.update(
-                number=account_info['number'],
-                fullname_vn=customer_info['fullname_vn'],
-                balance_available=account_info['balance_available'],
-                currency=account_info['currency']
-            )
+
+        for account in account_info_list:
+            casa_accounts.append(dict(
+                number=account["number"],
+                fullname_vn=full_name_vn,
+                balance_available=account['balance_available'],
+                currency=account['currency']
+            ))
+            numbers.append(account["number"])
+
         acc_types = self.call_repos(await repos_get_acc_types(
             numbers=numbers,
             session=self.oracle_session
         ))
 
-        for account in source_accounts['casa_accounts']:
+        for account in casa_accounts:
             number = account["number"]
             for casa_account_number, acc_type in acc_types:
                 if number == casa_account_number:
@@ -744,6 +739,11 @@ class CtrCasaTransfer(BaseController):
                         account_type=acc_type
                     )
                     break
+
+        source_accounts = dict(
+            total_items=total_items,
+            casa_accounts=casa_accounts
+        )
 
         return self.response(source_accounts)
 
