@@ -35,7 +35,9 @@ from app.utils.constant.business_type import BUSINESS_TYPE_CASA_TOP_UP
 from app.utils.constant.casa import (
     CASA_ACCOUNT_STATUS_UNAPPROVED, RECEIVING_METHOD_SCB_TO_ACCOUNT,
     RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT,
-    RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD
+    RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD,
+    RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY,
+    RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT
 )
 from app.utils.constant.cif import BUSINESS_FORM_CLOSE_CASA
 from app.utils.constant.gw import (
@@ -531,21 +533,37 @@ class CtrGWCasaAccount(BaseController):
             is_success, response_data = await CtrGWPayment(current_user).ctr_gw_pay_in_cash(form_data=form_data)
             if not is_success:
                 return self.response_exception(
+                    loc='pay_in_cash',
                     msg=ERROR_CALL_SERVICE_GW,
                     detail=str(response_data)
                 )
             xref = response_data['payInCash_out']['data_output']['xref']['p_xref']
 
-        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
-            is_success, response_data = await CtrGWPayment(current_user).ctr_gw_pay_in_cash_247_by_acc_num(
+        if receiving_method in [RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT, RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY]:
+            is_success, gw_response_data = await CtrGWPayment(current_user).ctr_gw_interbank_transfer(
                 booking_id=booking_id,
                 form_data=form_data
             )
             if not is_success:
                 return self.response_exception(
+                    loc='interbank_transfer',
+                    msg=ERROR_CALL_SERVICE_GW,
+                    detail=str(gw_response_data)
+                )
+            response_data = gw_response_data
+
+        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
+            is_success, gw_response_data = await CtrGWPayment(current_user).ctr_gw_pay_in_cash_247_by_acc_num(
+                booking_id=booking_id,
+                form_data=form_data
+            )
+            if not is_success:
+                return self.response_exception(
+                    loc='pay_in_cash_247_by_acc_num',
                     msg=ERROR_CALL_SERVICE_GW,
                     detail=str(response_data)
                 )
+            response_data = gw_response_data
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
             is_success, gw_response_data = await CtrGWPayment(current_user).ctr_gw_pay_in_cash_247_by_card_num(
@@ -554,6 +572,7 @@ class CtrGWCasaAccount(BaseController):
             )
             if not is_success:
                 return self.response_exception(
+                    loc='pay_in_cash_247_by_card_num',
                     msg=ERROR_CALL_SERVICE_GW,
                     detail=str(gw_response_data)
                 )
