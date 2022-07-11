@@ -13,7 +13,6 @@ class TdAccountRequest(BaseSchema):
     account_class_id: str = Field(..., description='Loại hình tài khoản')
     amount: Optional[int] = Field(None, description='Số dư hiện tại')
     pay_in_amount: int = Field(..., description='Thông tin nguồn tiền đầu vào')
-    pay_in_casa_account: Optional[str] = Field(None, description='Tài khoản nguồn tiền đầu vào')
     pay_out_interest_casa_account: str = Field(..., description='Tài khoản nhận lãi')
     pay_out_casa_account: str = Field(..., description='Tài khoản nhận gốc')
     td_contract_num: str = Field(..., description='Số hợp đồng')

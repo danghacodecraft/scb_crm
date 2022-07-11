@@ -281,16 +281,18 @@ class CtrKSS(BaseController):
             "username": post_check_request.username,
             "post_control": post_control_request
         }
-
-        post_check_response = self.call_repos(await repos_create_post_check(payload_data=payload_data))
-
-        # TODO
-        booking_id, booking_code = self.call_repos(await repos_create_booking_kss( # noqa
+        booking_id, booking_code = self.call_repos(await repos_create_booking_kss(
             business_type_code=BUSINESS_TYPE_EKYC_AUDIT,
             current_user=current_user.user_info,
             payload_data=payload_data,
             session=self.oracle_session
         ))
+
+        post_check_response = self.call_repos(await repos_create_post_check(
+            payload_data=payload_data,
+            booking_id=booking_id
+        ))
+
         return self.response(data=post_check_response)
 
     async def ctr_update_post_check(

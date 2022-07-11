@@ -49,7 +49,7 @@ class CtrDeposit(BaseController):
                 "active_flag": False,
                 "amount": item.amount,
                 "pay_in_amount": item.pay_in_amount,
-                "pay_in_casa_account": item.pay_in_casa_account,
+                "pay_in_casa_account": None,
                 "pay_out_interest_casa_account": item.pay_out_interest_casa_account,
                 "pay_out_casa_account": item.pay_out_casa_account,
                 "td_contract_num": item.td_contract_num,

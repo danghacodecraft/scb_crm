@@ -254,6 +254,8 @@ class CtrGWDepositAccount(BaseController):
                 session=self.oracle_session
             )
         )
+        response_data = []
+
         td_accounts = self.call_repos(
             await repos_get_td_account(
                 td_accounts=booking_account,
@@ -296,16 +298,24 @@ class CtrGWDepositAccount(BaseController):
                         "p_blk_intprodmap": "",
                         "p_blk_inteffdtmap": "",
                         "p_blk_intsde": "",
-                        "p_blk_tddetails": "",
+                        "p_blk_tddetails": [
+                            {
+                                "TD_AMOUNT": int(item.TdAccount.pay_in_amount),
+                                "ROLLOVER_TYPE": item.TdAccount.td_rollover_type
+                            }
+                        ],
                         "p_blk_amount_dates": "",
                         "p_blk_turnovers": "",
                         "p_blk_noticepref": "",
                         "p_blk_acc_nominees": "",
                         "p_blk_dcdmaster": "",
                         "p_blk_tdpayindetails": [
+                            # TODO hard core  PAYIN_TYPE, PAYIN_PERCENTAGE
                             {
-                                "TD_AMOUNT": int(item.TdAccount.pay_in_amount),
-                                "ROLLOVER_TYPE": item.TdAccount.td_rollover_type
+                                "PAYIN_TYPE": "S",
+                                "PAYIN_PERCENTAGE": "100",
+                                "PAYIN_TDAMOUNT": item.TdAccount.pay_in_amount,
+                                "PAYIN_ACC": item.TdAccount.pay_in_casa_account
                             }
                         ],
                         "p_blk_tdpayoutdetails": "",
@@ -361,10 +371,11 @@ class CtrGWDepositAccount(BaseController):
                     }
                 }
             }
-            gw_deposit_open_account_td = self.call_repos(await repos_gw_deposit_open_account_td( # noqa
+            gw_deposit_open_account_td = self.call_repos(await repos_gw_deposit_open_account_td(
                 current_user=current_user,
                 data_input=data_input
             ))
-
-        return self.response(data=(data_input, customer, booking_account))
+            print('gw_deposit_open_account_td', gw_deposit_open_account_td)
+            response_data.append(gw_deposit_open_account_td)
+        return self.response(data=td_accounts)
         # return self.response(data=gw_deposit_open_account_td)

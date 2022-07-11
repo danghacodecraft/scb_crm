@@ -2,6 +2,7 @@ from datetime import date
 from typing import List
 
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn
 from app.settings.event import service_gw
@@ -102,14 +103,15 @@ async def repos_gw_deposit_open_account_td(current_user, data_input):
     return ReposReturn(data=gw_deposit_open_account_td)
 
 
-async def repos_get_booking_account_by_booking(booking_id, session):
-    booking_account = session.execute(
+async def repos_get_booking_account_by_booking(booking_id, session: Session):
+    booking_accounts = session.execute(
         select(
-            BookingAccount.td_account_id
-        ).filter(BookingAccount.booking_id == booking_id)
-    ).scalars().all()
+            BookingAccount
+        )
+        .filter(BookingAccount.booking_id == booking_id)
+    ).all()
 
-    return ReposReturn(data=booking_account)
+    return ReposReturn(data=booking_accounts)
 
 
 async def repos_get_customer_by_booking_account(td_accounts: List, session):
