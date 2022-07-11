@@ -60,7 +60,7 @@ from app.utils.error_messages import (
 )
 from app.utils.functions import (
     date_string_to_other_date_string_format, dropdown, generate_uuid, now,
-    orjson_dumps, orjson_loads
+    orjson_dumps, orjson_loads, string_to_date
 )
 from app.utils.vietnamese_converter import (
     convert_to_unsigned_vietnamese, make_short_name, split_name
@@ -367,7 +367,7 @@ class CtrCasaTopUp(BaseController):
         await self.get_model_object_by_id(model_id=data.receiver_branch.id, model=Branch, loc='branch -> id')
 
         # validate issued_date
-        await self.validate_issued_date(issued_date=data.receiver_issued_date, loc='issued_date')
+        await self.validate_issued_date(issued_date=data.receiver_issued_date, loc='receiver_issued_date')
 
         # validate receiver_place_of_issue
         place_of_issue = await self.get_model_object_by_id(
@@ -596,7 +596,7 @@ class CtrCasaTopUp(BaseController):
             data.sender_full_name_vn = customer_detail['full_name']
             customer_identity_detail = customer_detail['id_info']
             data.sender_identity_number = customer_identity_detail['id_num']
-            data.sender_issued_date = customer_identity_detail['id_issued_date']
+            data.sender_issued_date = string_to_date(customer_identity_detail['id_issued_date'])
             data.sender_address_full = customer_detail['t_address_info']['contact_address_full']
             data.sender_mobile_number = customer_detail['mobile_phone']
         # TH2: Không nhập CIF
