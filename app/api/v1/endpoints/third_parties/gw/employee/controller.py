@@ -383,10 +383,9 @@ class CtrGWEmployee(BaseController):
                      position=working_process_info['position'], )
                 for working_process_info in working_process_infos]))
 
-    async def ctr_gw_get_reward_info_from_code(self, staff_code: str):
+    async def ctr_gw_get_reward_info_from_code(self):
         current_user = self.current_user
         gw_reward_info = self.call_repos(await repos_gw_get_reward_info_from_code(
-            staff_code=staff_code,
             current_user=current_user
         ))
 
@@ -416,10 +415,9 @@ class CtrGWEmployee(BaseController):
                     signer=reward_info['reward_signer'])
                 for reward_info in reward_infos]))
 
-    async def ctr_gw_get_discipline_info_from_code(self, staff_code: str):
+    async def ctr_gw_get_discipline_info_from_code(self):
         current_user = self.current_user
         gw_discipline_info = self.call_repos(await repos_gw_get_discipline_info_from_code(
-            staff_code=staff_code,
             current_user=current_user
         ))
 
@@ -473,10 +471,9 @@ class CtrGWEmployee(BaseController):
                 description=topic_info['topic_description'])
                 for topic_info in topic_infos]))
 
-    async def ctr_gw_get_kpis_info_from_code(self, staff_code: str):
+    async def ctr_gw_get_kpis_info_from_code(self):
         current_user = self.current_user
         gw_kpis_info = self.call_repos(await repos_gw_get_kpis_info_from_code(
-            staff_code=staff_code,
             current_user=current_user
         ))
 

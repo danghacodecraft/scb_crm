@@ -108,11 +108,9 @@ async def repos_gw_get_reward_info_from_code(staff_code: str, current_user):
     return ReposReturn(data=employee_info)
 
 
-async def repos_gw_get_discipline_info_from_code(staff_code: str, current_user):
+async def repos_gw_get_discipline_info_from_code(current_user):
     current_user = current_user.user_info
-    is_success, employee_info = await service_gw.get_discipline_info_from_code(
-        staff_code=staff_code, current_user=current_user
-    )
+    is_success, employee_info = await service_gw.get_discipline_info_from_code(current_user=current_user)
     if not is_success:
         return ReposReturn(
             is_error=True,
@@ -140,10 +138,10 @@ async def repos_gw_get_topic_info_from_code(staff_code: str, current_user):
     return ReposReturn(data=employee_info)
 
 
-async def repos_gw_get_kpis_info_from_code(staff_code: str, current_user):
+async def repos_gw_get_kpis_info_from_code(current_user):
     current_user = current_user.user_info
     is_success, employee_info = await service_gw.get_kpis_info_from_code(
-        staff_code=staff_code, current_user=current_user
+        current_user=current_user
     )
     if not is_success:
         return ReposReturn(

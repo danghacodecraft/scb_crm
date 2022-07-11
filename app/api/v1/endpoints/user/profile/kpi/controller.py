@@ -5,7 +5,7 @@ from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
 
 class CtrKpi(BaseController):
     async def ctr_kpi(self):
-        current_user = self.current_user.user_info
+        current_user = self.current_user
         if not current_user:
             return self.response_exception(
                 msg=USER_NOT_EXIST,
@@ -13,26 +13,22 @@ class CtrKpi(BaseController):
                 loc="current_user"
             )
 
-        employee_id = current_user.code
-
-        is_success, kpis = self.call_repos(
+        gw_kpis = self.call_repos(
             await repos_kpi(
-                employee_id=employee_id,
-                session=self.oracle_session
+                current_user=current_user
             )
         )
-        if not is_success:
-            return self.response_exception(msg=str(kpis))
 
+        kpis = gw_kpis['selectKpisInfoFromCode_out']['data_output']['kpi_info_list']['kpi_info_item']
         response_kpis = []
         if kpis:
             response_kpis = [
                 {
-                    "assessment_period": kpi["DATE"],
-                    "total_score": kpi["KPI"],
-                    "completion_rate": kpi["PER"],
-                    "result": kpi["RES"],
-                    "note": kpi["NOTE"]
+                    "assessment_period": kpi["period_name"],
+                    "total_score": kpi["total_point"],
+                    "completion_rate": kpi["kpi_completed"],
+                    "result": kpi["grade_name"],
+                    "note": kpi["kpi_note"]
                 } for kpi in kpis
             ]
         return self.response(data=response_kpis)
