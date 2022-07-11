@@ -142,6 +142,7 @@ class CtrDeposit(BaseController):
             session=self.oracle_session
         ))
         update_td_account = []
+
         for item in booking_accounts:
             update_td_account.append({
                 "id": item.id,
