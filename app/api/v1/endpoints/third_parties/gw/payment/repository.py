@@ -20,8 +20,8 @@ from app.utils.constant.approval import (
 )
 from app.utils.constant.casa import (
     RECEIVING_METHOD_SCB_BY_IDENTITY, RECEIVING_METHOD_SCB_TO_ACCOUNT,
-    RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT,
-    RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD,
+    RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT,
+    RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD,
     RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY,
     RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT
 )
@@ -30,9 +30,7 @@ from app.utils.constant.cif import (
     BUSINESS_FORM_CASA_TRANSFER_PD
 )
 from app.utils.constant.gw import GW_CASA_RESPONSE_STATUS_SUCCESS
-from app.utils.error_messages import (
-    ERROR_BOOKING_CODE_EXISTED, ERROR_CALL_SERVICE_GW, MESSAGE_STATUS
-)
+from app.utils.error_messages import ERROR_BOOKING_CODE_EXISTED, MESSAGE_STATUS
 from app.utils.functions import generate_uuid, now, orjson_dumps
 
 
@@ -270,19 +268,10 @@ async def repos_gw_redeem_account(current_user, data_input):
 async def repos_gw_pay_in_cash(
         current_user: AuthResponse, data_input: dict
 ):
-    is_success, gw_pay_in_cash = await service_gw.gw_pay_in_cash(
+    gw_pay_in_cash = await service_gw.gw_pay_in_cash(
         data_input=data_input,
         current_user=current_user.user_info
     )
-    pay_in_cash = gw_pay_in_cash.get('payInCash_out', {})
-    # check trường hợp lỗi
-    if pay_in_cash['transaction_info']['transaction_error_code'] != GW_CASA_RESPONSE_STATUS_SUCCESS:
-        return ReposReturn(
-            is_error=True,
-            msg=ERROR_CALL_SERVICE_GW,
-            detail=str(gw_pay_in_cash),
-            loc='repos_gw_pay_in_cash'
-        )
 
     return ReposReturn(data=gw_pay_in_cash)
 
@@ -296,6 +285,17 @@ async def repos_pay_in_cash_247_by_acc_num(
     )
 
     return ReposReturn(data=gw_pay_in_cash_247_by_acc_num)
+
+
+async def repos_pay_in_cash_247_by_card_num(
+        current_user: AuthResponse, data_input: dict
+):
+    gw_pay_in_cash_247_by_card_num = await service_gw.gw_pay_in_cash_247_by_card_num(
+        data_input=data_input,
+        current_user=current_user.user_info
+    )
+
+    return ReposReturn(data=gw_pay_in_cash_247_by_card_num)
 
 
 @auto_commit
@@ -330,12 +330,12 @@ async def repos_gw_save_casa_transfer_info(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )
         function_out = 'tt_liquidation_out'
-    if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT:
+    if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
         is_success, gw_casa_transfer = await service_gw.gw_payment_interbank_transfer_247_by_account_number(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )
         function_out = 'interbankTransfer247ByAccNum_out'
-    if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD:
+    if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
         is_success, gw_casa_transfer = await service_gw.gw_payment_interbank_transfer_247_by_card_number(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )

@@ -37,8 +37,8 @@ from app.utils.constant.business_type import BUSINESS_TYPE_CASA_TRANSFER
 from app.utils.constant.casa import (
     RECEIVING_METHOD__METHOD_TYPES, RECEIVING_METHOD_ACCOUNT_CASES,
     RECEIVING_METHOD_SCB_BY_IDENTITY, RECEIVING_METHOD_SCB_TO_ACCOUNT,
-    RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT,
-    RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD,
+    RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT,
+    RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD,
     RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY,
     RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT, RECEIVING_METHODS
 )
@@ -116,7 +116,7 @@ class CtrCasaTransfer(BaseController):
                     address_full=form_data['receiver_address_full'],
                 )
 
-            if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT:
+            if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
                 receiver_account_number = form_data['receiver_account_number']
                 gw_full_name = await CtrGWCasaAccount(
                     current_user=current_user
@@ -134,7 +134,7 @@ class CtrCasaTransfer(BaseController):
                     fullname_vn=full_name,
                     address_full=form_data['receiver_address_full']
                 )
-        elif receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD:
+        elif receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
             receiver_card_number = form_data['receiver_card_number']
             full_name = await CtrGWCasaAccount(current_user=current_user).ctr_gw_get_retrieve_ben_name_by_card_number(
                 card_number=receiver_card_number
@@ -642,11 +642,11 @@ class CtrCasaTransfer(BaseController):
                 saving_customer, saving_customer_identity, saving_customer_address
             ) = await CtrCustomer(current_user).ctr_create_non_resident_customer(data=data)
 
-        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT:
+        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
             casa_transfer_info = await self.ctr_save_casa_transfer_third_party_247_to_account(
                 current_user=current_user, data=data)
 
-        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_CARD:
+        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
             casa_transfer_info = await self.ctr_save_casa_transfer_third_party_247_to_card(
                 current_user=current_user, data=data)
 
