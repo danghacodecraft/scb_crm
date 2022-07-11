@@ -81,9 +81,6 @@ class CtrCasaTopUp(BaseController):
         # Thông tin người thụ hưởng
         ################################################################################################################
         receiver_response = {}
-        bank_id = form_data['receiver_bank']['id']
-        bank = await self.get_model_object_by_id(model_id=bank_id, model=Bank, loc=f'bank_id: {bank_id}')
-        dropdown_bank = dropdown(bank)
 
         if receiving_method in RECEIVING_METHOD_ACCOUNT_CASES:
             receiver_account_number = form_data['receiver_account_number']
@@ -109,6 +106,10 @@ class CtrCasaTopUp(BaseController):
                 )
 
             if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
+                bank_id = form_data['receiver_bank']['id']
+                bank = await self.get_model_object_by_id(model_id=bank_id, model=Bank, loc=f'bank_id: {bank_id}')
+                dropdown_bank = dropdown(bank)
+
                 receiver_province_id = form_data['receiver_province']['id']
                 province = await self.get_model_object_by_id(
                     model_id=receiver_province_id,
@@ -124,6 +125,10 @@ class CtrCasaTopUp(BaseController):
                 )
 
             if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
+                bank_id = form_data['receiver_bank']['id']
+                bank = await self.get_model_object_by_id(model_id=bank_id, model=Bank, loc=f'bank_id: {bank_id}')
+                dropdown_bank = dropdown(bank)
+
                 receiver_response.update(
                     bank=dropdown_bank,
                     fullname_vn="abc",   # TODO: Lấy Họ tên từ E-bank
@@ -131,6 +136,10 @@ class CtrCasaTopUp(BaseController):
                     address_full=form_data['receiver_address_full']
                 )
         elif receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
+            bank_id = form_data['receiver_bank']['id']
+            bank = await self.get_model_object_by_id(model_id=bank_id, model=Bank, loc=f'bank_id: {bank_id}')
+            dropdown_bank = dropdown(bank)
+
             receiver_response.update(
                 bank=dropdown_bank,  # TODO: đợi e-bank
                 account_number=form_data['receiver_card_number'],  # TODO: đợi e-bank
@@ -159,28 +168,27 @@ class CtrCasaTopUp(BaseController):
                 )
 
             if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
-                branch_id = form_data['branch']['id']
+                bank_id = form_data['receiver_bank']['id']
+                bank = await self.get_model_object_by_id(model_id=bank_id, model=Bank, loc=f'bank_id: {bank_id}')
+                dropdown_bank = dropdown(bank)
+
+                receiver_province_id = form_data['receiver_province']['id']
+                province = await self.get_model_object_by_id(
+                    model_id=receiver_province_id,
+                    model=AddressProvince,
+                    loc=f'receiver_province_id: {receiver_province_id}'
+                )
                 receiver_response.update(
-                    # bank=form_data['bank'],
-                    bank=dict(
-                        code=branch_id,
-                        name=branch_id
-                    ),  # TODO: đợi e-bank
+                    bank=dropdown_bank,
                     # province=dropdown(branch_info.address_province),
-                    province=dict(
-                        code=branch_id,
-                        name=branch_id
-                    ),  # TODO: đợi e-bank
-                    branch_info=dict(
-                        code=branch_id,
-                        name=branch_id
-                    ),  # TODO: đợi e-bank
-                    fullname_vn=form_data['full_name_vn'],
-                    identity_number=form_data['identity_number'],
-                    issued_date=form_data['issued_date'],
+                    province=dropdown(province),
+                    bank_branch_info=form_data['receiver_bank_branch'],
+                    fullname_vn=form_data['receiver_full_name_vn'],
+                    identity_number=form_data['receiver_identity_number'],
+                    issued_date=form_data['receiver_issued_date'],
                     place_of_issue=dropdown(receiver_place_of_issue_id),
-                    mobile_number=form_data['mobile_number'],
-                    address_full=form_data['address_full']
+                    mobile_number=form_data['receiver_mobile_number'],
+                    address_full=form_data['receiver_address_full']
                 )
 
         ################################################################################################################
@@ -428,6 +436,14 @@ class CtrCasaTopUp(BaseController):
             model_id=data.receiver_bank.id,
             model=Bank,
             loc=f'receiver_bank -> id: {receiver_bank_id}'
+        )
+
+        # validate province
+        receiver_province_id = data.receiver_province.id
+        await self.get_model_object_by_id(
+            model_id=receiver_province_id,
+            model=AddressProvince,
+            loc=f'receiver_province -> id: {receiver_province_id}'
         )
 
         # validate sender_place_of_issue
