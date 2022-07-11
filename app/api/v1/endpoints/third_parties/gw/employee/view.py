@@ -11,10 +11,9 @@ from app.api.v1.endpoints.third_parties.gw.employee.example import (
     EMPLOYEE_CODE_EXAMPLE, EMPLOYEE_DISCIPLINE_SUCCESS_EXAMPLE,
     EMPLOYEE_INFO_CODE_EXAMPLE, EMPLOYEE_INFO_SUCCESS_EXAMPLE,
     EMPLOYEE_KPIS_SUCCESS_EXAMPLE, EMPLOYEE_LIST_SUCCESS_EXAMPLE,
-    EMPLOYEE_REWARD_SUCCESS_EXAMPLE, EMPLOYEE_STAFF_OTHER_CODE_EXAMPLE,
-    EMPLOYEE_STAFF_OTHER_SUCCESS_EXAMPLE, EMPLOYEE_TOPIC_SUCCESS_EXAMPLE,
-    EMPLOYEE_USER_NAME_EXAMPLE, EMPLOYEE_WORKING_PROCESS_SUCCESS_EXAMPLE,
-    ORG_ID_EXAMPLE
+    EMPLOYEE_REWARD_SUCCESS_EXAMPLE, EMPLOYEE_STAFF_OTHER_SUCCESS_EXAMPLE,
+    EMPLOYEE_TOPIC_SUCCESS_EXAMPLE, EMPLOYEE_USER_NAME_EXAMPLE,
+    EMPLOYEE_WORKING_PROCESS_SUCCESS_EXAMPLE, ORG_ID_EXAMPLE
 )
 from app.api.v1.endpoints.third_parties.gw.employee.schema import (
     GWEmployeeDisciplineResponse, GWEmployeeInfoResponse,
@@ -161,7 +160,7 @@ async def view_gw_get_discipline_info_from_code(
 
 
 @router.post(
-    path="/topic/{staff_code}",
+    path="/topic/",
     name="[GW] Lấy thông tin đào tạo nội bộ theo mã nhân viên",
     description="Lấy thông tin đào tạo nội bộ theo mã nhân viên",
     responses=swagger_response(
@@ -171,12 +170,9 @@ async def view_gw_get_discipline_info_from_code(
     )
 )
 async def view_gw_get_topic_info_from_code(
-        staff_code: str = Path(..., description="Mã số nhân viên", example=EMPLOYEE_INFO_CODE_EXAMPLE),
         current_user=Depends(get_current_user_from_header())
 ):
-    working_process_info = await CtrGWEmployee(current_user).ctr_gw_get_topic_info_from_code(
-        staff_code=staff_code
-    )
+    working_process_info = await CtrGWEmployee(current_user).ctr_gw_get_topic_info_from_code()
     return ResponseData[GWEmployeeTopicResponse](**working_process_info)
 
 
@@ -198,7 +194,7 @@ async def view_gw_get_kpis_info_from_code(
 
 
 @router.post(
-    path="/staff-other/{staff_code}",
+    path="/staff-other/",
     name="[GW] Lấy thông tin khác theo mã nhân viên",
     description="Lấy thông tin khác theo mã nhân viên",
     responses=swagger_response(
@@ -208,10 +204,7 @@ async def view_gw_get_kpis_info_from_code(
     )
 )
 async def view_gw_get_staff_other_info_from_code(
-        staff_code: str = Path(..., description="Mã số nhân viên", example=EMPLOYEE_STAFF_OTHER_CODE_EXAMPLE),
         current_user=Depends(get_current_user_from_header())
 ):
-    staff_other = await CtrGWEmployee(current_user).ctr_gw_get_staff_other_info_from_code(
-        staff_code=staff_code
-    )
+    staff_other = await CtrGWEmployee(current_user).ctr_gw_get_staff_other_info_from_code()
     return ResponseData[GWEmployeeStaffOtherResponse](**staff_other)

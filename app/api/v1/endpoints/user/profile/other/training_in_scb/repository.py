@@ -6,6 +6,10 @@ from app.settings.event import service_gw
 async def repos_training_in_scb(
         current_user: AuthResponse,
 ) -> ReposReturn:
-    training_in_scbs = await service_gw.get_topic_info_from_code(current_user=current_user.user_info)
+    is_success, data_response = await service_gw.get_topic_info_from_code(
+        current_user=current_user.user_info)
 
-    return ReposReturn(data=training_in_scbs)
+    if not is_success:
+        return ReposReturn(is_error=True, msg=str(data_response), loc="employee_training_in_scb'")
+
+    return ReposReturn(data=data_response)

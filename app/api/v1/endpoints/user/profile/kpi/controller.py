@@ -13,11 +13,7 @@ class CtrKpi(BaseController):
                 loc="current_user"
             )
 
-        gw_kpis = self.call_repos(
-            await repos_kpi(
-                current_user=current_user
-            )
-        )
+        gw_kpis = self.call_repos(await repos_kpi(current_user=current_user))
 
         kpis = gw_kpis['selectKpisInfoFromCode_out']['data_output']['kpi_info_list']['kpi_info_item']
         response_kpis = []

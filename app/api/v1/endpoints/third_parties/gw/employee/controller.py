@@ -358,10 +358,9 @@ class CtrGWEmployee(BaseController):
             )
         ))
 
-    async def ctr_gw_get_working_process_info_from_code(self, staff_code: str):
+    async def ctr_gw_get_working_process_info_from_code(self):
         current_user = self.current_user
         gw_working_process_info = self.call_repos(await repos_gw_get_working_process_info_from_code(
-            staff_code=staff_code,
             current_user=current_user
         ))
 
@@ -442,10 +441,9 @@ class CtrGWEmployee(BaseController):
                 description=discipline_info['discipline_description'])
                 for discipline_info in discipline_infos]))
 
-    async def ctr_gw_get_topic_info_from_code(self, staff_code: str):
+    async def ctr_gw_get_topic_info_from_code(self):
         current_user = self.current_user
         gw_topic_info = self.call_repos(await repos_gw_get_topic_info_from_code(
-            staff_code=staff_code,
             current_user=current_user
         ))
 
@@ -490,10 +488,9 @@ class CtrGWEmployee(BaseController):
                 note=kpis_info['kpi_note'])
                 for kpis_info in kpis_infos]))
 
-    async def ctr_gw_get_staff_other_info_from_code(self, staff_code: str):
+    async def ctr_gw_get_staff_other_info_from_code(self):
         current_user = self.current_user
         gw_staff_other_info = self.call_repos(await repos_gw_get_staff_other_info_from_code(
-            staff_code=staff_code,
             current_user=current_user
         ))
 
