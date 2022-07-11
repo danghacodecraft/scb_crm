@@ -8,7 +8,7 @@ from app.utils.functions import datetime_to_date, string_to_datetime
 
 class CtrTrainingInSCB(BaseController):
     async def ctr_training_in_scb(self):
-        current_user = self.current_user.user_info
+        current_user = self.current_user
         if not current_user:
             return self.response_exception(
                 msg=USER_NOT_EXIST,
@@ -16,15 +16,10 @@ class CtrTrainingInSCB(BaseController):
                 loc="current_user"
             )
 
-        employee_id = current_user.code
+        gw_training_in_scbs = self.call_repos(await repos_training_in_scb(current_user=current_user))
 
-        is_success, training_in_scbs = self.call_repos(
-            await repos_training_in_scb(
-                employee_id=employee_id
-            )
-        )
-        if not is_success:
-            return self.response_exception(msg=str(training_in_scbs))
+        training_in_scbs = gw_training_in_scbs['selectTopicInfoFromCode_out']['data_output'][
+            'topic_info_list']['topic_info_item']
 
         response_training_in_scbs = [dict(
             topic=None,
@@ -39,17 +34,17 @@ class CtrTrainingInSCB(BaseController):
 
             response_training_in_scbs = []
             for training_in_scb in training_in_scbs:
-                topic = training_in_scb["CHU_DE"]
-                code = training_in_scb["MA_KHOA_HOC"]
-                name = training_in_scb["TEN_KHOA_HOC"]
+                topic = training_in_scb["topic_description"]
+                code = training_in_scb["topic_code"]
+                name = training_in_scb["topic_name"]
 
-                from_date = training_in_scb["TU_NGAY"]
+                from_date = training_in_scb["from_date"]
                 from_date = datetime_to_date(string_to_datetime(from_date)) if from_date else None
 
-                to_date = training_in_scb["DEN_NGAY"]
+                to_date = training_in_scb["to_date"]
                 to_date = datetime_to_date(string_to_datetime(to_date)) if to_date else None
 
-                result = training_in_scb["KET_QUA"]
+                result = training_in_scb["topic_result"]
 
                 response_training_in_scbs.append(dict(
                     topic=topic,

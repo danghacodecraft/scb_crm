@@ -1232,10 +1232,10 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
-    async def get_working_process_info_from_code(self, current_user: UserInfoResponse, staff_code):
+    async def get_working_process_info_from_code(self, current_user: UserInfoResponse):
         data_input = {
             "employee_info": {
-                "staff_code": staff_code
+                "staff_code": current_user.code
             }
         }
         request_data = self.gw_create_request_body(
@@ -1273,10 +1273,10 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
-    async def get_reward_info_from_code(self, current_user: UserInfoResponse, staff_code):
+    async def get_reward_info_from_code(self, current_user: UserInfoResponse):
         data_input = {
             "employee_info": {
-                "staff_code": staff_code,
+                "staff_code": current_user.code,
                 "staff_type": "KHEN_THUONG",
                 "department_info": {
                     "department_code": "ALL"
@@ -1321,10 +1321,10 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
-    async def get_discipline_info_from_code(self, current_user: UserInfoResponse, staff_code):
+    async def get_discipline_info_from_code(self, current_user: UserInfoResponse):
         data_input = {
             "employee_info": {
-                "staff_code": staff_code,
+                "staff_code": current_user.code,
                 "staff_type": "KY_LUAT",
                 "department_info": {
                     "department_code": "ALL"
@@ -1369,10 +1369,10 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
-    async def get_topic_info_from_code(self, current_user: UserInfoResponse, staff_code):
+    async def get_topic_info_from_code(self, current_user: UserInfoResponse):
         data_input = {
             "employee_info": {
-                "staff_code": staff_code,
+                "staff_code": current_user.code,
                 "staff_type": "DAO_TAO_NOI_BO",
                 "department_info": {
                     "department_code": "ALL"
@@ -1417,10 +1417,10 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
-    async def get_kpis_info_from_code(self, current_user: UserInfoResponse, staff_code):
+    async def get_kpis_info_from_code(self, current_user: UserInfoResponse):
         data_input = {
             "employee_info": {
-                "staff_code": staff_code
+                "staff_code": str(int(current_user.code))
             }
         }
         request_data = self.gw_create_request_body(
@@ -1458,10 +1458,10 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
-    async def get_staff_other_info_from_code(self, current_user: UserInfoResponse, staff_code):
+    async def get_staff_other_info_from_code(self, current_user: UserInfoResponse):
         data_input = {
             "employee_info": {
-                "staff_code": staff_code,
+                "staff_code": current_user.code,
                 "staff_type": "OTHER_INFO",
                 "department_info": {
                     "department_code": "ALL"
