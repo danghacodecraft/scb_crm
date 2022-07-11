@@ -31,9 +31,7 @@ from app.api.v1.endpoints.third_parties.repository import (
 )
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
-from app.settings.config import (
-    DATETIME_INPUT_OUTPUT_FORMAT, DATETIME_INPUT_OUTPUT_REVERT_FORMAT
-)
+from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.utils.constant.approval import CIF_STAGE_APPROVE_KSV
 from app.utils.constant.business_type import BUSINESS_TYPE_CASA_TOP_UP
 from app.utils.constant.casa import (
@@ -646,8 +644,8 @@ class CtrGWCasaAccount(BaseController):
             },
             # TODO
             "ben_id": "970436",
-            "trans_date": datetime_to_string(_time=now()),
-            "time_stamp": datetime_to_string(_time=now(), _format=DATETIME_INPUT_OUTPUT_REVERT_FORMAT),
+            "trans_date": datetime_to_string(now()),
+            "time_stamp": datetime_to_string(now()),
             "trans_id": "20220629160002159368",
             # TODO
             "staff_maker": {
@@ -683,8 +681,8 @@ class CtrGWCasaAccount(BaseController):
             },
             # TODO
             "ben_id": "970436",
-            "trans_date": datetime_to_string(_time=now()),
-            "time_stamp": datetime_to_string(_time=now(), _format=DATETIME_INPUT_OUTPUT_REVERT_FORMAT),
+            "trans_date": datetime_to_string(now()),
+            "time_stamp": datetime_to_string(now()),
             "trans_id": "20220629160002159368",
             # TODO
             "staff_maker": {
