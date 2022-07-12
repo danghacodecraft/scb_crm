@@ -37,7 +37,8 @@ from app.utils.constant.approval import (
     COMPLETED_STAGES, INIT_RESPONSE, INIT_STAGES, STAGE_BEGINS
 )
 from app.utils.constant.business_type import (
-    BUSINESS_TYPE_CASA_TOP_UP, BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPES
+    BUSINESS_TYPE_CASA_TOP_UP, BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_WITHDRAW,
+    BUSINESS_TYPES
 )
 from app.utils.constant.casa import RECEIVING_METHOD_IDENTITY_CASES
 from app.utils.constant.cif import (
@@ -644,25 +645,25 @@ class CtrApproval(BaseController):
         no_cif_flag = False
 
         # Nghiệp vụ không cần cif
-        if business_type_id == BUSINESS_TYPE_CASA_TOP_UP:
+        if business_type_id in [BUSINESS_TYPE_CASA_TOP_UP, BUSINESS_TYPE_WITHDRAW]:
             no_cif_flag = True
             booking_business_form = await CtrBooking().ctr_get_booking_business_form(
                 booking_id=booking_id, session=self.oracle_session
             )
             form_data = orjson_loads(booking_business_form.form_data)
-
-            # TH1: Method không có cif
-            if form_data['receiving_method'] in RECEIVING_METHOD_IDENTITY_CASES:
-                return self.response_exception(
-                    msg=f"{form_data['receiving_method']}",
-                    detail="Đang nâng cấp"
-                )
-            # TH2: Method BẮT BUỘC có cif
-            elif not cif_id:
-                return self.response_exception(
-                    msg=ERROR_FIELD_REQUIRED,
-                    loc=f'cif_id, business_type_id:{business_type_id}'
-                )
+            if business_type_id == BUSINESS_TYPE_CASA_TOP_UP:
+                # TH1: Method không có cif
+                if form_data['receiving_method'] in RECEIVING_METHOD_IDENTITY_CASES:
+                    return self.response_exception(
+                        msg=f"{form_data['receiving_method']}",
+                        detail="Đang nâng cấp"  # TODO
+                    )
+                # TH2: Method BẮT BUỘC có cif
+                elif not cif_id:
+                    return self.response_exception(
+                        msg=ERROR_FIELD_REQUIRED,
+                        loc=f'cif_id, business_type_id:{business_type_id}'
+                    )
 
         # Nghiệp vụ khác
         else:
