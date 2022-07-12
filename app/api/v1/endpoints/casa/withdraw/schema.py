@@ -21,11 +21,11 @@ class ReceiverInfoResponse(BaseSchema):
 # III. Thông tin phí
 class FeeInfoResponse(BaseSchema):
     is_transfer_payer: bool = Field(..., description="Cờ thu phí cùng giao dịch, `true` = Có, `false` = Không")
-    payer: str = Field(..., description="Bên chuyển")
-    fee_amount: int = Field(..., description="Số tiền phí")
-    vat_tax: float = Field(..., description="Thuế VAT")
-    total: float = Field(..., description="Tổng số tiền phí")
-    actual_total: float = Field(..., description="Số tiền thực chuyển")
+    payer_flag: Optional[bool] = Field(None, description="Bên thanh toán phí, `true`: Bên chuyển, `false` = Bên nhận'")
+    fee_amount: Optional[int] = Field(None, description="Số tiền phí")
+    vat_tax: Optional[float] = Field(None, description="Thuế VAT")
+    total: Optional[float] = Field(None, description="Tổng số tiền phí")
+    actual_total: Optional[float] = Field(None, description="Số tiền thực chuyển")
 
 
 # A. Thông tin giao dịch
@@ -119,7 +119,7 @@ class FeeInfoRequest(BaseSchema):
         ...,
         description=' 1. Cờ có thu phí hay không, `true`: Có thu phí, `false` = Không thu phí'
     )
-    payer: Optional[str] = Field(None, description="Bên thanh toán phí")
+    payer_flag: bool = Field(None, description="Bên thanh toán phí, `true`: Bên chuyển, `false` = Bên nhận'")
     fee_amount: Optional[int] = Field(None, description="3. Số tiền phí")
 
 
