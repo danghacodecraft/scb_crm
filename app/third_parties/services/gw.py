@@ -1,3 +1,4 @@
+import json
 from datetime import date
 from typing import Optional
 
@@ -72,6 +73,38 @@ class ServiceGW:
     async def stop(self):
         await self.session.close()
         self.session = None
+
+    async def call_api(self, api_url: str, request_data: json, output_key: str, service_name: str):
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW][{service_name}] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data
+                else:
+                    return_data = await response.json()
+                    if return_data[output_key]['transaction_info']['transaction_error_code'] != GW_TRANSACTION_RESPONSE_STATUS_SUCCESS:
+                        return False, return_data
+                    return True, return_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data
 
     ####################################################################################################################
     # START --- CASA
@@ -1909,36 +1942,14 @@ class ServiceGW:
         )
         api_url = f"{self.url}{GW_ENDPOINT_URL_INTERBANK_TRANSFER}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
-        )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='interbankTransfer_out',
+            service_name='interbankTransfer'
         )
 
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW][Payment] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    if return_data['interbankTransfer_out']['transaction_info']['transaction_error_code'] != GW_TRANSACTION_RESPONSE_STATUS_SUCCESS:
-                        return False, return_data
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
+        return response_data
 
     async def gw_payment_redeem_account(self, request_data):
         api_url = f"{self.url}{GW_ENDPOINT_URL_REDEEM_ACCOUNT}"

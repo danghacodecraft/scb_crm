@@ -10,11 +10,12 @@ from app.api.v1.endpoints.cif.repository import (
 )
 from app.api.v1.endpoints.config.bank.controller import CtrConfigBank
 from app.api.v1.endpoints.third_parties.gw.payment.repository import (
-    repos_create_booking_payment, repos_gw_pay_in_cash,
-    repos_gw_payment_amount_block, repos_gw_payment_amount_unblock,
-    repos_gw_redeem_account, repos_gw_save_casa_transfer_info,
-    repos_pay_in_cash_247_by_acc_num, repos_pay_in_cash_247_by_card_num,
-    repos_payment_amount_block, repos_payment_amount_unblock
+    repos_create_booking_payment, repos_gw_interbank_transfer,
+    repos_gw_pay_in_cash, repos_gw_payment_amount_block,
+    repos_gw_payment_amount_unblock, repos_gw_redeem_account,
+    repos_gw_save_casa_transfer_info, repos_pay_in_cash_247_by_acc_num,
+    repos_pay_in_cash_247_by_card_num, repos_payment_amount_block,
+    repos_payment_amount_unblock
 )
 from app.api.v1.endpoints.third_parties.gw.payment.schema import (
     RedeemAccountRequest
@@ -584,6 +585,86 @@ class CtrGWPayment(BaseController):
             current_user=current_user
         ))
         return gw_pay_in_cash
+
+    async def ctr_gw_interbank_transfer(
+            self,
+            booking_id: str,
+            form_data: dict
+    ):
+        current_user = self.current_user
+
+        data_input = {
+            "account_info": {
+                "account_bank_code": "92204006",
+                "account_product_package": "FT01"
+            },
+            "staff_info_checker": {
+                "staff_name": "HOANT2"
+            },
+            "staff_info_maker": {
+                "staff_name": "KHANHLQ"
+            },
+            "p_blk_mis": "",
+            "p_blk_udf": "",
+            "p_blk_refinance_rates": "",
+            "p_blk_amendment_rate": "",
+            "p_blk_main": {
+                "PRODUCT": {
+                    "DETAILS_OF_CHARGE": "Y",
+                    "PAYMENT_FACILITY": "O"
+                },
+                "TRANSACTION_LEG": {
+                    "ACCOUNT": '459906034',
+                    "AMOUNT": 10000000
+                },
+                "RATE": {
+                    "EXCHANGE_RATE": 0,
+                    "LCY_EXCHANGE_RATE": 0,
+                    "LCY_AMOUNT": 0
+                },
+                "ADDITIONAL_INFO": {
+                    "RELATED_CUSTOMER": "1674213",
+                    "NARRATIVE": "NARRATIVE"
+                }
+            },
+            "p_blk_charge": [
+                {
+                    "CHARGE_NAME": "PHI DV TT TRONG NUOC  711003001",
+                    "CHARGE_AMOUNT": 10000,
+                    "WAIVED": "N"
+                },
+                {
+                    "CHARGE_NAME": "THUE VAT",
+                    "CHARGE_AMOUNT": 0,
+                    "WAIVED": "N"
+                }
+            ],
+            "p_blk_settlement_detail": {
+                "SETTLEMENTS": {
+                    "TRANSFER_DETAIL": {
+                        "BENEFICIARY_ACCOUNT_NUMBER": "0973824427",
+                        "BENEFICIARY_NAME": "NGUYEN THANH HOA",
+                        "BENEFICIARY_ADRESS": "SAI GON",
+                        "ID_NO": "",
+                        "ISSUE_DATE": "",
+                        "ISSUER": ""
+                    },
+                    "ORDERING_CUSTOMER": {
+                        "ORDERING_ACC_NO": "0973824427",
+                        "ORDERING_NAME": "NGUYEN THANH HOA",
+                        "ORDERING_ADDRESS": "SAI GON",
+                        "ID_NO": "",
+                        "ISSUE_DATE": "",
+                        "ISSUER": ""
+                    }
+                }
+            }
+        }
+        gw_interbank_transfer = self.call_repos(await repos_gw_interbank_transfer(
+            data_input=data_input,
+            current_user=current_user
+        ))
+        return gw_interbank_transfer
 
     async def ctr_gw_pay_in_cash_247_by_acc_num(
             self,
