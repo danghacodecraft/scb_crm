@@ -37,16 +37,17 @@ class KSSResponse(BaseSchema):
 
 
 class QueryParamsKSSRequest(BaseSchema):
-    tran_type_id: str = Field(None, description="Theo loại giao dịch")
-    transaction_id: str = Field(None, description='Theo mã giao dịch')
-    approve_status: str = Field(None, description='Theo trạng thái phê duyệt')
-    branch_id: str = Field(None, description='Theo đơn vị')
-    step_status: str = Field(None, description='Theo trạng thái giao dịch')
-    zone_id: str = Field(None, description='Theo vùng')
-    start_date: str = Field(None, description='Từ ngày')
-    end_date: str = Field(None, description='Đến ngày')
-    page_num: int = Field(None, description='Số trang')
-    record_per_page: int = Field(None, description='Số record')
+    tran_type_id: Optional[str] = Field(None, description="Theo loại giao dịch")
+    transaction_id: Optional[str] = Field(None, description='Theo mã giao dịch')
+    approve_status: Optional[str] = Field(None, description='Theo trạng thái phê duyệt')
+    branch_id: Optional[str] = Field(None, description='Theo đơn vị')
+    step_status: Optional[str] = Field(None, description='Theo trạng thái giao dịch')
+    zone_id: Optional[str] = Field(None, description='Theo vùng')
+    start_date: Optional[str] = Field(None, description='Từ ngày')
+    end_date: Optional[str] = Field(None, description='Đến ngày')
+    cif_phone_number_gttt_name: Optional[str] = Field(None, description="Filter by cif, phone number, gttt, full name")
+    page_num: Optional[int] = Field(None, description='Số trang')
+    record_per_page: Optional[int] = Field(None, description='Số record')
 
 
 ####################################################################################################

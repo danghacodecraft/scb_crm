@@ -51,7 +51,7 @@ class CtrKSS(BaseController):
                 error_status_code=status.HTTP_403_FORBIDDEN)
 
         query_data = {}
-
+        query_data.update({'cif_phone_number_gttt_name': query_params.cif_phone_number_gttt_name}) if query_params.cif_phone_number_gttt_name else None
         query_data.update({'transaction_id': query_params.transaction_id}) if query_params.transaction_id else None
         query_data.update({'tran_type_id': query_params.tran_type_id}) if query_params.tran_type_id else None
         query_data.update({'approve_status': query_params.approve_status}) if query_params.approve_status else None
