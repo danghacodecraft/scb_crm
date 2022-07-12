@@ -22,7 +22,7 @@ from app.api.v1.endpoints.third_parties.gw.payment.schema import (
 )
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.validator import validate_history_data
-from app.third_parties.oracle.models.master_data.bank import BankBranch
+from app.third_parties.oracle.models.master_data.address import AddressProvince
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.utils.constant.business_type import (
     BUSINESS_TYPE_AMOUNT_BLOCK, BUSINESS_TYPE_AMOUNT_UNBLOCK,
@@ -773,6 +773,7 @@ class CtrGWPayment(BaseController):
         return gw_pay_in_cash_247_by_card_num
 
     async def ctr_gw_save_casa_transfer_info(self, BOOKING_ID: str):
+        current_user = self.current_user
         get_casa_transfer_info = self.call_repos(await repos_get_casa_transfer_info(
             booking_id=BOOKING_ID,
             session=self.oracle_session
@@ -828,7 +829,7 @@ class CtrGWPayment(BaseController):
                 }
             }
 
-        if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY and \
+        if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY or \
                 receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
             request_data = {
                 "data_input": {
@@ -867,12 +868,19 @@ class CtrGWPayment(BaseController):
             }
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
-            bank_id = form_data['receiver_bank']['id']
-            bank_info = await self.get_model_object_by_id(model_id=bank_id, model=BankBranch, loc='receiver_bank_id')
+            bank_info = await CtrConfigBank(current_user=current_user).ctr_get_bank_branch(
+                bank_id=form_data['receiver_bank']['id'])
+
+            receiver_province_id = form_data['receiver_province']['id']
+            province = await self.get_model_object_by_id(
+                model_id=receiver_province_id,
+                model=AddressProvince,
+                loc=f'receiver_province_id: {receiver_province_id}'
+            )
             request_data = {
                 "data_input": {
                     "account_info": {
-                        "account_bank_code": bank_info.code,
+                        "account_bank_code": bank_info['data'][0]['code'],
                         "account_product_package": "FT01"
                     },
                     "staff_info_checker": {
@@ -921,7 +929,7 @@ class CtrGWPayment(BaseController):
                             "TRANSFER_DETAIL": {
                                 "BENEFICIARY_ACCOUNT_NUMBER": form_data['receiver_account_number'],
                                 "BENEFICIARY_NAME": form_data['receiver_full_name_vn'],
-                                "BENEFICIARY_ADRESS": form_data['receiver_province']['name'],
+                                "BENEFICIARY_ADRESS": province.code,
                                 "ID_NO": "",
                                 "ISSUE_DATE": "",
                                 "ISSUER": ""
@@ -929,7 +937,7 @@ class CtrGWPayment(BaseController):
                             "ORDERING_CUSTOMER": {
                                 "ORDERING_ACC_NO": form_data['receiver_account_number'],
                                 "ORDERING_NAME": form_data['receiver_full_name_vn'],
-                                "ORDERING_ADDRESS": form_data['receiver_province']['name'],
+                                "ORDERING_ADDRESS": province.code,
                                 "ID_NO": "",
                                 "ISSUE_DATE": "",
                                 "ISSUER": ""
@@ -940,9 +948,13 @@ class CtrGWPayment(BaseController):
             }
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
+            # ben = await CtrConfigBank(current_user=current_user).ctr_get_bank_branch(
+            #     bank_id=form_data['receiver_bank']['id'])
+
             request_data = {
                 "data_input": {
-                    "ben_id": "970436",
+                    # "ben_id": ben['data'][0]['id'],
+                    "ben_id": "970436",  # TODO
                     "trans_date": datetime_to_string(now()),
                     "time_stamp": datetime_to_string(now()),
                     "trans_id": "20220629160002159368",
@@ -973,9 +985,13 @@ class CtrGWPayment(BaseController):
             }
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
+            # ben = await CtrConfigBank(current_user=current_user).ctr_get_bank_branch(
+            #     bank_id=form_data['receiver_bank']['id'])
+
             request_data = {
                 "data_input": {
-                    "ben_id": "970436",
+                    # "ben_id": ben['data'][0]['id'],
+                    "ben_id": "970436",  # TODO
                     "trans_date": datetime_to_string(now()),
                     "time_stamp": datetime_to_string(now()),
                     "trans_id": "20220629160002159368",

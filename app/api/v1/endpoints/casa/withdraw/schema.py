@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date
 from typing import List, Optional
 
 from pydantic import Field
@@ -54,7 +54,7 @@ class SenderInfoResponse(BaseSchema):
     cif_number: Optional[str] = Field(None, description="Mã khách hàng giao dịch")
     fullname_vn: Optional[str] = Field(None, description="Người giao dịch")
     identity: Optional[str] = Field(None, description="Giấy tờ định danh")
-    issued_date: Optional[datetime] = Field(None, description="Ngày cấp")
+    issued_date: Optional[date] = Field(None, description="Ngày cấp")
     place_of_issue: Optional[str] = Field(None, description="Nơi cấp")
     address_full: Optional[str] = Field(None, description="Địa chỉ")
     mobile_phone: Optional[str] = Field(None, description="Điện thoại")

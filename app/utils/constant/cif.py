@@ -259,7 +259,7 @@ PROFILE_HISTORY_DESCRIPTIONS_EDIT_CIF = "Tu chỉnh CIF"
 PROFILE_HISTORY_DESCRIPTIONS_OPEN_CASA_ACCOUNT = "Mở tài khoản thanh toán"
 PROFILE_HISTORY_DESCRIPTIONS_TOP_UP_CASA_ACCOUNT = "Nộp tiền vào tài khoản thanh toán"
 PROFILE_HISTORY_DESCRIPTIONS_CLOSE_CASA_ACCOUNT = "Đóng tài khoản thanh toán"
-PROFILE_HISTORY_DESCRIPTIONS_WITHDRAW = "Rút tiền TKTT"
+PROFILE_HISTORY_DESCRIPTIONS_WITHDRAW = "Rút tiền từ Tài khoản thanh toán"
 PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_TD_ACCOUNT = "Mở tài khoản tiết kiệm"
 PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_ACCOUNT = "Mở tài khoản tiết kiệm"
 PROFILE_HISTORY_DESCRIPTIONS_INIT_DEBIT_CARD = "Tạo thẻ ghi nợ"
@@ -320,7 +320,6 @@ PROFILE_HISTORY_DESCRIPTIONS = {
         'description': PROFILE_HISTORY_DESCRIPTIONS_WITHDRAW,
         'content': "Giao dịch viên đang chuẩn bị hồ sơ. "
                    f"Mốc thời gian tính từ lúc GDV điền thông tin tab đầu tiên [{PROFILE_HISTORY_DESCRIPTIONS_WITHDRAW}]"
-                   "Mốc thời gian tính từ lúc GDV điền thông tin tab đầu tiên [Mở tài khoản tiết kiệm]"
     },
     BUSINESS_TYPE_CODE_TRANSFER: {
         'description': PROFILE_HISTORY_DESCRIPTIONS_TRANSFER_CASA_ACCOUNT,
