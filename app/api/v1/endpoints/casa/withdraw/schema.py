@@ -67,8 +67,13 @@ class TransactionalCustomerResponse(BaseSchema):
     sender_info_response: SenderInfoResponse = Field(..., description="II. Thông tin khách hàng giao dịch")
 
 
+class CasaAccountNumResponse(BaseSchema):
+    account_number: str = Field(..., description="Số tài khoản")
+
+
 # Giao dịch rút tiền
 class WithdrawResponse(BaseSchema):
+    casa_account: CasaAccountNumResponse = Field(..., description="Tài khoản nguồn")
     transaction_response: TransactionResponse = Field(..., description="Thông tin giao dịch")
     transactional_customer_response: TransactionalCustomerResponse = Field(..., description="Thông tin giao dịch")
 

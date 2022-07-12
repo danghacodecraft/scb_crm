@@ -20,8 +20,8 @@ from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.validator import validate_history_data
 from app.utils.constant.business_type import BUSINESS_TYPE_WITHDRAW
 from app.utils.constant.cif import (
-    BUSINESS_FORM_WITHDRAW, PROFILE_HISTORY_DESCRIPTIONS_WITHDRAW,
-    PROFILE_HISTORY_STATUS_INIT
+    BUSINESS_FORM_WITHDRAW, CHECK_CONDITION_VAT, CHECK_CONDITION_WITHDRAW,
+    PROFILE_HISTORY_DESCRIPTIONS_WITHDRAW, PROFILE_HISTORY_STATUS_INIT
 )
 from app.utils.error_messages import (
     ERROR_AMOUNT_INVALID, ERROR_CASA_ACCOUNT_NOT_EXIST,
@@ -47,7 +47,7 @@ class CtrWithdraw(BaseController):
         )
 
         casa_account_number = request.transaction_info.source_accounts.account_num
-        if request.transaction_info.receiver_info.amount < 50000:
+        if request.transaction_info.receiver_info.amount < CHECK_CONDITION_WITHDRAW:
             return self.response_exception(
                 msg=ERROR_AMOUNT_INVALID,
                 loc=f"amount: {request.transaction_info.receiver_info.amount}"
@@ -75,7 +75,7 @@ class CtrWithdraw(BaseController):
             return_raw_data_flag=True
         )
         balance = casa_account_balance['customer_info']['account_info']['account_balance']
-        if int(balance) - receiver.amount < 50000:
+        if int(balance) - receiver.amount < CHECK_CONDITION_WITHDRAW:
             return self.response_exception(
                 msg=ERROR_CASA_BALANCE_UNAVAILABLE,
                 loc=f"account_balance: {balance}"
@@ -339,7 +339,7 @@ class CtrWithdraw(BaseController):
         payer_flag = form_data['transaction_info']['fee_info']["payer_flag"]
         if is_transfer_payer:
             if payer_flag:
-                vat_tax = fee_amount / 10
+                vat_tax = fee_amount / CHECK_CONDITION_VAT
                 total = fee_amount + vat_tax
                 actual_total = total + amount
                 is_transfer_payer = False
@@ -428,7 +428,12 @@ class CtrWithdraw(BaseController):
                 mobile_phone=customer_info['mobile_phone'],
                 note=customer_info['note']
             )
+        print('1======================================')
+        print(account_number)
         response_data = dict(
+            casa_account=dict(
+                account_number=account_number
+            ),
             transaction_response=dict(
                 receiver_info_response=receiver_response,
                 fee_info_response=fee_info_response
