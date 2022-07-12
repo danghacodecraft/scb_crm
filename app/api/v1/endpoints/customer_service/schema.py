@@ -31,9 +31,9 @@ class ListKSS(BaseSchema):
 
 class KSSResponse(BaseSchema):
     detail: List[ListKSS] = Field(..., description='Dữ liệu danh sách kiểm soát sau')
-    total_page: int = Field(..., description='Tổng page')
-    total_record: int = Field(..., description='Tổng record')
-    page: int = Field(..., description='Số page')
+    total_page: Optional[int] = Field(..., description='Tổng page')
+    total_record: Optional[int] = Field(..., description='Tổng record')
+    page: Optional[int] = Field(..., description='Số page')
 
 
 class QueryParamsKSSRequest(BaseSchema):
