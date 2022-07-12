@@ -2,12 +2,6 @@ from sqlalchemy import desc, select, update
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
-from app.third_parties.oracle.models.cif.basic_information.identity.model import (
-    CustomerIdentity
-)
-from app.third_parties.oracle.models.cif.basic_information.model import (
-    Customer
-)
 from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingBusinessForm, TransactionDaily, TransactionSender
 )
@@ -33,9 +27,9 @@ async def repos_save_casa_transfer_info(
         saving_transaction_sender: dict,
         saving_transaction_job: dict,
         saving_booking_business_form: dict,
-        saving_customer: dict,
-        saving_customer_identity: dict,
-        saving_customer_address: dict,
+        # saving_customer: dict,
+        # saving_customer_identity: dict,
+        # saving_customer_address: dict,
         session: Session
 ):
     # Lưu log vào DB
@@ -52,11 +46,16 @@ async def repos_save_casa_transfer_info(
         TransactionJob(**saving_transaction_job),
         BookingBusinessForm(**saving_booking_business_form)
     ]
-    if saving_customer and saving_customer_identity and saving_customer_address:
-        insert_list.extend([
-            Customer(**saving_customer),
-            CustomerIdentity(**saving_customer_identity)
-        ])
+    # if saving_customer and saving_customer_identity and saving_customer_address:
+    #     insert_list.extend([
+    #         Customer(**saving_customer),
+    #         CustomerIdentity(**saving_customer_identity),
+    #         CustomerAddress(**saving_customer_address),
+    #         BookingCustomer(
+    #             booking_id=booking_id,
+    #             customer_id=saving_customer['id']
+    #         )
+    #     ])
 
     # Lưu log vào DB
     session.add_all(insert_list)

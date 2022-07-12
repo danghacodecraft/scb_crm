@@ -29,7 +29,7 @@ from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
 from app.api.v1.validator import validate_history_data
 from app.third_parties.oracle.models.master_data.address import AddressProvince
-from app.third_parties.oracle.models.master_data.bank import Bank, BankBranch
+from app.third_parties.oracle.models.master_data.bank import Bank
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.approval import CASA_TRANSFER_STAGE_BEGIN
@@ -47,7 +47,9 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_TRANSFER_CASA_ACCOUNT,
     PROFILE_HISTORY_STATUS_INIT
 )
-from app.utils.constant.gw import GW_REQUEST_DIRECT_INDIRECT
+from app.utils.constant.gw import (
+    GW_DATE_FORMAT, GW_DATETIME_FORMAT, GW_REQUEST_DIRECT_INDIRECT
+)
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_GDV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_GDV
 )
@@ -57,7 +59,8 @@ from app.utils.error_messages import (
     ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
 )
 from app.utils.functions import (
-    dropdown, generate_uuid, now, orjson_dumps, orjson_loads
+    date_string_to_other_date_string_format, dropdown, generate_uuid, now,
+    orjson_dumps, orjson_loads
 )
 from app.utils.vietnamese_converter import (
     convert_to_unsigned_vietnamese, make_short_name, split_name
@@ -104,7 +107,7 @@ class CtrCasaTransfer(BaseController):
 
             if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
                 bank_id = form_data['receiver_bank']['id']
-                bank_info = await self.get_model_object_by_id(model_id=bank_id, model=BankBranch, loc='receiver_bank_id')
+                bank_info = await self.get_model_object_by_id(model_id=bank_id, model=Bank, loc='receiver_bank_id')
                 province_id = form_data['receiver_province']['id']
                 province_info = await self.get_model_object_by_id(model_id=province_id, model=AddressProvince,
                                                                   loc='receiver_province_id')
@@ -126,7 +129,7 @@ class CtrCasaTransfer(BaseController):
                 full_name = gw_full_name['data']['full_name']
                 bank_id = form_data['receiver_bank']['id']
                 bank_info = await self.get_model_object_by_id(
-                    model_id=bank_id, model=BankBranch, loc='receiver_bank'
+                    model_id=bank_id, model=Bank, loc='receiver_bank'
                 )
                 receiver_response = dict(
                     bank=dropdown(bank_info),
@@ -150,13 +153,13 @@ class CtrCasaTransfer(BaseController):
                 address_full=form_data['receiver_address_full']
             )
         else:
-            receiver_place_of_issue_id = await self.get_model_object_by_id(
+            receiver_place_of_issue = await self.get_model_object_by_id(
                 model_id=form_data['receiver_place_of_issue']['id'], model=PlaceOfIssue,
                 loc='receiver_place_of_issue_id')
 
             if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
                 receiver_branch_info = await self.get_model_object_by_id(
-                    model_id=form_data['receiver_branch']['id'], model=BankBranch, loc='receiver_branch_id'
+                    model_id=form_data['receiver_branch']['id'], model=Branch, loc='receiver_branch_id'
                 )
 
                 receiver_response = dict(
@@ -165,7 +168,7 @@ class CtrCasaTransfer(BaseController):
                     fullname_vn=form_data['receiver_full_name_vn'],
                     identity_number=form_data['receiver_identity_number'],
                     issued_date=form_data['receiver_issued_date'],
-                    place_of_issue=dropdown(receiver_place_of_issue_id),
+                    place_of_issue=dropdown(receiver_place_of_issue),
                     mobile_phone=form_data['receiver_mobile_number'],
                     address_full=form_data['receiver_address_full']
                 )
@@ -192,7 +195,7 @@ class CtrCasaTransfer(BaseController):
                     fullname_vn=form_data['receiver_full_name_vn'],
                     identity_number=form_data['receiver_identity_number'],
                     issued_date=form_data['receiver_issued_date'],
-                    place_of_issue=form_data(receiver_place_of_issue_id),
+                    place_of_issue=dropdown(receiver_place_of_issue),
                     mobile_number=form_data['receiver_mobile_number'],
                     address_full=form_data['receiver_address_full']
                 )
@@ -241,7 +244,11 @@ class CtrCasaTransfer(BaseController):
             address_full=gw_customer_info['t_address_info']['contact_address_full'],
             identity_info=dict(
                 number=gw_customer_info_identity_info['id_num'],
-                issued_date=gw_customer_info_identity_info['id_issued_date'],
+                issued_date=date_string_to_other_date_string_format(
+                    gw_customer_info_identity_info['id_issued_date'],
+                    from_format=GW_DATETIME_FORMAT,
+                    to_format=GW_DATE_FORMAT
+                ),
                 place_of_issue=gw_customer_info_identity_info['id_issued_location']
             ),
             mobile_phone=gw_customer_info['mobile_phone'],
@@ -621,15 +628,15 @@ class CtrCasaTransfer(BaseController):
                 current_user=current_user, data=data
             )
 
-        saving_customer = {}
-        saving_customer_identity = {}
-        saving_customer_address = {}
+        # saving_customer = {}
+        # saving_customer_identity = {}
+        # saving_customer_address = {}
         if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
             casa_transfer_info = await self.ctr_save_casa_transfer_scb_by_identity(
                 current_user=current_user, data=data)
-            (
-                saving_customer, saving_customer_identity, saving_customer_address
-            ) = await CtrCustomer(current_user).ctr_create_non_resident_customer(data=data)
+            # (
+            #     saving_customer, saving_customer_identity, saving_customer_address
+            # ) = await CtrCustomer(current_user).ctr_create_non_resident_customer(data=data)
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
             casa_transfer_info = await self.ctr_save_casa_transfer_third_party_to_account(
@@ -638,9 +645,9 @@ class CtrCasaTransfer(BaseController):
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
             casa_transfer_info = await self.ctr_save_casa_transfer_third_party_by_identity(
                 current_user=current_user, data=data)
-            (
-                saving_customer, saving_customer_identity, saving_customer_address
-            ) = await CtrCustomer(current_user).ctr_create_non_resident_customer(data=data)
+            # (
+            #     saving_customer, saving_customer_identity, saving_customer_address
+            # ) = await CtrCustomer(current_user).ctr_create_non_resident_customer(data=data)
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
             casa_transfer_info = await self.ctr_save_casa_transfer_third_party_247_to_account(
@@ -692,9 +699,9 @@ class CtrCasaTransfer(BaseController):
             saving_transaction_sender=saving_transaction_sender,
             saving_transaction_job=saving_transaction_job,
             saving_booking_business_form=saving_booking_business_form,
-            saving_customer=saving_customer,
-            saving_customer_identity=saving_customer_identity,
-            saving_customer_address=saving_customer_address,
+            # saving_customer=saving_customer,
+            # saving_customer_identity=saving_customer_identity,
+            # saving_customer_address=saving_customer_address,
             session=self.oracle_session
         ))
 
