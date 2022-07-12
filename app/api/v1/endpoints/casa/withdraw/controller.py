@@ -72,8 +72,7 @@ class CtrWithdraw(BaseController):
         transactional_customer = request.customer_info.sender_info
 
         # Kiểm tra số tiền rút có đủ hay không
-        casa_account_balance = await CtrGWCasaAccount.ctr_gw_get_casa_account_info(
-            self,
+        casa_account_balance = await CtrGWCasaAccount(current_user=current_user).ctr_gw_get_casa_account_info(
             account_number=casa_account_number,
             return_raw_data_flag=True
         )
@@ -335,7 +334,6 @@ class CtrWithdraw(BaseController):
         # Thông tin phí
         ################################################################################################################
         fee_info_response = {}
-
         fee_info = form_data['transaction_info']['fee_info']
         fee_amount = fee_info['amount']
         is_transfer_payer = form_data['transaction_info']['fee_info']["is_transfer_payer"]
@@ -345,7 +343,6 @@ class CtrWithdraw(BaseController):
                 vat_tax = fee_amount / CHECK_CONDITION_VAT
                 total = fee_amount + vat_tax
                 actual_total = total + amount
-                is_transfer_payer = False
                 fee_info_response.update(dict(
                     fee_amount=fee_info['amount'],
                     vat_tax=vat_tax,
