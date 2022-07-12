@@ -132,8 +132,8 @@ class CasaTransferThirdParty247ToCardRequest(CasaTransferThirdPartyRequest):
 class CasaTransferRequest(ResponseRequestSchema):
     receiving_method: str = Field(..., description="Hình thức nhận")
     data: Union[
-        CasaTransferSCBByIdentityRequest,
         CasaTransferThirdPartyByIdentityRequest,
+        CasaTransferSCBByIdentityRequest,
         CasaTransferThirdPartyToAccountRequest,
         CasaTransferThirdParty247ToAccountRequest,
         CasaTransferSCBToAccountRequest,
