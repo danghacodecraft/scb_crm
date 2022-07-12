@@ -109,7 +109,9 @@ class CtrWithdraw(BaseController):
                 is_transfer_payer=fee.is_transfer_payer,
                 payer_flag=fee.payer_flag,
                 amount=fee.fee_amount
-            ) if fee.is_transfer_payer else None
+            ) if fee.is_transfer_payer else dict(
+                is_transfer_payer=False
+            )
         )
 
         transactional_customer_info = dict(
@@ -334,11 +336,11 @@ class CtrWithdraw(BaseController):
         # Thông tin phí
         ################################################################################################################
         fee_info_response = {}
-        fee_info = form_data['transaction_info']['fee_info']
-        fee_amount = fee_info['amount']
         is_transfer_payer = form_data['transaction_info']['fee_info']["is_transfer_payer"]
-        payer_flag = form_data['transaction_info']['fee_info']["payer_flag"]
         if is_transfer_payer:
+            payer_flag = form_data['transaction_info']['fee_info']["payer_flag"]
+            fee_info = form_data['transaction_info']['fee_info']
+            fee_amount = fee_info['amount']
             if payer_flag:
                 vat_tax = fee_amount / CHECK_CONDITION_VAT
                 total = fee_amount + vat_tax
