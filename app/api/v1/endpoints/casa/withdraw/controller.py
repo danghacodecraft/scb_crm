@@ -20,10 +20,13 @@ from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.validator import validate_history_data
 from app.utils.constant.business_type import BUSINESS_TYPE_WITHDRAW
 from app.utils.constant.cif import (
-    BUSINESS_FORM_WITHDRAW, PROFILE_HISTORY_DESCRIPTIONS_WITHDRAW,
-    PROFILE_HISTORY_STATUS_INIT
+    BUSINESS_FORM_WITHDRAW, CHECK_CONDITION_VAT, CHECK_CONDITION_WITHDRAW,
+    PROFILE_HISTORY_DESCRIPTIONS_WITHDRAW, PROFILE_HISTORY_STATUS_INIT
 )
-from app.utils.error_messages import ERROR_CASA_ACCOUNT_NOT_EXIST
+from app.utils.error_messages import (
+    ERROR_AMOUNT_INVALID, ERROR_CASA_ACCOUNT_NOT_EXIST,
+    ERROR_CASA_BALANCE_UNAVAILABLE
+)
 from app.utils.functions import orjson_dumps, orjson_loads
 
 
@@ -44,6 +47,11 @@ class CtrWithdraw(BaseController):
         )
 
         casa_account_number = request.transaction_info.source_accounts.account_num
+        if request.transaction_info.receiver_info.amount < CHECK_CONDITION_WITHDRAW:
+            return self.response_exception(
+                msg=ERROR_AMOUNT_INVALID,
+                loc=f"amount: {request.transaction_info.receiver_info.amount}"
+            )
 
         # Kiểm tra số tài khoản có tồn tại hay không
         casa_account = await CtrGWCasaAccount(current_user).ctr_gw_check_exist_casa_account_info(
@@ -59,6 +67,20 @@ class CtrWithdraw(BaseController):
         fee = request.transaction_info.fee_info
         management = request.customer_info.management_info
         transactional_customer = request.customer_info.sender_info
+
+        # Kiểm tra số tiền rút có đủ hay không
+        casa_account_balance = await CtrGWCasaAccount.ctr_gw_get_casa_account_info(
+            self,
+            account_number=casa_account_number,
+            return_raw_data_flag=True
+        )
+        balance = casa_account_balance['customer_info']['account_info']['account_balance']
+        if int(balance) - receiver.amount < CHECK_CONDITION_WITHDRAW:
+            return self.response_exception(
+                msg=ERROR_CASA_BALANCE_UNAVAILABLE,
+                loc=f"account_balance: {balance}"
+            )
+
         if receiver.withdraw_account_flag:
             receiver_info = dict(
                 withdraw_account_flag=True,
@@ -83,7 +105,7 @@ class CtrWithdraw(BaseController):
             receiver_info=receiver_info,
             fee_info=dict(
                 is_transfer_payer=fee.is_transfer_payer,
-                payer=fee.payer,
+                payer_flag=fee.payer_flag,
                 amount=fee.fee_amount
             ) if fee.is_transfer_payer else None
         )
@@ -309,27 +331,43 @@ class CtrWithdraw(BaseController):
         ################################################################################################################
         # Thông tin phí
         ################################################################################################################
+        fee_info_response = {}
+
         fee_info = form_data['transaction_info']['fee_info']
         fee_amount = fee_info['amount']
-        vat_tax = fee_amount / 10
-        total = fee_amount + vat_tax
-        actual_total = total + amount
-        is_transfer_payer = False
-        payer = None
-        if fee_info['is_transfer_payer'] is not None:
-            payer = "RECEIVER"
-            if fee_info['is_transfer_payer'] is True:
-                is_transfer_payer = True
-                payer = "SENDER"
-
-        fee_info_response = (dict(
-            fee_amount=fee_info['amount'],
-            vat_tax=vat_tax,
-            total=total,
-            actual_total=actual_total,
-            is_transfer_payer=is_transfer_payer,
-            payer=payer
-        ))
+        is_transfer_payer = form_data['transaction_info']['fee_info']["is_transfer_payer"]
+        payer_flag = form_data['transaction_info']['fee_info']["payer_flag"]
+        if is_transfer_payer:
+            if payer_flag:
+                vat_tax = fee_amount / CHECK_CONDITION_VAT
+                total = fee_amount + vat_tax
+                actual_total = total + amount
+                is_transfer_payer = False
+                fee_info_response.update(dict(
+                    fee_amount=fee_info['amount'],
+                    vat_tax=vat_tax,
+                    total=total,
+                    actual_total=actual_total,
+                    is_transfer_payer=is_transfer_payer,
+                    payer_flag=payer_flag
+                ))
+            else:
+                vat_tax = fee_amount / 10
+                total = fee_amount + vat_tax
+                actual_total = total
+                is_transfer_payer = False
+                fee_info_response.update(dict(
+                    fee_amount=fee_info['amount'],
+                    vat_tax=vat_tax,
+                    total=total,
+                    actual_total=actual_total,
+                    is_transfer_payer=is_transfer_payer,
+                    payer_flag=payer_flag
+                ))
+        else:
+            fee_info_response.update(dict(
+                is_transfer_payer=is_transfer_payer
+            ))
 
         ################################################################################################################
         # Thông tin quản lý
@@ -339,6 +377,7 @@ class CtrWithdraw(BaseController):
             employee_code=form_data['transactional_customer_info']['management_info']['direct_staff_code'],
             return_raw_data_flag=True
         )
+
         direct_staff = dict(
             code=gw_direct_staff['staff_code'],
             name=gw_direct_staff['staff_name']
@@ -389,7 +428,12 @@ class CtrWithdraw(BaseController):
                 mobile_phone=customer_info['mobile_phone'],
                 note=customer_info['note']
             )
+        print('1======================================')
+        print(account_number)
         response_data = dict(
+            casa_account=dict(
+                account_number=account_number
+            ),
             transaction_response=dict(
                 receiver_info_response=receiver_response,
                 fee_info_response=fee_info_response
