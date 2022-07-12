@@ -84,13 +84,11 @@ async def repos_save_td_account(
 async def repos_update_td_account(
     booking_id,
     saving_transaction_job,
-    saving_booking_business_form,
     update_td_account,
     session
 ):
     session.add_all([
-        TransactionJob(**saving_transaction_job),
-        BookingBusinessForm(**saving_booking_business_form)
+        TransactionJob(**saving_transaction_job)
     ])
     session.bulk_update_mappings(TdAccount, update_td_account)
 
