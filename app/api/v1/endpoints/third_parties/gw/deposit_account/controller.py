@@ -1,4 +1,7 @@
 from app.api.base.controller import BaseController
+from app.api.v1.endpoints.third_parties.gw.customer.repository import (
+    repos_get_teller_info
+)
 from app.api.v1.endpoints.third_parties.gw.deposit_account.repository import (
     ctr_gw_get_statement_deposit_account_td,
     repos_get_booking_account_by_booking,
@@ -248,6 +251,7 @@ class CtrGWDepositAccount(BaseController):
                 session=self.oracle_session
             )
         )
+
         customer = self.call_repos(
             await repos_get_customer_by_booking_account(
                 td_accounts=booking_account,
@@ -262,6 +266,10 @@ class CtrGWDepositAccount(BaseController):
                 session=self.oracle_session
             )
         )
+        teller = self.call_repos(await repos_get_teller_info(
+            booking_id=BOOKING_ID,
+            session=self.oracle_session
+        ))
         for item in td_accounts:
             # TODO hard core data_input open_account_td
             data_input = {
@@ -314,7 +322,7 @@ class CtrGWDepositAccount(BaseController):
                             {
                                 "PAYIN_TYPE": "S",
                                 "PAYIN_PERCENTAGE": "100",
-                                "PAYIN_TDAMOUNT": item.TdAccount.pay_in_amount,
+                                "PAYIN_TDAMOUNT": int(item.TdAccount.pay_in_amount),
                                 "PAYIN_ACC": item.TdAccount.pay_in_casa_account
                             }
                         ],
@@ -355,10 +363,10 @@ class CtrGWDepositAccount(BaseController):
                         "p_blk_acc": ""
                     },
                     "staff_info_checker": {
-                        "staff_name": "HOANT2"
+                        "staff_name": teller.user_name
                     },
                     "staff_info_maker": {
-                        "staff_name": "KHANHLQ"
+                        "staff_name": current_user.user_info.username
                     },
                     "udf_info": {
                         # TODO hard core
@@ -372,10 +380,21 @@ class CtrGWDepositAccount(BaseController):
                 }
             }
             gw_deposit_open_account_td = self.call_repos(await repos_gw_deposit_open_account_td(
-                current_user=current_user,
-                data_input=data_input
+                current_user=current_user.user_info,
+                data_input=data_input,
+                booking_id=BOOKING_ID,
+                session=self.oracle_session
             ))
-            print('gw_deposit_open_account_td', gw_deposit_open_account_td)
-            response_data.append(gw_deposit_open_account_td)
-        return self.response(data=td_accounts)
-        # return self.response(data=gw_deposit_open_account_td)
+            if gw_deposit_open_account_td['openTD_out']['transaction_info']['transaction_error_code'] == "00":
+                response_data.append({
+                    "account_id": item.TdAccount.id,
+                    "account_num": gw_deposit_open_account_td['openTD_out']['data_output']['account_info']['account_num'],
+                    "error": None
+                })
+            else:
+                response_data.append({
+                    "account_id": item.TdAccount.id,
+                    "account_num": None,
+                    "error": gw_deposit_open_account_td['openTD_out']['transaction_info']['transaction_error_msg']
+                })
+        return self.response(data=response_data)

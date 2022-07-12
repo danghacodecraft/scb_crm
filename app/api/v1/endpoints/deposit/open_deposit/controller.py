@@ -8,10 +8,14 @@ from app.api.v1.endpoints.deposit.open_deposit.repository import (
 from app.api.v1.endpoints.third_parties.gw.deposit_account.repository import (
     repos_get_booking_account_by_booking
 )
+from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.validator import validate_history_data
-from app.utils.constant.business_type import BUSINESS_TYPE_OPEN_TD_ACCOUNT
+from app.utils.constant.business_type import (
+    BUSINESS_TYPE_TD_ACCOUNT_OPEN_ACCOUNT
+)
 from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_TD_ACCOUNT,
+    PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_TD_ACCOUNT_PAY_IN,
     PROFILE_HISTORY_STATUS_INIT
 )
 from app.utils.functions import generate_uuid, now, orjson_dumps
@@ -24,6 +28,19 @@ class CtrDeposit(BaseController):
             deposit_account_request
     ):
         current_user = self.current_user
+        # Kiểm tra booking
+        await CtrBooking().ctr_get_booking_and_validate(
+            booking_id=BOOKING_ID,
+            business_type_code=BUSINESS_TYPE_TD_ACCOUNT_OPEN_ACCOUNT,
+            check_correct_booking_flag=False,
+            loc=f'booking_id: {BOOKING_ID}'
+        )
+
+        # Kiểm tra số CIF có tồn tại trong CRM không
+        customer = self.call_repos(await repos_get_customer_by_cif_number(
+            cif_number=deposit_account_request.cif_number,
+            session=self.oracle_session
+        ))
         customer = self.call_repos(
             await repos_get_customer_by_cif_number(
                 cif_number=deposit_account_request.cif_number,
@@ -100,7 +117,7 @@ class CtrDeposit(BaseController):
 
         # Tạo data TransactionDaily và các TransactionStage
         transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
-            business_type_id=BUSINESS_TYPE_OPEN_TD_ACCOUNT,
+            business_type_id=BUSINESS_TYPE_TD_ACCOUNT_OPEN_ACCOUNT,
             booking_id=BOOKING_ID,
             request_json=deposit_account_request.json(),
             history_datas=orjson_dumps(history_datas),
@@ -137,20 +154,46 @@ class CtrDeposit(BaseController):
         return self.response(data=response_data)
 
     async def ctr_save_deposit_pay_in(self, BOOKING_ID, deposit_pay_in_request):
+        current_user = self.current_user
+
         booking_accounts = self.call_repos(await repos_get_booking_account_by_booking(
             booking_id=BOOKING_ID,
             session=self.oracle_session
         ))
         update_td_account = []
 
+        history_datas = self.make_history_log_data(
+            description=PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_TD_ACCOUNT_PAY_IN,
+            history_status=PROFILE_HISTORY_STATUS_INIT,
+            current_user=current_user.user_info
+        )
+        saving_transaction_job = dict(
+            transaction_id=generate_uuid(),
+            booking_id=BOOKING_ID,
+            business_job_id="PAY_IN_TD_ACCOUNT",
+            complete_flag=True,
+            created_at=now()
+        )
+
+        saving_booking_business_form = dict(
+            booking_id=BOOKING_ID,
+            form_data=deposit_pay_in_request.json(),
+            business_form_id="OPEN_TD_ACCOUNT_PAY",
+            created_at=now(),
+            save_flag=True,
+            log_data=history_datas
+        )
         for item in booking_accounts:
             update_td_account.append({
-                "id": item.id,
+                "id": item,
                 "pay_in_casa_account": deposit_pay_in_request.account_form.pay_in_form.account_number,
                 "pay_in_type": deposit_pay_in_request.account_form.pay_in_form.pay_in,
             })
+        print('hmmmmmmmmmm', saving_transaction_job, saving_booking_business_form)
         booking_id = self.call_repos(await repos_update_td_account(
             BOOKING_ID,
+            saving_transaction_job=saving_transaction_job,
+            saving_booking_business_form=saving_booking_business_form,
             update_td_account=update_td_account,
             session=self.oracle_session
         ))
