@@ -72,8 +72,7 @@ class CtrWithdraw(BaseController):
         transactional_customer = request.customer_info.sender_info
 
         # Kiểm tra số tiền rút có đủ hay không
-        casa_account_balance = await CtrGWCasaAccount.ctr_gw_get_casa_account_info(
-            self,
+        casa_account_balance = await CtrGWCasaAccount(current_user=current_user).ctr_gw_get_casa_account_info(
             account_number=casa_account_number,
             return_raw_data_flag=True
         )
