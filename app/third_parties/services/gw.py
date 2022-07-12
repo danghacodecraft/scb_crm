@@ -1940,6 +1940,7 @@ class ServiceGW:
         request_data = self.gw_create_request_body(
             current_user=current_user, function_name="interbankTransfer_in", data_input=data_input
         )
+        print(request_data)
         api_url = f"{self.url}{GW_ENDPOINT_URL_INTERBANK_TRANSFER}"
 
         response_data = await self.call_api(

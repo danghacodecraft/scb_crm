@@ -547,7 +547,8 @@ class CtrGWCasaAccount(BaseController):
         if receiving_method in [RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT, RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY]:
             is_success, gw_response_data = await CtrGWPayment(current_user).ctr_gw_interbank_transfer(
                 booking_id=booking_id,
-                form_data=form_data
+                form_data=form_data,
+                receiving_method=receiving_method
             )
             if not is_success:
                 return self.response_exception(

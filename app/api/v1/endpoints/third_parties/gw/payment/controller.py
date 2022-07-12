@@ -9,6 +9,9 @@ from app.api.v1.endpoints.cif.repository import (
     repos_get_account_id_by_account_number
 )
 from app.api.v1.endpoints.config.bank.controller import CtrConfigBank
+from app.api.v1.endpoints.third_parties.gw.customer.controller import (
+    CtrGWCustomer
+)
 from app.api.v1.endpoints.third_parties.gw.payment.repository import (
     repos_create_booking_payment, repos_gw_interbank_transfer,
     repos_gw_pay_in_cash, repos_gw_payment_amount_block,
@@ -41,7 +44,8 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_UNBLOCK, PROFILE_HISTORY_STATUS_INIT
 )
 from app.utils.constant.gw import (
-    GW_DATE_FORMAT, GW_DATETIME_FORMAT, GW_GL_BRANCH_CODE,
+    GW_ACCOUNT_CHARGE_ON_ORDERING, GW_ACCOUNT_CHARGE_ON_RECEIVER,
+    GW_CORE_DATE_FORMAT, GW_DATE_FORMAT, GW_DATETIME_FORMAT, GW_GL_BRANCH_CODE,
     GW_TRANSACTION_RESPONSE_STATUS_SUCCESS
 )
 from app.utils.functions import (
@@ -589,77 +593,114 @@ class CtrGWPayment(BaseController):
     async def ctr_gw_interbank_transfer(
             self,
             booking_id: str,
-            form_data: dict
+            form_data: dict,
+            receiving_method: str
     ):
         current_user = self.current_user
 
-        data_input = {
-            "account_info": {
-                "account_bank_code": "92204006",
-                "account_product_package": "FT01"
-            },
-            "staff_info_checker": {
-                "staff_name": "HOANT2"
-            },
-            "staff_info_maker": {
-                "staff_name": "KHANHLQ"
-            },
-            "p_blk_mis": "",
-            "p_blk_udf": "",
-            "p_blk_refinance_rates": "",
-            "p_blk_amendment_rate": "",
-            "p_blk_main": {
-                "PRODUCT": {
-                    "DETAILS_OF_CHARGE": "Y",
-                    "PAYMENT_FACILITY": "O"
+        ben = await CtrConfigBank(current_user).ctr_get_bank_branch(bank_id=form_data['receiver_bank']['id'])
+
+        fee_info = form_data['fee_info']
+        details_of_charge = ''
+        if fee_info:
+            if fee_info['is_transfer_payer'] is True:
+                details_of_charge = GW_ACCOUNT_CHARGE_ON_ORDERING
+            if fee_info['is_transfer_payer'] is False:
+                details_of_charge = GW_ACCOUNT_CHARGE_ON_RECEIVER
+
+        sender_cif_number = form_data['sender_cif_number']
+        if sender_cif_number:
+            gw_customer_info = await CtrGWCustomer(current_user).ctr_gw_get_customer_info_detail(
+                cif_number=sender_cif_number,
+                return_raw_data_flag=True
+            )
+            gw_customer_info_id_info = gw_customer_info['id_info']
+            sender_full_name_vn = gw_customer_info['full_name']
+            sender_address_full = gw_customer_info['t_address_info']['contact_address_full']
+            sender_identity_number = gw_customer_info_id_info['id_num']
+            sender_issued_date = date_string_to_other_date_string_format(
+                date_input=gw_customer_info_id_info['id_issued_date'],
+                from_format=GW_DATETIME_FORMAT,
+                to_format=GW_CORE_DATE_FORMAT
+            )
+
+            sender_place_of_issue = gw_customer_info_id_info['id_issued_location']
+        else:
+            sender_full_name_vn = form_data['sender_full_name_vn']
+            sender_address_full = form_data['sender_address_full']
+            sender_identity_number = form_data['sender_identity_number']
+            sender_issued_date = form_data['sender_issued_date']
+            sender_place_of_issue = form_data['sender_place_of_issue']
+
+        data_input = None
+        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
+            data_input = {
+                "account_info": {
+                    "account_bank_code": ben['data'][0]['id'],
+                    "account_product_package": "NC01"
                 },
-                "TRANSACTION_LEG": {
-                    "ACCOUNT": '459906034',
-                    "AMOUNT": 10000000
+                "staff_info_checker": {
+                    "staff_name": "DIEMNTK"     # TODO
                 },
-                "RATE": {
-                    "EXCHANGE_RATE": 0,
-                    "LCY_EXCHANGE_RATE": 0,
-                    "LCY_AMOUNT": 0
+                "staff_info_maker": {
+                    "staff_name": "DIEPTTN1"    # TODO
                 },
-                "ADDITIONAL_INFO": {
-                    "RELATED_CUSTOMER": "1674213",
-                    "NARRATIVE": "NARRATIVE"
-                }
-            },
-            "p_blk_charge": [
-                {
-                    "CHARGE_NAME": "PHI DV TT TRONG NUOC  711003001",
-                    "CHARGE_AMOUNT": 10000,
-                    "WAIVED": "N"
-                },
-                {
-                    "CHARGE_NAME": "THUE VAT",
-                    "CHARGE_AMOUNT": 0,
-                    "WAIVED": "N"
-                }
-            ],
-            "p_blk_settlement_detail": {
-                "SETTLEMENTS": {
-                    "TRANSFER_DETAIL": {
-                        "BENEFICIARY_ACCOUNT_NUMBER": "0973824427",
-                        "BENEFICIARY_NAME": "NGUYEN THANH HOA",
-                        "BENEFICIARY_ADRESS": "SAI GON",
-                        "ID_NO": "",
-                        "ISSUE_DATE": "",
-                        "ISSUER": ""
+                "p_blk_mis": "",
+                "p_blk_udf": "",
+                "p_blk_refinance_rates": "",
+                "p_blk_amendment_rate": "",
+                "p_blk_main": {
+                    "PRODUCT": {
+                        "DETAILS_OF_CHARGE": details_of_charge,
+                        "PAYMENT_FACILITY": "O"
                     },
-                    "ORDERING_CUSTOMER": {
-                        "ORDERING_ACC_NO": "0973824427",
-                        "ORDERING_NAME": "NGUYEN THANH HOA",
-                        "ORDERING_ADDRESS": "SAI GON",
-                        "ID_NO": "",
-                        "ISSUE_DATE": "",
-                        "ISSUER": ""
+                    "TRANSACTION_LEG": {
+                        "ACCOUNT": "101101001",
+                        "AMOUNT": form_data['amount']
+                    },
+                    "RATE": {
+                        "EXCHANGE_RATE": 0,
+                        "LCY_EXCHANGE_RATE": 0,
+                        "LCY_AMOUNT": 0
+                    },
+                    "ADDITIONAL_INFO": {
+                        "RELATED_CUSTOMER": form_data['sender_cif_number'],
+                        "NARRATIVE": form_data['content']
+                    }
+                },
+                "p_blk_charge": [
+                    {
+                        "CHARGE_NAME": "PHI DV TT TRONG NUOC  711003001",
+                        "CHARGE_AMOUNT": 10000,
+                        "WAIVED": "N"
+                    },
+                    {
+                        "CHARGE_NAME": "THUE VAT",
+                        "CHARGE_AMOUNT": 0,
+                        "WAIVED": "N"
+                    }
+                ],
+                "p_blk_settlement_detail": {
+                    "SETTLEMENTS": {
+                        "TRANSFER_DETAIL": {
+                            "BENEFICIARY_ACCOUNT_NUMBER": form_data['receiver_account_number'],
+                            "BENEFICIARY_NAME": form_data['receiver_full_name_vn'],
+                            "BENEFICIARY_ADRESS": form_data['receiver_address_full'],
+                            "ID_NO": '',
+                            "ISSUE_DATE": "",
+                            "ISSUER": ""
+                        },
+                        "ORDERING_CUSTOMER": {
+                            "BENEFICIARY_ACCOUNT_NUMBER": '',
+                            "BENEFICIARY_NAME": sender_full_name_vn,
+                            "BENEFICIARY_ADRESS": sender_address_full,
+                            "ID_NO": sender_identity_number,
+                            "ISSUE_DATE": sender_issued_date,
+                            "ISSUER": sender_place_of_issue
+                        }
                     }
                 }
             }
-        }
         gw_interbank_transfer = self.call_repos(await repos_gw_interbank_transfer(
             data_input=data_input,
             current_user=current_user
