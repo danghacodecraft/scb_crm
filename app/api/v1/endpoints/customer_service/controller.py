@@ -14,6 +14,9 @@ from app.api.v1.endpoints.customer_service.repository import (
 from app.api.v1.endpoints.customer_service.schema import (
     CreatePostCheckRequest, QueryParamsKSSRequest, UpdatePostCheckRequest
 )
+from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
+    repos_gw_get_casa_account_info
+)
 from app.settings.config import DATE_INPUT_OUTPUT_FORMAT
 from app.utils.constant.business_type import BUSINESS_TYPE_EKYC_AUDIT
 from app.utils.constant.cif import (
@@ -344,6 +347,23 @@ class CtrKSS(BaseController):
         customer_detail = self.call_repos(await repos_get_customer_detail(
             postcheck_uuid=postcheck_uuid
         ))
+        account_number = customer_detail.get('account_number')
+        if account_number:
+            account_detail = self.call_repos(await repos_gw_get_casa_account_info(
+                account_number=account_number,
+                current_user=self.current_user.user_info
+            ))
+            account_status = account_detail['retrieveCurrentAccountCASA_out']['data_output']['customer_info']['account_info']['account_status']
+            for key, value in account_status[0].items():
+                if key == "AC_STAT_NO_DR":
+                    if value == "N":
+                        customer_detail.update(dict(
+                            account_status="Mở"
+                        ))
+                    else:
+                        customer_detail.update(dict(
+                            account_status="Đóng"
+                        ))
 
         return self.response(data=customer_detail)
 
