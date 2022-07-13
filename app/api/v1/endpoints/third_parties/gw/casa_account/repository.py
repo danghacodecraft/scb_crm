@@ -350,3 +350,17 @@ async def repos_gw_get_retrieve_ben_name_by_card_number(current_user: UserInfoRe
             detail=str(ben_name)
         )
     return ReposReturn(data=ben_name)
+
+
+async def repos_gw_change_status_account(current_user, data_input):
+    is_success, response_data, request_data = await service_gw.change_status_account(current_user, data_input)
+
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="repos_gw_change_status_account",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(response_data)
+        )
+
+    return ReposReturn(data=response_data)

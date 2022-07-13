@@ -38,6 +38,7 @@ GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_ID_FCC = '/users/v1.0/rest/selectUse
 GW_ENDPOINT_URL_RETRIEVE_TELE_TRANSFER_INFO = '/payment/v1.0/rest/teleTransfer'
 GW_ENDPOINT_URL_RETRIEVE_BEN_NAME_BY_ACCOUNT_NUMBER = '/payment/v1.0/rest/retrieveBenNameByAccNum'
 GW_ENDPOINT_URL_RETRIEVE_BEN_NAME_BY_CARD_NUMBER = '/payment/v1.0/rest/retrieveBenNameByCardNum'
+GW_ENDPOINT_URL_RETRIEVE_CHANGE_STATUS_ACCOUNT_NUMBER = '/currentaccount/v1.0/rest/accountChangeStatus'
 
 # ---------------------------------------------- PAYMENT ---------------------------------------------- #
 
