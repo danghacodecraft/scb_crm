@@ -62,6 +62,7 @@ GW_ENDPOINT_URL_SELECT_SERIAL_NUMBER = "/serial/v1.0/rest/retrieveSerialNumber"
 
 # ---------------------------------------------- BRANCH LOCATION ---------------------------------------------- #
 GW_ENDPOINT_URL_SELECT_BRANCH_BY_REGION_ID = "/branchlocation/v1.0/rest/selectBranchByRegionID"
+GW_ENDPOINT_URL_SELECT_BRANCH_BY_BRANCH_ID = "/branchlocation/v1.0/rest/selectBranchByBranchID"
 
 ######################################################################################################
 #                                           Constant                                                #
@@ -70,7 +71,6 @@ GW_ENDPOINT_URL_SELECT_BRANCH_BY_REGION_ID = "/branchlocation/v1.0/rest/selectBr
 GW_DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 GW_DATE_FORMAT = '%Y-%m-%d'
 
-GW_RESPONSE_STATUS_SUCCESS = 1
 GW_RESPONSE_STATUS_SUCCESS = '00'
 GW_FUNCTION_OPEN_CASA = "openCASA_in"
 

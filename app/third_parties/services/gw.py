@@ -51,6 +51,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_RETRIEVE_TELE_TRANSFER_INFO,
     GW_ENDPOINT_URL_RETRIEVE_TOPIC_INFO_FROM_CODE,
     GW_ENDPOINT_URL_RETRIEVE_WORKING_PROCESS_INFO_FROM_CODE,
+    GW_ENDPOINT_URL_SELECT_BRANCH_BY_BRANCH_ID,
     GW_ENDPOINT_URL_SELECT_BRANCH_BY_REGION_ID,
     GW_ENDPOINT_URL_SELECT_CATEGORY,
     GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE,
@@ -2372,6 +2373,18 @@ class ServiceGW:
             request_data=request_data,
             api_url=api_url,
             output_key='selectBranchByRegionID_out'
+        )
+        return response_data
+
+    async def select_branch_by_branch_id(self, current_user: UserInfoResponse, data_input):
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="selectBranchByBranchID_in", data_input=data_input
+        )
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_BRANCH_BY_BRANCH_ID}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='selectBranchByBranchID_out'
         )
         return response_data
     ####################################################################################################################
