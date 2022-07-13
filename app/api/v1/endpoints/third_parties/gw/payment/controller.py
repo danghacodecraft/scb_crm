@@ -873,7 +873,7 @@ class CtrGWPayment(BaseController):
             request_data = {
                 "data_input": {
                     # "ben_id": ben['data'][0]['id'],
-                    "ben_id": "970436",  # TODO
+                    "ben_id": "970436",  # TODO hard core chưa thông tin ngân hàng khác
                     "trans_date": datetime_to_string(now()),
                     "time_stamp": datetime_to_string(now()),
                     "trans_id": "20220629160002159368",
@@ -910,7 +910,7 @@ class CtrGWPayment(BaseController):
             request_data = {
                 "data_input": {
                     # "ben_id": ben['data'][0]['id'],
-                    "ben_id": "970436",  # TODO
+                    "ben_id": "970436",  # TODO hard core chưa thông tin ngân hàng khác
                     "trans_date": datetime_to_string(now()),
                     "time_stamp": datetime_to_string(now()),
                     "trans_id": "20220629160002159368",

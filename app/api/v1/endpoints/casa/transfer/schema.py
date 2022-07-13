@@ -5,7 +5,7 @@ from pydantic import Field, validator
 
 from app.api.base.schema import ResponseRequestSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
-from app.api.v1.schemas.utils import DropdownRequest
+from app.api.v1.schemas.utils import DropdownRequest, DropdownResponse
 from app.utils.functions import is_valid_mobile_number
 from app.utils.regex import (
     MAX_LENGTH_TRANSFER_CONTENT, REGEX_NUMBER_ONLY, REGEX_TRANSFER_CONTENT
@@ -33,7 +33,7 @@ class CasaTransferCommonRequest(ResponseRequestSchema):
     sender_place_of_issue: Optional[DropdownRequest] = Field(None, description="Nơi cấp")
     sender_address_full: Optional[str] = Field(None, description="Địa chỉ")
     sender_mobile_number: Optional[str] = Field(None, description="Số điện thoại", regex=REGEX_NUMBER_ONLY)
-    receiving_method: str = Field(..., description="Hình thức nhận")
+    receiving_method: str = Field(None, description="Hình thức nhận")
     is_fee: bool = Field(..., description="Có thu phí không")
     fee_info: Optional[FeeInfoRequest] = Field(..., description="Thông tin phí")
     direct_staff_code: Optional[str] = Field(..., description="Mã nhân viên kinh doanh")
@@ -120,6 +120,7 @@ class CasaTransferThirdParty247ToAccountRequest(CasaTransferThirdPartyRequest):
     Ngoài SCB 24/7 tài khoản
     """
     receiver_account_number: str = Field(..., description="Số tài khoản", regex=REGEX_NUMBER_ONLY)
+    receiver_full_name: str = Field(None, description="Họ tên người nhận (Không cần truyền)")
 
 
 class CasaTransferThirdParty247ToCardRequest(CasaTransferThirdPartyRequest):
@@ -127,6 +128,7 @@ class CasaTransferThirdParty247ToCardRequest(CasaTransferThirdPartyRequest):
     Ngoài SCB 24/7 số thẻ
     """
     receiver_card_number: str = Field(..., description="Số thẻ")
+    receiver_full_name: str = Field(None, description="Họ tên người nhận (Không cần truyền)")
 
 
 class CasaTransferRequest(ResponseRequestSchema):
@@ -188,7 +190,7 @@ class FeeInfoResponse(ResponseRequestSchema):
 class IdentityInfoResponse(ResponseRequestSchema):
     number: Optional[str] = Field(..., description="Số GTDD")
     issued_date: Optional[str] = Field(..., description="Ngày cấp")
-    place_of_issue: Optional[str] = Field(..., description="Nơi cấp")
+    place_of_issue: Optional[DropdownResponse] = Field(..., description="Nơi cấp")
 
 
 class CustomerResponse(ResponseRequestSchema):
