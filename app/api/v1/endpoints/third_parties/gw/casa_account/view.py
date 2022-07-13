@@ -216,7 +216,7 @@ async def view_gw_get_casa_account_info(
 
 @router.post(
     path="/ben-name-by-account-number/{account_number}/",
-    name="[GW] Lấy tên người thụ hưởng",
+    name="[GW] Lấy tên người thụ hưởng qua số TK",
     description="[GW] Lấy tên người thụ hưởng thông qua số tài khoản ngoài SCB",
     responses=swagger_response(
         response_model=ResponseData[GWBenNameResponse],
@@ -256,8 +256,8 @@ async def view_gw_check_exist_third_party_account_number(
 
 @router.post(
     path="/ben-name-by-card-number/{card_number}/",
-    name="[GW] Lấy tên người thụ hưởng",
-    description="[GW] Lấy tên người thụ hưởng thông qua số tài khoản ngoài SCB",
+    name="[GW] Lấy tên người thụ hưởng qua số thẻ",
+    description="[GW] Lấy tên người thụ hưởng thông qua số thẻ ngoài SCB",
     responses=swagger_response(
         response_model=ResponseData[GWBenNameResponse],
         success_status_code=status.HTTP_200_OK
