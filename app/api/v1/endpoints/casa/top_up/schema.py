@@ -22,7 +22,7 @@ class FeeInfoRequest(ResponseRequestSchema):
                          "<br/>`false`: Bên nhận "
                          "<br/>`null`: Không thu phí cùng giao dịch"
     )
-    fee_amount: int = Field(..., description="Số tiền phí")
+    fee_amount: Optional[int] = Field(..., description="Số tiền phí")
     note: Optional[str] = Field(..., description="Ghi chú")
 
 
