@@ -8,8 +8,9 @@ from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
     repos_get_customer_by_cif_number
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
-    repos_check_casa_account_approved, repos_gw_get_casa_account_by_cif_number,
-    repos_gw_get_casa_account_info, repos_gw_get_close_casa_account,
+    repos_check_casa_account_approved, repos_gw_change_status_account,
+    repos_gw_get_casa_account_by_cif_number, repos_gw_get_casa_account_info,
+    repos_gw_get_close_casa_account,
     repos_gw_get_column_chart_casa_account_info,
     repos_gw_get_pie_chart_casa_account_info,
     repos_gw_get_retrieve_ben_name_by_account_number,
@@ -707,3 +708,60 @@ class CtrGWCasaAccount(BaseController):
         ben_name = gw_ben_name['retrieveBenNameByCardNum_out']['data_output']['customer_info']
 
         return self.response(data=ben_name)
+
+    async def ctr_gw_change_status_account(self, account_number):
+        current_user = self.current_user
+        # TODO default đóng tài khoản thanh toán
+        data_input = {
+            "account_info": {
+                "account_num": account_number
+            },
+            # TODO hard core
+            "p_blk_main": {
+                "TRANSACTION_INFO": {
+                    "SOURCE_CODE": "ODC1",
+                    "USER_ID": "ODC1",
+                    "BRANCH_CODE": ""
+                },
+                "CHANGE_DETAIL": {
+                    "NEW_STATUS": "NORM",
+                    "NO_DEBIT": "Y",
+                    "NO_CREDIT": "Y"
+                }
+            },
+            "p_blk_charge": "",
+            "p_blk_udf": "",
+            "p_udf": "",
+            # TODO hard checker, maker
+            "staff_info_checker": {
+                "staff_name": "HOANT2"
+            },
+            "staff_info_maker": {
+                "staff_name": "KHANHLQ"
+            }
+        }
+        gw_change_status = self.call_repos(await repos_gw_change_status_account(
+            current_user=current_user.user_info,
+            data_input=data_input
+        ))
+
+        account_changes = gw_change_status.get('accountChangeStatus_out').get('transaction_info')
+
+        if account_changes['transaction_error_code'] == "00":
+            response_data = {
+                "account": account_number,
+                "transaction": {
+                    "code": None,
+                    "msg": account_changes.get('transaction_error_msg')
+                }
+            }
+        else:
+            response_data = {
+                "account": account_number,
+                "transaction": {
+                    "code": account_changes.get('transaction_error_code'),
+                    "msg": account_changes.get('transaction_error_msg')
+                }
+            }
+
+        return self.response(data=response_data)

@@ -246,4 +246,5 @@ class CustomerDetailResponse(BaseSchema):
     extra_info: dict = Field(None, description='Thông tin khác')
     ekyc_level: Optional[str] = Field(..., description="Level ekyc")
     account_status: Optional[str] = Field(None, description="Trạng thái tài khoản")
-    kss_status: Optional[str] = Field(None, description="Trạng thái giao dịch")
+    kss_status: Optional[str] = Field(None, description="Trạng thái KSS")
+    status: Optional[str] = Field(None, description="Trạng thái giao dịch")

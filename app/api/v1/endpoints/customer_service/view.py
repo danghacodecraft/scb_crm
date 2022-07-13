@@ -189,7 +189,7 @@ async def view_list_statistics(
     description="Thêm mới hậu kiểm",
     responses=swagger_response(
         response_model=ResponseData[CreatePostCheckRequest],
-        success_status_code=status.HTTP_200_OK
+        success_status_code=status.HTTP_201_CREATED
     )
 )
 async def create_post_check(
