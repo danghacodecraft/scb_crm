@@ -40,8 +40,8 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_UNBLOCK, PROFILE_HISTORY_STATUS_INIT
 )
 from app.utils.constant.gw import (
-    GW_CASA_RESPONSE_STATUS_SUCCESS, GW_DATE_FORMAT, GW_DATETIME_FORMAT,
-    GW_GL_BRANCH_CODE
+    GW_DATE_FORMAT, GW_DATETIME_FORMAT, GW_GL_BRANCH_CODE,
+    GW_RESPONSE_STATUS_SUCCESS
 )
 from app.utils.functions import (
     date_string_to_other_date_string_format, datetime_to_string, now,
@@ -461,7 +461,7 @@ class CtrGWPayment(BaseController):
 
         redeem_account = gw_payment_redeem_account.get('redeemAccount_out', {})
         # check trường hợp lỗi
-        if redeem_account.get('transaction_info').get('transaction_error_code') != GW_CASA_RESPONSE_STATUS_SUCCESS:
+        if redeem_account.get('transaction_info').get('transaction_error_code') != GW_RESPONSE_STATUS_SUCCESS:
             return self.response_exception(msg=redeem_account.get('transaction_info').get('transaction_error_msg'))
         response_data = {
             "booking_id": booking_id,

@@ -3,17 +3,17 @@ from typing import Optional
 
 import aiohttp
 from loguru import logger
+from pydantic import json
 from starlette import status
 
 from app.api.v1.endpoints.user.schema import UserInfoResponse
 from app.settings.service import SERVICE
 from app.utils.constant.gw import (
-    GW_AUTHORIZED_REF_DATA_MGM_ACC_NUM, GW_CASA_RESPONSE_STATUS_SUCCESS,
-    GW_CO_OWNER_REF_DATA_MGM_ACC_NUM, GW_CURRENT_ACCOUNT_CASA,
-    GW_CURRENT_ACCOUNT_FROM_CIF, GW_CUSTOMER_REF_DATA_MGMT_CIF_NUM,
-    GW_DEPOSIT_ACCOUNT_FROM_CIF, GW_DEPOSIT_ACCOUNT_TD, GW_EMPLOYEE_FROM_CODE,
-    GW_EMPLOYEE_FROM_NAME, GW_EMPLOYEES,
-    GW_ENDPOINT_URL_CHECK_EXITS_ACCOUNT_CASA,
+    GW_AUTHORIZED_REF_DATA_MGM_ACC_NUM, GW_CO_OWNER_REF_DATA_MGM_ACC_NUM,
+    GW_CURRENT_ACCOUNT_CASA, GW_CURRENT_ACCOUNT_FROM_CIF,
+    GW_CUSTOMER_REF_DATA_MGMT_CIF_NUM, GW_DEPOSIT_ACCOUNT_FROM_CIF,
+    GW_DEPOSIT_ACCOUNT_TD, GW_EMPLOYEE_FROM_CODE, GW_EMPLOYEE_FROM_NAME,
+    GW_EMPLOYEES, GW_ENDPOINT_URL_CHECK_EXITS_ACCOUNT_CASA,
     GW_ENDPOINT_URL_DEPOSIT_OPEN_ACCOUNT_TD,
     GW_ENDPOINT_URL_HISTORY_CHANGE_FIELD, GW_ENDPOINT_URL_INTERBANK_TRANSFER,
     GW_ENDPOINT_URL_INTERBANK_TRANSFER_247_BY_ACCOUNT_NUMBER,
@@ -51,13 +51,16 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_RETRIEVE_TELE_TRANSFER_INFO,
     GW_ENDPOINT_URL_RETRIEVE_TOPIC_INFO_FROM_CODE,
     GW_ENDPOINT_URL_RETRIEVE_WORKING_PROCESS_INFO_FROM_CODE,
+    GW_ENDPOINT_URL_SELECT_BRANCH_BY_BRANCH_ID,
+    GW_ENDPOINT_URL_SELECT_BRANCH_BY_REGION_ID,
     GW_ENDPOINT_URL_SELECT_CATEGORY,
     GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE,
     GW_ENDPOINT_URL_SELECT_SERIAL_NUMBER, GW_ENDPOINT_URL_SELECT_USER_INFO,
     GW_ENDPOINT_URL_TT_LIQUIDATION, GW_ENDPOINT_URL_WITHDRAW,
     GW_FUNCTION_OPEN_CASA, GW_HISTORY_ACCOUNT_NUM,
-    GW_HISTORY_CHANGE_FIELD_ACCOUNT, GW_RETRIEVE_CASA_ACCOUNT_DETAIL,
-    GW_SELF_SELECTED_ACCOUNT_FLAG, GW_SELF_UNSELECTED_ACCOUNT_FLAG
+    GW_HISTORY_CHANGE_FIELD_ACCOUNT, GW_RESPONSE_STATUS_SUCCESS,
+    GW_RETRIEVE_CASA_ACCOUNT_DETAIL, GW_SELF_SELECTED_ACCOUNT_FLAG,
+    GW_SELF_UNSELECTED_ACCOUNT_FLAG
 )
 from app.utils.functions import date_to_string
 
@@ -73,6 +76,40 @@ class ServiceGW:
     async def stop(self):
         await self.session.close()
         self.session = None
+
+    async def call_api(self, request_data: json, api_url: str, output_key: str):
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data
+                else:
+                    return_data = await response.json()
+
+                    if return_data[output_key]['transaction_info']['transaction_error_code'] != GW_RESPONSE_STATUS_SUCCESS:
+                        return False, return_data
+
+                    return True, return_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data
 
     ####################################################################################################################
     # START --- CASA
@@ -447,7 +484,7 @@ class ServiceGW:
                     return False, return_data, request_data
                 else:
                     return_data = await response.json()
-                    if return_data['openCASA_out']['transaction_info']['transaction_error_code'] != GW_CASA_RESPONSE_STATUS_SUCCESS:
+                    if return_data['openCASA_out']['transaction_info']['transaction_error_code'] != GW_RESPONSE_STATUS_SUCCESS:
                         return False, return_data, request_data
 
                     return True, return_data, request_data
@@ -2323,3 +2360,31 @@ class ServiceGW:
         except aiohttp.ClientConnectorError as ex:
             logger.error(str(ex))
             return False, return_data
+
+    ####################################################################################################################
+    # Branch Location
+    ####################################################################################################################
+    async def select_branch_by_region_id(self, current_user: UserInfoResponse, data_input):
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="selectBranchByRegionID_in", data_input=data_input
+        )
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_BRANCH_BY_REGION_ID}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='selectBranchByRegionID_out'
+        )
+        return response_data
+
+    async def select_branch_by_branch_id(self, current_user: UserInfoResponse, data_input):
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="selectBranchByBranchID_in", data_input=data_input
+        )
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_BRANCH_BY_BRANCH_ID}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='selectBranchByBranchID_out'
+        )
+        return response_data
+    ####################################################################################################################
