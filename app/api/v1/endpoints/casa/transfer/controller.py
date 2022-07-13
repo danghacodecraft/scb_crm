@@ -200,17 +200,24 @@ class CtrCasaTransfer(BaseController):
         # Thông tin phí
         ################################################################################################################
         fee_info = form_data['fee_info']
-        fee_amount = fee_info['fee_amount']
-        vat_tax = fee_amount / 10
-        total = fee_amount + vat_tax
-        actual_total = total + transfer_amount
-        is_transfer_payer = False
-        payer = None
-        if fee_info['is_transfer_payer'] is not None:
-            payer = "RECEIVER"
-            if fee_info['is_transfer_payer'] is True:
-                is_transfer_payer = True
-                payer = "SENDER"
+        if form_data['is_fee']:
+            fee_amount = fee_info['fee_amount']
+            vat_tax = fee_amount / 10
+            total = fee_amount + vat_tax
+            actual_total = total + transfer_amount
+            is_transfer_payer = False
+            payer = None
+            if fee_info['is_transfer_payer'] is not None:
+                payer = "RECEIVER"
+                if fee_info['is_transfer_payer'] is True:
+                    is_transfer_payer = True
+                    payer = "SENDER"
+        else:
+            vat_tax = None
+            total = None
+            actual_total = transfer_amount
+            is_transfer_payer = None
+            payer = None
 
         fee_info.update(dict(
             vat_tax=vat_tax,
