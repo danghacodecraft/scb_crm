@@ -199,8 +199,9 @@ class CtrCasaTransfer(BaseController):
         ################################################################################################################
         # Thông tin phí
         ################################################################################################################
-        fee_info = form_data['fee_info']
+        fee_info = {}
         if form_data['is_fee']:
+            fee_info = form_data['fee_info']
             fee_amount = fee_info['fee_amount']
             vat_tax = fee_amount / 10
             total = fee_amount + vat_tax
@@ -220,11 +221,13 @@ class CtrCasaTransfer(BaseController):
             payer = None
 
         fee_info.update(dict(
+            fee_amount=None,
             vat_tax=vat_tax,
             total=total,
             actual_total=actual_total,
             is_transfer_payer=is_transfer_payer,
-            payer=payer
+            payer=payer,
+            note=form_data['fee_info']['note']
         ))
         ################################################################################################################
 
