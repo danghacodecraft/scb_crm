@@ -589,7 +589,7 @@ class CtrCasaTransfer(BaseController):
             loc=f'booking_id: {booking_id}'
         )
 
-        if is_fee is not None and not fee_info:
+        if is_fee and (not fee_info or fee_info.fee_amount is None or fee_info.is_transfer_payer is None):
             return self.response_exception(msg=ERROR_NOT_NULL, loc="fee_info")
             # TODO: Case cho bên chuyển/ Bên nhận
 
