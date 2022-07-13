@@ -21,7 +21,7 @@ from app.utils.constant.cif import (
     BUSINESS_FORM_CLOSE_CASA_PD, BUSINESS_FORM_OPEN_CASA_PD
 )
 from app.utils.constant.gw import (
-    GW_CASA_RESPONSE_STATUS_SUCCESS, GW_TRANSACTION_NAME_COLUMN_CHART,
+    GW_RESPONSE_STATUS_SUCCESS, GW_TRANSACTION_NAME_COLUMN_CHART,
     GW_TRANSACTION_NAME_PIE_CHART, GW_TRANSACTION_NAME_STATEMENT
 )
 from app.utils.error_messages import (
@@ -195,7 +195,7 @@ async def repos_gw_get_close_casa_account(
 
         if is_success:
             close_casa = gw_close_casa_account['closeCASA_out']['transaction_info']
-            if close_casa.get('transaction_error_code') == GW_CASA_RESPONSE_STATUS_SUCCESS:
+            if close_casa.get('transaction_error_code') == GW_RESPONSE_STATUS_SUCCESS:
                 account_number.append({
                     "id": casa_account.data,
                     "casa_account_number": casa_account_number,
