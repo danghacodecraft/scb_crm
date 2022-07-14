@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import APIRouter, Body, Depends
 from starlette import status
 
@@ -20,7 +22,7 @@ router = APIRouter()
     name="[GW] Lấy danh sách các đơn vị kinh doanh theo mã vùng",
     description="[GW] Lấy danh sách các đơn vị kinh doanh theo mã vùng",
     responses=swagger_response(
-        response_model=ResponseData[SelectBranchByRegionIdResponse],
+        response_model=ResponseData[List[SelectBranchByRegionIdResponse]],
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -31,7 +33,7 @@ async def view_gw_select_branch_by_region_id(
     gw_select_branch_by_region_id = await CtrGWBranchLocation(current_user).ctr_gw_select_branch_by_region_id(
         region_id=request.region_id
     )
-    return ResponseData[SelectBranchByRegionIdResponse](**gw_select_branch_by_region_id)
+    return ResponseData[List[SelectBranchByRegionIdResponse]](**gw_select_branch_by_region_id)
 
 
 @router.post(
