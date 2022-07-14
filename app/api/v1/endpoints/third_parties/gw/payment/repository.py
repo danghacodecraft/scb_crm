@@ -276,6 +276,26 @@ async def repos_gw_pay_in_cash(
     return ReposReturn(data=gw_pay_in_cash)
 
 
+async def repos_gw_tele_transfer(
+    current_user: AuthResponse, data_input: dict
+):
+    gw_tele_transfer = await service_gw.gw_tele_transfer(
+        data_input=data_input,
+        current_user=current_user.user_info
+    )
+    return ReposReturn(data=gw_tele_transfer)
+
+
+async def repos_gw_tt_liquidation(
+    current_user: AuthResponse, data_input: dict
+):
+    gw_tt_liquidation = await service_gw.gw_payment_tt_liquidation(
+        data_input=data_input,
+        current_user=current_user.user_info
+    )
+    return ReposReturn(data=gw_tt_liquidation)
+
+
 async def repos_gw_interbank_transfer(
         current_user: AuthResponse, data_input: dict
 ):

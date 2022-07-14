@@ -50,6 +50,7 @@ GW_ENDPOINT_URL_PAY_IN_CASH_247_BY_CARD_NUMBER = "/payment/v1.0/rest/payInCash24
 GW_ENDPOINT_URL_REDEEM_ACCOUNT = "/payment/v1.0/rest/redeemAccount"
 GW_ENDPOINT_URL_INTERNAL_TRANSFER = "/payment/v1.0/rest/internalTransfer"
 GW_ENDPOINT_URL_TT_LIQUIDATION = "/payment/v1.0/rest/ttLiquidation"
+GW_ENDPOINT_URL_TELE_TRANSFER = "/payment/v1.0/rest/teleTransfer"
 GW_ENDPOINT_URL_INTERBANK_TRANSFER = "/payment/v1.0/rest/interbankTransfer"
 GW_ENDPOINT_URL_INTERBANK_TRANSFER_247_BY_ACCOUNT_NUMBER = "/payment/v1.0/rest/interbankTransfer247ByAccNum"
 GW_ENDPOINT_URL_INTERBANK_TRANSFER_247_BY_CARD_NUMBER = "/payment/v1.0/rest/interbankTransfer247ByCardNum"

@@ -16,7 +16,8 @@ from app.api.v1.endpoints.third_parties.gw.payment.repository import (
     repos_create_booking_payment, repos_gw_interbank_transfer,
     repos_gw_pay_in_cash, repos_gw_payment_amount_block,
     repos_gw_payment_amount_unblock, repos_gw_redeem_account,
-    repos_gw_save_casa_transfer_info, repos_pay_in_cash_247_by_acc_num,
+    repos_gw_save_casa_transfer_info, repos_gw_tele_transfer,
+    repos_gw_tt_liquidation, repos_pay_in_cash_247_by_acc_num,
     repos_pay_in_cash_247_by_card_num, repos_payment_amount_block,
     repos_payment_amount_unblock
 )
@@ -55,6 +56,43 @@ from app.utils.functions import (
 
 
 class CtrGWPayment(BaseController):
+
+    async def get_sender_info(self, form_data):
+        sender_cif_number = form_data['sender_cif_number']
+        if sender_cif_number:
+            gw_customer_info = await CtrGWCustomer(self.current_user).ctr_gw_get_customer_info_detail(
+                cif_number=sender_cif_number,
+                return_raw_data_flag=True
+            )
+            gw_customer_info_id_info = gw_customer_info['id_info']
+            sender_full_name_vn = gw_customer_info['full_name']
+            sender_address_full = gw_customer_info['t_address_info']['contact_address_full']
+            sender_identity_number = gw_customer_info_id_info['id_num']
+            sender_issued_date = date_string_to_other_date_string_format(
+                date_input=gw_customer_info_id_info['id_issued_date'],
+                from_format=GW_DATETIME_FORMAT,
+                to_format=GW_CORE_DATE_FORMAT
+            )
+
+            sender_place_of_issue_id = gw_customer_info_id_info['id_issued_location']
+        else:
+            sender_full_name_vn = form_data['sender_full_name_vn']
+            sender_address_full = form_data['sender_address_full']
+            sender_identity_number = form_data['sender_identity_number']
+            sender_issued_date = form_data['sender_issued_date']
+            sender_place_of_issue_id = form_data['sender_place_of_issue']['id']
+
+        sender_place_of_issue = await self.get_model_object_by_id(
+            model_id=sender_place_of_issue_id,
+            model=PlaceOfIssue,
+            loc='sender_place_of_issue_id'
+        )
+        sender_place_of_issue = sender_place_of_issue.name
+
+        return (
+            sender_cif_number, sender_full_name_vn, sender_address_full, sender_identity_number, sender_issued_date,
+            sender_place_of_issue
+        )
 
     async def ctr_payment_amount_block(
             self,
@@ -590,6 +628,121 @@ class CtrGWPayment(BaseController):
         ))
         return gw_pay_in_cash
 
+    async def ctr_tele_transfer(self, form_data):
+        current_user = self.current_user
+        receiver_place_of_issue_id = form_data['receiver_place_of_issue']['id']
+        receiver_place_of_issue = await self.get_model_object_by_id(
+            model_id=receiver_place_of_issue_id,
+            model=PlaceOfIssue,
+            loc='receiver_place_of_issue_id'
+        )
+        (
+            sender_cif_number, sender_full_name_vn, sender_address_full, sender_identity_number, sender_issued_date,
+            sender_place_of_issue
+        ) = await self.get_sender_info(form_data=form_data)
+
+        data_input = {
+            "p_tt_type": "C",
+            "p_details": {
+                "TT_DETAILS": {
+                    "TT_CURRENCY": "VND",
+                    "TT_AMOUNT": form_data['amount'],
+                    "TRANSACTION_CURRENCY": "VND"
+                },
+                "BENEFICIARY_DETAILS": {
+                    "BENEFICIARY_NAME": form_data['receiver_full_name_vn'],
+                    "BENEFICIARY_PHONE_NO": form_data['receiver_mobile_number'],
+                    "BENEFICIARY_ID_NO": form_data['receiver_identity_number'],
+                    # "ID_ISSUE_DATE": date_string_to_other_date_string_format(
+                    #     date_input=form_data['receiver_issued_date'],
+                    #     from_format=GW_DATE_FORMAT,
+                    #     to_format=GW_CORE_DATE_FORMAT
+                    # ),
+                    "ID_ISSUE_DATE": form_data['receiver_issued_date'],
+                    "ID_ISSUER": receiver_place_of_issue.name,
+                    "ADDRESS": form_data['receiver_address_full']
+                },
+                "REMITTER_DETAILS": {
+                    "REMITTER_NAME": sender_full_name_vn,
+                    "REMITTER_PHONE_NO": form_data['sender_mobile_number'],
+                    "REMITTER_ID_NO": sender_identity_number,
+                    "ID_ISSUE_DATE": date_string_to_other_date_string_format(
+                        date_input=sender_issued_date,
+                        from_format=GW_CORE_DATE_FORMAT,
+                        to_format=GW_DATE_FORMAT
+                    ),
+                    "ID_ISSUER": sender_place_of_issue,
+                    "ADDRESS": sender_address_full
+                },
+                "ADDITIONAL_DETAILS": {
+                    "NARRATIVE": form_data['content']
+                }
+            },
+            "p_denomination": "",
+            "p_charges": [
+                {
+                    "CHARGE_NAME": "PHI DV TT TRONG NUOC  711003001",
+                    "CHARGE_AMOUNT": 100000,
+                    "WAIVED": "N"
+                }
+            ],
+            "p_mis": "",
+            "p_udf": "",
+            "staff_info_checker": {
+                "staff_name": "HOANT2"
+            },
+            "staff_info_maker": {
+                "staff_name": "KHANHLQ"
+            }
+        }
+        print(data_input)
+        gw_tele_transfer = self.call_repos(await repos_gw_tele_transfer(
+            data_input=data_input,
+            current_user=current_user
+        ))
+        return gw_tele_transfer
+
+    async def ctr_tt_liquidation(self, p_instrument_number, form_data):
+        current_user = self.current_user
+        data_input = {
+            "account_info": {
+                "account_num": "123456787912",
+                "account_currency": "VND"
+            },
+            "branch_info": {
+                "branch_code": "000"
+            },
+            "p_liquidation_type": "C",
+            "p_liquidation_details": "",
+            "p_instrument_number": p_instrument_number,
+            "p_instrument_status": "LIQD",
+            "p_charges": [
+                {
+                    "CHARGE_NAME": "",
+                    "CHARGE_AMOUNT": 0,
+                    "WAIVED": "N"
+                }
+            ],
+            "p_mis": "",
+            "p_udf": [
+                {
+                    "UDF_NAME": "",
+                    "UDF_VALUE": ""
+                }
+            ],
+            "staff_info_checker": {
+                "staff_name": "HOANT2"
+            },
+            "staff_info_maker": {
+                "staff_name": "KHANHLQ"
+            }
+        }
+        gw_tt_liquidation = self.call_repos(await repos_gw_tt_liquidation(
+            data_input=data_input,
+            current_user=current_user
+        ))
+        return gw_tt_liquidation
+
     async def ctr_gw_interbank_transfer(
             self,
             booking_id: str,
@@ -608,29 +761,10 @@ class CtrGWPayment(BaseController):
             if fee_info['is_transfer_payer'] is False:
                 details_of_charge = GW_ACCOUNT_CHARGE_ON_RECEIVER
 
-        sender_cif_number = form_data['sender_cif_number']
-        if sender_cif_number:
-            gw_customer_info = await CtrGWCustomer(current_user).ctr_gw_get_customer_info_detail(
-                cif_number=sender_cif_number,
-                return_raw_data_flag=True
-            )
-            gw_customer_info_id_info = gw_customer_info['id_info']
-            sender_full_name_vn = gw_customer_info['full_name']
-            sender_address_full = gw_customer_info['t_address_info']['contact_address_full']
-            sender_identity_number = gw_customer_info_id_info['id_num']
-            sender_issued_date = date_string_to_other_date_string_format(
-                date_input=gw_customer_info_id_info['id_issued_date'],
-                from_format=GW_DATETIME_FORMAT,
-                to_format=GW_CORE_DATE_FORMAT
-            )
-
-            sender_place_of_issue = gw_customer_info_id_info['id_issued_location']
-        else:
-            sender_full_name_vn = form_data['sender_full_name_vn']
-            sender_address_full = form_data['sender_address_full']
-            sender_identity_number = form_data['sender_identity_number']
-            sender_issued_date = form_data['sender_issued_date']
-            sender_place_of_issue = form_data['sender_place_of_issue']
+        (
+            sender_cif_number, sender_full_name_vn, sender_address_full, sender_identity_number, sender_issued_date,
+            sender_place_of_issue
+        ) = await self.get_sender_info(form_data=form_data)
 
         data_input = {}
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
