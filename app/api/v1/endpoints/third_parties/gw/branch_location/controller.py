@@ -13,7 +13,7 @@ class CtrGWBranchLocation(BaseController):
         ))
         if not is_success:
             return self.response_exception(msg=ERROR_CALL_SERVICE_GW, detail=str(gw_select_branch_by_region_id))
-        return self.response(data=gw_select_branch_by_region_id['selectBranchByRegionID_out']['data_output'])
+        return self.response(data=[item['region_info_item'] for item in gw_select_branch_by_region_id['selectBranchByRegionID_out']['data_output']['region_info_list']])
 
     async def ctr_gw_select_branch_by_branch_id(self, branch_id):
         is_success, gw_select_branch_by_branch_id = self.call_repos(await repos_gw_select_branch_by_branch_id(
