@@ -334,7 +334,7 @@ class CtrKSS(BaseController):
             postcheck_uuid=postcheck_update_request.customer_id
         ))
         if history_status:
-            if history_status['kss_status'] == "Không hợp lệ" and history_status['approve_status'] == "Đã Duyệt":
+            if history_status[-1]['kss_status'] == "Không hợp lệ" and history_status[-1]['approve_status'] == "Đã Duyệt":
                 account_number = self.call_repos(await repos_gw_change_status_account( # noqa
                     current_user=current_user.user_info,
                     account_number=customer_detail.get('account_number')
