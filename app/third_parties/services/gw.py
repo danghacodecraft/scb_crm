@@ -55,9 +55,10 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_SELECT_BRANCH_BY_REGION_ID,
     GW_ENDPOINT_URL_SELECT_CATEGORY,
     GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE,
-    GW_ENDPOINT_URL_SELECT_SERIAL_NUMBER, GW_ENDPOINT_URL_SELECT_USER_INFO,
-    GW_ENDPOINT_URL_TT_LIQUIDATION, GW_ENDPOINT_URL_WITHDRAW,
-    GW_FUNCTION_OPEN_CASA, GW_HISTORY_ACCOUNT_NUM,
+    GW_ENDPOINT_URL_SELECT_SERIAL_NUMBER,
+    GW_ENDPOINT_URL_SELECT_STATISTIC_BANKING_BY_PERIOD,
+    GW_ENDPOINT_URL_SELECT_USER_INFO, GW_ENDPOINT_URL_TT_LIQUIDATION,
+    GW_ENDPOINT_URL_WITHDRAW, GW_FUNCTION_OPEN_CASA, GW_HISTORY_ACCOUNT_NUM,
     GW_HISTORY_CHANGE_FIELD_ACCOUNT, GW_RESPONSE_STATUS_SUCCESS,
     GW_RETRIEVE_CASA_ACCOUNT_DETAIL, GW_SELF_SELECTED_ACCOUNT_FLAG,
     GW_SELF_UNSELECTED_ACCOUNT_FLAG
@@ -2385,6 +2386,22 @@ class ServiceGW:
             request_data=request_data,
             api_url=api_url,
             output_key='selectBranchByBranchID_out'
+        )
+        return response_data
+    ####################################################################################################################
+
+    ####################################################################################################################
+    # Statistic
+    ####################################################################################################################
+    async def select_statistic_banking_by_period(self, current_user: UserInfoResponse, data_input):
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="SelectStatisticBankingByPeriod_in", data_input=data_input
+        )
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_STATISTIC_BANKING_BY_PERIOD}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='SelectStatisticBankingByPeriod_out'
         )
         return response_data
     ####################################################################################################################

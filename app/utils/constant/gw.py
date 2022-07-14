@@ -64,6 +64,9 @@ GW_ENDPOINT_URL_SELECT_SERIAL_NUMBER = "/serial/v1.0/rest/retrieveSerialNumber"
 GW_ENDPOINT_URL_SELECT_BRANCH_BY_REGION_ID = "/branchlocation/v1.0/rest/selectBranchByRegionID"
 GW_ENDPOINT_URL_SELECT_BRANCH_BY_BRANCH_ID = "/branchlocation/v1.0/rest/selectBranchByBranchID"
 
+# ---------------------------------------------- STATISTIC ---------------------------------------------- #
+GW_ENDPOINT_URL_SELECT_STATISTIC_BANKING_BY_PERIOD = "/statistic/v1.0/rest/selectStatisticBankingByPeriod"
+
 ######################################################################################################
 #                                           Constant                                                #
 ######################################################################################################
