@@ -214,6 +214,7 @@ class CtrCasaTransfer(BaseController):
                     is_transfer_payer = True
                     payer = "SENDER"
         else:
+            fee_amount = None
             vat_tax = None
             total = None
             actual_total = transfer_amount
@@ -221,7 +222,7 @@ class CtrCasaTransfer(BaseController):
             payer = None
 
         fee_info.update(dict(
-            fee_amount=None,
+            fee_amount=fee_amount,
             vat_tax=vat_tax,
             total=total,
             actual_total=actual_total,
