@@ -361,6 +361,15 @@ class CtrKSS(BaseController):
         customer_detail = self.call_repos(await repos_get_customer_detail(
             postcheck_uuid=postcheck_uuid
         ))
+        transaction_id = customer_detail.get('transaction_id')
+        ekyc_step = []
+        for item in customer_detail.get('ekyc_step'):
+            if transaction_id == item.get('transaction_id'):
+                ekyc_step.extend(item.get('info_step'))
+
+        customer_detail.update({
+            "ekyc_step": ekyc_step
+        })
         account_number = customer_detail.get('account_number')
         if account_number:
             account_detail = self.call_repos(await repos_gw_get_casa_account_info(
