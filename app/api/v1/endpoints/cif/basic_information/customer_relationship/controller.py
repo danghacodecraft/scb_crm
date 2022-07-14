@@ -11,7 +11,10 @@ from app.api.v1.endpoints.cif.basic_information.guardian.repository import (
     repos_save_guardians
 )
 from app.api.v1.endpoints.cif.repository import (
-    repos_check_exist_cif, repos_get_booking, repos_get_initializing_customer
+    repos_get_booking, repos_get_initializing_customer
+)
+from app.api.v1.endpoints.third_parties.gw.customer.controller import (
+    CtrGWCustomer
 )
 from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.settings.event import service_gw
@@ -29,7 +32,7 @@ from app.utils.constant.cif import (
 from app.utils.constant.gw import GW_GENDER_FEMALE, GW_GENDER_MALE
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_GW, ERROR_CIF_NUMBER_DUPLICATED,
-    ERROR_RELATION_CUSTOMER_SELF_RELATED
+    ERROR_CIF_NUMBER_NOT_EXIST, ERROR_RELATION_CUSTOMER_SELF_RELATED
 )
 from app.utils.functions import dropdown, orjson_dumps, string_to_date
 
@@ -190,8 +193,13 @@ class CtrCustomerRelationship(BaseController):
         log_data = []
         customer_relationship_cif_numbers, relationship_types = [], set()
         for customer_relationship in customer_relationship_save_request:
-            # check số cif có tồn tại trong SOA
-            self.call_repos(await repos_check_exist_cif(cif_number=customer_relationship.cif_number))
+            # check số cif có tồn tại trong GW
+            check_is_exist = await CtrGWCustomer(current_user).ctr_gw_check_exist_customer_detail_info(
+                cif_number=customer_relationship.cif_number
+            )
+            if not check_is_exist['data']['is_existed']:
+                return self.response_exception(msg=ERROR_CIF_NUMBER_NOT_EXIST)
+
             customer_relationship_cif_numbers.append(customer_relationship.cif_number),
             relationship_types.add(customer_relationship.customer_relationship.id)
 

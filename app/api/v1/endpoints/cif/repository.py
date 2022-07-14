@@ -5,7 +5,6 @@ from sqlalchemy import desc, or_, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn
-from app.settings.event import service_soa
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
     CustomerAddress, CustomerProfessional
 )
@@ -35,8 +34,8 @@ from app.third_parties.oracle.models.master_data.others import (
     AverageIncomeAmount, Career, KYCLevel, MaritalStatus, Position
 )
 from app.utils.error_messages import (
-    ERROR_BOOKING_CODE_NOT_EXIST, ERROR_CALL_SERVICE_SOA,
-    ERROR_CIF_ID_NOT_EXIST, ERROR_CIF_NUMBER_EXIST, ERROR_CIF_NUMBER_INVALID,
+    ERROR_BOOKING_CODE_NOT_EXIST, ERROR_CIF_ID_NOT_EXIST,
+    ERROR_CIF_NUMBER_EXIST, ERROR_CIF_NUMBER_INVALID,
     ERROR_CIF_NUMBER_NOT_EXIST, MESSAGE_STATUS
 )
 from app.utils.functions import dropdown
@@ -196,16 +195,6 @@ async def repos_get_customers_by_cif_numbers(
     return ReposReturn(data=customers)
 
 
-async def repos_check_exist_cif(cif_number: str):
-    is_success, customer_detail = await service_soa.retrieve_customer_ref_data_mgmt(cif_number=cif_number)
-    if not is_success:
-        return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_SOA, detail=customer_detail["message"])
-
-    return ReposReturn(data={
-        "is_existed": customer_detail["is_existed"]
-    })
-
-
 async def repos_validate_cif_number(cif_number: str):
     regex = re.search("[0-9]+", cif_number)
     if not regex or len(regex.group()) != len(cif_number):
@@ -218,23 +207,9 @@ async def repos_validate_cif_number(cif_number: str):
     return ReposReturn(data=None)
 
 
-async def repos_retrieve_customer_information_by_cif_number(
-        cif_number: str,
-        # flat_address: bool
-):
-    is_success, customer_information = await service_soa.retrieve_customer_information_by_cif_number(
-        cif_number=cif_number,
-        # flat_address=flat_address
-    )
-    if not is_success:
-        return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_SOA, detail=customer_information["message"])
-
-    return ReposReturn(data=customer_information)
-
-
 async def repos_get_total_participants(
-    cif_id: str,
-    session: Session
+        cif_id: str,
+        session: Session
 ):
     total_participants = session.execute(
         select(
@@ -251,8 +226,8 @@ async def repos_get_total_participants(
 
 
 async def repos_get_booking(
-    cif_id: str,
-    session: Session
+        cif_id: str,
+        session: Session
 ):
     booking = session.execute(
         select(
@@ -295,8 +270,8 @@ async def repos_get_booking_account(
 
 
 async def repos_get_customer_working_infos(
-    cif_id_or_number: str,
-    session: Session
+        cif_id_or_number: str,
+        session: Session
 ):
     customer_working_info = session.execute(
         select(

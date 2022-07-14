@@ -6,7 +6,6 @@ from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
-from app.settings.event import service_soa
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
     CustomerAddress
 )
@@ -32,8 +31,8 @@ from app.third_parties.oracle.models.master_data.others import (
     KYCLevel, MaritalStatus
 )
 from app.utils.error_messages import (
-    ERROR_CALL_SERVICE_SOA, ERROR_CIF_ID_NOT_EXIST, ERROR_CIF_NUMBER_EXIST,
-    ERROR_CIF_NUMBER_INVALID, ERROR_CIF_NUMBER_NOT_EXIST, MESSAGE_STATUS
+    ERROR_CIF_ID_NOT_EXIST, ERROR_CIF_NUMBER_EXIST, ERROR_CIF_NUMBER_INVALID,
+    ERROR_CIF_NUMBER_NOT_EXIST, MESSAGE_STATUS
 )
 from app.utils.functions import dropdown, now
 
@@ -190,16 +189,6 @@ async def repos_get_customers_by_cif_numbers(
     return ReposReturn(data=customers)
 
 
-async def repos_check_exist_cif(cif_number: str):
-    is_success, customer_detail = await service_soa.retrieve_customer_ref_data_mgmt(cif_number=cif_number)
-    if not is_success:
-        return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_SOA, detail=customer_detail["message"])
-
-    return ReposReturn(data={
-        "is_existed": customer_detail["is_existed"]
-    })
-
-
 async def repos_validate_cif_number(cif_number: str):
     regex = re.search("[0-9]+", cif_number)
     if not regex or len(regex.group()) != len(cif_number):
@@ -210,20 +199,6 @@ async def repos_validate_cif_number(cif_number: str):
             loc="cif_number"
         )
     return ReposReturn(data=None)
-
-
-async def repos_retrieve_customer_information_by_cif_number(
-        cif_number: str,
-        # flat_address: bool
-):
-    is_success, customer_information = await service_soa.retrieve_customer_information_by_cif_number(
-        cif_number=cif_number,
-        # flat_address=flat_address
-    )
-    if not is_success:
-        return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_SOA, detail=customer_information["message"])
-
-    return ReposReturn(data=customer_information)
 
 
 @auto_commit
