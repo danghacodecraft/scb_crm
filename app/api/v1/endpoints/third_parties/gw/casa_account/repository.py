@@ -352,7 +352,37 @@ async def repos_gw_get_retrieve_ben_name_by_card_number(current_user: UserInfoRe
     return ReposReturn(data=ben_name)
 
 
-async def repos_gw_change_status_account(current_user, data_input):
+async def repos_gw_change_status_account(current_user, account_number):
+    # TODO default đóng tài khoản thanh toán
+    data_input = {
+        "account_info": {
+            "account_num": account_number
+        },
+        # TODO hard core
+        "p_blk_main": {
+            "TRANSACTION_INFO": {
+                "SOURCE_CODE": "ODC1",
+                "USER_ID": "ODC1",
+                "BRANCH_CODE": ""
+            },
+            "CHANGE_DETAIL": {
+                "NEW_STATUS": "NORM",
+                "NO_DEBIT": "Y",
+                "NO_CREDIT": "Y"
+            }
+        },
+        "p_blk_charge": "",
+        "p_blk_udf": "",
+        "p_udf": "",
+        # TODO hard checker, maker
+        "staff_info_checker": {
+            "staff_name": "HOANT2"
+        },
+        "staff_info_maker": {
+            "staff_name": "KHANHLQ"
+        }
+    }
+
     is_success, response_data, request_data = await service_gw.change_status_account(current_user, data_input)
 
     if not is_success:
