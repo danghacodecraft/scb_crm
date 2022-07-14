@@ -10,8 +10,8 @@ from app.api.v1.endpoints.third_parties.gw.branch_location.controller import (
     CtrGWBranchLocation
 )
 from app.api.v1.endpoints.third_parties.gw.branch_location.schema import (
-    SelectBranchByBranchIdRequest, SelectBranchByRegionIdRequest,
-    SelectBranchByRegionIdResponse
+    SelectBranchByBranchIdRequest, SelectBranchByBranchIdResponse,
+    SelectBranchByRegionIdRequest, SelectBranchByRegionIdResponse
 )
 
 router = APIRouter()
@@ -41,7 +41,7 @@ async def view_gw_select_branch_by_region_id(
     name="[GW] Lấy chi tiết các đơn vị kinh doanh theo mã đơn vị",
     description="[GW] Lấy chi tiết các đơn vị kinh doanh theo mã đơn vị",
     responses=swagger_response(
-        response_model=ResponseData[SelectBranchByRegionIdResponse],
+        response_model=ResponseData[SelectBranchByBranchIdResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -52,4 +52,4 @@ async def view_gw_select_branch_by_branch_id(
     gw_select_branch_by_branch_id = await CtrGWBranchLocation(current_user).ctr_gw_select_branch_by_branch_id(
         branch_id=request.branch_id
     )
-    return ResponseData[SelectBranchByRegionIdResponse](**gw_select_branch_by_branch_id)
+    return ResponseData[SelectBranchByBranchIdResponse](**gw_select_branch_by_branch_id)

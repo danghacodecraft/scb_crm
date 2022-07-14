@@ -28,4 +28,18 @@ class SelectBranchByRegionIdItemResponse(BaseGWSchema):
 class SelectBranchByRegionIdResponse(BaseGWSchema):
     region_id: Optional[str] = Field(..., description="Mã vùng")
     region_name: Optional[str] = Field(..., description="Tên vùng")
-    branches: List = Field(..., description="Danh sách chi nhánh")
+    branches: List[SelectBranchByRegionIdItemResponse] = Field(..., description="Danh sách chi nhánh")
+
+
+class SelectBranchByBranchIdResponse(BaseGWSchema):
+    region_id: Optional[str] = Field(..., description="Mã vùng")
+    region_name: Optional[str] = Field(..., description="Tên vùng")
+    area_id: Optional[str] = Field(..., description="Tên khu vự")
+    area_name: Optional[str] = Field(..., description="Tên khu vự")
+    branch_console: Optional[str] = Field(...)
+    branch_console_name: Optional[str] = Field(...)
+    branch_id: Optional[str] = Field(..., description="Mã đơn vị")
+    branch_name: Optional[str] = Field(..., description="Tên đơn vị")
+    latitude: Optional[float] = Field(..., description="Vĩ độ")
+    longtitude: Optional[float] = Field(..., description="Kinh độ")
+    region_type: Optional[str] = Field(..., description="Loại đơn vị")
