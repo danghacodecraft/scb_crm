@@ -21,8 +21,8 @@ from app.utils.constant.cif import (
     BUSINESS_FORM_CLOSE_CASA_PD, BUSINESS_FORM_OPEN_CASA_PD
 )
 from app.utils.constant.gw import (
-    GW_TRANSACTION_NAME_COLUMN_CHART, GW_TRANSACTION_NAME_PIE_CHART,
-    GW_TRANSACTION_NAME_STATEMENT, GW_TRANSACTION_RESPONSE_STATUS_SUCCESS
+    GW_RESPONSE_STATUS_SUCCESS, GW_TRANSACTION_NAME_COLUMN_CHART,
+    GW_TRANSACTION_NAME_PIE_CHART, GW_TRANSACTION_NAME_STATEMENT
 )
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_GW, ERROR_CASA_ACCOUNT_APPROVED
@@ -195,7 +195,7 @@ async def repos_gw_get_close_casa_account(
 
         if is_success:
             close_casa = gw_close_casa_account['closeCASA_out']['transaction_info']
-            if close_casa.get('transaction_error_code') == GW_TRANSACTION_RESPONSE_STATUS_SUCCESS:
+            if close_casa.get('transaction_error_code') == GW_RESPONSE_STATUS_SUCCESS:
                 account_number.append({
                     "id": casa_account.data,
                     "casa_account_number": casa_account_number,
@@ -350,3 +350,17 @@ async def repos_gw_get_retrieve_ben_name_by_card_number(current_user: UserInfoRe
             detail=str(ben_name)
         )
     return ReposReturn(data=ben_name)
+
+
+async def repos_gw_change_status_account(current_user, data_input):
+    is_success, response_data, request_data = await service_gw.change_status_account(current_user, data_input)
+
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="repos_gw_change_status_account",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(response_data)
+        )
+
+    return ReposReturn(data=response_data)

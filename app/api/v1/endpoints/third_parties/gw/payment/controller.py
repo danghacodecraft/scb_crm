@@ -46,7 +46,7 @@ from app.utils.constant.cif import (
 from app.utils.constant.gw import (
     GW_ACCOUNT_CHARGE_ON_ORDERING, GW_ACCOUNT_CHARGE_ON_RECEIVER,
     GW_CORE_DATE_FORMAT, GW_DATE_FORMAT, GW_DATETIME_FORMAT, GW_GL_BRANCH_CODE,
-    GW_TRANSACTION_RESPONSE_STATUS_SUCCESS
+    GW_RESPONSE_STATUS_SUCCESS
 )
 from app.utils.functions import (
     date_string_to_other_date_string_format, datetime_to_string, now,
@@ -466,7 +466,7 @@ class CtrGWPayment(BaseController):
 
         redeem_account = gw_payment_redeem_account.get('redeemAccount_out', {})
         # check trường hợp lỗi
-        if redeem_account.get('transaction_info').get('transaction_error_code') != GW_TRANSACTION_RESPONSE_STATUS_SUCCESS:
+        if redeem_account.get('transaction_info').get('transaction_error_code') != GW_RESPONSE_STATUS_SUCCESS:
             return self.response_exception(msg=redeem_account.get('transaction_info').get('transaction_error_msg'))
         response_data = {
             "booking_id": booking_id,
@@ -1032,7 +1032,7 @@ class CtrGWPayment(BaseController):
             request_data = {
                 "data_input": {
                     # "ben_id": ben['data'][0]['id'],
-                    "ben_id": "970436",  # TODO
+                    "ben_id": "970436",  # TODO hard core chưa thông tin ngân hàng khác
                     "trans_date": datetime_to_string(now()),
                     "time_stamp": datetime_to_string(now()),
                     "trans_id": "20220629160002159368",

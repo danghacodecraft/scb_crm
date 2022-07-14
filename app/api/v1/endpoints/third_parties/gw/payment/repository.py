@@ -29,7 +29,7 @@ from app.utils.constant.cif import (
     BUSINESS_FORM_AMOUNT_BLOCK_PD, BUSINESS_FORM_AMOUNT_UNBLOCK_PD,
     BUSINESS_FORM_CASA_TRANSFER_PD
 )
-from app.utils.constant.gw import GW_TRANSACTION_RESPONSE_STATUS_SUCCESS
+from app.utils.constant.gw import GW_RESPONSE_STATUS_SUCCESS
 from app.utils.error_messages import ERROR_BOOKING_CODE_EXISTED, MESSAGE_STATUS
 from app.utils.functions import generate_uuid, now, orjson_dumps
 
@@ -358,7 +358,7 @@ async def repos_gw_save_casa_transfer_info(
     casa_transfer = gw_casa_transfer.get(function_out, {})
 
     # check trường hợp lỗi
-    if casa_transfer.get('transaction_info').get('transaction_error_code') != GW_TRANSACTION_RESPONSE_STATUS_SUCCESS:
+    if casa_transfer.get('transaction_info').get('transaction_error_code') != GW_RESPONSE_STATUS_SUCCESS:
         return ReposReturn(is_error=True, msg=casa_transfer.get('transaction_info').get('transaction_error_msg'))
 
     # lưu form data request GW

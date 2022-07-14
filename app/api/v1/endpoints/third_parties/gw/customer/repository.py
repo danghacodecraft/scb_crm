@@ -31,7 +31,7 @@ from app.third_parties.oracle.models.master_data.others import (
     AverageIncomeAmount, TransactionJob
 )
 from app.utils.constant.cif import IMAGE_TYPE_FACE
-from app.utils.constant.gw import GW_TRANSACTION_RESPONSE_STATUS_SUCCESS
+from app.utils.constant.gw import GW_RESPONSE_STATUS_SUCCESS
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_GW, ERROR_NO_DATA, ERROR_OPEN_CIF
 )
@@ -145,7 +145,7 @@ async def repos_gw_open_cif(
         account_info=account_info,
         current_user=current_user
     )
-    if response_data.get('openCIFAuthorise_out').get('transaction_error_code') != GW_TRANSACTION_RESPONSE_STATUS_SUCCESS:
+    if response_data.get('openCIFAuthorise_out').get('transaction_error_code') != GW_RESPONSE_STATUS_SUCCESS:
         for transaction_job in transaction_jobs:
             transaction_job.update({
                 "complete_flag": False,

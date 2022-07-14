@@ -38,6 +38,7 @@ GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_ID_FCC = '/users/v1.0/rest/selectUse
 GW_ENDPOINT_URL_RETRIEVE_TELE_TRANSFER_INFO = '/payment/v1.0/rest/teleTransfer'
 GW_ENDPOINT_URL_RETRIEVE_BEN_NAME_BY_ACCOUNT_NUMBER = '/payment/v1.0/rest/retrieveBenNameByAccNum'
 GW_ENDPOINT_URL_RETRIEVE_BEN_NAME_BY_CARD_NUMBER = '/payment/v1.0/rest/retrieveBenNameByCardNum'
+GW_ENDPOINT_URL_RETRIEVE_CHANGE_STATUS_ACCOUNT_NUMBER = '/currentaccount/v1.0/rest/accountChangeStatus'
 
 # ---------------------------------------------- PAYMENT ---------------------------------------------- #
 
@@ -59,6 +60,13 @@ GW_ENDPOINT_URL_SELECT_USER_INFO = "/users/v1.0/rest/selectUserInfoByUserID"
 # ---------------------------------------------- SERIAL ---------------------------------------------- #
 GW_ENDPOINT_URL_SELECT_SERIAL_NUMBER = "/serial/v1.0/rest/retrieveSerialNumber"
 
+# ---------------------------------------------- BRANCH LOCATION ---------------------------------------------- #
+GW_ENDPOINT_URL_SELECT_BRANCH_BY_REGION_ID = "/branchlocation/v1.0/rest/selectBranchByRegionID"
+GW_ENDPOINT_URL_SELECT_BRANCH_BY_BRANCH_ID = "/branchlocation/v1.0/rest/selectBranchByBranchID"
+
+# ---------------------------------------------- STATISTIC ---------------------------------------------- #
+GW_ENDPOINT_URL_SELECT_STATISTIC_BANKING_BY_PERIOD = "/statistic/v1.0/rest/selectStatisticBankingByPeriod"
+
 ######################################################################################################
 #                                           Constant                                                #
 ######################################################################################################
@@ -67,8 +75,7 @@ GW_DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 GW_DATE_FORMAT = '%Y-%m-%d'
 GW_CORE_DATE_FORMAT = '%d/%m/%Y'
 
-GW_RESPONSE_STATUS_SUCCESS = 1
-GW_TRANSACTION_RESPONSE_STATUS_SUCCESS = '00'
+GW_RESPONSE_STATUS_SUCCESS = '00'
 GW_FUNCTION_OPEN_CASA = "openCASA_in"
 
 GW_CURRENT_ACCOUNT_FROM_CIF = "CurrentAccountFromCIF"

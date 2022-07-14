@@ -43,7 +43,8 @@ from app.utils.constant.casa import (
     RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT, RECEIVING_METHODS
 )
 from app.utils.constant.cif import (
-    ADDRESS_TYPE_CODE_UNDEFINDED, IDENTITY_TYPE_CODE_NON_RESIDENT,
+    ADDRESS_TYPE_CODE_UNDEFINDED, DROPDOWN_NONE_DICT,
+    IDENTITY_TYPE_CODE_NON_RESIDENT,
     PROFILE_HISTORY_DESCRIPTIONS_TRANSFER_CASA_ACCOUNT,
     PROFILE_HISTORY_STATUS_INIT
 )
@@ -60,7 +61,7 @@ from app.utils.error_messages import (
 )
 from app.utils.functions import (
     date_string_to_other_date_string_format, dropdown, generate_uuid, now,
-    orjson_dumps, orjson_loads
+    orjson_dumps, orjson_loads, string_to_date
 )
 from app.utils.vietnamese_converter import (
     convert_to_unsigned_vietnamese, make_short_name, split_name
@@ -121,12 +122,6 @@ class CtrCasaTransfer(BaseController):
 
             if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
                 receiver_account_number = form_data['receiver_account_number']
-                gw_full_name = await CtrGWCasaAccount(
-                    current_user=current_user
-                ).ctr_gw_get_retrieve_ben_name_by_account_number(
-                    account_number=receiver_account_number
-                )
-                full_name = gw_full_name['data']['full_name']
                 bank_id = form_data['receiver_bank']['id']
                 bank_info = await self.get_model_object_by_id(
                     model_id=bank_id, model=Bank, loc='receiver_bank'
@@ -134,14 +129,11 @@ class CtrCasaTransfer(BaseController):
                 receiver_response = dict(
                     bank=dropdown(bank_info),
                     account_number=receiver_account_number,
-                    fullname_vn=full_name,
+                    fullname_vn=form_data['receiver_full_name'],
                     address_full=form_data['receiver_address_full']
                 )
         elif receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
             receiver_card_number = form_data['receiver_card_number']
-            full_name = await CtrGWCasaAccount(current_user=current_user).ctr_gw_get_retrieve_ben_name_by_card_number(
-                card_number=receiver_card_number
-            )
             bank_id = form_data['receiver_bank']['id']
             bank_info = await self.get_model_object_by_id(
                 model_id=bank_id, model=Bank, loc='receiver_bank'
@@ -149,7 +141,7 @@ class CtrCasaTransfer(BaseController):
             receiver_response = dict(
                 bank=dropdown(bank_info),
                 card_number=receiver_card_number,
-                fullname_vn=full_name,
+                fullname_vn=form_data['receiver_full_name'],
                 address_full=form_data['receiver_address_full']
             )
         else:
@@ -207,25 +199,35 @@ class CtrCasaTransfer(BaseController):
         ################################################################################################################
         # Thông tin phí
         ################################################################################################################
-        fee_info = form_data['fee_info']
-        fee_amount = fee_info['fee_amount']
-        vat_tax = fee_amount / 10
-        total = fee_amount + vat_tax
-        actual_total = total + transfer_amount
-        is_transfer_payer = False
-        payer = None
-        if fee_info['is_transfer_payer'] is not None:
-            payer = "RECEIVER"
-            if fee_info['is_transfer_payer'] is True:
-                is_transfer_payer = True
-                payer = "SENDER"
+        fee_info = {}
+        if form_data['is_fee']:
+            fee_info = form_data['fee_info']
+            fee_amount = fee_info['fee_amount']
+            vat_tax = fee_amount / 10
+            total = fee_amount + vat_tax
+            actual_total = total + transfer_amount
+            is_transfer_payer = False
+            payer = None
+            if fee_info['is_transfer_payer'] is not None:
+                payer = "RECEIVER"
+                if fee_info['is_transfer_payer'] is True:
+                    is_transfer_payer = True
+                    payer = "SENDER"
+        else:
+            vat_tax = None
+            total = None
+            actual_total = transfer_amount
+            is_transfer_payer = None
+            payer = None
 
         fee_info.update(dict(
+            fee_amount=None,
             vat_tax=vat_tax,
             total=total,
             actual_total=actual_total,
             is_transfer_payer=is_transfer_payer,
-            payer=payer
+            payer=payer,
+            note=form_data['fee_info']['note']
         ))
         ################################################################################################################
 
@@ -249,20 +251,31 @@ class CtrCasaTransfer(BaseController):
                     from_format=GW_DATETIME_FORMAT,
                     to_format=GW_DATE_FORMAT
                 ),
-                place_of_issue=gw_customer_info_identity_info['id_issued_location']
+                place_of_issue=dict(
+                    id=gw_customer_info_identity_info['id_issued_location'],
+                    code=gw_customer_info_identity_info['id_issued_location'],
+                    name=gw_customer_info_identity_info['id_issued_location']
+                )
             ),
             mobile_phone=gw_customer_info['mobile_phone'],
             telephone=gw_customer_info['telephone'],
             otherphone=gw_customer_info['otherphone']
         )
         if not sender_cif_number:
+            sender_place_of_issue = form_data['sender_place_of_issue']
+            identity_place_of_issue = DROPDOWN_NONE_DICT
+            if form_data['sender_place_of_issue']:
+                identity_place_of_issue = await self.get_model_object_by_id(
+                    model_id=sender_place_of_issue['id'],
+                    model=PlaceOfIssue,
+                    loc='sender_place_of_issue -> id')
             sender_response.update(
                 fullname_vn=form_data['sender_full_name_vn'],
                 address_full=form_data['sender_address_full'],
                 identity_info=dict(
                     number=form_data['sender_identity_number'],
-                    issued_date=form_data['sender_place_of_issue'],
-                    place_of_issue=form_data['sender_place_of_issue']
+                    issued_date=form_data['sender_issued_date'],
+                    place_of_issue=dropdown(identity_place_of_issue)
                 ),
                 mobile_phone=form_data['sender_mobile_number']
             )
@@ -308,6 +321,7 @@ class CtrCasaTransfer(BaseController):
     async def ctr_save_casa_transfer_scb_to_account(
             self,
             current_user: AuthResponse,
+            receiving_method: str,
             data: CasaTransferSCBToAccountRequest
     ):
         if not isinstance(data, CasaTransferSCBToAccountRequest):
@@ -315,10 +329,6 @@ class CtrCasaTransfer(BaseController):
                 msg=ERROR_MAPPING_MODEL,
                 loc=f'expect: CasaTransferSCBToAccountRequest, request: {type(data)}'
             )
-
-        sender_cif_number = data.sender_cif_number
-        if not sender_cif_number:
-            return self.response_exception(msg=ERROR_CIF_NUMBER_NOT_EXIST, loc=f"cif_number: {sender_cif_number}")
 
         receiver_account_number = data.receiver_account_number
         sender_account_number = data.sender_account_number
@@ -342,12 +352,13 @@ class CtrCasaTransfer(BaseController):
                 msg=ERROR_CASA_ACCOUNT_NOT_EXIST,
                 loc=f"receiver_account_number: {receiver_account_number}"
             )
-
+        data.receiving_method = receiving_method
         return data
 
     async def ctr_save_casa_transfer_scb_by_identity(
             self,
             current_user: AuthResponse,
+            receiving_method: str,
             data: CasaTransferSCBByIdentityRequest
     ):
         if not isinstance(data, CasaTransferSCBByIdentityRequest):
@@ -379,11 +390,14 @@ class CtrCasaTransfer(BaseController):
             model_id=data.receiver_place_of_issue.id, model=PlaceOfIssue, loc='place_of_issue -> id'
         )
 
+        data.receiving_method = receiving_method
+
         return data
 
     async def ctr_save_casa_transfer_third_party_to_account(
             self,
             current_user: AuthResponse,
+            receiving_method: str,
             data: CasaTransferThirdPartyToAccountRequest
     ):
         if not isinstance(data, CasaTransferThirdPartyToAccountRequest):
@@ -402,13 +416,28 @@ class CtrCasaTransfer(BaseController):
                 msg=ERROR_CASA_ACCOUNT_NOT_EXIST,
                 loc=f"sender_account_number: {sender_account_number}"
             )
-        await self.get_model_object_by_id(model_id=data.receiver_bank.id, model=Bank, loc='bank -> id')
+        receiver_bank_id = data.receiver_bank.id
+        await self.get_model_object_by_id(
+            model_id=receiver_bank_id,
+            model=Bank,
+            loc=f'receiver_bank -> id: {receiver_bank_id}'
+        )
+
+        # validate province
+        receiver_province_id = data.receiver_province.id
+        await self.get_model_object_by_id(
+            model_id=receiver_province_id,
+            model=AddressProvince,
+            loc=f'receiver_province -> id: {receiver_province_id}'
+        )
+        data.receiving_method = receiving_method
 
         return data
 
     async def ctr_save_casa_transfer_third_party_by_identity(
             self,
             current_user: AuthResponse,
+            receiving_method: str,
             data: CasaTransferThirdPartyByIdentityRequest
     ):
         if not isinstance(data, CasaTransferThirdPartyByIdentityRequest):
@@ -428,14 +457,34 @@ class CtrCasaTransfer(BaseController):
                 loc=f"sender_account_number: {sender_account_number}"
             )
 
-        # validate branch of bank
-        # TODO:
-        # await self.get_model_object_by_id(model_id=request.branch.id, model=Branch, loc='branch -> id')
+        # validate bank
+        receiver_bank_id = data.receiver_bank.id
+        await self.get_model_object_by_id(
+            model_id=receiver_bank_id,
+            model=Bank,
+            loc=f'receiver_bank -> id: {receiver_bank_id}'
+        )
+
+        # validate province
+        receiver_province_id = data.receiver_province.id
+        await self.get_model_object_by_id(
+            model_id=receiver_province_id,
+            model=AddressProvince,
+            loc=f'receiver_province -> id: {receiver_province_id}'
+        )
+
+        # validate receiver_place_of_issue
+        await self.get_model_object_by_id(
+            model_id=data.receiver_place_of_issue.id, model=PlaceOfIssue, loc='receiver_place_of_issue -> id'
+        )
+        data.receiving_method = receiving_method
+
         return data
 
     async def ctr_save_casa_transfer_third_party_247_to_account(
             self,
             current_user: AuthResponse,
+            receiving_method: str,
             data: CasaTransferThirdParty247ToAccountRequest
     ):
         if not isinstance(data, CasaTransferThirdParty247ToAccountRequest):
@@ -446,11 +495,17 @@ class CtrCasaTransfer(BaseController):
         sender_account_number = data.sender_account_number
         receiver_account_number = data.receiver_account_number
 
-        if not receiver_account_number:
+        ben_name = await CtrGWCasaAccount(current_user).ctr_gw_get_retrieve_ben_name_by_account_number(
+            account_number=receiver_account_number)
+        receiver_full_name = ben_name['data']['full_name']
+
+        if not receiver_full_name:
             return self.response_exception(
-                msg='receiver_account_number is null',
-                loc='receiver_account_number'
+                msg="receiver_account_number not exist",
+                loc=f"receiver_account_number: {receiver_account_number}"
             )
+
+        data.receiver_full_name = receiver_full_name
 
         # Kiểm tra số tài khoản chuyển khoản tồn tại hay không
         sender_casa_account = await CtrGWCasaAccount(current_user).ctr_gw_check_exist_casa_account_info(
@@ -465,11 +520,13 @@ class CtrCasaTransfer(BaseController):
 
         # validate bank
         await self.get_model_object_by_id(model_id=data.receiver_bank.id, model=Bank, loc='bank -> id')
+        data.receiving_method = receiving_method
         return data
 
     async def ctr_save_casa_transfer_third_party_247_to_card(
             self,
             current_user: AuthResponse,
+            receiving_method: str,
             data: CasaTransferThirdParty247ToCardRequest
     ):
         if not isinstance(data, CasaTransferThirdParty247ToCardRequest):
@@ -479,11 +536,17 @@ class CtrCasaTransfer(BaseController):
             )
         receiver_card_number = data.receiver_card_number
 
-        if not receiver_card_number:
+        ben_name = await CtrGWCasaAccount(current_user).ctr_gw_get_retrieve_ben_name_by_card_number(
+            card_number=receiver_card_number)
+        receiver_full_name = ben_name['data']['full_name']
+
+        if not receiver_full_name:
             return self.response_exception(
-                msg='receiver_card_number is null',
-                loc='receiver_card_number'
+                msg="receiver_card_number not exist",
+                loc=f"receiver_card_number: {receiver_card_number}"
             )
+
+        data.receiver_full_name = receiver_full_name
 
         sender_account_number = data.sender_account_number
 
@@ -499,6 +562,7 @@ class CtrCasaTransfer(BaseController):
 
         # validate bank
         await self.get_model_object_by_id(model_id=data.receiver_bank.id, model=Bank, loc='bank -> id')
+        data.receiving_method = receiving_method
         return data
 
     async def ctr_save_casa_transfer_info(
@@ -535,7 +599,7 @@ class CtrCasaTransfer(BaseController):
             loc=f'booking_id: {booking_id}'
         )
 
-        if is_fee is not None and not fee_info:
+        if is_fee and (not fee_info or fee_info.fee_amount is None or fee_info.is_transfer_payer is None):
             return self.response_exception(msg=ERROR_NOT_NULL, loc="fee_info")
             # TODO: Case cho bên chuyển/ Bên nhận
 
@@ -579,16 +643,22 @@ class CtrCasaTransfer(BaseController):
 
         # TH1: có nhập cif -> Kiểm tra số CIF có tồn tại trong CRM không
         if sender_cif_number:
-            # self.call_repos(await repos_get_customer_by_cif_number(
-            #     cif_number=cif_number,
-            #     session=self.oracle_session
-            # ))
-            is_existed = await CtrGWCustomer(current_user).ctr_gw_check_exist_customer_detail_info(
+            customer_detail = await CtrGWCustomer(current_user).ctr_gw_get_customer_info_detail(
                 cif_number=sender_cif_number,
                 return_raw_data_flag=True
             )
-            if not is_existed:
-                return self.response_exception(msg=ERROR_CIF_NUMBER_NOT_EXIST, loc="cif_number")
+            if not customer_detail['full_name']:
+                return self.response_exception(
+                    msg=ERROR_CIF_NUMBER_NOT_EXIST,
+                    loc=f"sender_cif_number {sender_cif_number}"
+                )
+
+            data.sender_full_name_vn = customer_detail['full_name']
+            customer_identity_detail = customer_detail['id_info']
+            data.sender_identity_number = customer_identity_detail['id_num']
+            data.sender_issued_date = string_to_date(customer_identity_detail['id_issued_date'])
+            data.sender_address_full = customer_detail['t_address_info']['contact_address_full']
+            data.sender_mobile_number = customer_detail['mobile_phone']
         # TH2: Không nhập CIF
         else:
             sender_full_name_vn = data.sender_full_name_vn
@@ -625,7 +695,7 @@ class CtrCasaTransfer(BaseController):
 
         if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
             casa_transfer_info = await self.ctr_save_casa_transfer_scb_to_account(
-                current_user=current_user, data=data
+                current_user=current_user, receiving_method=receiving_method, data=data
             )
 
         # saving_customer = {}
@@ -633,29 +703,29 @@ class CtrCasaTransfer(BaseController):
         # saving_customer_address = {}
         if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
             casa_transfer_info = await self.ctr_save_casa_transfer_scb_by_identity(
-                current_user=current_user, data=data)
+                current_user=current_user, receiving_method=receiving_method, data=data)
             # (
             #     saving_customer, saving_customer_identity, saving_customer_address
             # ) = await CtrCustomer(current_user).ctr_create_non_resident_customer(data=data)
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
             casa_transfer_info = await self.ctr_save_casa_transfer_third_party_to_account(
-                current_user=current_user, data=data)
+                current_user=current_user, receiving_method=receiving_method, data=data)
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
             casa_transfer_info = await self.ctr_save_casa_transfer_third_party_by_identity(
-                current_user=current_user, data=data)
+                current_user=current_user, receiving_method=receiving_method, data=data)
             # (
             #     saving_customer, saving_customer_identity, saving_customer_address
             # ) = await CtrCustomer(current_user).ctr_create_non_resident_customer(data=data)
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
             casa_transfer_info = await self.ctr_save_casa_transfer_third_party_247_to_account(
-                current_user=current_user, data=data)
+                current_user=current_user, receiving_method=receiving_method, data=data)
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
             casa_transfer_info = await self.ctr_save_casa_transfer_third_party_247_to_card(
-                current_user=current_user, data=data)
+                current_user=current_user, receiving_method=receiving_method, data=data)
 
         if not casa_transfer_info:
             return self.response_exception(msg="No Casa Transfer")

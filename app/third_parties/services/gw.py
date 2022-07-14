@@ -26,6 +26,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_RETRIEVE_AUTHORIZED_ACCOUNT_NUM,
     GW_ENDPOINT_URL_RETRIEVE_BEN_NAME_BY_ACCOUNT_NUMBER,
     GW_ENDPOINT_URL_RETRIEVE_BEN_NAME_BY_CARD_NUMBER,
+    GW_ENDPOINT_URL_RETRIEVE_CHANGE_STATUS_ACCOUNT_NUMBER,
     GW_ENDPOINT_URL_RETRIEVE_CLOSE_CASA_ACCOUNT,
     GW_ENDPOINT_URL_RETRIEVE_CO_OWNER_ACCOUNT_NUM,
     GW_ENDPOINT_URL_RETRIEVE_CURRENT_ACCOUNT_CASA,
@@ -50,14 +51,17 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_RETRIEVE_TELE_TRANSFER_INFO,
     GW_ENDPOINT_URL_RETRIEVE_TOPIC_INFO_FROM_CODE,
     GW_ENDPOINT_URL_RETRIEVE_WORKING_PROCESS_INFO_FROM_CODE,
+    GW_ENDPOINT_URL_SELECT_BRANCH_BY_BRANCH_ID,
+    GW_ENDPOINT_URL_SELECT_BRANCH_BY_REGION_ID,
     GW_ENDPOINT_URL_SELECT_CATEGORY,
     GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE,
-    GW_ENDPOINT_URL_SELECT_SERIAL_NUMBER, GW_ENDPOINT_URL_SELECT_USER_INFO,
-    GW_ENDPOINT_URL_TT_LIQUIDATION, GW_ENDPOINT_URL_WITHDRAW,
-    GW_FUNCTION_OPEN_CASA, GW_HISTORY_ACCOUNT_NUM,
-    GW_HISTORY_CHANGE_FIELD_ACCOUNT, GW_RETRIEVE_CASA_ACCOUNT_DETAIL,
-    GW_SELF_SELECTED_ACCOUNT_FLAG, GW_SELF_UNSELECTED_ACCOUNT_FLAG,
-    GW_TRANSACTION_RESPONSE_STATUS_SUCCESS
+    GW_ENDPOINT_URL_SELECT_SERIAL_NUMBER,
+    GW_ENDPOINT_URL_SELECT_STATISTIC_BANKING_BY_PERIOD,
+    GW_ENDPOINT_URL_SELECT_USER_INFO, GW_ENDPOINT_URL_TT_LIQUIDATION,
+    GW_ENDPOINT_URL_WITHDRAW, GW_FUNCTION_OPEN_CASA, GW_HISTORY_ACCOUNT_NUM,
+    GW_HISTORY_CHANGE_FIELD_ACCOUNT, GW_RESPONSE_STATUS_SUCCESS,
+    GW_RETRIEVE_CASA_ACCOUNT_DETAIL, GW_SELF_SELECTED_ACCOUNT_FLAG,
+    GW_SELF_UNSELECTED_ACCOUNT_FLAG
 )
 from app.utils.functions import date_to_string
 
@@ -99,7 +103,7 @@ class ServiceGW:
                     return False, return_data
                 else:
                     return_data = await response.json()
-                    if return_data[output_key]['transaction_info']['transaction_error_code'] != GW_TRANSACTION_RESPONSE_STATUS_SUCCESS:
+                    if return_data[output_key]['transaction_info']['transaction_error_code'] != GW_RESPONSE_STATUS_SUCCESS:
                         return False, return_data
                     return True, return_data
         except aiohttp.ClientConnectorError as ex:
@@ -479,7 +483,7 @@ class ServiceGW:
                     return False, return_data, request_data
                 else:
                     return_data = await response.json()
-                    if return_data['openCASA_out']['transaction_info']['transaction_error_code'] != GW_TRANSACTION_RESPONSE_STATUS_SUCCESS:
+                    if return_data['openCASA_out']['transaction_info']['transaction_error_code'] != GW_RESPONSE_STATUS_SUCCESS:
                         return False, return_data, request_data
 
                     return True, return_data, request_data
@@ -650,6 +654,45 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
+    async def change_status_account(
+            self,
+            current_user: UserInfoResponse,
+            data_input
+    ):
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="accountChangeStatus_in", data_input=data_input
+        )
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_CHANGE_STATUS_ACCOUNT_NUMBER}"
+
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data, request_data
+                else:
+                    return_data = await response.json()
+                    return True, return_data, request_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data, request_data
     ####################################################################################################################
     # END --- CASA
     ####################################################################################################################
@@ -1928,7 +1971,7 @@ class ServiceGW:
                     return False, return_data
                 else:
                     return_data = await response.json()
-                    if return_data != GW_TRANSACTION_RESPONSE_STATUS_SUCCESS:
+                    if return_data != GW_RESPONSE_STATUS_SUCCESS:
                         return False, return_data
                     return True, return_data
         except aiohttp.ClientConnectorError as ex:
@@ -1940,7 +1983,6 @@ class ServiceGW:
         request_data = self.gw_create_request_body(
             current_user=current_user, function_name="interbankTransfer_in", data_input=data_input
         )
-        print(request_data)
         api_url = f"{self.url}{GW_ENDPOINT_URL_INTERBANK_TRANSFER}"
 
         response_data = await self.call_api(
@@ -2335,3 +2377,50 @@ class ServiceGW:
         except aiohttp.ClientConnectorError as ex:
             logger.error(str(ex))
             return False, return_data
+
+    ####################################################################################################################
+    # Branch Location
+    ####################################################################################################################
+    async def select_branch_by_region_id(self, current_user: UserInfoResponse, data_input):
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="selectBranchByRegionID_in", data_input=data_input
+        )
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_BRANCH_BY_REGION_ID}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='selectBranchByRegionID_out',
+            service_name='selectBranchByRegionID'
+        )
+        return response_data
+
+    async def select_branch_by_branch_id(self, current_user: UserInfoResponse, data_input):
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="selectBranchByBranchID_in", data_input=data_input
+        )
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_BRANCH_BY_BRANCH_ID}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='selectBranchByBranchID_out',
+            service_name='selectBranchByBranchID'
+        )
+        return response_data
+    ####################################################################################################################
+
+    ####################################################################################################################
+    # Statistic
+    ####################################################################################################################
+    async def select_statistic_banking_by_period(self, current_user: UserInfoResponse, data_input):
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="SelectStatisticBankingByPeriod_in", data_input=data_input
+        )
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_STATISTIC_BANKING_BY_PERIOD}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='SelectStatisticBankingByPeriod_out',
+            service_name='SelectStatisticBankingByPeriod'
+        )
+        return response_data
+    ####################################################################################################################

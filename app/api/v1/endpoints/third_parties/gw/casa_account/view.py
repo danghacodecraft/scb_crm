@@ -3,7 +3,7 @@ from typing import List
 from fastapi import APIRouter, Body, Depends, Header, Path
 from starlette import status
 
-from app.api.base.schema import ResponseData
+from app.api.base.schema import BaseSchema, ResponseData
 from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
@@ -216,7 +216,7 @@ async def view_gw_get_casa_account_info(
 
 @router.post(
     path="/ben-name-by-account-number/{account_number}/",
-    name="[GW] Lấy tên người thụ hưởng",
+    name="[GW] Lấy tên người thụ hưởng qua số TK",
     description="[GW] Lấy tên người thụ hưởng thông qua số tài khoản ngoài SCB",
     responses=swagger_response(
         response_model=ResponseData[GWBenNameResponse],
@@ -256,8 +256,8 @@ async def view_gw_check_exist_third_party_account_number(
 
 @router.post(
     path="/ben-name-by-card-number/{card_number}/",
-    name="[GW] Lấy tên người thụ hưởng",
-    description="[GW] Lấy tên người thụ hưởng thông qua số tài khoản ngoài SCB",
+    name="[GW] Lấy tên người thụ hưởng qua số thẻ",
+    description="[GW] Lấy tên người thụ hưởng thông qua số thẻ ngoài SCB",
     responses=swagger_response(
         response_model=ResponseData[GWBenNameResponse],
         success_status_code=status.HTTP_200_OK
@@ -292,3 +292,23 @@ async def view_gw_check_exist_third_party_card_number(
     response = {"data": dict(is_existed=True if ben_name['data']['full_name'] else False)}
 
     return ResponseData(**response)
+
+
+@router.post(
+    path="/change-status-account/{account_number}",
+    name="Khóa tài khoản thanh toán (Thay đổi trạng thái nodebit/ nocredit)",
+    description="[GW] Khóa tài khoản thanh toán (Thay đổi trạng thái nodebit/ nocredit)",
+    responses=swagger_response(
+        response_model=ResponseData[BaseSchema],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_change_status_account(
+        account_number: str = Path(..., description="Số thẻ"),
+        current_user=Depends(get_current_user_from_header())
+):
+    account_number = await CtrGWCasaAccount(current_user).ctr_gw_change_status_account(
+        account_number=account_number
+    )
+
+    return ResponseData(**account_number)

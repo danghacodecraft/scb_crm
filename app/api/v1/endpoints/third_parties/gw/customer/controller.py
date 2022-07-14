@@ -38,8 +38,8 @@ from app.utils.constant.gw import (
     GW_LOCAL_CODE, GW_NO_AGREEMENT_FLAG, GW_NO_MARKETING_FLAG,
     GW_REQUEST_PARAMETER_CO_OWNER, GW_REQUEST_PARAMETER_DEBIT_CARD,
     GW_REQUEST_PARAMETER_DEFAULT,
-    GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP, GW_SELECT,
-    GW_TRANSACTION_RESPONSE_STATUS_SUCCESS, GW_UDF_NAME, GW_YES,
+    GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP,
+    GW_RESPONSE_STATUS_SUCCESS, GW_SELECT, GW_UDF_NAME, GW_YES,
     GW_YES_AGREEMENT_FLAG
 )
 from app.utils.error_messages import (
@@ -1002,7 +1002,7 @@ class CtrGWCustomer(BaseController):
         )
         # check open_cif success
         if response_data.get('openCIFAuthorise_out').get('transaction_info').get(
-                'transaction_error_code') != GW_TRANSACTION_RESPONSE_STATUS_SUCCESS:
+                'transaction_error_code') != GW_RESPONSE_STATUS_SUCCESS:
             return self.response_exception(
                 msg=ERROR_CALL_SERVICE_GW,
                 detail=response_data.get('openCIFAuthorise_out', {}).get("transaction_info", {}).get(
