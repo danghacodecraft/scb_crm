@@ -361,6 +361,10 @@ class CtrKSS(BaseController):
         customer_detail = self.call_repos(await repos_get_customer_detail(
             postcheck_uuid=postcheck_uuid
         ))
+
+        national = customer_detail.get('nationality')
+        if not national:
+            customer_detail['nationality'] = 'Việt Nam'
         transaction_id = customer_detail.get('transaction_id')
         ekyc_step = []
         for item in customer_detail.get('ekyc_step'):
