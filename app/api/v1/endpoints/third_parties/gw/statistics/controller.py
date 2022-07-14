@@ -14,4 +14,4 @@ class CtrGWStatistic(BaseController):
         ))
         if not is_success:
             return self.response_exception(msg=ERROR_CALL_SERVICE_GW, detail=str(gw_select_statistic_banking_by_period))
-        return self.response(data=gw_select_statistic_banking_by_period['SelectStatisticBankingByPeriod_out']['data_output'])
+        return self.response(data=gw_select_statistic_banking_by_period['selectStatisticBankingByPeriod_out']['data_output'])
