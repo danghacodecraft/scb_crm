@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import Field
 
@@ -13,9 +13,7 @@ class SelectBranchByBranchIdRequest(BaseSchema):
     branch_id: str = Field(..., description="Mã vùng")
 
 
-class SelectBranchByRegionIdResponse(BaseGWSchema):
-    region_id: Optional[str] = Field(..., description="Mã vùng")
-    region_name: Optional[str] = Field(..., description="Tên vùng")
+class SelectBranchByRegionIdItemResponse(BaseGWSchema):
     area_id: Optional[str] = Field(..., description="Tên khu vự")
     area_name: Optional[str] = Field(..., description="Tên khu vự")
     branch_console: Optional[str] = Field(...)
@@ -25,3 +23,9 @@ class SelectBranchByRegionIdResponse(BaseGWSchema):
     latitude: Optional[float] = Field(..., description="Vĩ độ")
     longtitude: Optional[float] = Field(..., description="Kinh độ")
     region_type: Optional[str] = Field(..., description="Loại đơn vị")
+
+
+class SelectBranchByRegionIdResponse(BaseGWSchema):
+    region_id: Optional[str] = Field(..., description="Mã vùng")
+    region_name: Optional[str] = Field(..., description="Tên vùng")
+    branches: List = Field(..., description="Danh sách chi nhánh")
