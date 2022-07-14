@@ -4,11 +4,14 @@ from sqlalchemy import select, update
 from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn, auto_commit
+from app.api.v1.endpoints.cif.payment_account.detail.controller import (
+    CtrPaymentAccount
+)
 from app.api.v1.endpoints.repository import (
     write_transaction_log_and_update_booking
 )
 from app.api.v1.endpoints.user.schema import AuthResponse
-from app.settings.event import service_gw, service_soa
+from app.settings.event import service_gw
 from app.third_parties.oracle.models.cif.payment_account.model import (
     CasaAccount
 )
@@ -19,10 +22,10 @@ from app.third_parties.oracle.models.master_data.address import AddressCountry
 from app.third_parties.oracle.models.master_data.others import Currency
 from app.utils.constant.cif import BUSINESS_FORM_TKTT_CTTKTT
 from app.utils.error_messages import (
-    ERROR_CALL_SERVICE_GW, ERROR_CALL_SERVICE_SOA, ERROR_INVALID_NUMBER,
-    ERROR_NO_DATA, MESSAGE_STATUS
+    ERROR_CALL_SERVICE_GW, ERROR_CALL_SERVICE_SOA, ERROR_NO_DATA,
+    MESSAGE_STATUS
 )
-from app.utils.functions import is_valid_number, now
+from app.utils.functions import now
 
 
 async def repos_detail_payment_account(cif_id: str, session: Session) -> ReposReturn:
@@ -126,7 +129,7 @@ async def repos_check_exist_casa_account_number(casa_account_number: str):
     """
         Kiểm tra số tài khoản thanh toán có tồn tại hay không
     """
-    is_success, check_exist_info = await service_soa.retrieve_current_account_casa(
+    is_success, check_exist_info = await CtrPaymentAccount.ctr_gw_check_exist_casa_account_number(
         casa_account_number=casa_account_number
     )
     if not is_success:
@@ -149,26 +152,3 @@ async def repos_gw_check_exist_casa_account_number(
             detail=str(check_exist_casa_account_number)
         )
     return ReposReturn(data=check_exist_casa_account_number)
-
-
-async def repos_get_casa_account_from_soa(casa_account_number: str, loc: str):
-    """
-    Lấy thông tin tài khoản thanh toán bằng số tài khoản thanh toán
-    """
-    if not is_valid_number(casa_account_number):
-        return ReposReturn(
-            is_error=True,
-            msg=ERROR_INVALID_NUMBER,
-            detail=MESSAGE_STATUS[ERROR_INVALID_NUMBER],
-            loc=loc
-        )
-
-    is_success, account_salary_organization_response = await service_soa.retrieve_current_account_casa(
-        casa_account_number=casa_account_number
-    )
-
-    if not is_success:
-        return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_SOA,
-                           detail=MESSAGE_STATUS[ERROR_CALL_SERVICE_SOA])
-
-    return ReposReturn(data=account_salary_organization_response)
