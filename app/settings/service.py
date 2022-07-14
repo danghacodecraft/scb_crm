@@ -50,6 +50,7 @@ SERVICE = {
         }
     },
     "gw": {
-        "url": os.getenv("SERVICE_GW_URL")
+        "url": os.getenv("SERVICE_GW_URL"),
+        "bypass": bool(os.getenv("SERVICE_GW_BYPASS", "") if os.getenv("SERVICE_GW_BYPASS", "") in ["True", "true", "1"] else False)
     }
 }
