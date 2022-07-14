@@ -430,6 +430,14 @@ class CtrCasaTopUp(BaseController):
                 msg=ERROR_BANK_NOT_IN_CITAD
             )
 
+        # validate province
+        receiver_province_id = data.receiver_province.id
+        await self.get_model_object_by_id(
+            model_id=receiver_province_id,
+            model=AddressProvince,
+            loc=f'receiver_province -> id: {receiver_province_id}'
+        )
+
         data.receiving_method = receiving_method
 
         return data
