@@ -36,8 +36,8 @@ async def view_gw_select_branch_by_region_id(
 
 @router.post(
     path="/by-branch-id/",
-    name="[GW] Lấy danh sách các đơn vị kinh doanh theo mã đơn vị",
-    description="[GW] Lấy danh sách các đơn vị kinh doanh theo mã đơn vị",
+    name="[GW] Lấy chi tiết các đơn vị kinh doanh theo mã đơn vị",
+    description="[GW] Lấy chi tiết các đơn vị kinh doanh theo mã đơn vị",
     responses=swagger_response(
         response_model=ResponseData[SelectBranchByRegionIdResponse],
         success_status_code=status.HTTP_200_OK
