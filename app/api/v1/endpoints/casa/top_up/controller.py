@@ -372,6 +372,14 @@ class CtrCasaTopUp(BaseController):
                 loc=f'expect: CasaTopUpSCBByIdentityRequest, request: {type(data)}'
             )
 
+        # validate province
+        receiver_province_id = data.receiver_province.id
+        await self.get_model_object_by_id(
+            model_id=receiver_province_id,
+            model=AddressProvince,
+            loc=f'receiver_province -> id: {receiver_province_id}'
+        )
+
         # validate branch
         await self.get_model_object_by_id(model_id=data.receiver_branch.id, model=Branch, loc='branch -> id')
 
