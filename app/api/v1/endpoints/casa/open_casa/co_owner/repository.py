@@ -13,6 +13,9 @@ from app.third_parties.oracle.models.cif.basic_information.identity.model import
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
 )
+from app.third_parties.oracle.models.cif.form.model import (
+    Booking, BookingAccount
+)
 from app.third_parties.oracle.models.cif.payment_account.model import (
     AgreementAuthorization, CasaAccount, JointAccountHolder,
     JointAccountHolderAgreementAuthorization, MethodSign
@@ -22,8 +25,18 @@ from app.third_parties.oracle.models.master_data.customer import (
     CustomerRelationshipType
 )
 from app.utils.constant.cif import BUSINESS_FORM_TKTT_DSH, IMAGE_TYPE_SIGNATURE
-from app.utils.error_messages import ERROR_CASA_ACCOUNT_ID_DOES_NOT_EXIST
+from app.utils.error_messages import (
+    ERROR_BOOKING_CODE_NOT_EXIST, ERROR_CASA_ACCOUNT_ID_DOES_NOT_EXIST
+)
 from app.utils.functions import now
+
+
+async def ctr_get_booking_parent(booking_id, session: Session) -> ReposReturn:
+    booking_parent = session.execute(
+        select(Booking.parent_id).filter(Booking.id == booking_id)
+    ).scalar()
+
+    return ReposReturn(data=booking_parent)
 
 
 async def repos_check_casa_account(account_id: str, session: Session) -> ReposReturn:
@@ -44,6 +57,52 @@ async def repos_check_file_id(file_uuid: str, session: Session) -> ReposReturn:
     ).scalar()
 
     return ReposReturn(data=file_uuid_info)
+
+
+async def repos_acc_agree_info(document_no: str, session: Session) -> ReposReturn:
+    casa_account_info = session.execute(
+        select(JointAccountHolderAgreementAuthorization.casa_account_id)
+        .filter(JointAccountHolderAgreementAuthorization.joint_acc_agree_document_no == document_no)
+    ).scalar()
+
+    return ReposReturn(data=casa_account_info)
+
+
+async def repos_acc_agree_get_file(document_no: str, session: Session) -> ReposReturn:
+    file_info = session.execute(
+        select(JointAccountHolderAgreementAuthorization.joint_acc_agree_document_file_id)
+        .filter(JointAccountHolderAgreementAuthorization.joint_acc_agree_document_no == document_no)
+    ).scalars().all()
+
+    return ReposReturn(data=file_info)
+
+
+async def repos_get_booking_account(
+        account_id: str,
+        session: Session
+):
+    booking_parent_id = session.execute(
+        select(
+            Booking.parent_id,
+            BookingAccount
+        )
+        .join(Booking, BookingAccount.booking_id == Booking.id)
+        .filter(BookingAccount.account_id == account_id)
+    ).scalar()
+
+    if not booking_parent_id:
+        return ReposReturn(is_error=True, msg=ERROR_BOOKING_CODE_NOT_EXIST)
+
+    booking_parent = session.execute(
+        select(
+            Booking
+        )
+        .filter(Booking.id == booking_parent_id)
+    ).scalar()
+    if not booking_parent:
+        return ReposReturn(is_error=True, msg=ERROR_BOOKING_CODE_NOT_EXIST, loc="booking_parent")
+
+    return ReposReturn(data=booking_parent)
 
 
 @auto_commit
@@ -81,7 +140,7 @@ async def repos_save_co_owner(
     )
 
 
-async def repos_get_co_owner(account_id: str, session: Session) -> ReposReturn:
+async def repos_get_co_owner(account_id: str, document_no: str, session: Session) -> ReposReturn:
     account_holders = session.execute(
         select(
             CasaAccount,
@@ -93,7 +152,8 @@ async def repos_get_co_owner(account_id: str, session: Session) -> ReposReturn:
         .join(JointAccountHolder,
               JointAccountHolderAgreementAuthorization.joint_acc_agree_id == JointAccountHolder.joint_acc_agree_id)
         .join(CustomerRelationshipType, JointAccountHolder.relationship_type_id == CustomerRelationshipType.id)
-        .filter(CasaAccount.id == account_id)
+        .filter(CasaAccount.id == account_id,
+                JointAccountHolderAgreementAuthorization.joint_acc_agree_document_no == document_no)
     ).all()
 
     account_holder_signs = session.execute(
@@ -107,8 +167,9 @@ async def repos_get_co_owner(account_id: str, session: Session) -> ReposReturn:
         .join(MethodSign,
               JointAccountHolderAgreementAuthorization.joint_acc_agree_id == MethodSign.joint_acc_agree_id)
         .join(AgreementAuthorization, MethodSign.agreement_author_id == AgreementAuthorization.id)
-        .filter(CasaAccount.id == account_id)
-    ).all()
+        .filter(CasaAccount.id == account_id,
+                JointAccountHolderAgreementAuthorization.joint_acc_agree_document_no == document_no
+                )).all()
 
     return ReposReturn(data=(account_holders, account_holder_signs))
 
@@ -118,7 +179,7 @@ async def repos_account_co_owner(account_id: str, session: Session):
         select(
             JointAccountHolderAgreementAuthorization
         ).filter(JointAccountHolderAgreementAuthorization.casa_account_id == account_id)
-    ).scalar()
+    ).scalars().all()
 
     return ReposReturn(data=account_co_owner)
 
