@@ -1,8 +1,8 @@
 from app.api.base.controller import BaseController
 from app.utils.constant.cif import (
     APPROVE_STATUS_APPROVED, APPROVE_STATUS_PENDING, APPROVE_STATUS_REFUSE,
-    POST_CHECK_TYPE, TRANSACTION_CIF, TRANSACTION_STATUS_FALSE,
-    TRANSACTION_STATUS_TRUE, TRANSACTIONS_TYPE
+    POST_CHECK_TYPE, TRANSACTION_STATUS_FALSE, TRANSACTION_STATUS_TRUE,
+    TRANSACTION_VTM, TRANSACTIONS_TYPE, TRANSACTION_eKYC, TRANSACTION_LiveBank
 )
 
 
@@ -45,9 +45,19 @@ class CtrPostCheck(BaseController):
     async def ctr_transaction_type(self):
         transaction_type = [
             {
-                'id': TRANSACTION_CIF,
-                'code': TRANSACTION_CIF,
-                'name': TRANSACTIONS_TYPE[TRANSACTION_CIF]
+                'id': TRANSACTION_eKYC,
+                'code': TRANSACTION_eKYC,
+                'name': TRANSACTIONS_TYPE[TRANSACTION_eKYC]
+            },
+            {
+                'id': TRANSACTION_VTM,
+                'code': TRANSACTION_VTM,
+                'name': TRANSACTIONS_TYPE[TRANSACTION_VTM]
+            },
+            {
+                'id': TRANSACTION_LiveBank,
+                'code': TRANSACTION_LiveBank,
+                'name': TRANSACTIONS_TYPE[TRANSACTION_LiveBank]
             }
         ]
 
