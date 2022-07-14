@@ -36,9 +36,12 @@ from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.utils.constant.approval import CIF_STAGE_APPROVE_KSV
 from app.utils.constant.business_type import BUSINESS_TYPE_CASA_TOP_UP
 from app.utils.constant.casa import (
-    CASA_ACCOUNT_STATUS_UNAPPROVED, RECEIVING_METHOD_SCB_TO_ACCOUNT,
+    CASA_ACCOUNT_STATUS_UNAPPROVED, RECEIVING_METHOD_SCB_BY_IDENTITY,
+    RECEIVING_METHOD_SCB_TO_ACCOUNT,
     RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT,
-    RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD
+    RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD,
+    RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY,
+    RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT
 )
 from app.utils.constant.cif import BUSINESS_FORM_CLOSE_CASA
 from app.utils.constant.gw import (
@@ -47,7 +50,9 @@ from app.utils.constant.gw import (
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_KSV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_KSV
 )
-from app.utils.error_messages import ERROR_CALL_SERVICE_GW, ERROR_PERMISSION
+from app.utils.error_messages import (
+    ERROR_CALL_SERVICE_GW, ERROR_NO_INSTRUMENT_NUMBER, ERROR_PERMISSION
+)
 from app.utils.functions import (
     date_to_string, datetime_to_string, now, orjson_dumps, orjson_loads,
     string_to_date
@@ -532,26 +537,77 @@ class CtrGWCasaAccount(BaseController):
         receiving_method = form_data['receiving_method']
         response_data = None
         xref = None
+        p_contract_ref = None
 
         if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
             is_success, response_data = await CtrGWPayment(current_user).ctr_gw_pay_in_cash(form_data=form_data)
             if not is_success:
                 return self.response_exception(
+                    loc='pay_in_cash',
                     msg=ERROR_CALL_SERVICE_GW,
                     detail=str(response_data)
                 )
             xref = response_data['payInCash_out']['data_output']['xref']['p_xref']
 
+        if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
+
+            is_success, tele_transfer_response_data = await CtrGWPayment(current_user).ctr_tele_transfer(
+                form_data=form_data
+            )
+            if not is_success:
+                return self.response_exception(
+                    loc='tele_transfer',
+                    msg=ERROR_CALL_SERVICE_GW,
+                    detail=str(response_data)
+                )
+            p_instrument_number = tele_transfer_response_data['teleTransfer_out']['data_output']['p_instrument_number']
+
+            if p_instrument_number == '':
+                return self.response_exception(
+                    loc='tele_transfer',
+                    msg=ERROR_NO_INSTRUMENT_NUMBER,
+                    detail=str(response_data)
+                )
+
+            is_success, tt_liquidation_response_data = await CtrGWPayment(current_user).ctr_tt_liquidation(
+                form_data=form_data,
+                p_instrument_number=p_instrument_number
+            )
+            if not is_success:
+                return self.response_exception(
+                    loc='tt_liquidation',
+                    msg=ERROR_CALL_SERVICE_GW,
+                    detail=str(tt_liquidation_response_data)
+                )
+            p_contract_ref = tt_liquidation_response_data['ttLiquidation_out']['data_output']['p_contract_ref']
+            response_data = tt_liquidation_response_data
+
+        if receiving_method in [RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT, RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY]:
+            is_success, gw_response_data = await CtrGWPayment(current_user).ctr_gw_interbank_transfer(
+                booking_id=booking_id,
+                form_data=form_data,
+                receiving_method=receiving_method
+            )
+            if not is_success:
+                return self.response_exception(
+                    loc='interbank_transfer',
+                    msg=ERROR_CALL_SERVICE_GW,
+                    detail=str(gw_response_data)
+                )
+            response_data = gw_response_data
+
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
-            is_success, response_data = await CtrGWPayment(current_user).ctr_gw_pay_in_cash_247_by_acc_num(
+            is_success, gw_response_data = await CtrGWPayment(current_user).ctr_gw_pay_in_cash_247_by_acc_num(
                 booking_id=booking_id,
                 form_data=form_data
             )
             if not is_success:
                 return self.response_exception(
+                    loc='pay_in_cash_247_by_acc_num',
                     msg=ERROR_CALL_SERVICE_GW,
                     detail=str(response_data)
                 )
+            response_data = gw_response_data
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
             is_success, gw_response_data = await CtrGWPayment(current_user).ctr_gw_pay_in_cash_247_by_card_num(
@@ -560,6 +616,7 @@ class CtrGWCasaAccount(BaseController):
             )
             if not is_success:
                 return self.response_exception(
+                    loc='pay_in_cash_247_by_card_num',
                     msg=ERROR_CALL_SERVICE_GW,
                     detail=str(gw_response_data)
                 )
@@ -577,7 +634,8 @@ class CtrGWCasaAccount(BaseController):
 
         return self.response(data=dict(
             booking_id=booking_id,
-            xref=xref
+            xref=xref,
+            p_contract_ref=p_contract_ref
         ))
 
     async def ctr_gw_get_tele_transfer(self, request_data, place_of_issue):

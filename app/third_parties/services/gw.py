@@ -1,9 +1,9 @@
+import json
 from datetime import date
 from typing import Optional
 
 import aiohttp
 from loguru import logger
-from pydantic import json
 from starlette import status
 
 from app.api.v1.endpoints.user.schema import UserInfoResponse
@@ -57,8 +57,9 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE,
     GW_ENDPOINT_URL_SELECT_SERIAL_NUMBER,
     GW_ENDPOINT_URL_SELECT_STATISTIC_BANKING_BY_PERIOD,
-    GW_ENDPOINT_URL_SELECT_USER_INFO, GW_ENDPOINT_URL_TT_LIQUIDATION,
-    GW_ENDPOINT_URL_WITHDRAW, GW_FUNCTION_OPEN_CASA, GW_HISTORY_ACCOUNT_NUM,
+    GW_ENDPOINT_URL_SELECT_USER_INFO, GW_ENDPOINT_URL_TELE_TRANSFER,
+    GW_ENDPOINT_URL_TT_LIQUIDATION, GW_ENDPOINT_URL_WITHDRAW,
+    GW_FUNCTION_OPEN_CASA, GW_HISTORY_ACCOUNT_NUM,
     GW_HISTORY_CHANGE_FIELD_ACCOUNT, GW_RESPONSE_STATUS_SUCCESS,
     GW_RETRIEVE_CASA_ACCOUNT_DETAIL, GW_SELF_SELECTED_ACCOUNT_FLAG,
     GW_SELF_UNSELECTED_ACCOUNT_FLAG
@@ -78,7 +79,7 @@ class ServiceGW:
         await self.session.close()
         self.session = None
 
-    async def call_api(self, request_data: json, api_url: str, output_key: str):
+    async def call_api(self, api_url: str, request_data: json, output_key: str, service_name: str):
         return_errors = dict(
             loc="SERVICE GW",
             msg="",
@@ -92,7 +93,7 @@ class ServiceGW:
 
         try:
             async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
+                logger.log("SERVICE", f"[GW][{service_name}] {response.status} {api_url}")
                 if response.status != status.HTTP_200_OK:
                     if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
                         return_error = await response.json()
@@ -103,10 +104,8 @@ class ServiceGW:
                     return False, return_data
                 else:
                     return_data = await response.json()
-
                     if return_data[output_key]['transaction_info']['transaction_error_code'] != GW_RESPONSE_STATUS_SUCCESS:
                         return False, return_data
-
                     return True, return_data
         except aiohttp.ClientConnectorError as ex:
             logger.error(str(ex))
@@ -1973,10 +1972,28 @@ class ServiceGW:
                     return False, return_data
                 else:
                     return_data = await response.json()
+                    if return_data != GW_RESPONSE_STATUS_SUCCESS:
+                        return False, return_data
                     return True, return_data
         except aiohttp.ClientConnectorError as ex:
             logger.error(str(ex))
             return False, return_data
+
+    async def gw_interbank_transfer(self, current_user: UserInfoResponse, data_input):
+
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="interbankTransfer_in", data_input=data_input
+        )
+        api_url = f"{self.url}{GW_ENDPOINT_URL_INTERBANK_TRANSFER}"
+
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='interbankTransfer_out',
+            service_name='interbankTransfer'
+        )
+
+        return response_data
 
     async def gw_payment_redeem_account(self, request_data):
         api_url = f"{self.url}{GW_ENDPOINT_URL_REDEEM_ACCOUNT}"
@@ -2113,39 +2130,31 @@ class ServiceGW:
             logger.error(str(ex))
             return False, return_data
 
+    async def gw_tele_transfer(self, current_user: UserInfoResponse, data_input):
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="teleTransfer_in", data_input=data_input)
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_TELE_TRANSFER}"
+
+        return await self.call_api(
+            api_url=api_url,
+            request_data=request_data,
+            output_key='teleTransfer_out',
+            service_name='teleTransfer'
+        )
+
     async def gw_payment_tt_liquidation(self, current_user: UserInfoResponse, data_input):
         request_data = self.gw_create_request_body(
             current_user=current_user, function_name="ttLiquidation_in", data_input=data_input)
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_TT_LIQUIDATION}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        return await self.call_api(
+            api_url=api_url,
+            request_data=request_data,
+            output_key='ttLiquidation_out',
+            service_name='ttLiquidation'
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW][Payment] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
 
     async def gw_payment_interbank_transfer(self, current_user: UserInfoResponse, data_input):
         request_data = self.gw_create_request_body(
@@ -2373,7 +2382,8 @@ class ServiceGW:
         response_data = await self.call_api(
             request_data=request_data,
             api_url=api_url,
-            output_key='selectBranchByRegionID_out'
+            output_key='selectBranchByRegionID_out',
+            service_name='selectBranchByRegionID'
         )
         return response_data
 
@@ -2385,7 +2395,8 @@ class ServiceGW:
         response_data = await self.call_api(
             request_data=request_data,
             api_url=api_url,
-            output_key='selectBranchByBranchID_out'
+            output_key='selectBranchByBranchID_out',
+            service_name='selectBranchByBranchID'
         )
         return response_data
     ####################################################################################################################
@@ -2401,7 +2412,8 @@ class ServiceGW:
         response_data = await self.call_api(
             request_data=request_data,
             api_url=api_url,
-            output_key='selectStatisticBankingByPeriod_out'
+            output_key='selectStatisticBankingByPeriod_out',
+            service_name='selectStatisticBankingByPeriod'
         )
         return response_data
     ####################################################################################################################
