@@ -15,7 +15,7 @@ from app.api.v1.endpoints.customer_service.schema import (
     CreatePostCheckRequest, QueryParamsKSSRequest, UpdatePostCheckRequest
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
-    repos_gw_get_casa_account_info
+    repos_gw_change_status_account, repos_gw_get_casa_account_info
 )
 from app.settings.config import DATE_INPUT_OUTPUT_FORMAT
 from app.utils.constant.business_type import BUSINESS_TYPE_EKYC_AUDIT
@@ -322,9 +322,23 @@ class CtrKSS(BaseController):
             "username": postcheck_update_request.username,
             "is_approve": postcheck_update_request.is_approve
         }
+
         update_post_check = self.call_repos(await repos_update_post_check(
             request_data=request_data
         ))
+        # lấy lịch sử trạng thái hậu kiểm cuối cùng
+        history_status = self.call_repos(await repos_get_history_post_post_check(
+            postcheck_uuid=postcheck_update_request.customer_id
+        ))
+        customer_detail = self.call_repos(await repos_get_customer_detail(
+            postcheck_uuid=postcheck_update_request.customer_id
+        ))
+        if history_status:
+            if history_status['kss_status'] == "Không hợp lệ" and history_status['approve_status'] == "Đã Duyệt":
+                account_number = self.call_repos(await repos_gw_change_status_account( # noqa
+                    current_user=current_user.user_info,
+                    account_number=customer_detail.get('account_number')
+                ))
 
         return self.response(data=update_post_check)
 
