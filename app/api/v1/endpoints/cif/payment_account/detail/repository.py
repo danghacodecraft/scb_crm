@@ -4,9 +4,6 @@ from sqlalchemy import select, update
 from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn, auto_commit
-from app.api.v1.endpoints.cif.payment_account.detail.controller import (
-    CtrPaymentAccount
-)
 from app.api.v1.endpoints.repository import (
     write_transaction_log_and_update_booking
 )
@@ -22,8 +19,7 @@ from app.third_parties.oracle.models.master_data.address import AddressCountry
 from app.third_parties.oracle.models.master_data.others import Currency
 from app.utils.constant.cif import BUSINESS_FORM_TKTT_CTTKTT
 from app.utils.error_messages import (
-    ERROR_CALL_SERVICE_GW, ERROR_CALL_SERVICE_SOA, ERROR_NO_DATA,
-    MESSAGE_STATUS
+    ERROR_CALL_SERVICE_GW, ERROR_NO_DATA, MESSAGE_STATUS
 )
 from app.utils.functions import now
 
@@ -123,19 +119,6 @@ async def repos_check_casa_account(cif_id: str, session: Session):
     ).scalars().first()
 
     return ReposReturn(data=casa_account)
-
-
-async def repos_check_exist_casa_account_number(casa_account_number: str):
-    """
-        Kiểm tra số tài khoản thanh toán có tồn tại hay không
-    """
-    is_success, check_exist_info = await CtrPaymentAccount.ctr_gw_check_exist_casa_account_number(
-        casa_account_number=casa_account_number
-    )
-    if not is_success:
-        return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_SOA, detail=check_exist_info["message"])
-
-    return ReposReturn(data=check_exist_info)
 
 
 async def repos_gw_check_exist_casa_account_number(

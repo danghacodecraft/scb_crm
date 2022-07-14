@@ -398,13 +398,6 @@ class CtrEBanking(BaseController):
         return self.response(data=data)
 
     async def ctr_balance_payment_account(self, cif_id: str):
-        # Lấy danh sách tài khoản thanh toán thông qua service SOA
-        # payment_accounts = self.call_repos(
-        #     await repos_get_list_balance_payment_account(
-        #         cif_id=cif_id,
-        #         session=self.oracle_session
-        #     )
-        # )
 
         # Luồng tạo mới chỉ lấy tài khoản thanh toán trong DB
         # Lấy danh sách tài khoản thanh toán trong DB
