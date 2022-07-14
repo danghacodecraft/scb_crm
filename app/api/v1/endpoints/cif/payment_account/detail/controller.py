@@ -1,9 +1,10 @@
 from app.api.base.controller import BaseController
-from app.api.v1.endpoints.casa.open_casa.open_casa.controller import CtrCasaOpenCasa
+from app.api.v1.endpoints.casa.open_casa.open_casa.controller import (
+    CtrCasaOpenCasa
+)
 from app.api.v1.endpoints.cif.payment_account.detail.repository import (
-    repos_check_casa_account,
-    repos_detail_payment_account, repos_gw_check_exist_casa_account_number, repos_save_payment_account,
-    repos_check_exist_casa_account_number
+    repos_check_casa_account, repos_detail_payment_account,
+    repos_gw_check_exist_casa_account_number, repos_save_payment_account
 )
 from app.api.v1.endpoints.cif.payment_account.detail.schema import (
     SavePaymentAccountRequest
@@ -11,20 +12,28 @@ from app.api.v1.endpoints.cif.payment_account.detail.schema import (
 from app.api.v1.endpoints.cif.repository import (
     repos_get_booking, repos_get_initializing_customer
 )
-from app.api.v1.endpoints.config.account.repository import repos_get_account_classes
-from app.api.v1.endpoints.third_parties.gw.casa_account.repository import repos_gw_get_casa_account_info
+from app.api.v1.endpoints.config.account.repository import (
+    repos_get_account_classes
+)
+from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
+    CtrGWCasaAccount
+)
+from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
+    repos_gw_get_casa_account_info
+)
 from app.api.v1.validator import validate_history_data
 from app.third_parties.oracle.models.master_data.account import AccountType
 from app.third_parties.oracle.models.master_data.others import Currency
 from app.utils.constant.cif import (
-    PROFILE_HISTORY_DESCRIPTIONS_OPEN_CASA_ACCOUNT,
-    PROFILE_HISTORY_STATUS_INIT, STAFF_TYPE_BUSINESS_CODE, DROPDOWN_NONE_DICT
+    DROPDOWN_NONE_DICT, PROFILE_HISTORY_DESCRIPTIONS_OPEN_CASA_ACCOUNT,
+    PROFILE_HISTORY_STATUS_INIT, STAFF_TYPE_BUSINESS_CODE
 )
 from app.utils.error_messages import (
-    ERROR_CASA_ACCOUNT_EXIST, ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_INVALID_NUMBER, ERROR_ACCOUNT_NUMBER_NOT_NULL,
-    ERROR_FIELD_REQUIRED, ERROR_ID_NOT_EXIST
+    ERROR_ACCOUNT_NUMBER_NOT_NULL, ERROR_CASA_ACCOUNT_EXIST,
+    ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_FIELD_REQUIRED, ERROR_ID_NOT_EXIST,
+    ERROR_INVALID_NUMBER
 )
-from app.utils.functions import is_valid_number, now, orjson_dumps, dropdown
+from app.utils.functions import dropdown, is_valid_number, now, orjson_dumps
 
 
 class CtrPaymentAccount(BaseController):
@@ -94,7 +103,7 @@ class CtrPaymentAccount(BaseController):
         if self_selected_account_flag:
             casa_account_number = payment_account_save_request.casa_account_number
             if not casa_account_number:
-                return self.response_exception(msg=ERROR_ACCOUNT_NUMBER_NOT_NULL, loc=f"casa_account_number")
+                return self.response_exception(msg=ERROR_ACCOUNT_NUMBER_NOT_NULL, loc="casa_account_number")
 
         # Nếu là TKTT tự chọn
         if self_selected_account_flag:
@@ -102,16 +111,17 @@ class CtrPaymentAccount(BaseController):
             account_structure_type_level_2_id = payment_account_save_request.account_structure_type_level_2.id
             if not account_structure_type_level_2_id:
                 return self.response_exception(
-                    loc=f'account_info -> account_structure_type_level_2 -> id',
+                    loc='account_info -> account_structure_type_level_2 -> id',
                     msg=ERROR_FIELD_REQUIRED
                 )
 
             # Kiểm tra STK có tồn tại trong GW chưa
-            is_existed = await CtrCasaOpenCasa(current_user=current_user).ctr_check_exist_casa_account(account_number=casa_account_number)
+            is_existed = await CtrCasaOpenCasa(current_user=current_user).ctr_check_exist_casa_account(
+                account_number=casa_account_number)
             if is_existed:
                 return self.response_exception(
                     msg=ERROR_CASA_ACCOUNT_EXIST,
-                    loc=f'casa_account_number'
+                    loc='casa_account_number'
                 )
 
             if account_salary_organization_account:
@@ -120,11 +130,11 @@ class CtrPaymentAccount(BaseController):
                     current_user=self.current_user.user_info
                 ))
                 account_organization_info = \
-                gw_account_organization_info['retrieveCurrentAccountCASA_out']['data_output']['customer_info']
+                    gw_account_organization_info['retrieveCurrentAccountCASA_out']['data_output']['customer_info']
                 if account_organization_info['account_info']['account_num'] == '':
                     return self.response_exception(
                         msg=ERROR_CASA_ACCOUNT_NOT_EXIST,
-                        loc=f'account_salary_organization_account'
+                        loc='account_salary_organization_account'
                     )
                 acc_salary_org_name = account_organization_info['full_name']
 
@@ -219,11 +229,11 @@ class CtrPaymentAccount(BaseController):
                 loc="casa_account_number"
             )
 
-        casa_account_info = self.call_repos(
-            await repos_check_exist_casa_account_number(
-                casa_account_number=casa_account_number
-            )
+        casa_account_info = await CtrGWCasaAccount().ctr_gw_get_casa_account_info(
+            account_number=casa_account_number,
+            return_raw_data_flag=True
         )
+
         return self.response(data=casa_account_info)
 
     async def ctr_gw_check_exist_casa_account_number(self, casa_account_number):

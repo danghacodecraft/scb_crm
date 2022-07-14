@@ -1,10 +1,12 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.basic_information.repository import (
-    repos_get_customer_detail_by_cif_number,
     repos_get_customer_personal_relationships
 )
 from app.api.v1.endpoints.cif.repository import (
     repos_get_initializing_customer, repos_validate_cif_number
+)
+from app.api.v1.endpoints.third_parties.gw.customer.controller import (
+    CtrGWCustomer
 )
 from app.utils.error_messages import (
     ERROR_RELATION_CUSTOMER_SELF_RELATED, ERROR_RELATIONSHIP_EXIST
@@ -36,11 +38,9 @@ class CtrBasicInformation(BaseController):
                 loc="cif_number",
             )
 
-        customer_detail_data = self.call_repos(
-            await repos_get_customer_detail_by_cif_number(
-                cif_number=cif_number_need_to_find,
-                session=self.oracle_session
-            ))
+        customer_detail_data = CtrGWCustomer().ctr_gw_check_exist_customer_detail_info(
+            cif_number=cif_number_need_to_find
+        )
 
         relationships = await repos_get_customer_personal_relationships(
             session=self.oracle_session,
