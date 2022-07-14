@@ -632,9 +632,9 @@ class CtrGWPayment(BaseController):
             sender_issued_date = form_data['sender_issued_date']
             sender_place_of_issue = form_data['sender_place_of_issue']
 
-        data_input = None
+        data_input = {}
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
-            data_input = {
+            data_input.update({
                 "account_info": {
                     "account_bank_code": ben['data'][0]['id'],
                     "account_product_package": "NC01"
@@ -691,16 +691,17 @@ class CtrGWPayment(BaseController):
                             "ISSUER": ""
                         },
                         "ORDERING_CUSTOMER": {
-                            "BENEFICIARY_ACCOUNT_NUMBER": '',
-                            "BENEFICIARY_NAME": sender_full_name_vn,
-                            "BENEFICIARY_ADRESS": sender_address_full,
+                            "ORDERING_ACC_NO": "",
+                            "ORDERING_NAME": sender_full_name_vn,
+                            "ORDERING_ADDRESS": sender_address_full,
                             "ID_NO": sender_identity_number,
                             "ISSUE_DATE": sender_issued_date,
                             "ISSUER": sender_place_of_issue
                         }
                     }
                 }
-            }
+            })
+
         gw_interbank_transfer = self.call_repos(await repos_gw_interbank_transfer(
             data_input=data_input,
             current_user=current_user
