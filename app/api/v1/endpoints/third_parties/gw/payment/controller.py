@@ -702,6 +702,85 @@ class CtrGWPayment(BaseController):
                 }
             })
 
+        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
+            receiver_place_of_issue_id = form_data['receiver_place_of_issue']['id']
+            receiver_place_of_issue = await self.get_model_object_by_id(
+                model_id=receiver_place_of_issue_id,
+                model=PlaceOfIssue,
+                loc='receiver_place_of_issue_id'
+            )
+            data_input.update({
+                "account_info": {
+                    "account_bank_code": ben['data'][0]['id'],
+                    "account_product_package": "NC01"
+                },
+                "staff_info_checker": {
+                    "staff_name": "DIEMNTK"     # TODO
+                },
+                "staff_info_maker": {
+                    "staff_name": "DIEPTTN1"    # TODO
+                },
+                "p_blk_mis": "",
+                "p_blk_udf": "",
+                "p_blk_refinance_rates": "",
+                "p_blk_amendment_rate": "",
+                "p_blk_main": {
+                    "PRODUCT": {
+                        "DETAILS_OF_CHARGE": details_of_charge,
+                        "PAYMENT_FACILITY": "O"
+                    },
+                    "TRANSACTION_LEG": {
+                        "ACCOUNT": "101101001",
+                        "AMOUNT": form_data['amount']
+                    },
+                    "RATE": {
+                        "EXCHANGE_RATE": 0,
+                        "LCY_EXCHANGE_RATE": 0,
+                        "LCY_AMOUNT": 0
+                    },
+                    "ADDITIONAL_INFO": {
+                        "RELATED_CUSTOMER": form_data['sender_cif_number'],
+                        "NARRATIVE": form_data['content']
+                    }
+                },
+                "p_blk_charge": [
+                    {
+                        "CHARGE_NAME": "PHI DV TT TRONG NUOC  711003001",
+                        "CHARGE_AMOUNT": 10000,
+                        "WAIVED": "N"
+                    },
+                    {
+                        "CHARGE_NAME": "THUE VAT",
+                        "CHARGE_AMOUNT": 0,
+                        "WAIVED": "N"
+                    }
+                ],
+                "p_blk_settlement_detail": {
+                    "SETTLEMENTS": {
+                        "TRANSFER_DETAIL": {
+                            "BENEFICIARY_ACCOUNT_NUMBER": '.',  # TODO
+                            "BENEFICIARY_NAME": form_data['receiver_full_name_vn'],
+                            "BENEFICIARY_ADRESS": form_data['receiver_address_full'],
+                            "ID_NO": form_data['receiver_identity_number'],
+                            "ISSUE_DATE": date_string_to_other_date_string_format(
+                                date_input=form_data['receiver_issued_date'],
+                                from_format=GW_DATE_FORMAT,
+                                to_format=GW_CORE_DATE_FORMAT
+                            ),
+                            "ISSUER": receiver_place_of_issue.name
+                        },
+                        "ORDERING_CUSTOMER": {
+                            "ORDERING_ACC_NO": "",
+                            "ORDERING_NAME": sender_full_name_vn,
+                            "ORDERING_ADDRESS": sender_address_full,
+                            "ID_NO": sender_identity_number,
+                            "ISSUE_DATE": sender_issued_date,
+                            "ISSUER": sender_place_of_issue
+                        }
+                    }
+                }
+            })
+
         gw_interbank_transfer = self.call_repos(await repos_gw_interbank_transfer(
             data_input=data_input,
             current_user=current_user
