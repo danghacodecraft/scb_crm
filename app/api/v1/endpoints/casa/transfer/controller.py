@@ -29,7 +29,7 @@ from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
 from app.api.v1.validator import validate_history_data
 from app.third_parties.oracle.models.master_data.address import AddressProvince
-from app.third_parties.oracle.models.master_data.bank import Bank
+from app.third_parties.oracle.models.master_data.bank import Bank, BankBranch
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.approval import CASA_TRANSFER_STAGE_BEGIN
@@ -176,19 +176,19 @@ class CtrCasaTransfer(BaseController):
                 bank_info = await self.get_model_object_by_id(
                     model_id=bank_id, model=Bank, loc='receiver_bank'
                 )
+                branch_info = await self.get_model_object_by_id(
+                    model_id=branch_id, model=BankBranch, loc='receiver_branch'
+                )
 
                 receiver_response = dict(
                     bank=dropdown(bank_info),
                     province=dropdown(province_info),
-                    branch=dict(
-                        code=branch_id,
-                        name=branch_id
-                    ),  # TODO: đợi e-bank
+                    branch_info=dropdown(branch_info),
                     fullname_vn=form_data['receiver_full_name_vn'],
                     identity_number=form_data['receiver_identity_number'],
                     issued_date=form_data['receiver_issued_date'],
                     place_of_issue=dropdown(receiver_place_of_issue),
-                    mobile_number=form_data['receiver_mobile_number'],
+                    mobile_phone=form_data['receiver_mobile_number'],
                     address_full=form_data['receiver_address_full']
                 )
 
@@ -464,6 +464,14 @@ class CtrCasaTransfer(BaseController):
             model_id=receiver_bank_id,
             model=Bank,
             loc=f'receiver_bank -> id: {receiver_bank_id}'
+        )
+
+        # validate bank branch
+        receiver_branch_id = data.receiver_branch.id
+        await self.get_model_object_by_id(
+            model_id=receiver_branch_id,
+            model=BankBranch,
+            loc=f'receiver_branch -> id: {receiver_branch_id}'
         )
 
         # validate province
