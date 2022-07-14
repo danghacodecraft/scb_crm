@@ -251,6 +251,7 @@ class GWCloseCasaAccountResponse(BaseGWSchema):
 class GWTopUpCasaAccountResponse(BaseGWSchema):
     booking_id: str = Field(..., description="Booking")
     xref: Optional[str] = Field(..., description="Số bút toán")
+    p_contract_ref: Optional[str] = Field(..., description="Mã hợp đồng")
 
 
 class GWBenNameResponse(BaseGWSchema):
