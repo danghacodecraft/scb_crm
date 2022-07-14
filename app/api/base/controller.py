@@ -21,11 +21,11 @@ from app.api.v1.endpoints.repository import (
     repos_get_model_object_by_id_or_code, repos_get_model_objects_by_ids
 )
 from app.api.v1.endpoints.user.schema import AuthResponse, UserInfoResponse
-from app.third_parties.oracle.base import Base, SessionLocal, SessionLocal_Task
+from app.third_parties.oracle.base import Base, SessionLocal
 from app.utils.constant.cif import PROFILE_HISTORY_DESCRIPTIONS
 from app.utils.constant.ekyc import is_success
 from app.utils.error_messages import (
-    ERROR_GROUP_ROLE_CODE, ERROR_MENU_CODE, MESSAGE_STATUS, ERROR_ISSUED_DATE
+    ERROR_GROUP_ROLE_CODE, ERROR_ISSUED_DATE, ERROR_MENU_CODE, MESSAGE_STATUS
 )
 from app.utils.functions import (
     datetime_to_string, dropdown, dropdown_name, generate_uuid, now,
@@ -47,11 +47,6 @@ class BaseController:
         if is_init_oracle_session:
             logger.debug("Started session Oracle")
             self.oracle_session = SessionLocal()
-
-        self.oracle_session_task: Optional[Session] = None
-        if is_init_oracle_session:
-            logger.debug("Started session Oracle")
-            self.oracle_session_task = SessionLocal_Task()
 
     def _close_oracle_session(self):
         if self.oracle_session:
