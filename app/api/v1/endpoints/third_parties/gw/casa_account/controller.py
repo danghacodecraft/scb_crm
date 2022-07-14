@@ -731,38 +731,10 @@ class CtrGWCasaAccount(BaseController):
 
     async def ctr_gw_change_status_account(self, account_number):
         current_user = self.current_user
-        # TODO default đóng tài khoản thanh toán
-        data_input = {
-            "account_info": {
-                "account_num": account_number
-            },
-            # TODO hard core
-            "p_blk_main": {
-                "TRANSACTION_INFO": {
-                    "SOURCE_CODE": "ODC1",
-                    "USER_ID": "ODC1",
-                    "BRANCH_CODE": ""
-                },
-                "CHANGE_DETAIL": {
-                    "NEW_STATUS": "NORM",
-                    "NO_DEBIT": "Y",
-                    "NO_CREDIT": "Y"
-                }
-            },
-            "p_blk_charge": "",
-            "p_blk_udf": "",
-            "p_udf": "",
-            # TODO hard checker, maker
-            "staff_info_checker": {
-                "staff_name": "HOANT2"
-            },
-            "staff_info_maker": {
-                "staff_name": "KHANHLQ"
-            }
-        }
+
         gw_change_status = self.call_repos(await repos_gw_change_status_account(
             current_user=current_user.user_info,
-            data_input=data_input
+            account_number=account_number
         ))
 
         account_changes = gw_change_status.get('accountChangeStatus_out').get('transaction_info')

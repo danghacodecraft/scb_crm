@@ -2413,14 +2413,14 @@ class ServiceGW:
     ####################################################################################################################
     async def select_statistic_banking_by_period(self, current_user: UserInfoResponse, data_input):
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="SelectStatisticBankingByPeriod_in", data_input=data_input
+            current_user=current_user, function_name="selectStatisticBankingByPeriod_in", data_input=data_input
         )
         api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_STATISTIC_BANKING_BY_PERIOD}"
         response_data = await self.call_api(
             request_data=request_data,
             api_url=api_url,
-            output_key='SelectStatisticBankingByPeriod_out',
-            service_name='SelectStatisticBankingByPeriod'
+            output_key='selectStatisticBankingByPeriod_out',
+            service_name='selectStatisticBankingByPeriod'
         )
         return response_data
     ####################################################################################################################
