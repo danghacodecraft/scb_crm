@@ -57,8 +57,9 @@ from app.utils.error_messages import (
     ERROR_BANK_NOT_IN_CITAD, ERROR_BANK_NOT_IN_NAPAS,
     ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_CIF_NUMBER_NOT_EXIST,
     ERROR_DENOMINATIONS_NOT_EXIST, ERROR_FIELD_REQUIRED,
-    ERROR_INTERBANK_ACCOUNT_NUMBER_NOT_EXIST, ERROR_MAPPING_MODEL,
-    ERROR_NOT_NULL, ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
+    ERROR_INTERBANK_ACCOUNT_NUMBER_NOT_EXIST,
+    ERROR_INTERBANK_CARD_NUMBER_NOT_EXIST, ERROR_MAPPING_MODEL, ERROR_NOT_NULL,
+    ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
 )
 from app.utils.functions import (
     date_string_to_other_date_string_format, dropdown, generate_uuid, now,
@@ -540,7 +541,14 @@ class CtrCasaTopUp(BaseController):
                 loc=f'receiver_bank -> id: {receiver_bank_id}',
                 msg=ERROR_BANK_NOT_IN_NAPAS
             )
-        # TODO: validate card number
+        # validate card number
+        card_number = data.receiver_card_number
+        is_existed = await CtrGWCasaAccount(self.current_user).ctr_check_exist_card_number_from_other_bank(
+            card_number=card_number
+        )
+        if not is_existed:
+            self.response_exception(msg=ERROR_INTERBANK_CARD_NUMBER_NOT_EXIST,
+                                    loc=f'card_number: {card_number}')
 
         data.receiving_method = receiving_method
         return data
