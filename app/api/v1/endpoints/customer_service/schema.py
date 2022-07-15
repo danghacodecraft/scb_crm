@@ -102,7 +102,7 @@ class HistoryPostCheckResponse(BaseSchema):
     kss_status: str = Field(..., description='Status post-control description')
     kss_status_old: str = Field(..., description='Status old post-control description')
     create_date_format: Optional[str] = Field(..., description='Create date')
-    approve_status: str = Field(..., description='Trạng thái phê duyệt')
+    approve_status: Optional[str] = Field(..., description='Trạng thái phê duyệt')
     approve_date_format: Optional[str] = Field(..., description='Ngày phê duyệt')
     status: str = Field(..., description='Status posst-control')
     status_old: str = Field(..., description='Status old post-control')
