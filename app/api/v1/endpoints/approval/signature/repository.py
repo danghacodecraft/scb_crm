@@ -17,7 +17,7 @@ from app.utils.constant.cif import (
     ACTIVE_FLAG_DISACTIVED, BUSINESS_FORM_TTCN_GTDD_CK,
     IMAGE_TYPE_CODE_SIGNATURE
 )
-from app.utils.error_messages import ERROR_SIGNATURE_IS_NULL
+from app.utils.error_messages import ERROR_NO_DATA, ERROR_SIGNATURE_IS_NULL
 from app.utils.functions import generate_uuid, now
 
 
@@ -73,7 +73,6 @@ async def repos_get_signature_data(cif_id: str, session: Session) -> ReposReturn
     return ReposReturn(data=query_data)
 
 
-@auto_commit
 async def repos_compare_signature(
         cif_id: str,
         uuid_ekyc: str,
@@ -97,7 +96,7 @@ async def repos_compare_signature(
     ).scalars().all()
 
     if not signature_query:
-        return ReposReturn(is_error=True, msg='ERROR_NO_DATA')
+        return ReposReturn(is_error=True, msg=ERROR_NO_DATA)
 
     signature_compares = []
 
