@@ -107,8 +107,8 @@ class HistoryPostCheckResponse(BaseSchema):
     status: str = Field(..., description='Status posst-control')
     status_old: str = Field(..., description='Status old post-control')
     result: str = Field(..., description='Kết quả đánh giá')
-    create_user: str = Field(..., description='User create')
-    approve_user: str = Field(..., description='User approve')
+    create_user: Optional[str] = Field(..., description='User create')
+    approve_user: Optional[str] = Field(..., description='User approve')
 
 
 ####################################################################################################
