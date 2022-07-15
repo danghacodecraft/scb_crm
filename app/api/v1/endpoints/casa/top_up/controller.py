@@ -56,7 +56,8 @@ from app.utils.constant.idm import (
 from app.utils.error_messages import (
     ERROR_BANK_NOT_IN_CITAD, ERROR_BANK_NOT_IN_NAPAS,
     ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_CIF_NUMBER_NOT_EXIST,
-    ERROR_DENOMINATIONS_NOT_EXIST, ERROR_FIELD_REQUIRED, ERROR_MAPPING_MODEL,
+    ERROR_DENOMINATIONS_NOT_EXIST, ERROR_FIELD_REQUIRED,
+    ERROR_INTERBANK_ACCOUNT_NUMBER_NOT_EXIST, ERROR_MAPPING_MODEL,
     ERROR_NOT_NULL, ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
 )
 from app.utils.functions import (
@@ -504,6 +505,15 @@ class CtrCasaTopUp(BaseController):
                 loc=f'receiver_bank -> id: {receiver_bank_id}',
                 msg=ERROR_BANK_NOT_IN_NAPAS
             )
+
+        # validate account_number
+        account_number = data.receiver_account_number
+        is_existed = await CtrGWCasaAccount(self.current_user).ctr_check_exist_account_number_from_other_bank(
+            account_number=account_number
+        )
+        if not is_existed:
+            self.response_exception(msg=ERROR_INTERBANK_ACCOUNT_NUMBER_NOT_EXIST, loc=f'account_number: {account_number}')
+
         data.receiving_method = receiving_method
         return data
 

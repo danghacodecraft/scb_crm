@@ -730,6 +730,10 @@ class CtrGWCasaAccount(BaseController):
 
         return self.response(data=ben_name)
 
+    async def ctr_check_exist_account_number_from_other_bank(self, account_number) -> bool:
+        account_info = await self.ctr_gw_get_retrieve_ben_name_by_account_number(account_number=account_number)
+        return True if account_info['data']['full_name'] else False
+
     async def ctr_gw_get_retrieve_ben_name_by_card_number(self, card_number: str):
         current_user = self.current_user.user_info
         data_input = {
