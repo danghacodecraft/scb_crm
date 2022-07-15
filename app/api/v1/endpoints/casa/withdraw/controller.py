@@ -61,11 +61,7 @@ class CtrWithdraw(BaseController):
                 msg=ERROR_CASA_ACCOUNT_NOT_EXIST,
                 loc=f"account_number: {casa_account_number}"
             )
-
         receiver = request.transaction_info.receiver_info
-        fee = request.transaction_info.fee_info
-        management = request.customer_info.management_info
-        transactional_customer = request.customer_info.sender_info
 
         # Kiểm tra số tiền rút có đủ hay không
         casa_account_balance = await CtrGWCasaAccount(current_user=current_user).ctr_gw_get_casa_account_info(
@@ -79,63 +75,6 @@ class CtrWithdraw(BaseController):
                 loc=f"account_balance: {balance}"
             )
 
-        if receiver.withdraw_account_flag:
-            receiver_info = dict(
-                withdraw_account_flag=True,
-                amount=receiver.amount,
-                content=receiver.content
-            )
-        else:
-            receiver_info = dict(
-                withdraw_account_flag=False,
-                amount=receiver.amount,
-                seri_cheque=receiver.seri_cheque,
-                date_of_issue=receiver.date_of_issue,
-                exchange_VND_flag=receiver.exchange_VND_flag,
-                exchange_rate=receiver.exchange_rate,
-                exchanged_money_VND=receiver.exchanged_money_VND,
-                reciprocal_rate_headquarters=receiver.reciprocal_rate_headquarters,
-                content=receiver.content
-            )
-
-        transaction_info = dict(
-            source_accounts=request.transaction_info.source_accounts.account_num,
-            receiver_info=receiver_info,
-            fee_info=dict(
-                is_transfer_payer=fee.is_transfer_payer,
-                payer_flag=fee.payer_flag,
-                amount=fee.fee_amount
-            ) if fee.is_transfer_payer else dict(
-                is_transfer_payer=False
-            )
-        )
-
-        transactional_customer_info = dict(
-            management_info=dict(
-                direct_staff_code=management.direct_staff_code,
-                indirect_staff_code=management.indirect_staff_code
-            ),
-            sender_info=dict(
-                cif_flag=transactional_customer.cif_flag,
-                cif_number=transactional_customer.cif_number,
-                note=transactional_customer.note
-            ) if transactional_customer.cif_flag else dict(
-                cif_flag=transactional_customer.cif_flag,
-                fullname_vn=transactional_customer.fullname_vn,
-                identity=transactional_customer.identity,
-                issued_date=transactional_customer.issued_date,
-                place_of_issue=transactional_customer.place_of_issue,
-                address_full=transactional_customer.address_full,
-                mobile_phone=transactional_customer.mobile_phone,
-                note=transactional_customer.note,
-            )
-        )
-
-        data_request = dict(
-            transaction_info=transaction_info,
-            transactional_customer_info=transactional_customer_info
-        )
-
         history_data = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_WITHDRAW,
             history_status=PROFILE_HISTORY_STATUS_INIT,
@@ -146,7 +85,7 @@ class CtrWithdraw(BaseController):
         transaction_data = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
             business_type_id=BUSINESS_TYPE_WITHDRAW,
             booking_id=booking_id,
-            request_json=orjson_dumps(data_request),
+            request_json=request.json(),
             history_datas=orjson_dumps(history_data)
         )
         (
