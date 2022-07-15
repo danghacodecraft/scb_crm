@@ -11,7 +11,8 @@ from app.settings.event import service_gw, service_idm
 from app.settings.service import SERVICE
 from app.third_parties.services.idm import ServiceIDM
 from app.utils.error_messages import (
-    ERROR_CALL_SERVICE_IDM, ERROR_INVALID_TOKEN, USER_ID_NOT_EXIST
+    ERROR_CALL_SERVICE_GW, ERROR_CALL_SERVICE_IDM, ERROR_INVALID_TOKEN,
+    USER_ID_NOT_EXIST
 )
 
 USER_ID = "9651cdfd9a9a4eb691f9a3a125ac46b0"
@@ -50,6 +51,8 @@ async def repos_login(username: str, password: str) -> ReposReturn:
                 }
             }
         )
+        if not is_success:
+            return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_GW, detail=str(data_gw))
 
         gw_data_output = data_gw['selectUserInfoByUserID_out']['data_output']
         if gw_data_output:
