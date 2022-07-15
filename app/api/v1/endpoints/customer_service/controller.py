@@ -165,6 +165,8 @@ class CtrKSS(BaseController):
         post_control_response = self.call_repos(await repos_get_post_control(
             query_params=query_params
         ))
+        if post_control_response['kss_status'] == 'Hợp lệ' or post_control_response['kss_status'] == 'Cần xác minh':
+            post_control_response['approve_status'] = None
 
         return self.response(data=post_control_response)
 
@@ -188,7 +190,16 @@ class CtrKSS(BaseController):
             postcheck_uuid=postcheck_uuid
         ))
 
-        return self.response(data=history_post_check)
+        response_datas = []
+        for history in history_post_check:
+            if (
+                    history['kss_status_old'] == 'Chờ hậu kiểm'
+                    and (history['kss_status'] == 'Hợp lệ' or history['kss_status'] == 'Cần xác minh')
+            ):
+                history['approve_status'] = history['approve_user'] = None
+            response_datas.append(history)
+
+        return self.response(data=response_datas)
 
     async def ctr_statistics_month(self, months: int):
         current_user = self.current_user
