@@ -31,6 +31,7 @@ from app.third_parties.oracle.models.master_data.others import (
 )
 from app.utils.constant.cif import BUSINESS_FORM_WITHDRAW, CONTACT_ADDRESS_CODE
 from app.utils.constant.dwh import NAME_ACCOUNTING_ENTRY
+from app.utils.error_messages import ERROR_CIF_NUMBER_NOT_EXIST
 from app.utils.functions import date_to_datetime, end_time_of_day
 from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese
 
@@ -85,6 +86,29 @@ async def repos_count_total_item(region_id: Optional[str], branch_id: Optional[s
 
     total_item = session.execute(transaction_list).scalar()
     return ReposReturn(data=total_item)
+
+
+async def repos_get_customers_by_cif_number(
+        cif_numbers: str,
+        session: Session
+) -> ReposReturn:
+    customers = session.execute(
+        select(
+            Customer
+        ).filter(
+            Customer.cif_number == cif_numbers,
+            Customer.complete_flag == 1
+        )
+    ).scalar()
+
+    if not customers:
+        return ReposReturn(
+            is_error=True,
+            msg=ERROR_CIF_NUMBER_NOT_EXIST,
+            loc="cif_number"
+        )
+
+    return ReposReturn(data=customers)
 
 
 async def repos_get_transaction_list(region_id: Optional[str], branch_id: Optional[str],

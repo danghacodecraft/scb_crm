@@ -4,7 +4,7 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.dashboard.repository import (
     repos_accounting_entry, repos_count_total_item,
     repos_get_amount_block_from_booking, repos_get_customer,
-    repos_get_open_casa_info_from_booking,
+    repos_get_customers_by_cif_number, repos_get_open_casa_info_from_booking,
     repos_get_open_cif_info_from_booking, repos_get_senders,
     repos_get_sla_transaction_infos, repos_get_total_item,
     repos_get_transaction_list, repos_get_withdraw_info_from_booking,
@@ -176,15 +176,23 @@ class CtrDashboard(BaseController):
         withdraw_infos = self.call_repos(
             await repos_get_withdraw_info_from_booking(booking_ids=business_type_withdraws,
                                                        session=self.oracle_session))
-
-        # withdraw__cif_numbers = []
+        withdraw__cif_numbers = []
         for booking, booking_business_form in withdraw_infos:
             form_data = orjson_loads(booking_business_form.form_data)
             customer_info = form_data['customer_info']['sender_info']
+            cif_number = customer_info['cif_number']
+            withdraw__cif_numbers.append(cif_number)
+
+            cif_info = self.call_repos(
+                await repos_get_customers_by_cif_number(
+                    cif_numbers=cif_number,
+                    session=self.oracle_session
+                )
+            )
             mapping_datas[booking.id].update(
-                full_name_vn=customer_info['fullname_vn'],
-                # cif_id=customer_info.id,
-                cif_number=customer_info['cif_number']
+                full_name_vn=cif_info.full_name_vn,
+                cif_id=cif_info.id,
+                cif_number=cif_number,
             )
             mapping_datas[booking.id]['business_type'].update(
                 numbers=[dict(
