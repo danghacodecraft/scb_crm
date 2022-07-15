@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from pydantic import Field
+from pydantic import Field, validator
 
 from app.api.base.schema import BaseSchema
 
@@ -48,6 +48,10 @@ class QueryParamsKSSRequest(BaseSchema):
     cif_phone_number_gttt_name: Optional[str] = Field(None, description="Filter by cif, phone number, gttt, full name")
     page_num: Optional[int] = Field(None, description='Số trang')
     record_per_page: Optional[int] = Field(None, description='Số record')
+
+    @validator('cif_phone_number_gttt_name')
+    def upper_case(cls, string):
+        return string.upper()
 
 
 ####################################################################################################
