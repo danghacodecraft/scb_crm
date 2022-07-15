@@ -372,7 +372,7 @@ class CtrKSS(BaseController):
                 ekyc_step.extend(item.get('info_step'))
 
         customer_detail.update({
-            "resident_status": "Cư Trú",
+            # "resident_status": "Cư Trú",
             "ekyc_step": ekyc_step
         })
 
