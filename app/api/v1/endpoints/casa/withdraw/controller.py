@@ -155,7 +155,7 @@ class CtrWithdraw(BaseController):
             numbers.append(number)
             account.update(
                 number=account_info['number'],
-                fullname_vn=customer_info['fullname_vn'],
+                full_name_vn=customer_info['fullname_vn'],
                 balance_available=account_info['balance_available'],
                 currency=account_info['currency']
             )
@@ -197,8 +197,7 @@ class CtrWithdraw(BaseController):
         ################################################################################################################
         # Thông tin người thụ hưởng
         ################################################################################################################
-        account_number = form_data['transaction_info']['source_accounts']
-
+        account_number = form_data['transaction_info']['source_accounts']['account_num']
         gw_casa_account_info = await CtrGWCasaAccount(current_user=current_user).ctr_gw_get_casa_account_info(
             account_number=account_number,
             return_raw_data_flag=True
@@ -261,7 +260,7 @@ class CtrWithdraw(BaseController):
         ################################################################################################################
         controller_gw_employee = CtrGWEmployee(current_user)
         gw_direct_staff = await controller_gw_employee.ctr_gw_get_employee_info_from_code(
-            employee_code=form_data['transactional_customer_info']['management_info']['direct_staff_code'],
+            employee_code=form_data['customer_info']['management_info']['direct_staff_code'],
             return_raw_data_flag=True
         )
         direct_staff = dict(
@@ -269,7 +268,7 @@ class CtrWithdraw(BaseController):
             name=gw_direct_staff['staff_name']
         )
         gw_indirect_staff = await controller_gw_employee.ctr_gw_get_employee_info_from_code(
-            employee_code=form_data['transactional_customer_info']['management_info']['indirect_staff_code'],
+            employee_code=form_data['customer_info']['management_info']['indirect_staff_code'],
             return_raw_data_flag=True
         )
         indirect_staff = dict(
@@ -280,12 +279,12 @@ class CtrWithdraw(BaseController):
         ################################################################################################################
         # Thông tin khách hàng giao dịch
         ################################################################################################################
-        cif_flag = form_data['transactional_customer_info']['sender_info']['cif_flag']
+        cif_flag = form_data['customer_info']['sender_info']['cif_flag']
         sender_response = {}
-        customer_info = form_data['transactional_customer_info']['sender_info']
+        customer_info = form_data['customer_info']['sender_info']
 
         if cif_flag:
-            cif_number = form_data['transactional_customer_info']['sender_info']['cif_number']
+            cif_number = form_data['customer_info']['sender_info']['cif_number']
             gw_customer_info = await CtrGWCustomer(current_user).ctr_gw_get_customer_info_detail(
                 cif_number=cif_number,
                 return_raw_data_flag=True
@@ -296,7 +295,7 @@ class CtrWithdraw(BaseController):
             sender_response.update(
                 cif_flag=cif_flag,
                 cif_number=cif_number,
-                fullname_vn=gw_customer_info['full_name'],
+                full_name_vn=gw_customer_info['full_name'],
                 address_full=gw_customer_info_address_info['address_full'],
                 identity=gw_customer_info_identity_info['id_num'],
                 issued_date=date_string_to_other_date_string_format(
@@ -311,7 +310,7 @@ class CtrWithdraw(BaseController):
         else:
             sender_response.update(
                 cif_flag=cif_flag,
-                fullname_vn=customer_info['fullname_vn'],
+                full_name_vn=customer_info['fullname_vn'],
                 address_full=customer_info['address_full'],
                 identity=customer_info['identity'],
                 issued_date=customer_info['issued_date'],
