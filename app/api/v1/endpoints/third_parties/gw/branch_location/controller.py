@@ -81,7 +81,7 @@ class CtrGWBranchLocation(BaseController):
                         "branch_name": "Tất cả",
                         'longitude': GW_LONGITUDE_DEFAULT,
                         'latitude': GW_LATITUDE_DEFAULT,
-                        "type": "CN Đa năng"
+                        "type": GW_TYPE_DEFAULT
                     }
                 ],
                 "left": GW_LONGITUDE_MIN,
