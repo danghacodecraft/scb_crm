@@ -246,12 +246,13 @@ async def view_gw_check_exist_third_party_account_number(
         account_number: str = Path(..., description="Số tài khoản"),
         current_user=Depends(get_current_user_from_header())
 ):
-    ben_name = await CtrGWCasaAccount(current_user).ctr_gw_get_retrieve_ben_name_by_account_number(
+    is_existed = await CtrGWCasaAccount(current_user).ctr_check_exist_account_number_from_other_bank(
         account_number=account_number
     )
-    response = {"data": dict(is_existed=True if ben_name['data']['full_name'] else False)}
 
-    return ResponseData(**response)
+    return ResponseData(**dict(data=dict(
+        is_existed=is_existed
+    )))
 
 
 @router.post(
@@ -286,12 +287,13 @@ async def view_gw_check_exist_third_party_card_number(
         card_number: str = Path(..., description="Số thẻ"),
         current_user=Depends(get_current_user_from_header())
 ):
-    ben_name = await CtrGWCasaAccount(current_user).ctr_gw_get_retrieve_ben_name_by_card_number(
+    is_existed = await CtrGWCasaAccount(current_user).ctr_check_exist_card_number_from_other_bank(
         card_number=card_number
     )
-    response = {"data": dict(is_existed=True if ben_name['data']['full_name'] else False)}
 
-    return ResponseData(**response)
+    return ResponseData(**dict(data=dict(
+        is_existed=is_existed
+    )))
 
 
 @router.post(
