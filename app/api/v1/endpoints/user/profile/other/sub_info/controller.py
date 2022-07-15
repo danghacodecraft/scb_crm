@@ -7,7 +7,7 @@ from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
 
 class CtrSubInfo(BaseController):
     async def ctr_sub_info(self):
-        current_user = self.current_user.user_info
+        current_user = self.current_user
         if not current_user:
             return self.response_exception(
                 msg=USER_NOT_EXIST,
@@ -15,30 +15,26 @@ class CtrSubInfo(BaseController):
                 loc="current_user"
             )
 
-        employee_id = current_user.code
+        gw_sub_infos = self.call_repos(
+            await repos_sub_info(current_user=current_user))
 
-        is_success, sub_infos = self.call_repos(
-            await repos_sub_info(
-                employee_id=employee_id
-            )
-        )
-        if not is_success:
-            return self.response_exception(msg=str(sub_infos))
+        sub_infos = gw_sub_infos['selectStaffOtherInfoFromCode_out']['data_output']['staff_other']
+        recruitment_info = sub_infos['recruitment_info']
 
         return self.response_paging(data={
             "recruit_info": {
-                "code": sub_infos[0]["MA_TUYEN_DUNG"],
-                "reason": sub_infos[0]["LY_DO_TUYEN_DUNG"],
-                "introducer": sub_infos[0]["NGUOI_GIOI_THIEU"],
-                "replacement_staff": sub_infos[0]["NV_THAY_THE"],
-                "note": sub_infos[0]["NOTE"]
+                "code": recruitment_info["recruitment_code"],
+                "reason": recruitment_info["recruitment_reason"],
+                "introducer": recruitment_info["recruitment_presenter"],
+                "replacement_staff": recruitment_info["replace_staff"],
+                "note": recruitment_info["recruitment_note"]
             },
             "other_info": {
-                "other_info": sub_infos[0]["THONG_TIN_KHAC"],
-                "dateoff": sub_infos[0]["THAM_NIEN_THEM"],
-                "annual_leave": sub_infos[0]["PHEP_NAM_UU_DAI"]
+                "other_info": recruitment_info["recruitment_other"],
+                "dateoff": sub_infos["seniority_month"],
+                "annual_leave": sub_infos["annual_number"]
             }
-        } if len(sub_infos) > 0 else {
+        } if sub_infos else {
             "recruit_info": {
                 "code": None,
                 "reason": None,

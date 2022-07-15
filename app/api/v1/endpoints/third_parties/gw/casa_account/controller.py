@@ -8,10 +8,13 @@ from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
     repos_get_customer_by_cif_number
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
-    repos_check_casa_account_approved, repos_gw_get_casa_account_by_cif_number,
-    repos_gw_get_casa_account_info, repos_gw_get_close_casa_account,
+    repos_check_casa_account_approved, repos_gw_change_status_account,
+    repos_gw_get_casa_account_by_cif_number, repos_gw_get_casa_account_info,
+    repos_gw_get_close_casa_account,
     repos_gw_get_column_chart_casa_account_info,
     repos_gw_get_pie_chart_casa_account_info,
+    repos_gw_get_retrieve_ben_name_by_account_number,
+    repos_gw_get_retrieve_ben_name_by_card_number,
     repos_gw_get_statements_casa_account_info, repos_gw_get_tele_transfer,
     repos_gw_open_casa_account, repos_gw_withdraw,
     repos_open_casa_get_casa_account_infos,
@@ -34,8 +37,12 @@ from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.utils.constant.approval import CIF_STAGE_APPROVE_KSV
 from app.utils.constant.business_type import BUSINESS_TYPE_CASA_TOP_UP
 from app.utils.constant.casa import (
-    CASA_ACCOUNT_STATUS_UNAPPROVED, RECEIVING_METHOD_SCB_TO_ACCOUNT,
-    RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT
+    CASA_ACCOUNT_STATUS_UNAPPROVED, RECEIVING_METHOD_SCB_BY_IDENTITY,
+    RECEIVING_METHOD_SCB_TO_ACCOUNT,
+    RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT,
+    RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD,
+    RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY,
+    RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT
 )
 from app.utils.constant.cif import (
     BUSINESS_FORM_CLOSE_CASA, BUSINESS_FORM_WITHDRAW
@@ -46,9 +53,12 @@ from app.utils.constant.gw import (
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_KSV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_KSV
 )
-from app.utils.error_messages import ERROR_CALL_SERVICE_GW, ERROR_PERMISSION
+from app.utils.error_messages import (
+    ERROR_CALL_SERVICE_GW, ERROR_NO_INSTRUMENT_NUMBER, ERROR_PERMISSION
+)
 from app.utils.functions import (
-    date_to_string, now, orjson_dumps, orjson_loads, string_to_date
+    date_to_string, datetime_to_string, now, orjson_dumps, orjson_loads,
+    string_to_date
 )
 
 
@@ -63,8 +73,9 @@ class CtrGWCasaAccount(BaseController):
         ))
         response_data = {}
         total_balances = 0
-        account_info_list = account_info['selectCurrentAccountFromCIF_out']['data_output']['customer_info'][
-            'account_info_list']
+        customer_info = account_info['selectCurrentAccountFromCIF_out']['data_output']['customer_info']
+        account_info_list = customer_info['account_info_list']
+        full_name_vn = customer_info['full_name']
         account_infos = []
         for account in account_info_list:
             account_info_item = account['account_info_item']
@@ -100,6 +111,7 @@ class CtrGWCasaAccount(BaseController):
 
         response_data.update(dict(
             total_balances=total_balances,
+            full_name_vn=full_name_vn,
             total_items=len(account_infos),
             account_info_list=account_infos
         ))
@@ -233,8 +245,8 @@ class CtrGWCasaAccount(BaseController):
         ))
 
     async def ctr_gw_check_exist_casa_account_info(
-            self,
-            account_number: str
+        self,
+        account_number: str
     ):
         gw_check_exist_casa_account_info = self.call_repos(await repos_gw_get_casa_account_info(
             account_number=account_number,
@@ -242,9 +254,8 @@ class CtrGWCasaAccount(BaseController):
         ))
         if not gw_check_exist_casa_account_info:
             return self.response(data=dict(is_existed=False))
-        account_info = \
-            gw_check_exist_casa_account_info['retrieveCurrentAccountCASA_out']['data_output']['customer_info'][
-                'account_info']
+        account_info = gw_check_exist_casa_account_info['retrieveCurrentAccountCASA_out']['data_output']['customer_info'][
+            'account_info']
 
         return self.response(data=dict(
             is_existed=True if account_info['account_num'] else False
@@ -459,7 +470,7 @@ class CtrGWCasaAccount(BaseController):
             successes=[dict(
                 id=casa_account_id,
                 number=casa_account_number
-            ) for casa_account_id, casa_account_number in casa_account_successes.items()],
+            )for casa_account_id, casa_account_number in casa_account_successes.items()],
             errors=gw_errors
         ))
 
@@ -531,21 +542,90 @@ class CtrGWCasaAccount(BaseController):
         receiving_method = form_data['receiving_method']
         response_data = None
         xref = None
+        p_contract_ref = None
 
         if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
-            response_data = await CtrGWPayment(current_user=current_user).ctr_gw_pay_in_cash(form_data=form_data)
-            xref = response_data['data']['payInCash_out']['data_output']['xref']['p_xref']
+            is_success, response_data = await CtrGWPayment(current_user).ctr_gw_pay_in_cash(form_data=form_data)
+            if not is_success:
+                return self.response_exception(
+                    loc='pay_in_cash',
+                    msg=ERROR_CALL_SERVICE_GW,
+                    detail=str(response_data)
+                )
+            xref = response_data['payInCash_out']['data_output']['xref']['p_xref']
 
-        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_TO_ACCOUNT:
-            is_success, response_data = await CtrGWPayment(current_user=current_user).ctr_gw_pay_in_cash_247_by_acc_num(
+        if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
+
+            is_success, tele_transfer_response_data = await CtrGWPayment(current_user).ctr_tele_transfer(
+                form_data=form_data
+            )
+            if not is_success:
+                return self.response_exception(
+                    loc='tele_transfer',
+                    msg=ERROR_CALL_SERVICE_GW,
+                    detail=str(response_data)
+                )
+            p_instrument_number = tele_transfer_response_data['teleTransfer_out']['data_output']['p_instrument_number']
+
+            if p_instrument_number == '':
+                return self.response_exception(
+                    loc='tele_transfer',
+                    msg=ERROR_NO_INSTRUMENT_NUMBER,
+                    detail=str(response_data)
+                )
+
+            is_success, tt_liquidation_response_data = await CtrGWPayment(current_user).ctr_tt_liquidation(
+                form_data=form_data,
+                p_instrument_number=p_instrument_number
+            )
+            if not is_success:
+                return self.response_exception(
+                    loc='tt_liquidation',
+                    msg=ERROR_CALL_SERVICE_GW,
+                    detail=str(tt_liquidation_response_data)
+                )
+            p_contract_ref = tt_liquidation_response_data['ttLiquidation_out']['data_output']['p_contract_ref']
+            response_data = tt_liquidation_response_data
+
+        if receiving_method in [RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT, RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY]:
+            is_success, gw_response_data = await CtrGWPayment(current_user).ctr_gw_interbank_transfer(
+                booking_id=booking_id,
+                form_data=form_data,
+                receiving_method=receiving_method
+            )
+            if not is_success:
+                return self.response_exception(
+                    loc='interbank_transfer',
+                    msg=ERROR_CALL_SERVICE_GW,
+                    detail=str(gw_response_data)
+                )
+            response_data = gw_response_data
+
+        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
+            is_success, gw_response_data = await CtrGWPayment(current_user).ctr_gw_pay_in_cash_247_by_acc_num(
                 booking_id=booking_id,
                 form_data=form_data
             )
             if not is_success:
                 return self.response_exception(
+                    loc='pay_in_cash_247_by_acc_num',
                     msg=ERROR_CALL_SERVICE_GW,
-                    detail=str(response_data['payInCash247byAccNum_out'])
+                    detail=str(response_data)
                 )
+            response_data = gw_response_data
+
+        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
+            is_success, gw_response_data = await CtrGWPayment(current_user).ctr_gw_pay_in_cash_247_by_card_num(
+                booking_id=booking_id,
+                form_data=form_data
+            )
+            if not is_success:
+                return self.response_exception(
+                    loc='pay_in_cash_247_by_card_num',
+                    msg=ERROR_CALL_SERVICE_GW,
+                    detail=str(gw_response_data)
+                )
+            response_data = gw_response_data
 
         if not response_data:
             return self.response_exception(msg="GW return None", loc=f'response_data: {response_data}')
@@ -559,7 +639,8 @@ class CtrGWCasaAccount(BaseController):
 
         return self.response(data=dict(
             booking_id=booking_id,
-            xref=xref
+            xref=xref,
+            p_contract_ref=p_contract_ref
         ))
 
     async def ctr_gw_get_tele_transfer(self, request_data, place_of_issue):
@@ -664,5 +745,116 @@ class CtrGWCasaAccount(BaseController):
             "booking_id": booking_id,
             "account": gw_payment_amount_block
         }
+
+        return self.response(data=response_data)
+
+    async def ctr_gw_get_retrieve_ben_name_by_account_number(self, account_number: str):
+        current_user = self.current_user
+        data_input = {
+            "account_to_info": {
+                "account_num": account_number
+            },
+            # TODO
+            "account_from_info": {
+                "account_num": "20625700001"
+            },
+            # TODO
+            "ben_id": "970436",
+            "trans_date": datetime_to_string(now()),
+            "time_stamp": datetime_to_string(now()),
+            "trans_id": "20220629160002159368",
+            # TODO
+            "staff_maker": {
+                "staff_code": "annvh"
+            },
+            # TODO
+            "staff_checker": {
+                "staff_code": "THUYTP"
+            },
+            # TODO
+            "branch_info": {
+                "branch_code": "001",
+                "branch_name": "CN CONG QUYNH"
+            }
+        }
+
+        gw_ben_name = self.call_repos(await repos_gw_get_retrieve_ben_name_by_account_number(
+            current_user=current_user.user_info, data_input=data_input))
+
+        ben_name = gw_ben_name['retrieveBenNameByAccNum_out']['data_output']['customer_info']
+
+        return self.response(data=ben_name)
+
+    async def ctr_check_exist_account_number_from_other_bank(self, account_number) -> bool:
+        account_info = await self.ctr_gw_get_retrieve_ben_name_by_account_number(account_number=account_number)
+        return True if account_info['data']['full_name'] else False
+
+    async def ctr_gw_get_retrieve_ben_name_by_card_number(self, card_number: str):
+        current_user = self.current_user.user_info
+        data_input = {
+            "card_to_info": {
+                "card_num": card_number
+            },
+            # TODO
+            "account_from_info": {
+                "account_num": "20625700001"
+            },
+            # TODO
+            "ben_id": "970436",
+            "trans_date": datetime_to_string(now()),
+            "time_stamp": datetime_to_string(now()),
+            "trans_id": "20220629160002159368",
+            # TODO
+            "staff_maker": {
+                "staff_code": "annvh"
+            },
+            # TODO
+            "staff_checker": {
+                "staff_code": "THUYTP"
+            },
+            # TODO
+            "branch_info": {
+                "branch_code": "001",
+                "branch_name": "CN CONG QUYNH"
+            }
+        }
+
+        gw_ben_name = self.call_repos(await repos_gw_get_retrieve_ben_name_by_card_number(
+            current_user=current_user, data_input=data_input))
+
+        ben_name = gw_ben_name['retrieveBenNameByCardNum_out']['data_output']['customer_info']
+
+        return self.response(data=ben_name)
+
+    async def ctr_check_exist_card_number_from_other_bank(self, card_number) -> bool:
+        card_info = await self.ctr_gw_get_retrieve_ben_name_by_card_number(card_number=card_number)
+        return True if card_info['data']['full_name'] else False
+
+    async def ctr_gw_change_status_account(self, account_number):
+        current_user = self.current_user
+
+        gw_change_status = self.call_repos(await repos_gw_change_status_account(
+            current_user=current_user.user_info,
+            account_number=account_number
+        ))
+
+        account_changes = gw_change_status.get('accountChangeStatus_out').get('transaction_info')
+
+        if account_changes['transaction_error_code'] == "00":
+            response_data = {
+                "account": account_number,
+                "transaction": {
+                    "code": None,
+                    "msg": account_changes.get('transaction_error_msg')
+                }
+            }
+        else:
+            response_data = {
+                "account": account_number,
+                "transaction": {
+                    "code": account_changes.get('transaction_error_code'),
+                    "msg": account_changes.get('transaction_error_msg')
+                }
+            }
 
         return self.response(data=response_data)

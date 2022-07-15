@@ -22,7 +22,7 @@ class FeeInfoRequest(ResponseRequestSchema):
                          "<br/>`false`: Bên nhận "
                          "<br/>`null`: Không thu phí cùng giao dịch"
     )
-    fee_amount: int = Field(..., description="Số tiền phí")
+    fee_amount: Optional[int] = Field(..., description="Số tiền phí")
     note: Optional[str] = Field(..., description="Ghi chú")
 
 
@@ -101,6 +101,7 @@ class CasaTopUpThirdPartyToAccountRequest(CasaTopUpThirdPartyCommonRequest):
     """
     Ngoài SCB đến tài khoản
     """
+    receiver_province: DropdownRequest = Field(..., description="Tỉnh/Thành phố")
     receiver_account_number: str = Field(..., description="Số tài khoản", regex=REGEX_NUMBER_ONLY)
     receiver_full_name_vn: str = Field(..., description="Chủ tài khoản")
 
@@ -109,12 +110,13 @@ class CasaTopUpThirdPartyByIdentityRequest(CasaTopUpThirdPartyCommonRequest):
     """
     Ngoài SCB nhận bằng giấy tờ định danh
     """
-    receiver_branch: DropdownRequest = Field(..., description="Chi nhánh")
+    receiver_province: DropdownRequest = Field(..., description="Tỉnh/Thành phố")
+    receiver_bank_branch: str = Field(..., description="Chi nhánh ngân hàng")
     receiver_full_name_vn: str = Field(..., description="Chủ tài khoản")
     receiver_identity_number: str = Field(..., description="Số GTĐD", regex=REGEX_NUMBER_ONLY)
     receiver_issued_date: date = Field(..., description="Ngày cấp")
     receiver_place_of_issue: DropdownRequest = Field(..., description="Nơi cấp")
-    receiver_mobile_number: Optional[str] = Field(..., description="Số điện thoại")
+    receiver_mobile_number: Optional[str] = Field(None, description="Số điện thoại")
 
     @validator("receiver_mobile_number")
     def check_valid_mobile_number(cls, v):
@@ -140,8 +142,8 @@ class CasaTopUpThirdParty247ToCardRequest(CasaTopUpThirdPartyCommonRequest):
 class CasaTopUpRequest(ResponseRequestSchema):
     receiving_method: str = Field(..., description="Hình thức nhận")
     data: Union[
-        CasaTopUpSCBByIdentityRequest,
         CasaTopUpThirdPartyByIdentityRequest,
+        CasaTopUpSCBByIdentityRequest,
         CasaTopUpThirdPartyToAccountRequest,
         CasaTopUpThirdParty247ToAccountRequest,
         CasaTopUpSCBToAccountRequest,
@@ -164,6 +166,7 @@ class ReceiverResponse(ResponseRequestSchema):
     account_number: Optional[str] = Field(None, description="Số tài khoản")
     fullname_vn: Optional[str] = Field(None, description="Chủ tài khoản")
     bank: DropdownCodeNameResponse = Field(None, description="Ngân hàng")
+    bank_branch: Optional[str] = Field(None, description="Chi nhánh ngân hàng")
     province: DropdownCodeNameResponse = Field(None, description="Tỉnh/Thành phố")
     branch_info: DropdownCodeNameResponse = Field(None, description="Đơn vị thụ hưởng")
     identity_number: Optional[str] = Field(None, description="Số giấy tờ định danh")

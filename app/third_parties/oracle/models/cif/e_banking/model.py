@@ -47,6 +47,7 @@ class TdAccount(Base):
     td_interest_type = Column('td_interest_type', VARCHAR(20), comment='Hình thức lãi')
     td_interest = Column('td_interest', VARCHAR(5), comment='Lãi suất tiết kiệm (%)')
     td_rollover_type = Column('td_rollover_type', VARCHAR(2), comment='Chỉ định khi đến hạn:I = Tái ký gốc + lãi ,P = Tái ký gốc')
+    pay_in_type = Column('pay_in_type', VARCHAR(36), comment='Phương thức hạch toán (Tiền mặt, TKTT, TK treo đơn vị)')
 
 
 class TdAccountResign(Base):

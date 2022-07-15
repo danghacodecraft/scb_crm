@@ -31,22 +31,23 @@ class ListKSS(BaseSchema):
 
 class KSSResponse(BaseSchema):
     detail: List[ListKSS] = Field(..., description='Dữ liệu danh sách kiểm soát sau')
-    total_page: int = Field(..., description='Tổng page')
-    total_record: int = Field(..., description='Tổng record')
-    page: int = Field(..., description='Số page')
+    total_page: Optional[int] = Field(..., description='Tổng page')
+    total_record: Optional[int] = Field(..., description='Tổng record')
+    page: Optional[int] = Field(..., description='Số page')
 
 
 class QueryParamsKSSRequest(BaseSchema):
-    tran_type_id: str = Field(None, description="Theo loại giao dịch")
-    transaction_id: str = Field(None, description='Theo mã giao dịch')
-    approve_status: str = Field(None, description='Theo trạng thái phê duyệt')
-    branch_id: str = Field(None, description='Theo đơn vị')
-    step_status: str = Field(None, description='Theo trạng thái giao dịch')
-    zone_id: str = Field(None, description='Theo vùng')
-    start_date: str = Field(None, description='Từ ngày')
-    end_date: str = Field(None, description='Đến ngày')
-    page_num: int = Field(None, description='Số trang')
-    record_per_page: int = Field(None, description='Số record')
+    tran_type_id: Optional[str] = Field(None, description="Theo loại giao dịch")
+    transaction_id: Optional[str] = Field(None, description='Theo mã giao dịch')
+    approve_status: Optional[str] = Field(None, description='Theo trạng thái phê duyệt')
+    branch_id: Optional[str] = Field(None, description='Theo đơn vị')
+    step_status: Optional[str] = Field(None, description='Theo trạng thái giao dịch')
+    zone_id: Optional[str] = Field(None, description='Theo vùng')
+    start_date: Optional[str] = Field(None, description='Từ ngày')
+    end_date: Optional[str] = Field(None, description='Đến ngày')
+    cif_phone_number_gttt_name: Optional[str] = Field(None, description="Filter by cif, phone number, gttt, full name")
+    page_num: Optional[int] = Field(None, description='Số trang')
+    record_per_page: Optional[int] = Field(None, description='Số record')
 
 
 ####################################################################################################
@@ -216,6 +217,8 @@ class CustomerDetailResponse(BaseSchema):
         description='Dữ liệu có được bằng việc quét mã QR code (đối với CCCD gắn chíp)')
     finger_ids: List = Field(None, description='Danh sách các ID của hình chụp vân tay khách hàng trong hệ thống')
     full_name: str = Field(..., description='Họ và tên')
+    cif: Optional[str] = Field(None, description='Số CIF_NUMBER')
+    account_number: Optional[str] = Field(None, description='Số tài khoản thanh toán')
     date_of_birth: str = Field(..., description='Ngày sinh, phải theo định dạng `DD/MM/YYYY`')
     gender: str = Field(None, description='Giới tính')
     place_of_residence: str = Field(None, description='Nơi DKHK thường trú')
@@ -241,3 +244,9 @@ class CustomerDetailResponse(BaseSchema):
         None,
         description='Tỷ lệ phần trăm giống nhau giữa hình ảnh trên giấy tờ và hình ảnh thật')
     extra_info: dict = Field(None, description='Thông tin khác')
+    ekyc_level: Optional[str] = Field(..., description="Level ekyc")
+    account_status: Optional[str] = Field(None, description="Trạng thái tài khoản")
+    kss_status: Optional[str] = Field(None, description="Trạng thái KSS")
+    status: Optional[str] = Field(None, description="Trạng thái giao dịch")
+    # resident_status: Optional[str] = Field(None, description="Tình trạng cư trú")
+    ekyc_step: Optional[List] = Field(None, description="Thông tin logs")

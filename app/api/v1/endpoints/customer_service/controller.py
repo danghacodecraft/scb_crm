@@ -14,6 +14,9 @@ from app.api.v1.endpoints.customer_service.repository import (
 from app.api.v1.endpoints.customer_service.schema import (
     CreatePostCheckRequest, QueryParamsKSSRequest, UpdatePostCheckRequest
 )
+from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
+    repos_gw_change_status_account, repos_gw_get_casa_account_info
+)
 from app.settings.config import DATE_INPUT_OUTPUT_FORMAT
 from app.utils.constant.business_type import BUSINESS_TYPE_EKYC_AUDIT
 from app.utils.constant.cif import (
@@ -51,7 +54,7 @@ class CtrKSS(BaseController):
                 error_status_code=status.HTTP_403_FORBIDDEN)
 
         query_data = {}
-
+        query_data.update({'cif_phone_number_gttt_name': query_params.cif_phone_number_gttt_name}) if query_params.cif_phone_number_gttt_name else None
         query_data.update({'transaction_id': query_params.transaction_id}) if query_params.transaction_id else None
         query_data.update({'tran_type_id': query_params.tran_type_id}) if query_params.tran_type_id else None
         query_data.update({'approve_status': query_params.approve_status}) if query_params.approve_status else None
@@ -319,9 +322,23 @@ class CtrKSS(BaseController):
             "username": postcheck_update_request.username,
             "is_approve": postcheck_update_request.is_approve
         }
+
         update_post_check = self.call_repos(await repos_update_post_check(
             request_data=request_data
         ))
+        # lấy lịch sử trạng thái hậu kiểm cuối cùng
+        history_status = self.call_repos(await repos_get_history_post_post_check(
+            postcheck_uuid=postcheck_update_request.customer_id
+        ))
+        customer_detail = self.call_repos(await repos_get_customer_detail(
+            postcheck_uuid=postcheck_update_request.customer_id
+        ))
+        if history_status:
+            if history_status[-1]['kss_status'] == "Không hợp lệ" and history_status[-1]['approve_status'] == "Đã Duyệt":
+                account_number = self.call_repos(await repos_gw_change_status_account( # noqa
+                    current_user=current_user.user_info,
+                    account_number=customer_detail.get('account_number')
+                ))
 
         return self.response(data=update_post_check)
 
@@ -344,6 +361,38 @@ class CtrKSS(BaseController):
         customer_detail = self.call_repos(await repos_get_customer_detail(
             postcheck_uuid=postcheck_uuid
         ))
+
+        national = customer_detail.get('nationality')
+        if not national:
+            customer_detail['nationality'] = 'Việt Nam'
+        transaction_id = customer_detail.get('transaction_id')
+        ekyc_step = []
+        for item in customer_detail.get('ekyc_step'):
+            if transaction_id == item.get('transaction_id'):
+                ekyc_step.extend(item.get('info_step'))
+
+        customer_detail.update({
+            # "resident_status": "Cư Trú",
+            "ekyc_step": ekyc_step
+        })
+
+        account_number = customer_detail.get('account_number')
+        if account_number:
+            account_detail = self.call_repos(await repos_gw_get_casa_account_info(
+                account_number=account_number,
+                current_user=self.current_user.user_info
+            ))
+            account_status = account_detail['retrieveCurrentAccountCASA_out']['data_output']['customer_info']['account_info']['account_status']
+            for key, value in account_status[0].items():
+                if key == "AC_STAT_NO_DR":
+                    if value == "N":
+                        customer_detail.update(dict(
+                            account_status="Mở"
+                        ))
+                    else:
+                        customer_detail.update(dict(
+                            account_status="Đóng"
+                        ))
 
         return self.response(data=customer_detail)
 

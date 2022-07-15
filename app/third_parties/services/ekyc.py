@@ -21,8 +21,8 @@ class ServiceEKYC:
     url = SERVICE["ekyc"]['url']
     proxy: Optional[StrOrURL] = None
     authorization = SERVICE["ekyc"]['authorization']
-    device_info = "eyJkZXZpY2VOYW1lIjoibWluaOKAmXMgaVBob25lIiwib3MiOiJJT1MiLCJtb2RlbCI6ImlQaG9uZSBYUiIsInBob25lX" \
-                  "251bWJlciI6IjA5MDI0MDk2NjQiLCJtYW51ZmFjdHVyZXIiOiJBcHBsZSIsIm9zVmVyc2lvbiI6IjE0LjEifQ"
+    device_info = "eeyJkZXZpY2VOYW1lIjogIkNSTSIsICJvcyI6ICJSZWRoYXQiLCAibW9kZWwiOiAiIiwgInBob25lX251bWJlciI6ICIiLCJ" \
+                  "tYW51ZmFjdHVyZXIiOiAiIiwgIm9zVmVyc2lvbiI6ICI3LjkifQ=="
     otp = SERVICE["ekyc"]['otp']
 
     def start(self):

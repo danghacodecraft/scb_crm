@@ -6,7 +6,6 @@ from app.api.base.repository import ReposReturn, auto_commit
 from app.api.v1.endpoints.repository import (
     write_transaction_log_and_update_booking
 )
-from app.settings.event import service_soa
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
 )
@@ -310,21 +309,6 @@ DETAIL_RESET_PASSWORD_E_BANKING_DATA = {
         "note": "Trả lời đầy đủ các câu hỏi"
     }
 }
-
-
-async def repos_get_list_balance_payment_account(cif_id: str, session: Session) -> ReposReturn:
-    # lấy danh sách tài khoản thanh toán theo số cif trong SOA
-    customer_cif_number = session.execute(
-        select(
-            Customer.cif_number
-        ).filter(Customer.id == cif_id)
-    ).scalar()
-    account_casa = None
-
-    if customer_cif_number:
-        account_casa = await service_soa.current_account_from_cif(casa_cif_number=customer_cif_number)
-
-    return ReposReturn(data=account_casa)
 
 
 async def repos_get_payment_accounts(cif_id: str, session: Session) -> ReposReturn:
