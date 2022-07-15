@@ -16,8 +16,8 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingAccount, BookingCustomer, TransactionDaily,
-    TransactionSender
+    Booking, BookingAccount, BookingBusinessForm, BookingCustomer,
+    TransactionDaily, TransactionSender
 )
 from app.third_parties.oracle.models.cif.payment_account.model import (
     CasaAccount
@@ -29,7 +29,7 @@ from app.third_parties.oracle.models.master_data.others import (
     Branch, SlaTransaction, TransactionStage, TransactionStageRole,
     TransactionStageStatus
 )
-from app.utils.constant.cif import CONTACT_ADDRESS_CODE
+from app.utils.constant.cif import BUSINESS_FORM_WITHDRAW, CONTACT_ADDRESS_CODE
 from app.utils.constant.dwh import NAME_ACCOUNTING_ENTRY
 from app.utils.functions import date_to_datetime, end_time_of_day
 from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese
@@ -453,6 +453,27 @@ async def repos_get_open_cif_info_from_booking(
         .filter(Booking.id.in_(booking_ids))
     ).all()
     return ReposReturn(data=open_cif_infos)
+
+
+async def repos_get_withdraw_info_from_booking(
+    booking_ids: List,
+    session: Session
+) -> ReposReturn:
+    withdraw_infos = session.execute(
+        select(
+            Booking,
+            BookingBusinessForm
+        )
+        .join(
+            BookingBusinessForm, and_(
+                Booking.id == BookingBusinessForm.booking_id,
+                BookingBusinessForm.business_form_id == BUSINESS_FORM_WITHDRAW
+            )
+        )
+        .filter(Booking.id.in_(booking_ids))
+        .order_by(BookingBusinessForm.created_at)
+    ).all()
+    return ReposReturn(data=withdraw_infos)
 
 
 async def repos_get_amount_block_from_booking(
