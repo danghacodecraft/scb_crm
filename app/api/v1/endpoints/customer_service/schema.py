@@ -248,5 +248,5 @@ class CustomerDetailResponse(BaseSchema):
     account_status: Optional[str] = Field(None, description="Trạng thái tài khoản")
     kss_status: Optional[str] = Field(None, description="Trạng thái KSS")
     status: Optional[str] = Field(None, description="Trạng thái giao dịch")
-    resident_status: Optional[str] = Field(None, description="Tình trạng cư trú")
+    # resident_status: Optional[str] = Field(None, description="Tình trạng cư trú")
     ekyc_step: Optional[List] = Field(None, description="Thông tin logs")
