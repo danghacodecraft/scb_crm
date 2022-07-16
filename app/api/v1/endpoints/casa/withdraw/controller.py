@@ -1,10 +1,6 @@
 from app.api.base.controller import BaseController
-from app.api.v1.endpoints.approval.repository import (
-    repos_get_booking_business_form_by_booking_id
-)
 from app.api.v1.endpoints.casa.withdraw.repository import (
-    repos_get_acc_types, repos_get_withdraw_info, repos_gw_withdraw,
-    repos_save_withdraw
+    repos_get_acc_types, repos_get_withdraw_info, repos_save_withdraw
 )
 from app.api.v1.endpoints.casa.withdraw.schema import WithdrawRequest
 from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
@@ -20,7 +16,7 @@ from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.validator import validate_history_data
 from app.utils.constant.business_type import BUSINESS_TYPE_WITHDRAW
 from app.utils.constant.cif import (
-    BUSINESS_FORM_WITHDRAW, CHECK_CONDITION_VAT, CHECK_CONDITION_WITHDRAW,
+    CHECK_CONDITION_VAT, CHECK_CONDITION_WITHDRAW,
     PROFILE_HISTORY_DESCRIPTIONS_WITHDRAW, PROFILE_HISTORY_STATUS_INIT
 )
 from app.utils.constant.gw import GW_DATE_FORMAT, GW_DATETIME_FORMAT
@@ -65,11 +61,7 @@ class CtrWithdraw(BaseController):
                 msg=ERROR_CASA_ACCOUNT_NOT_EXIST,
                 loc=f"account_number: {casa_account_number}"
             )
-
         receiver = request.transaction_info.receiver_info
-        fee = request.transaction_info.fee_info
-        management = request.customer_info.management_info
-        transactional_customer = request.customer_info.sender_info
 
         # Kiểm tra số tiền rút có đủ hay không
         casa_account_balance = await CtrGWCasaAccount(current_user=current_user).ctr_gw_get_casa_account_info(
@@ -83,63 +75,6 @@ class CtrWithdraw(BaseController):
                 loc=f"account_balance: {balance}"
             )
 
-        if receiver.withdraw_account_flag:
-            receiver_info = dict(
-                withdraw_account_flag=True,
-                amount=receiver.amount,
-                content=receiver.content
-            )
-        else:
-            receiver_info = dict(
-                withdraw_account_flag=False,
-                amount=receiver.amount,
-                seri_cheque=receiver.seri_cheque,
-                date_of_issue=receiver.date_of_issue,
-                exchange_VND_flag=receiver.exchange_VND_flag,
-                exchange_rate=receiver.exchange_rate,
-                exchanged_money_VND=receiver.exchanged_money_VND,
-                reciprocal_rate_headquarters=receiver.reciprocal_rate_headquarters,
-                content=receiver.content
-            )
-
-        transaction_info = dict(
-            source_accounts=request.transaction_info.source_accounts.account_num,
-            receiver_info=receiver_info,
-            fee_info=dict(
-                is_transfer_payer=fee.is_transfer_payer,
-                payer_flag=fee.payer_flag,
-                amount=fee.fee_amount
-            ) if fee.is_transfer_payer else dict(
-                is_transfer_payer=False
-            )
-        )
-
-        transactional_customer_info = dict(
-            management_info=dict(
-                direct_staff_code=management.direct_staff_code,
-                indirect_staff_code=management.indirect_staff_code
-            ),
-            sender_info=dict(
-                cif_flag=transactional_customer.cif_flag,
-                cif_number=transactional_customer.cif_number,
-                note=transactional_customer.note
-            ) if transactional_customer.cif_flag else dict(
-                cif_flag=transactional_customer.cif_flag,
-                fullname_vn=transactional_customer.fullname_vn,
-                identity=transactional_customer.identity,
-                issued_date=transactional_customer.issued_date,
-                place_of_issue=transactional_customer.place_of_issue,
-                address_full=transactional_customer.address_full,
-                mobile_phone=transactional_customer.mobile_phone,
-                note=transactional_customer.note,
-            )
-        )
-
-        data_request = dict(
-            transaction_info=transaction_info,
-            transactional_customer_info=transactional_customer_info
-        )
-
         history_data = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_WITHDRAW,
             history_status=PROFILE_HISTORY_STATUS_INIT,
@@ -150,7 +85,7 @@ class CtrWithdraw(BaseController):
         transaction_data = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
             business_type_id=BUSINESS_TYPE_WITHDRAW,
             booking_id=booking_id,
-            request_json=orjson_dumps(data_request),
+            request_json=request.json(),
             history_datas=orjson_dumps(history_data)
         )
         (
@@ -188,56 +123,6 @@ class CtrWithdraw(BaseController):
 
         return self.response(data=response_data)
 
-    async def ctr_gw_withdraw(self, booking_id: str):
-
-        current_user = self.current_user
-        booking_business_form = self.call_repos(
-            await repos_get_booking_business_form_by_booking_id(
-                booking_id=booking_id,
-                business_form_id=BUSINESS_FORM_WITHDRAW,
-                session=self.oracle_session
-
-            ))
-
-        request_data_gw = orjson_loads(booking_business_form.form_data)
-        p_blk_udf = []
-        p_blk_udf.append(dict(
-            UDF_NAME='MUC_DICH_GIAO_DICH',
-            UDF_VALUE='MUC_DICH_KHAC'
-        ))
-
-        data_input = dict(
-            account_info=dict(
-                account_num=request_data_gw['transaction_info']['source_accounts'],
-                account_currency='VND',
-                account_withdrawals_amount=request_data_gw['transaction_info']['receiver_info']['amount']
-            ),
-            staff_info_checker=dict(
-                staff_name='DIEMNTK'
-            ),
-            staff_info_maker=dict(
-                staff_name='DIEPTTN1'
-            ),
-            p_blk_detail="",
-            p_blk_mis="",
-            p_blk_udf=p_blk_udf,
-            p_blk_charge=""
-        )
-
-        gw_payment_amount_block = self.call_repos(await repos_gw_withdraw(
-            current_user=current_user,
-            booking_id=booking_id,
-            request_data_gw=data_input,
-            session=self.oracle_session
-        ))
-
-        response_data = {
-            "booking_id": booking_id,
-            "account": gw_payment_amount_block
-        }
-
-        return self.response(data=response_data)
-
     async def ctr_source_account_info(self, cif_number: str, booking_id: str):
         current_user = self.current_user
         # Check exist Booking
@@ -270,7 +155,7 @@ class CtrWithdraw(BaseController):
             numbers.append(number)
             account.update(
                 number=account_info['number'],
-                fullname_vn=customer_info['fullname_vn'],
+                full_name_vn=customer_info['fullname_vn'],
                 balance_available=account_info['balance_available'],
                 currency=account_info['currency']
             )
@@ -312,8 +197,7 @@ class CtrWithdraw(BaseController):
         ################################################################################################################
         # Thông tin người thụ hưởng
         ################################################################################################################
-        account_number = form_data['transaction_info']['source_accounts']
-
+        account_number = form_data['transaction_info']['source_accounts']['account_num']
         gw_casa_account_info = await CtrGWCasaAccount(current_user=current_user).ctr_gw_get_casa_account_info(
             account_number=account_number,
             return_raw_data_flag=True
@@ -376,16 +260,15 @@ class CtrWithdraw(BaseController):
         ################################################################################################################
         controller_gw_employee = CtrGWEmployee(current_user)
         gw_direct_staff = await controller_gw_employee.ctr_gw_get_employee_info_from_code(
-            employee_code=form_data['transactional_customer_info']['management_info']['direct_staff_code'],
+            employee_code=form_data['customer_info']['management_info']['direct_staff_code'],
             return_raw_data_flag=True
         )
-
         direct_staff = dict(
             code=gw_direct_staff['staff_code'],
             name=gw_direct_staff['staff_name']
         )
         gw_indirect_staff = await controller_gw_employee.ctr_gw_get_employee_info_from_code(
-            employee_code=form_data['transactional_customer_info']['management_info']['indirect_staff_code'],
+            employee_code=form_data['customer_info']['management_info']['indirect_staff_code'],
             return_raw_data_flag=True
         )
         indirect_staff = dict(
@@ -396,12 +279,12 @@ class CtrWithdraw(BaseController):
         ################################################################################################################
         # Thông tin khách hàng giao dịch
         ################################################################################################################
-        cif_flag = form_data['transactional_customer_info']['sender_info']['cif_flag']
+        cif_flag = form_data['customer_info']['sender_info']['cif_flag']
         sender_response = {}
-        customer_info = form_data['transactional_customer_info']['sender_info']
+        customer_info = form_data['customer_info']['sender_info']
 
         if cif_flag:
-            cif_number = form_data['transactional_customer_info']['sender_info']['cif_number']
+            cif_number = form_data['customer_info']['sender_info']['cif_number']
             gw_customer_info = await CtrGWCustomer(current_user).ctr_gw_get_customer_info_detail(
                 cif_number=cif_number,
                 return_raw_data_flag=True
@@ -412,7 +295,7 @@ class CtrWithdraw(BaseController):
             sender_response.update(
                 cif_flag=cif_flag,
                 cif_number=cif_number,
-                fullname_vn=gw_customer_info['full_name'],
+                full_name_vn=gw_customer_info['full_name'],
                 address_full=gw_customer_info_address_info['address_full'],
                 identity=gw_customer_info_identity_info['id_num'],
                 issued_date=date_string_to_other_date_string_format(
@@ -427,7 +310,7 @@ class CtrWithdraw(BaseController):
         else:
             sender_response.update(
                 cif_flag=cif_flag,
-                fullname_vn=customer_info['fullname_vn'],
+                full_name_vn=customer_info['fullname_vn'],
                 address_full=customer_info['address_full'],
                 identity=customer_info['identity'],
                 issued_date=customer_info['issued_date'],

@@ -236,7 +236,7 @@ class CtrPaymentAccount(BaseController):
 
         return self.response(data=casa_account_info)
 
-    async def ctr_gw_check_exist_casa_account_number(self, casa_account_number):
+    async def ctr_gw_check_exist_casa_account_number(self, cif_id, casa_account_number):
         current_user = self.current_user
 
         # VALIDATE: casa_account_number

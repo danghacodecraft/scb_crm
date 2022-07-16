@@ -16,7 +16,8 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_get_retrieve_ben_name_by_account_number,
     repos_gw_get_retrieve_ben_name_by_card_number,
     repos_gw_get_statements_casa_account_info, repos_gw_get_tele_transfer,
-    repos_gw_open_casa_account, repos_open_casa_get_casa_account_infos,
+    repos_gw_open_casa_account, repos_gw_withdraw,
+    repos_open_casa_get_casa_account_infos,
     repos_update_casa_account_to_approved
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
@@ -43,7 +44,9 @@ from app.utils.constant.casa import (
     RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY,
     RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT
 )
-from app.utils.constant.cif import BUSINESS_FORM_CLOSE_CASA
+from app.utils.constant.cif import (
+    BUSINESS_FORM_CLOSE_CASA, BUSINESS_FORM_WITHDRAW
+)
 from app.utils.constant.gw import (
     GW_TRANSACTION_TYPE_SEND, GW_TRANSACTION_TYPE_WITHDRAW
 )
@@ -445,7 +448,8 @@ class CtrGWCasaAccount(BaseController):
                     detail=str(gw_open_casa_account_info['openCASA_out'])
                 ))
             else:
-                casa_account_successes.update({casa_account_id: gw_open_casa_account_info['openCASA_out']['data_output']['account_info']['account_num']})
+                casa_account_successes.update({casa_account_id:
+                                               gw_open_casa_account_info['openCASA_out']['data_output']['account_info']['account_num']})
 
         update_casa_accounts = []
         for casa_account_id, casa_account_number in casa_account_successes.items():
@@ -498,7 +502,8 @@ class CtrGWCasaAccount(BaseController):
             to_date=request.to_date
         ))
         report_casa_accounts = \
-            gw_report_statements_casa_account_info['selectReportStatementCaSaFromAcc_out']['data_output']['report_info']['report_casa_account']
+            gw_report_statements_casa_account_info['selectReportStatementCaSaFromAcc_out']['data_output'][
+                'report_info']['report_casa_account']
         statements = []
 
         for report_casa_account in report_casa_accounts:
@@ -692,6 +697,56 @@ class CtrGWCasaAccount(BaseController):
             data_input=data_input
         )
         return self.response(data=tele_transfer_info)
+
+    async def ctr_gw_withdraw(self, booking_id: str):
+
+        current_user = self.current_user
+        booking_business_form = self.call_repos(
+            await repos_get_booking_business_form_by_booking_id(
+                booking_id=booking_id,
+                business_form_id=BUSINESS_FORM_WITHDRAW,
+                session=self.oracle_session
+
+            ))
+
+        request_data_gw = orjson_loads(booking_business_form.form_data)
+        p_blk_udf = []
+        p_blk_udf.append(dict(
+            UDF_NAME='MUC_DICH_GIAO_DICH',
+            UDF_VALUE='MUC_DICH_KHAC'
+        ))
+
+        data_input = dict(
+            account_info=dict(
+                account_num=request_data_gw['transaction_info']['source_accounts'],
+                account_currency='VND',
+                account_withdrawals_amount=request_data_gw['transaction_info']['receiver_info']['amount']
+            ),
+            staff_info_checker=dict(
+                staff_name='DIEMNTK'
+            ),
+            staff_info_maker=dict(
+                staff_name='DIEPTTN1'
+            ),
+            p_blk_detail="",
+            p_blk_mis="",
+            p_blk_udf=p_blk_udf,
+            p_blk_charge=""
+        )
+
+        gw_payment_amount_block = self.call_repos(await repos_gw_withdraw(
+            current_user=current_user,
+            booking_id=booking_id,
+            request_data_gw=orjson_dumps(data_input),
+            session=self.oracle_session
+        ))
+
+        response_data = {
+            "booking_id": booking_id,
+            "account": gw_payment_amount_block
+        }
+
+        return self.response(data=response_data)
 
     async def ctr_gw_get_retrieve_ben_name_by_account_number(self, account_number: str):
         current_user = self.current_user

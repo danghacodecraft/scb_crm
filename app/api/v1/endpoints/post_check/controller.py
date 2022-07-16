@@ -3,7 +3,7 @@ from typing import Optional
 from starlette import status
 
 from app.api.base.controller import BaseController
-from app.api.v1.endpoints.customer_service.repository import (
+from app.api.v1.endpoints.post_check.repository import (
     repos_create_booking_kss, repos_create_post_check,
     repos_get_customer_detail, repos_get_history_post_post_check,
     repos_get_list_branch, repos_get_list_kss, repos_get_list_zone,
@@ -11,7 +11,7 @@ from app.api.v1.endpoints.customer_service.repository import (
     repos_get_statistics_profiles, repos_save_customer_ekyc,
     repos_update_post_check
 )
-from app.api.v1.endpoints.customer_service.schema import (
+from app.api.v1.endpoints.post_check.schema import (
     CreatePostCheckRequest, QueryParamsKSSRequest, UpdatePostCheckRequest
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
@@ -25,8 +25,9 @@ from app.utils.constant.cif import (
     EKYC_GENDER_TYPE_FEMALE, EKYC_GENDER_TYPE_MALE
 )
 from app.utils.constant.ekyc import (
-    EKYC_DATE_FORMAT, EKYC_DEFAULT_VALUE, GROUP_ROLE_CODE_AP,
-    GROUP_ROLE_CODE_IN, GROUP_ROLE_CODE_VIEW, MENU_CODE, MENU_CODE_VIEW
+    EKYC_DATE_FORMAT, EKYC_DEFAULT_VALUE, EKYC_REGION_ZONE_MAPPING,
+    GROUP_ROLE_CODE_AP, GROUP_ROLE_CODE_IN, GROUP_ROLE_CODE_VIEW, MENU_CODE,
+    MENU_CODE_VIEW
 )
 from app.utils.error_messages import ERROR_PERMISSION, MESSAGE_STATUS
 from app.utils.functions import (
@@ -53,13 +54,20 @@ class CtrKSS(BaseController):
                 detail=MESSAGE_STATUS[ERROR_PERMISSION],
                 error_status_code=status.HTTP_403_FORBIDDEN)
 
+        # Map region to zone: Phía eKYC có danh mục Vùng khác với danh mục khu vực của GW
+        # TODO: Hard theo danh sách vùng để map EKYC_REGION_ZONE_MAPPING
+        try:
+            zone_id = list(filter(lambda x: x['region_code'] == query_params.zone_id, EKYC_REGION_ZONE_MAPPING))[0]['zone_id']
+        except IndexError:
+            zone_id = None
+
         query_data = {}
         query_data.update({'cif_phone_number_gttt_name': query_params.cif_phone_number_gttt_name}) if query_params.cif_phone_number_gttt_name else None
         query_data.update({'transaction_id': query_params.transaction_id}) if query_params.transaction_id else None
         query_data.update({'tran_type_id': query_params.tran_type_id}) if query_params.tran_type_id else None
         query_data.update({'approve_status': query_params.approve_status}) if query_params.approve_status else None
         query_data.update({'branch_id': query_params.branch_id}) if query_params.branch_id else None
-        query_data.update({'zone_id': query_params.zone_id}) if query_params.zone_id else None
+        query_data.update({'zone_id': zone_id}) if zone_id else None
         query_data.update(
             {
                 'start_date': date_string_to_other_date_string_format(
@@ -139,9 +147,9 @@ class CtrKSS(BaseController):
         return self.response(data=list_zone)
 
     async def ctr_get_post_control(
-        self,
-        postcheck_uuid: str,
-        post_control_his_id: int
+            self,
+            postcheck_uuid: str,
+            post_control_his_id: int
     ):
         current_user = self.current_user
 
@@ -299,7 +307,7 @@ class CtrKSS(BaseController):
         post_check_response = self.call_repos(await repos_create_post_check(payload_data=payload_data))
 
         # TODO
-        booking_id, booking_code = self.call_repos(await repos_create_booking_kss( # noqa
+        booking_id, booking_code = self.call_repos(await repos_create_booking_kss(  # noqa
             business_type_code=BUSINESS_TYPE_EKYC_AUDIT,
             current_user=current_user.user_info,
             payload_data=payload_data,
@@ -308,8 +316,8 @@ class CtrKSS(BaseController):
         return self.response(data=post_check_response)
 
     async def ctr_update_post_check(
-        self,
-        postcheck_update_request: UpdatePostCheckRequest
+            self,
+            postcheck_update_request: UpdatePostCheckRequest
     ):
 
         current_user = self.current_user
@@ -346,7 +354,7 @@ class CtrKSS(BaseController):
         ))
         if history_status:
             if history_status[-1]['kss_status'] == "Không hợp lệ" and history_status[-1]['approve_status'] == "Đã Duyệt":
-                account_number = self.call_repos(await repos_gw_change_status_account( # noqa
+                account_number = self.call_repos(await repos_gw_change_status_account(  # noqa
                     current_user=current_user.user_info,
                     account_number=customer_detail.get('account_number')
                 ))
@@ -374,6 +382,12 @@ class CtrKSS(BaseController):
         ))
 
         national = customer_detail.get('nationality')
+
+        for key, value in customer_detail.items():
+            # reformat date from dd/mm/yyyy to yyyy-mm-dd
+            if isinstance(value, str) and "/" in value and len(value) == 10:
+                customer_detail[key] = date_string_to_other_date_string_format(value, '%d/%m/%Y', '%Y-%m-%d')
+
         if not national:
             customer_detail['nationality'] = 'Việt Nam'
         transaction_id = customer_detail.get('transaction_id')

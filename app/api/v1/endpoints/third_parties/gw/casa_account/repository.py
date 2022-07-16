@@ -15,10 +15,13 @@ from app.third_parties.oracle.models.cif.payment_account.model import (
     CasaAccount
 )
 from app.third_parties.oracle.models.master_data.others import TransactionJob
-from app.utils.constant.approval import BUSINESS_JOB_CODE_OPEN_CASA
+from app.utils.constant.approval import (
+    BUSINESS_JOB_CODE_OPEN_CASA, BUSINESS_JOB_CODE_WITHDRAW
+)
 from app.utils.constant.casa import CASA_ACCOUNT_STATUS_APPROVED
 from app.utils.constant.cif import (
-    BUSINESS_FORM_CLOSE_CASA_PD, BUSINESS_FORM_OPEN_CASA_PD
+    BUSINESS_FORM_CLOSE_CASA_PD, BUSINESS_FORM_OPEN_CASA_PD,
+    BUSINESS_FORM_WITHDRAW_PD
 )
 from app.utils.constant.gw import (
     GW_RESPONSE_STATUS_SUCCESS, GW_TRANSACTION_NAME_COLUMN_CHART,
@@ -320,6 +323,58 @@ async def repos_gw_get_tele_transfer(current_user: UserInfoResponse, data_input)
         )
 
     return ReposReturn(data=tele_transfer)
+
+
+@auto_commit
+async def repos_gw_withdraw(
+        current_user,
+        request_data_gw,
+        booking_id,
+        session: Session
+):
+    response_data = []
+    is_success, gw_withdraw, request_data = await service_gw.gw_withdraw(
+        current_user=current_user.user_info, data_input=request_data_gw
+    )
+
+    # lưu form data request GW
+    session.add(
+        BookingBusinessForm(**dict(
+            booking_id=booking_id,
+            form_data=orjson_dumps(request_data_gw),
+            business_form_id=BUSINESS_FORM_WITHDRAW_PD,
+            save_flag=True,
+            created_at=now(),
+            log_data=orjson_dumps(gw_withdraw)
+        ))
+    )
+
+    session.add(TransactionJob(**dict(
+        transaction_id=generate_uuid(),
+        booking_id=booking_id,
+        business_job_id=BUSINESS_JOB_CODE_WITHDRAW,
+        complete_flag=is_success,
+        error_code=gw_withdraw.get('cashWithdrawals_out').get('transaction_info').get(
+            'transaction_error_code'),
+        error_desc=gw_withdraw.get('cashWithdrawals_out').get('transaction_info').get(
+            'transaction_error_msg'),
+        created_at=now()
+    )))
+
+    withdraw = gw_withdraw.get('cashWithdrawals_out').get('data_output')
+
+    if isinstance(withdraw, dict):
+        response_data.append({
+            'account_number': request_data_gw.get('account_info').get('account_num'),
+            'account_withdrawals_amount': request_data_gw.get('account_info').get('account_withdrawals_amount')
+        })
+    else:
+        response_data.append({
+            'account_number': request_data_gw.get('account_info').get('account_num'),
+            'account_withdrawals_amount': withdraw
+        })
+
+    return ReposReturn(data=response_data)
 
 
 async def repos_gw_get_retrieve_ben_name_by_account_number(current_user: UserInfoResponse, data_input):

@@ -34,6 +34,26 @@ router = APIRouter()
 
 
 @router.post(
+    path="/withdraw-pd/",
+    name="Rút tiền từ tài khoản thanh toán - Phê duyệt",
+    description="Rút tiền từ tài khoản thanh toán - Phê duyệt",
+    responses=swagger_response(
+        response_model=ResponseData,
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_withdraw(
+        current_user=Depends(get_current_user_from_header()),
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch")  # noqa
+):
+    gw_withdraw = await CtrGWCasaAccount(current_user).ctr_gw_withdraw(
+        booking_id=BOOKING_ID
+    )
+
+    return ResponseData(**gw_withdraw)
+
+
+@router.post(
     path="/",
     name="[GW] Danh sách Tài Khoản thanh toán theo số CIF",
     description="[GW] Tìm kiếm danh sách TK thanh toán theo CIF",

@@ -5,13 +5,13 @@ from app.api.v1.endpoints.booking import view as view_bookings
 from app.api.v1.endpoints.casa import router as routers_casa
 from app.api.v1.endpoints.cif import router as routers_cif
 from app.api.v1.endpoints.config import router as routers_config
-from app.api.v1.endpoints.customer_service import view as view_customer_service
 from app.api.v1.endpoints.dashboard import router as routers_dashboard
 from app.api.v1.endpoints.deposit import router as router_deposit
 from app.api.v1.endpoints.document_file import view as view_document_file
 from app.api.v1.endpoints.file import view as views_file
 from app.api.v1.endpoints.mobile import view as router_mobile
 from app.api.v1.endpoints.news import view as view_scb_news
+from app.api.v1.endpoints.post_check import view as view_post_check
 from app.api.v1.endpoints.third_parties import router as router_third_party
 from app.api.v1.endpoints.user import router as routers_user
 
@@ -21,7 +21,7 @@ router.include_router(router=routers_user.router_module, prefix="/users", tags=[
 
 router.include_router(router=views_file.router, prefix="/files", tags=["File"])
 
-router.include_router(router=view_customer_service.router, prefix="/post-check", tags=["KSS"])
+router.include_router(router=view_post_check.router, prefix="/post-check", tags=["KSS"])
 
 router.include_router(router=routers_config.router, prefix="/config", tags=["Configs"])
 
