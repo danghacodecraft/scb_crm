@@ -4,13 +4,13 @@ from app.api.v1.endpoints.cif.basic_information.identity.identity_document.repos
     repos_compare_face, repos_save_identity,
     repos_upload_identity_document_and_ocr
 )
-from app.api.v1.endpoints.customer_service.controller import CtrKSS
 from app.api.v1.endpoints.file.controller import CtrFile
 from app.api.v1.endpoints.file.repository import repos_upload_file
 from app.api.v1.endpoints.mobile.repository import (
     repos_get_mobile_identity, repos_get_total_item
 )
 from app.api.v1.endpoints.mobile.schema import IdentityMobileRequest
+from app.api.v1.endpoints.post_check.controller import CtrKSS
 from app.api.v1.others.booking.repository import repos_create_booking
 from app.api.v1.validator import validate_history_data
 from app.settings.config import DATE_INPUT_OUTPUT_EKYC_FORMAT

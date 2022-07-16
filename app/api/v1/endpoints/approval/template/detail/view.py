@@ -27,6 +27,7 @@ router = APIRouter()
 
 )
 async def view_form(
+        cif_id: str = Path(..., description='Id CIF ảo'),
         BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         template_id: str = Path(..., description='template_id'),
         current_user=Depends(get_current_user_from_header())

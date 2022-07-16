@@ -6,8 +6,8 @@ from starlette import status
 from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
-from app.api.v1.endpoints.customer_service.controller import CtrKSS
-from app.api.v1.endpoints.customer_service.schema import (
+from app.api.v1.endpoints.post_check.controller import CtrKSS
+from app.api.v1.endpoints.post_check.schema import (
     BranchResponse, CreatePostCheckRequest, CustomerDetailResponse,
     HistoryPostCheckResponse, KSSResponse, PostControlResponse,
     QueryParamsKSSRequest, StatisticsMonth, StatisticsProfilesResponse,

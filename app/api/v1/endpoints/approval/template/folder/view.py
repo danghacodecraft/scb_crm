@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends, Header, Path
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -26,6 +26,7 @@ router = APIRouter()
     )
 )
 async def view_get_approval_template_folder_info(
+        cif_id: str = Path(..., description='Id CIF ảo'),
         BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         current_user=Depends(get_current_user_from_header())
 ):
