@@ -108,13 +108,13 @@ class ServiceIDM:
             file_url = self.cdn.get(avatar_type) + file_url if file_url.startswith('/') else self.cdn.get(avatar_type) + '/' + file_url
         return file_url
 
-    async def banner_list(self, app_code: str):
+    async def banner_list(self):
         """
         Input: app_code từ login của CRM
         Output: Thông tin banner từ IDM
         """
         headers = SERVICE["idm"]['headers']
-        path = f"/api/v1/staff/banner_list?app_code={app_code}"
+        path = "/api/v1/staff/banner_list"
         url = f'{self.HOST}{path}'
 
         try:
@@ -122,6 +122,7 @@ class ServiceIDM:
                 async with session.request(
                         method='get',
                         url=url,
+                        params={'app_code': SERVICE["idm"]['my_service']},
                         headers=headers,
                         verify_ssl=False
                 ) as response:
