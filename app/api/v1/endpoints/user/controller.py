@@ -5,6 +5,7 @@ from app.api.v1.endpoints.user.repository import (
     repos_get_list_user, repos_get_user_info, repos_login
 )
 from app.api.v1.endpoints.user.schema import UserUpdateRequest
+from app.settings.event import service_idm
 from app.utils.functions import now
 
 
@@ -34,3 +35,7 @@ class CtrUser(BaseController):
             'updated_at': now(),
             'updated_by': 'system'
         })
+
+    async def ctr_get_banner_info(self, app_code: str):
+        _, info_banner_list = await service_idm.banner_list(app_code=app_code)
+        return self.response(data=info_banner_list)

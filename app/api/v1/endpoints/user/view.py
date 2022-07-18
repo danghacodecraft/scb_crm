@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Body, Depends
+from typing import List, Optional
+
+from fastapi import APIRouter, Body, Depends, Query
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from starlette import status
 
@@ -9,8 +11,8 @@ from app.api.v1.endpoints.user.controller import CtrUser
 from app.api.v1.endpoints.user.schema import (
     EXAMPLE_REQ_UPDATE_USER, EXAMPLE_RES_FAIL_LOGIN,
     EXAMPLE_RES_FAIL_UPDATE_USER, EXAMPLE_RES_SUCCESS_DETAIL_USER,
-    EXAMPLE_RES_SUCCESS_UPDATE_USER, AuthResponse, UserInfoResponse,
-    UserUpdateRequest, UserUpdateResponse
+    EXAMPLE_RES_SUCCESS_UPDATE_USER, AuthResponse, UserBannerResponse,
+    UserInfoResponse, UserUpdateRequest, UserUpdateResponse
 )
 
 router = APIRouter()
@@ -33,6 +35,22 @@ security = HTTPBasic()
 # ):
 #     paging_users = await CtrUser(is_init_oracle_session=False, pagination_params=pagination_params).ctr_get_list_user()
 #     return PagingResponse[UserInfoResponse](**paging_users)
+
+
+@router.get(
+    path="/banner/",
+    name="List Application Banner",
+    description="Lấy thông tin danh sách Application Banner",
+    responses=swagger_response(
+        response_model=ResponseData[Optional[List[UserBannerResponse]]],
+        success_status_code=status.HTTP_200_OK,
+    )
+)
+async def view_retrieve_banner(
+        app_code: str = Query(None, description="Code của chương trình")
+):
+    list_banner_info = await CtrUser(is_init_oracle_session=False).ctr_get_banner_info(app_code=app_code)
+    return ResponseData[Optional[List[UserBannerResponse]]](**list_banner_info)
 
 
 @router.post(
