@@ -13,6 +13,7 @@ GW_ENDPOINT_URL_RETRIEVE_OPEN_CASA_ACCOUNT = '/currentaccount/v1.0/rest/openCASA
 GW_ENDPOINT_URL_RETRIEVE_CLOSE_CASA_ACCOUNT = '/currentaccount/v1.0/rest/closeCASA'
 GW_ENDPOINT_URL_RETRIEVE_DEPOSIT_ACCOUNT_FROM_CIF = '/depositaccount/v1.0/rest/selectDepositAccountFromCIF'
 GW_ENDPOINT_URL_RETRIEVE_DEPOSIT_ACCOUNT_TD = "/depositaccount/v1.0/rest/retrieveDepositAccountTD"
+GW_ENDPOINT_URL_RETRIEVE_EBANK_BY_CIF_NUMBER = "/ebank/v1.0/rest/retrieveEbankStatusByCif"
 GW_ENDPOINT_URL_DEPOSIT_OPEN_ACCOUNT_TD = "/depositaccount/v1.0/rest/openTD"
 GW_ENDPOINT_URL_RETRIEVE_REPORT_TD_FROM_CIF = "/report/v1.0/rest/selectReportTDFromCif"
 GW_ENDPOINT_URL_RETRIEVE_AUTHORIZED_ACCOUNT_NUM = "/customer/v1.0/rest/selectAuthorizedRefDataMgmtAccNum"
