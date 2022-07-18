@@ -51,7 +51,9 @@ class QueryParamsKSSRequest(BaseSchema):
 
     @validator('cif_phone_number_gttt_name')
     def upper_case(cls, string):
-        return string.upper()
+        if string:
+            return string.upper()
+        return None
 
 
 ####################################################################################################
