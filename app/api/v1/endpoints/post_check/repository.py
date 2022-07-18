@@ -25,7 +25,7 @@ async def repos_get_list_kss(
         return ReposReturn(is_error=True, loc="LIST KSS", detail=response.get('message'))
     for item in response.get('detail'):
         if item['status'] == "Thành công" and not item['kss_status']:
-            item['kss_status'] = "Chờ Hậu Kiểm"
+            item['kss_status'] = "Chờ hậu kiểm"
             item['date_kss'] = item['trans_date']
 
     return ReposReturn(data={
@@ -120,9 +120,11 @@ async def repos_get_customer_detail(postcheck_uuid: str) -> ReposReturn:
     return ReposReturn(data=response)
 
 
-async def repos_create_post_check(payload_data: dict) -> ReposReturn:
-    is_success, response = await service_ekyc.create_post_check(payload_data=payload_data)
-
+async def repos_create_post_check(booking_id: str, payload_data: dict) -> ReposReturn:
+    is_success, response = await service_ekyc.create_post_check(
+        payload_data=payload_data,
+        booking_id=booking_id
+    )
     if not is_success:
         return ReposReturn(
             is_error=True,

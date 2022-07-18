@@ -124,8 +124,8 @@ class FeeInfoRequest(BaseSchema):
         ...,
         description=' 1. Cờ có thu phí hay không, `true`: Có thu phí, `false` = Không thu phí'
     )
-    payer_flag: bool = Field(None, description="Bên thanh toán phí, `true`: Bên chuyển, `false` = Bên nhận'")
-    fee_amount: Optional[int] = Field(None, description="3. Số tiền phí")
+    payer_flag: Optional[bool] = Field(None, description="Bên thanh toán phí, `true`: Bên chuyển, `false` = Bên nhận'")
+    amount: Optional[int] = Field(None, description="3. Số tiền phí")
 
 
 # A. THÔNG TIN GIAO DỊCH

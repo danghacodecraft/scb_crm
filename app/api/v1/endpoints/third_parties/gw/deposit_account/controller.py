@@ -1,4 +1,7 @@
 from app.api.base.controller import BaseController
+from app.api.v1.endpoints.third_parties.gw.customer.repository import (
+    repos_get_teller_info
+)
 from app.api.v1.endpoints.third_parties.gw.deposit_account.repository import (
     ctr_gw_get_statement_deposit_account_td,
     repos_get_booking_account_by_booking,
@@ -248,18 +251,25 @@ class CtrGWDepositAccount(BaseController):
                 session=self.oracle_session
             )
         )
+
         customer = self.call_repos(
             await repos_get_customer_by_booking_account(
                 td_accounts=booking_account,
                 session=self.oracle_session
             )
         )
+        response_data = []
+
         td_accounts = self.call_repos(
             await repos_get_td_account(
                 td_accounts=booking_account,
                 session=self.oracle_session
             )
         )
+        teller = self.call_repos(await repos_get_teller_info(
+            booking_id=BOOKING_ID,
+            session=self.oracle_session
+        ))
         for item in td_accounts:
             # TODO hard core data_input open_account_td
             data_input = {
@@ -296,16 +306,24 @@ class CtrGWDepositAccount(BaseController):
                         "p_blk_intprodmap": "",
                         "p_blk_inteffdtmap": "",
                         "p_blk_intsde": "",
-                        "p_blk_tddetails": "",
+                        "p_blk_tddetails": [
+                            {
+                                "TD_AMOUNT": int(item.TdAccount.pay_in_amount),
+                                "ROLLOVER_TYPE": item.TdAccount.td_rollover_type
+                            }
+                        ],
                         "p_blk_amount_dates": "",
                         "p_blk_turnovers": "",
                         "p_blk_noticepref": "",
                         "p_blk_acc_nominees": "",
                         "p_blk_dcdmaster": "",
                         "p_blk_tdpayindetails": [
+                            # TODO hard core  PAYIN_TYPE, PAYIN_PERCENTAGE
                             {
-                                "TD_AMOUNT": int(item.TdAccount.pay_in_amount),
-                                "ROLLOVER_TYPE": item.TdAccount.td_rollover_type
+                                "PAYIN_TYPE": "S",
+                                "PAYIN_PERCENTAGE": "100",
+                                "PAYIN_TDAMOUNT": int(item.TdAccount.pay_in_amount),
+                                "PAYIN_ACC": item.TdAccount.pay_in_casa_account
                             }
                         ],
                         "p_blk_tdpayoutdetails": "",
@@ -345,10 +363,10 @@ class CtrGWDepositAccount(BaseController):
                         "p_blk_acc": ""
                     },
                     "staff_info_checker": {
-                        "staff_name": "HOANT2"
+                        "staff_name": teller.user_name
                     },
                     "staff_info_maker": {
-                        "staff_name": "KHANHLQ"
+                        "staff_name": current_user.user_info.username
                     },
                     "udf_info": {
                         # TODO hard core
@@ -361,10 +379,22 @@ class CtrGWDepositAccount(BaseController):
                     }
                 }
             }
-            gw_deposit_open_account_td = self.call_repos(await repos_gw_deposit_open_account_td( # noqa
-                current_user=current_user,
-                data_input=data_input
+            gw_deposit_open_account_td = self.call_repos(await repos_gw_deposit_open_account_td(
+                current_user=current_user.user_info,
+                data_input=data_input,
+                booking_id=BOOKING_ID,
+                session=self.oracle_session
             ))
-
-        return self.response(data=(data_input, customer, booking_account))
-        # return self.response(data=gw_deposit_open_account_td)
+            if gw_deposit_open_account_td['openTD_out']['transaction_info']['transaction_error_code'] == "00":
+                response_data.append({
+                    "account_id": item.TdAccount.id,
+                    "account_num": gw_deposit_open_account_td['openTD_out']['data_output']['account_info']['account_num'],
+                    "error": None
+                })
+            else:
+                response_data.append({
+                    "account_id": item.TdAccount.id,
+                    "account_num": None,
+                    "error": gw_deposit_open_account_td['openTD_out']['transaction_info']['transaction_error_msg']
+                })
+        return self.response(data=response_data)
