@@ -306,7 +306,7 @@ class CtrKSS(BaseController):
 
         return self.response(data=statistics)
 
-    async def ctr_create_post_check(self, post_check_request: CreatePostCheckRequest):
+    async def ctr_create_post_check(self, booking_id: str, post_check_request: CreatePostCheckRequest):
         current_user = self.current_user
         # role nhập
         is_success, response = self.check_permission(
@@ -336,7 +336,7 @@ class CtrKSS(BaseController):
             "post_control": post_control_request
         }
 
-        post_check_response = self.call_repos(await repos_create_post_check(payload_data=payload_data))
+        post_check_response = self.call_repos(await repos_create_post_check(booking_id=booking_id, payload_data=payload_data))
 
         # TODO
         booking_id, booking_code = self.call_repos(await repos_create_booking_kss(  # noqa

@@ -408,7 +408,6 @@ class ServiceEKYC:
         )
 
         for item in response_data['attachment_info']:
-
             item['url'] = replace_with_cdn(
                 cdn=item['uri'] if item['uri'].startswith('/') else '/cdn-ekyc/' + item['uri'],
                 file_url=self.url
@@ -416,7 +415,7 @@ class ServiceEKYC:
 
         return True, response_data
 
-    async def create_post_check(self, payload_data: dict, booking_id):
+    async def create_post_check(self, booking_id: str, payload_data: dict, ):
         api_url = f"{self.url}/api/v1/customer-service/crm/postcontrol/"
 
         headers = self.create_header(booking_id=None)

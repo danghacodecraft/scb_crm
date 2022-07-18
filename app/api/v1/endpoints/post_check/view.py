@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, Path, Query
+from fastapi import APIRouter, Depends, Header, Path, Query
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -200,9 +200,11 @@ async def view_list_statistics(
 )
 async def create_post_check(
     post_check_request: CreatePostCheckRequest,
+    BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
     current_user=Depends(get_current_user_from_header())
 ):
     post_check = await CtrKSS(current_user).ctr_create_post_check(
+        booking_id=BOOKING_ID,
         post_check_request=post_check_request
     )
 
