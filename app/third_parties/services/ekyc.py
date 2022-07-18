@@ -263,13 +263,14 @@ class ServiceEKYC:
                 }),
             }
 
-    async def get_statistics_profiles(self):
+    async def get_statistics_profiles(self, query_data):
         api_url = f"{self.url}/api/v1/customer-service/crm/profilestatistics"
 
         headers = self.create_header(booking_id=None)
 
         try:
-            async with self.session.get(url=api_url, headers=headers, ssl=False) as response:
+            async with self.session.get(url=api_url, headers=headers,
+                                        params=query_data, ssl=False) as response:
                 logger.log("SERVICE", f"[EKYC PROFILESTATISTICS] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()
