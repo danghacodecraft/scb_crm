@@ -740,6 +740,11 @@ class CtrGWCasaAccount(BaseController):
             request_data_gw=orjson_dumps(data_input),
             session=self.oracle_session
         ))
+        if not gw_payment_amount_block:
+            return self.response_exception(
+                msg=ERROR_CALL_SERVICE_GW,
+                loc=f'gw_payment_amount_block: {gw_payment_amount_block}'
+            )
 
         response_data = {
             "booking_id": booking_id,

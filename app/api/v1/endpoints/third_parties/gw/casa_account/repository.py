@@ -337,44 +337,51 @@ async def repos_gw_withdraw(
         current_user=current_user.user_info, data_input=request_data_gw
     )
 
-    # lưu form data request GW
-    session.add(
-        BookingBusinessForm(**dict(
+    if is_success:
+        # lưu form data request GW
+        session.add(
+            BookingBusinessForm(**dict(
+                booking_id=booking_id,
+                form_data=orjson_dumps(request_data_gw),
+                business_form_id=BUSINESS_FORM_WITHDRAW_PD,
+                save_flag=True,
+                created_at=now(),
+                log_data=orjson_dumps(gw_withdraw)
+            ))
+        )
+
+        session.add(TransactionJob(**dict(
+            transaction_id=generate_uuid(),
             booking_id=booking_id,
-            form_data=orjson_dumps(request_data_gw),
-            business_form_id=BUSINESS_FORM_WITHDRAW_PD,
-            save_flag=True,
-            created_at=now(),
-            log_data=orjson_dumps(gw_withdraw)
-        ))
-    )
+            business_job_id=BUSINESS_JOB_CODE_WITHDRAW,
+            complete_flag=is_success,
+            error_code=gw_withdraw.get('cashWithdrawals_out').get('transaction_info').get(
+                'transaction_error_code'),
+            error_desc=gw_withdraw.get('cashWithdrawals_out').get('transaction_info').get(
+                'transaction_error_msg'),
+            created_at=now()
+        )))
 
-    session.add(TransactionJob(**dict(
-        transaction_id=generate_uuid(),
-        booking_id=booking_id,
-        business_job_id=BUSINESS_JOB_CODE_WITHDRAW,
-        complete_flag=is_success,
-        error_code=gw_withdraw.get('cashWithdrawals_out').get('transaction_info').get(
-            'transaction_error_code'),
-        error_desc=gw_withdraw.get('cashWithdrawals_out').get('transaction_info').get(
-            'transaction_error_msg'),
-        created_at=now()
-    )))
+        withdraw = gw_withdraw.get('cashWithdrawals_out').get('data_output')
 
-    withdraw = gw_withdraw.get('cashWithdrawals_out').get('data_output')
-
-    if isinstance(withdraw, dict):
-        response_data.append({
-            'account_number': request_data_gw.get('account_info').get('account_num'),
-            'account_withdrawals_amount': request_data_gw.get('account_info').get('account_withdrawals_amount')
-        })
+        if isinstance(withdraw, dict):
+            response_data.append({
+                'account_number': request_data_gw.get('account_info').get('account_num'),
+                'account_withdrawals_amount': request_data_gw.get('account_info').get('account_withdrawals_amount')
+            })
+        else:
+            response_data.append({
+                'account_number': request_data_gw.get('account_info').get('account_num'),
+                'account_withdrawals_amount': withdraw
+            })
+        return ReposReturn(data=response_data)
     else:
-        response_data.append({
-            'account_number': request_data_gw.get('account_info').get('account_num'),
-            'account_withdrawals_amount': withdraw
-        })
-
-    return ReposReturn(data=response_data)
+        return ReposReturn(
+            is_error=False,
+            loc="repos_gw_withdraw",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(response_data)
+        )
 
 
 async def repos_gw_get_retrieve_ben_name_by_account_number(current_user: UserInfoResponse, data_input):
