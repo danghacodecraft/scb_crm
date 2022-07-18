@@ -3,16 +3,11 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
-from app.api.v1.others.booking.repository import generate_booking_code
 from app.settings.event import service_ekyc
-from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingBusinessForm
-)
+from app.third_parties.oracle.models.cif.form.model import BookingBusinessForm
 from app.utils.constant.ekyc import BUSINESS_FORM_EKYC
-from app.utils.error_messages import (
-    ERROR_BOOKING_CODE_EXISTED, ERROR_CALL_SERVICE_EKYC, MESSAGE_STATUS
-)
-from app.utils.functions import generate_uuid, now, orjson_dumps
+from app.utils.error_messages import ERROR_CALL_SERVICE_EKYC
+from app.utils.functions import now, orjson_dumps
 
 
 async def repos_get_list_kss(
@@ -121,10 +116,12 @@ async def repos_get_customer_detail(postcheck_uuid: str) -> ReposReturn:
 
 
 async def repos_create_post_check(booking_id: str, payload_data: dict) -> ReposReturn:
+    print(payload_data)
     is_success, response = await service_ekyc.create_post_check(
         booking_id=booking_id,
         payload_data=payload_data,
     )
+    print('response', response)
     if not is_success:
         return ReposReturn(
             is_error=True,
@@ -165,44 +162,46 @@ async def repos_save_customer_ekyc(
 
 
 @auto_commit
-async def repos_create_booking_kss(
-    business_type_code: str,
+async def repos_save_booking(
+    booking_id: str,
     payload_data: dict,
-    current_user,
+    out_data,
     session: Session
 ):
-    booking_id = generate_uuid()
-    current_user_branch_code = current_user.hrm_branch_code
-    is_existed, booking_code = await generate_booking_code(
-        branch_code=current_user_branch_code,
-        business_type_code=business_type_code,
-        session=session
-    )
-    if is_existed:
-        return ReposReturn(
-            is_error=True,
-            msg=ERROR_BOOKING_CODE_EXISTED + f", booking_code: {booking_code}",
-            detail=MESSAGE_STATUS[ERROR_BOOKING_CODE_EXISTED]
-        )
+
+    # current_user_branch_code = current_user.hrm_branch_code
+    # is_existed, booking_code = await generate_booking_code(
+    #     branch_code=current_user_branch_code,
+    #     business_type_code=business_type_code,
+    #     session=session
+    # )
+    # if is_existed:
+    #     return ReposReturn(
+    #         is_error=True,
+    #         msg=ERROR_BOOKING_CODE_EXISTED + f", booking_code: {booking_code}",
+    #         detail=MESSAGE_STATUS[ERROR_BOOKING_CODE_EXISTED]
+    #     )
 
     session.add_all([
-        Booking(
-            id=booking_id,
-            # TODO hard core transaction ekyc kss
-            transaction_id=None,
-            code=booking_code,
-            business_type_id=business_type_code,
-            branch_id=current_user_branch_code,
-            created_at=now(),
-            updated_at=now()
-        ),
+        # Booking(
+        #     id=booking_id,
+        #     # TODO hard core transaction ekyc kss
+        #     transaction_id=None,
+        #     code=booking_code,
+        #     business_type_id=business_type_code,
+        #     branch_id=current_user_branch_code,
+        #     created_at=now(),
+        #     updated_at=now()
+        # ),
+        # Create booking_business_form call ekyc
         BookingBusinessForm(
             booking_id=booking_id,
             business_form_id=BUSINESS_FORM_EKYC,
-            save_flag=False,
+            save_flag=True,
             form_data=orjson_dumps(payload_data),
+            out_data=orjson_dumps(out_data),
             created_at=now()
         )
     ])
 
-    return ReposReturn(data=(booking_id, booking_code))
+    return ReposReturn(data=booking_id)
