@@ -229,9 +229,41 @@ class CtrKSS(BaseController):
 
         return self.response(statistics_months)
 
-    async def ctr_get_statistics_profiles(self):
+    async def ctr_get_statistics_profiles(
+            self,
+            selected_date,
+            start_date,
+            end_date
+    ):
         current_user = self.current_user
-
+        query_data = {}
+        query_data.update(
+            {
+                'start_date': date_string_to_other_date_string_format(
+                    start_date,
+                    from_format=DATE_INPUT_OUTPUT_FORMAT,
+                    to_format=EKYC_DATE_FORMAT
+                )
+            }
+        ) if start_date else None
+        query_data.update(
+            {
+                'selected_date': date_string_to_other_date_string_format(
+                    selected_date,
+                    from_format=DATE_INPUT_OUTPUT_FORMAT,
+                    to_format=EKYC_DATE_FORMAT
+                )
+            }
+        ) if selected_date else None
+        query_data.update(
+            {
+                'end_date': date_string_to_other_date_string_format(
+                    end_date,
+                    from_format=DATE_INPUT_OUTPUT_FORMAT,
+                    to_format=EKYC_DATE_FORMAT
+                )
+            }
+        ) if end_date else None
         is_success, response = self.check_permission(
             current_user=current_user,
             menu_code=MENU_CODE,
@@ -245,7 +277,7 @@ class CtrKSS(BaseController):
                 error_status_code=status.HTTP_403_FORBIDDEN
             )
 
-        statistics_profiles = self.call_repos(await repos_get_statistics_profiles())
+        statistics_profiles = self.call_repos(await repos_get_statistics_profiles(query_data=query_data))
 
         return self.response(data=statistics_profiles)
 

@@ -46,8 +46,11 @@ async def repos_get_list_zone() -> ReposReturn:
     return ReposReturn(data=response)
 
 
-async def repos_get_statistics_profiles() -> ReposReturn:
-    is_success, response = await service_ekyc.get_statistics_profiles()
+async def repos_get_statistics_profiles(query_data) -> ReposReturn:
+    is_success, response = await service_ekyc.get_statistics_profiles(query_data)
+
+    if not is_success:
+        return ReposReturn(is_error=True, loc="STATISTICS PROFILES", detail=response.get('message'))
 
     return ReposReturn(data=response)
 
