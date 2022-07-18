@@ -116,12 +116,11 @@ async def repos_get_customer_detail(postcheck_uuid: str) -> ReposReturn:
 
 
 async def repos_create_post_check(booking_id: str, payload_data: dict) -> ReposReturn:
-    print(payload_data)
     is_success, response = await service_ekyc.create_post_check(
         booking_id=booking_id,
         payload_data=payload_data,
     )
-    print('response', response)
+
     if not is_success:
         return ReposReturn(
             is_error=True,
