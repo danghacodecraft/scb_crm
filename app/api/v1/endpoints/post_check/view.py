@@ -146,12 +146,16 @@ async def view_list_statistics_month(
     )
 )
 async def view_list_statistics_profiles(
-    selected_date: str = Query(None, description='Chọn ngày kết thúc DD/MM/YYYY'),
-    start_date: str = Query(None, description='Chọn ngày'),
-    end_date: str = Query(None, description='Chọn ngày bắt đầu DD/MM/YYYY'),
+    selected_date: str = Query(None, description='Chọn ngày kết thúc YYYY-MM-DD'),
+    start_date: str = Query(None, description='Chọn ngày YYYY-MM-DD'),
+    end_date: str = Query(None, description='Chọn ngày bắt đầu YYYY-MM-DD'),
     current_user=Depends(get_current_user_from_header())
 ):
-    statistics_profiles = await CtrKSS(current_user).ctr_get_statistics_profiles()
+    statistics_profiles = await CtrKSS(current_user).ctr_get_statistics_profiles(
+        selected_date=selected_date,
+        start_date=start_date,
+        end_date=end_date
+    )
 
     return ResponseData[StatisticsProfilesResponse](**statistics_profiles)
 
