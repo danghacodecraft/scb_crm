@@ -416,7 +416,7 @@ class ServiceEKYC:
 
         return True, response_data
 
-    async def create_post_check(self, payload_data: dict):
+    async def create_post_check(self, payload_data: dict, booking_id):
         api_url = f"{self.url}/api/v1/customer-service/crm/postcontrol/"
 
         headers = self.create_header(booking_id=None)
