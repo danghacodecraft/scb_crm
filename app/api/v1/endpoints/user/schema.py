@@ -251,3 +251,9 @@ EXAMPLE_RES_FAIL_UPDATE_USER = {
 }
 
 ########################################################################################################################
+
+
+class UserBannerResponse(BaseSchema):
+    banner_link_512: str = Field(..., description="Link 512")
+    banner_link_1024: str = Field(..., description="Link 1024")
+    banner_link_2560: str = Field(..., description="Link 2560")
