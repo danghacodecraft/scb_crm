@@ -37,6 +37,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_RETRIEVE_DEPOSIT_ACCOUNT_FROM_CIF,
     GW_ENDPOINT_URL_RETRIEVE_DEPOSIT_ACCOUNT_TD,
     GW_ENDPOINT_URL_RETRIEVE_DISCIPLINE_INFO_FROM_CODE,
+    GW_ENDPOINT_URL_RETRIEVE_EBANK_BY_CIF_NUMBER,
     GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_CODE,
     GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_USER_NAME,
     GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_LIST_FROM_ORG_ID,
@@ -931,7 +932,52 @@ class ServiceGW:
     ####################################################################################################################
     # END --- DEPOSIT TD
     ####################################################################################################################
+    ####################################################################################################################
+    # START --- RETRIEVE EBANK
+    ####################################################################################################################
+    async def get_retrieve_ebank_td(self, current_user: UserInfoResponse, cif_num):
+        data_input = {
+            "cif_info": {
+                "cif_num": cif_num
+            }
+        }
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="retrieveEbankStatusByCif_in", data_input=data_input
+        )
 
+        api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_EBANK_BY_CIF_NUMBER}"
+
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data
+                else:
+                    return_data = await response.json()
+                    return True, return_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data
+    ####################################################################################################################
+    # END --- RETRIEVE EBANK
+    ####################################################################################################################
     ####################################################################################################################
     # START --- CUSTOMER
     ####################################################################################################################
