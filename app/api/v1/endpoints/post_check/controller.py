@@ -3,7 +3,7 @@ from typing import Optional
 from starlette import status
 
 from app.api.base.controller import BaseController
-from app.api.v1.endpoints.customer_service.repository import (
+from app.api.v1.endpoints.post_check.repository import (
     repos_create_booking_kss, repos_create_post_check,
     repos_get_customer_detail, repos_get_history_post_post_check,
     repos_get_list_branch, repos_get_list_kss, repos_get_list_zone,
@@ -11,8 +11,11 @@ from app.api.v1.endpoints.customer_service.repository import (
     repos_get_statistics_profiles, repos_save_customer_ekyc,
     repos_update_post_check
 )
-from app.api.v1.endpoints.customer_service.schema import (
+from app.api.v1.endpoints.post_check.schema import (
     CreatePostCheckRequest, QueryParamsKSSRequest, UpdatePostCheckRequest
+)
+from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
+    repos_gw_change_status_account, repos_gw_get_casa_account_info
 )
 from app.settings.config import DATE_INPUT_OUTPUT_FORMAT
 from app.utils.constant.business_type import BUSINESS_TYPE_EKYC_AUDIT
@@ -22,8 +25,9 @@ from app.utils.constant.cif import (
     EKYC_GENDER_TYPE_FEMALE, EKYC_GENDER_TYPE_MALE
 )
 from app.utils.constant.ekyc import (
-    EKYC_DATE_FORMAT, EKYC_DEFAULT_VALUE, GROUP_ROLE_CODE_AP,
-    GROUP_ROLE_CODE_IN, GROUP_ROLE_CODE_VIEW, MENU_CODE, MENU_CODE_VIEW
+    EKYC_DATE_FORMAT, EKYC_DEFAULT_VALUE, EKYC_REGION_ZONE_MAPPING,
+    GROUP_ROLE_CODE_AP, GROUP_ROLE_CODE_IN, GROUP_ROLE_CODE_VIEW, MENU_CODE,
+    MENU_CODE_VIEW
 )
 from app.utils.error_messages import ERROR_PERMISSION, MESSAGE_STATUS
 from app.utils.functions import (
@@ -50,13 +54,20 @@ class CtrKSS(BaseController):
                 detail=MESSAGE_STATUS[ERROR_PERMISSION],
                 error_status_code=status.HTTP_403_FORBIDDEN)
 
-        query_data = {}
+        # Map region to zone: Phía eKYC có danh mục Vùng khác với danh mục khu vực của GW
+        # TODO: Hard theo danh sách vùng để map EKYC_REGION_ZONE_MAPPING
+        try:
+            zone_id = list(filter(lambda x: x['region_code'] == query_params.zone_id, EKYC_REGION_ZONE_MAPPING))[0]['zone_id']
+        except IndexError:
+            zone_id = None
 
+        query_data = {}
+        query_data.update({'cif_phone_number_gttt_name': query_params.cif_phone_number_gttt_name}) if query_params.cif_phone_number_gttt_name else None
         query_data.update({'transaction_id': query_params.transaction_id}) if query_params.transaction_id else None
         query_data.update({'tran_type_id': query_params.tran_type_id}) if query_params.tran_type_id else None
         query_data.update({'approve_status': query_params.approve_status}) if query_params.approve_status else None
         query_data.update({'branch_id': query_params.branch_id}) if query_params.branch_id else None
-        query_data.update({'zone_id': query_params.zone_id}) if query_params.zone_id else None
+        query_data.update({'zone_id': zone_id}) if zone_id else None
         query_data.update(
             {
                 'start_date': date_string_to_other_date_string_format(
@@ -136,9 +147,9 @@ class CtrKSS(BaseController):
         return self.response(data=list_zone)
 
     async def ctr_get_post_control(
-        self,
-        postcheck_uuid: str,
-        post_control_his_id: int
+            self,
+            postcheck_uuid: str,
+            post_control_his_id: int
     ):
         current_user = self.current_user
 
@@ -162,6 +173,8 @@ class CtrKSS(BaseController):
         post_control_response = self.call_repos(await repos_get_post_control(
             query_params=query_params
         ))
+        # if post_control_response['kss_status'] == 'Hợp lệ' or post_control_response['kss_status'] == 'Cần xác minh':
+        #     post_control_response['approve_status'] = None
 
         return self.response(data=post_control_response)
 
@@ -185,6 +198,15 @@ class CtrKSS(BaseController):
             postcheck_uuid=postcheck_uuid
         ))
 
+        # response_datas = []
+        # for history in history_post_check:
+        #     if (
+        #             history['kss_status_old'] == 'Chờ hậu kiểm'
+        #             and (history['kss_status'] == 'Hợp lệ' or history['kss_status'] == 'Cần xác minh')
+        #     ):
+        #         history['approve_status'] = history['approve_user'] = None
+        #     response_datas.append(history)
+
         return self.response(data=history_post_check)
 
     async def ctr_statistics_month(self, months: int):
@@ -207,9 +229,41 @@ class CtrKSS(BaseController):
 
         return self.response(statistics_months)
 
-    async def ctr_get_statistics_profiles(self):
+    async def ctr_get_statistics_profiles(
+            self,
+            selected_date,
+            start_date,
+            end_date
+    ):
         current_user = self.current_user
-
+        query_data = {}
+        query_data.update(
+            {
+                'start_date': date_string_to_other_date_string_format(
+                    start_date,
+                    from_format=DATE_INPUT_OUTPUT_FORMAT,
+                    to_format=EKYC_DATE_FORMAT
+                )
+            }
+        ) if start_date else None
+        query_data.update(
+            {
+                'selected_date': date_string_to_other_date_string_format(
+                    selected_date,
+                    from_format=DATE_INPUT_OUTPUT_FORMAT,
+                    to_format=EKYC_DATE_FORMAT
+                )
+            }
+        ) if selected_date else None
+        query_data.update(
+            {
+                'end_date': date_string_to_other_date_string_format(
+                    end_date,
+                    from_format=DATE_INPUT_OUTPUT_FORMAT,
+                    to_format=EKYC_DATE_FORMAT
+                )
+            }
+        ) if end_date else None
         is_success, response = self.check_permission(
             current_user=current_user,
             menu_code=MENU_CODE,
@@ -223,7 +277,7 @@ class CtrKSS(BaseController):
                 error_status_code=status.HTTP_403_FORBIDDEN
             )
 
-        statistics_profiles = self.call_repos(await repos_get_statistics_profiles())
+        statistics_profiles = self.call_repos(await repos_get_statistics_profiles(query_data=query_data))
 
         return self.response(data=statistics_profiles)
 
@@ -281,23 +335,21 @@ class CtrKSS(BaseController):
             "username": post_check_request.username,
             "post_control": post_control_request
         }
-        booking_id, booking_code = self.call_repos(await repos_create_booking_kss(
+
+        post_check_response = self.call_repos(await repos_create_post_check(payload_data=payload_data))
+
+        # TODO
+        booking_id, booking_code = self.call_repos(await repos_create_booking_kss(  # noqa
             business_type_code=BUSINESS_TYPE_EKYC_AUDIT,
             current_user=current_user.user_info,
             payload_data=payload_data,
             session=self.oracle_session
         ))
-
-        post_check_response = self.call_repos(await repos_create_post_check(
-            payload_data=payload_data,
-            booking_id=booking_id
-        ))
-
         return self.response(data=post_check_response)
 
     async def ctr_update_post_check(
-        self,
-        postcheck_update_request: UpdatePostCheckRequest
+            self,
+            postcheck_update_request: UpdatePostCheckRequest
     ):
 
         current_user = self.current_user
@@ -321,9 +373,23 @@ class CtrKSS(BaseController):
             "username": postcheck_update_request.username,
             "is_approve": postcheck_update_request.is_approve
         }
+
         update_post_check = self.call_repos(await repos_update_post_check(
             request_data=request_data
         ))
+        # lấy lịch sử trạng thái hậu kiểm cuối cùng
+        history_status = self.call_repos(await repos_get_history_post_post_check(
+            postcheck_uuid=postcheck_update_request.customer_id
+        ))
+        customer_detail = self.call_repos(await repos_get_customer_detail(
+            postcheck_uuid=postcheck_update_request.customer_id
+        ))
+        if history_status:
+            if history_status[-1]['kss_status'] == "Không hợp lệ" and history_status[-1]['approve_status'] == "Đã Duyệt":
+                account_number = self.call_repos(await repos_gw_change_status_account(  # noqa
+                    current_user=current_user.user_info,
+                    account_number=customer_detail.get('account_number')
+                ))
 
         return self.response(data=update_post_check)
 
@@ -346,6 +412,44 @@ class CtrKSS(BaseController):
         customer_detail = self.call_repos(await repos_get_customer_detail(
             postcheck_uuid=postcheck_uuid
         ))
+
+        national = customer_detail.get('nationality')
+
+        for key, value in customer_detail.items():
+            # reformat date from dd/mm/yyyy to yyyy-mm-dd
+            if isinstance(value, str) and "/" in value and len(value) == 10:
+                customer_detail[key] = date_string_to_other_date_string_format(value, '%d/%m/%Y', '%Y-%m-%d')
+
+        if not national:
+            customer_detail['nationality'] = 'Việt Nam'
+        transaction_id = customer_detail.get('transaction_id')
+        ekyc_step = []
+        for item in customer_detail.get('ekyc_step'):
+            if transaction_id == item.get('transaction_id'):
+                ekyc_step.extend(item.get('info_step'))
+
+        customer_detail.update({
+            # "resident_status": "Cư Trú",
+            "ekyc_step": ekyc_step
+        })
+
+        account_number = customer_detail.get('account_number')
+        if account_number:
+            account_detail = self.call_repos(await repos_gw_get_casa_account_info(
+                account_number=account_number,
+                current_user=self.current_user.user_info
+            ))
+            account_status = account_detail['retrieveCurrentAccountCASA_out']['data_output']['customer_info']['account_info']['account_status']
+            for key, value in account_status[0].items():
+                if key == "AC_STAT_NO_DR":
+                    if value == "N":
+                        customer_detail.update(dict(
+                            account_status="Mở"
+                        ))
+                    else:
+                        customer_detail.update(dict(
+                            account_status="Đóng"
+                        ))
 
         return self.response(data=customer_detail)
 

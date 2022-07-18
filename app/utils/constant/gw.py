@@ -36,6 +36,9 @@ GW_ENDPOINT_URL_HISTORY_CHANGE_FIELD = "/history/v1.0/rest/historyChangeFieldAcc
 GW_ENDPOINT_URL_RETRIEVE_CUS_OPEN_CIF = '/customer/v1.0/rest/openCIFAuthorise'
 GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_ID_FCC = '/users/v1.0/rest/selectUserInfoByUserID'
 GW_ENDPOINT_URL_RETRIEVE_TELE_TRANSFER_INFO = '/payment/v1.0/rest/teleTransfer'
+GW_ENDPOINT_URL_RETRIEVE_BEN_NAME_BY_ACCOUNT_NUMBER = '/payment/v1.0/rest/retrieveBenNameByAccNum'
+GW_ENDPOINT_URL_RETRIEVE_BEN_NAME_BY_CARD_NUMBER = '/payment/v1.0/rest/retrieveBenNameByCardNum'
+GW_ENDPOINT_URL_RETRIEVE_CHANGE_STATUS_ACCOUNT_NUMBER = '/currentaccount/v1.0/rest/accountChangeStatus'
 
 # ---------------------------------------------- PAYMENT ---------------------------------------------- #
 
@@ -45,6 +48,12 @@ GW_ENDPOINT_URL_PAY_IN_CASH = "/payment/v1.0/rest/payInCash"
 GW_ENDPOINT_URL_PAY_IN_CASH_247_BY_ACCOUNT_NUMBER = "/payment/v1.0/rest/payInCash247byAccNum"
 GW_ENDPOINT_URL_PAY_IN_CASH_247_BY_CARD_NUMBER = "/payment/v1.0/rest/payInCash247byCardNum"
 GW_ENDPOINT_URL_REDEEM_ACCOUNT = "/payment/v1.0/rest/redeemAccount"
+GW_ENDPOINT_URL_INTERNAL_TRANSFER = "/payment/v1.0/rest/internalTransfer"
+GW_ENDPOINT_URL_TT_LIQUIDATION = "/payment/v1.0/rest/ttLiquidation"
+GW_ENDPOINT_URL_TELE_TRANSFER = "/payment/v1.0/rest/teleTransfer"
+GW_ENDPOINT_URL_INTERBANK_TRANSFER = "/payment/v1.0/rest/interbankTransfer"
+GW_ENDPOINT_URL_INTERBANK_TRANSFER_247_BY_ACCOUNT_NUMBER = "/payment/v1.0/rest/interbankTransfer247ByAccNum"
+GW_ENDPOINT_URL_INTERBANK_TRANSFER_247_BY_CARD_NUMBER = "/payment/v1.0/rest/interbankTransfer247ByCardNum"
 GW_ENDPOINT_URL_WITHDRAW = "/payment/v1.0/rest/cashWithdrawals"
 # ---------------------------------------------- USER ---------------------------------------------- #
 GW_ENDPOINT_URL_SELECT_USER_INFO = "/users/v1.0/rest/selectUserInfoByUserID"
@@ -52,15 +61,22 @@ GW_ENDPOINT_URL_SELECT_USER_INFO = "/users/v1.0/rest/selectUserInfoByUserID"
 # ---------------------------------------------- SERIAL ---------------------------------------------- #
 GW_ENDPOINT_URL_SELECT_SERIAL_NUMBER = "/serial/v1.0/rest/retrieveSerialNumber"
 
+# ---------------------------------------------- BRANCH LOCATION ---------------------------------------------- #
+GW_ENDPOINT_URL_SELECT_BRANCH_BY_REGION_ID = "/branchlocation/v1.0/rest/selectBranchByRegionID"
+GW_ENDPOINT_URL_SELECT_BRANCH_BY_BRANCH_ID = "/branchlocation/v1.0/rest/selectBranchByBranchID"
+
+# ---------------------------------------------- STATISTIC ---------------------------------------------- #
+GW_ENDPOINT_URL_SELECT_STATISTIC_BANKING_BY_PERIOD = "/statistics/v1.0/rest/selectStatisticBankingByPeriod"
+
 ######################################################################################################
 #                                           Constant                                                #
 ######################################################################################################
 
 GW_DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 GW_DATE_FORMAT = '%Y-%m-%d'
+GW_CORE_DATE_FORMAT = '%m/%d/%Y'
 
-GW_RESPONSE_STATUS_SUCCESS = 1
-GW_CASA_RESPONSE_STATUS_SUCCESS = '00'
+GW_RESPONSE_STATUS_SUCCESS = '00'
 GW_FUNCTION_OPEN_CASA = "openCASA_in"
 
 GW_CURRENT_ACCOUNT_FROM_CIF = "CurrentAccountFromCIF"
@@ -128,6 +144,9 @@ GW_ACCOUNT_CLASS_CODE = "CAI025"
 GW_ACCOUNT_AUTO_CREATE_CIF_Y = "Y"
 GW_ACCOUNT_AUTO_CREATE_CIF_N = "N"
 
+GW_ACCOUNT_CHARGE_ON_ORDERING = "Y"
+GW_ACCOUNT_CHARGE_ON_RECEIVER = "N"
+
 GW_MARTIAL_STATUS_SINGLE = "S"
 GW_MARTIAL_STATUS_MARRIED = "M"
 GW_DEFAULT_KHTC_DOI_TUONG = "THONG THUONG"
@@ -165,3 +184,12 @@ GW_REQUEST_PARAMETER = {
     GW_REQUEST_PARAMETER_DEBIT_CARD: "Thẻ ghi nợ",
     GW_REQUEST_PARAMETER_CO_OWNER: "Đồng sở hữu"
 }
+
+GW_TYPE_DEFAULT = "CN Đa năng"
+GW_LONGITUDE_DEFAULT = 106.70564814326777
+GW_LONGITUDE_MIN = 100
+GW_LONGITUDE_MAX = 120
+
+GW_LATITUDE_DEFAULT = 10.771912559303502
+GW_LATITUDE_MIN = 10
+GW_LATITUDE_MAX = 30

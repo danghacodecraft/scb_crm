@@ -8,7 +8,7 @@ from app.utils.functions import datetime_to_date, string_to_datetime
 
 class CtrDiscipline(BaseController):
     async def ctr_discipline(self):
-        current_user = self.current_user.user_info
+        current_user = self.current_user
         if not current_user:
             return self.response_exception(
                 msg=USER_NOT_EXIST,
@@ -16,15 +16,10 @@ class CtrDiscipline(BaseController):
                 loc="current_user"
             )
 
-        employee_id = current_user.code
+        gw_disciplines = self.call_repos(await repos_discipline(current_user=current_user))
 
-        is_success, disciplines = self.call_repos(
-            await repos_discipline(
-                employee_id=employee_id
-            )
-        )
-        if not is_success:
-            self.response_exception(msg=str(disciplines))
+        disciplines = gw_disciplines['selectDisciplineInfoFromCode_out']['data_output'][
+            'discipline_info_list']['discipline_info_item']
 
         response_disciplines = [dict(
             effective_date=None,
@@ -44,22 +39,22 @@ class CtrDiscipline(BaseController):
         if disciplines:
             response_disciplines = []
             for discipline in disciplines:
-                effective_date = discipline["NGAY_HIEU_LUC"]
+                effective_date = discipline["discipline_effect_date"]
                 effective_date = datetime_to_date(string_to_datetime(effective_date)) if effective_date else None
 
-                end_date = discipline["NGAY_KET_THUC"]
+                end_date = discipline["discipline_expire_date"]
                 end_date = datetime_to_date(string_to_datetime(end_date)) if end_date else None
 
-                titles = discipline["CHUC_DANH"]
-                department = discipline["DON_VI_PHONG_BAN"]
-                reason = discipline["LY_DO_KY_LUAT"]
-                detailed_reason = discipline["LY_DO_CHI_TIET_KY_LUAT"]
-                detected_date = discipline["NGAY_PHAT_HIEN"]
-                violation_date = discipline["NGAY_VI_PHAM"]
-                total_damage = discipline["TONG_GIA_TRI_THIET_HAI"]
-                number = discipline["SO_QUYET_DINH"]
-                deleter = None  # TODO không có người xóa kỷ luật
-                signer = discipline["NGAY_PHAT_HIEN"]
+                titles = discipline["discipline_jobtitle"]
+                department = discipline["discipline_department"]
+                reason = discipline["discipline_reason"]
+                detailed_reason = discipline["discipline_description"]
+                detected_date = discipline["detection_date"]
+                violation_date = discipline["violation_date"]
+                total_damage = discipline["discipline_total"]
+                number = discipline["discipline_num"]
+                deleter = discipline["discipline_remover"]
+                signer = discipline["discipline_signer"]
 
                 response_disciplines.append(dict(
                     effective_date=effective_date,

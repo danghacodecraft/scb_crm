@@ -3,7 +3,7 @@ from typing import List
 from fastapi import APIRouter, Body, Depends, Header, Path
 from starlette import status
 
-from app.api.base.schema import ResponseData
+from app.api.base.schema import BaseSchema, ResponseData
 from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
@@ -17,19 +17,40 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.example import (
     CASA_ACCOUNT_NUMBER_REQUEST, CASA_CIF_NUMBER_REQUEST
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
-    GWCasaAccountByCIFNumberRequest, GWCasaAccountByCIFNumberResponse,
-    GWCasaAccountCheckExistRequest, GWCasaAccountCheckExistResponse,
-    GWCasaAccountResponse, GWCloseCasaAccountResponse,
-    GWOpenCasaAccountRequest, GWOpenCasaAccountResponse,
-    GWReportColumnChartHistoryAccountInfoRequest,
+    GWBenNameResponse, GWCasaAccountByCIFNumberRequest,
+    GWCasaAccountByCIFNumberResponse, GWCasaAccountCheckExistRequest,
+    GWCasaAccountCheckExistResponse, GWCasaAccountResponse,
+    GWCloseCasaAccountResponse, GWOpenCasaAccountRequest,
+    GWOpenCasaAccountResponse, GWReportColumnChartHistoryAccountInfoRequest,
     GWReportColumnChartHistoryAccountInfoResponse,
     GWReportPieChartHistoryAccountInfoRequest,
     GWReportPieChartHistoryAccountInfoResponse,
     GWReportStatementHistoryAccountInfoRequest,
-    GWReportStatementHistoryAccountInfoResponse, GWTopUpCasaAccountResponse
+    GWReportStatementHistoryAccountInfoResponse,
+    GWThirdPartyAccountCheckExistResponse, GWTopUpCasaAccountResponse
 )
 
 router = APIRouter()
+
+
+@router.post(
+    path="/withdraw-pd/",
+    name="Rút tiền từ tài khoản thanh toán - Phê duyệt",
+    description="Rút tiền từ tài khoản thanh toán - Phê duyệt",
+    responses=swagger_response(
+        response_model=ResponseData,
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_withdraw(
+        current_user=Depends(get_current_user_from_header()),
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch")  # noqa
+):
+    gw_withdraw = await CtrGWCasaAccount(current_user).ctr_gw_withdraw(
+        booking_id=BOOKING_ID
+    )
+
+    return ResponseData(**gw_withdraw)
 
 
 @router.post(
@@ -211,3 +232,105 @@ async def view_gw_get_casa_account_info(
         account_number=account_number
     )
     return ResponseData[GWCasaAccountResponse](**gw_casa_account_info)
+
+
+@router.post(
+    path="/ben-name-by-account-number/{account_number}/",
+    name="[GW] Lấy tên người thụ hưởng qua số TK",
+    description="[GW] Lấy tên người thụ hưởng thông qua số tài khoản ngoài SCB",
+    responses=swagger_response(
+        response_model=ResponseData[GWBenNameResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_get_ben_name_by_account_number(
+        account_number: str = Path(..., description="Số tài khoản"),
+        current_user=Depends(get_current_user_from_header())
+):
+    ben_name = await CtrGWCasaAccount(current_user).ctr_gw_get_retrieve_ben_name_by_account_number(
+        account_number=account_number
+    )
+    return ResponseData[GWBenNameResponse](**ben_name)
+
+
+@router.post(
+    path="/check-exist-third-party-account-number/{account_number}/",
+    name="[GW] Kiểm tra số tài khoản ngoài SCB có tồn tại không",
+    description="[GW] Kiểm tra số tài khoản ngoài SCB có tồn tại không",
+    responses=swagger_response(
+        response_model=ResponseData[GWThirdPartyAccountCheckExistResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_check_exist_third_party_account_number(
+        account_number: str = Path(..., description="Số tài khoản"),
+        current_user=Depends(get_current_user_from_header())
+):
+    is_existed = await CtrGWCasaAccount(current_user).ctr_check_exist_account_number_from_other_bank(
+        account_number=account_number
+    )
+
+    return ResponseData(**dict(data=dict(
+        is_existed=is_existed
+    )))
+
+
+@router.post(
+    path="/ben-name-by-card-number/{card_number}/",
+    name="[GW] Lấy tên người thụ hưởng qua số thẻ",
+    description="[GW] Lấy tên người thụ hưởng thông qua số thẻ ngoài SCB",
+    responses=swagger_response(
+        response_model=ResponseData[GWBenNameResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_get_ben_name_by_card_number(
+        card_number: str = Path(..., description="Số thẻ"),
+        current_user=Depends(get_current_user_from_header())
+):
+    ben_name = await CtrGWCasaAccount(current_user).ctr_gw_get_retrieve_ben_name_by_card_number(
+        card_number=card_number
+    )
+    return ResponseData[GWBenNameResponse](**ben_name)
+
+
+@router.post(
+    path="/check-exist-third-party-card-number/{card_number}/",
+    name="[GW] Kiểm tra số thẻ ngoài SCB có tồn tại không",
+    description="[GW] Kiểm tra số thẻ ngoài SCB có tồn tại không",
+    responses=swagger_response(
+        response_model=ResponseData[GWThirdPartyAccountCheckExistResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_check_exist_third_party_card_number(
+        card_number: str = Path(..., description="Số thẻ"),
+        current_user=Depends(get_current_user_from_header())
+):
+    is_existed = await CtrGWCasaAccount(current_user).ctr_check_exist_card_number_from_other_bank(
+        card_number=card_number
+    )
+
+    return ResponseData(**dict(data=dict(
+        is_existed=is_existed
+    )))
+
+
+@router.post(
+    path="/change-status-account/{account_number}",
+    name="Khóa tài khoản thanh toán (Thay đổi trạng thái nodebit/ nocredit)",
+    description="[GW] Khóa tài khoản thanh toán (Thay đổi trạng thái nodebit/ nocredit)",
+    responses=swagger_response(
+        response_model=ResponseData[BaseSchema],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_change_status_account(
+        account_number: str = Path(..., description="Số thẻ"),
+        current_user=Depends(get_current_user_from_header())
+):
+    account_number = await CtrGWCasaAccount(current_user).ctr_gw_change_status_account(
+        account_number=account_number
+    )
+
+    return ResponseData(**account_number)

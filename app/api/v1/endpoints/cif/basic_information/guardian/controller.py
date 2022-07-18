@@ -8,9 +8,6 @@ from app.api.v1.endpoints.cif.basic_information.guardian.repository import (
 from app.api.v1.endpoints.cif.basic_information.guardian.schema import (
     SaveGuardianRequest
 )
-from app.api.v1.endpoints.cif.basic_information.repository import (
-    repos_get_customer_detail_by_cif_number
-)
 from app.api.v1.endpoints.cif.repository import (
     repos_get_booking, repos_get_initializing_customer
 )
@@ -263,12 +260,12 @@ class CtrGuardian(BaseController):
         #     model_ids=list(relationship_types),
         #     loc="customer_relationship"
         # )
+
         # Kiểm tra người giám hộ có tồn tại trong Core không
         for guardian in guardian_save_request:
-            self.call_repos(await repos_get_customer_detail_by_cif_number(
-                cif_number=guardian.cif_number,
-                session=self.oracle_session
-            ))
+            await CtrGWCustomer(current_user).ctr_gw_get_customer_info_detail(
+                cif_number=guardian.cif_number
+            )
 
         # guardians_cif_number__id = {}
         for index, guardian in enumerate(guardians):

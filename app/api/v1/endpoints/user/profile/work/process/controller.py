@@ -8,7 +8,7 @@ from app.utils.functions import datetime_to_date, string_to_datetime
 
 class CtrProcess(BaseController):
     async def ctr_process_info(self):
-        current_user = self.current_user.user_info
+        current_user = self.current_user
         if not current_user:
             return self.response_exception(
                 msg=USER_NOT_EXIST,
@@ -16,16 +16,14 @@ class CtrProcess(BaseController):
                 loc="current_user"
             )
 
-        employee_id = current_user.code
-
-        is_success, processes = self.call_repos(
+        gw_processes = self.call_repos(
             await repos_process_info(
-                employee_id=employee_id,
-                session=self.oracle_session
+                current_user=current_user
             )
         )
-        if not is_success:
-            return self.response_exception(msg=str(processes))
+
+        processes = gw_processes['selectWorkingProcessInfoFromCode_out']['data_output'][
+            'working_process_info_list']['working_process_info_item']
 
         response_datas = [dict(
             from_date=None,
@@ -37,10 +35,10 @@ class CtrProcess(BaseController):
             response_datas = []
             for process in processes:
                 response_datas.append({
-                    "from_date": datetime_to_date(string_to_datetime(process['TU_NGAY'])) if process['TU_NGAY'] else None,
-                    "to_date": datetime_to_date(string_to_datetime(process['DEN_NGAY'])) if process['DEN_NGAY'] else None,
-                    "company": process['CONG_TY'],
-                    "position": process['CHUC_VU']
+                    "from_date": datetime_to_date(string_to_datetime(process['from_date'])) if process['from_date'] else None,
+                    "to_date": datetime_to_date(string_to_datetime(process['to_date'])) if process['to_date'] else None,
+                    "company": process['company'],
+                    "position": process['position']
                 })
 
         return self.response_paging(data=response_datas)

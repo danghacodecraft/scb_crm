@@ -38,7 +38,7 @@ class ServiceIDM:
         data_user_login = {
             "username": username,
             "password": password,
-            "app_code": "CRM"
+            "app_code": SERVICE["idm"]['my_service']
         }
 
         try:

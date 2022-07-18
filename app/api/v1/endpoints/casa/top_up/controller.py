@@ -54,9 +54,12 @@ from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_GDV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_GDV
 )
 from app.utils.error_messages import (
+    ERROR_BANK_NOT_IN_CITAD, ERROR_BANK_NOT_IN_NAPAS,
     ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_CIF_NUMBER_NOT_EXIST,
-    ERROR_DENOMINATIONS_NOT_EXIST, ERROR_FIELD_REQUIRED, ERROR_MAPPING_MODEL,
-    ERROR_NOT_NULL, ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
+    ERROR_DENOMINATIONS_NOT_EXIST, ERROR_FIELD_REQUIRED,
+    ERROR_INTERBANK_ACCOUNT_NUMBER_NOT_EXIST,
+    ERROR_INTERBANK_CARD_NUMBER_NOT_EXIST, ERROR_MAPPING_MODEL, ERROR_NOT_NULL,
+    ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
 )
 from app.utils.functions import (
     date_string_to_other_date_string_format, dropdown, generate_uuid, now,
@@ -371,6 +374,14 @@ class CtrCasaTopUp(BaseController):
                 loc=f'expect: CasaTopUpSCBByIdentityRequest, request: {type(data)}'
             )
 
+        # validate province
+        receiver_province_id = data.receiver_province.id
+        await self.get_model_object_by_id(
+            model_id=receiver_province_id,
+            model=AddressProvince,
+            loc=f'receiver_province -> id: {receiver_province_id}'
+        )
+
         # validate branch
         await self.get_model_object_by_id(model_id=data.receiver_branch.id, model=Branch, loc='branch -> id')
 
@@ -410,10 +421,23 @@ class CtrCasaTopUp(BaseController):
             )
         # validate bank
         receiver_bank_id = data.receiver_bank.id
-        await self.get_model_object_by_id(
+        receiver_bank = await self.get_model_object_by_id(
             model_id=data.receiver_bank.id,
             model=Bank,
             loc=f'receiver_bank -> id: {receiver_bank_id}'
+        )
+        if not receiver_bank.citad_flag:
+            return self.response_exception(
+                loc=f'receiver_bank -> id: {receiver_bank_id}',
+                msg=ERROR_BANK_NOT_IN_CITAD
+            )
+
+        # validate province
+        receiver_province_id = data.receiver_province.id
+        await self.get_model_object_by_id(
+            model_id=receiver_province_id,
+            model=AddressProvince,
+            loc=f'receiver_province -> id: {receiver_province_id}'
         )
 
         data.receiving_method = receiving_method
@@ -432,11 +456,16 @@ class CtrCasaTopUp(BaseController):
             )
         # validate bank
         receiver_bank_id = data.receiver_bank.id
-        await self.get_model_object_by_id(
+        receiver_bank = await self.get_model_object_by_id(
             model_id=data.receiver_bank.id,
             model=Bank,
             loc=f'receiver_bank -> id: {receiver_bank_id}'
         )
+        if not receiver_bank.citad_flag:
+            return self.response_exception(
+                loc=f'receiver_bank -> id: {receiver_bank_id}',
+                msg=ERROR_BANK_NOT_IN_CITAD
+            )
 
         # validate province
         receiver_province_id = data.receiver_province.id
@@ -467,11 +496,25 @@ class CtrCasaTopUp(BaseController):
             )
         # validate bank
         receiver_bank_id = data.receiver_bank.id
-        await self.get_model_object_by_id(
+        receiver_bank = await self.get_model_object_by_id(
             model_id=data.receiver_bank.id,
             model=Bank,
             loc=f'receiver_bank -> id: {receiver_bank_id}'
         )
+        if not receiver_bank.napas_flag:
+            return self.response_exception(
+                loc=f'receiver_bank -> id: {receiver_bank_id}',
+                msg=ERROR_BANK_NOT_IN_NAPAS
+            )
+
+        # validate account_number
+        account_number = data.receiver_account_number
+        is_existed = await CtrGWCasaAccount(self.current_user).ctr_check_exist_account_number_from_other_bank(
+            account_number=account_number
+        )
+        if not is_existed:
+            self.response_exception(msg=ERROR_INTERBANK_ACCOUNT_NUMBER_NOT_EXIST, loc=f'account_number: {account_number}')
+
         data.receiving_method = receiving_method
         return data
 
@@ -488,12 +531,24 @@ class CtrCasaTopUp(BaseController):
 
         # validate bank
         receiver_bank_id = data.receiver_bank.id
-        await self.get_model_object_by_id(
+        receiver_bank = await self.get_model_object_by_id(
             model_id=data.receiver_bank.id,
             model=Bank,
             loc=f'receiver_bank -> id: {receiver_bank_id}'
         )
-        # TODO: validate card number
+        if not receiver_bank.napas_flag:
+            return self.response_exception(
+                loc=f'receiver_bank -> id: {receiver_bank_id}',
+                msg=ERROR_BANK_NOT_IN_NAPAS
+            )
+        # validate card number
+        card_number = data.receiver_card_number
+        is_existed = await CtrGWCasaAccount(self.current_user).ctr_check_exist_card_number_from_other_bank(
+            card_number=card_number
+        )
+        if not is_existed:
+            self.response_exception(msg=ERROR_INTERBANK_CARD_NUMBER_NOT_EXIST,
+                                    loc=f'card_number: {card_number}')
 
         data.receiving_method = receiving_method
         return data

@@ -6,8 +6,8 @@ from starlette import status
 from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
-from app.api.v1.endpoints.customer_service.controller import CtrKSS
-from app.api.v1.endpoints.customer_service.schema import (
+from app.api.v1.endpoints.post_check.controller import CtrKSS
+from app.api.v1.endpoints.post_check.schema import (
     BranchResponse, CreatePostCheckRequest, CustomerDetailResponse,
     HistoryPostCheckResponse, KSSResponse, PostControlResponse,
     QueryParamsKSSRequest, StatisticsMonth, StatisticsProfilesResponse,
@@ -146,12 +146,16 @@ async def view_list_statistics_month(
     )
 )
 async def view_list_statistics_profiles(
-    selected_date: str = Query(None, description='Chọn ngày kết thúc DD/MM/YYYY'),
-    start_date: str = Query(None, description='Chọn ngày'),
-    end_date: str = Query(None, description='Chọn ngày bắt đầu DD/MM/YYYY'),
+    selected_date: str = Query(None, description='Chọn ngày kết thúc YYYY-MM-DD'),
+    start_date: str = Query(None, description='Chọn ngày YYYY-MM-DD'),
+    end_date: str = Query(None, description='Chọn ngày bắt đầu YYYY-MM-DD'),
     current_user=Depends(get_current_user_from_header())
 ):
-    statistics_profiles = await CtrKSS(current_user).ctr_get_statistics_profiles()
+    statistics_profiles = await CtrKSS(current_user).ctr_get_statistics_profiles(
+        selected_date=selected_date,
+        start_date=start_date,
+        end_date=end_date
+    )
 
     return ResponseData[StatisticsProfilesResponse](**statistics_profiles)
 
@@ -189,7 +193,7 @@ async def view_list_statistics(
     description="Thêm mới hậu kiểm",
     responses=swagger_response(
         response_model=ResponseData[CreatePostCheckRequest],
-        success_status_code=status.HTTP_200_OK
+        success_status_code=status.HTTP_201_CREATED
     )
 )
 async def create_post_check(

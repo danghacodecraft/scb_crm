@@ -26,13 +26,8 @@ SERVICE = {
         "authorization": f"bearer {os.getenv('SERVICE_CARD_BEARER_TOKEN')}",
         "x-transaction-id": "CRM_TEST"
     },
-    "soa": {
-        "url": os.getenv("SERVICE_SOA_URL"),
-        "authorization_username": "crm",
-        "authorization_password": "123456"
-    },
     "idm": {
-        "host": os.getenv("SERVICE_IDM_URL", "http://192.168.73.135:9006"),
+        "host": os.getenv("SERVICE_IDM_URL"),
         "headers": {
             'Content-Type': 'application/json'
         },
@@ -55,6 +50,7 @@ SERVICE = {
         }
     },
     "gw": {
-        "url": os.getenv("SERVICE_GW_URL")
+        "url": os.getenv("SERVICE_GW_URL"),
+        "bypass": bool(os.getenv("SERVICE_GW_BYPASS", "") if os.getenv("SERVICE_GW_BYPASS", "") in ["True", "true", "1"] else False)
     }
 }

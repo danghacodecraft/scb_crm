@@ -23,6 +23,10 @@ async def repos_get_list_kss(
     )
     if not is_success:
         return ReposReturn(is_error=True, loc="LIST KSS", detail=response.get('message'))
+    for item in response.get('detail'):
+        if item['status'] == "Thành công" and not item['kss_status']:
+            item['kss_status'] = "Chờ Hậu Kiểm"
+            item['date_kss'] = item['trans_date']
 
     return ReposReturn(data={
         'detail': response.get('detail'),
@@ -46,14 +50,19 @@ async def repos_get_list_zone() -> ReposReturn:
     return ReposReturn(data=response)
 
 
-async def repos_get_statistics_profiles() -> ReposReturn:
-    is_success, response = await service_ekyc.get_statistics_profiles()
+async def repos_get_statistics_profiles(query_data) -> ReposReturn:
+    is_success, response = await service_ekyc.get_statistics_profiles(query_data)
+
+    if not is_success:
+        return ReposReturn(is_error=True, loc="STATISTICS PROFILES", detail=response.get('message'))
 
     return ReposReturn(data=response)
 
 
 async def repos_get_statistics_month(months: int) -> ReposReturn:
     is_success, response = await service_ekyc.get_statistics_months(months=months)
+    if not is_success:
+        return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_EKYC, detail=str(response))
 
     return ReposReturn(data=response)
 

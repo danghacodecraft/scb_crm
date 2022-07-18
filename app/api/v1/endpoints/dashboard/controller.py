@@ -4,17 +4,19 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.dashboard.repository import (
     repos_accounting_entry, repos_count_total_item,
     repos_get_amount_block_from_booking, repos_get_customer,
-    repos_get_open_casa_info_from_booking,
+    repos_get_customers_by_cif_number, repos_get_open_casa_info_from_booking,
     repos_get_open_cif_info_from_booking, repos_get_senders,
     repos_get_sla_transaction_infos, repos_get_total_item,
-    repos_get_transaction_list, repos_region
+    repos_get_transaction_list, repos_get_withdraw_info_from_booking,
+    repos_region
 )
 from app.api.v1.endpoints.third_parties.gw.category.controller import (
     CtrSelectCategory
 )
 from app.utils.constant.business_type import (
     BUSINESS_TYPE_AMOUNT_BLOCK, BUSINESS_TYPE_AMOUNT_UNBLOCK,
-    BUSINESS_TYPE_CLOSE_CASA, BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA
+    BUSINESS_TYPE_CLOSE_CASA, BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA,
+    BUSINESS_TYPE_WITHDRAW
 )
 from app.utils.constant.cif import (
     CIF_STAGE_ROLE_CODE_AUDIT, CIF_STAGE_ROLE_CODE_SUPERVISOR,
@@ -22,7 +24,7 @@ from app.utils.constant.cif import (
 )
 from app.utils.constant.gw import GW_TRANSACTION_NAME, GW_TRANSACTION_VALUE
 from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
-from app.utils.functions import dropdown
+from app.utils.functions import dropdown, orjson_loads
 
 
 class CtrDashboard(BaseController):
@@ -62,6 +64,7 @@ class CtrDashboard(BaseController):
         business_type_init_cifs = []
         business_type_open_casas = []
         business_type_amount_block = []
+        business_type_withdraws = []
         for transaction in transaction_list:
             booking, branch, status, stage_role = transaction
 
@@ -81,9 +84,11 @@ class CtrDashboard(BaseController):
             if business_type_id == BUSINESS_TYPE_OPEN_CASA:
                 business_type_open_casas.append(booking_id)
             if business_type_id == BUSINESS_TYPE_AMOUNT_BLOCK \
-                    or business_type_id == BUSINESS_TYPE_AMOUNT_UNBLOCK\
+                    or business_type_id == BUSINESS_TYPE_AMOUNT_UNBLOCK \
                     or business_type_id == BUSINESS_TYPE_CLOSE_CASA:
                 business_type_amount_block.append(booking_id)
+            if business_type_id == BUSINESS_TYPE_WITHDRAW:
+                business_type_withdraws.append(booking_id)
             # TODO: còn các loại nghiệp vụ khác
 
             mapping_datas.update({
@@ -167,6 +172,35 @@ class CtrDashboard(BaseController):
                     )]
                 )
 
+        # Lấy thông tin các giao dịch Rút tiền
+        withdraw_infos = self.call_repos(
+            await repos_get_withdraw_info_from_booking(booking_ids=business_type_withdraws,
+                                                       session=self.oracle_session))
+        withdraw__cif_numbers = []
+        for booking, booking_business_form in withdraw_infos:
+            form_data = orjson_loads(booking_business_form.form_data)
+            customer_info = form_data['customer_info']['sender_info']
+            cif_number = customer_info['cif_number']
+            withdraw__cif_numbers.append(cif_number)
+
+            cif_info = self.call_repos(
+                await repos_get_customers_by_cif_number(
+                    cif_numbers=cif_number,
+                    session=self.oracle_session
+                )
+            )
+            mapping_datas[booking.id].update(
+                full_name_vn=cif_info.full_name_vn,
+                cif_id=cif_info.id,
+                cif_number=cif_number,
+            )
+            mapping_datas[booking.id]['business_type'].update(
+                numbers=[dict(
+                    number=customer_info['cif_number'],
+                    approval_status=customer_info['cif_flag']
+                )]
+            )
+
         # Lấy tất cả người thực hiện của giao dịch
         if booking_ids:
             stage_infos = self.call_repos(await repos_get_senders(
@@ -201,8 +235,8 @@ class CtrDashboard(BaseController):
         ))
 
         for (
-            booking, sla_transaction, sender_sla_transaction, sla_transaction_parent, sender_sla_trans_parent,
-            sla_transaction_grandparent, sender_sla_trans_grandparent
+                booking, sla_transaction, sender_sla_transaction, sla_transaction_parent, sender_sla_trans_parent,
+                sla_transaction_grandparent, sender_sla_trans_grandparent
         ) in sla_transaction_infos:
             for booking_id, data in mapping_datas.items():
                 stage_role_code = data['stage_role']

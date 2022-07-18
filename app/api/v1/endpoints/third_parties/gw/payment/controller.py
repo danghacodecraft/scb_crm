@@ -2,14 +2,22 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.repository import (
     repos_get_booking_business_form_by_booking_id
 )
+from app.api.v1.endpoints.casa.transfer.repository import (
+    repos_get_casa_transfer_info
+)
 from app.api.v1.endpoints.cif.repository import (
     repos_get_account_id_by_account_number
 )
 from app.api.v1.endpoints.config.bank.controller import CtrConfigBank
+from app.api.v1.endpoints.third_parties.gw.customer.controller import (
+    CtrGWCustomer
+)
 from app.api.v1.endpoints.third_parties.gw.payment.repository import (
-    repos_create_booking_payment, repos_gw_pay_in_cash,
-    repos_gw_payment_amount_block, repos_gw_payment_amount_unblock,
-    repos_gw_redeem_account, repos_pay_in_cash_247_by_acc_num,
+    repos_create_booking_payment, repos_gw_interbank_transfer,
+    repos_gw_pay_in_cash, repos_gw_payment_amount_block,
+    repos_gw_payment_amount_unblock, repos_gw_redeem_account,
+    repos_gw_save_casa_transfer_info, repos_gw_tele_transfer,
+    repos_gw_tt_liquidation, repos_pay_in_cash_247_by_acc_num,
     repos_pay_in_cash_247_by_card_num, repos_payment_amount_block,
     repos_payment_amount_unblock
 )
@@ -18,10 +26,18 @@ from app.api.v1.endpoints.third_parties.gw.payment.schema import (
 )
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.validator import validate_history_data
+from app.third_parties.oracle.models.master_data.address import AddressProvince
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.utils.constant.business_type import (
     BUSINESS_TYPE_AMOUNT_BLOCK, BUSINESS_TYPE_AMOUNT_UNBLOCK,
     BUSINESS_TYPE_REDEEM_ACCOUNT
+)
+from app.utils.constant.casa import (
+    RECEIVING_METHOD_SCB_BY_IDENTITY, RECEIVING_METHOD_SCB_TO_ACCOUNT,
+    RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT,
+    RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD,
+    RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY,
+    RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT
 )
 from app.utils.constant.cif import (
     BUSINESS_FORM_AMOUNT_BLOCK, BUSINESS_FORM_AMOUNT_UNBLOCK,
@@ -29,8 +45,9 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_UNBLOCK, PROFILE_HISTORY_STATUS_INIT
 )
 from app.utils.constant.gw import (
-    GW_CASA_RESPONSE_STATUS_SUCCESS, GW_DATE_FORMAT, GW_DATETIME_FORMAT,
-    GW_GL_BRANCH_CODE
+    GW_ACCOUNT_CHARGE_ON_ORDERING, GW_ACCOUNT_CHARGE_ON_RECEIVER,
+    GW_CORE_DATE_FORMAT, GW_DATE_FORMAT, GW_DATETIME_FORMAT, GW_GL_BRANCH_CODE,
+    GW_RESPONSE_STATUS_SUCCESS
 )
 from app.utils.functions import (
     date_string_to_other_date_string_format, datetime_to_string, now,
@@ -39,6 +56,43 @@ from app.utils.functions import (
 
 
 class CtrGWPayment(BaseController):
+
+    async def get_sender_info(self, form_data):
+        sender_cif_number = form_data['sender_cif_number']
+        if sender_cif_number:
+            gw_customer_info = await CtrGWCustomer(self.current_user).ctr_gw_get_customer_info_detail(
+                cif_number=sender_cif_number,
+                return_raw_data_flag=True
+            )
+            gw_customer_info_id_info = gw_customer_info['id_info']
+            sender_full_name_vn = gw_customer_info['full_name']
+            sender_address_full = gw_customer_info['t_address_info']['contact_address_full']
+            sender_identity_number = gw_customer_info_id_info['id_num']
+            sender_issued_date = date_string_to_other_date_string_format(
+                date_input=gw_customer_info_id_info['id_issued_date'],
+                from_format=GW_DATETIME_FORMAT,
+                to_format=GW_CORE_DATE_FORMAT
+            )
+
+            sender_place_of_issue_id = gw_customer_info_id_info['id_issued_location']
+        else:
+            sender_full_name_vn = form_data['sender_full_name_vn']
+            sender_address_full = form_data['sender_address_full']
+            sender_identity_number = form_data['sender_identity_number']
+            sender_issued_date = form_data['sender_issued_date']
+            sender_place_of_issue_id = form_data['sender_place_of_issue']['id']
+
+        sender_place_of_issue = await self.get_model_object_by_id(
+            model_id=sender_place_of_issue_id,
+            model=PlaceOfIssue,
+            loc='sender_place_of_issue_id'
+        )
+        sender_place_of_issue = sender_place_of_issue.name
+
+        return (
+            sender_cif_number, sender_full_name_vn, sender_address_full, sender_identity_number, sender_issued_date,
+            sender_place_of_issue
+        )
 
     async def ctr_payment_amount_block(
             self,
@@ -450,7 +504,7 @@ class CtrGWPayment(BaseController):
 
         redeem_account = gw_payment_redeem_account.get('redeemAccount_out', {})
         # check trường hợp lỗi
-        if redeem_account.get('transaction_info').get('transaction_error_code') != GW_CASA_RESPONSE_STATUS_SUCCESS:
+        if redeem_account.get('transaction_info').get('transaction_error_code') != GW_RESPONSE_STATUS_SUCCESS:
             return self.response_exception(msg=redeem_account.get('transaction_info').get('transaction_error_msg'))
         response_data = {
             "booking_id": booking_id,
@@ -574,6 +628,299 @@ class CtrGWPayment(BaseController):
         ))
         return gw_pay_in_cash
 
+    async def ctr_tele_transfer(self, form_data):
+        current_user = self.current_user
+        receiver_place_of_issue_id = form_data['receiver_place_of_issue']['id']
+        receiver_place_of_issue = await self.get_model_object_by_id(
+            model_id=receiver_place_of_issue_id,
+            model=PlaceOfIssue,
+            loc='receiver_place_of_issue_id'
+        )
+        (
+            sender_cif_number, sender_full_name_vn, sender_address_full, sender_identity_number, sender_issued_date,
+            sender_place_of_issue
+        ) = await self.get_sender_info(form_data=form_data)
+
+        data_input = {
+            "p_tt_type": "C",
+            "p_details": {
+                "TT_DETAILS": {
+                    "TT_CURRENCY": "VND",
+                    "TT_AMOUNT": form_data['amount'],
+                    "TRANSACTION_CURRENCY": "VND"
+                },
+                "BENEFICIARY_DETAILS": {
+                    "BENEFICIARY_NAME": form_data['receiver_full_name_vn'],
+                    "BENEFICIARY_PHONE_NO": form_data['receiver_mobile_number'],
+                    "BENEFICIARY_ID_NO": form_data['receiver_identity_number'],
+                    # "ID_ISSUE_DATE": date_string_to_other_date_string_format(
+                    #     date_input=form_data['receiver_issued_date'],
+                    #     from_format=GW_DATE_FORMAT,
+                    #     to_format=GW_CORE_DATE_FORMAT
+                    # ),
+                    "ID_ISSUE_DATE": form_data['receiver_issued_date'],
+                    "ID_ISSUER": receiver_place_of_issue.name,
+                    "ADDRESS": form_data['receiver_address_full']
+                },
+                "REMITTER_DETAILS": {
+                    "REMITTER_NAME": sender_full_name_vn,
+                    "REMITTER_PHONE_NO": form_data['sender_mobile_number'],
+                    "REMITTER_ID_NO": sender_identity_number,
+                    "ID_ISSUE_DATE": date_string_to_other_date_string_format(
+                        date_input=sender_issued_date,
+                        from_format=GW_CORE_DATE_FORMAT,
+                        to_format=GW_DATE_FORMAT
+                    ),
+                    "ID_ISSUER": sender_place_of_issue,
+                    "ADDRESS": sender_address_full
+                },
+                "ADDITIONAL_DETAILS": {
+                    "NARRATIVE": form_data['content']
+                }
+            },
+            "p_denomination": "",
+            "p_charges": [
+                {
+                    "CHARGE_NAME": "PHI DV TT TRONG NUOC  711003001",
+                    "CHARGE_AMOUNT": 100000,
+                    "WAIVED": "N"
+                }
+            ],
+            "p_mis": "",
+            "p_udf": "",
+            "staff_info_checker": {
+                "staff_name": "HOANT2"
+            },
+            "staff_info_maker": {
+                "staff_name": "KHANHLQ"
+            }
+        }
+        print(data_input)
+        gw_tele_transfer = self.call_repos(await repos_gw_tele_transfer(
+            data_input=data_input,
+            current_user=current_user
+        ))
+        return gw_tele_transfer
+
+    async def ctr_tt_liquidation(self, p_instrument_number, form_data):
+        current_user = self.current_user
+        data_input = {
+            "account_info": {
+                "account_num": "123456787912",
+                "account_currency": "VND"
+            },
+            "branch_info": {
+                "branch_code": "000"
+            },
+            "p_liquidation_type": "C",
+            "p_liquidation_details": "",
+            "p_instrument_number": p_instrument_number,
+            "p_instrument_status": "LIQD",
+            "p_charges": [
+                {
+                    "CHARGE_NAME": "",
+                    "CHARGE_AMOUNT": 0,
+                    "WAIVED": "N"
+                }
+            ],
+            "p_mis": "",
+            "p_udf": [
+                {
+                    "UDF_NAME": "",
+                    "UDF_VALUE": ""
+                }
+            ],
+            "staff_info_checker": {
+                "staff_name": "HOANT2"
+            },
+            "staff_info_maker": {
+                "staff_name": "KHANHLQ"
+            }
+        }
+        gw_tt_liquidation = self.call_repos(await repos_gw_tt_liquidation(
+            data_input=data_input,
+            current_user=current_user
+        ))
+        return gw_tt_liquidation
+
+    async def ctr_gw_interbank_transfer(
+            self,
+            booking_id: str,
+            form_data: dict,
+            receiving_method: str
+    ):
+        current_user = self.current_user
+
+        ben = await CtrConfigBank(current_user).ctr_get_bank_branch(bank_id=form_data['receiver_bank']['id'])
+
+        fee_info = form_data['fee_info']
+        details_of_charge = ''
+        if fee_info:
+            if fee_info['is_transfer_payer'] is True:
+                details_of_charge = GW_ACCOUNT_CHARGE_ON_ORDERING
+            if fee_info['is_transfer_payer'] is False:
+                details_of_charge = GW_ACCOUNT_CHARGE_ON_RECEIVER
+
+        (
+            sender_cif_number, sender_full_name_vn, sender_address_full, sender_identity_number, sender_issued_date,
+            sender_place_of_issue
+        ) = await self.get_sender_info(form_data=form_data)
+
+        data_input = {}
+        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
+            data_input.update({
+                "account_info": {
+                    "account_bank_code": ben['data'][0]['id'],
+                    "account_product_package": "NC01"
+                },
+                "staff_info_checker": {
+                    "staff_name": "DIEMNTK"     # TODO
+                },
+                "staff_info_maker": {
+                    "staff_name": "DIEPTTN1"    # TODO
+                },
+                "p_blk_mis": "",
+                "p_blk_udf": "",
+                "p_blk_refinance_rates": "",
+                "p_blk_amendment_rate": "",
+                "p_blk_main": {
+                    "PRODUCT": {
+                        "DETAILS_OF_CHARGE": details_of_charge,
+                        "PAYMENT_FACILITY": "O"
+                    },
+                    "TRANSACTION_LEG": {
+                        "ACCOUNT": "101101001",
+                        "AMOUNT": form_data['amount']
+                    },
+                    "RATE": {
+                        "EXCHANGE_RATE": 0,
+                        "LCY_EXCHANGE_RATE": 0,
+                        "LCY_AMOUNT": 0
+                    },
+                    "ADDITIONAL_INFO": {
+                        "RELATED_CUSTOMER": form_data['sender_cif_number'],
+                        "NARRATIVE": form_data['content']
+                    }
+                },
+                "p_blk_charge": [
+                    {
+                        "CHARGE_NAME": "PHI DV TT TRONG NUOC  711003001",
+                        "CHARGE_AMOUNT": 10000,
+                        "WAIVED": "N"
+                    },
+                    {
+                        "CHARGE_NAME": "THUE VAT",
+                        "CHARGE_AMOUNT": 0,
+                        "WAIVED": "N"
+                    }
+                ],
+                "p_blk_settlement_detail": {
+                    "SETTLEMENTS": {
+                        "TRANSFER_DETAIL": {
+                            "BENEFICIARY_ACCOUNT_NUMBER": form_data['receiver_account_number'],
+                            "BENEFICIARY_NAME": form_data['receiver_full_name_vn'],
+                            "BENEFICIARY_ADRESS": form_data['receiver_address_full'],
+                            "ID_NO": '',
+                            "ISSUE_DATE": "",
+                            "ISSUER": ""
+                        },
+                        "ORDERING_CUSTOMER": {
+                            "ORDERING_ACC_NO": "",
+                            "ORDERING_NAME": sender_full_name_vn,
+                            "ORDERING_ADDRESS": sender_address_full,
+                            "ID_NO": sender_identity_number,
+                            "ISSUE_DATE": sender_issued_date,
+                            "ISSUER": sender_place_of_issue
+                        }
+                    }
+                }
+            })
+
+        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
+            receiver_place_of_issue_id = form_data['receiver_place_of_issue']['id']
+            receiver_place_of_issue = await self.get_model_object_by_id(
+                model_id=receiver_place_of_issue_id,
+                model=PlaceOfIssue,
+                loc='receiver_place_of_issue_id'
+            )
+            data_input.update({
+                "account_info": {
+                    "account_bank_code": ben['data'][0]['id'],
+                    "account_product_package": "NC01"
+                },
+                "staff_info_checker": {
+                    "staff_name": "DIEMNTK"     # TODO
+                },
+                "staff_info_maker": {
+                    "staff_name": "DIEPTTN1"    # TODO
+                },
+                "p_blk_mis": "",
+                "p_blk_udf": "",
+                "p_blk_refinance_rates": "",
+                "p_blk_amendment_rate": "",
+                "p_blk_main": {
+                    "PRODUCT": {
+                        "DETAILS_OF_CHARGE": details_of_charge,
+                        "PAYMENT_FACILITY": "O"
+                    },
+                    "TRANSACTION_LEG": {
+                        "ACCOUNT": "101101001",
+                        "AMOUNT": form_data['amount']
+                    },
+                    "RATE": {
+                        "EXCHANGE_RATE": 0,
+                        "LCY_EXCHANGE_RATE": 0,
+                        "LCY_AMOUNT": 0
+                    },
+                    "ADDITIONAL_INFO": {
+                        "RELATED_CUSTOMER": form_data['sender_cif_number'],
+                        "NARRATIVE": form_data['content']
+                    }
+                },
+                "p_blk_charge": [
+                    {
+                        "CHARGE_NAME": "PHI DV TT TRONG NUOC  711003001",
+                        "CHARGE_AMOUNT": 10000,
+                        "WAIVED": "N"
+                    },
+                    {
+                        "CHARGE_NAME": "THUE VAT",
+                        "CHARGE_AMOUNT": 0,
+                        "WAIVED": "N"
+                    }
+                ],
+                "p_blk_settlement_detail": {
+                    "SETTLEMENTS": {
+                        "TRANSFER_DETAIL": {
+                            "BENEFICIARY_ACCOUNT_NUMBER": '.',  # TODO
+                            "BENEFICIARY_NAME": form_data['receiver_full_name_vn'],
+                            "BENEFICIARY_ADRESS": form_data['receiver_address_full'],
+                            "ID_NO": form_data['receiver_identity_number'],
+                            "ISSUE_DATE": date_string_to_other_date_string_format(
+                                date_input=form_data['receiver_issued_date'],
+                                from_format=GW_DATE_FORMAT,
+                                to_format=GW_CORE_DATE_FORMAT
+                            ),
+                            "ISSUER": receiver_place_of_issue.name
+                        },
+                        "ORDERING_CUSTOMER": {
+                            "ORDERING_ACC_NO": "",
+                            "ORDERING_NAME": sender_full_name_vn,
+                            "ORDERING_ADDRESS": sender_address_full,
+                            "ID_NO": sender_identity_number,
+                            "ISSUE_DATE": sender_issued_date,
+                            "ISSUER": sender_place_of_issue
+                        }
+                    }
+                }
+            })
+
+        gw_interbank_transfer = self.call_repos(await repos_gw_interbank_transfer(
+            data_input=data_input,
+            current_user=current_user
+        ))
+        return gw_interbank_transfer
+
     async def ctr_gw_pay_in_cash_247_by_acc_num(
             self,
             booking_id: str,
@@ -679,4 +1026,265 @@ class CtrGWPayment(BaseController):
             current_user=current_user
         ))
         return gw_pay_in_cash_247_by_card_num
+
+    async def ctr_gw_save_casa_transfer_info(self, BOOKING_ID: str):
+        current_user = self.current_user
+        get_casa_transfer_info = self.call_repos(await repos_get_casa_transfer_info(
+            booking_id=BOOKING_ID,
+            session=self.oracle_session
+        ))
+        form_data = orjson_loads(get_casa_transfer_info.form_data)
+
+        receiving_method = form_data['receiving_method']
+        transfer_amount = form_data['amount']
+
+        # Thông tin phí
+        ################################################################################################################
+        fee_info = form_data['fee_info']
+        fee_amount = fee_info['fee_amount']
+        vat_tax = fee_amount / 10
+        total = fee_amount + vat_tax
+        actual_total = int(total + transfer_amount)
+        is_transfer_payer = False
+        if fee_info['is_transfer_payer'] is not None:
+            if fee_info['is_transfer_payer'] is True:
+                is_transfer_payer = True
+
+        request_data = {}
+
+        if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
+            request_data = {
+                "data_input": {
+                    "p_blk_detail": {
+                        "FROM_ACCOUNT_DETAILS": {
+                            "FROM_ACCOUNT_NUMBER": form_data['sender_account_number'],
+                            "FROM_ACCOUNT_AMOUNT": actual_total
+                        },
+                        "TO_ACCOUNT_DETAILS": {
+                            "TO_ACCOUNT_NUMBER": form_data['receiver_account_number']
+                        }
+                    },
+                    "p_blk_charge": [],  # TODO thông tin phí
+                    "p_blk_mis": "",
+                    "p_blk_udf": [
+                        {
+                            "UDF_NAME": "",
+                            "UDF_VALUE": ""
+                        }
+                    ],
+                    "p_blk_project": "",
+                    # TODO
+                    "staff_info_checker": {
+                        "staff_name": "HOANT2"
+                    },
+                    # TODO
+                    "staff_info_maker": {
+                        "staff_name": "KHANHLQ"
+                    }
+                }
+            }
+
+        if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY or \
+                receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
+            request_data = {
+                "data_input": {
+                    "p_liquidation_type": "C",
+                    "p_liquidation_details": "",
+                    "branch_info": {
+                        "branch_code": "001"
+                    },
+                    "p_instrument_number": "123245678",
+                    "p_instrument_status": "LIQD",
+                    "account_info": {
+                        "account_num": "123456787912",
+                        "account_currency": "VND"
+                    },
+                    "p_charges": [
+                        {
+                            "CHARGE_NAME": "",
+                            "CHARGE_AMOUNT": 0,
+                            "WAIVED": "N"
+                        }
+                    ],
+                    "p_mis": "",
+                    "p_udf": [
+                        {
+                            "UDF_NAME": "",
+                            "UDF_VALUE": ""
+                        }
+                    ],
+                    "staff_info_checker": {
+                        "staff_name": "HOANT2"
+                    },
+                    "staff_info_maker": {
+                        "staff_name": "KHANHLQ"
+                    }
+                }
+            }
+
+        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
+            bank_info = await CtrConfigBank(current_user=current_user).ctr_get_bank_branch(
+                bank_id=form_data['receiver_bank']['id'])
+
+            receiver_province_id = form_data['receiver_province']['id']
+            province = await self.get_model_object_by_id(
+                model_id=receiver_province_id,
+                model=AddressProvince,
+                loc=f'receiver_province_id: {receiver_province_id}'
+            )
+            request_data = {
+                "data_input": {
+                    "account_info": {
+                        "account_bank_code": bank_info['data'][0]['code'],
+                        "account_product_package": "FT01"
+                    },
+                    "staff_info_checker": {
+                        "staff_name": "HOANT2"
+                    },
+                    "staff_info_maker": {
+                        "staff_name": "KHANHLQ"
+                    },
+                    "p_blk_mis": "",
+                    "p_blk_udf": "",
+                    "p_blk_refinance_rates": "",
+                    "p_blk_amendment_rate": "",
+                    "p_blk_main": {
+                        "PRODUCT": {
+                            "DETAILS_OF_CHARGE": "Y" if is_transfer_payer else "O",
+                            "PAYMENT_FACILITY": "O"
+                        },
+                        "TRANSACTION_LEG": {
+                            "ACCOUNT": form_data['sender_account_number'],
+                            "AMOUNT": actual_total
+                        },
+                        "RATE": {
+                            "EXCHANGE_RATE": 0,
+                            "LCY_EXCHANGE_RATE": 0,
+                            "LCY_AMOUNT": 0
+                        },
+                        "ADDITIONAL_INFO": {
+                            "RELATED_CUSTOMER": form_data["sender_cif_number"],
+                            "NARRATIVE": form_data["content"]
+                        }
+                    },
+                    "p_blk_charge": [
+                        {
+                            "CHARGE_NAME": "PHI DV TT TRONG NUOC  711003001",
+                            "CHARGE_AMOUNT": 0,
+                            "WAIVED": "N"
+                        },
+                        {
+                            "CHARGE_NAME": "THUE VAT",
+                            "CHARGE_AMOUNT": 0,
+                            "WAIVED": "N"
+                        }
+                    ],
+                    "p_blk_settlement_detail": {
+                        "SETTLEMENTS": {
+                            "TRANSFER_DETAIL": {
+                                "BENEFICIARY_ACCOUNT_NUMBER": form_data['receiver_account_number'],
+                                "BENEFICIARY_NAME": form_data['receiver_full_name_vn'],
+                                "BENEFICIARY_ADRESS": province.code,
+                                "ID_NO": "",
+                                "ISSUE_DATE": "",
+                                "ISSUER": ""
+                            },
+                            "ORDERING_CUSTOMER": {
+                                "ORDERING_ACC_NO": form_data['receiver_account_number'],
+                                "ORDERING_NAME": form_data['receiver_full_name_vn'],
+                                "ORDERING_ADDRESS": province.code,
+                                "ID_NO": "",
+                                "ISSUE_DATE": "",
+                                "ISSUER": ""
+                            }
+                        }
+                    }
+                }
+            }
+
+        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
+            # ben = await CtrConfigBank(current_user=current_user).ctr_get_bank_branch(
+            #     bank_id=form_data['receiver_bank']['id'])
+
+            request_data = {
+                "data_input": {
+                    # "ben_id": ben['data'][0]['id'],
+                    "ben_id": "970436",  # TODO
+                    "trans_date": datetime_to_string(now()),
+                    "time_stamp": datetime_to_string(now()),
+                    "trans_id": "20220629160002159368",
+                    "amount": actual_total,
+                    "description": form_data["content"],
+                    "account_to_info": {
+                        "account_num": form_data["receiver_account_number"]
+                    },
+                    "account_from_info": {
+                        "account_num": form_data["sender_account_number"]
+                    },
+                    "customer_info": {
+                        "full_name": form_data["sender_full_name_vn"]
+                    },
+                    # TODO
+                    "staff_maker": {
+                        "staff_code": "annvh"
+                    },
+                    # TODO
+                    "staff_checker": {
+                        "staff_code": "THUYTP"
+                    },
+                    # TODO
+                    "branch_info": {
+                        "branch_code": "001"
+                    }
+                }
+            }
+
+        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
+            # ben = await CtrConfigBank(current_user=current_user).ctr_get_bank_branch(
+            #     bank_id=form_data['receiver_bank']['id'])
+
+            request_data = {
+                "data_input": {
+                    # "ben_id": ben['data'][0]['id'],
+                    "ben_id": "970436",  # TODO hard core chưa thông tin ngân hàng khác
+                    "trans_date": datetime_to_string(now()),
+                    "time_stamp": datetime_to_string(now()),
+                    "trans_id": "20220629160002159368",
+                    "amount": actual_total,
+                    "description": form_data["content"],
+                    "account_from_info": {
+                        "account_num": form_data["sender_account_number"]
+                    },
+                    "customer_info": {
+                        "full_name": form_data["sender_full_name_vn"]
+                    },
+                    # TODO
+                    "staff_maker": {
+                        "staff_code": "annvh"
+                    },
+                    # TODO
+                    "staff_checker": {
+                        "staff_code": "THUYTP"
+                    },
+                    # TODO
+                    "branch_info": {
+                        "branch_code": "001"
+                    },
+                    "card_to_info": {
+                        "card_num": form_data["receiver_card_number"]
+                    }
+                }
+            }
+        self.call_repos(await repos_gw_save_casa_transfer_info(
+            current_user=self.current_user,
+            receiving_method=receiving_method,
+            booking_id=BOOKING_ID,
+            request_data=request_data,
+            session=self.oracle_session
+        ))
+
+        response_data = {
+            "booking_id": BOOKING_ID,
+        }
+        return self.response(data=response_data)
     ####################################################################################################################

@@ -10,7 +10,6 @@ from app.api.v1.endpoints.file.controller import CtrFile
 from app.api.v1.endpoints.file.schema import (
     FileServiceDownloadFileResponse, FileServiceResponse
 )
-from app.utils.constant.cif import UUID_MAX_LENGTH, UUID_MIN_LENGTH
 
 router = APIRouter()
 
@@ -26,9 +25,7 @@ router = APIRouter()
 )
 async def view_file_upload(
         BOOKING_ID: str = Header( # noqa
-            ..., description="Mã phiên giao dịch",
-            min_length=UUID_MIN_LENGTH,
-            max_length=UUID_MAX_LENGTH
+            ..., description="Mã phiên giao dịch"
         ),
         file: UploadFile = File(..., description='File cần upload'),
         save_to_db_flag: bool = File(False, description='Có lưu vào DB không'),

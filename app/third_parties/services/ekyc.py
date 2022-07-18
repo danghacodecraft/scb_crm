@@ -21,8 +21,8 @@ class ServiceEKYC:
     url = SERVICE["ekyc"]['url']
     proxy: Optional[StrOrURL] = None
     authorization = SERVICE["ekyc"]['authorization']
-    device_info = "eyJkZXZpY2VOYW1lIjoibWluaOKAmXMgaVBob25lIiwib3MiOiJJT1MiLCJtb2RlbCI6ImlQaG9uZSBYUiIsInBob25lX" \
-                  "251bWJlciI6IjA5MDI0MDk2NjQiLCJtYW51ZmFjdHVyZXIiOiJBcHBsZSIsIm9zVmVyc2lvbiI6IjE0LjEifQ"
+    device_info = "eeyJkZXZpY2VOYW1lIjogIkNSTSIsICJvcyI6ICJSZWRoYXQiLCAibW9kZWwiOiAiIiwgInBob25lX251bWJlciI6ICIiLCJ" \
+                  "tYW51ZmFjdHVyZXIiOiAiIiwgIm9zVmVyc2lvbiI6ICI3LjkifQ=="
     otp = SERVICE["ekyc"]['otp']
 
     def start(self):
@@ -263,13 +263,14 @@ class ServiceEKYC:
                 }),
             }
 
-    async def get_statistics_profiles(self):
+    async def get_statistics_profiles(self, query_data):
         api_url = f"{self.url}/api/v1/customer-service/crm/profilestatistics"
 
         headers = self.create_header(booking_id=None)
 
         try:
-            async with self.session.get(url=api_url, headers=headers, ssl=False) as response:
+            async with self.session.get(url=api_url, headers=headers,
+                                        params=query_data, ssl=False) as response:
                 logger.log("SERVICE", f"[EKYC PROFILESTATISTICS] {response.status} : {api_url}")
                 if response.status == status.HTTP_200_OK:
                     return True, await response.json()

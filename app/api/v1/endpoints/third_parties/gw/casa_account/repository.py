@@ -15,13 +15,16 @@ from app.third_parties.oracle.models.cif.payment_account.model import (
     CasaAccount
 )
 from app.third_parties.oracle.models.master_data.others import TransactionJob
-from app.utils.constant.approval import BUSINESS_JOB_CODE_OPEN_CASA
+from app.utils.constant.approval import (
+    BUSINESS_JOB_CODE_OPEN_CASA, BUSINESS_JOB_CODE_WITHDRAW
+)
 from app.utils.constant.casa import CASA_ACCOUNT_STATUS_APPROVED
 from app.utils.constant.cif import (
-    BUSINESS_FORM_CLOSE_CASA_PD, BUSINESS_FORM_OPEN_CASA_PD
+    BUSINESS_FORM_CLOSE_CASA_PD, BUSINESS_FORM_OPEN_CASA_PD,
+    BUSINESS_FORM_WITHDRAW_PD
 )
 from app.utils.constant.gw import (
-    GW_CASA_RESPONSE_STATUS_SUCCESS, GW_TRANSACTION_NAME_COLUMN_CHART,
+    GW_RESPONSE_STATUS_SUCCESS, GW_TRANSACTION_NAME_COLUMN_CHART,
     GW_TRANSACTION_NAME_PIE_CHART, GW_TRANSACTION_NAME_STATEMENT
 )
 from app.utils.error_messages import (
@@ -195,7 +198,7 @@ async def repos_gw_get_close_casa_account(
 
         if is_success:
             close_casa = gw_close_casa_account['closeCASA_out']['transaction_info']
-            if close_casa.get('transaction_error_code') == GW_CASA_RESPONSE_STATUS_SUCCESS:
+            if close_casa.get('transaction_error_code') == GW_RESPONSE_STATUS_SUCCESS:
                 account_number.append({
                     "id": casa_account.data,
                     "casa_account_number": casa_account_number,
@@ -320,3 +323,129 @@ async def repos_gw_get_tele_transfer(current_user: UserInfoResponse, data_input)
         )
 
     return ReposReturn(data=tele_transfer)
+
+
+@auto_commit
+async def repos_gw_withdraw(
+        current_user,
+        request_data_gw,
+        booking_id,
+        session: Session
+):
+    response_data = []
+    is_success, gw_withdraw, request_data = await service_gw.gw_withdraw(
+        current_user=current_user.user_info, data_input=request_data_gw
+    )
+
+    # lưu form data request GW
+    session.add(
+        BookingBusinessForm(**dict(
+            booking_id=booking_id,
+            form_data=orjson_dumps(request_data_gw),
+            business_form_id=BUSINESS_FORM_WITHDRAW_PD,
+            save_flag=True,
+            created_at=now(),
+            log_data=orjson_dumps(gw_withdraw)
+        ))
+    )
+
+    session.add(TransactionJob(**dict(
+        transaction_id=generate_uuid(),
+        booking_id=booking_id,
+        business_job_id=BUSINESS_JOB_CODE_WITHDRAW,
+        complete_flag=is_success,
+        error_code=gw_withdraw.get('cashWithdrawals_out').get('transaction_info').get(
+            'transaction_error_code'),
+        error_desc=gw_withdraw.get('cashWithdrawals_out').get('transaction_info').get(
+            'transaction_error_msg'),
+        created_at=now()
+    )))
+
+    withdraw = gw_withdraw.get('cashWithdrawals_out').get('data_output')
+
+    if isinstance(withdraw, dict):
+        response_data.append({
+            'account_number': request_data_gw.get('account_info').get('account_num'),
+            'account_withdrawals_amount': request_data_gw.get('account_info').get('account_withdrawals_amount')
+        })
+    else:
+        response_data.append({
+            'account_number': request_data_gw.get('account_info').get('account_num'),
+            'account_withdrawals_amount': withdraw
+        })
+
+    return ReposReturn(data=response_data)
+
+
+async def repos_gw_get_retrieve_ben_name_by_account_number(current_user: UserInfoResponse, data_input):
+    is_success, ben_name = await service_gw.get_ben_name_by_account_number(
+        current_user=current_user,
+        data_input=data_input
+    )
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="repos_gw_get_retrieve_ben_name_by_account_number",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(ben_name)
+        )
+    return ReposReturn(data=ben_name)
+
+
+async def repos_gw_get_retrieve_ben_name_by_card_number(current_user: UserInfoResponse, data_input):
+    is_success, ben_name = await service_gw.get_ben_name_by_card_number(
+        current_user=current_user,
+        data_input=data_input
+    )
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="repos_gw_get_retrieve_ben_name_by_card_number",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(ben_name)
+        )
+    return ReposReturn(data=ben_name)
+
+
+async def repos_gw_change_status_account(current_user, account_number):
+    # TODO default đóng tài khoản thanh toán
+    data_input = {
+        "account_info": {
+            "account_num": account_number
+        },
+        # TODO hard core
+        "p_blk_main": {
+            "TRANSACTION_INFO": {
+                "SOURCE_CODE": "ODC1",
+                "USER_ID": "ODC1",
+                "BRANCH_CODE": ""
+            },
+            "CHANGE_DETAIL": {
+                "NEW_STATUS": "NORM",
+                "NO_DEBIT": "Y",
+                "NO_CREDIT": "Y"
+            }
+        },
+        "p_blk_charge": "",
+        "p_blk_udf": "",
+        "p_udf": "",
+        # TODO hard checker, maker
+        "staff_info_checker": {
+            "staff_name": "HOANT2"
+        },
+        "staff_info_maker": {
+            "staff_name": "KHANHLQ"
+        }
+    }
+
+    is_success, response_data, request_data = await service_gw.change_status_account(current_user, data_input)
+
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="repos_gw_change_status_account",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(response_data)
+        )
+
+    return ReposReturn(data=response_data)
