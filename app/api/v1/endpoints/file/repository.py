@@ -23,7 +23,7 @@ async def repos_upload_file(
     )
 
     if ekyc_flag:
-        is_success, uuid_ekyc = await service_ekyc.upload_file(file=file, name=name, booking_id=booking_id)
+        is_success, uuid_ekyc = await service_ekyc.upload_file(file=file, name=name)
         if not is_success:
             return ReposReturn(is_error=True, msg=f"{uuid_ekyc}")
         response.update({
