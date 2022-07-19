@@ -2,8 +2,7 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.casa.open_casa.co_owner.repository import (
     ctr_get_booking_parent, repos_acc_agree_get_file, repos_acc_agree_info,
     repos_account_co_owner, repos_check_casa_account, repos_check_file_id,
-    repos_get_booking_account, repos_get_co_owner, repos_get_uuid,
-    repos_save_co_owner
+    repos_get_co_owner, repos_get_uuid, repos_save_co_owner
 )
 from app.api.v1.endpoints.casa.open_casa.co_owner.schema import (
     AccountHolderRequest
@@ -42,14 +41,15 @@ class CtrCoOwner(BaseController):
             loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_OPEN_CASA}"
         )
 
-        # Check Booking parent
+        # Check Booking
         booking_parent = self.call_repos(
             await ctr_get_booking_parent(
                 booking_id=booking_id,
                 session=self.oracle_session
             )
         )
-        if not booking_parent:
+
+        if not booking_parent.parent_id:
             return self.response_exception(
                 msg=ERROR_BOOKING_PARENT_DOES_NOT_EXIST, loc=f"booking_id: {booking_id}"
             )
@@ -133,13 +133,9 @@ class CtrCoOwner(BaseController):
             )
         )
 
-        # Lấy Booking Code
-        booking = self.call_repos(await repos_get_booking_account(
-            account_id=account_id, session=self.oracle_session
-        ))
         co_owner_data.update(booking=dict(
-            id=booking.id,
-            code=booking.code
+            id=booking_parent.parent_id,
+            code=booking_parent.code
         ))
 
         return self.response(data=co_owner_data)

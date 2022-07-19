@@ -62,7 +62,38 @@ class CtrWithdraw(BaseController):
                 loc=f"account_number: {casa_account_number}"
             )
         receiver = request.transaction_info.receiver_info
-
+        account = request.transaction_info.source_accounts
+        fee = request.transaction_info.fee_info
+        management = request.customer_info.management_info
+        sender = request.customer_info.sender_info
+        data_input = {
+            "transaction_info": {
+                "source_accounts": {
+                    "account_num": account.account_num
+                },
+                "receiver_info": {
+                    "withdraw_account_flag": receiver.withdraw_account_flag,
+                    "amount": receiver.amount,
+                    "content": receiver.content,
+                },
+                "fee_info": {
+                    "is_transfer_payer": fee.is_transfer_payer,
+                    "payer_flag": fee.payer_flag,
+                    "amount": fee.amount,
+                }
+            },
+            "customer_info": {
+                "management_info": {
+                    "direct_staff_code": management.direct_staff_code,
+                    "indirect_staff_code": management.indirect_staff_code,
+                },
+                "sender_info": {
+                    "cif_flag": sender.cif_flag,
+                    "cif_number": sender.cif_number,
+                    "note": sender.note
+                }
+            }
+        }
         # Kiểm tra số tiền rút có đủ hay không
         casa_account_balance = await CtrGWCasaAccount(current_user=current_user).ctr_gw_get_casa_account_info(
             account_number=casa_account_number,
@@ -85,7 +116,7 @@ class CtrWithdraw(BaseController):
         transaction_data = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
             business_type_id=BUSINESS_TYPE_WITHDRAW,
             booking_id=booking_id,
-            request_json=request.json(),
+            request_json=orjson_dumps(data_input),
             history_datas=orjson_dumps(history_data)
         )
         (
