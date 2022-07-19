@@ -738,7 +738,7 @@ class CtrGWCasaAccount(BaseController):
         _, gw_payment_amount_block, _ = self.call_repos(await repos_gw_withdraw(
             current_user=current_user,
             booking_id=booking_id,
-            request_data_gw=orjson_dumps(data_input),
+            request_data_gw=data_input,
             session=self.oracle_session
         ))
         if not gw_payment_amount_block:
@@ -747,22 +747,15 @@ class CtrGWCasaAccount(BaseController):
                 loc=f'gw_payment_amount_block: {gw_payment_amount_block}'
             )
 
-        withdraw = gw_payment_amount_block['cashWithdrawals_out']['data_output']
         response_data = {
             "booking_id": booking_id,
             "account": gw_payment_amount_block
         }
 
-        if isinstance(withdraw, dict):
-            response_data.update({
-                'account_number': request_data_gw['transaction_info']['source_accounts']['account_num'],
-                'account_withdrawals_amount': request_data_gw['transaction_info']['receiver_info']['amount']
-            })
-        else:
-            response_data.update({
-                'account_number': request_data_gw['transaction_info']['source_accounts']['account_num'],
-                'account_withdrawals_amount': withdraw
-            })
+        response_data.update({
+            'account_number': request_data_gw['transaction_info']['source_accounts']['account_num'],
+            'account_withdrawals_amount': request_data_gw['transaction_info']['receiver_info']['amount']
+        })
 
         return self.response(data=response_data)
 
