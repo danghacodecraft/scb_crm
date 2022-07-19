@@ -325,23 +325,17 @@ async def repos_gw_get_tele_transfer(current_user: UserInfoResponse, data_input)
     return ReposReturn(data=tele_transfer)
 
 
-# @auto_commit
+@auto_commit
 async def repos_gw_withdraw(
         current_user,
         request_data_gw,
         booking_id,
         session: Session
 ):
-    response_data = []
-    is_success, gw_withdraw, request_data = await service_gw.gw_withdraw(
+    is_success, gw_withdraw, gw_request = await service_gw.gw_withdraw(
         current_user=current_user.user_info, data_input=request_data_gw
     )
 
-    if not is_success:
-        return ReposReturn(
-            loc="repos_gw_withdraw",
-            msg=ERROR_CALL_SERVICE_GW,
-        )
     # lưu form data request GW
     session.add(
         BookingBusinessForm(**dict(
@@ -366,19 +360,7 @@ async def repos_gw_withdraw(
         created_at=now()
     )))
 
-    withdraw = gw_withdraw.get('cashWithdrawals_out').get('data_output')
-
-    if isinstance(withdraw, dict):
-        response_data.append({
-            'account_number': request_data_gw.get('account_info').get('account_num'),
-            'account_withdrawals_amount': request_data_gw.get('account_info').get('account_withdrawals_amount')
-        })
-    else:
-        response_data.append({
-            'account_number': request_data_gw.get('account_info').get('account_num'),
-            'account_withdrawals_amount': withdraw
-        })
-    return ReposReturn(data=response_data)
+    return ReposReturn(data=(is_success, gw_withdraw, gw_request))
 
 
 async def repos_gw_get_retrieve_ben_name_by_account_number(current_user: UserInfoResponse, data_input):
