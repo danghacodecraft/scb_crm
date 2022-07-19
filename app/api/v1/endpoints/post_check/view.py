@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, Path, Query
+from fastapi import APIRouter, Depends, Header, Path, Query
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -13,6 +13,7 @@ from app.api.v1.endpoints.post_check.schema import (
     QueryParamsKSSRequest, StatisticsMonth, StatisticsProfilesResponse,
     StatisticsResponse, UpdatePostCheckRequest, ZoneRequest
 )
+from app.utils.functions import date_string_to_other_date_string_format
 
 router = APIRouter()
 
@@ -176,9 +177,10 @@ async def view_list_statistics(
         \n `search_type` = 3, hiển thị theo tháng
         \n `search_type` = 4, hiển thị theo năm
         """),
-    selected_date: str = Query(None, description='Chọn ngày `DD/MM/YYYY`'),
+    selected_date: str = Query(None, description='Chọn ngày `YYYY-MM-DD`'),
     current_user=Depends(get_current_user_from_header())
 ):
+    selected_date = date_string_to_other_date_string_format(selected_date, from_format='%Y-%m-%d', to_format='%d/%m/%Y')
     statistics = await CtrKSS(current_user).ctr_get_statistics(
         search_type=search_type,
         selected_date=selected_date
@@ -198,9 +200,11 @@ async def view_list_statistics(
 )
 async def create_post_check(
     post_check_request: CreatePostCheckRequest,
+    BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
     current_user=Depends(get_current_user_from_header())
 ):
     post_check = await CtrKSS(current_user).ctr_create_post_check(
+        booking_id=BOOKING_ID,
         post_check_request=post_check_request
     )
 

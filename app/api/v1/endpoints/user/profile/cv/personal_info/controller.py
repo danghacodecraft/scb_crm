@@ -50,7 +50,9 @@ class CtrPersonalInfo(BaseController):
 
         if personal_info:
             birth_date = personal_info['curriculum_vitae']['individual']['birth_date']
-            date_of_birth = datetime_to_date(string_to_datetime(birth_date, _format=DATE_TYPE_DMY_WITH_SLASH)) if birth_date else None
+            date_of_birth = None
+            if birth_date is not None:
+                date_of_birth = datetime_to_date(string_to_datetime(birth_date, _format=DATE_TYPE_DMY_WITH_SLASH))
 
             issued_date = personal_info['curriculum_vitae']['individual']['passport']['issue_date']
             issued_date = datetime_to_date(string_to_datetime(issued_date)) if issued_date else None

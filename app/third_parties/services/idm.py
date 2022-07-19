@@ -107,3 +107,34 @@ class ServiceIDM:
             # Thay thế link tải file từ service bằng CDN config theo dự án
             file_url = self.cdn.get(avatar_type) + file_url if file_url.startswith('/') else self.cdn.get(avatar_type) + '/' + file_url
         return file_url
+
+    async def banner_list(self):
+        """
+        Input: app_code từ login của CRM
+        Output: Thông tin banner từ IDM
+        """
+        headers = SERVICE["idm"]['headers']
+        path = "/api/v1/staff/banner_list"
+        url = f'{self.HOST}{path}'
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.request(
+                        method='get',
+                        url=url,
+                        params={'app_code': SERVICE["idm"]['my_service']},
+                        headers=headers,
+                        verify_ssl=False
+                ) as response:
+
+                    if response.status == status.HTTP_200_OK:
+                        return True, await response.json()
+                    if response.status == status.HTTP_400_BAD_REQUEST:
+                        return False, await response.json()
+                    return False, {
+                        "message": ERROR_CALL_SERVICE_IDM,
+                        "detail": "STATUS " + str(response.status)
+                    }
+        except Exception as ex:
+            logger.exception(ex)
+            return False, {"message": str(ex)}

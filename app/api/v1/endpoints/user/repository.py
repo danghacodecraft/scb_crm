@@ -115,3 +115,8 @@ async def repos_get_user_info(user_id: str) -> ReposReturn:
 
 async def repos_get_user_info_core_fcc(current_user):
     service_gw.gw_detail_user(current_user=current_user)
+
+
+async def repos_get_list_banner():
+    banner_list = await service_idm.banner_list()
+    return ReposReturn(data=banner_list)
