@@ -9,7 +9,8 @@ from app.api.v1.endpoints.third_parties.gw.statistics.controller import (
 )
 from app.api.v1.endpoints.third_parties.gw.statistics.schema import (
     SelectStatisticBankingByPeriodDataOutput,
-    SelectStatisticBankingByPeriodRequest
+    SelectStatisticBankingByPeriodRequest, SelectSummaryCardsByDateRequest,
+    SelectSummaryCardsByDateResponse
 )
 
 router = APIRouter()
@@ -32,3 +33,22 @@ async def view_gw_select_statistic_banking_by_period(
         request=request
     )
     return ResponseData[SelectStatisticBankingByPeriodDataOutput](**gw_select_statistic_banking_by_period)
+
+
+@router.post(
+    path="/select-summary-card-by-date/",
+    name="[GW] Lấy thông tin phát hành và doanh số Thẻ ghi nợ + Thẻ tín dụng quốc tế",
+    description="[GW] Lấy thông tin phát hành và doanh số Thẻ ghi nợ + Thẻ tín dụng quốc tế",
+    responses=swagger_response(
+        response_model=ResponseData[SelectSummaryCardsByDateResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_select_summary_card_by_date(
+        request: SelectSummaryCardsByDateRequest = Body(...),
+        current_user=Depends(get_current_user_from_header())
+):
+    gw_select_summary_card_by_date = await CtrGWStatistic(current_user).ctr_gw_select_summary_card_by_date(
+        request=request
+    )
+    return ResponseData(**gw_select_summary_card_by_date)

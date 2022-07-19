@@ -166,3 +166,12 @@ class SelectStatisticBankingByPeriodDataOutput(BaseGWSchema):
     total_debit_card_open_list: List[SelectStatisticBankingByPeriodTotalDebitCardOpenListResponse]
     total_ebank_open_list: List[SelectStatisticBankingByPeriodTotalEbankOpenListResponse]
     total_credit_card_open_list: List[SelectStatisticBankingByPeriodTotalCreditCardOpenListResponse]
+
+
+class SelectSummaryCardsByDateRequest(BaseSchema):
+    from_date: date = Field(..., description="Từ ngày")
+    to_date: date = Field(..., description="Đến ngày")
+
+
+class SelectSummaryCardsByDateResponse(BaseGWSchema):
+    pass

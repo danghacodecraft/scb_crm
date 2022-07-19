@@ -68,6 +68,7 @@ GW_ENDPOINT_URL_SELECT_BRANCH_BY_BRANCH_ID = "/branchlocation/v1.0/rest/selectBr
 
 # ---------------------------------------------- STATISTIC ---------------------------------------------- #
 GW_ENDPOINT_URL_SELECT_STATISTIC_BANKING_BY_PERIOD = "/statistics/v1.0/rest/selectStatisticBankingByPeriod"
+GW_ENDPOINT_URL_SELECT_SUMMARY_CARD_BY_DATE = "/statistics/v1.0/rest/selectSummaryCardsByDate"
 
 ######################################################################################################
 #                                           Constant                                                #
