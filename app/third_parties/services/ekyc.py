@@ -418,7 +418,7 @@ class ServiceEKYC:
     async def create_post_check(self, booking_id: str, payload_data: dict, ):
         api_url = f"{self.url}/api/v1/customer-service/crm/postcontrol/"
 
-        headers = self.create_header(booking_id=None)
+        headers = self.create_header(booking_id=booking_id)
 
         try:
             async with self.session.post(url=api_url, headers=headers, json=payload_data, ssl=False) as response:
