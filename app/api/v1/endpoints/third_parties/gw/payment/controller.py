@@ -552,11 +552,11 @@ class CtrGWPayment(BaseController):
                 },
                 {
                     "UDF_NAME": "CMND_PASSPORT",
-                    "UDF_VALUE": form_data['sender_identity_number']
+                    "UDF_VALUE": form_data['sender_identity_number'] if form_data['sender_identity_number'] else ''
                 },
                 {
                     "UDF_NAME": "NGAY_CAP",
-                    "UDF_VALUE": form_data['sender_issued_date']
+                    "UDF_VALUE": form_data['sender_issued_date'] if form_data['sender_issued_date'] else ''
                 },
                 {
                     "UDF_NAME": "NOI_CAP",
@@ -622,6 +622,7 @@ class CtrGWPayment(BaseController):
                 "staff_name": "KHANHLQ"
             }
         }
+        print(data_input)
         gw_pay_in_cash = self.call_repos(await repos_gw_pay_in_cash(
             data_input=data_input,
             current_user=current_user
