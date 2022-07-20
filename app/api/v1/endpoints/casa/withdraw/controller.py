@@ -80,6 +80,7 @@ class CtrWithdraw(BaseController):
                     "is_transfer_payer": fee.is_transfer_payer,
                     "payer_flag": fee.payer_flag,
                     "amount": fee.amount,
+                    "note": fee.note
                 }
             },
             "customer_info": {
@@ -256,6 +257,7 @@ class CtrWithdraw(BaseController):
             payer_flag = form_data['transaction_info']['fee_info']["payer_flag"]
             fee_info = form_data['transaction_info']['fee_info']
             fee_amount = fee_info['amount']
+            note = form_data['transaction_info']['fee_info']['note']
             if payer_flag:
                 vat_tax = fee_amount / CHECK_CONDITION_VAT
                 total = fee_amount + vat_tax
@@ -266,7 +268,8 @@ class CtrWithdraw(BaseController):
                     total=total,
                     actual_total=actual_total,
                     is_transfer_payer=is_transfer_payer,
-                    payer_flag=payer_flag
+                    payer_flag=payer_flag,
+                    note=note
                 ))
             else:
                 vat_tax = fee_amount / 10
@@ -279,7 +282,8 @@ class CtrWithdraw(BaseController):
                     total=total,
                     actual_total=actual_total,
                     is_transfer_payer=is_transfer_payer,
-                    payer_flag=payer_flag
+                    payer_flag=payer_flag,
+                    note=note
                 ))
         else:
             fee_info_response.update(dict(
