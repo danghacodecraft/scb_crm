@@ -9,7 +9,8 @@ from app.api.v1.schemas.utils import DropdownResponse
 
 class OptionalNumberInfo(BaseSchema):
     number: Optional[str] = Field(..., description="Số")
-    approval_status: int = Field(..., description="Trạng thái phê duyệt")
+    number_type: Optional[str] = Field(None, description="Loại số: Số TKTT/ SỐ GTDD")
+    approval_status: int = Field(None, description="Trạng thái phê duyệt")
 
     @validator('approval_status', pre=True)
     def check_nullable(cls, value):

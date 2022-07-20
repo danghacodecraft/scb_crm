@@ -130,7 +130,7 @@ async def repos_gw_payment_amount_block(
 ):
     response_data = []
     for item in request_data_gw:
-        is_success, gw_payment_amount_block, request_data = await service_gw.gw_payment_amount_block(
+        is_success, gw_payment_amount_block = await service_gw.gw_payment_amount_block(
             current_user=current_user.user_info, data_input=item
         )
 
