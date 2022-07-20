@@ -15,6 +15,7 @@ from app.api.v1.endpoints.third_parties.gw.deposit_account.schema import (
     GWReportStatementHistoryTDAccountInfoRequest
 )
 from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
+from app.utils.constant.gw import GW_DEFAULT_VALUE
 from app.utils.functions import string_to_date
 
 
@@ -322,8 +323,8 @@ class CtrGWDepositAccount(BaseController):
                             {
                                 "PAYIN_TYPE": "S",
                                 "PAYIN_PERCENTAGE": "100",
-                                "PAYIN_TDAMOUNT": int(item.TdAccount.pay_in_amount),
-                                "PAYIN_ACC": item.TdAccount.pay_in_casa_account
+                                "PAYIN_TDAMOUNT": int(item.TdAccount.pay_in_amount) if item.TdAccount.pay_in_amount else GW_DEFAULT_VALUE,
+                                "PAYIN_ACC": item.TdAccount.pay_in_casa_account if item.TdAccount.pay_in_casa_account else GW_DEFAULT_VALUE
                             }
                         ],
                         "p_blk_tdpayoutdetails": "",
