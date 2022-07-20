@@ -33,14 +33,6 @@ from app.utils.functions import dropdown, generate_uuid
 class CtrCoOwner(BaseController):
     async def ctr_save_co_owner(self, account_id: str, co_owner: AccountHolderRequest, booking_id: str):
 
-        # Check exist Booking
-        await CtrBooking().ctr_get_booking_and_validate(
-            business_type_code=BUSINESS_TYPE_OPEN_CASA,
-            booking_id=booking_id,
-            check_correct_booking_flag=False,
-            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_OPEN_CASA}"
-        )
-
         # Check Booking
         booking_parent = self.call_repos(
             await ctr_get_booking_parent(
@@ -48,8 +40,7 @@ class CtrCoOwner(BaseController):
                 session=self.oracle_session
             )
         )
-
-        if not booking_parent.parent_id:
+        if not booking_parent:
             return self.response_exception(
                 msg=ERROR_BOOKING_PARENT_DOES_NOT_EXIST, loc=f"booking_id: {booking_id}"
             )
@@ -134,7 +125,7 @@ class CtrCoOwner(BaseController):
         )
 
         co_owner_data.update(booking=dict(
-            id=booking_parent.parent_id,
+            id=booking_parent.id,
             code=booking_parent.code
         ))
 
