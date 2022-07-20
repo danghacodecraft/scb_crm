@@ -15,8 +15,12 @@ from app.api.v1.endpoints.third_parties.gw.category.controller import (
 )
 from app.utils.constant.business_type import (
     BUSINESS_TYPE_AMOUNT_BLOCK, BUSINESS_TYPE_AMOUNT_UNBLOCK,
-    BUSINESS_TYPE_CLOSE_CASA, BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA,
-    BUSINESS_TYPE_WITHDRAW
+    BUSINESS_TYPE_CASA_TOP_UP, BUSINESS_TYPE_CLOSE_CASA,
+    BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA, BUSINESS_TYPE_WITHDRAW
+)
+from app.utils.constant.casa import (
+    CASA_TOP_UP_NUMBER_TYPE_CASA_ACCOUNT_NUMBER,
+    CASA_TOP_UP_NUMBER_TYPE_IDENTITY_NUMBER
 )
 from app.utils.constant.cif import (
     CIF_STAGE_ROLE_CODE_AUDIT, CIF_STAGE_ROLE_CODE_SUPERVISOR,
@@ -135,7 +139,8 @@ class CtrDashboard(BaseController):
         for booking, _, casa_account, customer in open_casa_infos:
             account_info = dict(
                 number=casa_account.casa_account_number,
-                approval_status=casa_account.approve_status
+                approval_status=casa_account.approve_status,
+                number_type=CASA_TOP_UP_NUMBER_TYPE_CASA_ACCOUNT_NUMBER
             )
             if booking.parent_id not in exist_booking:
                 account_numbers = [account_info]
@@ -236,7 +241,7 @@ class CtrDashboard(BaseController):
 
         for (
                 booking, sla_transaction, sender_sla_transaction, sla_transaction_parent, sender_sla_trans_parent,
-                sla_transaction_grandparent, sender_sla_trans_grandparent
+                sla_transaction_grandparent, sender_sla_trans_grandparent, booking_business_form
         ) in sla_transaction_infos:
             for booking_id, data in mapping_datas.items():
                 stage_role_code = data['stage_role']
@@ -288,6 +293,32 @@ class CtrDashboard(BaseController):
                         mapping_datas[booking_id]['teller'].update(sla_transaction_grandparent_info)
                         mapping_datas[booking_id]['supervisor'].update(sla_transaction_parent_info)
                         mapping_datas[booking_id]['audit'].update(sla_transaction_info)
+
+                    if booking_business_form and booking.business_type_id == BUSINESS_TYPE_CASA_TOP_UP and booking_business_form.form_data:
+                        form_data = orjson_loads(booking_business_form.form_data)
+                        mapping_datas[booking_id].update(
+                            cif_number=form_data['sender_cif_number'] if 'sender_cif_number' in form_data else None,
+                            full_name_vn=form_data['sender_full_name_vn'] if 'sender_full_name_vn' in form_data else None
+                        )
+
+                        numbers = []
+                        number_key_account_number = 'receiver_account_number'
+
+                        if number_key_account_number in form_data:
+                            numbers.append(dict(
+                                number=form_data[number_key_account_number],
+                                number_type=CASA_TOP_UP_NUMBER_TYPE_CASA_ACCOUNT_NUMBER,
+                                approval_status=1  # TODO: trạng thái phê duyệt cho từng number
+                            ))
+
+                        number_key_identity_number = 'receiver_identity_number'
+                        if number_key_identity_number in form_data:
+                            numbers.append(dict(
+                                number=form_data[number_key_identity_number],
+                                number_type=CASA_TOP_UP_NUMBER_TYPE_IDENTITY_NUMBER,
+                                approval_status=1  # TODO: trạng thái phê duyệt cho từng number
+                            ))
+                        mapping_datas[booking_id]['business_type']['numbers'] = numbers
 
         return self.response_paging(
             data=[mapping_data for _, mapping_data in mapping_datas.items()],

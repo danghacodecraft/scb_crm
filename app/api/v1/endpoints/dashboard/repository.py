@@ -312,7 +312,8 @@ async def repos_get_sla_transaction_infos(booking_ids: tuple, session: Session):
             sla_transaction_parent,
             sender_sla_trans_parent,
             sla_transaction_grandparent,
-            sender_sla_trans_grandparent
+            sender_sla_trans_grandparent,
+            BookingBusinessForm
         )
         .join(TransactionDaily, Booking.transaction_id == TransactionDaily.transaction_id)
         .join(TransactionSender, TransactionDaily.transaction_id == TransactionSender.transaction_id)
@@ -332,6 +333,7 @@ async def repos_get_sla_transaction_infos(booking_ids: tuple, session: Session):
                    sla_trans_stage_grandparent.id == sla_trans_daily_grandparent.transaction_stage_id)
         .outerjoin(sender_sla_trans_grandparent,
                    sla_trans_daily_grandparent.transaction_id == sender_sla_trans_grandparent.transaction_id)
+        .outerjoin(BookingBusinessForm, Booking.id == BookingBusinessForm.booking_id)
         .filter(Booking.id.in_(booking_ids))
     ).all()
 
