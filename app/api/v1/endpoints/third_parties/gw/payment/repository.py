@@ -15,9 +15,7 @@ from app.third_parties.oracle.models.master_data.others import (
     SlaTransaction, TransactionJob, TransactionStage, TransactionStageLane,
     TransactionStagePhase, TransactionStageRole, TransactionStageStatus
 )
-from app.utils.constant.approval import (
-    BUSINESS_JOB_CODE_AMOUNT_BLOCK, BUSINESS_JOB_CODE_CASA_TRANSFER
-)
+from app.utils.constant.approval import BUSINESS_JOB_CODE_AMOUNT_BLOCK
 from app.utils.constant.casa import (
     RECEIVING_METHOD_SCB_BY_IDENTITY, RECEIVING_METHOD_SCB_TO_ACCOUNT,
     RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT,
@@ -26,11 +24,12 @@ from app.utils.constant.casa import (
     RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT
 )
 from app.utils.constant.cif import (
-    BUSINESS_FORM_AMOUNT_BLOCK_PD, BUSINESS_FORM_AMOUNT_UNBLOCK_PD,
-    BUSINESS_FORM_CASA_TRANSFER_PD
+    BUSINESS_FORM_AMOUNT_BLOCK_PD, BUSINESS_FORM_AMOUNT_UNBLOCK_PD
 )
 from app.utils.constant.gw import GW_RESPONSE_STATUS_SUCCESS
-from app.utils.error_messages import ERROR_BOOKING_CODE_EXISTED, MESSAGE_STATUS
+from app.utils.error_messages import (
+    ERROR_BOOKING_CODE_EXISTED, ERROR_CALL_SERVICE_GW, MESSAGE_STATUS
+)
 from app.utils.functions import generate_uuid, now, orjson_dumps
 
 
@@ -335,7 +334,7 @@ async def repos_gw_save_casa_transfer_info(
         receiving_method: str,
         request_data,
         booking_id,
-        session
+        session: Session
 ):
     gw_casa_transfer, function_out, is_success = None, None, False
     if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
@@ -348,24 +347,31 @@ async def repos_gw_save_casa_transfer_info(
         is_success, gw_casa_transfer = await service_gw.gw_payment_tt_liquidation(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )
-        function_out = 'tt_liquidation_out'
+        function_out = 'ttLiquidation_out'
 
     if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
         is_success, gw_casa_transfer = await service_gw.gw_payment_interbank_transfer(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )
         function_out = 'interbankTransfer_out'
-    if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY and \
-            receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
-        is_success, gw_casa_transfer = await service_gw.gw_payment_tt_liquidation(
+
+    if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
+        is_success, tele_transfer_response_data = await service_gw.gw_interbank_transfer(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )
-        function_out = 'tt_liquidation_out'
+
+    if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
+        is_success, gw_casa_transfer = await service_gw.gw_interbank_transfer(
+            current_user=current_user.user_info, data_input=request_data["data_input"]
+        )
+        function_out = 'interbankTransfer_out'
+
     if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
         is_success, gw_casa_transfer = await service_gw.gw_payment_interbank_transfer_247_by_account_number(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )
         function_out = 'interbankTransfer247ByAccNum_out'
+
     if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
         is_success, gw_casa_transfer = await service_gw.gw_payment_interbank_transfer_247_by_card_number(
             current_user=current_user.user_info, data_input=request_data["data_input"]
@@ -377,32 +383,17 @@ async def repos_gw_save_casa_transfer_info(
 
     casa_transfer = gw_casa_transfer.get(function_out, {})
 
+    if not is_success or casa_transfer == {}:
+        return ReposReturn(is_error=True, loc='repos_gw_save_casa_transfer_info', msg=ERROR_CALL_SERVICE_GW)
+
     # check trường hợp lỗi
     if casa_transfer.get('transaction_info').get('transaction_error_code') != GW_RESPONSE_STATUS_SUCCESS:
         return ReposReturn(is_error=True, msg=casa_transfer.get('transaction_info').get('transaction_error_msg'))
 
-    # lưu form data request GW
-    session.add(
-        BookingBusinessForm(**dict(
-            booking_id=booking_id,
-            form_data=orjson_dumps(request_data),
-            business_form_id=BUSINESS_FORM_CASA_TRANSFER_PD,
-            save_flag=True,
-            created_at=now(),
-            log_data=orjson_dumps(gw_casa_transfer)
-        ))
-    )
+    response_data = {
+        "booking_id": booking_id,
+        "p_contract_ref": casa_transfer['data_output']['p_contract_ref']
+        if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY else None
+    }
 
-    session.add(TransactionJob(**dict(
-        transaction_id=generate_uuid(),
-        booking_id=booking_id,
-        business_job_id=BUSINESS_JOB_CODE_CASA_TRANSFER,
-        complete_flag=is_success,
-        error_code=gw_casa_transfer.get(function_out).get('transaction_info').get(
-            'transaction_error_code'),
-        error_desc=gw_casa_transfer.get(function_out).get('transaction_info').get(
-            'transaction_error_msg'),
-        created_at=now()
-    )))
-
-    return ReposReturn(data=casa_transfer)
+    return ReposReturn(data=(response_data, gw_casa_transfer))

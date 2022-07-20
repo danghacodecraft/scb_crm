@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from fastapi import APIRouter, Body, Depends, Query
+from fastapi import APIRouter, Body, Depends
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from starlette import status
 
@@ -46,10 +46,8 @@ security = HTTPBasic()
         success_status_code=status.HTTP_200_OK,
     )
 )
-async def view_retrieve_banner(
-        app_code: str = Query(None, description="Code của chương trình")
-):
-    list_banner_info = await CtrUser(is_init_oracle_session=False).ctr_get_banner_info(app_code=app_code)
+async def view_retrieve_banner():
+    list_banner_info = await CtrUser(is_init_oracle_session=False).ctr_get_banner_info()
     return ResponseData[Optional[List[UserBannerResponse]]](**list_banner_info)
 
 

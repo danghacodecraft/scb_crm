@@ -12,7 +12,7 @@ from app.settings.service import SERVICE
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_EKYC, ERROR_CALL_SERVICE_FILE, ERROR_INVALID_URL
 )
-from app.utils.functions import convert_string_to_uuidv4, replace_with_cdn
+from app.utils.functions import replace_with_cdn
 
 
 class ServiceEKYC:
@@ -37,11 +37,10 @@ class ServiceEKYC:
             file: bytes,
             filename: str,
             identity_type: int,
-            booking_id: Optional[str],
     ) -> Tuple[bool, dict]:
         api_url = f"{self.url}/api/v1/card-service/ocr/"
 
-        headers = self.create_header(booking_id=booking_id)
+        headers = self.create_header()
 
         form_data = aiohttp.FormData()
         form_data.add_field("file", value=file, filename=filename)
@@ -65,7 +64,7 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def add_face(self, file: bytes, booking_id: str = None):
+    async def add_face(self, file: bytes):
         """
         Thêm 1 ảnh người vào trong eKYC
         """
@@ -73,7 +72,7 @@ class ServiceEKYC:
         form_data = aiohttp.FormData()
         form_data.add_field("file", value=file, filename='abc.jpg')
 
-        headers = self.create_header(booking_id=booking_id)
+        headers = self.create_header()
 
         try:
             async with self.session.post(url=api_url, data=form_data, headers=headers,
@@ -103,15 +102,14 @@ class ServiceEKYC:
     async def compare_face(
             self,
             face_uuid: str,
-            avatar_image_uuid: str,
-            booking_id: Optional[str]
+            avatar_image_uuid: str
     ):
         """
         So sánh khuôn mặt trong 2 ảnh
         """
         api_url = f"{self.url}/api/v1/face-service/compare/"
 
-        headers = self.create_header(booking_id=booking_id)
+        headers = self.create_header()
 
         data = {
             "image_face_1_uuid": face_uuid,
@@ -142,10 +140,10 @@ class ServiceEKYC:
                 }),
             }
 
-    async def validate(self, data, document_type, booking_id: Optional[str]):
+    async def validate(self, data, document_type):
         api_url = f"{self.url}/api/v1/card-service/validate/"
 
-        headers = self.create_header(booking_id=booking_id)
+        headers = self.create_header()
 
         is_success = True
         request_body = {
@@ -173,10 +171,10 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"errors": {"message": "eKYC error please try again later"}}
 
-    async def validate_ekyc(self, request_body: dict, booking_id: Optional[str]):
+    async def validate_ekyc(self, request_body: dict):
         api_url = f"{self.url}/api/v1/card-service/validate/"
 
-        headers = self.create_header(booking_id=booking_id)
+        headers = self.create_header()
 
         try:
             async with self.session.post(url=api_url, json=request_body, headers=headers, ssl=False) as response:
@@ -192,7 +190,7 @@ class ServiceEKYC:
     async def get_list_kss(self, query_data):
         api_url = f"{self.url}/api/v1/customer-service/crm/"
 
-        headers = self.create_header(booking_id=None)
+        headers = self.create_header()
 
         try:
             async with self.session.get(url=api_url, headers=headers, params=query_data,
@@ -215,7 +213,7 @@ class ServiceEKYC:
     async def get_list_branch(self, query_param: dict):
         api_url = f"{self.url}/api/v1/customer-service/crm/branch"
 
-        headers = self.create_header(booking_id=None)
+        headers = self.create_header()
 
         try:
             async with self.session.get(url=api_url, headers=headers, params=query_param,
@@ -237,7 +235,7 @@ class ServiceEKYC:
     async def get_list_zone(self):
         api_url = f"{self.url}/api/v1/customer-service/crm/zone/"
 
-        headers = self.create_header(booking_id=None)
+        headers = self.create_header()
 
         try:
             async with self.session.get(url=api_url, headers=headers, ssl=False) as response:
@@ -266,7 +264,7 @@ class ServiceEKYC:
     async def get_statistics_profiles(self, query_data):
         api_url = f"{self.url}/api/v1/customer-service/crm/profilestatistics"
 
-        headers = self.create_header(booking_id=None)
+        headers = self.create_header()
 
         try:
             async with self.session.get(url=api_url, headers=headers,
@@ -289,7 +287,7 @@ class ServiceEKYC:
     async def get_statistics_months(self, months: int):
         api_url = f"{self.url}/api/v1/customer-service/crm/statisticsbymonth/"
 
-        headers = self.create_header(booking_id=None)
+        headers = self.create_header()
 
         query = {
             'month': months
@@ -314,7 +312,7 @@ class ServiceEKYC:
     async def get_history_post_check(self, postcheck_uuid: str):
         api_url = f"{self.url}/api/v1/customer-service/crm/postcontrolhistory/"
 
-        headers = self.create_header(booking_id=None)
+        headers = self.create_header()
 
         query = {
             'customer_id': postcheck_uuid
@@ -339,7 +337,7 @@ class ServiceEKYC:
     async def update_post_check(self, request_data):
         api_url = f"{self.url}/api/v1/customer-service/crm/postcontrol/"
 
-        headers = self.create_header(booking_id=None)
+        headers = self.create_header()
 
         try:
             async with self.session.put(url=api_url, json=request_data, headers=headers, ssl=False) as response:
@@ -363,7 +361,7 @@ class ServiceEKYC:
     async def get_statistics(self, query_param: dict):
         api_url = f"{self.url}/api/v1/customer-service/crm/statistics/"
 
-        headers = self.create_header(booking_id=None)
+        headers = self.create_header()
 
         try:
             async with self.session.get(url=api_url, headers=headers, params=query_param, ssl=False) as response:
@@ -385,7 +383,7 @@ class ServiceEKYC:
     async def get_customer_detail(self, postcheck_uuid: str):
         api_url = f"{self.url}/api/v1/customer-service/crm/{postcheck_uuid}/"
 
-        headers = self.create_header(booking_id=None)
+        headers = self.create_header()
 
         try:
             async with self.session.get(url=api_url, headers=headers, ssl=False) as response:
@@ -408,7 +406,6 @@ class ServiceEKYC:
         )
 
         for item in response_data['attachment_info']:
-
             item['url'] = replace_with_cdn(
                 cdn=item['uri'] if item['uri'].startswith('/') else '/cdn-ekyc/' + item['uri'],
                 file_url=self.url
@@ -416,10 +413,10 @@ class ServiceEKYC:
 
         return True, response_data
 
-    async def create_post_check(self, payload_data: dict, booking_id):
+    async def create_post_check(self, payload_data: dict):
         api_url = f"{self.url}/api/v1/customer-service/crm/postcontrol/"
 
-        headers = self.create_header(booking_id=None)
+        headers = self.create_header()
 
         try:
             async with self.session.post(url=api_url, headers=headers, json=payload_data, ssl=False) as response:
@@ -443,7 +440,7 @@ class ServiceEKYC:
     async def get_post_control(self, query_params):
         api_url = f"{self.url}/api/v1/customer-service/crm/postcontrol/"
 
-        headers = self.create_header(booking_id=None)
+        headers = self.create_header()
 
         try:
             async with self.session.get(url=api_url, params=query_params, headers=headers, ssl=False) as response:
@@ -465,10 +462,10 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def upload_file(self, file: bytes, name, booking_id: Optional[str] = None):
+    async def upload_file(self, file: bytes, name):
         api_url = f"{self.url}/api/v1/file-service/"
 
-        headers = self.create_header(booking_id=booking_id)
+        headers = self.create_header()
 
         form_data = aiohttp.FormData()
         form_data.add_field('file', value=file, filename=name)
@@ -496,10 +493,10 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def compare_signature(self, uuid_ekyc: str, sign_uuid: str, booking_id: Optional[str]):
+    async def compare_signature(self, uuid_ekyc: str, sign_uuid: str):
         api_url = f"{self.url}/api/v1/face-service/compare_signature/"
 
-        headers = self.create_header(booking_id=booking_id)
+        headers = self.create_header()
 
         json_body = {
             "image_sign_1_uuid": uuid_ekyc,
@@ -523,10 +520,10 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def add_finger_ekyc(self, json_body: dict, booking_id: Optional[str]):
+    async def add_finger_ekyc(self, json_body: dict):
         api_url = f"{self.url}/api/v1/finger-service/add/"
 
-        headers = self.create_header(booking_id=booking_id)
+        headers = self.create_header()
 
         try:
             async with self.session.post(url=api_url, json=json_body, headers=headers, ssl=False) as response:
@@ -545,10 +542,10 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def compare_finger_ekyc(self, json_body: dict, booking_id: Optional[str]):
+    async def compare_finger_ekyc(self, json_body: dict):
         api_url = f"{self.url}/api/v1/finger-service/verify/"
 
-        headers = self.create_header(booking_id=booking_id)
+        headers = self.create_header()
 
         try:
             async with self.session.post(url=api_url, json=json_body, headers=headers, ssl=False) as response:
@@ -568,9 +565,9 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def download_file(self, uuid: str, booking_id: Optional[str]):
+    async def download_file(self, uuid: str):
         api_url = f"{self.url}/api/v1/file-service/{uuid}/"
-        headers = self.create_header(booking_id=booking_id)
+        headers = self.create_header()
 
         try:
             async with self.session.get(url=api_url, headers=headers, ssl=False) as response:
@@ -590,7 +587,7 @@ class ServiceEKYC:
             logger.error(str(ex))
             return False, {"message": str(ex)}
 
-    async def upload_file_ekyc(self, info: dict, booking_id: Optional[str]):
+    async def upload_file_ekyc(self, info: dict):
         async with aiohttp.ClientSession() as session:
             uri = info["uri"]
             url = replace_with_cdn(
@@ -615,10 +612,10 @@ class ServiceEKYC:
                         "detail": f"Invalid: {url}"
                     }
 
-    async def save_customer_ekyc(self, body_data: dict, booking_id: Optional[str]):
+    async def save_customer_ekyc(self, body_data: dict):
         api_url = f"{self.url}/api/v1/customer-service/customers/"
 
-        headers = self.create_header(booking_id=booking_id)
+        headers = self.create_header()
 
         try:
             async with self.session.post(url=api_url, json=body_data, headers=headers, ssl=False) as response:
@@ -639,7 +636,6 @@ class ServiceEKYC:
             self,
             file: bytes,
             filename: str,
-            booking_id: Optional[str]
     ):
 
         api_url = f"{self.url}/api/v1/face-service/add/"
@@ -647,7 +643,7 @@ class ServiceEKYC:
         form_data = aiohttp.FormData()
         form_data.add_field("file", value=file, filename=filename)
 
-        headers = self.create_header(booking_id=booking_id)
+        headers = self.create_header()
 
         try:
             async with self.session.post(url=api_url, data=form_data, headers=headers,
@@ -672,12 +668,9 @@ class ServiceEKYC:
                 }),
             }
 
-    def create_header(self, booking_id: Optional[str]):
+    def create_header(self):
         # thay đổi giá trị x-transaction-id
         transaction_id = "CRM_"
-        if booking_id:
-            booking_id = convert_string_to_uuidv4(booking_id)
-            transaction_id = f"CRM_{booking_id}"
 
         headers = {
             "AUTHORIZATION": self.authorization,

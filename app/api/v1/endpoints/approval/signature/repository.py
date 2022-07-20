@@ -73,6 +73,7 @@ async def repos_get_signature_data(cif_id: str, session: Session) -> ReposReturn
     return ReposReturn(data=query_data)
 
 
+@auto_commit
 async def repos_compare_signature(
         cif_id: str,
         uuid_ekyc: str,
@@ -103,8 +104,7 @@ async def repos_compare_signature(
     for signature in signature_query:
         is_success, response = await service_ekyc.compare_signature(
             uuid_ekyc=uuid_ekyc,
-            sign_uuid=signature.ekyc_uuid,
-            booking_id=booking_id
+            sign_uuid=signature.ekyc_uuid
         )
 
         if not is_success:

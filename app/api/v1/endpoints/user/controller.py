@@ -36,7 +36,7 @@ class CtrUser(BaseController):
             'updated_by': 'system'
         })
 
-    async def ctr_get_banner_info(self, app_code: str):
-        _, info_banner_list = self.call_repos(await repos_get_list_banner(app_code=app_code))
+    async def ctr_get_banner_info(self):
+        _, info_banner_list = self.call_repos(await repos_get_list_banner())
 
         return self.response(info_banner_list)

@@ -13,6 +13,7 @@ from app.api.v1.endpoints.post_check.schema import (
     QueryParamsKSSRequest, StatisticsMonth, StatisticsProfilesResponse,
     StatisticsResponse, UpdatePostCheckRequest, ZoneRequest
 )
+from app.utils.functions import date_string_to_other_date_string_format
 
 router = APIRouter()
 
@@ -176,9 +177,10 @@ async def view_list_statistics(
         \n `search_type` = 3, hiển thị theo tháng
         \n `search_type` = 4, hiển thị theo năm
         """),
-    selected_date: str = Query(None, description='Chọn ngày `DD/MM/YYYY`'),
+    selected_date: str = Query(None, description='Chọn ngày `YYYY-MM-DD`'),
     current_user=Depends(get_current_user_from_header())
 ):
+    selected_date = date_string_to_other_date_string_format(selected_date, from_format='%Y-%m-%d', to_format='%d/%m/%Y')
     statistics = await CtrKSS(current_user).ctr_get_statistics(
         search_type=search_type,
         selected_date=selected_date
