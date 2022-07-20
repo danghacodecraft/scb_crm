@@ -171,7 +171,42 @@ class SelectStatisticBankingByPeriodDataOutput(BaseGWSchema):
 class SelectSummaryCardsByDateRequest(BaseSchema):
     from_date: date = Field(..., description="Từ ngày")
     to_date: date = Field(..., description="Đến ngày")
+    region_id: str = Field('ALL', description="Mã vùng")
+    branch_code: str = Field('ALL', description="Mã chi nhánh")
 
 
 class SelectSummaryCardsByDateResponse(BaseGWSchema):
     pass
+
+
+class SelectDataForChardDashBoardRequest(BaseSchema):
+    from_date: date = Field(..., description="Từ ngày")
+    to_date: date = Field(..., description="Đến ngày")
+    region_id: str = Field('ALL', description="Mã vùng")
+    branch_code: str = Field('ALL', description="Mã chi nhánh")
+
+
+class TotalSelectDataForChardDashBoardResponse(BaseGWSchema):
+    company_customer_open_count: int = Field(..., description="Khách hàng mới - Khối DN")
+    individual_customer_open_count: int = Field(..., description="Khách hàng mới - Khối PFS")
+    cif_open_count: int = Field(..., description="Mở CIF")
+    tktt_open_count: int = Field(..., description="Mở Tiết Kiệm")
+    tktt_count_close_count: int = Field(..., description="Tất toán")
+    tktt_td_count: int = Field(..., description="Thẻ")
+    count_mortgage_loan_count: int = Field(..., description="Vay Cầm Cố")
+    total_trn_ref_no_count: int = Field(..., description="Tổng số bút toán")
+    other: int = Field(..., description="Khác")
+
+
+class PercentSelectDataForChardDashBoardResponse(BaseGWSchema):
+    cif_open_count: float = Field(..., description="Mở CIF")
+    tktt_open_count: float = Field(..., description="Mở Tiết Kiệm")
+    tktt_count_close_count: float = Field(..., description="Tất toán")
+    tktt_td_count: float = Field(..., description="Thẻ")
+    count_mortgage_loan_count: float = Field(..., description="Vay Cầm Cố")
+    other: float = Field(..., description="Khác")
+
+
+class SelectDataForChardDashBoardResponse(BaseGWSchema):
+    total: TotalSelectDataForChardDashBoardResponse = Field(..., description="")
+    percent: PercentSelectDataForChardDashBoardResponse = Field(..., description="")

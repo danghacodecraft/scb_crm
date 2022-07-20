@@ -55,6 +55,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_SELECT_BRANCH_BY_BRANCH_ID,
     GW_ENDPOINT_URL_SELECT_BRANCH_BY_REGION_ID,
     GW_ENDPOINT_URL_SELECT_CATEGORY,
+    GW_ENDPOINT_URL_SELECT_DATA_FOR_CHART_DASHBOARD,
     GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE,
     GW_ENDPOINT_URL_SELECT_SERIAL_NUMBER,
     GW_ENDPOINT_URL_SELECT_STATISTIC_BANKING_BY_PERIOD,
@@ -2474,6 +2475,19 @@ class ServiceGW:
             api_url=api_url,
             output_key='selectSummaryCardsByDate_out',
             service_name='selectSummaryCardsByDate'
+        )
+        return response_data
+
+    async def select_data_for_chard_dashboard(self, current_user: UserInfoResponse, data_input):
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="selectDataForChartDashBoard_in", data_input=data_input
+        )
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_DATA_FOR_CHART_DASHBOARD}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='selectDataForChartDashBoard_out',
+            service_name='selectDataForChartDashBoard'
         )
         return response_data
     ####################################################################################################################

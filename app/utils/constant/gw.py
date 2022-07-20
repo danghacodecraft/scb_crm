@@ -69,6 +69,7 @@ GW_ENDPOINT_URL_SELECT_BRANCH_BY_BRANCH_ID = "/branchlocation/v1.0/rest/selectBr
 # ---------------------------------------------- STATISTIC ---------------------------------------------- #
 GW_ENDPOINT_URL_SELECT_STATISTIC_BANKING_BY_PERIOD = "/statistics/v1.0/rest/selectStatisticBankingByPeriod"
 GW_ENDPOINT_URL_SELECT_SUMMARY_CARD_BY_DATE = "/statistics/v1.0/rest/selectSummaryCardsByDate"
+GW_ENDPOINT_URL_SELECT_DATA_FOR_CHART_DASHBOARD = "/statistics/v1.0/rest/selectDataForChartDashBoard"
 
 ######################################################################################################
 #                                           Constant                                                #
@@ -195,3 +196,23 @@ GW_LONGITUDE_MAX = 120
 GW_LATITUDE_DEFAULT = 10.771912559303502
 GW_LATITUDE_MIN = 10
 GW_LATITUDE_MAX = 30
+
+GW_DASHBOARD_COMPANY_CUSTOMER_OPEN_COUNT = 'COMPANY_CUSTOMER_OPEN_COUNT'
+GW_DASHBOARD_INDIVIDUAL_CUSTOMER_OPEN_COUNT = 'INDIVIDUAL_CUSTOMER_OPEN_COUNT'
+GW_DASHBOARD_CIF_OPEN_COUNT = 'CIF_OPEN_COUNT'
+GW_DASHBOARD_TKTT_COUNT_OPEN = 'TKTT_COUNT_OPEN'
+GW_DASHBOARD_TKTT_COUNT_CLOSE = 'TKTT_COUNT_CLOSE'
+GW_DASHBOARD_TD_COUNT = 'TD_COUNT'
+GW_DASHBOARD_COUNT_MORTGAGE_LOAN = 'COUNT_MORTGAGE_LOAN'
+GW_DASHBOARD_TOTAL_TRN_REF_NO = 'TOTAL_TRN_REF_NO'
+
+GW_DASHBOARD_INPUT_PARAMS = {
+    GW_DASHBOARD_COMPANY_CUSTOMER_OPEN_COUNT: 'Khách hàng Doanh Nghiệp',
+    GW_DASHBOARD_INDIVIDUAL_CUSTOMER_OPEN_COUNT: 'Khách hàng cá nhân',
+    GW_DASHBOARD_CIF_OPEN_COUNT: 'Tổng số CIF mở mới',
+    GW_DASHBOARD_TKTT_COUNT_OPEN: 'Số lượng TKTK mở mới',
+    GW_DASHBOARD_TKTT_COUNT_CLOSE: 'Số lượng TKTK tất toán',
+    GW_DASHBOARD_TD_COUNT: 'Số lượng mở Thẻ (ghi nợ + tín dụng)',
+    GW_DASHBOARD_COUNT_MORTGAGE_LOAN: 'Số lượng vay cầm cố',
+    GW_DASHBOARD_TOTAL_TRN_REF_NO: 'Tổng số bút toán'
+}
