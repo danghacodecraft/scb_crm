@@ -296,9 +296,11 @@ class CtrDashboard(BaseController):
 
                     if booking_business_form and booking.business_type_id == BUSINESS_TYPE_CASA_TOP_UP and booking_business_form.form_data:
                         form_data = orjson_loads(booking_business_form.form_data)
+                        sender_cif_number_key = 'sender_cif_number'
+                        sender_full_name_key = 'sender_full_name_vn'
                         mapping_datas[booking_id].update(
-                            cif_number=form_data['sender_cif_number'] if 'sender_cif_number' in form_data else None,
-                            full_name_vn=form_data['sender_full_name_vn'] if 'sender_full_name_vn' in form_data else None
+                            cif_number=form_data[sender_cif_number_key] if sender_cif_number_key in form_data else None,
+                            full_name_vn=form_data[sender_full_name_key] if sender_full_name_key in form_data else None
                         )
 
                         numbers = []
