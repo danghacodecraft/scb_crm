@@ -16,11 +16,13 @@ from app.third_parties.oracle.models.cif.form.model import (
     TransactionSender
 )
 from app.third_parties.oracle.models.master_data.others import (
-    BusinessJob, BusinessType, TransactionJob,
+    BusinessJob, BusinessType, SlaTransaction, TransactionJob,
     TransactionStage, TransactionStageAction, TransactionStageLane,
-    TransactionStagePhase, TransactionStageRole, TransactionStageStatus, SlaTransaction
+    TransactionStagePhase, TransactionStageRole, TransactionStageStatus
 )
-from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPES
+from app.utils.constant.business_type import (
+    BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPES
+)
 from app.utils.constant.cif import IMAGE_TYPE_FACE
 from app.utils.error_messages import (
     ERROR_BOOKING_ID_NOT_EXIST, ERROR_BOOKING_TRANSACTION_NOT_EXIST
@@ -442,5 +444,8 @@ async def repos_get_booking_business_form_by_booking_id(
             BookingBusinessForm.business_form_id == business_form_id
         ))
     ).scalar()
+
+    if not business_form:
+        return ReposReturn(is_error=True, msg=f"BOOKING-ID NOT EXITS {booking_id}")
 
     return ReposReturn(data=business_form)
