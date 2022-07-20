@@ -1,8 +1,8 @@
-from sqlalchemy import select, and_
+from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn
-from app.third_parties.oracle.models.master_data.others import StageAction, StageRole
+from app.third_parties.oracle.models.master_data.others import StageAction
 from app.utils.functions import dropdown
 
 
