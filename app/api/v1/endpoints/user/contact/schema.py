@@ -1,11 +1,11 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import Field
 
-from app.api.base.schema import BaseSchema
+from app.api.base.schema import BaseGWSchema
 
 
-class ContactResponse(BaseSchema):
+class ContactResponse(BaseGWSchema):
     emp_name: str = Field(None, description="Dương Đỗ Nguyên")
     emp_code: str = Field(None, description="17487")
     username: str = Field(None, description="NGUYENDD1")
@@ -15,5 +15,5 @@ class ContactResponse(BaseSchema):
     internal_mobile: str = Field(None, description="imb_00965")
     emp_id: str = Field(None, description="6036")
     title_name: str = Field(None, description="Nhân Viên PTUDNB")
-    unit: List = Field(None, description="Ngân hàng TMCP Sài Gòn;Ban Điều hành;Khối Vận hành và Công nghệ;Trung tâm Vận hành và Phát triển Giải pháp;Phòng Phát triển Giải pháp;Mảng Phát triển Hệ thống [Back-end]")
+    unit: Optional[List] = Field(None, description="Ngân hàng TMCP Sài Gòn;Ban Điều hành;Khối Vận hành và Công nghệ;Trung tâm Vận hành và Phát triển Giải pháp;Phòng Phát triển Giải pháp;Mảng Phát triển Hệ thống [Back-end]")
     avatar_link: str = Field(None, description="/cdn/user-profile/00965.jpeg")
