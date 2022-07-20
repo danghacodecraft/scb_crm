@@ -152,6 +152,7 @@ class ServiceGW:
                             status=response.status,
                             errors=return_error['errors']
                         )
+                    return_data.update(status=response.status)
                     return False, return_data
                 else:
                     return_data = await response.json()
