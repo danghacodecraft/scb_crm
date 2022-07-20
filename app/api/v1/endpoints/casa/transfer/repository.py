@@ -12,6 +12,7 @@ from app.third_parties.oracle.models.master_data.others import (
     SlaTransaction, TransactionJob, TransactionStage, TransactionStageLane,
     TransactionStagePhase, TransactionStageRole, TransactionStageStatus
 )
+from app.utils.constant.cif import BUSINESS_FORM_CASA_TRANSFER
 
 
 @auto_commit
@@ -79,7 +80,8 @@ async def repos_get_casa_transfer_info(booking_id: str, session: Session):
         select(
             BookingBusinessForm
         )
-        .filter(BookingBusinessForm.booking_id == booking_id)
+        .filter(BookingBusinessForm.booking_id == booking_id,
+                BookingBusinessForm.business_form_id == BUSINESS_FORM_CASA_TRANSFER)
         .order_by(desc(BookingBusinessForm.created_at))
     ).scalars().first()
     return ReposReturn(data=get_casa_transfer_info)
