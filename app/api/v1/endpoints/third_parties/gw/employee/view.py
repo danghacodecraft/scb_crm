@@ -116,7 +116,7 @@ async def view_gw_get_retrieve_employee_info_from_code(
     )
 )
 async def view_gw_get_working_process_info_from_code(
-        current_user=Depends(get_current_user_from_header())
+    current_user=Depends(get_current_user_from_header())
 ):
     working_process_info = await CtrGWEmployee(current_user).ctr_gw_get_working_process_info_from_code(
     )
@@ -134,7 +134,7 @@ async def view_gw_get_working_process_info_from_code(
     )
 )
 async def view_gw_get_reward_info_from_code(
-        current_user=Depends(get_current_user_from_header())
+    current_user=Depends(get_current_user_from_header())
 ):
     working_process_info = await CtrGWEmployee(current_user).ctr_gw_get_reward_info_from_code()
     return ResponseData[GWEmployeeRewardResponse](**working_process_info)
