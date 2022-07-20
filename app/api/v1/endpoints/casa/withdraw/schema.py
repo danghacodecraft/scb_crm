@@ -26,6 +26,7 @@ class FeeInfoResponse(BaseSchema):
     vat_tax: Optional[float] = Field(None, description="Thuế VAT")
     total: Optional[float] = Field(None, description="Tổng số tiền phí")
     actual_total: Optional[float] = Field(None, description="Số tiền thực chuyển")
+    note: Optional[str] = Field(None, description="Ghi chú")
 
 
 # A. Thông tin giao dịch
@@ -126,6 +127,7 @@ class FeeInfoRequest(BaseSchema):
     )
     payer_flag: Optional[bool] = Field(None, description="Bên thanh toán phí, `true`: Bên chuyển, `false` = Bên nhận'")
     amount: Optional[int] = Field(None, description="3. Số tiền phí")
+    note: Optional[str] = Field(None, description="Ghi chú")
 
 
 # A. THÔNG TIN GIAO DỊCH

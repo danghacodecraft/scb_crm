@@ -106,7 +106,7 @@ async def view_gw_get_retrieve_employee_info_from_code(
 
 
 @router.post(
-    path="/working-process/{staff_code}",
+    path="/working-process/",
     name="[GW] Lấy thông tin quá trình công tác theo mã nhân viên",
     description="Lấy thông tin quá trình công tác theo mã nhân viên",
     responses=swagger_response(
@@ -118,7 +118,8 @@ async def view_gw_get_retrieve_employee_info_from_code(
 async def view_gw_get_working_process_info_from_code(
         current_user=Depends(get_current_user_from_header())
 ):
-    working_process_info = await CtrGWEmployee(current_user).ctr_gw_get_working_process_info_from_code()
+    working_process_info = await CtrGWEmployee(current_user).ctr_gw_get_working_process_info_from_code(
+    )
     return ResponseData[GWEmployeeWorkingProcessResponse](**working_process_info)
 
 
