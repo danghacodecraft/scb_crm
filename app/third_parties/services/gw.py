@@ -2170,7 +2170,6 @@ class ServiceGW:
     async def gw_payment_tt_liquidation(self, current_user: UserInfoResponse, data_input):
         request_data = self.gw_create_request_body(
             current_user=current_user, function_name="ttLiquidation_in", data_input=data_input)
-
         api_url = f"{self.url}{GW_ENDPOINT_URL_TT_LIQUIDATION}"
 
         return await self.call_api(

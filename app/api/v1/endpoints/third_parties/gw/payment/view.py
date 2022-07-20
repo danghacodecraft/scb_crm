@@ -14,7 +14,8 @@ from app.api.v1.endpoints.third_parties.gw.payment.example import (
 )
 from app.api.v1.endpoints.third_parties.gw.payment.schema import (
     AccountAmountBlockRequest, AccountAmountBlockResponse,
-    AccountAmountUnblockRequest, PaymentSuccessResponse, RedeemAccountRequest
+    AccountAmountUnblockRequest, GWCasaTransferAccountResponse,
+    PaymentSuccessResponse, RedeemAccountRequest
 )
 
 router = APIRouter()
@@ -140,20 +141,20 @@ async def gw_redeem_account(
 
 
 @router.post(
-    path="/transfer-pd/",
+    path="/transfer/",
     name="[GW] Chuyển khoản",
     description="Chuyển khoản - Phê duyệt",
     responses=swagger_response(
-        response_model=ResponseData[PaymentSuccessResponse],
+        response_model=ResponseData[GWCasaTransferAccountResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
-async def view_casa_transfer_pd(
+async def view_casa_transfer(
         current_user=Depends(get_current_user_from_header()),
         BOOKING_ID: str = Header(..., description="Mã phiên giao dịch")
 ):
-    casa_transfer_pd = await CtrGWPayment(current_user).ctr_gw_save_casa_transfer_info(
+    casa_transfer = await CtrGWPayment(current_user).ctr_gw_save_casa_transfer_info(
         BOOKING_ID=BOOKING_ID
     )
 
-    return ResponseData[PaymentSuccessResponse](**casa_transfer_pd)
+    return ResponseData[GWCasaTransferAccountResponse](**casa_transfer)
