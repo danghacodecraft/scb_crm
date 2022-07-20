@@ -178,7 +178,7 @@ async def repos_gw_get_close_casa_account(
     current_user = current_user.user_info
     for item in request_data_gw:
 
-        is_success, gw_close_casa_account, request_data = await service_gw.get_close_casa_account(
+        is_success, gw_close_casa_account = await service_gw.get_close_casa_account(
             data_input=item,
             current_user=current_user
         )
@@ -186,7 +186,7 @@ async def repos_gw_get_close_casa_account(
         session.add(
             BookingBusinessForm(**dict(
                 booking_id=booking_id,
-                form_data=orjson_dumps(request_data),
+                form_data=orjson_dumps(item),
                 business_form_id=BUSINESS_FORM_CLOSE_CASA_PD,
                 save_flag=True,
                 created_at=now(),
