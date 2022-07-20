@@ -3,11 +3,7 @@ from app.api.v1.endpoints.config.approval.repository import (
     repos_get_stage_action
 )
 from app.api.v1.endpoints.repository import repos_get_data_model_config
-from app.third_parties.oracle.models.master_data.others import (
-    StageAction, StageStatus
-)
-from app.utils.constant.approval import CIF_APPROVE_STAGES
-from app.utils.error_messages import ERROR_APPROVAL_STAGE_NOT_EXISTED
+from app.third_parties.oracle.models.master_data.others import StageStatus
 
 
 class CtrConfigApproval(BaseController):

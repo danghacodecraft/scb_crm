@@ -1,5 +1,7 @@
 from typing import List
+
 from sqlalchemy.orm import Session
+
 from app.api.base.repository import ReposReturn, auto_commit
 from app.third_parties.oracle.models.cif.basic_information.identity.model import (
     CustomerCompareImage, CustomerCompareImageTransaction

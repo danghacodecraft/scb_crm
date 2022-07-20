@@ -16,7 +16,9 @@ from app.third_parties.oracle.models.cif.form.model import (
 from app.third_parties.oracle.models.cif.payment_account.model import (
     CasaAccount
 )
-from app.utils.constant.cif import BUSINESS_FORM_TTCN_GTDD_GTDD, BUSINESS_TYPE_CODE_CIF
+from app.utils.constant.cif import (
+    BUSINESS_FORM_TTCN_GTDD_GTDD, BUSINESS_TYPE_CODE_CIF
+)
 from app.utils.error_messages import (
     ERROR_BOOKING_CODE_EXISTED, ERROR_BOOKING_ID_NOT_EXIST, MESSAGE_STATUS
 )
@@ -27,9 +29,9 @@ from app.utils.functions import (
 
 
 async def generate_booking_code(
-    branch_code: str,
-    business_type_code: str,
-    session: Session
+        branch_code: str,
+        business_type_code: str,
+        session: Session
 ):
     datetime_today = date_to_datetime(today())
     sequence = session.execute(
@@ -50,11 +52,11 @@ async def generate_booking_code(
 
 
 async def repos_create_booking(
-    transaction_id: Optional[str],
-    business_type_code: str,
-    session: Session,
-    current_user: UserInfoResponse,
-    booking_code_flag: bool = True
+        transaction_id: Optional[str],
+        business_type_code: str,
+        session: Session,
+        current_user: UserInfoResponse,
+        booking_code_flag: bool = True
 ):
     """
     Input:
@@ -102,12 +104,12 @@ async def repos_create_booking(
 
 
 async def repos_update_booking(
-    booking_id: str,
-    transaction_id: Optional[str],
-    business_type_code: str,
-    session: Session,
-    current_user: UserInfoResponse,
-    booking_code_flag: bool = False
+        booking_id: str,
+        transaction_id: Optional[str],
+        business_type_code: str,
+        session: Session,
+        current_user: UserInfoResponse,
+        booking_code_flag: bool = False
 ):
     current_user_branch_code = current_user.hrm_branch_code
 
@@ -248,10 +250,10 @@ async def repos_get_customer_from_booking_account(booking_id: str, session: Sess
                 BookingAccount,
                 CasaAccount
             )
-                .join(BookingAccount, Booking.id == BookingAccount.booking_id)
-                .join(CasaAccount, BookingAccount.account_id == CasaAccount.id)
-                .join(Customer, CasaAccount.customer_id == Customer.id)
-                .filter(Booking.parent_id == booking_id)
+            .join(BookingAccount, Booking.id == BookingAccount.booking_id)
+            .join(CasaAccount, BookingAccount.account_id == CasaAccount.id)
+            .join(Customer, CasaAccount.customer_id == Customer.id)
+            .filter(Booking.parent_id == booking_id)
         ).scalars().first()
     return ReposReturn(data=customer)
 
