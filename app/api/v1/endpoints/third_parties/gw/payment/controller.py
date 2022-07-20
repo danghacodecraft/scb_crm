@@ -135,13 +135,7 @@ class CtrGWPayment(BaseController):
                     }
                 },
                 # TODO chưa được mô tả
-                "p_blk_charge": [
-                    {
-                        "CHARGE_NAME": "",
-                        "CHARGE_AMOUNT": 0,
-                        "WAIVED": "N"
-                    }
-                ],
+                "p_blk_charge": "",
                 # TODO chưa được mô tả
                 "p_blk_udf": [
                     {

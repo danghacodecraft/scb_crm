@@ -510,34 +510,13 @@ class ServiceGW:
         )
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_CLOSE_CASA_ACCOUNT}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='closeCASA_out',
+            service_name='CLOSE_CASA'
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW][Report] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data, request_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data, request_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data, request_data
+        return response_data
 
     async def get_tele_transfer(
             self,
@@ -1963,34 +1942,13 @@ class ServiceGW:
         )
         api_url = f"{self.url}{GW_ENDPOINT_URL_PAYMENT_AMOUNT_BLOCK}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='amountBlock_out',
+            service_name='AMOUNT_BLOCK'
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW][Payment] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data, request_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data, request_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data, request_data
+        return response_data
 
     async def gw_payment_amount_unblock(self, current_user: UserInfoResponse, data_input):
 
@@ -1999,36 +1957,13 @@ class ServiceGW:
         )
         api_url = f"{self.url}{GW_ENDPOINT_URL_PAYMENT_AMOUNT_UNBLOCK}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='amountUnBlock_out',
+            service_name='AMOUNT_UNBLOCK'
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW][Payment] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    if return_data != GW_RESPONSE_STATUS_SUCCESS:
-                        return False, return_data
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
+        return response_data
 
     async def gw_interbank_transfer(self, current_user: UserInfoResponse, data_input):
 
