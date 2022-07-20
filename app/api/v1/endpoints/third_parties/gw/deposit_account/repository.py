@@ -107,6 +107,10 @@ async def repos_gw_deposit_open_account_td(current_user, booking_id, data_input,
         current_user=current_user,
         data_input=data_input
     )
+
+    if not is_success:
+        return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_GW, loc='OPEN_TD_ACCOUNT')
+
     session.add(
         BookingBusinessForm(**dict(
             booking_id=booking_id,
