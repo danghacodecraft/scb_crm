@@ -100,4 +100,14 @@ class CtrGWBranchLocation(BaseController):
         ))
         if not is_success:
             return self.response_exception(msg=ERROR_CALL_SERVICE_GW, detail=str(gw_select_branch_by_branch_id))
-        return self.response(data=gw_select_branch_by_branch_id['selectBranchByBranchID_out']['data_output'])
+        response_data = gw_select_branch_by_branch_id['selectBranchByBranchID_out']['data_output']
+        print(response_data)
+        return self.response(data={
+            'region_id': response_data['region_id'],
+            'region_name': response_data['region_name'],
+            'branch_id': response_data['branch_id'],
+            'branch_name': response_data['branch_name'],
+            'latitude': response_data['latitude'],
+            'longitude': response_data['longtitude'],
+            'type': response_data['region_type'],
+        })
