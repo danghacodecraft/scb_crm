@@ -245,8 +245,8 @@ class CtrGWCasaAccount(BaseController):
         ))
 
     async def ctr_gw_check_exist_casa_account_info(
-        self,
-        account_number: str
+            self,
+            account_number: str
     ):
         gw_check_exist_casa_account_info = self.call_repos(await repos_gw_get_casa_account_info(
             account_number=account_number,
@@ -254,8 +254,9 @@ class CtrGWCasaAccount(BaseController):
         ))
         if not gw_check_exist_casa_account_info:
             return self.response(data=dict(is_existed=False))
-        account_info = gw_check_exist_casa_account_info['retrieveCurrentAccountCASA_out']['data_output']['customer_info'][
-            'account_info']
+        account_info = \
+            gw_check_exist_casa_account_info['retrieveCurrentAccountCASA_out']['data_output']['customer_info'][
+                'account_info']
 
         return self.response(data=dict(
             is_existed=True if account_info['account_num'] else False
@@ -470,7 +471,7 @@ class CtrGWCasaAccount(BaseController):
             successes=[dict(
                 id=casa_account_id,
                 number=casa_account_number
-            )for casa_account_id, casa_account_number in casa_account_successes.items()],
+            ) for casa_account_id, casa_account_number in casa_account_successes.items()],
             errors=gw_errors
         ))
 
@@ -718,7 +719,7 @@ class CtrGWCasaAccount(BaseController):
 
         data_input = dict(
             account_info=dict(
-                account_num=request_data_gw['transaction_info']['source_accounts'],
+                account_num=request_data_gw['transaction_info']['source_accounts']['account_num'],
                 account_currency='VND',
                 account_withdrawals_amount=request_data_gw['transaction_info']['receiver_info']['amount']
             ),
@@ -734,17 +735,27 @@ class CtrGWCasaAccount(BaseController):
             p_blk_charge=""
         )
 
-        gw_payment_amount_block = self.call_repos(await repos_gw_withdraw(
+        _, gw_payment_amount_block, _ = self.call_repos(await repos_gw_withdraw(
             current_user=current_user,
             booking_id=booking_id,
-            request_data_gw=orjson_dumps(data_input),
+            request_data_gw=data_input,
             session=self.oracle_session
         ))
+        if not gw_payment_amount_block:
+            return self.response_exception(
+                msg=ERROR_CALL_SERVICE_GW,
+                loc=f'gw_payment_amount_block: {gw_payment_amount_block}'
+            )
 
         response_data = {
             "booking_id": booking_id,
             "account": gw_payment_amount_block
         }
+
+        response_data.update({
+            'account_number': request_data_gw['transaction_info']['source_accounts']['account_num'],
+            'account_withdrawals_amount': request_data_gw['transaction_info']['receiver_info']['amount']
+        })
 
         return self.response(data=response_data)
 

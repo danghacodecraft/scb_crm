@@ -34,7 +34,7 @@ class CifApproveRequest(BaseSchema):
 
 
 class CifApprovalResponse(BaseSchema):
-    cif_id: str = Field(..., description="Cif ID")
+    cif_id: Optional[str] = Field(..., description="Cif ID")
     previous_stage: Optional[str] = Field(..., description="Bước trước đó")
     current_stage: str = Field(..., description="Bước hiện tại")
     next_stage: Optional[str] = Field(..., description="Bước tiếp theo")

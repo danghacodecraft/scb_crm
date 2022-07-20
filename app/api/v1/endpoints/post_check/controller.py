@@ -4,10 +4,10 @@ from starlette import status
 
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.post_check.repository import (
-    repos_create_booking_kss, repos_create_post_check,
-    repos_get_customer_detail, repos_get_history_post_post_check,
-    repos_get_list_branch, repos_get_list_kss, repos_get_list_zone,
-    repos_get_post_control, repos_get_statistics, repos_get_statistics_month,
+    repos_create_post_check, repos_get_customer_detail,
+    repos_get_history_post_post_check, repos_get_list_branch,
+    repos_get_list_kss, repos_get_list_zone, repos_get_post_control,
+    repos_get_statistics, repos_get_statistics_month,
     repos_get_statistics_profiles, repos_save_customer_ekyc,
     repos_update_post_check
 )
@@ -18,7 +18,6 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_change_status_account, repos_gw_get_casa_account_info
 )
 from app.settings.config import DATE_INPUT_OUTPUT_FORMAT
-from app.utils.constant.business_type import BUSINESS_TYPE_EKYC_AUDIT
 from app.utils.constant.cif import (
     CRM_GENDER_TYPE_FEMALE, EKYC_DOCUMENT_TYPE_NEW_CITIZEN,
     EKYC_DOCUMENT_TYPE_OLD_CITIZEN, EKYC_DOCUMENT_TYPE_PASSPORT,
@@ -338,13 +337,6 @@ class CtrKSS(BaseController):
 
         post_check_response = self.call_repos(await repos_create_post_check(payload_data=payload_data))
 
-        # TODO
-        booking_id, booking_code = self.call_repos(await repos_create_booking_kss(  # noqa
-            business_type_code=BUSINESS_TYPE_EKYC_AUDIT,
-            current_user=current_user.user_info,
-            payload_data=payload_data,
-            session=self.oracle_session
-        ))
         return self.response(data=post_check_response)
 
     async def ctr_update_post_check(
@@ -460,7 +452,6 @@ class CtrKSS(BaseController):
             gender: str,
             date_of_expiry: str,
             phone_number: str,
-            booking_id: Optional[str],
             front_image: Optional[str] = None,
             front_image_name: Optional[str] = None,
             back_image: Optional[str] = None,
@@ -536,7 +527,6 @@ class CtrKSS(BaseController):
 
         customer = self.call_repos(await repos_save_customer_ekyc(
             body_request=body,
-            booking_id=booking_id
         ))
 
         return self.response(data=customer)
