@@ -8,8 +8,8 @@ from app.utils.functions import date_to_string
 
 async def repos_gw_select_statistic_banking_by_period(current_user: UserInfoResponse, from_date: date, to_date: date):
     data_input = {
-        "P_FDATE": date_to_string(from_date),
-        "P_TDATE": date_to_string(to_date)
+        "from_date": date_to_string(from_date),
+        "to_date": date_to_string(to_date)
     }
     gw_select_statistic_banking_by_period = await service_gw.select_statistic_banking_by_period(
         current_user=current_user,
