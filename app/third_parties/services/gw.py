@@ -105,7 +105,8 @@ class ServiceGW:
                     return False, return_data
                 else:
                     return_data = await response.json()
-                    if return_data[output_key]['transaction_info']['transaction_error_code'] != GW_RESPONSE_STATUS_SUCCESS:
+                    if return_data[output_key]['transaction_info']['transaction_error_code'] \
+                            != GW_RESPONSE_STATUS_SUCCESS:
                         return False, return_data
                     return True, return_data
         except aiohttp.ClientConnectorError as ex:
@@ -485,7 +486,8 @@ class ServiceGW:
                     return False, return_data, request_data
                 else:
                     return_data = await response.json()
-                    if return_data['openCASA_out']['transaction_info']['transaction_error_code'] != GW_RESPONSE_STATUS_SUCCESS:
+                    if return_data['openCASA_out']['transaction_info']['transaction_error_code'] \
+                            != GW_RESPONSE_STATUS_SUCCESS:
                         return False, return_data, request_data
 
                     return True, return_data, request_data
@@ -695,6 +697,7 @@ class ServiceGW:
         except aiohttp.ClientConnectorError as ex:
             logger.error(str(ex))
             return False, return_data, request_data
+
     ####################################################################################################################
     # END --- CASA
     ####################################################################################################################
@@ -975,6 +978,7 @@ class ServiceGW:
         except aiohttp.ClientConnectorError as ex:
             logger.error(str(ex))
             return False, return_data
+
     ####################################################################################################################
     # END --- RETRIEVE EBANK
     ####################################################################################################################
@@ -2422,6 +2426,7 @@ class ServiceGW:
             service_name='selectBranchByBranchID'
         )
         return response_data
+
     ####################################################################################################################
 
     ####################################################################################################################

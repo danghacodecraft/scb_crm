@@ -7,7 +7,9 @@ from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.casa.open_casa.open_casa.controller import (
     CtrCasaOpenCasa
 )
-from app.api.v1.endpoints.casa.open_casa.open_casa.schema import CasaOpenCasaRequest, CasaOpenCasaResponse
+from app.api.v1.endpoints.casa.open_casa.open_casa.schema import (
+    CasaOpenCasaRequest, CasaOpenCasaResponse
+)
 from app.api.v1.endpoints.casa.schema import SaveCasaSuccessResponse
 
 router = APIRouter()

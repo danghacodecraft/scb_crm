@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from fastapi import APIRouter, Body, Depends, Path, Query, Header
+from fastapi import APIRouter, Body, Depends, Header, Query
 from starlette import status
 
 from app.api.base.schema import PagingResponse, ResponseData
@@ -8,8 +8,8 @@ from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.approval.controller import CtrApproval
 from app.api.v1.endpoints.approval.schema import (
-    ApprovalRequest, CifApprovalProcessResponse, CifApprovalResponse,
-    CifApprovalSuccessResponse, ApprovalBusinessJob
+    ApprovalBusinessJob, ApprovalRequest, CifApprovalProcessResponse,
+    CifApprovalResponse, CifApprovalSuccessResponse
 )
 from app.utils.constant.business_type import BUSINESS_TYPES
 from app.utils.functions import make_description_from_dict
