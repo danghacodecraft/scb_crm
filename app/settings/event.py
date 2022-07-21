@@ -8,12 +8,14 @@ from app.third_parties.services.ekyc import ServiceEKYC
 from app.third_parties.services.file import ServiceFile
 from app.third_parties.services.gw import ServiceGW
 from app.third_parties.services.idm import ServiceIDM
+from app.third_parties.services.kafka import ServiceKafka
 
 service_file = ServiceFile()
 service_ekyc = ServiceEKYC()
 service_gw = ServiceGW()
 service_idm = ServiceIDM()
 service_dwh = ServiceDWH()
+service_kafka = ServiceKafka()
 
 
 

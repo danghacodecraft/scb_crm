@@ -1,24 +1,63 @@
-from kafka import KafkaProducer
+import json
+from datetime import date, datetime
 
-from app.utils.constant.kafka import KAFKA_TOPIC
-from app.utils.functions import orjson_dumps
+import orjson
+from confluent_kafka import Producer
+from dotenv import dotenv_values
+from loguru import logger
+from starlette import status
+
+from app.api.base.except_custom import ExceptionHandle
+from app.utils.functions import date_to_string, datetime_to_string
+
+config = dotenv_values('.env')
+
+
+def orjson_default(o):
+    # See "Date Time String Format" in the ECMA-262 specification.
+    if isinstance(o, datetime):
+        return datetime_to_string(o, _format='%Y-%m-%d %H:%M:%S.%f')
+    elif isinstance(o, date):
+        return date_to_string(o)
+    # elif isinstance(o, ErrorDetail):
+    #     return str(o)
+    else:
+        raise TypeError
 
 
 class ServiceKafka:
     def __init__(self):
-        self.sasl_mechanism = 'PLAIN'
-        self.security_protocol = 'SASL_PLAINTEXT'
-        self.bootstrap_servers = ['192.168.73.139:9092']    # server name
-        self.sasl_plain_username = "admin"
-        self.sasl_plain_password = "admin"
+        self.producer = Producer({
+            # không handle lỗi để config sai .env thì raise luôn
+            "bootstrap.servers": ",".join(json.loads(config.get("KAFKA_BOOTSTRAP_SERVERS"))),
+            "security.protocol": config.get("KAFKA_SECURITY_PROTOCOL"),
+            "sasl.mechanism": config.get("KAFKA_SASL_MECHANISM"),
+            "sasl.username": config.get("KAFKA_SASL_PLAIN_USERNAME"),
+            "sasl.password": config.get("KAFKA_SASL_PLAIN_PASSWORD"),
+            "message.max.bytes": config.get("KAFKA_MESSAGE_MAX_BYTES")
+        })
+        self.default_topic = config.get("KAFKA_PRODUCER_TOPIC")
 
-    def send_data(self, data: dict, topic: str = KAFKA_TOPIC):
-        producer = KafkaProducer(
-            bootstrap_servers=self.bootstrap_servers,
-            value_serializer=orjson_dumps(data),
-            sasl_mechanism=self.sasl_mechanism,
-            security_protocol=self.security_protocol,
-            sasl_plain_username=self.sasl_plain_username,
-            sasl_plain_password=self.sasl_plain_password
-        )
-        producer.send(topic=topic, value=data)
+    @staticmethod
+    def ack(err, msg):
+        if err is not None:
+            logger.error(f"Failed to deliver message: {msg}: {err}")
+        else:
+            logger.info("Message produced success")
+
+    def send_message(self, data: dict, topic=None):
+        try:
+            self.producer.produce(
+                topic=topic if topic else self.default_topic,
+                value=orjson.dumps(data, default=orjson_default, option=orjson.OPT_PASSTHROUGH_DATETIME),
+                callback=self.ack
+            )
+
+            # Wait up to 1 second for events. Callbacks will be invoked during
+            # this method call if the message is acknowledged.
+            self.producer.poll(1)
+        except Exception as e:
+            raise ExceptionHandle(
+                errors=[{'loc': None, 'msg': 'confluent_kafka.Error', 'detail': str(e)}],
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
