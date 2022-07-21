@@ -25,8 +25,8 @@ from app.utils.constant.cif import (
 )
 from app.utils.constant.ekyc import (
     EKYC_DATE_FORMAT, EKYC_DEFAULT_VALUE, EKYC_REGION_ZONE_MAPPING,
-    GROUP_ROLE_CODE_AP, GROUP_ROLE_CODE_IN, GROUP_ROLE_CODE_VIEW, MENU_CODE,
-    MENU_CODE_VIEW
+    ERROR_CODE_EKYC, GROUP_ROLE_CODE_AP, GROUP_ROLE_CODE_IN,
+    GROUP_ROLE_CODE_VIEW, MENU_CODE, MENU_CODE_VIEW
 )
 from app.utils.error_messages import ERROR_PERMISSION, MESSAGE_STATUS
 from app.utils.functions import (
@@ -421,7 +421,7 @@ class CtrKSS(BaseController):
                 ekyc_step.extend(item.get('info_step'))
 
         customer_detail.update({
-            # "resident_status": "Cư Trú",
+            "error_code_ekyc": None,
             "ekyc_step": ekyc_step
         })
 
@@ -442,6 +442,9 @@ class CtrKSS(BaseController):
                         customer_detail.update(dict(
                             account_status="Đóng"
                         ))
+        for ekyc_step in customer_detail['ekyc_step']:
+            if 'FAILED' in ekyc_step['step_status']:
+                customer_detail['error_code_ekyc'] = ERROR_CODE_EKYC[ekyc_step['step']]
 
         return self.response(data=customer_detail)
 
