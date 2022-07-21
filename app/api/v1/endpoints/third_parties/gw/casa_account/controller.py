@@ -48,6 +48,7 @@ from app.utils.constant.cif import (
     BUSINESS_FORM_CLOSE_CASA, BUSINESS_FORM_WITHDRAW
 )
 from app.utils.constant.gw import (
+    GW_FUNC_TELE_TRANSFER_OUT, GW_FUNC_TT_LIQUIDATION_OUT,
     GW_TRANSACTION_TYPE_SEND, GW_TRANSACTION_TYPE_WITHDRAW
 )
 from app.utils.constant.idm import (
@@ -566,7 +567,7 @@ class CtrGWCasaAccount(BaseController):
                     msg=ERROR_CALL_SERVICE_GW,
                     detail=str(response_data)
                 )
-            p_instrument_number = tele_transfer_response_data['teleTransfer_out']['data_output']['p_instrument_number']
+            p_instrument_number = tele_transfer_response_data[GW_FUNC_TELE_TRANSFER_OUT]['data_output']['p_instrument_number']
 
             if p_instrument_number == '':
                 return self.response_exception(
@@ -585,7 +586,7 @@ class CtrGWCasaAccount(BaseController):
                     msg=ERROR_CALL_SERVICE_GW,
                     detail=str(tt_liquidation_response_data)
                 )
-            p_contract_ref = tt_liquidation_response_data['ttLiquidation_out']['data_output']['p_contract_ref']
+            p_contract_ref = tt_liquidation_response_data[GW_FUNC_TT_LIQUIDATION_OUT]['data_output']['p_contract_ref']
             response_data = tt_liquidation_response_data
 
         if receiving_method in [RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT, RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY]:
@@ -693,7 +694,7 @@ class CtrGWCasaAccount(BaseController):
             current_user=self.current_user.user_info,
             data_input=data_input
         ))
-        tele_transfer_info = tele_transfer['teleTransfer_out']['data_output']
+        tele_transfer_info = tele_transfer[GW_FUNC_TELE_TRANSFER_OUT]['data_output']
         tele_transfer_info.update(
             data_input=data_input
         )

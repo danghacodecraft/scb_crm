@@ -26,7 +26,12 @@ from app.utils.constant.casa import (
 from app.utils.constant.cif import (
     BUSINESS_FORM_AMOUNT_BLOCK_PD, BUSINESS_FORM_AMOUNT_UNBLOCK_PD
 )
-from app.utils.constant.gw import GW_RESPONSE_STATUS_SUCCESS
+from app.utils.constant.gw import (
+    GW_FUNC_AMOUNT_BLOCK_OUT, GW_FUNC_INTERBANK_TRANSFER_247_BY_ACC_NUM_IN,
+    GW_FUNC_INTERBANK_TRANSFER_247_BY_CARD_NUM_IN,
+    GW_FUNC_INTERBANK_TRANSFER_OUT, GW_FUNC_INTERNAL_TRANSFER_OUT,
+    GW_FUNC_TT_LIQUIDATION_OUT, GW_RESPONSE_STATUS_SUCCESS
+)
 from app.utils.error_messages import (
     ERROR_BOOKING_CODE_EXISTED, ERROR_CALL_SERVICE_GW, MESSAGE_STATUS
 )
@@ -151,12 +156,12 @@ async def repos_gw_payment_amount_block(
             booking_id=booking_id,
             business_job_id=BUSINESS_JOB_CODE_AMOUNT_BLOCK,
             complete_flag=is_success,
-            error_code=gw_payment_amount_block.get('amountBlock_out').get('transaction_info').get('transaction_error_code'),
-            error_desc=gw_payment_amount_block.get('amountBlock_out').get('transaction_info').get('transaction_error_msg'),
+            error_code=gw_payment_amount_block.get(GW_FUNC_AMOUNT_BLOCK_OUT).get('transaction_info').get('transaction_error_code'),
+            error_desc=gw_payment_amount_block.get(GW_FUNC_AMOUNT_BLOCK_OUT).get('transaction_info').get('transaction_error_msg'),
             created_at=now()
         )))
 
-        amount_block = gw_payment_amount_block.get('amountBlock_out').get('data_output')
+        amount_block = gw_payment_amount_block.get(GW_FUNC_AMOUNT_BLOCK_OUT).get('data_output')
 
         if isinstance(amount_block, dict):
             response_data.append({
@@ -341,19 +346,19 @@ async def repos_gw_save_casa_transfer_info(
         is_success, gw_casa_transfer = await service_gw.gw_payment_internal_transfer(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )
-        function_out = 'internal_transfer_out'
+        function_out = GW_FUNC_INTERNAL_TRANSFER_OUT
 
     if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
         is_success, gw_casa_transfer = await service_gw.gw_payment_tt_liquidation(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )
-        function_out = 'ttLiquidation_out'
+        function_out = GW_FUNC_TT_LIQUIDATION_OUT
 
     if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
         is_success, gw_casa_transfer = await service_gw.gw_payment_interbank_transfer(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )
-        function_out = 'interbankTransfer_out'
+        function_out = GW_FUNC_INTERBANK_TRANSFER_OUT
 
     if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
         is_success, gw_casa_transfer = await service_gw.gw_interbank_transfer(
@@ -364,19 +369,19 @@ async def repos_gw_save_casa_transfer_info(
         is_success, gw_casa_transfer = await service_gw.gw_interbank_transfer(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )
-        function_out = 'interbankTransfer_out'
+        function_out = GW_FUNC_INTERBANK_TRANSFER_OUT
 
     if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
         is_success, gw_casa_transfer = await service_gw.gw_payment_interbank_transfer_247_by_account_number(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )
-        function_out = 'interbankTransfer247ByAccNum_out'
+        function_out = GW_FUNC_INTERBANK_TRANSFER_247_BY_ACC_NUM_IN
 
     if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
         is_success, gw_casa_transfer = await service_gw.gw_payment_interbank_transfer_247_by_card_number(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )
-        function_out = 'interbankTransfer247ByCardNum_out'
+        function_out = GW_FUNC_INTERBANK_TRANSFER_247_BY_CARD_NUM_IN
 
     if not gw_casa_transfer:
         return ReposReturn(is_error=True, msg="No GW Casa Transfer")

@@ -15,7 +15,17 @@ from app.third_parties.oracle.models.master_data.address import (
 from app.third_parties.oracle.models.master_data.customer import CustomerGender
 from app.utils.constant.cif import CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE
 from app.utils.constant.gw import (
-    GW_DATE_FORMAT, GW_DATETIME_FORMAT, GW_GENDER_FEMALE, GW_GENDER_MALE
+    GW_DATE_FORMAT, GW_DATETIME_FORMAT,
+    GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE,
+    GW_FUNC_SELECT_DISCIPLINE_INFO_FROM_CODE_OUT,
+    GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE_OUT,
+    GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_USERNAME_OUT,
+    GW_FUNC_SELECT_EMPLOYEE_LIST_FROM_ORG_ID_OUT,
+    GW_FUNC_SELECT_KPIS_INFO_FROM_CODE_OUT,
+    GW_FUNC_SELECT_REWARD_INFO_FROM_CODE_OUT,
+    GW_FUNC_SELECT_STAFF_OTHER_INFO_FROM_CODE_OUT,
+    GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE_OUT, GW_GENDER_FEMALE,
+    GW_GENDER_MALE
 )
 from app.utils.functions import (
     date_string_to_other_date_string_format, dropdown_name
@@ -34,7 +44,7 @@ class CtrGWEmployee(BaseController):
             current_user=current_user
         ))
 
-        employee_info = gw_employee_info["selectEmployeeInfoFromCode_out"]["data_output"]["employee_info"]
+        employee_info = gw_employee_info[GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE_OUT]["data_output"]["employee_info"]
         if return_raw_data_flag:
             return employee_info
 
@@ -62,7 +72,7 @@ class CtrGWEmployee(BaseController):
             current_user=current_user
         ))
 
-        employee_info = gw_employee_info["selectEmployeeInfoFromUserName_out"]["data_output"]["employee_info"]
+        employee_info = gw_employee_info[GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_USERNAME_OUT]["data_output"]["employee_info"]
 
         return self.response(data=dict(
             staff_code=employee_info['staff_code'],
@@ -88,7 +98,7 @@ class CtrGWEmployee(BaseController):
             current_user=current_user
         ))
 
-        employee_infos = gw_employee_infos["selectEmployeeListFromOrgId_out"]["data_output"]["employee_info"]
+        employee_infos = gw_employee_infos[GW_FUNC_SELECT_EMPLOYEE_LIST_FROM_ORG_ID_OUT]["data_output"]["employee_info"]
 
         return self.response(data=dict(
             employee_infos=[dict(
@@ -115,7 +125,7 @@ class CtrGWEmployee(BaseController):
             staff_code=staff_code, current_user=current_user
         ))
 
-        employee_info = gw_employee_info["retrieveEmployeeInfoFromCode_out"]["data_output"]["employee_info"]
+        employee_info = gw_employee_info[GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE]["data_output"]["employee_info"]
 
         department_info = employee_info['department_info']
 
@@ -364,7 +374,7 @@ class CtrGWEmployee(BaseController):
             current_user=current_user,
         ))
 
-        working_process_infos = gw_working_process_info['selectWorkingProcessInfoFromCode_out']['data_output'][
+        working_process_infos = gw_working_process_info[GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE_OUT]['data_output'][
             'working_process_info_list']['working_process_info_item']
 
         return self.response(data=dict(
@@ -388,7 +398,7 @@ class CtrGWEmployee(BaseController):
             current_user=current_user,
         ))
 
-        reward_infos = gw_reward_info['selectRewardInfoFromCode_out']['data_output'][
+        reward_infos = gw_reward_info[GW_FUNC_SELECT_REWARD_INFO_FROM_CODE_OUT]['data_output'][
             'reward_info_list']['reward_info_item']
 
         return self.response(data=dict(
@@ -420,7 +430,7 @@ class CtrGWEmployee(BaseController):
             current_user=current_user
         ))
 
-        discipline_infos = gw_discipline_info['selectDisciplineInfoFromCode_out']['data_output'][
+        discipline_infos = gw_discipline_info[GW_FUNC_SELECT_DISCIPLINE_INFO_FROM_CODE_OUT]['data_output'][
             'discipline_info_list']['discipline_info_item']
 
         return self.response(data=dict(
@@ -475,7 +485,7 @@ class CtrGWEmployee(BaseController):
             current_user=current_user
         ))
 
-        kpis_infos = gw_kpis_info['selectKpisInfoFromCode_out']['data_output'][
+        kpis_infos = gw_kpis_info[GW_FUNC_SELECT_KPIS_INFO_FROM_CODE_OUT]['data_output'][
             'kpi_info_list']['kpi_info_item']
 
         return self.response(data=dict(
@@ -494,7 +504,7 @@ class CtrGWEmployee(BaseController):
             current_user=current_user
         ))
 
-        staff_other_info = gw_staff_other_info['selectStaffOtherInfoFromCode_out']['data_output']['staff_other']
+        staff_other_info = gw_staff_other_info[GW_FUNC_SELECT_STAFF_OTHER_INFO_FROM_CODE_OUT]['data_output']['staff_other']
         recruitment_info = staff_other_info['recruitment_info']
 
         return self.response(data=dict(

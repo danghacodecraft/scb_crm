@@ -1,6 +1,8 @@
 from app.api.base.repository import ReposReturn
 from app.settings.event import service_gw
-from app.utils.constant.gw import GW_RESPONSE_STATUS_SUCCESS
+from app.utils.constant.gw import (
+    GW_FUNC_SELECT_USER_INFO_BY_USER_ID_OUT, GW_RESPONSE_STATUS_SUCCESS
+)
 
 
 async def repos_gw_detail_user(current_user, data_input):
@@ -8,7 +10,7 @@ async def repos_gw_detail_user(current_user, data_input):
         current_user=current_user.user_info, data_input=data_input
     )
     # check trường hợp lỗi
-    detail_user_info = gw_detail_user.get('selectUserInfoByUserID_out')
+    detail_user_info = gw_detail_user.get(GW_FUNC_SELECT_USER_INFO_BY_USER_ID_OUT)
     if detail_user_info.get('transaction_info').get('transaction_error_code') != GW_RESPONSE_STATUS_SUCCESS:
         return ReposReturn(is_error=True, msg=detail_user_info.get('transaction_info').get('transaction_error_msg'))
 

@@ -49,7 +49,8 @@ from app.utils.constant.cif import (
 )
 from app.utils.constant.gw import (
     GW_ACCOUNT_CHARGE_ON_ORDERING, GW_ACCOUNT_CHARGE_ON_RECEIVER,
-    GW_CORE_DATE_FORMAT, GW_DATE_FORMAT, GW_DATETIME_FORMAT, GW_GL_BRANCH_CODE,
+    GW_CORE_DATE_FORMAT, GW_DATE_FORMAT, GW_DATETIME_FORMAT,
+    GW_FUNC_INTERNAL_TRANSFER_OUT, GW_GL_BRANCH_CODE,
     GW_RESPONSE_STATUS_SUCCESS
 )
 from app.utils.error_messages import (
@@ -1120,7 +1121,7 @@ class CtrGWPayment(BaseController):
                     msg=ERROR_CALL_SERVICE_GW,
                     detail=str(tele_transfer_response_data)
                 )
-            p_instrument_number = tele_transfer_response_data['teleTransfer_out']['data_output']['p_instrument_number']
+            p_instrument_number = tele_transfer_response_data[GW_FUNC_INTERNAL_TRANSFER_OUT]['data_output']['p_instrument_number']
 
             if p_instrument_number == '':
                 return self.response_exception(

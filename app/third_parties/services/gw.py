@@ -61,7 +61,68 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_SELECT_STATISTIC_BANKING_BY_PERIOD,
     GW_ENDPOINT_URL_SELECT_USER_INFO, GW_ENDPOINT_URL_TELE_TRANSFER,
     GW_ENDPOINT_URL_TT_LIQUIDATION, GW_ENDPOINT_URL_WITHDRAW,
-    GW_FUNCTION_OPEN_CASA, GW_HISTORY_ACCOUNT_NUM,
+    GW_FUNC_AMOUNT_BLOCK, GW_FUNC_AMOUNT_BLOCK_IN, GW_FUNC_AMOUNT_BLOCK_OUT,
+    GW_FUNC_AMOUNT_UNBLOCK, GW_FUNC_AMOUNT_UNBLOCK_IN,
+    GW_FUNC_AMOUNT_UNBLOCK_OUT, GW_FUNC_CASH_WITHDRAWS,
+    GW_FUNC_CASH_WITHDRAWS_IN, GW_FUNC_CASH_WITHDRAWS_OUT,
+    GW_FUNC_INTERBANK_TRANSFER, GW_FUNC_INTERBANK_TRANSFER_247_BY_ACC_NUM,
+    GW_FUNC_INTERBANK_TRANSFER_247_BY_ACC_NUM_IN,
+    GW_FUNC_INTERBANK_TRANSFER_247_BY_ACC_NUM_OUT,
+    GW_FUNC_INTERBANK_TRANSFER_247_BY_CARD_NUM,
+    GW_FUNC_INTERBANK_TRANSFER_247_BY_CARD_NUM_IN,
+    GW_FUNC_INTERBANK_TRANSFER_247_BY_CARD_NUM_OUT,
+    GW_FUNC_INTERBANK_TRANSFER_IN, GW_FUNC_INTERBANK_TRANSFER_OUT,
+    GW_FUNC_INTERNAL_TRANSFER, GW_FUNC_INTERNAL_TRANSFER_IN,
+    GW_FUNC_INTERNAL_TRANSFER_OUT, GW_FUNC_PAY_IN_CARD,
+    GW_FUNC_PAY_IN_CARD_247_BY_ACC_NUM, GW_FUNC_PAY_IN_CARD_247_BY_ACC_NUM_IN,
+    GW_FUNC_PAY_IN_CARD_247_BY_ACC_NUM_OUT,
+    GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM,
+    GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM_IN,
+    GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM_OUT, GW_FUNC_PAY_IN_CARD_IN,
+    GW_FUNC_PAY_IN_CARD_OUT, GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE,
+    GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_IN,
+    GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_OUT,
+    GW_FUNC_RETRIEVE_SERIAL_NUMBER, GW_FUNC_RETRIEVE_SERIAL_NUMBER_IN,
+    GW_FUNC_RETRIEVE_SERIAL_NUMBER_OUT, GW_FUNC_SELECT_BRANCH_BY_BRANCH_ID,
+    GW_FUNC_SELECT_BRANCH_BY_BRANCH_ID_IN,
+    GW_FUNC_SELECT_BRANCH_BY_BRANCH_ID_OUT, GW_FUNC_SELECT_BRANCH_BY_REGION_ID,
+    GW_FUNC_SELECT_BRANCH_BY_REGION_ID_IN,
+    GW_FUNC_SELECT_BRANCH_BY_REGION_ID_OUT,
+    GW_FUNC_SELECT_DISCIPLINE_INFO_FROM_CODE,
+    GW_FUNC_SELECT_DISCIPLINE_INFO_FROM_CODE_IN,
+    GW_FUNC_SELECT_DISCIPLINE_INFO_FROM_CODE_OUT,
+    GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE,
+    GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE_IN,
+    GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE_OUT,
+    GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_USERNAME,
+    GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_USERNAME_IN,
+    GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_USERNAME_OUT,
+    GW_FUNC_SELECT_EMPLOYEE_LIST_FROM_ORG_ID,
+    GW_FUNC_SELECT_EMPLOYEE_LIST_FROM_ORG_ID_IN,
+    GW_FUNC_SELECT_EMPLOYEE_LIST_FROM_ORG_ID_OUT,
+    GW_FUNC_SELECT_KPIS_INFO_FROM_CODE, GW_FUNC_SELECT_KPIS_INFO_FROM_CODE_IN,
+    GW_FUNC_SELECT_KPIS_INFO_FROM_CODE_OUT,
+    GW_FUNC_SELECT_REWARD_INFO_FROM_CODE,
+    GW_FUNC_SELECT_REWARD_INFO_FROM_CODE_IN,
+    GW_FUNC_SELECT_REWARD_INFO_FROM_CODE_OUT,
+    GW_FUNC_SELECT_STAFF_OTHER_INFO_FROM_CODE,
+    GW_FUNC_SELECT_STAFF_OTHER_INFO_FROM_CODE_IN,
+    GW_FUNC_SELECT_STAFF_OTHER_INFO_FROM_CODE_OUT,
+    GW_FUNC_SELECT_STATISTIC_BANKING_BY_PERIOD,
+    GW_FUNC_SELECT_STATISTIC_BANKING_BY_PERIOD_IN,
+    GW_FUNC_SELECT_STATISTIC_BANKING_BY_PERIOD_OUT,
+    GW_FUNC_SELECT_TOPIC_INFO_FROM_CODE,
+    GW_FUNC_SELECT_TOPIC_INFO_FROM_CODE_IN,
+    GW_FUNC_SELECT_TOPIC_INFO_FROM_CODE_OUT,
+    GW_FUNC_SELECT_USER_INFO_BY_USER_ID,
+    GW_FUNC_SELECT_USER_INFO_BY_USER_ID_IN,
+    GW_FUNC_SELECT_USER_INFO_BY_USER_ID_OUT,
+    GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE,
+    GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE_IN,
+    GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE_OUT, GW_FUNC_TELE_TRANSFER,
+    GW_FUNC_TELE_TRANSFER_IN, GW_FUNC_TELE_TRANSFER_OUT,
+    GW_FUNC_TT_LIQUIDATION, GW_FUNC_TT_LIQUIDATION_IN,
+    GW_FUNC_TT_LIQUIDATION_OUT, GW_FUNCTION_OPEN_CASA, GW_HISTORY_ACCOUNT_NUM,
     GW_HISTORY_CHANGE_FIELD_ACCOUNT, GW_RESPONSE_STATUS_SUCCESS,
     GW_RETRIEVE_CASA_ACCOUNT_DETAIL, GW_SELF_SELECTED_ACCOUNT_FLAG,
     GW_SELF_UNSELECTED_ACCOUNT_FLAG
@@ -525,39 +586,18 @@ class ServiceGW:
             data_input
     ):
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="teleTransfer_in", data_input=data_input
+            current_user=current_user, function_name=GW_FUNC_TELE_TRANSFER_IN, data_input=data_input
         )
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_TELE_TRANSFER_INFO}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_TELE_TRANSFER_OUT,
+            service_name=GW_FUNC_TELE_TRANSFER
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
+        return response_data
 
     async def get_ben_name_by_account_number(
             self,
@@ -1237,7 +1277,7 @@ class ServiceGW:
             }
         }
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="selectEmployeeInfoFromCode_in", data_input=data_input
+            current_user=current_user, function_name=GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE_IN, data_input=data_input
         )
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE}"
@@ -1245,8 +1285,8 @@ class ServiceGW:
         response_data = await self.call_api(
             request_data=request_data,
             api_url=api_url,
-            output_key='selectEmployeeInfoFromCode_out',
-            service_name='selectEmployeeInfoFromCode'
+            output_key=GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE_OUT,
+            service_name=GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE
         )
         return response_data
 
@@ -1260,7 +1300,7 @@ class ServiceGW:
             }
         }
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="selectEmployeeInfoFromUserName_in", data_input=data_input
+            current_user=current_user, function_name=GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_USERNAME_IN, data_input=data_input
         )
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_USER_NAME}"
@@ -1268,8 +1308,8 @@ class ServiceGW:
         response_data = await self.call_api(
             request_data=request_data,
             api_url=api_url,
-            output_key='selectEmployeeInfoFromUserName_out',
-            service_name='selectEmployeeInfoFromUserName'
+            output_key=GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_USERNAME_OUT,
+            service_name=GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_USERNAME
         )
         return response_data
 
@@ -1283,7 +1323,7 @@ class ServiceGW:
             }
         }
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="selectEmployeeListFromOrgId_in", data_input=data_input
+            current_user=current_user, function_name=GW_FUNC_SELECT_EMPLOYEE_LIST_FROM_ORG_ID_IN, data_input=data_input
         )
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_LIST_FROM_ORG_ID}"
@@ -1291,8 +1331,8 @@ class ServiceGW:
         response_data = await self.call_api(
             request_data=request_data,
             api_url=api_url,
-            output_key='selectEmployeeListFromOrgId_out',
-            service_name='selectEmployeeListFromOrgId'
+            output_key=GW_FUNC_SELECT_EMPLOYEE_LIST_FROM_ORG_ID_OUT,
+            service_name=GW_FUNC_SELECT_EMPLOYEE_LIST_FROM_ORG_ID
         )
         return response_data
 
@@ -1310,7 +1350,7 @@ class ServiceGW:
             }
         }
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="retrieveEmployeeInfoFromCode_in", data_input=data_input
+            current_user=current_user, function_name=GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_IN, data_input=data_input
         )
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_CODE}"
@@ -1318,8 +1358,8 @@ class ServiceGW:
         response_data = await self.call_api(
             request_data=request_data,
             api_url=api_url,
-            output_key='retrieveEmployeeInfoFromCode_out',
-            service_name='retrieveEmployeeInfoFromCode'
+            output_key=GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_OUT,
+            service_name=GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE
         )
         return response_data
 
@@ -1330,7 +1370,7 @@ class ServiceGW:
             }
         }
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="selectWorkingProcessInfoFromCode_in", data_input=data_input
+            current_user=current_user, function_name=GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE_IN, data_input=data_input
         )
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_WORKING_PROCESS_INFO_FROM_CODE}"
@@ -1338,8 +1378,8 @@ class ServiceGW:
         response_data = await self.call_api(
             request_data=request_data,
             api_url=api_url,
-            output_key='selectWorkingProcessInfoFromCode_out',
-            service_name='selectWorkingProcessInfoFromCode'
+            output_key=GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE_OUT,
+            service_name=GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE
         )
         return response_data
 
@@ -1357,7 +1397,7 @@ class ServiceGW:
             }
         }
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="selectRewardInfoFromCode_in", data_input=data_input
+            current_user=current_user, function_name=GW_FUNC_SELECT_REWARD_INFO_FROM_CODE_IN, data_input=data_input
         )
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_REWARD_INFO_FROM_CODE}"
@@ -1365,8 +1405,8 @@ class ServiceGW:
         response_data = await self.call_api(
             request_data=request_data,
             api_url=api_url,
-            output_key='selectRewardInfoFromCode_out',
-            service_name='selectRewardInfoFromCode'
+            output_key=GW_FUNC_SELECT_REWARD_INFO_FROM_CODE_OUT,
+            service_name=GW_FUNC_SELECT_REWARD_INFO_FROM_CODE
         )
         return response_data
 
@@ -1384,7 +1424,7 @@ class ServiceGW:
             }
         }
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="selectDisciplineInfoFromCode_in", data_input=data_input
+            current_user=current_user, function_name=GW_FUNC_SELECT_DISCIPLINE_INFO_FROM_CODE_IN, data_input=data_input
         )
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_DISCIPLINE_INFO_FROM_CODE}"
@@ -1392,8 +1432,8 @@ class ServiceGW:
         response_data = await self.call_api(
             request_data=request_data,
             api_url=api_url,
-            output_key='selectDisciplineInfoFromCode_out',
-            service_name='selectDisciplineInfoFromCode'
+            output_key=GW_FUNC_SELECT_DISCIPLINE_INFO_FROM_CODE_OUT,
+            service_name=GW_FUNC_SELECT_DISCIPLINE_INFO_FROM_CODE
         )
         return response_data
 
@@ -1411,7 +1451,7 @@ class ServiceGW:
             }
         }
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="selectTopicInfoFromCode_in", data_input=data_input
+            current_user=current_user, function_name=GW_FUNC_SELECT_TOPIC_INFO_FROM_CODE_IN, data_input=data_input
         )
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_TOPIC_INFO_FROM_CODE}"
@@ -1419,8 +1459,8 @@ class ServiceGW:
         response_data = await self.call_api(
             request_data=request_data,
             api_url=api_url,
-            output_key='selectTopicInfoFromCode_out',
-            service_name='selectTopicInfoFromCode'
+            output_key=GW_FUNC_SELECT_TOPIC_INFO_FROM_CODE_OUT,
+            service_name=GW_FUNC_SELECT_TOPIC_INFO_FROM_CODE
         )
         return response_data
 
@@ -1431,7 +1471,7 @@ class ServiceGW:
             }
         }
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="selectKpisInfoFromCode_in", data_input=data_input
+            current_user=current_user, function_name=GW_FUNC_SELECT_KPIS_INFO_FROM_CODE_IN, data_input=data_input
         )
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_KPIS_INFO_FROM_CODE}"
@@ -1439,8 +1479,8 @@ class ServiceGW:
         response_data = await self.call_api(
             request_data=request_data,
             api_url=api_url,
-            output_key='selectKpisInfoFromCode_out',
-            service_name='selectKpisInfoFromCode'
+            output_key=GW_FUNC_SELECT_KPIS_INFO_FROM_CODE_OUT,
+            service_name=GW_FUNC_SELECT_KPIS_INFO_FROM_CODE
         )
         return response_data
 
@@ -1459,7 +1499,7 @@ class ServiceGW:
         }
 
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="selectStaffOtherInfoFromCode_in", data_input=data_input
+            current_user=current_user, function_name=GW_FUNC_SELECT_STAFF_OTHER_INFO_FROM_CODE_IN, data_input=data_input
         )
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_STAFF_OTHER_INFO_FROM_CODE}"
@@ -1467,8 +1507,8 @@ class ServiceGW:
         response_data = await self.call_api(
             request_data=request_data,
             api_url=api_url,
-            output_key='selectStaffOtherInfoFromCode_out',
-            service_name='selectStaffOtherInfoFromCode'
+            output_key=GW_FUNC_SELECT_STAFF_OTHER_INFO_FROM_CODE_OUT,
+            service_name=GW_FUNC_SELECT_STAFF_OTHER_INFO_FROM_CODE
         )
         return response_data
 
@@ -1752,38 +1792,17 @@ class ServiceGW:
     async def gw_withdraw(self, current_user: UserInfoResponse, data_input):
 
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="cashWithdrawals_in", data_input=data_input
+            current_user=current_user, function_name=GW_FUNC_CASH_WITHDRAWS_IN, data_input=data_input
         )
         api_url = f"{self.url}{GW_ENDPOINT_URL_WITHDRAW}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_CASH_WITHDRAWS_OUT,
+            service_name=GW_FUNC_CASH_WITHDRAWS
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW][Payment] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data, request_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data, request_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data, request_data
+        return response_data
 
     ####################################################################################################################
     # end --- withdraw
@@ -1796,45 +1815,45 @@ class ServiceGW:
     async def gw_payment_amount_block(self, current_user: UserInfoResponse, data_input):
 
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="amountBlock_in", data_input=data_input
+            current_user=current_user, function_name=GW_FUNC_AMOUNT_BLOCK_IN, data_input=data_input
         )
         api_url = f"{self.url}{GW_ENDPOINT_URL_PAYMENT_AMOUNT_BLOCK}"
 
         response_data = await self.call_api(
             request_data=request_data,
             api_url=api_url,
-            output_key='amountBlock_out',
-            service_name='AMOUNT_BLOCK'
+            output_key=GW_FUNC_AMOUNT_BLOCK_OUT,
+            service_name=GW_FUNC_AMOUNT_BLOCK
         )
         return response_data
 
     async def gw_payment_amount_unblock(self, current_user: UserInfoResponse, data_input):
 
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="amountUnBlock_in", data_input=data_input
+            current_user=current_user, function_name=GW_FUNC_AMOUNT_UNBLOCK_IN, data_input=data_input
         )
         api_url = f"{self.url}{GW_ENDPOINT_URL_PAYMENT_AMOUNT_UNBLOCK}"
 
         response_data = await self.call_api(
             request_data=request_data,
             api_url=api_url,
-            output_key='amountUnBlock_out',
-            service_name='AMOUNT_UNBLOCK'
+            output_key=GW_FUNC_AMOUNT_UNBLOCK_OUT,
+            service_name=GW_FUNC_AMOUNT_UNBLOCK
         )
         return response_data
 
     async def gw_interbank_transfer(self, current_user: UserInfoResponse, data_input):
 
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="interbankTransfer_in", data_input=data_input
+            current_user=current_user, function_name=GW_FUNC_INTERBANK_TRANSFER_IN, data_input=data_input
         )
         api_url = f"{self.url}{GW_ENDPOINT_URL_INTERBANK_TRANSFER}"
 
         response_data = await self.call_api(
             request_data=request_data,
             api_url=api_url,
-            output_key='interbankTransfer_out',
-            service_name='interbankTransfer'
+            output_key=GW_FUNC_INTERBANK_TRANSFER_OUT,
+            service_name=GW_FUNC_INTERBANK_TRANSFER
         )
 
         return response_data
@@ -1873,118 +1892,118 @@ class ServiceGW:
     async def gw_pay_in_cash(self, current_user: UserInfoResponse, data_input):
 
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="payInCash_in", data_input=data_input
+            current_user=current_user, function_name=GW_FUNC_PAY_IN_CARD_IN, data_input=data_input
         )
         api_url = f"{self.url}{GW_ENDPOINT_URL_PAY_IN_CASH}"
 
         return await self.call_api(
             api_url=api_url,
             request_data=request_data,
-            output_key='payInCash_out',
-            service_name='payInCash'
+            output_key=GW_FUNC_PAY_IN_CARD_OUT,
+            service_name=GW_FUNC_PAY_IN_CARD
         )
 
     async def gw_pay_in_cash_247_by_acc_num(self, current_user: UserInfoResponse, data_input):
 
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="payInCash247byAccNum_in", data_input=data_input
+            current_user=current_user, function_name=GW_FUNC_PAY_IN_CARD_247_BY_ACC_NUM_IN, data_input=data_input
         )
         api_url = f"{self.url}{GW_ENDPOINT_URL_PAY_IN_CASH_247_BY_ACCOUNT_NUMBER}"
 
         return await self.call_api(
             api_url=api_url,
             request_data=request_data,
-            output_key='payInCash247byAccNum_out',
-            service_name='payInCash247byAccNum'
+            output_key=GW_FUNC_PAY_IN_CARD_247_BY_ACC_NUM_OUT,
+            service_name=GW_FUNC_PAY_IN_CARD_247_BY_ACC_NUM
         )
 
     async def gw_payment_internal_transfer(self, current_user: UserInfoResponse, data_input):
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="internal_transfer_in", data_input=data_input)
+            current_user=current_user, function_name=GW_FUNC_INTERNAL_TRANSFER_IN, data_input=data_input)
         api_url = f"{self.url}{GW_ENDPOINT_URL_INTERNAL_TRANSFER}"
 
         return await self.call_api(
             api_url=api_url,
             request_data=request_data,
-            output_key='internal_transfer_out',
-            service_name='internal_transfer'
+            output_key=GW_FUNC_INTERNAL_TRANSFER_OUT,
+            service_name=GW_FUNC_INTERNAL_TRANSFER
         )
 
     async def gw_tele_transfer(self, current_user: UserInfoResponse, data_input):
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="teleTransfer_in", data_input=data_input)
+            current_user=current_user, function_name=GW_FUNC_TELE_TRANSFER_IN, data_input=data_input)
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_TELE_TRANSFER}"
 
         return await self.call_api(
             api_url=api_url,
             request_data=request_data,
-            output_key='teleTransfer_out',
-            service_name='teleTransfer'
+            output_key=GW_FUNC_TELE_TRANSFER_OUT,
+            service_name=GW_FUNC_TELE_TRANSFER
         )
 
     async def gw_payment_tt_liquidation(self, current_user: UserInfoResponse, data_input):
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="ttLiquidation_in", data_input=data_input)
+            current_user=current_user, function_name=GW_FUNC_TT_LIQUIDATION_IN, data_input=data_input)
         api_url = f"{self.url}{GW_ENDPOINT_URL_TT_LIQUIDATION}"
 
         return await self.call_api(
             api_url=api_url,
             request_data=request_data,
-            output_key='ttLiquidation_out',
-            service_name='ttLiquidation'
+            output_key=GW_FUNC_TT_LIQUIDATION_OUT,
+            service_name=GW_FUNC_TT_LIQUIDATION
         )
 
     async def gw_payment_interbank_transfer(self, current_user: UserInfoResponse, data_input):
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="interbankTransfer_in", data_input=data_input)
+            current_user=current_user, function_name=GW_FUNC_INTERBANK_TRANSFER_IN, data_input=data_input)
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_INTERBANK_TRANSFER}"
 
         return await self.call_api(
             api_url=api_url,
             request_data=request_data,
-            output_key='interbankTransfer_out',
-            service_name='interbankTransfer'
+            output_key=GW_FUNC_INTERBANK_TRANSFER_OUT,
+            service_name=GW_FUNC_INTERBANK_TRANSFER
         )
 
     async def gw_payment_interbank_transfer_247_by_account_number(self, current_user: UserInfoResponse, data_input):
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="interbankTransfer247ByAccNum_in", data_input=data_input)
+            current_user=current_user, function_name=GW_FUNC_INTERBANK_TRANSFER_247_BY_ACC_NUM_IN, data_input=data_input)
         api_url = f"{self.url}{GW_ENDPOINT_URL_INTERBANK_TRANSFER_247_BY_ACCOUNT_NUMBER}"
 
         return await self.call_api(
             api_url=api_url,
             request_data=request_data,
-            output_key='interbankTransfer247ByAccNum_out',
-            service_name='interbankTransfer247ByAccNum'
+            output_key=GW_FUNC_INTERBANK_TRANSFER_247_BY_ACC_NUM_OUT,
+            service_name=GW_FUNC_INTERBANK_TRANSFER_247_BY_ACC_NUM
         )
 
     async def gw_payment_interbank_transfer_247_by_card_number(self, current_user: UserInfoResponse, data_input):
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="interbankTransfer247ByCardNum_in", data_input=data_input)
+            current_user=current_user, function_name=GW_FUNC_INTERBANK_TRANSFER_247_BY_CARD_NUM_IN, data_input=data_input)
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_INTERBANK_TRANSFER_247_BY_CARD_NUMBER}"
 
         return await self.call_api(
             api_url=api_url,
             request_data=request_data,
-            output_key='interbankTransfer247ByCardNum_out',
-            service_name='interbankTransfer247ByCardNum'
+            output_key=GW_FUNC_INTERBANK_TRANSFER_247_BY_CARD_NUM_OUT,
+            service_name=GW_FUNC_INTERBANK_TRANSFER_247_BY_CARD_NUM
         )
 
     async def gw_pay_in_cash_247_by_card_num(self, current_user: UserInfoResponse, data_input):
 
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="payInCash247byCardNum_in", data_input=data_input
+            current_user=current_user, function_name=GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM_IN, data_input=data_input
         )
         api_url = f"{self.url}{GW_ENDPOINT_URL_PAY_IN_CASH_247_BY_CARD_NUMBER}"
 
         return await self.call_api(
             api_url=api_url,
             request_data=request_data,
-            output_key='payInCash247byCardNum_out',
-            service_name='payInCash247byCardNum'
+            output_key=GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM_OUT,
+            service_name=GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM
         )
 
     ####################################################################################################################
@@ -1992,103 +2011,59 @@ class ServiceGW:
     ####################################################################################################################
     async def gw_detail_user(self, current_user: UserInfoResponse, data_input):
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="selectUserInfoByUserID_in", data_input=data_input
+            current_user=current_user, function_name=GW_FUNC_SELECT_USER_INFO_BY_USER_ID_IN, data_input=data_input
         )
         api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_USER_INFO}"
-
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_SELECT_USER_INFO_BY_USER_ID_OUT,
+            service_name=GW_FUNC_SELECT_USER_INFO_BY_USER_ID
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW][UserInfo] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
+        return response_data
 
     ####################################################################################################################
     # START --- SERIAL
     ####################################################################################################################
     async def get_select_serial(self, current_user: UserInfoResponse, data_input):
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="retrieveSerialNumber_in", data_input=data_input
+            current_user=current_user, function_name=GW_FUNC_RETRIEVE_SERIAL_NUMBER_IN, data_input=data_input
         )
         api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_SERIAL_NUMBER}"
-
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_RETRIEVE_SERIAL_NUMBER_OUT,
+            service_name=GW_FUNC_RETRIEVE_SERIAL_NUMBER
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW][Serial] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
+        return response_data
 
     ####################################################################################################################
     # Branch Location
     ####################################################################################################################
     async def select_branch_by_region_id(self, current_user: UserInfoResponse, data_input):
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="selectBranchByRegionID_in", data_input=data_input
+            current_user=current_user, function_name=GW_FUNC_SELECT_BRANCH_BY_REGION_ID_IN, data_input=data_input
         )
         api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_BRANCH_BY_REGION_ID}"
         response_data = await self.call_api(
             request_data=request_data,
             api_url=api_url,
-            output_key='selectBranchByRegionID_out',
-            service_name='selectBranchByRegionID'
+            output_key=GW_FUNC_SELECT_BRANCH_BY_REGION_ID_OUT,
+            service_name=GW_FUNC_SELECT_BRANCH_BY_REGION_ID
         )
         return response_data
 
     async def select_branch_by_branch_id(self, current_user: UserInfoResponse, data_input):
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="selectBranchByBranchID_in", data_input=data_input
+            current_user=current_user, function_name=GW_FUNC_SELECT_BRANCH_BY_BRANCH_ID_IN, data_input=data_input
         )
         api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_BRANCH_BY_BRANCH_ID}"
         response_data = await self.call_api(
             request_data=request_data,
             api_url=api_url,
-            output_key='selectBranchByBranchID_out',
-            service_name='selectBranchByBranchID'
+            output_key=GW_FUNC_SELECT_BRANCH_BY_BRANCH_ID_OUT,
+            service_name=GW_FUNC_SELECT_BRANCH_BY_BRANCH_ID
         )
         return response_data
 
@@ -2099,14 +2074,14 @@ class ServiceGW:
     ####################################################################################################################
     async def select_statistic_banking_by_period(self, current_user: UserInfoResponse, data_input):
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name="selectStatisticBankingByPeriod_in", data_input=data_input
+            current_user=current_user, function_name=GW_FUNC_SELECT_STATISTIC_BANKING_BY_PERIOD_IN, data_input=data_input
         )
         api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_STATISTIC_BANKING_BY_PERIOD}"
         response_data = await self.call_api(
             request_data=request_data,
             api_url=api_url,
-            output_key='selectStatisticBankingByPeriod_out',
-            service_name='selectStatisticBankingByPeriod'
+            output_key=GW_FUNC_SELECT_STATISTIC_BANKING_BY_PERIOD_OUT,
+            service_name=GW_FUNC_SELECT_STATISTIC_BANKING_BY_PERIOD
         )
         return response_data
     ####################################################################################################################

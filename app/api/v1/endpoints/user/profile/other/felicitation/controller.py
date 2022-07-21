@@ -2,6 +2,7 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.user.profile.other.felicitation.repository import (
     repos_felicitation
 )
+from app.utils.constant.gw import GW_FUNC_SELECT_REWARD_INFO_FROM_CODE_OUT
 from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
 from app.utils.functions import datetime_to_date, string_to_datetime
 
@@ -18,7 +19,7 @@ class CtrFelicitation(BaseController):
 
         gw_felicitations = self.call_repos(await repos_felicitation(current_user=current_user))
 
-        felicitations = gw_felicitations['selectRewardInfoFromCode_out']['data_output'][
+        felicitations = gw_felicitations[GW_FUNC_SELECT_REWARD_INFO_FROM_CODE_OUT]['data_output'][
             'reward_info_list']['reward_info_item']
 
         response_felicitations = [dict(

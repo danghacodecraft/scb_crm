@@ -2,6 +2,7 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.user.profile.other.discipline.repository import (
     repos_discipline
 )
+from app.utils.constant.gw import GW_FUNC_SELECT_DISCIPLINE_INFO_FROM_CODE_OUT
 from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
 from app.utils.functions import datetime_to_date, string_to_datetime
 
@@ -18,7 +19,7 @@ class CtrDiscipline(BaseController):
 
         gw_disciplines = self.call_repos(await repos_discipline(current_user=current_user))
 
-        disciplines = gw_disciplines['selectDisciplineInfoFromCode_out']['data_output'][
+        disciplines = gw_disciplines[GW_FUNC_SELECT_DISCIPLINE_INFO_FROM_CODE_OUT]['data_output'][
             'discipline_info_list']['discipline_info_item']
 
         response_disciplines = [dict(

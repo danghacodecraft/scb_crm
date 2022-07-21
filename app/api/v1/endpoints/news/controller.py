@@ -12,6 +12,7 @@ from app.api.v1.endpoints.third_parties.gw.employee.repository import (
 from app.settings.event import service_file
 from app.third_parties.oracle.models.master_data.news import NewsCategory
 from app.utils.constant.cif import NEWS_COMMENT_FILTER_PARAMS
+from app.utils.constant.gw import GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE_OUT
 from app.utils.error_messages import VALIDATE_ERROR
 from app.utils.functions import (
     date_to_datetime, dropdown, end_time_of_day, generate_uuid, now
@@ -291,7 +292,7 @@ class CtrNews(BaseController):
             for user_code in user_codes:
                 gw_employee_info = self.call_repos(await repos_gw_get_employee_info_from_code(
                     employee_code=user_code, current_user=self.current_user))
-                user_info = gw_employee_info['selectEmployeeInfoFromCode_out']['data_output']['employee_info']
+                user_info = gw_employee_info[GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE_OUT]['data_output']['employee_info']
                 users_info_cmt.update({
                     user_code: {
                         "title_name": user_info['title_name'],

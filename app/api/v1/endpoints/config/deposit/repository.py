@@ -4,7 +4,9 @@ from sqlalchemy.orm import Session
 from app.api.base.repository import ReposReturn
 from app.settings.event import service_gw
 from app.third_parties.oracle.models.cif.e_banking.model import TdInterestType
-from app.utils.constant.gw import GW_RESPONSE_STATUS_SUCCESS
+from app.utils.constant.gw import (
+    GW_FUNC_RETRIEVE_SERIAL_NUMBER_OUT, GW_RESPONSE_STATUS_SUCCESS
+)
 
 
 async def repos_get_interest_type_by_id(
@@ -107,10 +109,10 @@ async def repos_get_serial(serial_prefix, serial_key, current_user):
         data_input=data_input,
         current_user=current_user,
     )
-    serial_out = serial['retrieveSerialNumber_out']['transaction_info']
+    serial_out = serial[GW_FUNC_RETRIEVE_SERIAL_NUMBER_OUT]['transaction_info']
     if serial_out['transaction_error_code'] != GW_RESPONSE_STATUS_SUCCESS:
         return ReposReturn(is_error=True, msg=serial_out['transaction_error_msg'], loc="SERIAL")
 
-    response_data = serial['retrieveSerialNumber_out']['data_output']['serial_info']
+    response_data = serial[GW_FUNC_RETRIEVE_SERIAL_NUMBER_OUT]['data_output']['serial_info']
 
     return ReposReturn(data=response_data)
