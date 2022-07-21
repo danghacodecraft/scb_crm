@@ -1154,34 +1154,13 @@ class ServiceGW:
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='selectEmployeeInfoFromCode_out',
+            service_name='selectEmployeeInfoFromCode'
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
+        return response_data
 
     async def get_employee_info_from_user_name(self, current_user: UserInfoResponse, employee_name):
         data_input = {
@@ -1198,34 +1177,13 @@ class ServiceGW:
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_USER_NAME}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='selectEmployeeInfoFromUserName_out',
+            service_name='selectEmployeeInfoFromUserName'
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
+        return response_data
 
     async def get_employee_list_from_org_id(self, current_user: UserInfoResponse, org_id):
         data_input = {
@@ -1242,34 +1200,13 @@ class ServiceGW:
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_LIST_FROM_ORG_ID}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='selectEmployeeListFromOrgId_out',
+            service_name='selectEmployeeListFromOrgId'
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
+        return response_data
 
     async def get_retrieve_employee_info_from_code(self, current_user: UserInfoResponse, staff_code):
         data_input = {
@@ -1290,34 +1227,13 @@ class ServiceGW:
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_CODE}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='retrieveEmployeeInfoFromCode_out',
+            service_name='retrieveEmployeeInfoFromCode'
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
+        return response_data
 
     async def get_working_process_info_from_code(self, current_user: UserInfoResponse):
         data_input = {
@@ -1331,34 +1247,13 @@ class ServiceGW:
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_WORKING_PROCESS_INFO_FROM_CODE}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='selectWorkingProcessInfoFromCode_out',
+            service_name='selectWorkingProcessInfoFromCode'
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
+        return response_data
 
     async def get_reward_info_from_code(self, current_user: UserInfoResponse):
         data_input = {
@@ -1379,34 +1274,13 @@ class ServiceGW:
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_REWARD_INFO_FROM_CODE}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='selectRewardInfoFromCode_out',
+            service_name='selectRewardInfoFromCode'
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
+        return response_data
 
     async def get_discipline_info_from_code(self, current_user: UserInfoResponse):
         data_input = {
@@ -1427,34 +1301,13 @@ class ServiceGW:
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_DISCIPLINE_INFO_FROM_CODE}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='selectDisciplineInfoFromCode_out',
+            service_name='selectDisciplineInfoFromCode'
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
+        return response_data
 
     async def get_topic_info_from_code(self, current_user: UserInfoResponse):
         data_input = {
@@ -1475,34 +1328,13 @@ class ServiceGW:
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_TOPIC_INFO_FROM_CODE}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='selectTopicInfoFromCode_out',
+            service_name='selectTopicInfoFromCode'
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
+        return response_data
 
     async def get_kpis_info_from_code(self, current_user: UserInfoResponse):
         data_input = {
@@ -1516,34 +1348,13 @@ class ServiceGW:
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_KPIS_INFO_FROM_CODE}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='selectKpisInfoFromCode_out',
+            service_name='selectKpisInfoFromCode'
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
+        return response_data
 
     async def get_staff_other_info_from_code(self, current_user: UserInfoResponse):
         data_input = {
@@ -1565,34 +1376,13 @@ class ServiceGW:
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_STAFF_OTHER_INFO_FROM_CODE}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='selectStaffOtherInfoFromCode_out',
+            service_name='selectStaffOtherInfoFromCode'
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
+        return response_data
 
     async def select_org_info(self, current_user: UserInfoResponse, transaction_name: str, endpoint: str,
                               function_name: str, id: str):
