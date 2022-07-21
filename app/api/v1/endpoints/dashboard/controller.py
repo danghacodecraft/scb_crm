@@ -15,13 +15,15 @@ from app.api.v1.endpoints.third_parties.gw.category.controller import (
 )
 from app.utils.constant.business_type import (
     BUSINESS_TYPE_AMOUNT_BLOCK, BUSINESS_TYPE_AMOUNT_UNBLOCK,
-    BUSINESS_TYPE_CASA_TOP_UP, BUSINESS_TYPE_CLOSE_CASA,
-    BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA,
+    BUSINESS_TYPE_CASA_TOP_UP, BUSINESS_TYPE_CASA_TRANSFER,
+    BUSINESS_TYPE_CLOSE_CASA, BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA,
     BUSINESS_TYPE_TD_ACCOUNT_OPEN_ACCOUNT, BUSINESS_TYPE_WITHDRAW
 )
 from app.utils.constant.casa import (
     CASA_TOP_UP_NUMBER_TYPE_CASA_ACCOUNT_NUMBER,
-    CASA_TOP_UP_NUMBER_TYPE_IDENTITY_NUMBER
+    CASA_TOP_UP_NUMBER_TYPE_IDENTITY_NUMBER,
+    CASA_TRANSFER_NUMBER_TYPE_CASA_ACCOUNT_NUMBER,
+    CASA_TRANSFER_NUMBER_TYPE_IDENTITY_NUMBER
 )
 from app.utils.constant.cif import (
     CIF_STAGE_ROLE_CODE_AUDIT, CIF_STAGE_ROLE_CODE_SUPERVISOR,
@@ -336,6 +338,36 @@ class CtrDashboard(BaseController):
                             numbers.append(dict(
                                 number=form_data[number_key_identity_number],
                                 number_type=CASA_TOP_UP_NUMBER_TYPE_IDENTITY_NUMBER,
+                                approval_status=1  # TODO: trạng thái phê duyệt cho từng number
+                            ))
+                        mapping_datas[booking_id]['business_type']['numbers'] = numbers
+
+                    if booking_business_form and booking.business_type_id == BUSINESS_TYPE_CASA_TRANSFER \
+                            and booking_business_form.form_data:
+                        form_data = orjson_loads(booking_business_form.form_data)
+
+                        sender_cif_number_key = 'sender_cif_number'
+                        sender_full_name_key = 'sender_full_name_vn'
+                        mapping_datas[booking_id].update(
+                            cif_number=form_data[sender_cif_number_key]
+                            if sender_cif_number_key in form_data else None,
+                            full_name_vn=form_data[sender_full_name_key]
+                            if sender_full_name_key in form_data else None
+                        )
+                        numbers = []
+                        number_key_account_number = 'receiver_account_number'
+                        if number_key_account_number in form_data:
+                            numbers.append(dict(
+                                number=form_data[number_key_account_number],
+                                number_type=CASA_TRANSFER_NUMBER_TYPE_CASA_ACCOUNT_NUMBER,
+                                approval_status=1  # TODO: trạng thái phê duyệt cho từng number
+                            ))
+
+                        number_key_identity_number = 'receiver_identity_number'
+                        if number_key_identity_number in form_data:
+                            numbers.append(dict(
+                                number=form_data[number_key_identity_number],
+                                number_type=CASA_TRANSFER_NUMBER_TYPE_IDENTITY_NUMBER,
                                 approval_status=1  # TODO: trạng thái phê duyệt cho từng number
                             ))
                         mapping_datas[booking_id]['business_type']['numbers'] = numbers
