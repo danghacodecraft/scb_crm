@@ -1,5 +1,6 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.user.profile.kpi.repository import repos_kpi
+from app.utils.constant.gw import GW_FUNC_SELECT_KPIS_INFO_FROM_CODE_OUT
 from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
 
 
@@ -15,7 +16,7 @@ class CtrKpi(BaseController):
 
         gw_kpis = self.call_repos(await repos_kpi(current_user=current_user))
 
-        kpis = gw_kpis['selectKpisInfoFromCode_out']['data_output']['kpi_info_list']['kpi_info_item']
+        kpis = gw_kpis[GW_FUNC_SELECT_KPIS_INFO_FROM_CODE_OUT]['data_output']['kpi_info_list']['kpi_info_item']
         response_kpis = []
         if kpis:
             response_kpis = [

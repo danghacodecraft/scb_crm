@@ -2,6 +2,9 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.user.profile.work.process.repository import (
     repos_process_info
 )
+from app.utils.constant.gw import (
+    GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE_OUT
+)
 from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
 from app.utils.functions import datetime_to_date, string_to_datetime
 
@@ -22,7 +25,7 @@ class CtrProcess(BaseController):
             )
         )
 
-        processes = gw_processes['selectWorkingProcessInfoFromCode_out']['data_output'][
+        processes = gw_processes[GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE_OUT]['data_output'][
             'working_process_info_list']['working_process_info_item']
 
         response_datas = [dict(

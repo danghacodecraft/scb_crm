@@ -3,6 +3,7 @@ from app.api.v1.endpoints.third_parties.gw.employee.repository import (
     repos_gw_get_employee_info_from_code
 )
 from app.third_parties.services.idm import ServiceIDM
+from app.utils.constant.gw import GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE_OUT
 
 
 class CtrContact(BaseController):
@@ -11,7 +12,7 @@ class CtrContact(BaseController):
         gw_contact = self.call_repos(
             await repos_gw_get_employee_info_from_code(current_user=self.current_user, employee_code=code)
         )
-        contact = gw_contact['selectEmployeeInfoFromCode_out']['data_output']
+        contact = gw_contact[GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE_OUT]['data_output']
         employee_info = contact['employee_info']
         response_data = {
             "emp_name": employee_info["staff_name"],

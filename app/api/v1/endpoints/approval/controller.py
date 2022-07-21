@@ -44,6 +44,7 @@ from app.utils.constant.cif import (
     DROPDOWN_NONE_DICT, IMAGE_TYPE_FACE, IMAGE_TYPE_FINGERPRINT,
     IMAGE_TYPE_SIGNATURE
 )
+from app.utils.constant.gw import GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE_OUT
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_GDV, IDM_GROUP_ROLE_CODE_KSV, IDM_MENU_CODE_TTKH,
     IDM_PERMISSION_CODE_GDV, IDM_PERMISSION_CODE_KSS, IDM_PERMISSION_CODE_KSV
@@ -83,7 +84,7 @@ class CtrApproval(BaseController):
                 content = orjson_loads(transaction_root_daily.data)
                 employee_info = self.call_repos(await repos_gw_get_employee_info_from_code(
                     employee_code=transaction_sender.user_id, current_user=self.current_user))
-                avatar = ServiceIDM().replace_with_cdn(employee_info['selectEmployeeInfoFromCode_out']['data_output']['employee_info']['avatar'])
+                avatar = ServiceIDM().replace_with_cdn(employee_info[GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE_OUT]['data_output']['employee_info']['avatar'])
                 if parent_key == transaction_root_daily.created_at.date():
                     childs.append({
                         "user_id": transaction_sender.user_id,

@@ -30,8 +30,9 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_STATUS
 )
 from app.utils.constant.gw import (
-    GW_DATE_FORMAT, GW_DATETIME_FORMAT, GW_GENDER_FEMALE, GW_GENDER_MALE,
-    GW_LOC_CHECK_CIF_EXIST
+    GW_DATE_FORMAT, GW_DATETIME_FORMAT,
+    GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE_OUT, GW_GENDER_FEMALE,
+    GW_GENDER_MALE, GW_LOC_CHECK_CIF_EXIST
 )
 from app.utils.functions import (
     date_string_to_other_date_string_format, dropdown, dropdown_name,
@@ -111,7 +112,7 @@ class CtrCustomer(BaseController):
         for _, _, _, transaction_sender, transaction_root_daily in transactions:
             employee_info = self.call_repos(await repos_gw_get_employee_info_from_code(
                 employee_code=transaction_sender.user_id, current_user=self.current_user))
-            avatar = ServiceIDM().replace_with_cdn(employee_info['selectEmployeeInfoFromCode_out']['data_output']['employee_info']['avatar'])
+            avatar = ServiceIDM().replace_with_cdn(employee_info[GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE_OUT]['data_output']['employee_info']['avatar'])
 
             if transaction_sender.user_id not in list_distinct_user_code:
                 list_distinct_employee.append(dict(
