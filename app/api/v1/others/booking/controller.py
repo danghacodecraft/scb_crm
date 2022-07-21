@@ -134,9 +134,9 @@ class CtrBooking(BaseController):
         ))
         return business_type
 
-    async def ctr_get_booking(self, booking_id: str):
+    async def ctr_get_init_booking(self, booking_id: str):
         """
-        Lấy thông tin nghiệp vụ thông qua booking
+        Lấy thông tin booking đang khởi tạo
         """
         booking = self.call_repos(await repos_get_booking(
             booking_id=booking_id,
@@ -147,7 +147,7 @@ class CtrBooking(BaseController):
         return booking
 
     async def ctr_get_customer_from_booking(self, booking_id: str):
-        booking = await self.ctr_get_booking(booking_id=booking_id)
+        booking = await self.ctr_get_init_booking(booking_id=booking_id)
         customer = None
         business_type_id = booking.business_type.id
 

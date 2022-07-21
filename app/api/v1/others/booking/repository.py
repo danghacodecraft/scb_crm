@@ -16,7 +16,7 @@ from app.third_parties.oracle.models.cif.form.model import (
 from app.third_parties.oracle.models.cif.payment_account.model import (
     CasaAccount
 )
-from app.utils.constant.booking import BOOKING_COMPLETED
+from app.utils.constant.booking import BOOKING_UNCOMPLETED, BOOKING_UNLOCK
 from app.utils.constant.cif import (
     BUSINESS_FORM_TTCN_GTDD_GTDD, BUSINESS_TYPE_CODE_CIF
 )
@@ -213,7 +213,8 @@ async def repos_get_booking(
         )
         .filter(and_(
             Booking.id == booking_id,
-            Booking.completed_flag == BOOKING_COMPLETED
+            Booking.completed_flag == BOOKING_UNCOMPLETED,
+            Booking.completed_flag == BOOKING_UNLOCK
         ))
     ).scalar()
 
