@@ -203,7 +203,7 @@ async def repos_is_used_booking(
     return True if is_used_booking else False
 
 
-async def repos_get_booking(
+async def repos_get_initializing_booking(
         booking_id: str,
         session: Session
 ):
