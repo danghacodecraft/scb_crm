@@ -25,7 +25,7 @@ class CtrGWBranchLocation(BaseController):
         response_datas = {}
         for region_item in region_list_item:
             branch = {
-                "branch_id": region_item['branch_id'],
+                "branch_id": region_item['branch_code'],
                 "branch_name": region_item['branch_name'],
                 "latitude": float(region_item['latitude']) if region_item['latitude'] != '' else 0,
                 "longitude": float(region_item['longtitude']) if region_item['longtitude'] != '' else 0,
@@ -104,7 +104,7 @@ class CtrGWBranchLocation(BaseController):
         return self.response(data={
             'region_id': response_data['region_id'],
             'region_name': response_data['region_name'],
-            'branch_id': response_data['branch_id'],
+            'branch_id': response_data['branch_code'],
             'branch_name': response_data['branch_name'],
             'latitude': response_data['latitude'],
             'longitude': response_data['longtitude'],
