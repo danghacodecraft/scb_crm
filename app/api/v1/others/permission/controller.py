@@ -65,7 +65,9 @@ class PermissionController(BaseController):
         Kiểm tra xem User có được thao tác ở bước đó không
         Return: ReposReturn(True/False/Error)
         """
-        current_user = auth_response.user_info
+        # F841 local variable 'current_user' is assigned to but never used
+        # current_user = auth_response.user_info
+
         menu_list = auth_response.menu_list
         try:
             filter_code = list(filter(lambda x: x.menu_code == menu_code, menu_list))[0]

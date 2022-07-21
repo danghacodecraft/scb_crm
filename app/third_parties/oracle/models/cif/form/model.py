@@ -127,8 +127,8 @@ class Booking(Base):
     updated_at = Column(DateTime, comment='Ngày chỉnh sửa')
     created_by = Column(DateTime, comment='Người tạo')
     updated_by = Column(DateTime, comment='Người chỉnh sửa')
-    completed_flag = Column(NUMBER(1), comment='Cờ đánh dấu hoàn thành')
-    locked_flag = Column(NUMBER(1), comment='Cờ đánh dấu phong tỏa')
+    completed_flag = Column(NUMBER(1), comment='Cờ đánh dấu hoàn thành', default=0)
+    locked_flag = Column(NUMBER(1), comment='Cờ đánh dấu phong tỏa', default=0)
 
     business_type = relationship('BusinessType')
     transaction = relationship('TransactionDaily')
