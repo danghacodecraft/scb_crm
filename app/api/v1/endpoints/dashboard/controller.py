@@ -6,9 +6,9 @@ from app.api.v1.endpoints.dashboard.repository import (
     repos_get_amount_block_from_booking, repos_get_customer,
     repos_get_customers_by_cif_number, repos_get_open_casa_info_from_booking,
     repos_get_open_cif_info_from_booking, repos_get_senders,
-    repos_get_sla_transaction_infos, repos_get_total_item,
-    repos_get_transaction_list, repos_get_withdraw_info_from_booking,
-    repos_region
+    repos_get_sla_transaction_infos, repos_get_td_account_from_booking,
+    repos_get_total_item, repos_get_transaction_list,
+    repos_get_withdraw_info_from_booking, repos_region
 )
 from app.api.v1.endpoints.third_parties.gw.category.controller import (
     CtrSelectCategory
@@ -16,7 +16,8 @@ from app.api.v1.endpoints.third_parties.gw.category.controller import (
 from app.utils.constant.business_type import (
     BUSINESS_TYPE_AMOUNT_BLOCK, BUSINESS_TYPE_AMOUNT_UNBLOCK,
     BUSINESS_TYPE_CASA_TOP_UP, BUSINESS_TYPE_CLOSE_CASA,
-    BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA, BUSINESS_TYPE_WITHDRAW
+    BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA,
+    BUSINESS_TYPE_TD_ACCOUNT_OPEN_ACCOUNT, BUSINESS_TYPE_WITHDRAW
 )
 from app.utils.constant.casa import (
     CASA_TOP_UP_NUMBER_TYPE_CASA_ACCOUNT_NUMBER,
@@ -69,6 +70,7 @@ class CtrDashboard(BaseController):
         business_type_open_casas = []
         business_type_amount_block = []
         business_type_withdraws = []
+        business_type_open_td_account = []
         for transaction in transaction_list:
             booking, branch, status, stage_role = transaction
 
@@ -93,6 +95,8 @@ class CtrDashboard(BaseController):
                 business_type_amount_block.append(booking_id)
             if business_type_id == BUSINESS_TYPE_WITHDRAW:
                 business_type_withdraws.append(booking_id)
+            if business_type_id == BUSINESS_TYPE_TD_ACCOUNT_OPEN_ACCOUNT:
+                business_type_open_td_account.append(booking_id)
             # TODO: còn các loại nghiệp vụ khác
 
             mapping_datas.update({
@@ -116,6 +120,20 @@ class CtrDashboard(BaseController):
                     audit=dict()
                 )
             })
+        # lấy thông tin giao dịch tài khoản tiết kiệm
+        td_account = self.call_repos(
+            await repos_get_td_account_from_booking(
+                booking_ids=business_type_open_td_account,
+                session=self.oracle_session
+            )
+        )
+
+        for booking, _, _, customer in td_account:
+            mapping_datas[booking.id].update(
+                full_name_vn=customer.full_name_vn,
+                cif_id=customer.id,
+                cif_number=customer.cif_number
+            )
 
         # lấy thông tin các giao dịch aoumut_block
         amount_blocks = self.call_repos(

@@ -16,6 +16,7 @@ from app.third_parties.oracle.models.cif.form.model import (
 from app.third_parties.oracle.models.cif.payment_account.model import (
     CasaAccount
 )
+from app.utils.constant.booking import BOOKING_UNCOMPLETED, BOOKING_UNLOCK
 from app.utils.constant.cif import (
     BUSINESS_FORM_TTCN_GTDD_GTDD, BUSINESS_TYPE_CODE_CIF
 )
@@ -202,7 +203,7 @@ async def repos_is_used_booking(
     return True if is_used_booking else False
 
 
-async def repos_get_booking(
+async def repos_get_initializing_booking(
         booking_id: str,
         session: Session
 ):
@@ -210,7 +211,11 @@ async def repos_get_booking(
         select(
             Booking
         )
-        .filter(Booking.id == booking_id)
+        .filter(and_(
+            Booking.id == booking_id,
+            Booking.completed_flag == BOOKING_UNCOMPLETED,
+            Booking.completed_flag == BOOKING_UNLOCK
+        ))
     ).scalar()
 
     return ReposReturn(data=booking)

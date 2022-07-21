@@ -15,6 +15,7 @@ from app.third_parties.oracle.models.cif.basic_information.identity.model import
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
 )
+from app.third_parties.oracle.models.cif.e_banking.model import TdAccount
 from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingAccount, BookingBusinessForm, BookingCustomer,
     TransactionDaily, TransactionSender
@@ -516,6 +517,26 @@ async def repos_get_amount_block_from_booking(
         .join(BookingAccount, Booking.id == BookingAccount.booking_id)
         .join(CasaAccount, BookingAccount.account_id == CasaAccount.id)
         .join(Customer, CasaAccount.customer_id == Customer.id)
+        .filter(Booking.id.in_(booking_ids))
+    ).all()
+    return ReposReturn(data=response_data)
+
+
+async def repos_get_td_account_from_booking(
+        booking_ids: List,
+        session: Session
+):
+
+    response_data = session.execute(
+        select(
+            Booking,
+            BookingAccount,
+            TdAccount,
+            Customer
+        )
+        .join(BookingAccount, Booking.id == BookingAccount.booking_id)
+        .join(TdAccount, BookingAccount.td_account_id == TdAccount.id)
+        .join(Customer, TdAccount.customer_id == Customer.id)
         .filter(Booking.id.in_(booking_ids))
     ).all()
     return ReposReturn(data=response_data)

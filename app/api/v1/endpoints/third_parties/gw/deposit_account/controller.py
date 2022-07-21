@@ -267,7 +267,7 @@ class CtrGWDepositAccount(BaseController):
                 session=self.oracle_session
             )
         )
-        teller = self.call_repos(await repos_get_teller_info(
+        teller = self.call_repos(await repos_get_teller_info( # noqa
             booking_id=BOOKING_ID,
             session=self.oracle_session
         ))
@@ -307,12 +307,10 @@ class CtrGWDepositAccount(BaseController):
                         "p_blk_intprodmap": "",
                         "p_blk_inteffdtmap": "",
                         "p_blk_intsde": "",
-                        "p_blk_tddetails": [
-                            {
-                                "TD_AMOUNT": int(item.TdAccount.pay_in_amount),
-                                "ROLLOVER_TYPE": item.TdAccount.td_rollover_type
-                            }
-                        ],
+                        "p_blk_tddetails": {
+                            "TD_AMOUNT": int(item.TdAccount.pay_in_amount),
+                            "ROLLOVER_TYPE": item.TdAccount.td_rollover_type
+                        },
                         "p_blk_amount_dates": "",
                         "p_blk_turnovers": "",
                         "p_blk_noticepref": "",
@@ -363,11 +361,12 @@ class CtrGWDepositAccount(BaseController):
                         "p_blk_acc_chnl": "",
                         "p_blk_acc": ""
                     },
+                    # TODO hard
                     "staff_info_checker": {
-                        "staff_name": teller.user_name
+                        "staff_name": "DIEMNTK"
                     },
                     "staff_info_maker": {
-                        "staff_name": current_user.user_info.username
+                        "staff_name": "DIEPTTN1"
                     },
                     "udf_info": {
                         # TODO hard core

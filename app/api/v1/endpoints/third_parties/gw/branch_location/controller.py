@@ -59,7 +59,7 @@ class CtrGWBranchLocation(BaseController):
             top = GW_LATITUDE_MIN
             bottom = GW_LATITUDE_MAX
             for branch in region['branches']:
-                branch_id = branch['branch_id']
+                branch_id = branch['branch_code']
                 longitude = branch['longitude']
                 latitude = branch['latitude']
                 if branch_id != 'ALL':

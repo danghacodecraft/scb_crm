@@ -6,11 +6,11 @@ from starlette import status
 
 from app.api.base.controller import BaseController
 from app.api.v1.others.booking.repository import (
-    repos_check_exist_booking, repos_create_booking, repos_get_booking,
-    repos_get_business_type, repos_get_customer_from_booking_account,
+    repos_check_exist_booking, repos_create_booking, repos_get_business_type,
+    repos_get_customer_from_booking_account,
     repos_get_customer_from_booking_account_amount_block,
-    repos_get_customer_from_booking_customer, repos_is_correct_booking,
-    repos_is_used_booking
+    repos_get_customer_from_booking_customer, repos_get_initializing_booking,
+    repos_is_correct_booking, repos_is_used_booking
 )
 from app.api.v1.others.permission.controller import PermissionController
 from app.third_parties.oracle.models.cif.form.model import (
@@ -134,11 +134,11 @@ class CtrBooking(BaseController):
         ))
         return business_type
 
-    async def ctr_get_booking(self, booking_id: str):
+    async def ctr_get_initializing_booking(self, booking_id: str):
         """
-        Lấy thông tin nghiệp vụ thông qua booking
+        Lấy thông tin booking đang khởi tạo
         """
-        booking = self.call_repos(await repos_get_booking(
+        booking = self.call_repos(await repos_get_initializing_booking(
             booking_id=booking_id,
             session=self.oracle_session
         ))
@@ -147,7 +147,7 @@ class CtrBooking(BaseController):
         return booking
 
     async def ctr_get_customer_from_booking(self, booking_id: str):
-        booking = await self.ctr_get_booking(booking_id=booking_id)
+        booking = await self.ctr_get_initializing_booking(booking_id=booking_id)
         customer = None
         business_type_id = booking.business_type.id
 
