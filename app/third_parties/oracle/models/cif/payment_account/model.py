@@ -100,7 +100,9 @@ class JointAccountHolderAgreementAuthorization(Base):
     __table_args__ = {'comment': 'Thỏa thuận/ ủy quyền đồng sở hữu'}
 
     joint_acc_agree_id = Column(VARCHAR(36), primary_key=True, server_default=text("sys_guid() "))
+    active_flag = Column(NUMBER(1, 0, False), nullable=False, comment="Trạng thái thỏa thuận/ ủy quyền")
     casa_account_id = Column(VARCHAR(36), nullable=False, comment="Số tài khoản hiện tại")
+    in_scb_flag = Column(NUMBER(1), nullable=False, comment="Cờ đánh dấu văn bản trong hay ngoài SCB")
     joint_acc_agree_document_file_id = Column(ForeignKey('crm_document_file.document_file_id'), nullable=False,
                                               comment="Id  mã loại thẻ")
     created_at = Column(DateTime, comment='Ngày tạo')
