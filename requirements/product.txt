@@ -5,3 +5,5 @@ uvloop==0.15.2 #https://pypi.org/project/uvloop/
 gunicorn==20.1.0 #https://pypi.org/project/gunicorn/
 
 python-Levenshtein==0.12.2 #https://pypi.org/project/Levenshtein/
+
+kafka==1.3.5 #https://pypi.org/project/kafka/
