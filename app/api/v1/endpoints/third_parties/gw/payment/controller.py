@@ -24,13 +24,16 @@ from app.api.v1.endpoints.third_parties.gw.payment.repository import (
 from app.api.v1.endpoints.third_parties.gw.payment.schema import (
     RedeemAccountRequest
 )
+from app.api.v1.endpoints.third_parties.repository import (
+    repos_save_gw_output_data
+)
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.validator import validate_history_data
 from app.third_parties.oracle.models.master_data.address import AddressProvince
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.utils.constant.business_type import (
     BUSINESS_TYPE_AMOUNT_BLOCK, BUSINESS_TYPE_AMOUNT_UNBLOCK,
-    BUSINESS_TYPE_REDEEM_ACCOUNT
+    BUSINESS_TYPE_CASA_TRANSFER, BUSINESS_TYPE_REDEEM_ACCOUNT
 )
 from app.utils.constant.casa import (
     RECEIVING_METHOD_SCB_BY_IDENTITY, RECEIVING_METHOD_SCB_TO_ACCOUNT,
@@ -48,6 +51,9 @@ from app.utils.constant.gw import (
     GW_ACCOUNT_CHARGE_ON_ORDERING, GW_ACCOUNT_CHARGE_ON_RECEIVER,
     GW_CORE_DATE_FORMAT, GW_DATE_FORMAT, GW_DATETIME_FORMAT, GW_GL_BRANCH_CODE,
     GW_RESPONSE_STATUS_SUCCESS
+)
+from app.utils.error_messages import (
+    ERROR_CALL_SERVICE_GW, ERROR_NO_INSTRUMENT_NUMBER
 )
 from app.utils.functions import (
     date_string_to_other_date_string_format, datetime_to_string, now,
@@ -81,7 +87,6 @@ class CtrGWPayment(BaseController):
             sender_identity_number = form_data['sender_identity_number']
             sender_issued_date = form_data['sender_issued_date']
             sender_place_of_issue_id = form_data['sender_place_of_issue']['id']
-
         sender_place_of_issue = await self.get_model_object_by_id(
             model_id=sender_place_of_issue_id,
             model=PlaceOfIssue,
@@ -130,13 +135,7 @@ class CtrGWPayment(BaseController):
                     }
                 },
                 # TODO chưa được mô tả
-                "p_blk_charge": [
-                    {
-                        "CHARGE_NAME": "",
-                        "CHARGE_AMOUNT": 0,
-                        "WAIVED": "N"
-                    }
-                ],
+                "p_blk_charge": "",
                 # TODO chưa được mô tả
                 "p_blk_udf": [
                     {
@@ -552,11 +551,11 @@ class CtrGWPayment(BaseController):
                 },
                 {
                     "UDF_NAME": "CMND_PASSPORT",
-                    "UDF_VALUE": form_data['sender_identity_number']
+                    "UDF_VALUE": form_data['sender_identity_number'] if form_data['sender_identity_number'] else ''
                 },
                 {
                     "UDF_NAME": "NGAY_CAP",
-                    "UDF_VALUE": form_data['sender_issued_date']
+                    "UDF_VALUE": form_data['sender_issued_date'] if form_data['sender_issued_date'] else ''
                 },
                 {
                     "UDF_NAME": "NOI_CAP",
@@ -622,13 +621,14 @@ class CtrGWPayment(BaseController):
                 "staff_name": "KHANHLQ"
             }
         }
+        print(data_input)
         gw_pay_in_cash = self.call_repos(await repos_gw_pay_in_cash(
             data_input=data_input,
             current_user=current_user
         ))
         return gw_pay_in_cash
 
-    async def ctr_tele_transfer(self, form_data):
+    async def ctr_tele_transfer(self, form_data, pay_in_cash_flag: bool = True):
         current_user = self.current_user
         receiver_place_of_issue_id = form_data['receiver_place_of_issue']['id']
         receiver_place_of_issue = await self.get_model_object_by_id(
@@ -642,7 +642,7 @@ class CtrGWPayment(BaseController):
         ) = await self.get_sender_info(form_data=form_data)
 
         data_input = {
-            "p_tt_type": "C",
+            "p_tt_type": "C" if pay_in_cash_flag else "A",
             "p_details": {
                 "TT_DETAILS": {
                     "TT_CURRENCY": "VND",
@@ -695,7 +695,12 @@ class CtrGWPayment(BaseController):
                 "staff_name": "KHANHLQ"
             }
         }
-        print(data_input)
+        if not pay_in_cash_flag:
+            data_input["p_details"]["ACCOUNT_DETAILS"] = {
+                "ACCOUNT_NUMBER": form_data['sender_account_number'],
+                "CHARGE_BY_CASH": "N"
+            }
+
         gw_tele_transfer = self.call_repos(await repos_gw_tele_transfer(
             data_input=data_input,
             current_user=current_user
@@ -1034,21 +1039,43 @@ class CtrGWPayment(BaseController):
             session=self.oracle_session
         ))
         form_data = orjson_loads(get_casa_transfer_info.form_data)
-
+        print(form_data)
         receiving_method = form_data['receiving_method']
         transfer_amount = form_data['amount']
 
         # Thông tin phí
         ################################################################################################################
-        fee_info = form_data['fee_info']
-        fee_amount = fee_info['fee_amount']
-        vat_tax = fee_amount / 10
-        total = fee_amount + vat_tax
-        actual_total = int(total + transfer_amount)
-        is_transfer_payer = False
-        if fee_info['is_transfer_payer'] is not None:
-            if fee_info['is_transfer_payer'] is True:
-                is_transfer_payer = True
+        fee_info = {}
+        if form_data['is_fee']:
+            fee_info = form_data['fee_info']
+            fee_amount = fee_info['fee_amount']
+            vat_tax = fee_amount / 10
+            total = fee_amount + vat_tax
+            actual_total = total + transfer_amount
+            is_transfer_payer = False
+            payer = None
+            if fee_info['is_transfer_payer'] is not None:
+                payer = "RECEIVER"
+                if fee_info['is_transfer_payer'] is True:
+                    is_transfer_payer = True
+                    payer = "SENDER"
+        else:
+            fee_amount = None
+            vat_tax = None
+            total = None
+            actual_total = transfer_amount
+            is_transfer_payer = None
+            payer = None
+
+        fee_info.update(dict(
+            fee_amount=fee_amount,
+            vat_tax=vat_tax,
+            total=total,
+            actual_total=actual_total,
+            is_transfer_payer=is_transfer_payer,
+            payer=payer,
+            note=form_data['fee_info']['note']
+        ))
 
         request_data = {}
 
@@ -1084,19 +1111,36 @@ class CtrGWPayment(BaseController):
                 }
             }
 
-        if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY or \
-                receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
+        if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
+            is_success, tele_transfer_response_data = await self.ctr_tele_transfer(
+                form_data=form_data, pay_in_cash_flag=False
+            )
+            if not is_success:
+                return self.response_exception(
+                    loc='tele_transfer',
+                    msg=ERROR_CALL_SERVICE_GW,
+                    detail=str(tele_transfer_response_data)
+                )
+            p_instrument_number = tele_transfer_response_data['teleTransfer_out']['data_output']['p_instrument_number']
+
+            if p_instrument_number == '':
+                return self.response_exception(
+                    loc='tele_transfer',
+                    msg=ERROR_NO_INSTRUMENT_NUMBER,
+                    detail=str(tele_transfer_response_data)
+                )
+
             request_data = {
                 "data_input": {
-                    "p_liquidation_type": "C",
+                    "p_liquidation_type": "A",
                     "p_liquidation_details": "",
                     "branch_info": {
-                        "branch_code": "001"
+                        "branch_code": "000"  # TODO
                     },
-                    "p_instrument_number": "123245678",
+                    "p_instrument_number": p_instrument_number,
                     "p_instrument_status": "LIQD",
                     "account_info": {
-                        "account_num": "123456787912",
+                        "account_num": form_data['sender_account_number'],
                         "account_currency": "VND"
                     },
                     "p_charges": [
@@ -1114,10 +1158,108 @@ class CtrGWPayment(BaseController):
                         }
                     ],
                     "staff_info_checker": {
-                        "staff_name": "HOANT2"
+                        "staff_name": "HOANT2"  # TODO
                     },
                     "staff_info_maker": {
-                        "staff_name": "KHANHLQ"
+                        "staff_name": "KHANHLQ"  # TODO
+                    }
+                }
+            }
+
+        if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
+            details_of_charge = ''
+            if fee_info:
+                if fee_info['is_transfer_payer'] is True:
+                    details_of_charge = GW_ACCOUNT_CHARGE_ON_ORDERING
+                if fee_info['is_transfer_payer'] is False:
+                    details_of_charge = GW_ACCOUNT_CHARGE_ON_RECEIVER
+
+            (
+                sender_cif_number, sender_full_name_vn, sender_address_full, sender_identity_number, sender_issued_date,
+                sender_place_of_issue
+            ) = await self.get_sender_info(form_data=form_data)
+            receiver_place_of_issue_id = form_data['receiver_place_of_issue']['id']
+            receiver_place_of_issue = await self.get_model_object_by_id(
+                model_id=receiver_place_of_issue_id,
+                model=PlaceOfIssue,
+                loc='receiver_place_of_issue_id'
+            )
+            ben = await CtrConfigBank(current_user=current_user).ctr_get_bank_branch(
+                bank_id=form_data['receiver_bank']['id'])
+            request_data = {
+                "data_input": {
+                    "account_info": {
+                        "account_bank_code": ben['data'][0]['id'],
+                        "account_product_package": "FT01"
+                    },
+                    "staff_info_checker": {
+                        "staff_name": "DIEMNTK"  # TODO
+                    },
+                    "staff_info_maker": {
+                        "staff_name": "DIEPTTN1"  # TODO
+                    },
+                    "p_blk_mis": "",
+                    "p_blk_udf": "",
+                    "p_blk_refinance_rates": "",
+                    "p_blk_amendment_rate": "",
+                    "p_blk_main": {
+                        "PRODUCT": {
+                            "DETAILS_OF_CHARGE": details_of_charge,
+                            "PAYMENT_FACILITY": "O"
+                        },
+                        "TRANSACTION_LEG": {
+                            "ACCOUNT": form_data['sender_account_number'],
+                            "AMOUNT": form_data['amount']
+                        },
+                        "RATE": {
+                            "EXCHANGE_RATE": 0,
+                            "LCY_EXCHANGE_RATE": 0,
+                            "LCY_AMOUNT": 0
+                        },
+                        "ADDITIONAL_INFO": {
+                            "RELATED_CUSTOMER": form_data['sender_cif_number'],
+                            "NARRATIVE": form_data['content']
+                        }
+                    },
+                    "p_blk_charge": [
+                        {
+                            "CHARGE_NAME": "PHI DV TT TRONG NUOC  711003001",
+                            "CHARGE_AMOUNT": 0,
+                            "WAIVED": "N"
+                        },
+                        {
+                            "CHARGE_NAME": "THUE VAT",
+                            "CHARGE_AMOUNT": 0,
+                            "WAIVED": "N"
+                        }
+                    ],
+                    "p_blk_settlement_detail": {
+                        "SETTLEMENTS": {
+                            "TRANSFER_DETAIL": {
+                                "BENEFICIARY_ACCOUNT_NUMBER": ".",
+                                "BENEFICIARY_NAME": form_data['receiver_full_name_vn'],
+                                "BENEFICIARY_ADRESS": form_data['receiver_address_full'],
+                                "ID_NO": form_data['receiver_identity_number'],
+                                "ISSUE_DATE": date_string_to_other_date_string_format(
+                                    date_input=form_data['receiver_issued_date'],
+                                    from_format=GW_DATE_FORMAT,
+                                    to_format=GW_CORE_DATE_FORMAT
+                                ),
+                                "ISSUER": receiver_place_of_issue.name
+                            },
+                            "ORDERING_CUSTOMER": {
+                                "ORDERING_ACC_NO": "",
+                                "ORDERING_NAME": sender_full_name_vn,
+                                "ORDERING_ADDRESS": sender_address_full,
+                                "ID_NO": sender_identity_number,
+                                "ISSUE_DATE": date_string_to_other_date_string_format(
+                                    date_input=sender_issued_date,
+                                    from_format=GW_DATE_FORMAT,
+                                    to_format=GW_CORE_DATE_FORMAT
+                                ),
+                                "ISSUER": sender_place_of_issue
+                            }
+                        }
                     }
                 }
             }
@@ -1275,7 +1417,7 @@ class CtrGWPayment(BaseController):
                     }
                 }
             }
-        self.call_repos(await repos_gw_save_casa_transfer_info(
+        response_data, gw_casa_transfer = self.call_repos(await repos_gw_save_casa_transfer_info(
             current_user=self.current_user,
             receiving_method=receiving_method,
             booking_id=BOOKING_ID,
@@ -1283,8 +1425,12 @@ class CtrGWPayment(BaseController):
             session=self.oracle_session
         ))
 
-        response_data = {
-            "booking_id": BOOKING_ID,
-        }
+        self.call_repos(await repos_save_gw_output_data(
+            booking_id=BOOKING_ID,
+            business_type_id=BUSINESS_TYPE_CASA_TRANSFER,
+            gw_output_data=orjson_dumps(gw_casa_transfer),
+            session=self.oracle_session
+        ))
+
         return self.response(data=response_data)
     ####################################################################################################################

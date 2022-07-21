@@ -103,14 +103,18 @@ async def repos_gw_get_column_chart_deposit_account_info(
 
 @auto_commit
 async def repos_gw_deposit_open_account_td(current_user, booking_id, data_input, session):
-    is_success, gw_deposit_open_account_td, request_data = await service_gw.deposit_open_account_td(
+    is_success, gw_deposit_open_account_td = await service_gw.deposit_open_account_td(
         current_user=current_user,
         data_input=data_input
     )
+
+    if not is_success:
+        return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_GW, loc='OPEN_TD_ACCOUNT')
+
     session.add(
         BookingBusinessForm(**dict(
             booking_id=booking_id,
-            form_data=orjson_dumps(request_data),
+            form_data=orjson_dumps(data_input),
             business_form_id=BUSINESS_FORM_OPEN_TD_OPEN_TD_ACCOUNT_PD,
             save_flag=True,
             created_at=now(),

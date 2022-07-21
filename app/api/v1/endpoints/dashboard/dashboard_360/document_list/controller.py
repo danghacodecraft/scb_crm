@@ -3,8 +3,6 @@ from app.api.v1.endpoints.dashboard.dashboard_360.document_list.repository impor
     repos_count_document_item, repos_get_document_list
 )
 from app.api.v1.endpoints.file.repository import repos_download_multi_file
-from app.api.v1.others.booking.controller import CtrBooking
-from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.functions import dropdown
 
 

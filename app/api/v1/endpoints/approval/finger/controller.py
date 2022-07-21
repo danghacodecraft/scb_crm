@@ -49,7 +49,7 @@ class CtrFingers(BaseController):
             booking_id: Optional[str]
     ):
         # Check exist Booking
-        await CtrBooking().ctr_get_booking(
+        await CtrBooking().ctr_get_init_booking(
             booking_id=booking_id
         )
 

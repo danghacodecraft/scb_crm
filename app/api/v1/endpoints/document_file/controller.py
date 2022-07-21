@@ -1,12 +1,13 @@
 from fastapi import UploadFile
 
 from app.api.base.controller import BaseController
-from app.api.v1.endpoints.casa.open_casa.open_casa.repository import repos_get_customer_by_cif_number
+from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
+    repos_get_customer_by_cif_number
+)
 from app.api.v1.endpoints.document_file.repository import (
     repos_add_document_file, repos_upload_file
 )
 from app.api.v1.endpoints.file.validator import file_validator
-from app.api.v1.others.booking.controller import CtrBooking
 from app.third_parties.oracle.models.cif.form.model import Booking
 from app.utils.constant.utils import DOCUMENT_FILE_FOLDER, DOCUMENT_FILE_TYPE
 from app.utils.functions import generate_uuid, now

@@ -361,7 +361,7 @@ class CtrGWEmployee(BaseController):
     async def ctr_gw_get_working_process_info_from_code(self):
         current_user = self.current_user
         gw_working_process_info = self.call_repos(await repos_gw_get_working_process_info_from_code(
-            current_user=current_user
+            current_user=current_user,
         ))
 
         working_process_infos = gw_working_process_info['selectWorkingProcessInfoFromCode_out']['data_output'][
@@ -385,7 +385,7 @@ class CtrGWEmployee(BaseController):
     async def ctr_gw_get_reward_info_from_code(self):
         current_user = self.current_user
         gw_reward_info = self.call_repos(await repos_gw_get_reward_info_from_code(
-            current_user=current_user
+            current_user=current_user,
         ))
 
         reward_infos = gw_reward_info['selectRewardInfoFromCode_out']['data_output'][

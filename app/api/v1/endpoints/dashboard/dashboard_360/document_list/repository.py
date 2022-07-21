@@ -1,8 +1,10 @@
-from sqlalchemy import desc, func, select
+from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn
-from app.third_parties.oracle.models.cif.basic_information.model import Customer
+from app.third_parties.oracle.models.cif.basic_information.model import (
+    Customer
+)
 from app.third_parties.oracle.models.document_file.model import DocumentFile
 
 

@@ -114,7 +114,7 @@ class CtrSignature(BaseController):
     async def ctr_compare_signature(self, cif_id: str, signature_img, booking_id: Optional[str]):
 
         # Check exist Booking
-        await CtrBooking().ctr_get_booking(
+        await CtrBooking().ctr_get_init_booking(
             booking_id=booking_id
         )
 
@@ -122,9 +122,11 @@ class CtrSignature(BaseController):
         data_signature_img = await signature_img.read()
 
         is_success, info_signature_img = self.call_repos(await repos_upload_file(
+            booking_id=booking_id,
             file=data_signature_img,
             name=signature_img.filename,
-            ekyc_flag=True))
+            ekyc_flag=True
+        ))
 
         compare_signatures = self.call_repos(await repos_compare_signature(
             cif_id=cif_id,

@@ -178,7 +178,7 @@ async def repos_gw_get_close_casa_account(
     current_user = current_user.user_info
     for item in request_data_gw:
 
-        is_success, gw_close_casa_account, request_data = await service_gw.get_close_casa_account(
+        is_success, gw_close_casa_account = await service_gw.get_close_casa_account(
             data_input=item,
             current_user=current_user
         )
@@ -186,7 +186,7 @@ async def repos_gw_get_close_casa_account(
         session.add(
             BookingBusinessForm(**dict(
                 booking_id=booking_id,
-                form_data=orjson_dumps(request_data),
+                form_data=orjson_dumps(item),
                 business_form_id=BUSINESS_FORM_CLOSE_CASA_PD,
                 save_flag=True,
                 created_at=now(),
@@ -332,8 +332,7 @@ async def repos_gw_withdraw(
         booking_id,
         session: Session
 ):
-    response_data = []
-    is_success, gw_withdraw, request_data = await service_gw.gw_withdraw(
+    is_success, gw_withdraw, gw_request = await service_gw.gw_withdraw(
         current_user=current_user.user_info, data_input=request_data_gw
     )
 
@@ -361,20 +360,7 @@ async def repos_gw_withdraw(
         created_at=now()
     )))
 
-    withdraw = gw_withdraw.get('cashWithdrawals_out').get('data_output')
-
-    if isinstance(withdraw, dict):
-        response_data.append({
-            'account_number': request_data_gw.get('account_info').get('account_num'),
-            'account_withdrawals_amount': request_data_gw.get('account_info').get('account_withdrawals_amount')
-        })
-    else:
-        response_data.append({
-            'account_number': request_data_gw.get('account_info').get('account_num'),
-            'account_withdrawals_amount': withdraw
-        })
-
-    return ReposReturn(data=response_data)
+    return ReposReturn(data=(is_success, gw_withdraw, gw_request))
 
 
 async def repos_gw_get_retrieve_ben_name_by_account_number(current_user: UserInfoResponse, data_input):

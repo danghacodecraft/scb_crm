@@ -8,7 +8,7 @@ from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.config.approval.controller import CtrConfigApproval
 from app.api.v1.schemas.utils import DropdownResponse
-from app.utils.constant.approval import CIF_APPROVE_STAGES, ROLE_CODES
+from app.utils.constant.approval import ROLE_CODES
 from app.utils.constant.business_type import BUSINESS_TYPES
 from app.utils.functions import make_description_from_dict
 

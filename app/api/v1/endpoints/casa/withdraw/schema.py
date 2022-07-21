@@ -26,6 +26,7 @@ class FeeInfoResponse(BaseSchema):
     vat_tax: Optional[float] = Field(None, description="Thuế VAT")
     total: Optional[float] = Field(None, description="Tổng số tiền phí")
     actual_total: Optional[float] = Field(None, description="Số tiền thực chuyển")
+    note: Optional[str] = Field(None, description="Ghi chú")
 
 
 # A. Thông tin giao dịch
@@ -52,7 +53,7 @@ class SenderInfoResponse(BaseSchema):
         description="Cờ kiểm tra có CIF chưa, `true` = Có, `false` = Không"
     )
     cif_number: Optional[str] = Field(None, description="Mã khách hàng giao dịch")
-    fullname_vn: Optional[str] = Field(None, description="Người giao dịch")
+    full_name_vn: Optional[str] = Field(None, description="Người giao dịch")
     identity: Optional[str] = Field(None, description="Giấy tờ định danh")
     issued_date: Optional[date] = Field(None, description="Ngày cấp")
     place_of_issue: Optional[str] = Field(None, description="Nơi cấp")
@@ -126,6 +127,7 @@ class FeeInfoRequest(BaseSchema):
     )
     payer_flag: Optional[bool] = Field(None, description="Bên thanh toán phí, `true`: Bên chuyển, `false` = Bên nhận'")
     amount: Optional[int] = Field(None, description="3. Số tiền phí")
+    note: Optional[str] = Field(None, description="Ghi chú")
 
 
 # A. THÔNG TIN GIAO DỊCH
