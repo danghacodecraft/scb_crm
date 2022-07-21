@@ -21,9 +21,8 @@ from app.api.v1.endpoints.repository import (
     repos_get_model_object_by_id_or_code, repos_get_model_objects_by_ids
 )
 from app.api.v1.endpoints.user.schema import AuthResponse, UserInfoResponse
-from app.settings.config import WRITE_LOG
-from app.settings.event import service_kafka
 from app.third_parties.oracle.base import Base, SessionLocal
+from app.third_parties.services.kafka import ServiceKafka
 from app.utils.constant.cif import PROFILE_HISTORY_DESCRIPTIONS
 from app.utils.constant.ekyc import is_success
 from app.utils.error_messages import (
@@ -35,14 +34,13 @@ from app.utils.functions import (
 )
 
 
-class BaseController:
+class BaseController(ServiceKafka):
     """
     BaseController use business
     """
 
     def __init__(self, current_user=None, pagination_params=None, is_init_oracle_session=True, kafka_message=None):
-        if kafka_message is None:
-            kafka_message = {}
+        super().__init__(kafka_message=kafka_message)
         self.current_user = current_user
         self.pagination_params = pagination_params
         self.errors = []
@@ -51,13 +49,6 @@ class BaseController:
         if is_init_oracle_session:
             logger.debug("Started session Oracle")
             self.oracle_session = SessionLocal()
-
-        if WRITE_LOG and kafka_message:
-            logger.debug("Started send message to KAFKA")
-            service_kafka.send_message(data={
-                'kafka_created_at': datetime_to_string(now()),
-                'message': kafka_message
-            })
 
     def _close_oracle_session(self):
         if self.oracle_session:

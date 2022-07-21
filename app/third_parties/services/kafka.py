@@ -8,7 +8,8 @@ from loguru import logger
 from starlette import status
 
 from app.api.base.except_custom import ExceptionHandle
-from app.utils.functions import date_to_string, datetime_to_string
+from app.settings.config import WRITE_LOG
+from app.utils.functions import date_to_string, datetime_to_string, now
 
 config = dotenv_values('.env')
 
@@ -26,7 +27,11 @@ def orjson_default(o):
 
 
 class ServiceKafka:
-    def __init__(self):
+    def __init__(self, kafka_message=None):
+        self.kafka_message = kafka_message
+        if self.kafka_message is None:
+            self.kafka_message = {}
+
         self.producer = Producer({
             # không handle lỗi để config sai .env thì raise luôn
             "bootstrap.servers": ",".join(json.loads(config.get("KAFKA_BOOTSTRAP_SERVERS"))),
@@ -37,6 +42,13 @@ class ServiceKafka:
             "message.max.bytes": config.get("KAFKA_MESSAGE_MAX_BYTES")
         })
         self.default_topic = config.get("KAFKA_PRODUCER_TOPIC")
+
+        if WRITE_LOG and kafka_message:
+            logger.debug("Started send message to KAFKA")
+            self.send_message(data={
+                'kafka_created_at': datetime_to_string(now()),
+                'message': self.kafka_message
+            })
 
     @staticmethod
     def ack(err, msg):
