@@ -19,3 +19,22 @@ async def repos_gw_get_retrieve_ebank_by_cif_number(
         )
 
     return ReposReturn(data=retrieve_ebank)
+
+
+async def repos_gw_get_open_ib(
+    request,
+    current_user
+):
+    current_user = current_user.user_info
+    is_success, open_ib = await service_gw.get_open_ib(
+        request=request, current_user=current_user
+    )
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="get_open_ib",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(open_ib)
+        )
+
+    return ReposReturn(data=open_ib)
