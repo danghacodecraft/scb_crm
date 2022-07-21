@@ -23,7 +23,7 @@ GWOrgInfoResponse.update_forward_refs()
 
 class GWOrgInfoFromParentResponse(BaseGWSchema):
     id: str = Field(..., description="Mã nhân viên")
-    parent_id: str = Field(..., description="Tên nhân viên")
+    # parent_id: str = Field(..., description="Tên nhân viên")
     name: str = Field(..., description="Tên đầy đủ")
     short_name: Optional[str] = Field(..., description="Địa điểm làm việc")
     path: str = Field(..., description="Địa chỉ email SCB")
