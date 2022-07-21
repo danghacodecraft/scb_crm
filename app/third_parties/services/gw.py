@@ -1803,66 +1803,24 @@ class ServiceGW:
         )
         api_url = f"{self.url}{GW_ENDPOINT_URL_PAY_IN_CASH_247_BY_ACCOUNT_NUMBER}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        return await self.call_api(
+            api_url=api_url,
+            request_data=request_data,
+            output_key='payInCash247byAccNum_out',
+            service_name='payInCash247byAccNum'
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW][Payment] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
 
     async def gw_payment_internal_transfer(self, current_user: UserInfoResponse, data_input):
         request_data = self.gw_create_request_body(
             current_user=current_user, function_name="internal_transfer_in", data_input=data_input)
         api_url = f"{self.url}{GW_ENDPOINT_URL_INTERNAL_TRANSFER}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        return await self.call_api(
+            api_url=api_url,
+            request_data=request_data,
+            output_key='internal_transfer_out',
+            service_name='internal_transfer'
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW][Payment] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
 
     async def gw_tele_transfer(self, current_user: UserInfoResponse, data_input):
         request_data = self.gw_create_request_body(
@@ -1895,67 +1853,24 @@ class ServiceGW:
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_INTERBANK_TRANSFER}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        return await self.call_api(
+            api_url=api_url,
+            request_data=request_data,
+            output_key='interbankTransfer_out',
+            service_name='interbankTransfer'
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW][Payment] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
 
     async def gw_payment_interbank_transfer_247_by_account_number(self, current_user: UserInfoResponse, data_input):
         request_data = self.gw_create_request_body(
             current_user=current_user, function_name="interbankTransfer247ByAccNum_in", data_input=data_input)
-
         api_url = f"{self.url}{GW_ENDPOINT_URL_INTERBANK_TRANSFER_247_BY_ACCOUNT_NUMBER}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        return await self.call_api(
+            api_url=api_url,
+            request_data=request_data,
+            output_key='interbankTransfer247ByAccNum_out',
+            service_name='interbankTransfer247ByAccNum'
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW][Payment] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
 
     async def gw_payment_interbank_transfer_247_by_card_number(self, current_user: UserInfoResponse, data_input):
         request_data = self.gw_create_request_body(
@@ -1963,34 +1878,12 @@ class ServiceGW:
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_INTERBANK_TRANSFER_247_BY_CARD_NUMBER}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        return await self.call_api(
+            api_url=api_url,
+            request_data=request_data,
+            output_key='interbankTransfer247ByCardNum_out',
+            service_name='interbankTransfer247ByCardNum'
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW][Payment] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
 
     async def gw_pay_in_cash_247_by_card_num(self, current_user: UserInfoResponse, data_input):
 
@@ -1999,34 +1892,12 @@ class ServiceGW:
         )
         api_url = f"{self.url}{GW_ENDPOINT_URL_PAY_IN_CASH_247_BY_CARD_NUMBER}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        return await self.call_api(
+            api_url=api_url,
+            request_data=request_data,
+            output_key='payInCash247byCardNum_out',
+            service_name='payInCash247byCardNum'
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW][Payment] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
 
     ####################################################################################################################
     # start --- user

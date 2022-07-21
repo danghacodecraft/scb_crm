@@ -1039,7 +1039,6 @@ class CtrGWPayment(BaseController):
             session=self.oracle_session
         ))
         form_data = orjson_loads(get_casa_transfer_info.form_data)
-        print(form_data)
         receiving_method = form_data['receiving_method']
         transfer_amount = form_data['amount']
 

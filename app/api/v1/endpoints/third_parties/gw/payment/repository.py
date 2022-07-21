@@ -356,7 +356,7 @@ async def repos_gw_save_casa_transfer_info(
         function_out = 'interbankTransfer_out'
 
     if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
-        is_success, tele_transfer_response_data = await service_gw.gw_interbank_transfer(
+        is_success, gw_casa_transfer = await service_gw.gw_interbank_transfer(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )
 
@@ -382,7 +382,6 @@ async def repos_gw_save_casa_transfer_info(
         return ReposReturn(is_error=True, msg="No GW Casa Transfer")
 
     casa_transfer = gw_casa_transfer.get(function_out, {})
-
     if not is_success or casa_transfer == {}:
         return ReposReturn(is_error=True, loc='repos_gw_save_casa_transfer_info', msg=ERROR_CALL_SERVICE_GW)
 
