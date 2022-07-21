@@ -107,7 +107,7 @@ class CtrIdentityMobile(BaseController):
                 image_file=front_side_image,
                 image_file_name=front_side_image_name,
                 identity_type=EKYC_IDENTITY_TYPE_PASSPORT,
-                booking_id=new_booking_id,
+                # booking_id=new_booking_id,
                 session=self.oracle_session
             ))
 
@@ -129,7 +129,7 @@ class CtrIdentityMobile(BaseController):
                     image_file=front_side_image,
                     image_file_name=front_side_image_name,
                     identity_type=EKYC_IDENTITY_TYPE_FRONT_SIDE_IDENTITY_CARD,
-                    booking_id=new_booking_id,
+                    # booking_id=new_booking_id,
                     session=self.oracle_session
                 ))
 
@@ -137,7 +137,7 @@ class CtrIdentityMobile(BaseController):
                     image_file=back_side_image,
                     image_file_name=back_side_image_name,
                     identity_type=EKYC_IDENTITY_TYPE_BACK_SIDE_IDENTITY_CARD,
-                    booking_id=new_booking_id,
+                    # booking_id=new_booking_id,
                     session=self.oracle_session
                 )))
 
@@ -146,7 +146,7 @@ class CtrIdentityMobile(BaseController):
                     image_file=front_side_image,
                     image_file_name=front_side_image_name,
                     identity_type=EKYC_IDENTITY_TYPE_FRONT_SIDE_CITIZEN_CARD,
-                    booking_id=new_booking_id,
+                    # booking_id=new_booking_id,
                     session=self.oracle_session
                 ))
 
@@ -154,7 +154,7 @@ class CtrIdentityMobile(BaseController):
                     image_file=back_side_image,
                     image_file_name=back_side_image_name,
                     identity_type=EKYC_IDENTITY_TYPE_BACK_SIDE_CITIZEN_CARD,
-                    booking_id=new_booking_id,
+                    # booking_id=new_booking_id,
                     session=self.oracle_session
                 )))
 
