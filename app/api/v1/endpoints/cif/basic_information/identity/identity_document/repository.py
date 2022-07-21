@@ -731,14 +731,12 @@ async def repos_upload_identity_document_and_ocr(
         identity_type: int,
         image_file: bytes,
         image_file_name: str,
-        session: Session,
-        booking_id: str = None
+        session: Session
 ):
     is_success, ocr_response = await service_ekyc.ocr_identity_document(
         file=image_file,
         filename=image_file_name,
-        identity_type=identity_type,
-        booking_id=booking_id
+        identity_type=identity_type
     )
     if not is_success:
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_EKYC, detail=ocr_response.get('message', ''))

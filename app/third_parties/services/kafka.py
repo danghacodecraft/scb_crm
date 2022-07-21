@@ -1,9 +1,10 @@
 from kafka import KafkaProducer
 
+from app.utils.constant.kafka import KAFKA_TOPIC
 from app.utils.functions import orjson_dumps
 
 
-class Kafka:
+class ServiceKafka:
     def __init__(self):
         self.sasl_mechanism = 'PLAIN'
         self.security_protocol = 'SASL_PLAINTEXT'
@@ -11,7 +12,7 @@ class Kafka:
         self.sasl_plain_username = "admin"
         self.sasl_plain_password = "admin"
 
-    def send_data(self, data: dict, topic: str = 'CRM_BE'):
+    def send_data(self, data: dict, topic: str = KAFKA_TOPIC):
         producer = KafkaProducer(
             bootstrap_servers=self.bootstrap_servers,
             value_serializer=orjson_dumps(data),
