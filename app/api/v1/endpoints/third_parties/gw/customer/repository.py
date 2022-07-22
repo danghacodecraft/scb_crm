@@ -147,7 +147,6 @@ async def repos_gw_open_cif(
     }
 
     is_success, response_data = await service_gw.open_cif(
-        cif_id=cif_id,
         data_input=data_input,
         current_user=current_user
     )

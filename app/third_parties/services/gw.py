@@ -1666,7 +1666,6 @@ class ServiceGW:
     ####################################################################################################################
     async def open_cif(
             self,
-            cif_id: str,
             data_input,
             current_user
     ):
@@ -1684,34 +1683,6 @@ class ServiceGW:
             service_name='OPEN_CIF'
         )
         return response_data
-        # return_errors = dict(
-        #     loc="SERVICE GW",
-        #     msg="",
-        #     detail=""
-        # )
-        # return_data = dict(
-        #     status=None,
-        #     data=None,
-        #     errors=return_errors
-        # )
-        #
-        # try:
-        #     async with self.session.post(url=api_url, json=request_data) as response:
-        #         logger.log("SERVICE", f"[GW] {response.status} {api_url}")
-        #         if response.status != status.HTTP_200_OK:
-        #             if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-        #                 return_error = await response.json()
-        #                 return_data.update(
-        #                     status=response.status,
-        #                     errors=return_error['errors']
-        #                 )
-        #             return False, return_data, request_data
-        #         else:
-        #             return_data = await response.json()
-        #             return True, return_data, request_data
-        # except Exception as ex:
-        #     logger.error(str(ex))
-        #     return False, {'message': str(ex)}, request_data
 
     ####################################################################################################################
     # END --- CIF
