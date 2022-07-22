@@ -16,7 +16,7 @@ from app.third_parties.oracle.models.master_data.customer import CustomerGender
 from app.utils.constant.cif import CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE
 from app.utils.constant.gw import (
     GW_DATE_FORMAT, GW_DATETIME_FORMAT,
-    GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE,
+    GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_OUT,
     GW_FUNC_SELECT_DISCIPLINE_INFO_FROM_CODE_OUT,
     GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE_OUT,
     GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_USERNAME_OUT,
@@ -125,7 +125,7 @@ class CtrGWEmployee(BaseController):
             staff_code=staff_code, current_user=current_user
         ))
 
-        employee_info = gw_employee_info[GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE]["data_output"]["employee_info"]
+        employee_info = gw_employee_info[GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_OUT]["data_output"]["employee_info"]
 
         department_info = employee_info['department_info']
 
