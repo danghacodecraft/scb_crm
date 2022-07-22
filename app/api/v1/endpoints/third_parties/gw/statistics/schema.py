@@ -169,14 +169,24 @@ class SelectStatisticBankingByPeriodDataOutput(BaseGWSchema):
 
 
 class SelectSummaryCardsByDateRequest(BaseSchema):
-    from_date: date = Field(..., description="Từ ngày")
-    to_date: date = Field(..., description="Đến ngày")
     region_id: str = Field('ALL', description="Mã vùng")
     branch_code: str = Field('ALL', description="Mã chi nhánh")
 
 
+class OpenSaleInternationalCardResponse(BaseGWSchema):
+    criterion_amt_week: int = Field(..., description="Tuần")
+    criterion_amt_month: int = Field(..., description="Tháng")
+    accumulated: int = Field(..., description="Lũy kế")
+
+
+class InternationalCardResponse(BaseGWSchema):
+    open: OpenSaleInternationalCardResponse = Field(..., description='Số lượng thẻ phát hành mới')
+    sales: OpenSaleInternationalCardResponse = Field(..., description='Doanh số thẻ')
+
+
 class SelectSummaryCardsByDateResponse(BaseGWSchema):
-    pass
+    international_debit_card: InternationalCardResponse = Field(..., description="Thông tin thẻ thanh toán quốc tế")
+    international_credit_card: InternationalCardResponse = Field(..., description="Thông tin thẻ tín dụng quốc tế")
 
 
 class SelectDataForChardDashBoardRequest(BaseSchema):

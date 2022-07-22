@@ -52,7 +52,7 @@ async def view_gw_select_summary_card_by_date(
     gw_select_summary_card_by_date = await CtrGWStatistic(current_user).ctr_gw_select_summary_card_by_date(
         request=request
     )
-    return ResponseData(**gw_select_summary_card_by_date)
+    return ResponseData[SelectSummaryCardsByDateResponse](**gw_select_summary_card_by_date)
 
 
 @router.post(
