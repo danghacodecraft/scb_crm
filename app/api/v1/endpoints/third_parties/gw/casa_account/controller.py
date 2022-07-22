@@ -249,18 +249,24 @@ class CtrGWCasaAccount(BaseController):
             self,
             account_number: str
     ):
+        current_user_info = self.current_user.user_info
         gw_check_exist_casa_account_info = self.call_repos(await repos_gw_get_casa_account_info(
             account_number=account_number,
-            current_user=self.current_user.user_info
+            current_user=current_user_info
         ))
         if not gw_check_exist_casa_account_info:
             return self.response(data=dict(is_existed=False))
         account_info = \
             gw_check_exist_casa_account_info['retrieveCurrentAccountCASA_out']['data_output']['customer_info'][
                 'account_info']
+        is_lower_core_fcc_date = False
+        account_open_date = string_to_date(account_info['account_open_date'], _format=DATETIME_INPUT_OUTPUT_FORMAT)
+        if account_open_date and account_open_date < current_user_info.fcc_current_date:
+            is_lower_core_fcc_date = True
 
         return self.response(data=dict(
-            is_existed=True if account_info['account_num'] else False
+            is_existed=True if account_info['account_num'] else False,
+            is_lower_core_fcc_date=is_lower_core_fcc_date
         ))
 
     async def ctr_gw_get_pie_chart_casa_account_info(self, request: GWReportPieChartHistoryAccountInfoRequest):
