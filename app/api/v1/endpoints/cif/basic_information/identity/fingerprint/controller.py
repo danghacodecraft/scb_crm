@@ -202,7 +202,7 @@ class CtrFingerPrint(BaseController):
         is_success, uuid_ekyc = await service_ekyc.upload_file(
             file=file_upload,
             name=file.filename,
-            booking_id=booking_id
+            # booking_id=booking_id
         )
 
         # body add finger call ekyc
@@ -211,7 +211,7 @@ class CtrFingerPrint(BaseController):
         }
 
         is_success_add_finger, id_finger = await service_ekyc.add_finger_ekyc(
-            booking_id=booking_id,
+            # booking_id=booking_id,
             json_body=json_body_add_finger
         )
         if not is_success_add_finger:
@@ -231,7 +231,7 @@ class CtrFingerPrint(BaseController):
             }
 
             is_success_compare, compare = await service_ekyc.compare_finger_ekyc(
-                booking_id=booking_id,
+                # booking_id=booking_id,
                 json_body=json_compare
             )
 

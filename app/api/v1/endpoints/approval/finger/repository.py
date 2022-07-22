@@ -58,7 +58,7 @@ async def repos_compare_finger_ekyc(
     }
     is_success, response = await service_ekyc.compare_finger_ekyc(
         json_body=json_body,
-        booking_id=booking_id
+        # booking_id=booking_id
     )
     if not is_success:
         return ReposReturn(is_error=True, msg=response['message'], loc="COMPARE_FINGERPRINT")

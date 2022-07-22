@@ -77,7 +77,9 @@ async def repos_check_is_exist_multi_file(uuids: List[str]) -> ReposReturn:
 
 
 async def repos_download_ekyc_file(uuid: str, booking_id: Optional[str]) -> ReposReturn:
-    is_success, response = await service_ekyc.download_file(uuid=uuid, booking_id=booking_id)
+    is_success, response = await service_ekyc.download_file(uuid=uuid,
+                                                            # booking_id=booking_id
+                                                            )
     if not is_success:
         return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_FILE)
 
