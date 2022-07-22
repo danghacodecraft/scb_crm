@@ -1,3 +1,4 @@
+from datetime import date
 from typing import List, Optional
 
 from pydantic import Field
@@ -24,6 +25,7 @@ class UserInfoResponse(BaseSchema):
     hrm_position_id: str = Field(None, description="ID Chức vụ")
     hrm_position_code: str = Field(None, description="Mã Chức vụ")
     hrm_position_name: str = Field(None, description="Tên Chức vụ")
+    fcc_current_date: date = Field(None, description="Ngày giao dịch trên hệ thống")
 
 
 class PermissionResponse(BaseSchema):
