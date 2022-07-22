@@ -272,3 +272,11 @@ def get_index_positions(list_of_elements, element):
         except ValueError:
             break
     return index_position_list
+
+
+def calculate_percentage(unit, total):
+    try:
+        percentage = round(unit / total * 100, 2)
+    except ZeroDivisionError:
+        return None
+    return percentage

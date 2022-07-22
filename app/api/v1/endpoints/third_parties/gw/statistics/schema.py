@@ -187,12 +187,12 @@ class SelectDataForChardDashBoardRequest(BaseSchema):
 
 
 class PercentSelectDataForChardDashBoardResponse(BaseGWSchema):
-    cif_open_count: float = Field(..., description="Mở CIF")
-    tktt_open_count: float = Field(..., description="Mở Tiết Kiệm")
-    tktt_count_close_count: float = Field(..., description="Tất toán")
-    tktt_td_count: float = Field(..., description="Thẻ")
-    count_mortgage_loan_count: float = Field(..., description="Vay Cầm Cố")
-    other: float = Field(..., description="Khác")
+    cif_open_count: Optional[float] = Field(..., description="Mở CIF")
+    tktt_open_count: Optional[float] = Field(..., description="Mở Tiết Kiệm")
+    tktt_count_close_count: Optional[float] = Field(..., description="Tất toán")
+    tktt_td_count: Optional[float] = Field(..., description="Thẻ")
+    count_mortgage_loan_count: Optional[float] = Field(..., description="Vay Cầm Cố")
+    other: Optional[float] = Field(..., description="Khác")
 
     @validator('*')
     def check_negative_number(cls, number):
