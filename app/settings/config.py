@@ -65,3 +65,5 @@ if os.getenv("DEBUG", True):
         total = time.time() - conn.info['query_start_time'].pop(-1)
         logger.success("Query Complete!")
         logger.info(f"Total Time: {total * 1000} ms\n")
+
+WRITE_LOG = os.getenv("KAFKA_WRITE_LOG")

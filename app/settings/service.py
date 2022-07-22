@@ -52,5 +52,14 @@ SERVICE = {
     "gw": {
         "url": os.getenv("SERVICE_GW_URL"),
         "bypass": bool(os.getenv("SERVICE_GW_BYPASS", "") if os.getenv("SERVICE_GW_BYPASS", "") in ["True", "true", "1"] else False)
+    },
+    "kafka": {
+        "sasl_mechanism": os.getenv("KAFKA_SASL_MECHANISM"),
+        "bootstrap_servers": os.getenv("KAFKA_BOOTSTRAP_SERVERS"),
+        "security_protocol": os.getenv("KAFKA_SECURITY_PROTOCOL"),
+        "sasl_plain_username": os.getenv("KAFKA_SASL_PLAIN_USERNAME"),
+        "sasl_plain_password": os.getenv("KAFKA_SASL_PLAIN_PASSWORD"),
+        "producer_topic": os.getenv("KAFKA_PRODUCER_TOPIC"),
+        "message_max_bytes": os.getenv("KAFKA_MESSAGE_MAX_BYTES"),
     }
 }

@@ -22,6 +22,7 @@ from app.api.v1.endpoints.repository import (
 )
 from app.api.v1.endpoints.user.schema import AuthResponse, UserInfoResponse
 from app.third_parties.oracle.base import Base, SessionLocal
+from app.third_parties.services.kafka import ServiceKafka
 from app.utils.constant.cif import PROFILE_HISTORY_DESCRIPTIONS
 from app.utils.constant.ekyc import is_success
 from app.utils.error_messages import (
@@ -33,12 +34,13 @@ from app.utils.functions import (
 )
 
 
-class BaseController:
+class BaseController(ServiceKafka):
     """
     BaseController use business
     """
 
-    def __init__(self, current_user=None, pagination_params=None, is_init_oracle_session=True):
+    def __init__(self, current_user=None, pagination_params=None, is_init_oracle_session=True, kafka_message=None):
+        super().__init__(kafka_message=kafka_message)
         self.current_user = current_user
         self.pagination_params = pagination_params
         self.errors = []
