@@ -1,7 +1,7 @@
 from datetime import date
 from typing import List, Optional
 
-from pydantic import Field
+from pydantic import Field, validator
 
 from app.api.base.schema import BaseGWSchema, BaseSchema
 
@@ -166,3 +166,47 @@ class SelectStatisticBankingByPeriodDataOutput(BaseGWSchema):
     total_debit_card_open_list: List[SelectStatisticBankingByPeriodTotalDebitCardOpenListResponse]
     total_ebank_open_list: List[SelectStatisticBankingByPeriodTotalEbankOpenListResponse]
     total_credit_card_open_list: List[SelectStatisticBankingByPeriodTotalCreditCardOpenListResponse]
+
+
+class SelectSummaryCardsByDateRequest(BaseSchema):
+    from_date: date = Field(..., description="Từ ngày")
+    to_date: date = Field(..., description="Đến ngày")
+    region_id: str = Field('ALL', description="Mã vùng")
+    branch_code: str = Field('ALL', description="Mã chi nhánh")
+
+
+class SelectSummaryCardsByDateResponse(BaseGWSchema):
+    pass
+
+
+class SelectDataForChardDashBoardRequest(BaseSchema):
+    from_date: date = Field(..., description="Từ ngày")
+    to_date: date = Field(..., description="Đến ngày")
+    region_id: str = Field('ALL', description="Mã vùng")
+    branch_code: str = Field('ALL', description="Mã chi nhánh")
+
+
+class PercentSelectDataForChardDashBoardResponse(BaseGWSchema):
+    cif_open_count: float = Field(..., description="Mở CIF")
+    tktt_open_count: float = Field(..., description="Mở Tiết Kiệm")
+    tktt_count_close_count: float = Field(..., description="Tất toán")
+    tktt_td_count: float = Field(..., description="Thẻ")
+    count_mortgage_loan_count: float = Field(..., description="Vay Cầm Cố")
+    other: float = Field(..., description="Khác")
+
+    @validator('*')
+    def check_negative_number(cls, number):
+        if number < 0:
+            return 0
+        return number
+
+
+class TotalSelectDataForChardDashBoardResponse(PercentSelectDataForChardDashBoardResponse):
+    company_customer_open_count: int = Field(..., description="Khách hàng mới - Khối DN")
+    individual_customer_open_count: int = Field(..., description="Khách hàng mới - Khối PFS")
+    total_trn_ref_no_count: int = Field(..., description="Tổng số bút toán")
+
+
+class SelectDataForChardDashBoardResponse(BaseGWSchema):
+    total: TotalSelectDataForChardDashBoardResponse = Field(..., description="")
+    percent: PercentSelectDataForChardDashBoardResponse = Field(..., description="")

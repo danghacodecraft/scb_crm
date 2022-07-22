@@ -26,7 +26,7 @@ async def view_save_casa_top_up_info(
         request: CasaTopUpRequest = Body(...),
         current_user=Depends(get_current_user_from_header())
 ):
-    casa_top_up_info = await CtrCasaTopUp(current_user).ctr_save_casa_top_up_info(
+    casa_top_up_info = await CtrCasaTopUp(current_user=current_user, kafka_message=request.dict()).ctr_save_casa_top_up_info(
         booking_id=BOOKING_ID,
         request=request
     )
@@ -50,5 +50,4 @@ async def view_get_casa_top_up_info(
     get_casa_top_up_info = await CtrCasaTopUp(current_user).ctr_get_casa_top_up_info(
         booking_id=BOOKING_ID
     )
-    return ResponseData(**get_casa_top_up_info)
     return ResponseData[CasaTopUpResponse](**get_casa_top_up_info)

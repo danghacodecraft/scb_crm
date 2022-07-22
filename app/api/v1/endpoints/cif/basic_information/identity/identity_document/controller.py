@@ -752,7 +752,7 @@ class CtrIdentityDocument(BaseController):
         is_success, compare_response = await service_ekyc.compare_face(
             face_uuid=compare_face_uuid_ekyc,
             avatar_image_uuid=identity_avatar_image_uuid,
-            booking_id=booking_id
+            # booking_id=booking_id
         )
 
         if not is_success:

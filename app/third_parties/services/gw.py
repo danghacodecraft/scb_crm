@@ -56,9 +56,11 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_SELECT_BRANCH_BY_BRANCH_ID,
     GW_ENDPOINT_URL_SELECT_BRANCH_BY_REGION_ID,
     GW_ENDPOINT_URL_SELECT_CATEGORY,
+    GW_ENDPOINT_URL_SELECT_DATA_FOR_CHART_DASHBOARD,
     GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE,
     GW_ENDPOINT_URL_SELECT_SERIAL_NUMBER,
     GW_ENDPOINT_URL_SELECT_STATISTIC_BANKING_BY_PERIOD,
+    GW_ENDPOINT_URL_SELECT_SUMMARY_CARD_BY_DATE,
     GW_ENDPOINT_URL_SELECT_USER_INFO, GW_ENDPOINT_URL_TELE_TRANSFER,
     GW_ENDPOINT_URL_TT_LIQUIDATION, GW_ENDPOINT_URL_WITHDRAW,
     GW_FUNC_AMOUNT_BLOCK, GW_FUNC_AMOUNT_BLOCK_IN, GW_FUNC_AMOUNT_BLOCK_OUT,
@@ -2082,6 +2084,32 @@ class ServiceGW:
             api_url=api_url,
             output_key=GW_FUNC_SELECT_STATISTIC_BANKING_BY_PERIOD_OUT,
             service_name=GW_FUNC_SELECT_STATISTIC_BANKING_BY_PERIOD
+        )
+        return response_data
+
+    async def select_summary_card_by_date(self, current_user: UserInfoResponse, data_input):
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="selectSummaryCardsByDate_in", data_input=data_input
+        )
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_SUMMARY_CARD_BY_DATE}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='selectSummaryCardsByDate_out',
+            service_name='selectSummaryCardsByDate'
+        )
+        return response_data
+
+    async def select_data_for_chard_dashboard(self, current_user: UserInfoResponse, data_input):
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="selectDataForChartDashBoard_in", data_input=data_input
+        )
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_DATA_FOR_CHART_DASHBOARD}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='selectDataForChartDashBoard_out',
+            service_name='selectDataForChartDashBoard'
         )
         return response_data
     ####################################################################################################################
