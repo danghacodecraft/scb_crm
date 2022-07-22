@@ -19,7 +19,7 @@ from app.third_parties.oracle.models.cif.basic_information.personal.model import
     CustomerIndividualInfo
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, TransactionDaily, TransactionSender
+    Booking, BookingBusinessForm, TransactionDaily, TransactionSender
 )
 from app.third_parties.oracle.models.cif.payment_account.model import (
     CasaAccount
@@ -30,11 +30,11 @@ from app.third_parties.oracle.models.master_data.address import (
 from app.third_parties.oracle.models.master_data.others import (
     AverageIncomeAmount, TransactionJob
 )
-from app.utils.constant.cif import IMAGE_TYPE_FACE
-from app.utils.constant.gw import GW_RESPONSE_STATUS_SUCCESS
+from app.utils.constant.cif import BUSINESS_FORM_OPEN_CIF_PD, IMAGE_TYPE_FACE
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_GW, ERROR_NO_DATA, ERROR_OPEN_CIF
 )
+from app.utils.functions import generate_uuid, now, orjson_dumps
 
 
 async def repos_gw_get_customer_info_list(
@@ -131,33 +131,51 @@ async def repos_gw_get_authorized(
     return ReposReturn(data=authorized)
 
 
+@auto_commit
 async def repos_gw_open_cif(
         cif_id: str,
+        booking_id: str,
         customer_info: dict,
         account_info: dict,
         current_user,
         transaction_jobs: List,
         session: Session
 ):
+    data_input = {
+        "customer_info": customer_info,
+        "account_info": account_info
+    }
+
     is_success, response_data = await service_gw.open_cif(
-        cif_id=cif_id,
-        customer_info=customer_info,
-        account_info=account_info,
+        data_input=data_input,
         current_user=current_user
     )
-    if response_data.get('openCIFAuthorise_out').get('transaction_error_code') != GW_RESPONSE_STATUS_SUCCESS:
+    booking_business_form_id = generate_uuid()
+
+    saving_booking_business_form = {
+        "booking_id": booking_id,
+        "business_form_id": BUSINESS_FORM_OPEN_CIF_PD,
+        "booking_business_form_id": booking_business_form_id,
+        "save_flag": True,
+        "is_success": True,
+        "created_at": now(),
+        "form_data": orjson_dumps(data_input),
+        "out_data": orjson_dumps(response_data),
+    }
+    if not is_success:
+        saving_booking_business_form.update({
+            "is_success": False
+        })
         for transaction_job in transaction_jobs:
             transaction_job.update({
                 "complete_flag": False,
-                "error_code": ERROR_OPEN_CIF,
-                "error_desc": response_data.get('openCIFAuthorise_out', {}).get('transaction_info', {}).get(
-                    'transaction_error_msg')
+                "error_code": ERROR_OPEN_CIF
             })
-    # insert transaction_job
+
+    session.add(BookingBusinessForm(**saving_booking_business_form))
     session.bulk_save_objects(
         TransactionJob(**transaction_job) for transaction_job in transaction_jobs
     )
-    session.commit()
 
     return ReposReturn(data=(is_success, response_data))
 
@@ -228,7 +246,7 @@ async def repos_get_customer_open_cif(
     ).all()
 
     if not customer:
-        return ReposReturn(is_error=True, msg=ERROR_NO_DATA)
+        return ReposReturn(is_error=True, msg=ERROR_NO_DATA, loc="CUSTOMER_OPEN_CIF")
 
     return ReposReturn(data=customer)
 
