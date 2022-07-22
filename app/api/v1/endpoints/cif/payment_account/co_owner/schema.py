@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date
 from typing import List, Optional
 
 from pydantic import Field
@@ -7,19 +7,10 @@ from app.api.base.schema import BaseSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
 from app.api.v1.schemas.utils import DropdownRequest, OptionalDropdownResponse
 
+
 ############################################################
 # Response
 ############################################################
-
-
-class FileUuidResponse(BaseSchema):
-    uuid: str = Field(..., description="Uuid")
-    file_url: str = Field(..., description="Url của file")
-    file_name: str = Field(..., description="Tên file")
-    file_content_type: str = Field(..., description="Loại file")
-    file_size: int = Field(..., description="File size")
-
-
 class SignatureResponse(BaseSchema):
     id: str = Field(..., description="Mã mẫu chữ ký")
     image_url: str = Field(..., description="Ảnh mẫu chữ ký")
@@ -77,20 +68,38 @@ class AgreementAuthorResponse(BaseSchema):
     )
 
 
+class CoOwnerInfoResponse(BaseSchema):
+    full_name_vn: str = Field(..., description="Tên tiếng việt của khách hàng")
+    avatar_url: str = Field(..., description="Url ảnh đại diện của khách hàng")
+
+
+class FileUuidInfoResponse(BaseSchema):
+    uuid: str = Field(..., description="Uuid file")
+    file_url: str = Field(..., description="Url của file")
+    file_name: str = Field(..., description="Tên file")
+    file_content_type: str = Field(..., description="Loại file")
+    file_size: str = Field(..., description="Kích thước file")
+
+
+class DocumentListResponse(BaseSchema):
+    file_uuid: FileUuidInfoResponse = Field(..., description="Thông tin file")
+
+
 class GetCoOwnerResponse(BaseSchema):
-    joint_account_holder_flag: bool = Field(
-        ..., description="Có đồng chủ sở hữu. `True`: Có , `False`: Không"
-    )
-    document_no: str = Field(..., description="Số văn bản")
-    created_at: datetime = Field(..., description="Ngày lập")
-    address_flag: bool = Field(..., description="Nơi lập")
-    document_address: Optional[str] = Field(None, description="Thông tin địa chỉ file")
-    file_uuid: FileUuidResponse = Field(..., description="Tập tin đính kèm")
     number_of_joint_account_holder: int = Field(..., description="Số lượng đồng sở hữu")
+    co_owner_info: List[CoOwnerInfoResponse] = Field(..., description="Số lượng đồng sở hữu")
     joint_account_holders: List[JointAccountHoldersResponse] = Field(..., description="Thông tin đồng sở hữu")
     agreement_authorization: List[AgreementAuthorResponse] = Field(
         ..., description="Danh mục thỏa thuận và ủy quyền"
     )
+    document_list: List[DocumentListResponse] = Field(..., description="Thông tin đồng sở hữu")
+
+
+class ListCoOwnerResponse(BaseSchema):
+    document_no: str = Field(..., description="Số văn bản")
+    create_at: date = Field(..., description="Ngày lập")
+    expiration_date: date = Field(..., description="Ngày hết hiệu lực")
+    document_address: str = Field(..., description="Nơi lập")
 
 
 ############################################################
@@ -123,14 +132,11 @@ class AgreementAuthorRequest(BaseSchema):
 
 
 class AccountHolderRequest(BaseSchema):
-    joint_account_holder_flag: bool = Field(
-        ..., description="Có đồng chủ sở hữu. `True`: Có , `False`: Không"
-    )
     document_no: str = Field(..., description="Số văn bản")
     create_at: date = Field(..., description="Ngày lập")
-    address_flag: bool = Field(..., description="Nơi lập")
-    document_address: Optional[str] = Field(None, description="Thông tin địa chỉ file")
-    file_uuid: str = Field(..., description="Tập tin đính kèm")
+    document_address: str = Field(..., description="Nơi lập")
+    expiration_date: Optional[date] = Field(None, description="Ngày hết hạn")
+    file_uuid: Optional[str] = Field(None, description="Tập tin đính kèm")
     joint_account_holders: List[AccountRequest] = Field(
         ..., description="Danh sách các đồng sở hữu"
     )

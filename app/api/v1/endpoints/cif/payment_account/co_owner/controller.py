@@ -1,8 +1,9 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.payment_account.co_owner.repository import (
-    repos_account_co_owner, repos_check_cif_id, repos_check_file_id,
-    repos_get_casa_account, repos_get_co_owner, repos_get_co_owner_signatures,
-    repos_get_file_uuid, repos_save_co_owner
+    repos_acc_agree_info, repos_account_co_owner, repos_check_acc_agree,
+    repos_check_cif_id, repos_check_file_id, repos_get_casa_account,
+    repos_get_co_owner, repos_get_co_owner_signatures, repos_get_file_uuid,
+    repos_save_co_owner
 )
 from app.api.v1.endpoints.cif.payment_account.co_owner.schema import (
     AccountHolderRequest
@@ -21,7 +22,8 @@ from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.gw import GW_REQUEST_PARAMETER_CO_OWNER
 from app.utils.error_messages import (
     ERROR_ACCOUNT_ID_DOES_NOT_EXIST, ERROR_CIF_ID_NOT_EXIST,
-    ERROR_CIF_NUMBER_NOT_EXIST, ERROR_DOCUMENT_ID_DOES_NOT_EXIST
+    ERROR_CIF_NUMBER_EXIST, ERROR_CIF_NUMBER_NOT_EXIST,
+    ERROR_DOCUMENT_ID_DOES_NOT_EXIST, ERROR_DOCUMENT_NO_DOES_NOT_EXIST
 )
 from app.utils.functions import dropdown, generate_uuid
 
@@ -41,6 +43,18 @@ class CtrCoOwner(BaseController):
         # lấy casa_account_id theo số cif_id
         casa_account = self.call_repos(
             await repos_get_casa_account(cif_id=cif_id, session=self.oracle_session)
+        )
+        if not casa_account:
+            return self.response_exception(
+                msg=ERROR_CIF_NUMBER_EXIST, loc=f"cif_id: {cif_id}"
+            )
+
+        # Check acc_agree
+        self.call_repos(
+            await repos_check_acc_agree(
+                account_id=casa_account,
+                session=self.oracle_session
+            )
         )
 
         # Check exist file_id
@@ -75,11 +89,10 @@ class CtrCoOwner(BaseController):
 
         uuid = generate_uuid()
         save_info_co_owner = {
-            "active_flag": co_owner.joint_account_holder_flag,
             "joint_acc_agree_id": uuid,
             "joint_acc_agree_document_no": co_owner.document_no,
             "created_at": co_owner.create_at,
-            "in_scb_flag": co_owner.address_flag,
+            "end_date": co_owner.expiration_date,
             "joint_acc_agree_document_address": co_owner.document_address,
             "casa_account_id": casa_account,
             "joint_acc_agree_document_file_id": file_id
@@ -128,7 +141,7 @@ class CtrCoOwner(BaseController):
 
         return self.response(data=co_owner_data)
 
-    async def ctr_co_owner(self, cif_id: str, booking_id: str):
+    async def ctr_list_co_owner(self, cif_id: str, booking_id: str):
         # Check exist Booking
         await CtrBooking().ctr_get_booking_and_validate(
             business_type_code=BUSINESS_TYPE_INIT_CIF,
@@ -157,19 +170,77 @@ class CtrCoOwner(BaseController):
                 msg=ERROR_ACCOUNT_ID_DOES_NOT_EXIST, loc=account_id
             )
 
-        document_uuid = self.call_repos(await repos_get_file_uuid(
-            document_id=account_co_owner.joint_acc_agree_document_file_id,
-            session=self.oracle_session
-        ))
+        response_data = []
+        for account_co_owner in account_co_owner:
+            response_data.append(dict(
+                document_no=account_co_owner.joint_acc_agree_document_no,
+                document_address=account_co_owner.joint_acc_agree_document_address,
+                created_at=account_co_owner.created_at,
+                expiration_date=account_co_owner.end_date
+            ))
 
-        if not document_uuid:
+        return self.response(data=response_data)
+
+    async def ctr_co_owner_info(self, document_no: str, cif_id: str, booking_id: str):
+        # Check exist Booking
+        await CtrBooking().ctr_get_booking_and_validate(
+            business_type_code=BUSINESS_TYPE_INIT_CIF,
+            booking_id=booking_id,
+            check_correct_booking_flag=False,
+            loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
+        )
+
+        # Check exist cif_id
+        account_id = self.call_repos(
+            await repos_check_cif_id(
+                cif_id=cif_id,
+                session=self.oracle_session))
+
+        if not account_id:
             return self.response_exception(
-                msg=ERROR_DOCUMENT_ID_DOES_NOT_EXIST, loc=account_co_owner.joint_acc_agree_document_file_id
+                msg=ERROR_CIF_ID_NOT_EXIST, loc=account_id
             )
 
-        document_uuids = [document_uuid]
-        # gọi đến service file để lấy link download
-        uuid__link_downloads = await self.get_info_multi_file(uuids=document_uuids)
+        account_co_owner = self.call_repos(await repos_account_co_owner(
+            account_id=account_id,
+            session=self.oracle_session
+        ))
+        if not account_co_owner:
+            return self.response_exception(
+                msg=ERROR_ACCOUNT_ID_DOES_NOT_EXIST, loc=account_id
+            )
+
+        # Check document_no
+        acc_agree_infos = self.call_repos(
+            await repos_acc_agree_info(
+                document_no=document_no,
+                session=self.oracle_session
+            )
+        )
+
+        if not acc_agree_infos:
+            return self.response_exception(
+                msg=ERROR_DOCUMENT_NO_DOES_NOT_EXIST, loc=f"document_no: {document_no}"
+            )
+
+        document_list = []
+        for file_id in acc_agree_infos:
+            document_uuid = self.call_repos(await repos_get_file_uuid(
+                document_id=file_id.joint_acc_agree_document_file_id,
+                session=self.oracle_session
+            ))
+
+            if not document_uuid:
+                return self.response_exception(
+                    msg=ERROR_DOCUMENT_ID_DOES_NOT_EXIST, loc=f"document_no: {document_uuid}"
+                )
+
+            document_uuids = [document_uuid]
+            # gọi đến service file để lấy link download
+            uuid__link_downloads = await self.get_info_multi_file(uuids=document_uuids)
+            document_list.append(dict(
+                file_uuid=uuid__link_downloads[document_uuid],
+            ))
 
         account_holders, account_holder_signs = self.call_repos(
             await repos_get_co_owner(
@@ -182,6 +253,8 @@ class CtrCoOwner(BaseController):
         agreement_authorizations = []
         signature_list = []
         cif_numbers = []
+        co_owner_info = []
+        response_data = []
 
         for casa_account, acc_joint_acc_agree, joint_account_holder, customer_relationship_type in account_holders:
             cif_number = joint_account_holder.cif_num
@@ -200,11 +273,16 @@ class CtrCoOwner(BaseController):
 
             basic_information = gw_data['basic_information']
             address_information = gw_data['address_information']
+            avatar_url = gw_data['avatar_url']
 
             gender_name = basic_information["gender"]["name"]
             dropdown_gender = await self.dropdown_mapping_crm_model_or_dropdown_name(
                 model=CustomerGender, name=None, code=gender_name
             )
+            co_owner_info.append(dict(
+                full_name_vn=basic_information['full_name_vn'],
+                avatar_url=avatar_url,
+            ))
 
             nationality_name = basic_information['nationality']["name"]
             dropdown_nationality = await self.dropdown_mapping_crm_model_or_dropdown_name(
@@ -267,16 +345,11 @@ class CtrCoOwner(BaseController):
             if agreement_authorizations[idx]['method_sign'] == 3:
                 agreement_authorizations[idx]["signature_list"] = signature_list
 
-        response_data = dict(
-            joint_account_holder_flag=account_co_owner.active_flag,
-            document_no=account_co_owner.joint_acc_agree_document_no,
-            created_at=account_co_owner.created_at,
-            address_flag=account_co_owner.in_scb_flag,
-            document_address=account_co_owner.joint_acc_agree_document_address,
-            file_uuid=uuid__link_downloads[document_uuid],
-
+        response_data.append(dict(
             number_of_joint_account_holder=number_of_joint_account_holder,
+            co_owner_info=co_owner_info,
             joint_account_holders=joint_account_holders,
-            agreement_authorization=agreement_authorizations
-        )
+            agreement_authorization=agreement_authorizations,
+            document_list=document_list
+        ))
         return self.response(data=response_data)
