@@ -736,7 +736,7 @@ class CtrGWCasaAccount(BaseController):
             p_blk_charge=""
         )
 
-        _, gw_payment_amount_block, _ = self.call_repos(await repos_gw_withdraw(
+        _, gw_payment_amount_block = self.call_repos(await repos_gw_withdraw(
             current_user=current_user,
             booking_id=booking_id,
             request_data_gw=data_input,
