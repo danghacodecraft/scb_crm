@@ -1,6 +1,6 @@
 import json
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -44,6 +44,25 @@ async def repos_check_casa_account(account_id: str, session: Session) -> ReposRe
     ).scalar()
 
     return ReposReturn(data=casa_account)
+
+
+async def repos_check_acc_agree(account_id: str, session: Session) -> ReposReturn:
+    acc_agree_info = session.execute(
+        select(JointAccountHolderAgreementAuthorization)
+        .filter(JointAccountHolderAgreementAuthorization.casa_account_id == account_id)
+    ).scalar()
+
+    if acc_agree_info:
+        session.execute(delete(JointAccountHolderAgreementAuthorization).filter(
+            JointAccountHolderAgreementAuthorization.casa_account_id == account_id))
+
+        session.execute(delete(JointAccountHolder).filter(
+            JointAccountHolder.joint_acc_agree_id == acc_agree_info.joint_acc_agree_id))
+
+        session.execute(delete(MethodSign).filter(
+            MethodSign.joint_acc_agree_id == acc_agree_info.joint_acc_agree_id))
+
+    return ReposReturn(data=acc_agree_info)
 
 
 async def repos_check_file_id(file_uuid: str, session: Session) -> ReposReturn:
