@@ -33,8 +33,8 @@ from app.third_parties.oracle.models.master_data.others import BusinessJob
 from app.third_parties.services.idm import ServiceIDM
 from app.utils.constant.approval import (
     APPROVE_AUDIT_STAGES, APPROVE_SUPERVISOR_STAGES, CIF_STAGE_APPROVE_KSS,
-    CIF_STAGE_APPROVE_KSV, CIF_STAGE_COMPLETED, CIF_STAGE_INIT,
-    COMPLETED_STAGES, INIT_RESPONSE, INIT_STAGES, STAGE_BEGINS
+    CIF_STAGE_APPROVE_KSV, CIF_STAGE_INIT, COMPLETED_STAGES, INIT_RESPONSE,
+    INIT_STAGES, STAGE_BEGINS
 )
 from app.utils.constant.business_type import (
     BUSINESS_TYPE_CASA_TOP_UP, BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_WITHDRAW,
@@ -885,7 +885,7 @@ class CtrApproval(BaseController):
                 ))
             current_stage_code = current_stage.code
 
-        if current_stage_code == CIF_STAGE_COMPLETED:
+        if current_stage_code in COMPLETED_STAGES:
             return self.response(
                 data=dict(
                     cif_id=cif_id,
