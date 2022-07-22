@@ -12,6 +12,7 @@ from app.utils.constant.gw import (
     GW_DASHBOARD_TKTT_COUNT_OPEN, GW_DASHBOARD_TOTAL_TRN_REF_NO
 )
 from app.utils.error_messages import ERROR_CALL_SERVICE_GW
+from app.utils.functions import calculate_percentage
 
 
 class CtrGWStatistic(BaseController):
@@ -113,47 +114,21 @@ class CtrGWStatistic(BaseController):
             + total_count_mortgage_loan_count
         )
 
-        percent_cif_open_count = 0
-        try:
-            percent_cif_open_count = total_cif_open_count / total_trn_ref_no_count
-        except ZeroDivisionError:
-            pass
+        percent_cif_open_count = calculate_percentage(total_cif_open_count, total_trn_ref_no_count)
 
-        percent_tktt_open_count = 0
-        try:
-            percent_tktt_open_count = total_tktt_open_count / total_trn_ref_no_count
-        except ZeroDivisionError:
-            pass
+        percent_tktt_open_count = calculate_percentage(total_tktt_open_count, total_trn_ref_no_count)
 
-        percent_tktt_count_close_count = 0
-        try:
-            percent_tktt_count_close_count = total_tktt_count_close_count / total_trn_ref_no_count
-        except ZeroDivisionError:
-            pass
+        percent_tktt_count_close_count = calculate_percentage(total_tktt_count_close_count, total_trn_ref_no_count)
 
-        percent_tktt_td_count = 0
-        try:
-            percent_tktt_td_count = total_tktt_td_count / total_trn_ref_no_count
-        except ZeroDivisionError:
-            pass
+        percent_tktt_td_count = calculate_percentage(total_tktt_td_count, total_trn_ref_no_count)
 
-        percent_count_mortgage_loan_count = 0
-        try:
-            percent_count_mortgage_loan_count = total_count_mortgage_loan_count / total_trn_ref_no_count
-        except ZeroDivisionError:
-            pass
+        percent_count_mortgage_loan_count = calculate_percentage(total_count_mortgage_loan_count, total_trn_ref_no_count)
 
-        percent_trn_ref_no_count = 0
-        try:
-            percent_trn_ref_no_count = total_trn_ref_no_count / total_trn_ref_no_count
-        except ZeroDivisionError:
-            pass
-
-        percent_other = 0
-        try:
-            percent_other = total_other / total_trn_ref_no_count
-        except ZeroDivisionError:
-            pass
+        percent_other = 100 - (percent_cif_open_count
+                               + percent_tktt_open_count
+                               + percent_tktt_count_close_count
+                               + percent_tktt_td_count
+                               + percent_count_mortgage_loan_count)
 
         response_data = dict(
             total=dict(
@@ -173,7 +148,6 @@ class CtrGWStatistic(BaseController):
                 tktt_count_close_count=percent_tktt_count_close_count,
                 tktt_td_count=percent_tktt_td_count,
                 count_mortgage_loan_count=percent_count_mortgage_loan_count,
-                trn_ref_no_count=percent_trn_ref_no_count,
                 other=percent_other
             )
         )
