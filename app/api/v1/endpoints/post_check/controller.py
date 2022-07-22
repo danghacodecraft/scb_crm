@@ -26,7 +26,8 @@ from app.utils.constant.cif import (
 from app.utils.constant.ekyc import (
     EKYC_DATE_FORMAT, EKYC_DEFAULT_VALUE, EKYC_REGION_ZONE_MAPPING,
     ERROR_CODE_EKYC, GROUP_ROLE_CODE_AP, GROUP_ROLE_CODE_IN,
-    GROUP_ROLE_CODE_VIEW, MENU_CODE, MENU_CODE_VIEW
+    GROUP_ROLE_CODE_VIEW, MENU_CODE, MENU_CODE_VIEW, STATUS_CLOSE,
+    STATUS_FAILED, STATUS_OPEN
 )
 from app.utils.error_messages import ERROR_PERMISSION, MESSAGE_STATUS
 from app.utils.functions import (
@@ -436,15 +437,15 @@ class CtrKSS(BaseController):
                 if key == "AC_STAT_NO_DR":
                     if value == "N":
                         customer_detail.update(dict(
-                            account_status="Mở"
+                            account_status=STATUS_OPEN
                         ))
                     else:
                         customer_detail.update(dict(
-                            account_status="Đóng"
+                            account_status=STATUS_CLOSE
                         ))
-        for ekyc_step in customer_detail['ekyc_step']:
-            if 'FAILED' in ekyc_step['step_status']:
-                customer_detail['error_code_ekyc'] = ERROR_CODE_EKYC[ekyc_step['step']]
+        if customer_detail['ekyc_step']:
+            if STATUS_FAILED in customer_detail['ekyc_step'][0]:
+                customer_detail['error_code_ekyc'] = ERROR_CODE_EKYC[customer_detail['ekyc_step'][0]]
 
         return self.response(data=customer_detail)
 
