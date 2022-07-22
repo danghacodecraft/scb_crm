@@ -8,6 +8,7 @@ from app.api.v1.endpoints.config import router as routers_config
 from app.api.v1.endpoints.dashboard import router as routers_dashboard
 from app.api.v1.endpoints.deposit import router as router_deposit
 from app.api.v1.endpoints.document_file import view as view_document_file
+from app.api.v1.endpoints.ekyc import view as view_ekyc
 from app.api.v1.endpoints.file import view as views_file
 from app.api.v1.endpoints.mobile import view as router_mobile
 from app.api.v1.endpoints.news import view as view_scb_news
@@ -46,3 +47,5 @@ router.include_router(router=router_third_party.router_module, prefix="/third-pa
 router.include_router(router=router_mobile.router, prefix="/mobile", tags=["[Mobile]"])
 
 router.include_router(router=router_deposit.router_module, prefix="/deposit", tags=["[Deposit]"])
+
+router.include_router(router=view_ekyc.router, prefix="/ekyc", tags=["[eKYC]"])
