@@ -159,15 +159,18 @@ class BookingCustomer(Base):
 
 class BookingBusinessForm(Base):
     __tablename__ = 'crm_booking_business_form'
-
     booking_id = Column(ForeignKey('crm_booking.booking_id'), primary_key=True, nullable=False,
                         server_default=text("sys_guid() "))
     business_form_id = Column(ForeignKey('crm_business_form.business_form_id'), primary_key=True, nullable=False)
+    booking_business_form_id = Column('booking_business_form_id', primary_key=True, nullable=False,
+                                      server_default=text("sys_guid() "))
     save_flag = Column(NUMBER(1, 0, False), nullable=False)
+    is_success = Column(NUMBER(1, 0, False), comment='Cờ đánh dấu booking form đã gọi thành công qua GW')
     created_at = Column(DateTime, nullable=False)
     updated_at = Column(DateTime)
     form_data = Column(BLOB, comment='Dữ liệu template nhập', default=orjson_dumps([]))
     log_data = Column(BLOB, comment='Data lưu Lịch sử hồ sơ', default=orjson_dumps([]))
     out_data = Column(CLOB, comment='Data GW trả về', default=orjson_dumps([]))
+
     booking = relationship('Booking')
     business_form = relationship('BusinessForm')

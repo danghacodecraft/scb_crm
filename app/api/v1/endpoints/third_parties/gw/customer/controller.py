@@ -38,9 +38,8 @@ from app.utils.constant.gw import (
     GW_LOCAL_CODE, GW_NO_AGREEMENT_FLAG, GW_NO_MARKETING_FLAG,
     GW_REQUEST_PARAMETER_CO_OWNER, GW_REQUEST_PARAMETER_DEBIT_CARD,
     GW_REQUEST_PARAMETER_DEFAULT,
-    GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP,
-    GW_RESPONSE_STATUS_SUCCESS, GW_SELECT, GW_UDF_NAME, GW_YES,
-    GW_YES_AGREEMENT_FLAG
+    GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP, GW_SELECT,
+    GW_UDF_NAME, GW_YES, GW_YES_AGREEMENT_FLAG
 )
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_GW, ERROR_PHONE_NUMBER, ERROR_PHONE_NUMBER_NOT_EXITS,
@@ -993,6 +992,7 @@ class CtrGWCustomer(BaseController):
         is_success, response_data = self.call_repos(
             await repos_gw_open_cif(
                 cif_id=cif_id,
+                booking_id=BOOKING_ID,
                 customer_info=customer_info,
                 account_info=account_info,
                 current_user=current_user.user_info,
@@ -1001,14 +1001,11 @@ class CtrGWCustomer(BaseController):
             )
         )
         # check open_cif success
-        if response_data.get('openCIFAuthorise_out').get('transaction_info').get(
-                'transaction_error_code') != GW_RESPONSE_STATUS_SUCCESS:
+        if not is_success:
             return self.response_exception(
                 msg=ERROR_CALL_SERVICE_GW,
-                detail=response_data.get('openCIFAuthorise_out', {}).get("transaction_info", {}).get(
-                    'transaction_error_msg')
+                detail=response_data.get('openCIFAuthorise_out').get("transaction_info").get('transaction_error_msg')
             )
-
         cif_number = response_data['openCIFAuthorise_out']['data_output']['customner_info']['cif_info']['cif_num']
         # TODO chưa thể mở tài khoản thanh toán
         # account_number = response_data['openCIFAuthorise_out']['data_output']['account_info']['account_num']
@@ -1033,6 +1030,7 @@ class CtrGWCustomer(BaseController):
             session=self.oracle_session
         )
         response = {
+            "booking_id": BOOKING_ID,
             "cif_id": cif_id,
             "cif_number": cif_number
         }
