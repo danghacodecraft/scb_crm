@@ -1,7 +1,7 @@
 import json
 import re
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Callable, Dict, Optional, Union
 from urllib.parse import urlparse
 
@@ -114,6 +114,27 @@ def end_time_of_day(datetime_input: datetime, default=None) -> datetime:
     try:
         return datetime_input.replace(hour=23, minute=59, second=59, microsecond=999999)
     except (ValueError, TypeError):
+        return default
+
+
+def yesterday(date_input: date = today(), default=None):
+    try:
+        return date_input - timedelta(days=1)
+    except (ValueError, TypeError):
+        return default
+
+
+def first_day_in_year(dt: datetime = datetime.now(), default=None) -> date:
+    try:
+        return dt.date().replace(month=1, day=1)
+    except(ValueError, TypeError):
+        return default
+
+
+def last_day_in_year(dt: datetime, default=None) -> date:
+    try:
+        dt.now().date().replace(month=12, day=31)
+    except(ValueError, TypeError):
         return default
 
 
