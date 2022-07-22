@@ -1,8 +1,8 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.casa.open_casa.co_owner.repository import (
-    ctr_get_booking_parent, repos_account_co_owner, repos_check_casa_account,
-    repos_check_file_id, repos_get_co_owner, repos_get_uuid,
-    repos_save_co_owner
+    ctr_get_booking_parent, repos_account_co_owner, repos_check_acc_agree,
+    repos_check_casa_account, repos_check_file_id, repos_get_co_owner,
+    repos_get_uuid, repos_save_co_owner
 )
 from app.api.v1.endpoints.casa.open_casa.co_owner.schema import (
     AccountHolderRequest
@@ -55,6 +55,13 @@ class CtrCoOwner(BaseController):
             return self.response_exception(
                 msg=ERROR_CASA_ACCOUNT_ID_DOES_NOT_EXIST, loc=account_id
             )
+        # Check acc_agree
+        self.call_repos(
+            await repos_check_acc_agree(
+                account_id=account_id,
+                session=self.oracle_session
+            )
+        )
 
         # Check exist file_id
         file_id = self.call_repos(

@@ -103,7 +103,7 @@ class JointAccountHolderAgreementAuthorization(Base):
     active_flag = Column(NUMBER(1, 0, False), nullable=False, comment="Trạng thái thỏa thuận/ ủy quyền")
     casa_account_id = Column(VARCHAR(36), nullable=False, comment="Số tài khoản hiện tại")
     in_scb_flag = Column(NUMBER(1), nullable=False, comment="Cờ đánh dấu văn bản trong hay ngoài SCB")
-    joint_acc_agree_document_file_id = Column(ForeignKey('crm_document_file.document_file_id'), nullable=False,
+    joint_acc_agree_document_file_id = Column(ForeignKey('crm_document_file.document_file_id'),
                                               comment="Id  mã loại thẻ")
     created_at = Column(DateTime, comment='Ngày tạo')
     updated_at = Column(DateTime, comment='Ngày cập nhật')
