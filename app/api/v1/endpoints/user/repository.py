@@ -15,6 +15,7 @@ from app.utils.error_messages import (
     ERROR_CALL_SERVICE_GW, ERROR_CALL_SERVICE_IDM, ERROR_INVALID_TOKEN,
     USER_ID_NOT_EXIST
 )
+from app.utils.functions import string_to_date
 
 USER_ID = "9651cdfd9a9a4eb691f9a3a125ac46b0"
 USER_TOKEN = "OTY1MWNkZmQ5YTlhNGViNjkxZjlhM2ExMjVhYzQ2YjA6N2VlN2E2ZTg1MTUzN2M2YzFmYWIwMWQzODYzMWU4YTIx"
@@ -58,9 +59,11 @@ async def repos_login(username: str, password: str) -> ReposReturn:
         gw_data_output = data_gw[GW_FUNC_SELECT_USER_INFO_BY_USER_ID_OUT]['data_output']
         if gw_data_output:
             gw_data_output = gw_data_output[0]
-            data_idm['hrm_title_name'] = gw_data_output['staff_info']['title_name']
-            data_idm['hrm_branch_name'] = gw_data_output['branch_info']['branch_code']
-            data_idm['hrm_branch_name'] = gw_data_output['branch_info']['branch_name']
+            user_info = data_idm['user_info']
+            user_info['hrm_title_name'] = gw_data_output['staff_info']['title_name']
+            user_info['hrm_branch_name'] = gw_data_output['branch_info']['branch_code']
+            user_info['hrm_branch_name'] = gw_data_output['branch_info']['branch_name']
+            user_info['fcc_current_date'] = string_to_date(gw_data_output['current_date'])
 
     data_idm["user_info"]["avatar_url"] = ServiceIDM().replace_with_cdn(data_idm["user_info"]["avatar_url"])
     data_idm['user_info']['token'] = base64.b64encode(

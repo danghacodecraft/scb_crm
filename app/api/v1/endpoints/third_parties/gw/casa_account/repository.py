@@ -333,8 +333,9 @@ async def repos_gw_withdraw(
         booking_id,
         session: Session
 ):
-    is_success, gw_withdraw, gw_request = await service_gw.gw_withdraw(
-        current_user=current_user.user_info, data_input=request_data_gw
+    is_success, gw_withdraw = await service_gw.gw_withdraw(
+        current_user=current_user.user_info,
+        data_input=request_data_gw
     )
 
     # lưu form data request GW
@@ -361,7 +362,7 @@ async def repos_gw_withdraw(
         created_at=now()
     )))
 
-    return ReposReturn(data=(is_success, gw_withdraw, gw_request))
+    return ReposReturn(data=(is_success, gw_withdraw))
 
 
 async def repos_gw_get_retrieve_ben_name_by_account_number(current_user: UserInfoResponse, data_input):

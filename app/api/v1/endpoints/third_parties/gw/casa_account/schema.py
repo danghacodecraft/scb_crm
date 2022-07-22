@@ -129,6 +129,7 @@ class GWReportPieChartHistoryAccountInfoResponse(BaseGWSchema):
 
 class GWCasaAccountCheckExistResponse(BaseGWSchema):
     is_existed: bool = Field(..., description="Cờ có tồn tại không")
+    is_lower_core_fcc_date: bool = Field(..., description="Cờ tài khoản có bé hơn ngày trên core")
 
 
 class GWCasaAccountCheckExistRequest(BaseGWSchema):
