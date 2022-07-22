@@ -803,7 +803,7 @@ async def repos_upload_identity_document_and_ocr(
 async def repos_validate_ekyc(request_body: dict, booking_id: Optional[str]):
     is_success, response = await service_ekyc.validate_ekyc(
         request_body=request_body,
-        booking_id=booking_id
+        # booking_id=booking_id
     )
 
     if not is_success:
