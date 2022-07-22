@@ -1187,7 +1187,7 @@ async def repos_compare_face(
     is_success, compare_face_info = await service_ekyc.compare_face(
         face_uuid=face_uuid,
         avatar_image_uuid=identity_image_uuid,
-        booking_id=booking_id
+        # booking_id=booking_id
     )
 
     if not is_success:
