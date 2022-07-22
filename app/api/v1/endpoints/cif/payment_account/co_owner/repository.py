@@ -1,7 +1,7 @@
 import json
 from typing import List
 
-from sqlalchemy import and_, select
+from sqlalchemy import and_, delete, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -136,6 +136,25 @@ async def repos_get_casa_account(cif_id: str, session: Session) -> ReposReturn:
     return ReposReturn(data=casa_account)
 
 
+async def repos_check_acc_agree(account_id: str, session: Session) -> ReposReturn:
+    acc_agree_info = session.execute(
+        select(JointAccountHolderAgreementAuthorization)
+        .filter(JointAccountHolderAgreementAuthorization.casa_account_id == account_id)
+    ).scalar()
+
+    if acc_agree_info:
+        session.execute(delete(JointAccountHolderAgreementAuthorization).filter(
+            JointAccountHolderAgreementAuthorization.casa_account_id == account_id))
+
+        session.execute(delete(JointAccountHolder).filter(
+            JointAccountHolder.joint_acc_agree_id == acc_agree_info.joint_acc_agree_id))
+
+        session.execute(delete(MethodSign).filter(
+            MethodSign.joint_acc_agree_id == acc_agree_info.joint_acc_agree_id))
+
+    return ReposReturn(data=acc_agree_info)
+
+
 async def repos_check_file_id(file_uuid: str, session: Session) -> ReposReturn:
     file_uuid_info = session.execute(
         select(DocumentFile.id).filter(DocumentFile.file_uuid == file_uuid)
@@ -201,7 +220,7 @@ async def repos_account_co_owner(account_id: str, session: Session):
         select(
             JointAccountHolderAgreementAuthorization
         ).filter(JointAccountHolderAgreementAuthorization.casa_account_id == account_id)
-    ).scalar()
+    ).scalars().all()
 
     if not account_co_owner:
         return ReposReturn(
@@ -211,6 +230,16 @@ async def repos_account_co_owner(account_id: str, session: Session):
         )
 
     return ReposReturn(data=account_co_owner)
+
+
+async def repos_acc_agree_info(document_no: str, session: Session):
+    acc_agree_info = session.execute(
+        select(
+            JointAccountHolderAgreementAuthorization
+        ).filter(JointAccountHolderAgreementAuthorization.joint_acc_agree_document_no == document_no)
+    ).scalars().all()
+
+    return ReposReturn(data=acc_agree_info)
 
 
 async def repos_get_list_cif_number(cif_id: str, session: Session):
@@ -234,7 +263,7 @@ async def repos_get_list_cif_number(cif_id: str, session: Session):
 
 
 async def repos_get_customer_address(
-    list_cif_number: List[str], session: Session
+        list_cif_number: List[str], session: Session
 ) -> ReposReturn:
     customer_address = session.execute(
         select(
