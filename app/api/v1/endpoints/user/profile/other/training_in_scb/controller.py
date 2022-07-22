@@ -2,6 +2,7 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.user.profile.other.training_in_scb.repository import (
     repos_training_in_scb
 )
+from app.utils.constant.gw import GW_FUNC_SELECT_TOPIC_INFO_FROM_CODE_OUT
 from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
 from app.utils.functions import datetime_to_date, string_to_datetime
 
@@ -18,7 +19,7 @@ class CtrTrainingInSCB(BaseController):
 
         gw_training_in_scbs = self.call_repos(await repos_training_in_scb(current_user=current_user))
 
-        training_in_scbs = gw_training_in_scbs['selectTopicInfoFromCode_out']['data_output'][
+        training_in_scbs = gw_training_in_scbs[GW_FUNC_SELECT_TOPIC_INFO_FROM_CODE_OUT]['data_output'][
             'topic_info_list']['topic_info_item']
 
         response_training_in_scbs = [dict(

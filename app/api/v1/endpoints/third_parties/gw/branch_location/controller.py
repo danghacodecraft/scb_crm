@@ -3,8 +3,9 @@ from app.api.v1.endpoints.third_parties.gw.branch_location.repository import (
     repos_gw_select_branch_by_branch_id, repos_gw_select_branch_by_region_id
 )
 from app.utils.constant.gw import (
-    GW_LATITUDE_DEFAULT, GW_LATITUDE_MAX, GW_LATITUDE_MIN,
-    GW_LONGITUDE_DEFAULT, GW_LONGITUDE_MAX, GW_LONGITUDE_MIN, GW_TYPE_DEFAULT
+    GW_FUNC_SELECT_BRANCH_BY_BRANCH_ID_OUT, GW_LATITUDE_DEFAULT,
+    GW_LATITUDE_MAX, GW_LATITUDE_MIN, GW_LONGITUDE_DEFAULT, GW_LONGITUDE_MAX,
+    GW_LONGITUDE_MIN, GW_TYPE_DEFAULT
 )
 from app.utils.error_messages import ERROR_CALL_SERVICE_GW
 
@@ -100,7 +101,7 @@ class CtrGWBranchLocation(BaseController):
         ))
         if not is_success:
             return self.response_exception(msg=ERROR_CALL_SERVICE_GW, detail=str(gw_select_branch_by_branch_id))
-        response_data = gw_select_branch_by_branch_id['selectBranchByBranchID_out']['data_output']
+        response_data = gw_select_branch_by_branch_id[GW_FUNC_SELECT_BRANCH_BY_BRANCH_ID_OUT]['data_output']
         return self.response(data={
             'region_id': response_data['region_id'],
             'region_name': response_data['region_name'],

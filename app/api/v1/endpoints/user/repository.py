@@ -10,6 +10,7 @@ from app.api.v1.endpoints.user.schema import UserInfoResponse
 from app.settings.event import service_gw, service_idm
 from app.settings.service import SERVICE
 from app.third_parties.services.idm import ServiceIDM
+from app.utils.constant.gw import GW_FUNC_SELECT_USER_INFO_BY_USER_ID_OUT
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_GW, ERROR_CALL_SERVICE_IDM, ERROR_INVALID_TOKEN,
     USER_ID_NOT_EXIST
@@ -54,7 +55,7 @@ async def repos_login(username: str, password: str) -> ReposReturn:
         if not is_success:
             return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_GW, detail=str(data_gw))
 
-        gw_data_output = data_gw['selectUserInfoByUserID_out']['data_output']
+        gw_data_output = data_gw[GW_FUNC_SELECT_USER_INFO_BY_USER_ID_OUT]['data_output']
         if gw_data_output:
             gw_data_output = gw_data_output[0]
             data_idm['hrm_title_name'] = gw_data_output['staff_info']['title_name']

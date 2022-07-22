@@ -24,7 +24,6 @@ from app.third_parties.oracle.models.master_data.customer import (
 )
 from app.utils.constant.business_type import BUSINESS_TYPE_OPEN_CASA
 from app.utils.constant.cif import BUSINESS_FORM_TKTT_DSH, IMAGE_TYPE_SIGNATURE
-from app.utils.error_messages import ERROR_CASA_ACCOUNT_ID_DOES_NOT_EXIST
 from app.utils.functions import now
 
 
@@ -44,10 +43,6 @@ async def repos_check_casa_account(account_id: str, session: Session) -> ReposRe
         select(CasaAccount.id).filter(CasaAccount.id == account_id)
     ).scalar()
 
-    if not casa_account:
-        return ReposReturn(
-            is_error=True, msg=ERROR_CASA_ACCOUNT_ID_DOES_NOT_EXIST, loc=f"account_id: {account_id}"
-        )
     return ReposReturn(data=casa_account)
 
 
@@ -112,7 +107,7 @@ async def repos_save_co_owner(
     )
 
 
-async def repos_get_co_owner(account_id: str, document_no: str, session: Session) -> ReposReturn:
+async def repos_get_co_owner(account_id: str, session: Session) -> ReposReturn:
     account_holders = session.execute(
         select(
             CasaAccount,
@@ -124,8 +119,7 @@ async def repos_get_co_owner(account_id: str, document_no: str, session: Session
         .join(JointAccountHolder,
               JointAccountHolderAgreementAuthorization.joint_acc_agree_id == JointAccountHolder.joint_acc_agree_id)
         .join(CustomerRelationshipType, JointAccountHolder.relationship_type_id == CustomerRelationshipType.id)
-        .filter(CasaAccount.id == account_id,
-                JointAccountHolderAgreementAuthorization.joint_acc_agree_document_no == document_no)
+        .filter(CasaAccount.id == account_id)
     ).all()
 
     account_holder_signs = session.execute(
@@ -139,9 +133,8 @@ async def repos_get_co_owner(account_id: str, document_no: str, session: Session
         .join(MethodSign,
               JointAccountHolderAgreementAuthorization.joint_acc_agree_id == MethodSign.joint_acc_agree_id)
         .join(AgreementAuthorization, MethodSign.agreement_author_id == AgreementAuthorization.id)
-        .filter(CasaAccount.id == account_id,
-                JointAccountHolderAgreementAuthorization.joint_acc_agree_document_no == document_no
-                )).all()
+        .filter(CasaAccount.id == account_id)
+    ).all()
 
     return ReposReturn(data=(account_holders, account_holder_signs))
 
@@ -151,7 +144,7 @@ async def repos_account_co_owner(account_id: str, session: Session):
         select(
             JointAccountHolderAgreementAuthorization
         ).filter(JointAccountHolderAgreementAuthorization.casa_account_id == account_id)
-    ).scalars().all()
+    ).scalar()
 
     return ReposReturn(data=account_co_owner)
 

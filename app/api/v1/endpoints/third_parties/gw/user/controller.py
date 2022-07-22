@@ -2,6 +2,7 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.user.repository import (
     repos_gw_detail_user
 )
+from app.utils.constant.gw import GW_FUNC_SELECT_USER_INFO_BY_USER_ID_OUT
 
 
 class CtrGWUser(BaseController):
@@ -17,7 +18,7 @@ class CtrGWUser(BaseController):
             current_user=current_user,
             data_input=data_input
         ))
-        data_output = gw_detail_user_responses.get('selectUserInfoByUserID_out')
+        data_output = gw_detail_user_responses.get(GW_FUNC_SELECT_USER_INFO_BY_USER_ID_OUT)
         detail_user_info = [{
             "user_code": item.get('user_code'),
             "staff_info": item.get('staff_info'),

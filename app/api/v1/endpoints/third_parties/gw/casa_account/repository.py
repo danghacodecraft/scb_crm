@@ -24,8 +24,9 @@ from app.utils.constant.cif import (
     BUSINESS_FORM_WITHDRAW_PD
 )
 from app.utils.constant.gw import (
-    GW_RESPONSE_STATUS_SUCCESS, GW_TRANSACTION_NAME_COLUMN_CHART,
-    GW_TRANSACTION_NAME_PIE_CHART, GW_TRANSACTION_NAME_STATEMENT
+    GW_FUNC_CASH_WITHDRAWS_OUT, GW_RESPONSE_STATUS_SUCCESS,
+    GW_TRANSACTION_NAME_COLUMN_CHART, GW_TRANSACTION_NAME_PIE_CHART,
+    GW_TRANSACTION_NAME_STATEMENT
 )
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_GW, ERROR_CASA_ACCOUNT_APPROVED
@@ -353,9 +354,9 @@ async def repos_gw_withdraw(
         booking_id=booking_id,
         business_job_id=BUSINESS_JOB_CODE_WITHDRAW,
         complete_flag=is_success,
-        error_code=gw_withdraw.get('cashWithdrawals_out').get('transaction_info').get(
+        error_code=gw_withdraw.get(GW_FUNC_CASH_WITHDRAWS_OUT).get('transaction_info').get(
             'transaction_error_code'),
-        error_desc=gw_withdraw.get('cashWithdrawals_out').get('transaction_info').get(
+        error_desc=gw_withdraw.get(GW_FUNC_CASH_WITHDRAWS_OUT).get('transaction_info').get(
             'transaction_error_msg'),
         created_at=now()
     )))

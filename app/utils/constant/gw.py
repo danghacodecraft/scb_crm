@@ -70,6 +70,138 @@ GW_ENDPOINT_URL_SELECT_BRANCH_BY_BRANCH_ID = "/branchlocation/v1.0/rest/selectBr
 # ---------------------------------------------- STATISTIC ---------------------------------------------- #
 GW_ENDPOINT_URL_SELECT_STATISTIC_BANKING_BY_PERIOD = "/statistics/v1.0/rest/selectStatisticBankingByPeriod"
 
+########################################################################################################################
+#                                         GW FUNCTION NAME
+########################################################################################################################
+
+#  Employee
+GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE_IN = "selectEmployeeInfoFromCode_in"
+GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE_OUT = "selectEmployeeInfoFromCode_out"
+GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE = "selectEmployeeInfoFromCode"
+
+GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_USERNAME_IN = "selectEmployeeInfoFromUserName_in"
+GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_USERNAME_OUT = "selectEmployeeInfoFromUserName_out"
+GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_USERNAME = "selectEmployeeInfoFromUserName"
+
+GW_FUNC_SELECT_EMPLOYEE_LIST_FROM_ORG_ID_IN = "selectEmployeeListFromOrgId_in"
+GW_FUNC_SELECT_EMPLOYEE_LIST_FROM_ORG_ID_OUT = "selectEmployeeListFromOrgId_out"
+GW_FUNC_SELECT_EMPLOYEE_LIST_FROM_ORG_ID = "selectEmployeeListFromOrgId"
+
+GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_IN = "retrieveEmployeeInfoFromCode_in"
+GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_OUT = "retrieveEmployeeInfoFromCode_out"
+GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE = "retrieveEmployeeInfoFromCode"
+
+GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE_IN = "selectWorkingProcessInfoFromCode_in"
+GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE_OUT = "selectWorkingProcessInfoFromCode_out"
+GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE = "selectWorkingProcessInfoFromCode"
+
+GW_FUNC_SELECT_REWARD_INFO_FROM_CODE_IN = "selectRewardInfoFromCode_in"
+GW_FUNC_SELECT_REWARD_INFO_FROM_CODE_OUT = "selectRewardInfoFromCode_out"
+GW_FUNC_SELECT_REWARD_INFO_FROM_CODE = "selectRewardInfoFromCode"
+
+GW_FUNC_SELECT_DISCIPLINE_INFO_FROM_CODE_IN = "selectDisciplineInfoFromCode_in"
+GW_FUNC_SELECT_DISCIPLINE_INFO_FROM_CODE_OUT = "selectDisciplineInfoFromCode_out"
+GW_FUNC_SELECT_DISCIPLINE_INFO_FROM_CODE = "selectDisciplineInfoFromCode"
+
+
+GW_FUNC_SELECT_TOPIC_INFO_FROM_CODE_IN = "selectTopicInfoFromCode_in"
+GW_FUNC_SELECT_TOPIC_INFO_FROM_CODE_OUT = "selectTopicInfoFromCode_out"
+GW_FUNC_SELECT_TOPIC_INFO_FROM_CODE = "selectTopicInfoFromCode"
+
+GW_FUNC_SELECT_KPIS_INFO_FROM_CODE_IN = "selectKpisInfoFromCode_in"
+GW_FUNC_SELECT_KPIS_INFO_FROM_CODE_OUT = "selectKpisInfoFromCode_out"
+GW_FUNC_SELECT_KPIS_INFO_FROM_CODE = "selectKpisInfoFromCode"
+
+GW_FUNC_SELECT_STAFF_OTHER_INFO_FROM_CODE_IN = "selectStaffOtherInfoFromCode_in"
+GW_FUNC_SELECT_STAFF_OTHER_INFO_FROM_CODE_OUT = "selectStaffOtherInfoFromCode_out"
+GW_FUNC_SELECT_STAFF_OTHER_INFO_FROM_CODE = "selectStaffOtherInfoFromCode"
+
+
+# Payment
+
+GW_FUNC_AMOUNT_BLOCK_IN = "amountBlock_in"
+GW_FUNC_AMOUNT_BLOCK_OUT = "amountBlock_out"
+GW_FUNC_AMOUNT_BLOCK = "amountBlock"
+
+GW_FUNC_AMOUNT_UNBLOCK_IN = "amountUnBlock_in"
+GW_FUNC_AMOUNT_UNBLOCK_OUT = "amountUnBlock_out"
+GW_FUNC_AMOUNT_UNBLOCK = "amountUnBlock"
+
+
+GW_FUNC_PAY_IN_CARD_IN = "payInCash_in"
+GW_FUNC_PAY_IN_CARD_OUT = "payInCash_out"
+GW_FUNC_PAY_IN_CARD = "payInCash"
+
+GW_FUNC_PAY_IN_CARD_247_BY_ACC_NUM_IN = "payInCash247byAccNum_in"
+GW_FUNC_PAY_IN_CARD_247_BY_ACC_NUM_OUT = "payInCash247byAccNum_out"
+GW_FUNC_PAY_IN_CARD_247_BY_ACC_NUM = "payInCash247byAccNum"
+
+GW_FUNC_CASH_WITHDRAWS_IN = 'cashWithdrawals_in'
+GW_FUNC_CASH_WITHDRAWS_OUT = 'cashWithdrawals_out'
+GW_FUNC_CASH_WITHDRAWS = 'cashWithdrawals'
+
+GW_FUNC_INTERNAL_TRANSFER_IN = "internal_transfer_in"
+GW_FUNC_INTERNAL_TRANSFER_OUT = "internal_transfer_out"
+GW_FUNC_INTERNAL_TRANSFER = "internal_transfer"
+
+GW_FUNC_TELE_TRANSFER_IN = "teleTransfer_in"
+GW_FUNC_TELE_TRANSFER_OUT = "teleTransfer_out"
+GW_FUNC_TELE_TRANSFER = "teleTransfer"
+
+GW_FUNC_TT_LIQUIDATION_IN = "ttLiquidation_in"
+GW_FUNC_TT_LIQUIDATION_OUT = "ttLiquidation_out"
+GW_FUNC_TT_LIQUIDATION = "ttLiquidation"
+
+GW_FUNC_INTERBANK_TRANSFER_IN = "interbankTransfer_in"
+GW_FUNC_INTERBANK_TRANSFER_OUT = "interbankTransfer_out"
+GW_FUNC_INTERBANK_TRANSFER = "interbankTransfer"
+
+GW_FUNC_INTERBANK_TRANSFER_247_BY_ACC_NUM_IN = "interbankTransfer247ByAccNum_in"
+GW_FUNC_INTERBANK_TRANSFER_247_BY_ACC_NUM_OUT = "interbankTransfer247ByAccNum_out"
+GW_FUNC_INTERBANK_TRANSFER_247_BY_ACC_NUM = "interbankTransfer247ByAccNum"
+
+GW_FUNC_INTERBANK_TRANSFER_247_BY_CARD_NUM_IN = "interbankTransfer247ByCardNum_in"
+GW_FUNC_INTERBANK_TRANSFER_247_BY_CARD_NUM_OUT = "interbankTransfer247ByCardNum_out"
+GW_FUNC_INTERBANK_TRANSFER_247_BY_CARD_NUM = "interbankTransfer247ByCardNum"
+
+GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM_IN = "payInCash247byCardNum_in"
+GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM_OUT = "payInCash247byCardNum_out"
+GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM = "payInCash247byCardNum"
+
+#  User
+
+GW_FUNC_SELECT_USER_INFO_BY_USER_ID_IN = "selectUserInfoByUserID_in"
+GW_FUNC_SELECT_USER_INFO_BY_USER_ID_OUT = "selectUserInfoByUserID_out"
+GW_FUNC_SELECT_USER_INFO_BY_USER_ID = "selectUserInfoByUserID"
+
+#  Serial
+
+GW_FUNC_RETRIEVE_SERIAL_NUMBER_IN = "retrieveSerialNumber_in"
+GW_FUNC_RETRIEVE_SERIAL_NUMBER_OUT = "retrieveSerialNumber_out"
+GW_FUNC_RETRIEVE_SERIAL_NUMBER = "retrieveSerialNumber"
+
+# Branch location
+
+GW_FUNC_SELECT_BRANCH_BY_REGION_ID_IN = "selectBranchByRegionID_in"
+GW_FUNC_SELECT_BRANCH_BY_REGION_ID_OUT = "selectBranchByRegionID_out"
+GW_FUNC_SELECT_BRANCH_BY_REGION_ID = "selectBranchByRegionID"
+
+GW_FUNC_SELECT_BRANCH_BY_BRANCH_ID_IN = "selectBranchByBranchID_in"
+GW_FUNC_SELECT_BRANCH_BY_BRANCH_ID_OUT = "selectBranchByBranchID_out"
+GW_FUNC_SELECT_BRANCH_BY_BRANCH_ID = "selectBranchByBranchID"
+
+# Statistic
+
+GW_FUNC_SELECT_STATISTIC_BANKING_BY_PERIOD_IN = "selectStatisticBankingByPeriod_in"
+GW_FUNC_SELECT_STATISTIC_BANKING_BY_PERIOD_OUT = "selectStatisticBankingByPeriod_out"
+GW_FUNC_SELECT_STATISTIC_BANKING_BY_PERIOD = "selectStatisticBankingByPeriod"
+
+
+########################################################################################################################
+#                                         END GW FUNCTION NAME
+########################################################################################################################
+
+
 ######################################################################################################
 #                                           Constant                                                #
 ######################################################################################################

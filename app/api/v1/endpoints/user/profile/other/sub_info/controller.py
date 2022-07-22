@@ -2,6 +2,7 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.user.profile.other.sub_info.repository import (
     repos_sub_info
 )
+from app.utils.constant.gw import GW_FUNC_SELECT_STAFF_OTHER_INFO_FROM_CODE_OUT
 from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
 
 
@@ -18,7 +19,7 @@ class CtrSubInfo(BaseController):
         gw_sub_infos = self.call_repos(
             await repos_sub_info(current_user=current_user))
 
-        sub_infos = gw_sub_infos['selectStaffOtherInfoFromCode_out']['data_output']['staff_other']
+        sub_infos = gw_sub_infos[GW_FUNC_SELECT_STAFF_OTHER_INFO_FROM_CODE_OUT]['data_output']['staff_other']
         recruitment_info = sub_infos['recruitment_info']
 
         return self.response_paging(data={
