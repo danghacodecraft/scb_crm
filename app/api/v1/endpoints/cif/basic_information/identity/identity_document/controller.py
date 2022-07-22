@@ -747,7 +747,7 @@ class CtrIdentityDocument(BaseController):
                 detail=MESSAGE_STATUS[ERROR_INVALID_URL],
                 loc="passport_information -> face_uuid_ekyc"
             )
-        # await self.check_exist_multi_file(uuids=[identity_image_uuid, face_compare_image_url])
+        await self.check_exist_multi_file(uuids=[identity_image_uuid, face_compare_image_url])
 
         is_success, compare_response = await service_ekyc.compare_face(
             face_uuid=compare_face_uuid_ekyc,
@@ -755,12 +755,12 @@ class CtrIdentityDocument(BaseController):
             # booking_id=booking_id
         )
 
-        # if not is_success:
-        #     return self.response_exception(
-        #         loc="face_uuid_ekyc",
-        #         msg=ERROR_CALL_SERVICE_EKYC,
-        #         detail=compare_response['message']
-        #     )
+        if not is_success:
+            return self.response_exception(
+                loc="face_uuid_ekyc",
+                msg=ERROR_CALL_SERVICE_EKYC,
+                detail=compare_response['message']
+            )
         similar_percent = compare_response['data']['similarity_percent']
 
         # dict dùng để tạo mới hoặc lưu lại CustomerCompareImage
