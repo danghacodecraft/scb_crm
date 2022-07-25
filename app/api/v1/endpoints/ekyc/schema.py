@@ -27,3 +27,7 @@ class CreateEKYCCustomerRequest(BaseSchema):
     user_approve: str = Field(..., description="Người phê duyệt")
     created_date: date = Field(..., description="Ngày tạo")
     updated_date: date = Field(..., description="Ngày cập nhập")
+
+
+class CreateEKYCCustomerResponse(BaseSchema):
+    customer_id: str = Field(..., description='Mã khách hàng (ekyc)')
