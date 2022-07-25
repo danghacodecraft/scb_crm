@@ -261,7 +261,7 @@ class CtrGWCasaAccount(BaseController):
                 'account_info']
         is_lower_core_fcc_date = False
         account_open_date = string_to_date(account_info['account_open_date'], _format=DATETIME_INPUT_OUTPUT_FORMAT)
-        if account_open_date and account_open_date < current_user_info.fcc_current_date:
+        if account_open_date and current_user_info.fcc_current_date and account_open_date < current_user_info.fcc_current_date:
             is_lower_core_fcc_date = True
 
         return self.response(data=dict(

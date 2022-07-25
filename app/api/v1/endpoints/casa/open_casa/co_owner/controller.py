@@ -62,21 +62,22 @@ class CtrCoOwner(BaseController):
                 session=self.oracle_session
             )
         )
+        file_id = ""
+        if co_owner.file_uuid:
+            # Check exist file_id
+            file_id = self.call_repos(
+                await repos_check_file_id(
+                    file_uuid=co_owner.file_uuid,
+                    session=self.oracle_session))
 
-        # Check exist file_id
-        file_id = self.call_repos(
-            await repos_check_file_id(
-                file_uuid=co_owner.file_uuid,
-                session=self.oracle_session))
-
-        if not file_id:
-            is_exist = self.call_repos(await repos_check_is_exist_multi_file(uuids=co_owner.file_uuid))
-            if not is_exist:
-                return self.response_exception(
-                    msg='',
-                    loc='file_uuid',
-                    detail='Can not found file in service file'
-                )
+            if not file_id:
+                is_exist = self.call_repos(await repos_check_is_exist_multi_file(uuids=co_owner.file_uuid))
+                if not is_exist:
+                    return self.response_exception(
+                        msg='',
+                        loc='file_uuid',
+                        detail='Can not found file in service file'
+                    )
 
         # Lấy danh sách cif_number account request
         customer_relationship_not_exist_list = []
@@ -170,18 +171,23 @@ class CtrCoOwner(BaseController):
             return self.response_exception(
                 msg=ERROR_CASA_ACCOUNT_ID_DOES_NOT_EXIST_IN_JOINT_ACCOUNT_AGREEMENT, loc=account_id
             )
+        document_uuid = ""
+        file_uuid = ""
+        if account_co_owner.joint_acc_agree_document_file_id:
+            document_uuid = self.call_repos(await repos_get_uuid(
+                document_id=account_co_owner.joint_acc_agree_document_file_id,
+                session=self.oracle_session
+            ))
+            if not document_uuid:
+                return self.response_exception(
+                    msg=ERROR_DOCUMENT_ID_DOES_NOT_EXIST, loc=f"document_uuid: {document_uuid}"
+                )
 
-        document_uuid = self.call_repos(await repos_get_uuid(
-            document_id=account_co_owner.joint_acc_agree_document_file_id,
-            session=self.oracle_session
-        ))
-        if not document_uuid:
-            return self.response_exception(
-                msg=ERROR_DOCUMENT_ID_DOES_NOT_EXIST, loc=f"document_uuid: {document_uuid}"
-            )
-        document_uuids = [document_uuid]
-        # gọi đến service file để lấy link download
-        uuid__link_downloads = await self.get_info_multi_file(uuids=document_uuids)
+            document_uuids = [document_uuid]
+            # gọi đến service file để lấy link download
+            uuid__link_downloads = await self.get_info_multi_file(uuids=document_uuids)
+            file_uuid = uuid__link_downloads[document_uuid]
+
         account_holders, account_holder_signs = self.call_repos(
             await repos_get_co_owner(
                 account_id=account_id,
@@ -274,13 +280,17 @@ class CtrCoOwner(BaseController):
             if agreement_authorizations[idx]['method_sign'] == 3:
                 agreement_authorizations[idx]["signature_list"] = signature_list
 
+        if document_uuid:
+            file_info = file_uuid
+        else:
+            file_info = None
         response_data = dict(
             joint_account_holder_flag=account_co_owner.active_flag,
             document_no=account_co_owner.joint_acc_agree_document_no,
             created_at=account_co_owner.created_at,
             address_flag=account_co_owner.in_scb_flag,
             document_address=account_co_owner.joint_acc_agree_document_address,
-            file_uuid=uuid__link_downloads[document_uuid],
+            file_uuid=file_info,
             number_of_joint_account_holder=number_of_joint_account_holder,
             joint_account_holders=joint_account_holders,
             agreement_authorization=agreement_authorizations

@@ -92,7 +92,7 @@ class GetCoOwnerResponse(BaseSchema):
     agreement_authorization: List[AgreementAuthorResponse] = Field(
         ..., description="Danh mục thỏa thuận và ủy quyền"
     )
-    document_list: List[DocumentListResponse] = Field(..., description="Thông tin đồng sở hữu")
+    document_list: Optional[List[DocumentListResponse]] = Field(None, description="Thông tin đồng sở hữu")
 
 
 class ListCoOwnerResponse(BaseSchema):
