@@ -1,6 +1,4 @@
-from typing import List
-
-from fastapi import APIRouter, Depends, Header, Path, Query
+from fastapi import APIRouter, Depends, Header, Path
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -37,11 +35,11 @@ async def view_create_co_owner(
 
 
 @router.get(
-    path="/list-co-owner",
-    name="B. Danh Sách thông tin đồng sở hữu",
-    description="Danh Sách thông tin đồng sở hữu",
+    path="/co-owner/",
+    name="B. Thông tin đồng sở hữu",
+    description="Thông tin đồng sở hữu",
     responses=swagger_response(
-        response_model=ResponseData,
+        response_model=ResponseData[GetCoOwnerResponse],
         success_status_code=status.HTTP_200_OK
     ),
 )
@@ -51,27 +49,4 @@ async def view_lits_retrieve_co_owner(
         current_user=Depends(get_current_user_from_header())
 ):
     co_owner_data = await CtrCoOwner(current_user).ctr_list_co_owner(cif_id=cif_id, booking_id=BOOKING_ID)
-    return ResponseData(**co_owner_data)
-
-
-@router.get(
-    path="/co-owner/",
-    name="B. Đồng sở hữu tài khoản theo số văn bản",
-    description="Đồng sở hữu tài khoản theo số văn bản",
-    responses=swagger_response(
-        response_model=ResponseData[List[GetCoOwnerResponse]],
-        success_status_code=status.HTTP_200_OK
-    ),
-)
-async def view_co_owner_info(
-        document_no: str = Query(..., description="Số văn bản"),
-        cif_id: str = Path(..., description='Id CIF ảo'),
-        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
-        current_user=Depends(get_current_user_from_header())
-):
-    co_owner_info = await CtrCoOwner(current_user).ctr_co_owner_info(
-        cif_id=cif_id,
-        document_no=document_no,
-        booking_id=BOOKING_ID
-    )
-    return ResponseData[List[GetCoOwnerResponse]](**co_owner_info)
+    return ResponseData[GetCoOwnerResponse](**co_owner_data)
