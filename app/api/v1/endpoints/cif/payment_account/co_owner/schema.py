@@ -86,13 +86,19 @@ class DocumentListResponse(BaseSchema):
 
 
 class GetCoOwnerResponse(BaseSchema):
+    joint_account_holder_flag: bool = Field(
+        ..., description="Có đồng chủ sở hữu. `True`: Có , `False`: Không"
+    )
+    document_no: str = Field(..., description="Số văn bản")
+    created_at: date = Field(..., description="Ngày lập")
+    address_flag: bool = Field(..., description="Nơi lập")
+    document_address: Optional[str] = Field(None, description="Thông tin địa chỉ file")
+    file_uuid: Optional[FileUuidInfoResponse] = Field(None, description="Thông tin đồng sở hữu")
     number_of_joint_account_holder: int = Field(..., description="Số lượng đồng sở hữu")
-    co_owner_info: List[CoOwnerInfoResponse] = Field(..., description="Số lượng đồng sở hữu")
     joint_account_holders: List[JointAccountHoldersResponse] = Field(..., description="Thông tin đồng sở hữu")
     agreement_authorization: List[AgreementAuthorResponse] = Field(
         ..., description="Danh mục thỏa thuận và ủy quyền"
     )
-    document_list: Optional[List[DocumentListResponse]] = Field(None, description="Thông tin đồng sở hữu")
 
 
 class ListCoOwnerResponse(BaseSchema):
@@ -132,10 +138,13 @@ class AgreementAuthorRequest(BaseSchema):
 
 
 class AccountHolderRequest(BaseSchema):
+    joint_account_holder_flag: bool = Field(
+        ..., description="Có đồng chủ sở hữu. `True`: Có , `False`: Không"
+    )
     document_no: str = Field(..., description="Số văn bản")
-    create_at: date = Field(..., description="Ngày lập")
-    document_address: str = Field(..., description="Nơi lập")
-    expiration_date: Optional[date] = Field(None, description="Ngày hết hạn")
+    created_at: date = Field(..., description="Ngày lập")
+    address_flag: bool = Field(..., description="Nơi lập")
+    document_address: Optional[str] = Field(None, description="Thông tin địa chỉ file")
     file_uuid: Optional[str] = Field(None, description="Tập tin đính kèm")
     joint_account_holders: List[AccountRequest] = Field(
         ..., description="Danh sách các đồng sở hữu"

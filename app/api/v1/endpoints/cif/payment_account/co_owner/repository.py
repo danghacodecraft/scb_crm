@@ -220,7 +220,7 @@ async def repos_account_co_owner(account_id: str, session: Session):
         select(
             JointAccountHolderAgreementAuthorization
         ).filter(JointAccountHolderAgreementAuthorization.casa_account_id == account_id)
-    ).scalars().all()
+    ).scalar()
 
     if not account_co_owner:
         return ReposReturn(
