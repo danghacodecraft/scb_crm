@@ -57,20 +57,22 @@ class CtrCoOwner(BaseController):
             )
         )
 
-        # Check exist file_id
-        file_id = self.call_repos(
-            await repos_check_file_id(
-                file_uuid=co_owner.file_uuid,
-                session=self.oracle_session))
+        file_id = ""
+        if co_owner.file_uuid:
+            # Check exist file_id
+            file_id = self.call_repos(
+                await repos_check_file_id(
+                    file_uuid=co_owner.file_uuid,
+                    session=self.oracle_session))
 
-        if not file_id:
-            is_exist = self.call_repos(await repos_check_is_exist_multi_file(uuids=[co_owner.file_uuid]))
-            if not is_exist:
-                return self.response_exception(
-                    msg='',
-                    loc='file_uuid',
-                    detail='Can not found file in service file'
-                )
+            if not file_id:
+                is_exist = self.call_repos(await repos_check_is_exist_multi_file(uuids=[co_owner.file_uuid]))
+                if not is_exist:
+                    return self.response_exception(
+                        msg='',
+                        loc='file_uuid',
+                        detail='Can not found file in service file'
+                    )
 
         # lấy danh sách cif_number account request
         customer_relationship_not_exist_list = []
@@ -225,22 +227,25 @@ class CtrCoOwner(BaseController):
 
         document_list = []
         for file_id in acc_agree_infos:
-            document_uuid = self.call_repos(await repos_get_file_uuid(
-                document_id=file_id.joint_acc_agree_document_file_id,
-                session=self.oracle_session
-            ))
+            if file_id.joint_acc_agree_document_file_id:
+                document_uuid = self.call_repos(await repos_get_file_uuid(
+                    document_id=file_id.joint_acc_agree_document_file_id,
+                    session=self.oracle_session
+                ))
 
-            if not document_uuid:
-                return self.response_exception(
-                    msg=ERROR_DOCUMENT_ID_DOES_NOT_EXIST, loc=f"document_no: {document_uuid}"
-                )
+                if not document_uuid:
+                    return self.response_exception(
+                        msg=ERROR_DOCUMENT_ID_DOES_NOT_EXIST, loc=f"document_id: {document_uuid}"
+                    )
 
-            document_uuids = [document_uuid]
-            # gọi đến service file để lấy link download
-            uuid__link_downloads = await self.get_info_multi_file(uuids=document_uuids)
-            document_list.append(dict(
-                file_uuid=uuid__link_downloads[document_uuid],
-            ))
+                document_uuids = [document_uuid]
+                # gọi đến service file để lấy link download
+                uuid__link_downloads = await self.get_info_multi_file(uuids=document_uuids)
+                document_list.append(dict(
+                    file_uuid=uuid__link_downloads[document_uuid],
+                ))
+            else:
+                document_list = None
 
         account_holders, account_holder_signs = self.call_repos(
             await repos_get_co_owner(
