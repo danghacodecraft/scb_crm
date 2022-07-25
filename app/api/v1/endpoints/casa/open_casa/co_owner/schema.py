@@ -133,7 +133,7 @@ class GetCoOwnerResponse(BaseSchema):
     created_at: date = Field(..., description="Ngày lập")
     address_flag: bool = Field(..., description="Nơi lập")
     document_address: Optional[str] = Field(None, description="Thông tin địa chỉ file")
-    file_uuid: Optional[FileUuidInfoResponse] = Field(..., description="Thông tin đồng sở hữu")
+    file_uuid: Optional[FileUuidInfoResponse] = Field(None, description="Thông tin đồng sở hữu")
     number_of_joint_account_holder: int = Field(..., description="Số lượng đồng sở hữu")
     joint_account_holders: List[JointAccountHoldersResponse] = Field(..., description="Thông tin đồng sở hữu")
     agreement_authorization: List[AgreementAuthorResponse] = Field(

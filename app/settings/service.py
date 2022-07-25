@@ -15,7 +15,8 @@ SERVICE = {
         "url": os.getenv("SERVICE_EKYC_URL"),
         "x-transaction-id": "CRM_TEST",
         "authorization": f"bearer {os.getenv('SERVICE_EKYC_BEARER_TOKEN')}",
-        'otp': os.getenv('OTP_EKYC', 'scbmnv9271q5a2Aa224')
+        'otp': os.getenv('SERVICE_EKYC_OTP'),
+        'token': os.getenv('SERVICE_EKYC_BEARER_TOKEN')
     },
     "template": {
         "url": os.getenv("SERVICE_TEMPLATE_URL"),

@@ -1666,49 +1666,23 @@ class ServiceGW:
     ####################################################################################################################
     async def open_cif(
             self,
-            cif_id: str,
-            customer_info: dict,
-            account_info: dict,
+            data_input,
             current_user
     ):
-        data_input = {
-            "customer_info": customer_info,
-            "account_info": account_info
-        }
+
         request_data = self.gw_create_request_body(
             current_user=current_user, function_name="openCIFAuthorise_in", data_input=data_input
         )
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_CUS_OPEN_CIF}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='openCIFAuthorise_out',
+            service_name='OPEN_CIF'
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except Exception as ex:
-            logger.error(str(ex))
-            return False, {'message': str(ex)}
+        return response_data
 
     ####################################################################################################################
     # END --- CIF

@@ -32,9 +32,7 @@ from app.utils.constant.gw import (
     GW_FUNC_INTERBANK_TRANSFER_OUT, GW_FUNC_INTERNAL_TRANSFER_OUT,
     GW_FUNC_TT_LIQUIDATION_OUT, GW_RESPONSE_STATUS_SUCCESS
 )
-from app.utils.error_messages import (
-    ERROR_BOOKING_CODE_EXISTED, ERROR_CALL_SERVICE_GW, MESSAGE_STATUS
-)
+from app.utils.error_messages import ERROR_BOOKING_CODE_EXISTED, MESSAGE_STATUS
 from app.utils.functions import generate_uuid, now, orjson_dumps
 
 
@@ -387,8 +385,6 @@ async def repos_gw_save_casa_transfer_info(
         return ReposReturn(is_error=True, msg="No GW Casa Transfer")
 
     casa_transfer = gw_casa_transfer.get(function_out, {})
-    if not is_success or casa_transfer == {}:
-        return ReposReturn(is_error=True, loc='repos_gw_save_casa_transfer_info', msg=ERROR_CALL_SERVICE_GW)
 
     # check trường hợp lỗi
     if casa_transfer.get('transaction_info').get('transaction_error_code') != GW_RESPONSE_STATUS_SUCCESS:
