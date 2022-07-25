@@ -1083,9 +1083,13 @@ class CtrGWPayment(BaseController):
             request_data = {
                 "data_input": {
                     "p_blk_detail": {
-                        "FROM_ACCOUNT_NUMBER": form_data['sender_account_number'],
-                        "FROM_ACCOUNT_AMOUNT": actual_total,
-                        "TO_ACCOUNT_NUMBER": form_data['receiver_account_number']
+                        "FROM_ACCOUNT_DETAILS": {
+                            "FROM_ACCOUNT_NUMBER": form_data['sender_account_number'],
+                            "FROM_ACCOUNT_AMOUNT": int(actual_total)
+                        },
+                        "TO_ACCOUNT_DETAILS": {
+                            "TO_ACCOUNT_NUMBER": form_data['receiver_account_number']
+                        }
                     },
                     "p_blk_charge": [],  # TODO thông tin phí
                     "p_blk_mis": "",
