@@ -14,6 +14,7 @@ from app.utils.constant.gw import (
     GW_CUSTOMER_REF_DATA_MGMT_CIF_NUM, GW_DEPOSIT_ACCOUNT_FROM_CIF,
     GW_DEPOSIT_ACCOUNT_TD, GW_EMPLOYEE_FROM_CODE, GW_EMPLOYEE_FROM_NAME,
     GW_EMPLOYEES, GW_ENDPOINT_URL_CHECK_EXITS_ACCOUNT_CASA,
+    GW_ENDPOINT_URL_CHECK_USERNAME_IB_MB_EXIST,
     GW_ENDPOINT_URL_DEPOSIT_OPEN_ACCOUNT_TD,
     GW_ENDPOINT_URL_HISTORY_CHANGE_FIELD, GW_ENDPOINT_URL_INTERBANK_TRANSFER,
     GW_ENDPOINT_URL_INTERBANK_TRANSFER_247_BY_ACCOUNT_NUMBER,
@@ -24,6 +25,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_PAY_IN_CASH_247_BY_CARD_NUMBER,
     GW_ENDPOINT_URL_PAYMENT_AMOUNT_BLOCK,
     GW_ENDPOINT_URL_PAYMENT_AMOUNT_UNBLOCK, GW_ENDPOINT_URL_REDEEM_ACCOUNT,
+    GW_ENDPOINT_URL_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA,
     GW_ENDPOINT_URL_RETRIEVE_AUTHORIZED_ACCOUNT_NUM,
     GW_ENDPOINT_URL_RETRIEVE_BEN_NAME_BY_ACCOUNT_NUMBER,
     GW_ENDPOINT_URL_RETRIEVE_BEN_NAME_BY_CARD_NUMBER,
@@ -42,6 +44,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_CODE,
     GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_USER_NAME,
     GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_LIST_FROM_ORG_ID,
+    GW_ENDPOINT_URL_RETRIEVE_INTERNET_BANKING_BY_CIF_NUMBER,
     GW_ENDPOINT_URL_RETRIEVE_KPIS_INFO_FROM_CODE,
     GW_ENDPOINT_URL_RETRIEVE_OPEN_CASA_ACCOUNT,
     GW_ENDPOINT_URL_RETRIEVE_REPORT_CASA_ACCOUNT,
@@ -53,11 +56,13 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_RETRIEVE_TELE_TRANSFER_INFO,
     GW_ENDPOINT_URL_RETRIEVE_TOPIC_INFO_FROM_CODE,
     GW_ENDPOINT_URL_RETRIEVE_WORKING_PROCESS_INFO_FROM_CODE,
+    GW_ENDPOINT_URL_SELECT_ACCOUNT_TD_BY_MOBILE_NUM,
     GW_ENDPOINT_URL_SELECT_BRANCH_BY_BRANCH_ID,
     GW_ENDPOINT_URL_SELECT_BRANCH_BY_REGION_ID,
     GW_ENDPOINT_URL_SELECT_CATEGORY,
     GW_ENDPOINT_URL_SELECT_DATA_FOR_CHART_DASHBOARD,
     GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE,
+    GW_ENDPOINT_URL_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA,
     GW_ENDPOINT_URL_SELECT_SERIAL_NUMBER,
     GW_ENDPOINT_URL_SELECT_STATISTIC_BANKING_BY_PERIOD,
     GW_ENDPOINT_URL_SELECT_SUMMARY_CARD_BY_DATE,
@@ -67,7 +72,9 @@ from app.utils.constant.gw import (
     GW_FUNC_AMOUNT_UNBLOCK, GW_FUNC_AMOUNT_UNBLOCK_IN,
     GW_FUNC_AMOUNT_UNBLOCK_OUT, GW_FUNC_CASH_WITHDRAWS,
     GW_FUNC_CASH_WITHDRAWS_IN, GW_FUNC_CASH_WITHDRAWS_OUT,
-    GW_FUNC_INTERBANK_TRANSFER, GW_FUNC_INTERBANK_TRANSFER_247_BY_ACC_NUM,
+    GW_FUNC_CHECK_USERNAME_IB_MB_EXIST, GW_FUNC_CHECK_USERNAME_IB_MB_EXIST_IN,
+    GW_FUNC_CHECK_USERNAME_IB_MB_EXIST_OUT, GW_FUNC_INTERBANK_TRANSFER,
+    GW_FUNC_INTERBANK_TRANSFER_247_BY_ACC_NUM,
     GW_FUNC_INTERBANK_TRANSFER_247_BY_ACC_NUM_IN,
     GW_FUNC_INTERBANK_TRANSFER_247_BY_ACC_NUM_OUT,
     GW_FUNC_INTERBANK_TRANSFER_247_BY_CARD_NUM,
@@ -81,12 +88,18 @@ from app.utils.constant.gw import (
     GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM,
     GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM_IN,
     GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM_OUT, GW_FUNC_PAY_IN_CARD_IN,
-    GW_FUNC_PAY_IN_CARD_OUT, GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE,
+    GW_FUNC_PAY_IN_CARD_OUT, GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA,
+    GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA_IN,
+    GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA_OUT,
+    GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE,
     GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_IN,
     GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_OUT,
     GW_FUNC_RETRIEVE_SERIAL_NUMBER, GW_FUNC_RETRIEVE_SERIAL_NUMBER_IN,
-    GW_FUNC_RETRIEVE_SERIAL_NUMBER_OUT, GW_FUNC_SELECT_BRANCH_BY_BRANCH_ID,
-    GW_FUNC_SELECT_BRANCH_BY_BRANCH_ID_IN,
+    GW_FUNC_RETRIEVE_SERIAL_NUMBER_OUT,
+    GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM,
+    GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM_IN,
+    GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM_OUT,
+    GW_FUNC_SELECT_BRANCH_BY_BRANCH_ID, GW_FUNC_SELECT_BRANCH_BY_BRANCH_ID_IN,
     GW_FUNC_SELECT_BRANCH_BY_BRANCH_ID_OUT, GW_FUNC_SELECT_BRANCH_BY_REGION_ID,
     GW_FUNC_SELECT_BRANCH_BY_REGION_ID_IN,
     GW_FUNC_SELECT_BRANCH_BY_REGION_ID_OUT,
@@ -104,6 +117,9 @@ from app.utils.constant.gw import (
     GW_FUNC_SELECT_EMPLOYEE_LIST_FROM_ORG_ID_OUT,
     GW_FUNC_SELECT_KPIS_INFO_FROM_CODE, GW_FUNC_SELECT_KPIS_INFO_FROM_CODE_IN,
     GW_FUNC_SELECT_KPIS_INFO_FROM_CODE_OUT,
+    GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA,
+    GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA_IN,
+    GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA_OUT,
     GW_FUNC_SELECT_REWARD_INFO_FROM_CODE,
     GW_FUNC_SELECT_REWARD_INFO_FROM_CODE_IN,
     GW_FUNC_SELECT_REWARD_INFO_FROM_CODE_OUT,
@@ -986,6 +1002,53 @@ class ServiceGW:
     # END --- RETRIEVE EBANK
     ####################################################################################################################
     ####################################################################################################################
+    # START --- RETRIEVE RETRIEVE INTERNET BANKING
+    ####################################################################################################################
+    async def get_retrieve_internet_banking(self, current_user: UserInfoResponse, cif_num):
+        data_input = {
+            "cif_info": {
+                "cif_num": cif_num
+            }
+        }
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name="retrieveIBInfoByCif_in", data_input=data_input
+        )
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_INTERNET_BANKING_BY_CIF_NUMBER}"
+
+        return_errors = dict(
+            loc="SERVICE GW",
+            msg="",
+            detail=""
+        )
+        return_data = dict(
+            status=None,
+            data=None,
+            errors=return_errors
+        )
+
+        try:
+            async with self.session.post(url=api_url, json=request_data) as response:
+                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
+                if response.status != status.HTTP_200_OK:
+                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                        return_error = await response.json()
+                        return_data.update(
+                            status=response.status,
+                            errors=return_error['errors']
+                        )
+                    return False, return_data
+                else:
+                    return_data = await response.json()
+                    return True, return_data
+        except aiohttp.ClientConnectorError as ex:
+            logger.error(str(ex))
+            return False, return_data
+
+    ####################################################################################################################
+    # END --- RETRIEVE INTERNET BANKING
+    ####################################################################################################################
+    ####################################################################################################################
     # START --- OPEN INTERNET BANKING
     ####################################################################################################################
     async def get_open_ib(self, current_user: UserInfoResponse, request):
@@ -1069,6 +1132,7 @@ class ServiceGW:
         # except aiohttp.ClientConnectorError as ex:
         #     logger.error(str(ex))
         #     return False, return_data
+
     ####################################################################################################################
     # END --- OPEN INTERNET BANKING
     ####################################################################################################################
@@ -1302,7 +1366,8 @@ class ServiceGW:
             }
         }
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name=GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_USERNAME_IN, data_input=data_input
+            current_user=current_user, function_name=GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_USERNAME_IN,
+            data_input=data_input
         )
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_USER_NAME}"
@@ -1372,7 +1437,8 @@ class ServiceGW:
             }
         }
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name=GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE_IN, data_input=data_input
+            current_user=current_user, function_name=GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE_IN,
+            data_input=data_input
         )
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_WORKING_PROCESS_INFO_FROM_CODE}"
@@ -1945,7 +2011,8 @@ class ServiceGW:
 
     async def gw_payment_interbank_transfer_247_by_account_number(self, current_user: UserInfoResponse, data_input):
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name=GW_FUNC_INTERBANK_TRANSFER_247_BY_ACC_NUM_IN, data_input=data_input)
+            current_user=current_user, function_name=GW_FUNC_INTERBANK_TRANSFER_247_BY_ACC_NUM_IN,
+            data_input=data_input)
         api_url = f"{self.url}{GW_ENDPOINT_URL_INTERBANK_TRANSFER_247_BY_ACCOUNT_NUMBER}"
 
         return await self.call_api(
@@ -1957,7 +2024,8 @@ class ServiceGW:
 
     async def gw_payment_interbank_transfer_247_by_card_number(self, current_user: UserInfoResponse, data_input):
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name=GW_FUNC_INTERBANK_TRANSFER_247_BY_CARD_NUM_IN, data_input=data_input)
+            current_user=current_user, function_name=GW_FUNC_INTERBANK_TRANSFER_247_BY_CARD_NUM_IN,
+            data_input=data_input)
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_INTERBANK_TRANSFER_247_BY_CARD_NUMBER}"
 
@@ -2050,7 +2118,8 @@ class ServiceGW:
     ####################################################################################################################
     async def select_statistic_banking_by_period(self, current_user: UserInfoResponse, data_input):
         request_data = self.gw_create_request_body(
-            current_user=current_user, function_name=GW_FUNC_SELECT_STATISTIC_BANKING_BY_PERIOD_IN, data_input=data_input
+            current_user=current_user, function_name=GW_FUNC_SELECT_STATISTIC_BANKING_BY_PERIOD_IN,
+            data_input=data_input
         )
         api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_STATISTIC_BANKING_BY_PERIOD}"
         response_data = await self.call_api(
@@ -2086,4 +2155,102 @@ class ServiceGW:
             service_name='selectDataForChartDashBoard'
         )
         return response_data
+
     ####################################################################################################################
+    ####################################################################################################################
+
+    ####################################################################################################################
+    # EbankSms
+    ####################################################################################################################
+    async def select_mobile_number_sms_by_account_casa(self, current_user: UserInfoResponse, ebank_sms_indentify_num):
+        data_input = {
+            "ebank_sms_info":
+                {
+                    "ebank_sms_indentify_num": ebank_sms_indentify_num
+                }
+        }
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA_IN,
+            data_input=data_input
+        )
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA_OUT,
+            service_name=GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA
+        )
+        return response_data
+
+    async def select_account_td_by_mobile_num(self, current_user: UserInfoResponse, ebank_sms_indentify_num):
+        data_input = {
+            "ebank_sms_info":
+                {
+                    "ebank_sms_indentify_num": ebank_sms_indentify_num
+                }
+        }
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM_IN,
+            data_input=data_input
+        )
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_ACCOUNT_TD_BY_MOBILE_NUM}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM_OUT,
+            service_name=GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM
+        )
+        return response_data
+
+    async def register_sms_service_by_account_casa(self, current_user: UserInfoResponse,
+                                                   account_info,
+                                                   ebank_sms_info_list,
+                                                   staff_info_checker,
+                                                   staff_info_maker):
+        data_input = {
+            "account_info": account_info,
+            "ebank_sms_info_list": ebank_sms_info_list,
+            "staff_info_checker": staff_info_checker,
+            "staff_info_maker": staff_info_maker,
+        }
+
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA_IN,
+            data_input=data_input
+        )
+        api_url = f"{self.url}{GW_ENDPOINT_URL_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA_OUT,
+            service_name=GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA
+        )
+        return response_data
+
+    ####################################################################################################################
+
+    ####################################################################################################################
+    # EbankIBMB
+    ####################################################################################################################
+    async def check_username_ib_mb_exist(self, current_user: UserInfoResponse, transaction_name, transaction_value):
+        data_input = {
+            "transaction_info":
+                {
+                    "transaction_name": transaction_name,
+                    "transaction_value": transaction_value
+                }
+        }
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_CHECK_USERNAME_IB_MB_EXIST_IN,
+            data_input=data_input
+        )
+        api_url = f"{self.url}{GW_ENDPOINT_URL_CHECK_USERNAME_IB_MB_EXIST}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_CHECK_USERNAME_IB_MB_EXIST_OUT,
+            service_name=GW_FUNC_CHECK_USERNAME_IB_MB_EXIST
+        )
+        return response_data
+
+####################################################################################################################

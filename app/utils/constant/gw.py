@@ -14,6 +14,7 @@ GW_ENDPOINT_URL_RETRIEVE_CLOSE_CASA_ACCOUNT = '/currentaccount/v1.0/rest/closeCA
 GW_ENDPOINT_URL_RETRIEVE_DEPOSIT_ACCOUNT_FROM_CIF = '/depositaccount/v1.0/rest/selectDepositAccountFromCIF'
 GW_ENDPOINT_URL_RETRIEVE_DEPOSIT_ACCOUNT_TD = "/depositaccount/v1.0/rest/retrieveDepositAccountTD"
 GW_ENDPOINT_URL_RETRIEVE_EBANK_BY_CIF_NUMBER = "/ebank/v1.0/rest/retrieveEbankStatusByCif"
+GW_ENDPOINT_URL_RETRIEVE_INTERNET_BANKING_BY_CIF_NUMBER = "/ebankibmb/v1.0/rest/retrieveIBInfoByCif"
 GW_ENDPOINT_URL_OPEN_INTERNET_BANKING = "/ebankibmb/v1.0/rest/openIB"
 GW_ENDPOINT_URL_DEPOSIT_OPEN_ACCOUNT_TD = "/depositaccount/v1.0/rest/openTD"
 GW_ENDPOINT_URL_RETRIEVE_REPORT_TD_FROM_CIF = "/report/v1.0/rest/selectReportTDFromCif"
@@ -71,6 +72,14 @@ GW_ENDPOINT_URL_SELECT_BRANCH_BY_BRANCH_ID = "/branchlocation/v1.0/rest/selectBr
 GW_ENDPOINT_URL_SELECT_STATISTIC_BANKING_BY_PERIOD = "/statistics/v1.0/rest/selectStatisticBankingByPeriod"
 GW_ENDPOINT_URL_SELECT_SUMMARY_CARD_BY_DATE = "/statistics/v1.0/rest/selectSummaryCardsByDate"
 GW_ENDPOINT_URL_SELECT_DATA_FOR_CHART_DASHBOARD = "/statistics/v1.0/rest/selectDataForChartDashBoard"
+
+# ---------------------------------------------- EBANK SMS ---------------------------------------------- #
+GW_ENDPOINT_URL_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA = "/ebanksms/v1.0/rest/selectMobileNumberSMSByAccountCASA"
+GW_ENDPOINT_URL_SELECT_ACCOUNT_TD_BY_MOBILE_NUM = "/ebanksms/v1.0/rest/selectAccountTDByMobileNum"
+GW_ENDPOINT_URL_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA = "/ebanksms/v1.0/rest/registerSMSServiceByAccountCASA"
+
+# ---------------------------------------------- EBANK IB MB ---------------------------------------------- #
+GW_ENDPOINT_URL_CHECK_USERNAME_IB_MB_EXIST = "/ebankibmb/v1.0/rest/checkUsernameIBMBExist"
 
 ########################################################################################################################
 #                                         GW FUNCTION NAME
@@ -198,6 +207,25 @@ GW_FUNC_SELECT_STATISTIC_BANKING_BY_PERIOD_IN = "selectStatisticBankingByPeriod_
 GW_FUNC_SELECT_STATISTIC_BANKING_BY_PERIOD_OUT = "selectStatisticBankingByPeriod_out"
 GW_FUNC_SELECT_STATISTIC_BANKING_BY_PERIOD = "selectStatisticBankingByPeriod"
 
+# EbankSms
+
+GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA_IN = "selectMobileNumberSMSByAccountCASA_in"
+GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA_OUT = "selectMobileNumberSMSByAccountCASA_out"
+GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA = "selectMobileNumberSMSByAccountCASA"
+
+GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM_IN = "selectAccountTDByMobileNum_in"
+GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM_OUT = "selectAccountTDByMobileNum_out"
+GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM = "selectAccountTDByMobileNum"
+
+GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA_IN = "registerSMSServiceByAccountCASA_in"
+GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA_OUT = "registerSMSServiceByAccountCASA_out"
+GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA = "registerSMSServiceByAccountCASA"
+
+
+# EbankIBMB
+GW_FUNC_CHECK_USERNAME_IB_MB_EXIST_IN = "checkUsernameIBMBExist_in"
+GW_FUNC_CHECK_USERNAME_IB_MB_EXIST_OUT = "checkUsernameIBMBExist_out"
+GW_FUNC_CHECK_USERNAME_IB_MB_EXIST = "checkUsernameIBMBExist"
 
 ########################################################################################################################
 #                                         END GW FUNCTION NAME
