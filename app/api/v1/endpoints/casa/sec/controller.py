@@ -42,7 +42,7 @@ class CtrSecInfo(CtrCasa, CtrBooking):
         current_user = self.current_user
         current_user_info = current_user.user_info
         # Kiểm tra booking
-        await CtrBooking().ctr_get_booking_and_validate(
+        await self.ctr_get_booking_and_validate(
             booking_id=booking_id,
             business_type_code=BUSINESS_TYPE_OPEN_SEC,
             check_correct_booking_flag=False,
