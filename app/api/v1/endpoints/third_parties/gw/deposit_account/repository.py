@@ -110,6 +110,7 @@ async def repos_gw_deposit_open_account_td(current_user, booking_id, data_input,
 
     session.add(
         BookingBusinessForm(**dict(
+            booking_business_form_id=generate_uuid(),
             booking_id=booking_id,
             form_data=orjson_dumps(data_input),
             business_form_id=BUSINESS_FORM_OPEN_TD_OPEN_TD_ACCOUNT_PD,
