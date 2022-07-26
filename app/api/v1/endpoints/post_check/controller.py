@@ -443,9 +443,13 @@ class CtrKSS(BaseController):
                         customer_detail.update(dict(
                             account_status=STATUS_CLOSE
                         ))
+        if customer_detail['status'] == "Thất bại":
+            customer_detail['ekyc_level'] = None
+
         if customer_detail['ekyc_step']:
-            if STATUS_FAILED in customer_detail['ekyc_step'][0]:
-                customer_detail['error_code_ekyc'] = ERROR_CODE_EKYC[customer_detail['ekyc_step'][0]]
+            first_row = customer_detail['ekyc_step'][0]
+            if STATUS_FAILED in first_row['step_status']:
+                customer_detail['error_code_ekyc'] = ERROR_CODE_EKYC[first_row['step']]
 
         return self.response(data=customer_detail)
 
