@@ -14,6 +14,7 @@ from app.utils.constant.gw import (
     GW_CUSTOMER_REF_DATA_MGMT_CIF_NUM, GW_DEPOSIT_ACCOUNT_FROM_CIF,
     GW_DEPOSIT_ACCOUNT_TD, GW_EMPLOYEE_FROM_CODE, GW_EMPLOYEE_FROM_NAME,
     GW_EMPLOYEES, GW_ENDPOINT_URL_CHECK_EXITS_ACCOUNT_CASA,
+    GW_ENDPOINT_URL_CHECK_USERNAME_IB_MB_EXIST,
     GW_ENDPOINT_URL_DEPOSIT_OPEN_ACCOUNT_TD,
     GW_ENDPOINT_URL_HISTORY_CHANGE_FIELD, GW_ENDPOINT_URL_INTERBANK_TRANSFER,
     GW_ENDPOINT_URL_INTERBANK_TRANSFER_247_BY_ACCOUNT_NUMBER,
@@ -69,7 +70,9 @@ from app.utils.constant.gw import (
     GW_FUNC_AMOUNT_UNBLOCK, GW_FUNC_AMOUNT_UNBLOCK_IN,
     GW_FUNC_AMOUNT_UNBLOCK_OUT, GW_FUNC_CASH_WITHDRAWS,
     GW_FUNC_CASH_WITHDRAWS_IN, GW_FUNC_CASH_WITHDRAWS_OUT,
-    GW_FUNC_INTERBANK_TRANSFER, GW_FUNC_INTERBANK_TRANSFER_247_BY_ACC_NUM,
+    GW_FUNC_CHECK_USERNAME_IB_MB_EXIST, GW_FUNC_CHECK_USERNAME_IB_MB_EXIST_IN,
+    GW_FUNC_CHECK_USERNAME_IB_MB_EXIST_OUT, GW_FUNC_INTERBANK_TRANSFER,
+    GW_FUNC_INTERBANK_TRANSFER_247_BY_ACC_NUM,
     GW_FUNC_INTERBANK_TRANSFER_247_BY_ACC_NUM_IN,
     GW_FUNC_INTERBANK_TRANSFER_247_BY_ACC_NUM_OUT,
     GW_FUNC_INTERBANK_TRANSFER_247_BY_CARD_NUM,
@@ -2146,4 +2149,31 @@ class ServiceGW:
             service_name=GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM
         )
         return response_data
+
     ####################################################################################################################
+
+    ####################################################################################################################
+    # EbankIBMB
+    ####################################################################################################################
+    async def check_username_ib_mb_exist(self, current_user: UserInfoResponse, transaction_name, transaction_value):
+        data_input = {
+            "transaction_info":
+                {
+                    "transaction_name": transaction_name,
+                    "transaction_value": transaction_value
+                }
+        }
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_CHECK_USERNAME_IB_MB_EXIST_IN,
+            data_input=data_input
+        )
+        api_url = f"{self.url}{GW_ENDPOINT_URL_CHECK_USERNAME_IB_MB_EXIST}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_CHECK_USERNAME_IB_MB_EXIST_OUT,
+            service_name=GW_FUNC_CHECK_USERNAME_IB_MB_EXIST
+        )
+        return response_data
+
+####################################################################################################################
