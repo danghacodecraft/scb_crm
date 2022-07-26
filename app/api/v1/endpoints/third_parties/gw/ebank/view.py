@@ -12,14 +12,36 @@ from app.api.v1.endpoints.third_parties.gw.ebank.controller import (
 from app.api.v1.endpoints.third_parties.gw.ebank.example import (
     OPEN_INTERNET_BANKING_REQUEST,
     RETRIEVE_EBANK_BY_CIF_NUMBER_SUCCESS_EXAMPLE,
-    RETRIEVE_EBANK_CIF_NUMBER_REQUEST
+    RETRIEVE_EBANK_CIF_NUMBER_REQUEST,
+    RETRIEVE_INTERNET_BANKING_CIF_NUMBER_REQUEST
 )
 from app.api.v1.endpoints.third_parties.gw.ebank.schema import (
     GWOpenIbRequest, GWRetrieveEbankByCIFNumberRequest,
-    GWRetrieveEbankByCIFNumberResponse
+    GWRetrieveEbankByCIFNumberResponse,
+    GWRetrieveInternetBankingByCIFNumberRequest,
+    GWRetrieveInternetBankingByCIFNumberResponse
 )
 
 router = APIRouter()
+
+
+@router.post(
+    path="/retrieve-ib-ebank/",
+    name="[GW] Lấy chi tiết thông tin dịch vụ IB của khách hàng",
+    description="[GW] Lấy chi tiết thông tin dịch vụ IB của khách hàng",
+    responses=swagger_response(
+        response_model=ResponseData[List[GWRetrieveInternetBankingByCIFNumberResponse]],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_get_retrieve_internet_banking_by_cif(
+        request: GWRetrieveInternetBankingByCIFNumberRequest = Body(..., example=RETRIEVE_INTERNET_BANKING_CIF_NUMBER_REQUEST),
+        current_user=Depends(get_current_user_from_header())
+):
+    gw_get_retrieve_internet_banking_by_cif = await CtrGWRetrieveEbank(current_user).ctr_gw_get_retrieve_internet_banking_by_cif_number(
+        cif_num=request.cif_info.cif_num
+    )
+    return ResponseData[List[GWRetrieveInternetBankingByCIFNumberResponse]](**gw_get_retrieve_internet_banking_by_cif)
 
 
 @router.post(
