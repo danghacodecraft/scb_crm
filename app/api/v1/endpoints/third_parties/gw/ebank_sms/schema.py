@@ -74,6 +74,7 @@ class SelectAccountTDByMobileNumEbankSMSInfoListResponse(BaseSchema):
 class SelectAccountTDByMobileNumResponse(BaseSchema):
     ebank_sms_info_list: List[SelectAccountTDByMobileNumEbankSMSInfoListResponse]
 
+
 ########################################################################################################################
 
 # registerSMSServiceByAccountCASA
@@ -118,3 +119,57 @@ class RegisterSmsServiceByAccountCasaRequest(BaseSchema):
     ebank_sms_info_list: List[RegisterSmsServiceByAccountCasaEbankSmsInfoItemRequest]
     staff_info_checker: RegisterSmsServiceByAccountCasaStaffInfoCheckerRequest
     staff_info_maker: RegisterSmsServiceByAccountCasaStaffInfoMakerRequest
+
+
+########################################################################################################################
+
+# registerSMSServiceByMobileNumber
+
+class RegisterSmsServiceByMobileNumberCIFInfoRequest(BaseSchema):
+    cif_num: str = Field(..., description="Số CIF", example="11111166")
+
+
+class RegisterSmsServiceByMobileNumberCustomerInfoItemRequest(BaseSchema):
+    mobile_phone: str = Field(..., description="Số điện thoại khách hàng đăng ký dịch vụ SMS Banking",
+                              example="0909555888")
+
+
+class RegisterSmsServiceByMobileNumberCustomerInfoRequest(BaseSchema):
+    customer_info: RegisterSmsServiceByMobileNumberCustomerInfoItemRequest
+
+
+class RegisterSmsServiceByMobileNumberBranchInfoChildItemRequest(BaseSchema):
+    branch_code: str = Field(..., description="Mã đơn vị đăng ký dịch vụ SMS Banking", example="000")
+
+
+class RegisterSmsServiceByMobileNumberEbankSmsInfoChildItemRequest(BaseSchema):
+    ebank_sms_indentify_num: str = Field(...,
+                                         description="Số tài khoản tiết kiệm đăng ký sử dụng dịch vụ SMS Banking",
+                                         example="0909111222")
+    branch_info: RegisterSmsServiceByMobileNumberBranchInfoChildItemRequest
+
+
+class RegisterSmsServiceByMobileNumberEbankSmsInfoItemRequest(BaseSchema):
+    ebank_sms_info_item: RegisterSmsServiceByMobileNumberEbankSmsInfoChildItemRequest
+
+
+class RegisterSmsServiceByMobileNumberAccountInfoRequest(BaseSchema):
+    account_type: str = Field(..., description="Giá trị TT : Đăng ký biến động số dư"
+                                               " Giá trị TK: Đăng ký SMS tiết kiệm", example="TK")
+    cif_info: RegisterSmsServiceByMobileNumberCIFInfoRequest
+    ebank_sms_info_list: List[RegisterSmsServiceByMobileNumberEbankSmsInfoItemRequest]
+
+
+class RegisterSmsServiceByMobileNumberStaffInfoCheckerRequest(BaseSchema):
+    staff_name: str = Field(..., description="Kiểm soát viên", example="HOANT2")
+
+
+class RegisterSmsServiceByMobileNumberStaffInfoMakerRequest(BaseSchema):
+    staff_name: str = Field(..., description="Giao dịch viên", example="KHANHLQ")
+
+
+class RegisterSmsServiceByMobileNumberRequest(BaseSchema):
+    customer_info: RegisterSmsServiceByMobileNumberCustomerInfoItemRequest
+    account_info: RegisterSmsServiceByMobileNumberAccountInfoRequest
+    staff_info_checker: RegisterSmsServiceByMobileNumberStaffInfoCheckerRequest
+    staff_info_maker: RegisterSmsServiceByMobileNumberStaffInfoMakerRequest

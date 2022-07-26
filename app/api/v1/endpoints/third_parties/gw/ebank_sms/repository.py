@@ -65,3 +65,29 @@ async def repos_gw_register_sms_service_by_account_casa(
         )
 
     return ReposReturn(data=register_sms_service_by_account_casa)
+
+
+async def repos_gw_register_sms_service_by_mobile_number(
+        account_info,
+        customer_info,
+        staff_info_checker,
+        staff_info_maker,
+        current_user
+):
+    current_user = current_user.user_info
+    is_success, register_sms_service_by_mobile_number = await service_gw.register_sms_service_by_mobile_number(
+        current_user=current_user,
+        account_info=account_info,
+        customer_info=customer_info,
+        staff_info_checker=staff_info_checker,
+        staff_info_maker=staff_info_maker
+    )
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="register_sms_service_by_mobile_number",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(register_sms_service_by_mobile_number)
+        )
+
+    return ReposReturn(data=register_sms_service_by_mobile_number)
