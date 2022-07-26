@@ -12,11 +12,13 @@ from app.api.v1.endpoints.third_parties.gw.ebank_sms.controller import (
 from app.api.v1.endpoints.third_parties.gw.ebank_sms.schema import (
     GWSelectMobileNumberSMSByAccountCASARequest,
     GWSelectMobileNumberSMSByAccountCASAResponse,
-    RegisterSmsServiceByAccountCasaRequest, SelectAccountTDByMobileNumRequest,
+    RegisterSmsServiceByAccountCasaRequest,
+    RegisterSmsServiceByMobileNumberRequest, SelectAccountTDByMobileNumRequest,
     SelectAccountTDByMobileNumResponse
 )
 from app.utils.constant.gw import (
     GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA_OUT,
+    GW_FUNC_REGISTER_SMS_SERVICE_BY_MOBILE_NUMBER_OUT,
     GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM_OUT,
     GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA_OUT
 )
@@ -97,3 +99,32 @@ async def view_gw_register_sms_service_by_account_casa(
         'data').get(GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA_OUT).get('data_output')
 
     return ResponseData(**gw_get_register_sms_service_by_account_casa)
+
+
+@router.post(
+    path="/register-sms-service-by-mobile-number/",
+    name="[GW] Đăng ký dịch vụ SMS Banking cho tài khoản tiết kiệm theo số điện thoại",
+    description="[GW] Đăng ký dịch vụ SMS Banking cho tài khoản tiết kiệm theo số điện thoại",
+    responses=swagger_response(
+        response_model=None,
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_register_sms_service_by_mobile_number(
+        request: RegisterSmsServiceByMobileNumberRequest = Body(..., ),
+        current_user=Depends(get_current_user_from_header())
+):
+    request_data = json.loads(request.json())
+
+    gw_get_register_sms_service_by_mobile_number = await CtrGWEbankSms(
+        current_user).ctr_gw_register_sms_service_by_mobile_number(
+        account_info=request_data.get('account_info'),
+        customer_info=request_data.get('customer_info'),
+        staff_info_checker=request_data.get('staff_info_checker'),
+        staff_info_maker=request_data.get('staff_info_maker')
+    )
+
+    gw_get_register_sms_service_by_mobile_number['data'] = gw_get_register_sms_service_by_mobile_number.get(
+        'data').get(GW_FUNC_REGISTER_SMS_SERVICE_BY_MOBILE_NUMBER_OUT).get('data_output')
+
+    return ResponseData(**gw_get_register_sms_service_by_mobile_number)
