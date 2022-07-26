@@ -20,3 +20,22 @@ async def repos_gw_get_select_mobile_number_sms_by_account_casa(
         )
 
     return ReposReturn(data=select_mobile_number_sms_by_account_casa)
+
+
+async def repos_gw_get_select_account_td_by_mobile_num(
+        ebank_sms_indentify_num,
+        current_user
+):
+    current_user = current_user.user_info
+    is_success, select_account_td_by_mobile_num = await service_gw.select_account_td_by_mobile_num(
+        current_user=current_user, ebank_sms_indentify_num=ebank_sms_indentify_num
+    )
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="get_select_account_td_by_mobile_num",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(select_account_td_by_mobile_num)
+        )
+
+    return ReposReturn(data=select_account_td_by_mobile_num)
