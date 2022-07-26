@@ -100,7 +100,7 @@ class CtrSecInfo(CtrCasa):
             saving_transaction_daily, saving_transaction_sender, saving_transaction_job, saving_booking_business_form
         ) = transaction_datas
 
-        save_open_sec_info = self.call_repos(await repos_save_open_sec_info(
+        self.call_repos(await repos_save_open_sec_info(
             booking_id=booking_id,
             saving_transaction_stage_status=saving_transaction_stage_status,
             saving_sla_transaction=saving_sla_transaction,
@@ -115,4 +115,6 @@ class CtrSecInfo(CtrCasa):
             session=self.oracle_session
         ))
 
-        return self.response(data=save_open_sec_info)
+        return self.response(data=dict(
+            booking_id=booking_id
+        ))
