@@ -53,6 +53,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_RETRIEVE_TELE_TRANSFER_INFO,
     GW_ENDPOINT_URL_RETRIEVE_TOPIC_INFO_FROM_CODE,
     GW_ENDPOINT_URL_RETRIEVE_WORKING_PROCESS_INFO_FROM_CODE,
+    GW_ENDPOINT_URL_SELECT_ACCOUNT_TD_BY_MOBILE_NUM,
     GW_ENDPOINT_URL_SELECT_BRANCH_BY_BRANCH_ID,
     GW_ENDPOINT_URL_SELECT_BRANCH_BY_REGION_ID,
     GW_ENDPOINT_URL_SELECT_CATEGORY,
@@ -86,8 +87,11 @@ from app.utils.constant.gw import (
     GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_IN,
     GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_OUT,
     GW_FUNC_RETRIEVE_SERIAL_NUMBER, GW_FUNC_RETRIEVE_SERIAL_NUMBER_IN,
-    GW_FUNC_RETRIEVE_SERIAL_NUMBER_OUT, GW_FUNC_SELECT_BRANCH_BY_BRANCH_ID,
-    GW_FUNC_SELECT_BRANCH_BY_BRANCH_ID_IN,
+    GW_FUNC_RETRIEVE_SERIAL_NUMBER_OUT,
+    GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM,
+    GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM_IN,
+    GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM_OUT,
+    GW_FUNC_SELECT_BRANCH_BY_BRANCH_ID, GW_FUNC_SELECT_BRANCH_BY_BRANCH_ID_IN,
     GW_FUNC_SELECT_BRANCH_BY_BRANCH_ID_OUT, GW_FUNC_SELECT_BRANCH_BY_REGION_ID,
     GW_FUNC_SELECT_BRANCH_BY_REGION_ID_IN,
     GW_FUNC_SELECT_BRANCH_BY_REGION_ID_OUT,
@@ -2120,6 +2124,26 @@ class ServiceGW:
             api_url=api_url,
             output_key=GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA_OUT,
             service_name=GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA
+        )
+        return response_data
+
+    async def select_account_td_by_mobile_num(self, current_user: UserInfoResponse, ebank_sms_indentify_num):
+        data_input = {
+            "ebank_sms_info":
+                {
+                    "ebank_sms_indentify_num": ebank_sms_indentify_num
+                }
+        }
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM_IN,
+            data_input=data_input
+        )
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_ACCOUNT_TD_BY_MOBILE_NUM}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM_OUT,
+            service_name=GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM
         )
         return response_data
     ####################################################################################################################

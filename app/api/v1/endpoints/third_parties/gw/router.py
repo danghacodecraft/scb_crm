@@ -53,4 +53,4 @@ router_module.include_router(router=views_branch_location.router, prefix="/branc
 
 router_module.include_router(router=views_statistic.router, prefix="/statistic", tags=["[Third-Party][GW][Statistic]"])
 
-router_module.include_router(router=views_ebank_sms.router, prefix="/ebank-sms", tags=["[Third-Party][GW][EbankSMS]"])
+router_module.include_router(router=views_ebank_sms.router, prefix="/ebank-sms", tags=["[Third-Party][GW][Ebank-SMS]"])

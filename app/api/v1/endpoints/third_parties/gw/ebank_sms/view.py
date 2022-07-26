@@ -9,9 +9,11 @@ from app.api.v1.endpoints.third_parties.gw.ebank_sms.controller import (
 )
 from app.api.v1.endpoints.third_parties.gw.ebank_sms.schema import (
     GWSelectMobileNumberSMSByAccountCASARequest,
-    GWSelectMobileNumberSMSByAccountCASAResponse
+    GWSelectMobileNumberSMSByAccountCASAResponse,
+    SelectAccountTDByMobileNumRequest, SelectAccountTDByMobileNumResponse
 )
 from app.utils.constant.gw import (
+    GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM_OUT,
     GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA_OUT
 )
 
@@ -35,7 +37,30 @@ async def view_gw_get_select_mobile_number_sms_by_account_casa(
         current_user).ctr_gw_select_mobile_number_sms_by_account_casa(
         ebank_sms_indentify_num=request.ebank_sms_info.ebank_sms_indentify_num
     )
-    gw_get_select_mobile_number_sms_by_account_casa['data'] = gw_get_select_mobile_number_sms_by_account_casa[
-        'data'][GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA_OUT]['data_output']
+    gw_get_select_mobile_number_sms_by_account_casa['data'] = gw_get_select_mobile_number_sms_by_account_casa.get(
+        'data').get(GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA_OUT).get('data_output')
 
     return ResponseData[GWSelectMobileNumberSMSByAccountCASAResponse](**gw_get_select_mobile_number_sms_by_account_casa)
+
+
+@router.post(
+    path="/select-account-td-by-mobile-num/",
+    name="[GW] Lấy danh sách tài khoản tiết kiệm theo số điện thoại",
+    description="[GW] Lấy danh sách tài khoản tiết kiệm theo số điện thoại",
+    responses=swagger_response(
+        response_model=ResponseData[SelectAccountTDByMobileNumResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_get_select_account_td_by_mobile_num(
+        request: SelectAccountTDByMobileNumRequest = Body(..., ),
+        current_user=Depends(get_current_user_from_header())
+):
+    gw_get_select_account_td_by_mobile_num = await CtrGWEbankSms(
+        current_user).ctr_gw_select_account_td_by_mobile_num(
+        ebank_sms_indentify_num=request.ebank_sms_info.ebank_sms_indentify_num
+    )
+    gw_get_select_account_td_by_mobile_num['data'] = gw_get_select_account_td_by_mobile_num.get(
+        'data').get(GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM_OUT).get('data_output')
+
+    return ResponseData[SelectAccountTDByMobileNumResponse](**gw_get_select_account_td_by_mobile_num)
