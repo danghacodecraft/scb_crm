@@ -15,10 +15,25 @@ from app.utils.constant.cif import (
 from app.utils.error_messages import (
     CASA_FEE_METHOD_NOT_EXIST, ERROR_CASA_ACCOUNT_NOT_EXIST
 )
-from app.utils.functions import orjson_dumps
+from app.utils.functions import orjson_dumps, orjson_loads
 
 
-class CtrSecInfo(CtrCasa):
+class CtrSecInfo(CtrCasa, CtrBooking):
+    async def ctr_get_open_sec_info(
+            self,
+            booking_id: str
+    ):
+        get_open_sec_info = await self.ctr_get_booking_business_form(
+            booking_id=booking_id, session=self.oracle_session
+        )
+        form_data = orjson_loads(get_open_sec_info.form_data)
+        for account_info in form_data['account_infos']:
+            account_info.update(
+                sec_unit_amount=account_info['sec_amount'] * 10
+            )
+
+        return self.response(data=form_data)
+
     async def ctr_save_open_sec_info(
             self,
             booking_id: str,

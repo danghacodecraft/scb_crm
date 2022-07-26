@@ -29,3 +29,22 @@ async def view_save_open_sec_info(
         request=request
     )
     return ResponseData(**save_open_sec_info)
+
+
+@router.get(
+    path="/sec/",
+    name="Phát hành SEC",
+    description="Phát hành SEC",
+    responses=swagger_response(
+        response_model=ResponseData,
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_get_open_sec_info(
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
+        current_user=Depends(get_current_user_from_header())
+):
+    get_open_sec_info = await CtrSecInfo(current_user).ctr_get_open_sec_info(
+        booking_id=BOOKING_ID
+    )
+    return ResponseData(**get_open_sec_info)
