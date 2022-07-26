@@ -34,7 +34,7 @@ from app.utils.error_messages import (
     ERROR_CIF_ID_NOT_EXIST, ERROR_CIF_NUMBER_EXIST, ERROR_CIF_NUMBER_INVALID,
     ERROR_CIF_NUMBER_NOT_EXIST, MESSAGE_STATUS
 )
-from app.utils.functions import dropdown, now
+from app.utils.functions import dropdown, generate_uuid, now
 
 
 async def repos_get_initializing_customer(cif_id: str, session: Session) -> ReposReturn:
@@ -209,6 +209,7 @@ async def repos_save_gw_output_data(
         session: Session
 ):
     session.add(BookingBusinessForm(
+        booking_business_form_id=generate_uuid(),
         booking_id=booking_id,
         business_form_id=f"{business_type_id}_GW",
         save_flag=True,
