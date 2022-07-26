@@ -1,7 +1,8 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.ebank_sms.repository import (
     repos_gw_get_select_account_td_by_mobile_num,
-    repos_gw_get_select_mobile_number_sms_by_account_casa
+    repos_gw_get_select_mobile_number_sms_by_account_casa,
+    repos_gw_register_sms_service_by_account_casa
 )
 
 
@@ -17,5 +18,20 @@ class CtrGWEbankSms(BaseController):
         current_user = self.current_user
         ebank_sms_info = self.call_repos(await repos_gw_get_select_account_td_by_mobile_num(
             ebank_sms_indentify_num=ebank_sms_indentify_num, current_user=current_user))
+
+        return self.response(data=ebank_sms_info)
+
+    async def ctr_gw_register_sms_service_by_account_casa(self,
+                                                          account_info,
+                                                          ebank_sms_info_list,
+                                                          staff_info_checker,
+                                                          staff_info_maker):
+        current_user = self.current_user
+        ebank_sms_info = self.call_repos(await repos_gw_register_sms_service_by_account_casa(
+            account_info=account_info,
+            ebank_sms_info_list=ebank_sms_info_list,
+            staff_info_checker=staff_info_checker,
+            staff_info_maker=staff_info_maker,
+            current_user=current_user))
 
         return self.response(data=ebank_sms_info)

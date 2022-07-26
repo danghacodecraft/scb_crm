@@ -73,3 +73,48 @@ class SelectAccountTDByMobileNumEbankSMSInfoListResponse(BaseSchema):
 
 class SelectAccountTDByMobileNumResponse(BaseSchema):
     ebank_sms_info_list: List[SelectAccountTDByMobileNumEbankSMSInfoListResponse]
+
+########################################################################################################################
+
+# registerSMSServiceByAccountCASA
+
+
+class RegisterSmsServiceByAccountCasaAccountInfoRequest(BaseSchema):
+    account_num: str = Field(..., description="Số tài khoản thanh toán", example="112233445566")
+    account_type: str = Field(..., description="Giá trị TT : Đăng ký biến động số dư"
+                                               " Giá trị TK: Đăng ký SMS tiết kiệm", example="TT")
+
+
+class RegisterSmsServiceByAccountCasaEbankSmsInfoItemCIFInfoRequest(BaseSchema):
+    cif_num: str = Field(..., description="Số CIF")
+
+
+class RegisterSmsServiceByAccountCasaEbankSmsInfoItemBranchInfoRequest(BaseSchema):
+    branch_code: str = Field(..., description="Mã đơn vị đăng ký dịch vụ SMS Banking", example="000")
+
+
+class RegisterSmsServiceByAccountCasaEbankSmsInfoChildItemRequest(BaseSchema):
+    ebank_sms_indentify_num: str = Field(...,
+                                         description="Số điện thoại đăng ký sử dụng dịch vụ SMS Banking",
+                                         example="0909111222")
+    cif_info: RegisterSmsServiceByAccountCasaEbankSmsInfoItemCIFInfoRequest
+    branch_info: RegisterSmsServiceByAccountCasaEbankSmsInfoItemBranchInfoRequest
+
+
+class RegisterSmsServiceByAccountCasaEbankSmsInfoItemRequest(BaseSchema):
+    ebank_sms_info_item: RegisterSmsServiceByAccountCasaEbankSmsInfoChildItemRequest
+
+
+class RegisterSmsServiceByAccountCasaStaffInfoCheckerRequest(BaseSchema):
+    staff_name: str = Field(..., description="Kiểm soát viên", example="HOANT2")
+
+
+class RegisterSmsServiceByAccountCasaStaffInfoMakerRequest(BaseSchema):
+    staff_name: str = Field(..., description="Giao dịch viên", example="KHANHLQ")
+
+
+class RegisterSmsServiceByAccountCasaRequest(BaseSchema):
+    account_info: RegisterSmsServiceByAccountCasaAccountInfoRequest
+    ebank_sms_info_list: List[RegisterSmsServiceByAccountCasaEbankSmsInfoItemRequest]
+    staff_info_checker: RegisterSmsServiceByAccountCasaStaffInfoCheckerRequest
+    staff_info_maker: RegisterSmsServiceByAccountCasaStaffInfoMakerRequest

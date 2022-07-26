@@ -76,8 +76,9 @@ GW_ENDPOINT_URL_SELECT_DATA_FOR_CHART_DASHBOARD = "/statistics/v1.0/rest/selectD
 # ---------------------------------------------- EBANK SMS ---------------------------------------------- #
 GW_ENDPOINT_URL_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA = "/ebanksms/v1.0/rest/selectMobileNumberSMSByAccountCASA"
 GW_ENDPOINT_URL_SELECT_ACCOUNT_TD_BY_MOBILE_NUM = "/ebanksms/v1.0/rest/selectAccountTDByMobileNum"
+GW_ENDPOINT_URL_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA = "/ebanksms/v1.0/rest/registerSMSServiceByAccountCASA"
 
-# ---------------------------------------------- EBANK SMS ---------------------------------------------- #
+# ---------------------------------------------- EBANK IB MB ---------------------------------------------- #
 GW_ENDPOINT_URL_CHECK_USERNAME_IB_MB_EXIST = "/ebankibmb/v1.0/rest/checkUsernameIBMBExist"
 
 ########################################################################################################################
@@ -215,6 +216,10 @@ GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA = "selectMobileNumberSMSByAccou
 GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM_IN = "selectAccountTDByMobileNum_in"
 GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM_OUT = "selectAccountTDByMobileNum_out"
 GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM = "selectAccountTDByMobileNum"
+
+GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA_IN = "registerSMSServiceByAccountCASA_in"
+GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA_OUT = "registerSMSServiceByAccountCASA_out"
+GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA = "registerSMSServiceByAccountCASA"
 
 
 # EbankIBMB

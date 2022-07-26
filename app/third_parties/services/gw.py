@@ -25,6 +25,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_PAY_IN_CASH_247_BY_CARD_NUMBER,
     GW_ENDPOINT_URL_PAYMENT_AMOUNT_BLOCK,
     GW_ENDPOINT_URL_PAYMENT_AMOUNT_UNBLOCK, GW_ENDPOINT_URL_REDEEM_ACCOUNT,
+    GW_ENDPOINT_URL_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA,
     GW_ENDPOINT_URL_RETRIEVE_AUTHORIZED_ACCOUNT_NUM,
     GW_ENDPOINT_URL_RETRIEVE_BEN_NAME_BY_ACCOUNT_NUMBER,
     GW_ENDPOINT_URL_RETRIEVE_BEN_NAME_BY_CARD_NUMBER,
@@ -87,7 +88,10 @@ from app.utils.constant.gw import (
     GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM,
     GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM_IN,
     GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM_OUT, GW_FUNC_PAY_IN_CARD_IN,
-    GW_FUNC_PAY_IN_CARD_OUT, GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE,
+    GW_FUNC_PAY_IN_CARD_OUT, GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA,
+    GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA_IN,
+    GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA_OUT,
+    GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE,
     GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_IN,
     GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_OUT,
     GW_FUNC_RETRIEVE_SERIAL_NUMBER, GW_FUNC_RETRIEVE_SERIAL_NUMBER_IN,
@@ -2195,6 +2199,31 @@ class ServiceGW:
             api_url=api_url,
             output_key=GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM_OUT,
             service_name=GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM
+        )
+        return response_data
+
+    async def register_sms_service_by_account_casa(self, current_user: UserInfoResponse,
+                                                   account_info,
+                                                   ebank_sms_info_list,
+                                                   staff_info_checker,
+                                                   staff_info_maker):
+        data_input = {
+            "account_info": account_info,
+            "ebank_sms_info_list": ebank_sms_info_list,
+            "staff_info_checker": staff_info_checker,
+            "staff_info_maker": staff_info_maker,
+        }
+
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA_IN,
+            data_input=data_input
+        )
+        api_url = f"{self.url}{GW_ENDPOINT_URL_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA_OUT,
+            service_name=GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA
         )
         return response_data
 
