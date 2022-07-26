@@ -539,6 +539,7 @@ class BaseController(ServiceKafka):
         )
 
         saving_booking_business_form = dict(
+            booking_business_form_id=generate_uuid(),
             booking_id=booking_id,
             form_data=request_json,
             business_form_id=begin_business_form.id,
