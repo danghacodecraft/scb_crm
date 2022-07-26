@@ -24,6 +24,12 @@ RETRIEVE_EBANK_BY_CIF_NUMBER_SUCCESS_EXAMPLE = {
     }
 }
 
+RETRIEVE_INTERNET_BANKING_CIF_NUMBER_REQUEST = {
+    "cif_info": {
+        "cif_num": "1348783"
+    }
+}
+
 OPEN_INTERNET_BANKING_REQUEST = {
     "example": {
         "value": {
