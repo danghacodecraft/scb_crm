@@ -1,14 +1,21 @@
 from app.api.v1.endpoints.casa.controller import CtrCasa
+from app.api.v1.endpoints.casa.sec.repository import repos_save_open_sec_info
 from app.api.v1.endpoints.casa.sec.schema import SaveSecRequest
 from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
     CtrGWCasaAccount
 )
 from app.api.v1.others.booking.controller import CtrBooking
+from app.api.v1.validator import validate_history_data
 from app.utils.constant.business_type import BUSINESS_TYPE_OPEN_SEC
 from app.utils.constant.casa import CASA_FEE_METHOD_CASA, CASA_FEE_METHODS
+from app.utils.constant.cif import (
+    PROFILE_HISTORY_DESCRIPTIONS_TOP_UP_CASA_ACCOUNT,
+    PROFILE_HISTORY_STATUS_INIT
+)
 from app.utils.error_messages import (
     CASA_FEE_METHOD_NOT_EXIST, ERROR_CASA_ACCOUNT_NOT_EXIST
 )
+from app.utils.functions import orjson_dumps
 
 
 class CtrSecInfo(CtrCasa):
@@ -18,6 +25,7 @@ class CtrSecInfo(CtrCasa):
             request: SaveSecRequest
     ):
         current_user = self.current_user
+        current_user_info = current_user.user_info
         # Kiểm tra booking
         await CtrBooking().ctr_get_booking_and_validate(
             booking_id=booking_id,
@@ -57,11 +65,54 @@ class CtrSecInfo(CtrCasa):
                         msg=ERROR_CASA_ACCOUNT_NOT_EXIST,
                         loc=f"transaction_info -> fee_info -> account_number: {account_number}"
                     )
-
+                transaction_info = request.transaction_info
                 # Bảng kê
-                await self.validate_statement(statement=request.transaction_info.statement)
+                await self.validate_statement(statement=transaction_info.statement)
 
                 # Thông tin khách hàng giao dịch
-                await self.validate_sender(sender=request.transaction_info.sender)
+                await self.validate_sender(sender=transaction_info.sender)
 
-        return self.response(data='a')
+        history_datas = self.make_history_log_data(
+            description=PROFILE_HISTORY_DESCRIPTIONS_TOP_UP_CASA_ACCOUNT,
+            history_status=PROFILE_HISTORY_STATUS_INIT,
+            current_user=current_user_info
+        )
+        # Validate history data
+        is_success, history_response = validate_history_data(history_datas)
+        if not is_success:
+            return self.response_exception(
+                msg=history_response['msg'],
+                loc=history_response['loc'],
+                detail=history_response['detail']
+            )
+
+        # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CASA
+        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
+            business_type_id=BUSINESS_TYPE_OPEN_SEC,
+            booking_id=booking_id,
+            request_json=request.json(),
+            history_datas=orjson_dumps(history_datas),
+        )
+
+        (
+            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
+            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
+            saving_transaction_daily, saving_transaction_sender, saving_transaction_job, saving_booking_business_form
+        ) = transaction_datas
+
+        save_open_sec_info = self.call_repos(await repos_save_open_sec_info(
+            booking_id=booking_id,
+            saving_transaction_stage_status=saving_transaction_stage_status,
+            saving_sla_transaction=saving_sla_transaction,
+            saving_transaction_stage=saving_transaction_stage,
+            saving_transaction_stage_phase=saving_transaction_stage_phase,
+            saving_transaction_stage_lane=saving_transaction_stage_lane,
+            saving_transaction_stage_role=saving_transaction_stage_role,
+            saving_transaction_daily=saving_transaction_daily,
+            saving_transaction_sender=saving_transaction_sender,
+            saving_transaction_job=saving_transaction_job,
+            saving_booking_business_form=saving_booking_business_form,
+            session=self.oracle_session
+        ))
+
+        return self.response(data=save_open_sec_info)
