@@ -76,6 +76,10 @@ GW_ENDPOINT_URL_SELECT_DATA_FOR_CHART_DASHBOARD = "/statistics/v1.0/rest/selectD
 # ---------------------------------------------- EBANK SMS ---------------------------------------------- #
 GW_ENDPOINT_URL_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA = "/ebanksms/v1.0/rest/selectMobileNumberSMSByAccountCASA"
 GW_ENDPOINT_URL_SELECT_ACCOUNT_TD_BY_MOBILE_NUM = "/ebanksms/v1.0/rest/selectAccountTDByMobileNum"
+
+# ---------------------------------------------- EBANK SMS ---------------------------------------------- #
+GW_ENDPOINT_URL_CHECK_USERNAME_IB_MB_EXIST = "/ebankibmb/v1.0/rest/checkUsernameIBMBExist"
+
 ########################################################################################################################
 #                                         GW FUNCTION NAME
 ########################################################################################################################
@@ -211,6 +215,12 @@ GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA = "selectMobileNumberSMSByAccou
 GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM_IN = "selectAccountTDByMobileNum_in"
 GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM_OUT = "selectAccountTDByMobileNum_out"
 GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM = "selectAccountTDByMobileNum"
+
+
+# EbankIBMB
+GW_FUNC_CHECK_USERNAME_IB_MB_EXIST_IN = "checkUsernameIBMBExist_in"
+GW_FUNC_CHECK_USERNAME_IB_MB_EXIST_OUT = "checkUsernameIBMBExist_out"
+GW_FUNC_CHECK_USERNAME_IB_MB_EXIST = "checkUsernameIBMBExist"
 
 ########################################################################################################################
 #                                         END GW FUNCTION NAME
