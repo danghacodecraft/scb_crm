@@ -36,7 +36,6 @@ async def repos_save_td_account(
         saving_booking_business_form: dict,
         session: Session
 ):
-
     session.add_all([
         TransactionStageStatus(**saving_transaction_stage_status),
         SlaTransaction(**saving_sla_transaction),
@@ -48,24 +47,6 @@ async def repos_save_td_account(
         TransactionSender(**saving_transaction_sender),
         TransactionJob(**saving_transaction_job),
         BookingBusinessForm(**saving_booking_business_form),
-        # lưu form data request từ client
-        # BookingBusinessForm(**dict(
-        #     booking_id=booking_id,
-        #     form_data=request_json,
-        #     business_form_id=BUSINESS_FORM_OPEN_TD_OPEN_TD_ACCOUNT,
-        #     save_flag=True,
-        #     created_at=now(),
-        #     log_data=history_datas
-        # )),
-        # TransactionJob(**dict(
-        #     transaction_id=generate_uuid(),
-        #     booking_id=booking_id,
-        #     business_job_id=BUSINESS_JOB_CODE_START_OPEN_TD_ACCOUNT,
-        #     complete_flag=True,
-        #     error_code=None,
-        #     error_desc=None,
-        #     created_at=now()
-        # ))
     ])
     session.bulk_save_objects([TdAccount(**item) for item in td_accounts])
     session.bulk_save_objects([TdAccountResign(**item) for item in td_account_resigns])

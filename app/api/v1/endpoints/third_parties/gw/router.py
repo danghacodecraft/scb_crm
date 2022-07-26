@@ -11,6 +11,8 @@ from app.api.v1.endpoints.third_parties.gw.customer import \
 from app.api.v1.endpoints.third_parties.gw.deposit_account import \
     view as views_deposit_account
 from app.api.v1.endpoints.third_parties.gw.ebank import view as views_ebank
+from app.api.v1.endpoints.third_parties.gw.ebank_sms import \
+    view as views_ebank_sms
 from app.api.v1.endpoints.third_parties.gw.employee import \
     view as views_employee
 from app.api.v1.endpoints.third_parties.gw.history import view as views_history
@@ -50,3 +52,5 @@ router_module.include_router(router=views_branch_location.router, prefix="/branc
                              tags=["[Third-Party][GW][Branch-Location]"])
 
 router_module.include_router(router=views_statistic.router, prefix="/statistic", tags=["[Third-Party][GW][Statistic]"])
+
+router_module.include_router(router=views_ebank_sms.router, prefix="/ebank-sms", tags=["[Third-Party][GW][Ebank-SMS]"])
