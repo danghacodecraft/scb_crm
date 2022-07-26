@@ -72,6 +72,8 @@ GW_ENDPOINT_URL_SELECT_STATISTIC_BANKING_BY_PERIOD = "/statistics/v1.0/rest/sele
 GW_ENDPOINT_URL_SELECT_SUMMARY_CARD_BY_DATE = "/statistics/v1.0/rest/selectSummaryCardsByDate"
 GW_ENDPOINT_URL_SELECT_DATA_FOR_CHART_DASHBOARD = "/statistics/v1.0/rest/selectDataForChartDashBoard"
 
+# ---------------------------------------------- EBANK SMS ---------------------------------------------- #
+GW_ENDPOINT_URL_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA = "/ebanksms/v1.0/rest/selectMobileNumberSMSByAccountCASA"
 ########################################################################################################################
 #                                         GW FUNCTION NAME
 ########################################################################################################################
@@ -198,6 +200,11 @@ GW_FUNC_SELECT_STATISTIC_BANKING_BY_PERIOD_IN = "selectStatisticBankingByPeriod_
 GW_FUNC_SELECT_STATISTIC_BANKING_BY_PERIOD_OUT = "selectStatisticBankingByPeriod_out"
 GW_FUNC_SELECT_STATISTIC_BANKING_BY_PERIOD = "selectStatisticBankingByPeriod"
 
+# EbankSms
+
+GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA_IN = "selectMobileNumberSMSByAccountCASA_in"
+GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA_OUT = "selectMobileNumberSMSByAccountCASA_out"
+GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA = "selectMobileNumberSMSByAccountCASA"
 
 ########################################################################################################################
 #                                         END GW FUNCTION NAME
