@@ -186,6 +186,7 @@ async def repos_gw_get_close_casa_account(
         # lưu form data request GW
         session.add(
             BookingBusinessForm(**dict(
+                booking_business_form_id=generate_uuid(),
                 booking_id=booking_id,
                 form_data=orjson_dumps(item),
                 business_form_id=BUSINESS_FORM_CLOSE_CASA_PD,
