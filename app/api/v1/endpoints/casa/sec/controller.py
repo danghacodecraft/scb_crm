@@ -4,6 +4,9 @@ from app.api.v1.endpoints.casa.sec.schema import SaveSecRequest
 from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
     CtrGWCasaAccount
 )
+from app.api.v1.endpoints.third_parties.gw.customer.controller import (
+    CtrGWCustomer
+)
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.validator import validate_history_data
 from app.utils.constant.business_type import BUSINESS_TYPE_OPEN_SEC
@@ -18,7 +21,7 @@ from app.utils.error_messages import (
 from app.utils.functions import orjson_dumps, orjson_loads
 
 
-class CtrSecInfo(CtrCasa, CtrBooking):
+class CtrSecInfo(CtrCasa, CtrBooking, CtrGWCasaAccount, CtrGWCustomer):
     async def ctr_get_open_sec_info(
             self,
             booking_id: str
@@ -27,10 +30,30 @@ class CtrSecInfo(CtrCasa, CtrBooking):
             booking_id=booking_id, session=self.oracle_session
         )
         form_data = orjson_loads(get_open_sec_info.form_data)
+        total_sec_amount = 0
         for account_info in form_data['account_infos']:
+            sec_amount = account_info['sec_amount']
             account_info.update(
-                sec_unit_amount=account_info['sec_amount'] * 10
+                sec_unit_amount=sec_amount * 10,
             )
+            total_sec_amount += sec_amount
+
+        form_data.update(
+            total_sec_amount=total_sec_amount,
+            total_sec_unit_amount=total_sec_amount * 10
+        )
+
+        sender_cif_number = form_data['transaction_info']['sender']['cif_number']
+        if sender_cif_number:
+            await self.ctr_gw_get_customer_info_detail(
+                cif_number=sender_cif_number,
+                return_raw_data_flag=True
+            )
+
+            # TODO: Lấy thông tin sender, tạo 1 Controller Sender trong casa
+            # TODO: Lấy thông tin statement, tạo 1 Controller Statement trong casa
+
+            # TODO: Tạo response model
 
         return self.response(data=form_data)
 

@@ -10,7 +10,7 @@ from app.utils.constant.casa import CASA_FEE_METHODS
 from app.utils.functions import make_description_from_dict
 
 
-class BasiInfoRequest(BaseSchema):
+class AccountInfoResponse(BaseSchema):
     sec_number: int = Field(..., description="Số cuốn")
 
 
@@ -37,7 +37,7 @@ class TransactionInfoFees(BaseSchema):
 
 
 class SaveSecResponse(BaseSchema):
-    basic_info: BasiInfoRequest = Field(..., description="Thông tin cơ bản")
+    account_info: List[AccountInfoResponse] = Field(..., description="Thông tin cơ bản")
     transaction_info_fees: TransactionInfoFees = Field(..., description="Thông tin giao dịch và phí")
 
 
