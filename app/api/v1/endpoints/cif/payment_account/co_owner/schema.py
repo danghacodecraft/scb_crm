@@ -63,7 +63,7 @@ class AgreementAuthorResponse(BaseSchema):
         description="Thỏa thuận chữ ký các hồ sơ chứng từ.True: Có , False: Không",
     )
     method_sign: Optional[int] = Field(..., description="Phương thức ký")
-    signature_list: Optional[List[SignatureAgreementAuthorResponse]] = Field(
+    signature_list: Optional[SignatureAgreementAuthorResponse] = Field(
         ..., description="Chữ ký của đồng sở hữu"
     )
 
@@ -131,9 +131,14 @@ class AgreementAuthorRequest(BaseSchema):
         ...,
         description="Thỏa thuận chữ ký các hồ sơ chứng từ.`True`: Có , `False`: Không",
     )
-    method_sign: int = Field(..., description="Phương thức ký")
+    method_sign: int = Field(
+        ...,
+        description="Phương thức ký. "
+                    "`1`: Chữ ký của tất cả các đồng sở hữu,"
+                    "`2`: Chữ ký của một trong bất kỳ các đồng chủ tài khoản,"
+                    "`3`: Chữ ký của các đồng chủ tài khoản sau")
     signature_list: Optional[List[SignatureAgreementAuthorRequest]] = Field(
-        ..., description="Chữ ký của đồng sở hữu"
+        None, description="Chữ ký của đồng sở hữu"
     )
 
 
