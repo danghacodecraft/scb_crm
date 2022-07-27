@@ -18,7 +18,7 @@ from app.third_parties.oracle.models.master_data.others import Currency
 from app.utils.constant.cif import ACTIVE_FLAG_ACTIVED
 from app.utils.error_messages import ERROR_ID_NOT_EXIST, ERROR_INVALID_NUMBER
 from app.utils.functions import (
-    dropdown, is_valid_number, now, special_dropdown
+    dropdown, generate_uuid, is_valid_number, now, special_dropdown
 )
 
 
@@ -231,6 +231,7 @@ async def write_transaction_log_and_update_booking(
     # Nếu chưa có thì tạo mới
     if not booking_business_form:
         session.add(BookingBusinessForm(**dict(
+            booking_business_form_id=generate_uuid(),
             booking_id=booking.id,
             business_form_id=business_form_id,
             save_flag=True,

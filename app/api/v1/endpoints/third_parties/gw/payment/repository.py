@@ -71,6 +71,7 @@ async def repos_create_booking_payment(
             updated_at=now()
         ),
         BookingBusinessForm(
+            booking_business_form_id=generate_uuid(),
             booking_id=booking_id,
             business_form_id=business_type_code,
             save_flag=True,
@@ -140,6 +141,7 @@ async def repos_gw_payment_amount_block(
         # lưu form data request GW
         session.add(
             BookingBusinessForm(**dict(
+                booking_business_form_id=generate_uuid(),
                 booking_id=booking_id,
                 form_data=orjson_dumps(item),
                 business_form_id=BUSINESS_FORM_AMOUNT_BLOCK_PD,
@@ -233,6 +235,7 @@ async def repos_gw_payment_amount_unblock(
         # lưu form data request GW
         session.add(
             BookingBusinessForm(**dict(
+                booking_business_form_id=generate_uuid(),
                 booking_id=booking_id,
                 form_data=orjson_dumps(item),
                 business_form_id=BUSINESS_FORM_AMOUNT_UNBLOCK_PD,
