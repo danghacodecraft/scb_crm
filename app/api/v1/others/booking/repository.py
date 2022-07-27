@@ -94,6 +94,7 @@ async def repos_create_booking(
     ]
     if business_type_code == BUSINESS_TYPE_CODE_CIF:
         insert_list.append(BookingBusinessForm(
+            booking_business_form_id=generate_uuid(),
             booking_id=booking_id,
             business_form_id=BUSINESS_FORM_TTCN_GTDD_GTDD,
             save_flag=False,
