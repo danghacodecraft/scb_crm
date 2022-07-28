@@ -923,7 +923,7 @@ class CtrApproval(BaseController):
             ############################################################################################################
             # check quyền user
             if current_stage_code in INIT_STAGES:
-                self.call_repos(await PermissionController.ctr_approval_check_permission(
+                self.call_repos(await PermissionController().ctr_approval_check_permission(
                     auth_response=auth_response,
                     menu_code=IDM_MENU_CODE_TTKH,
                     group_role_code=IDM_GROUP_ROLE_CODE_GDV,
@@ -931,7 +931,7 @@ class CtrApproval(BaseController):
                     stage_code=CIF_STAGE_INIT
                 ))
             elif current_stage_code in APPROVE_SUPERVISOR_STAGES:
-                self.call_repos(await PermissionController.ctr_approval_check_permission(
+                self.call_repos(await PermissionController().ctr_approval_check_permission(
                     auth_response=auth_response,
                     menu_code=IDM_MENU_CODE_TTKH,
                     group_role_code=IDM_GROUP_ROLE_CODE_KSV,
@@ -939,7 +939,7 @@ class CtrApproval(BaseController):
                     stage_code=CIF_STAGE_APPROVE_KSV
                 ))
             elif current_stage_code in APPROVE_AUDIT_STAGES:
-                self.call_repos(await PermissionController.ctr_approval_check_permission(
+                self.call_repos(await PermissionController().ctr_approval_check_permission(
                     auth_response=auth_response,
                     menu_code=IDM_MENU_CODE_TTKH,
                     group_role_code=IDM_GROUP_ROLE_CODE_KSV,
