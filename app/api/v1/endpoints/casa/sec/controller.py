@@ -49,10 +49,12 @@ class CtrSecInfo(CtrCasa, CtrBooking, CtrGWCasaAccount, CtrGWCustomer):
             total_sec_amount=total_sec_amount,
             total_sec_unit_amount=total_sec_amount * 10
         )
+
         fee_info = form_data['transaction_info']['fee_info']
-        fee_info.update(
-            total=fee_info['amount'] + fee_info['vat']
-        )
+        if fee_info:
+            fee_info.update(
+                total=fee_info['amount'] + fee_info['vat']
+            )
         return self.response(data=form_data)
 
     async def ctr_save_open_sec_info(

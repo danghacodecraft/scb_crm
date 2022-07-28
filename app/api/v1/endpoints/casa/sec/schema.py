@@ -44,7 +44,7 @@ class TransactionInfoResponse(BaseSchema):
     total_sec_unit_amount: int = Field(..., description="Tổng số tờ")
     content: str = Field(..., description="Nội dung")
     ref_number: str = Field(None, description="Số bút toán")  # TODO: tìm số bút toán
-    fee_info: OpenSecFeeInfoResponse = Field(..., description="II. Thông tin phí")
+    fee_info: Optional[OpenSecFeeInfoResponse] = Field(..., description="II. Thông tin phí")
     statement: StatementInfoResponse = Field(..., description="III. Bảng kê tiền giao dịch")
     sender: SenderInfoResponse = Field(..., description="IV. Thông tin khách hàng giao dịch")
 
