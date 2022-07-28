@@ -343,6 +343,7 @@ async def repos_gw_withdraw(
     session.add(
         BookingBusinessForm(**dict(
             booking_id=booking_id,
+            booking_business_form_id=generate_uuid(),
             form_data=orjson_dumps(request_data_gw),
             business_form_id=BUSINESS_FORM_WITHDRAW_PD,
             save_flag=True,

@@ -136,6 +136,7 @@ async def repos_get_casa_account(cif_id: str, session: Session) -> ReposReturn:
     return ReposReturn(data=casa_account)
 
 
+@auto_commit
 async def repos_check_acc_agree(account_id: str, session: Session) -> ReposReturn:
     acc_agree_info = session.execute(
         select(JointAccountHolderAgreementAuthorization)
@@ -151,7 +152,7 @@ async def repos_check_acc_agree(account_id: str, session: Session) -> ReposRetur
 
         session.execute(delete(MethodSign).filter(
             MethodSign.joint_acc_agree_id == acc_agree_info.joint_acc_agree_id))
-
+    # session.commit()
     return ReposReturn(data=acc_agree_info)
 
 
