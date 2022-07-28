@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 
 from starlette import status
@@ -51,6 +52,17 @@ class PermissionController(BaseController):
                 detail=MESSAGE_STATUS[ERROR_PERMISSION],
                 error_status_code=status.HTTP_403_FORBIDDEN
             )
+
+        # check core rule
+        if os.getenv("PRODUCTION", False):
+            if not current_user.fcc_current_date:
+                return ReposReturn(
+                    is_error=True,
+                    msg=ERROR_PERMISSION,
+                    loc=f"Stage: {stage_code}, User: {current_user.code}",
+                    detail=f"User {current_user.username} - {current_user.code} not in Core",
+                    error_status_code=status.HTTP_403_FORBIDDEN
+                )
         return ReposReturn(data=None)
 
     @staticmethod
