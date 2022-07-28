@@ -46,6 +46,7 @@ async def repos_check_casa_account(account_id: str, session: Session) -> ReposRe
     return ReposReturn(data=casa_account)
 
 
+@auto_commit
 async def repos_check_acc_agree(account_id: str, session: Session) -> ReposReturn:
     acc_agree_info = session.execute(
         select(JointAccountHolderAgreementAuthorization)
