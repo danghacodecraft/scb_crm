@@ -1,6 +1,6 @@
 from app.api.v1.endpoints.casa.controller import CtrCasa
 from app.api.v1.endpoints.casa.sec.repository import repos_save_open_sec_info
-from app.api.v1.endpoints.casa.sec.schema import SaveSecRequest
+from app.api.v1.endpoints.casa.sec.schema import OpenSecRequest
 from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
     CtrGWCasaAccount
 )
@@ -38,29 +38,27 @@ class CtrSecInfo(CtrCasa, CtrBooking, CtrGWCasaAccount, CtrGWCustomer):
             )
             total_sec_amount += sec_amount
 
-        form_data.update(
+        # Lấy thông tin sender, trong controller Casa
+        sender_response = await self.get_sender_info(sender=form_data['transaction_info']['sender'])
+
+        # Lấy thông tin statement, trong controller Casa
+        statement_response = await self.get_statement_info(statement_request=form_data['transaction_info']['statement'])
+        form_data['transaction_info'].update(
+            sender=sender_response,
+            statement=statement_response,
             total_sec_amount=total_sec_amount,
             total_sec_unit_amount=total_sec_amount * 10
         )
-
-        sender_cif_number = form_data['transaction_info']['sender']['cif_number']
-        if sender_cif_number:
-            await self.ctr_gw_get_customer_info_detail(
-                cif_number=sender_cif_number,
-                return_raw_data_flag=True
-            )
-
-            # TODO: Lấy thông tin sender, tạo 1 Controller Sender trong casa
-            # TODO: Lấy thông tin statement, tạo 1 Controller Statement trong casa
-
-            # TODO: Tạo response model
-
+        fee_info = form_data['transaction_info']['fee_info']
+        fee_info.update(
+            total=fee_info['amount'] + fee_info['vat']
+        )
         return self.response(data=form_data)
 
     async def ctr_save_open_sec_info(
             self,
             booking_id: str,
-            request: SaveSecRequest
+            request: OpenSecRequest
     ):
         current_user = self.current_user
         current_user_info = current_user.user_info
