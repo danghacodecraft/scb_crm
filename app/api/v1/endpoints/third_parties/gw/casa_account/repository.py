@@ -146,7 +146,6 @@ async def repos_gw_open_casa_account(
     casa_account_info,
     booking_parent_id: str,
     session: Session,
-    maker: str,
     current_user: AuthResponse
 ):
     current_user = current_user.user_info
@@ -270,6 +269,7 @@ async def repos_add_business_form_and_transaction_job(
         )),
         BookingBusinessForm(**dict(
             booking_id=booking_id,
+            booking_business_form_id=generate_uuid(),
             business_form_id=business_form_id,
             save_flag=True,
             created_at=now(),
