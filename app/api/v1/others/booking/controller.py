@@ -21,7 +21,6 @@ from app.third_parties.oracle.models.cif.payment_account.model import (
 )
 from app.utils.constant.approval import CIF_STAGE_INIT
 from app.utils.constant.business_type import BUSINESS_TYPES
-from app.utils.constant.casa import CASA_ACCOUNT_STATUS_APPROVED
 from app.utils.constant.cif import (
     BUSINESS_TYPE_CODE_AMOUNT_BLOCK, BUSINESS_TYPE_CODE_AMOUNT_UNBLOCK,
     BUSINESS_TYPE_CODE_CIF, BUSINESS_TYPE_CODE_CLOSE_CASA,
@@ -192,15 +191,10 @@ class CtrBooking(BaseController):
             .join(BookingAccount, Booking.id == BookingAccount.booking_id)
             .join(CasaAccount, BookingAccount.account_id == CasaAccount.id)
             .filter(Booking.parent_id == booking_id)
-        ).scalars().all()
+        ).all()
 
         if not casa_accounts:
             return self.response_exception(msg=ERROR_CASA_ACCOUNT_NOT_EXIST, loc=f'booking_id: {booking_id}')
-
-        approved_casa_account_ids = []
-        for casa_account in casa_accounts:
-            if casa_account.approve_status == CASA_ACCOUNT_STATUS_APPROVED:
-                approved_casa_account_ids.append(casa_account.id)
 
         return casa_accounts
 

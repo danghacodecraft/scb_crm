@@ -146,6 +146,7 @@ async def repos_gw_open_casa_account(
     casa_account_info,
     booking_parent_id: str,
     session: Session,
+    maker: str,
     current_user: AuthResponse
 ):
     current_user = current_user.user_info
@@ -153,6 +154,7 @@ async def repos_gw_open_casa_account(
         cif_number=cif_number,
         self_selected_account_flag=self_selected_account_flag,
         casa_account_info=casa_account_info,
+        maker=maker,
         current_user=current_user
     )
     await repos_add_business_form_and_transaction_job(

@@ -451,6 +451,7 @@ class ServiceGW:
     async def get_open_casa_account(
             self,
             current_user: UserInfoResponse,
+            maker: str,
             cif_number,
             self_selected_account_flag: bool,
             casa_account_info
@@ -529,11 +530,11 @@ class ServiceGW:
                     "p_blk_acc_chnl": ""
                 },
                 "staff_info_checker": {
-                    "staff_name": "BINHNTH"  # TODO
+                    "staff_name": current_user.username
                     # "staff_name": current_user.username
                 },
                 "staff_info_maker": {
-                    "staff_name": "HIEUPN"  # TODO
+                    "staff_name": maker
                     # "staff_name": casa_account_info.maker_id
                 },
                 "udf_info": {
