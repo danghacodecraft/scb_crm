@@ -37,6 +37,10 @@ class CtrUser(BaseController):
         })
 
     async def ctr_get_banner_info(self):
-        _, info_banner_list = self.call_repos(await repos_get_list_banner())
-
+        is_success, info_banner_list = self.call_repos(await repos_get_list_banner())
+        if not is_success:
+            return self.response_exception(
+                msg=info_banner_list['message'],
+                detail=info_banner_list['detail']
+            )
         return self.response(info_banner_list)
