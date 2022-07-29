@@ -191,7 +191,7 @@ class CtrBooking(BaseController):
             .join(BookingAccount, Booking.id == BookingAccount.booking_id)
             .join(CasaAccount, BookingAccount.account_id == CasaAccount.id)
             .filter(Booking.parent_id == booking_id)
-        ).all()
+        ).scalars().all()
 
         if not casa_accounts:
             return self.response_exception(msg=ERROR_CASA_ACCOUNT_NOT_EXIST, loc=f'booking_id: {booking_id}')

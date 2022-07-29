@@ -419,11 +419,9 @@ class CtrGWCasaAccount(BaseController):
         )
 
         casa_account_ids = []
-        maker = ""
-        for casa_account, booking, _ in casa_accounts:
+        for casa_account in casa_accounts:
             if casa_account.approve_status == CASA_ACCOUNT_STATUS_UNAPPROVED:
                 casa_account_ids.append(casa_account.id)
-            maker = booking.created_by
 
         # RULE: tài khoản đã được phê duyệt thì không cho phép phê duyệt
         self.call_repos(await repos_check_casa_account_approved(
@@ -449,7 +447,6 @@ class CtrGWCasaAccount(BaseController):
                 casa_account_info=casa_account_info,
                 current_user=self.current_user,
                 booking_parent_id=booking_id,
-                maker=maker,
                 session=self.oracle_session
             )
             if not is_success:
