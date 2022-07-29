@@ -529,12 +529,11 @@ class ServiceGW:
                     "p_blk_acc_chnl": ""
                 },
                 "staff_info_checker": {
-                    "staff_name": "BINHNTH"  # TODO
+                    "staff_name": current_user.username
                     # "staff_name": current_user.username
                 },
                 "staff_info_maker": {
-                    "staff_name": "HIEUPN"  # TODO
-                    # "staff_name": casa_account_info.maker_id
+                    "staff_name": casa_account_info.maker_id
                 },
                 "udf_info": {
                     "udf_json_array": []

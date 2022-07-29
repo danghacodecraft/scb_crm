@@ -269,6 +269,7 @@ async def repos_add_business_form_and_transaction_job(
         )),
         BookingBusinessForm(**dict(
             booking_id=booking_id,
+            booking_business_form_id=generate_uuid(),
             business_form_id=business_form_id,
             save_flag=True,
             created_at=now(),
