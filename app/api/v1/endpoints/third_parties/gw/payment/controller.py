@@ -81,19 +81,19 @@ class CtrGWPayment(BaseController):
                 to_format=GW_CORE_DATE_FORMAT
             )
 
-            sender_place_of_issue_id = gw_customer_info_id_info['id_issued_location']
+            sender_place_of_issue = gw_customer_info_id_info['id_issued_location']
         else:
             sender_full_name_vn = form_data['sender_full_name_vn']
             sender_address_full = form_data['sender_address_full']
             sender_identity_number = form_data['sender_identity_number']
             sender_issued_date = form_data['sender_issued_date']
             sender_place_of_issue_id = form_data['sender_place_of_issue']['id']
-        sender_place_of_issue = await self.get_model_object_by_id(
-            model_id=sender_place_of_issue_id,
-            model=PlaceOfIssue,
-            loc='sender_place_of_issue_id'
-        )
-        sender_place_of_issue = sender_place_of_issue.name
+            sender_place_of_issue = await self.get_model_object_by_id(
+                model_id=sender_place_of_issue_id,
+                model=PlaceOfIssue,
+                loc='sender_place_of_issue_id'
+            )
+            sender_place_of_issue = sender_place_of_issue.name
 
         return (
             sender_cif_number, sender_full_name_vn, sender_address_full, sender_identity_number, sender_issued_date,
