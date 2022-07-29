@@ -552,8 +552,13 @@ class CtrGWCasaAccount(BaseController):
         xref = None
         p_contract_ref = None
 
+        maker = booking_business_form.booking.created_by
+
         if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
-            is_success, response_data = await CtrGWPayment(current_user).ctr_gw_pay_in_cash(form_data=form_data)
+            is_success, response_data = await CtrGWPayment(current_user).ctr_gw_pay_in_cash(
+                form_data=form_data,
+                maker=maker
+            )
             if not is_success:
                 return self.response_exception(
                     loc='pay_in_cash',
@@ -584,6 +589,7 @@ class CtrGWCasaAccount(BaseController):
 
             is_success, tt_liquidation_response_data = await CtrGWPayment(current_user).ctr_tt_liquidation(
                 form_data=form_data,
+                maker=maker,
                 p_instrument_number=p_instrument_number
             )
             if not is_success:
@@ -599,6 +605,7 @@ class CtrGWCasaAccount(BaseController):
             is_success, gw_response_data = await CtrGWPayment(current_user).ctr_gw_interbank_transfer(
                 booking_id=booking_id,
                 form_data=form_data,
+                maker=maker,
                 receiving_method=receiving_method
             )
             if not is_success:
@@ -612,6 +619,7 @@ class CtrGWCasaAccount(BaseController):
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
             is_success, gw_response_data = await CtrGWPayment(current_user).ctr_gw_pay_in_cash_247_by_acc_num(
                 booking_id=booking_id,
+                maker=maker,
                 form_data=form_data
             )
             if not is_success:
@@ -625,6 +633,7 @@ class CtrGWCasaAccount(BaseController):
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
             is_success, gw_response_data = await CtrGWPayment(current_user).ctr_gw_pay_in_cash_247_by_card_num(
                 booking_id=booking_id,
+                maker=maker,
                 form_data=form_data
             )
             if not is_success:
@@ -651,7 +660,7 @@ class CtrGWCasaAccount(BaseController):
             p_contract_ref=p_contract_ref
         ))
 
-    async def ctr_gw_get_tele_transfer(self, request_data, place_of_issue):
+    async def ctr_gw_get_tele_transfer(self, maker: str, request_data, place_of_issue):
         data_input = {
             "p_tt_type": "C",
             "p_details": {
@@ -690,10 +699,10 @@ class CtrGWCasaAccount(BaseController):
                 }
             ],
             "staff_info_checker": {
-                "staff_name": "HOANT2"  # TODO
+                "staff_name": self.current_user.user_info.username
             },
             "staff_info_maker": {
-                "staff_name": "KHANHLQ"  # TODO
+                "staff_name": maker
             }
         }
         tele_transfer = self.call_repos(await repos_gw_get_tele_transfer(
