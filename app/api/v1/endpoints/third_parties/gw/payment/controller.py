@@ -630,7 +630,7 @@ class CtrGWPayment(BaseController):
         ))
         return gw_pay_in_cash
 
-    async def ctr_tele_transfer(self, form_data, pay_in_cash_flag: bool = True):
+    async def ctr_tele_transfer(self, form_data, maker: str, pay_in_cash_flag: bool = True):
         current_user = self.current_user
         receiver_place_of_issue_id = form_data['receiver_place_of_issue']['id']
         receiver_place_of_issue = await self.get_model_object_by_id(
@@ -691,10 +691,10 @@ class CtrGWPayment(BaseController):
             "p_mis": "",
             "p_udf": "",
             "staff_info_checker": {
-                "staff_name": "HOANT2"
+                "staff_name": self.current_user.user_info.username
             },
             "staff_info_maker": {
-                "staff_name": "KHANHLQ"
+                "staff_name": maker
             }
         }
         if not pay_in_cash_flag:

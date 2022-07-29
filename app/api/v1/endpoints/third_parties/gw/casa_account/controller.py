@@ -570,7 +570,8 @@ class CtrGWCasaAccount(BaseController):
         if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
 
             is_success, tele_transfer_response_data = await CtrGWPayment(current_user).ctr_tele_transfer(
-                form_data=form_data
+                form_data=form_data,
+                maker=maker
             )
             if not is_success:
                 return self.response_exception(

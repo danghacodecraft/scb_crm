@@ -389,22 +389,16 @@ class CtrCasaTopUp(BaseController):
         await self.validate_issued_date(issued_date=data.receiver_issued_date, loc='receiver_issued_date')
 
         # validate receiver_place_of_issue
-        place_of_issue = await self.get_model_object_by_id(
+        await self.get_model_object_by_id(
             model_id=data.receiver_place_of_issue.id, model=PlaceOfIssue, loc='receiver_place_of_issue -> id'
         )
 
         # validate sender_place_of_issue
-        await self.get_model_object_by_id(
-            model_id=data.sender_place_of_issue.id, model=PlaceOfIssue, loc='sender_place_of_issue -> id'
-        )
+        if data.sender_place_of_issue:
+            await self.get_model_object_by_id(
+                model_id=data.sender_place_of_issue.id, model=PlaceOfIssue, loc='sender_place_of_issue -> id'
+            )
 
-        # Lưu thông tin p_instrument_number cho bước phê duyệt
-        tele_transfer_info = await CtrGWCasaAccount(self.current_user).ctr_gw_get_tele_transfer(
-            request_data=data,
-            place_of_issue=place_of_issue
-        )
-        data.p_instrument_number = tele_transfer_info['data']['p_instrument_number']
-        data.core_fcc_request = tele_transfer_info['data']['data_input']
         data.receiving_method = receiving_method
 
         return data
