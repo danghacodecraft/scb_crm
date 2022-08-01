@@ -155,4 +155,75 @@ class CheckUsernameIBMBExistEbankIBMBInfoItemResponse(BaseSchema):
 class CheckUsernameIBMBExistResponse(BaseSchema):
     ebank_ibmb_info: CheckUsernameIBMBExistEbankIBMBInfoItemResponse
 
+
+########################################################################################################################
+
+# GW summaryBPTransByService
+
+# request
+class SummaryBPTransByServiceTransactionInfoRequest(BaseSchema):
+    transaction_val_date: date = Field(..., description="Từ ngày", example='2022-04-15')
+    transaction_val_date_to_date: date = Field(..., description="Đến ngày", example='2022-06-15')
+
+
+class SummaryBPTransByServiceCIFInfoRequest(BaseSchema):
+    cif_num: str = Field(..., description="Số CIF", example='135719')
+
+
+class SummaryBPTransByServiceRequest(BaseSchema):
+    transaction_info: SummaryBPTransByServiceTransactionInfoRequest
+    cif_info: SummaryBPTransByServiceCIFInfoRequest
+
+
+# response
+class SummaryBPTransByServiceTopupServiceInfoResponse(BaseSchema):
+    topup_service_name: str = Field(..., description="Tên dịch vụ topup. VD: Tiền điện, tiền nước, Internet,v.v...")
+    topup_service_code: str = Field(..., description="Mã dịch vụ Topup")
+
+
+class SummaryBPTransByServiceInvoiceTopupInfoItemResponse(BaseSchema):
+    topup_service_info: SummaryBPTransByServiceTopupServiceInfoResponse
+    topup_customer_code: str = Field(..., description="Mã khách hàng của dịch vụ topup")
+    topup_count: str = Field(..., description="Số lượng giao dịch trong khoảng thời gian")
+
+
+class SummaryBPTransByServiceInvoiceTopupInfoListResponse(BaseSchema):
+    invoice_topup_info_item: SummaryBPTransByServiceInvoiceTopupInfoItemResponse
+
+
+class SummaryBPTransByServiceResponse(BaseSchema):
+    invoice_topup_info_list: List[SummaryBPTransByServiceInvoiceTopupInfoListResponse]
+
+########################################################################################################################
+# GW summaryBPTransByInvoice
+
+# request
+
+
+# response
+
+########################################################################################################################
+# GW selectBPTransByCif
+
+# request
+
+
+# response
+
+########################################################################################################################
+# GW openMB
+
+# request
+
+
+# response
+
+########################################################################################################################
+# GW selectServicePackIB
+
+# request
+
+
+# response
+
 ########################################################################################################################
