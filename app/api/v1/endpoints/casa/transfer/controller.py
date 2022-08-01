@@ -72,7 +72,7 @@ from app.utils.vietnamese_converter import (
 class CtrCasaTransfer(BaseController):
     async def ctr_get_casa_transfer_info(self, booking_id: str):
         current_user = self.current_user
-        get_casa_transfer_info = self.call_repos(await repos_get_casa_transfer_info(
+        get_casa_transfer_info, _ = self.call_repos(await repos_get_casa_transfer_info(
             booking_id=booking_id,
             session=self.oracle_session
         ))
