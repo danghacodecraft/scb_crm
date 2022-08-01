@@ -20,7 +20,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_INTERBANK_TRANSFER_247_BY_ACCOUNT_NUMBER,
     GW_ENDPOINT_URL_INTERBANK_TRANSFER_247_BY_CARD_NUMBER,
     GW_ENDPOINT_URL_INTERNAL_TRANSFER, GW_ENDPOINT_URL_OPEN_INTERNET_BANKING,
-    GW_ENDPOINT_URL_PAY_IN_CASH,
+    GW_ENDPOINT_URL_OPEN_MB, GW_ENDPOINT_URL_PAY_IN_CASH,
     GW_ENDPOINT_URL_PAY_IN_CASH_247_BY_ACCOUNT_NUMBER,
     GW_ENDPOINT_URL_PAY_IN_CASH_247_BY_CARD_NUMBER,
     GW_ENDPOINT_URL_PAYMENT_AMOUNT_BLOCK,
@@ -45,8 +45,10 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_CODE,
     GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_USER_NAME,
     GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_LIST_FROM_ORG_ID,
+    GW_ENDPOINT_URL_RETRIEVE_IB_INFO_BY_CIF,
     GW_ENDPOINT_URL_RETRIEVE_INTERNET_BANKING_BY_CIF_NUMBER,
     GW_ENDPOINT_URL_RETRIEVE_KPIS_INFO_FROM_CODE,
+    GW_ENDPOINT_URL_RETRIEVE_MB_INFO_BY_CIF,
     GW_ENDPOINT_URL_RETRIEVE_OPEN_CASA_ACCOUNT,
     GW_ENDPOINT_URL_RETRIEVE_REPORT_CASA_ACCOUNT,
     GW_ENDPOINT_URL_RETRIEVE_REPORT_HIS_CASA_ACCOUNT,
@@ -65,9 +67,12 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE,
     GW_ENDPOINT_URL_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA,
     GW_ENDPOINT_URL_SELECT_SERIAL_NUMBER,
+    GW_ENDPOINT_URL_SELECT_SERVICE_PACK_IB,
     GW_ENDPOINT_URL_SELECT_STATISTIC_BANKING_BY_PERIOD,
     GW_ENDPOINT_URL_SELECT_SUMMARY_CARD_BY_DATE,
-    GW_ENDPOINT_URL_SELECT_USER_INFO, GW_ENDPOINT_URL_TELE_TRANSFER,
+    GW_ENDPOINT_URL_SELECT_USER_INFO,
+    GW_ENDPOINT_URL_SUMMARY_BP_TRANS_BY_INVOICE,
+    GW_ENDPOINT_URL_SUMMARY_BP_TRANS_BY_SERVICE, GW_ENDPOINT_URL_TELE_TRANSFER,
     GW_ENDPOINT_URL_TT_LIQUIDATION, GW_ENDPOINT_URL_WITHDRAW,
     GW_FUNC_AMOUNT_BLOCK, GW_FUNC_AMOUNT_BLOCK_IN, GW_FUNC_AMOUNT_BLOCK_OUT,
     GW_FUNC_AMOUNT_UNBLOCK, GW_FUNC_AMOUNT_UNBLOCK_IN,
@@ -83,7 +88,8 @@ from app.utils.constant.gw import (
     GW_FUNC_INTERBANK_TRANSFER_247_BY_CARD_NUM_OUT,
     GW_FUNC_INTERBANK_TRANSFER_IN, GW_FUNC_INTERBANK_TRANSFER_OUT,
     GW_FUNC_INTERNAL_TRANSFER, GW_FUNC_INTERNAL_TRANSFER_IN,
-    GW_FUNC_INTERNAL_TRANSFER_OUT, GW_FUNC_PAY_IN_CARD,
+    GW_FUNC_INTERNAL_TRANSFER_OUT, GW_FUNC_OPEN_MB, GW_FUNC_OPEN_MB_IN,
+    GW_FUNC_OPEN_MB_OUT, GW_FUNC_PAY_IN_CARD,
     GW_FUNC_PAY_IN_CARD_247_BY_ACC_NUM, GW_FUNC_PAY_IN_CARD_247_BY_ACC_NUM_IN,
     GW_FUNC_PAY_IN_CARD_247_BY_ACC_NUM_OUT,
     GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM,
@@ -98,6 +104,9 @@ from app.utils.constant.gw import (
     GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE,
     GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_IN,
     GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_OUT,
+    GW_FUNC_RETRIEVE_IB_INFO_BY_CIF, GW_FUNC_RETRIEVE_IB_INFO_BY_CIF_IN,
+    GW_FUNC_RETRIEVE_IB_INFO_BY_CIF_OUT, GW_FUNC_RETRIEVE_MB_INFO_BY_CIF,
+    GW_FUNC_RETRIEVE_MB_INFO_BY_CIF_IN, GW_FUNC_RETRIEVE_MB_INFO_BY_CIF_OUT,
     GW_FUNC_RETRIEVE_SERIAL_NUMBER, GW_FUNC_RETRIEVE_SERIAL_NUMBER_IN,
     GW_FUNC_RETRIEVE_SERIAL_NUMBER_OUT,
     GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM,
@@ -126,7 +135,8 @@ from app.utils.constant.gw import (
     GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA_OUT,
     GW_FUNC_SELECT_REWARD_INFO_FROM_CODE,
     GW_FUNC_SELECT_REWARD_INFO_FROM_CODE_IN,
-    GW_FUNC_SELECT_REWARD_INFO_FROM_CODE_OUT,
+    GW_FUNC_SELECT_REWARD_INFO_FROM_CODE_OUT, GW_FUNC_SELECT_SERVICE_PACK_IB,
+    GW_FUNC_SELECT_SERVICE_PACK_IB_IN, GW_FUNC_SELECT_SERVICE_PACK_IB_OUT,
     GW_FUNC_SELECT_STAFF_OTHER_INFO_FROM_CODE,
     GW_FUNC_SELECT_STAFF_OTHER_INFO_FROM_CODE_IN,
     GW_FUNC_SELECT_STAFF_OTHER_INFO_FROM_CODE_OUT,
@@ -141,7 +151,13 @@ from app.utils.constant.gw import (
     GW_FUNC_SELECT_USER_INFO_BY_USER_ID_OUT,
     GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE,
     GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE_IN,
-    GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE_OUT, GW_FUNC_TELE_TRANSFER,
+    GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE_OUT,
+    GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE,
+    GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE_IN,
+    GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE_OUT,
+    GW_FUNC_SUMMARY_BP_TRANS_BY_SERVICE,
+    GW_FUNC_SUMMARY_BP_TRANS_BY_SERVICE_IN,
+    GW_FUNC_SUMMARY_BP_TRANS_BY_SERVICE_OUT, GW_FUNC_TELE_TRANSFER,
     GW_FUNC_TELE_TRANSFER_IN, GW_FUNC_TELE_TRANSFER_OUT,
     GW_FUNC_TT_LIQUIDATION, GW_FUNC_TT_LIQUIDATION_IN,
     GW_FUNC_TT_LIQUIDATION_OUT, GW_FUNCTION_OPEN_CASA, GW_HISTORY_ACCOUNT_NUM,
@@ -529,12 +545,11 @@ class ServiceGW:
                     "p_blk_acc_chnl": ""
                 },
                 "staff_info_checker": {
-                    "staff_name": "BINHNTH"  # TODO
+                    "staff_name": current_user.username
                     # "staff_name": current_user.username
                 },
                 "staff_info_maker": {
-                    "staff_name": "HIEUPN"  # TODO
-                    # "staff_name": casa_account_info.maker_id
+                    "staff_name": casa_account_info.maker_id
                 },
                 "udf_info": {
                     "udf_json_array": []
@@ -1776,7 +1791,7 @@ class ServiceGW:
                         "branch_code": current_user.hrm_branch_code
                     }
                 },
-                "data_input": data_input
+                "data_input": data_input if len(data_input) != 0 else ""
             }
         }
 
@@ -2279,6 +2294,129 @@ class ServiceGW:
             api_url=api_url,
             output_key=GW_FUNC_CHECK_USERNAME_IB_MB_EXIST_OUT,
             service_name=GW_FUNC_CHECK_USERNAME_IB_MB_EXIST
+        )
+        return response_data
+
+    async def retrieve_ib_info_by_cif(self, current_user: UserInfoResponse, cif_num):
+        data_input = {
+            "cif_info":
+                {
+                    "cif_num": cif_num
+                }
+        }
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_RETRIEVE_IB_INFO_BY_CIF_IN,
+            data_input=data_input
+        )
+        api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_IB_INFO_BY_CIF}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_RETRIEVE_IB_INFO_BY_CIF_OUT,
+            service_name=GW_FUNC_RETRIEVE_IB_INFO_BY_CIF
+        )
+        return response_data
+
+    async def retrieve_mb_info_by_cif(self, current_user: UserInfoResponse, cif_num):
+        data_input = {
+            "cif_info":
+                {
+                    "cif_num": cif_num
+                }
+        }
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_RETRIEVE_MB_INFO_BY_CIF_IN,
+            data_input=data_input
+        )
+        api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_MB_INFO_BY_CIF}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_RETRIEVE_MB_INFO_BY_CIF_OUT,
+            service_name=GW_FUNC_RETRIEVE_MB_INFO_BY_CIF
+        )
+        return response_data
+
+    async def summary_bp_trans_by_service(self, current_user: UserInfoResponse, cif_num, transaction_val_date,
+                                          transaction_val_date_to_date):
+        data_input = {
+            "cif_info": {
+                "cif_num": cif_num
+            },
+            "transaction_info": {
+                "transaction_val_date": str(transaction_val_date),
+                "transaction_val_date_to_date": str(transaction_val_date_to_date)
+            }
+        }
+
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_SUMMARY_BP_TRANS_BY_SERVICE_IN,
+            data_input=data_input
+        )
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SUMMARY_BP_TRANS_BY_SERVICE}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_SUMMARY_BP_TRANS_BY_SERVICE_OUT,
+            service_name=GW_FUNC_SUMMARY_BP_TRANS_BY_SERVICE
+        )
+        return response_data
+
+    async def summary_bp_trans_by_invoice(self, current_user: UserInfoResponse, cif_num, transaction_val_date,
+                                          transaction_val_date_to_date):
+        data_input = {
+            "cif_info": {
+                "cif_num": cif_num
+            },
+            "transaction_info": {
+                "transaction_val_date": str(transaction_val_date),
+                "transaction_val_date_to_date": str(transaction_val_date_to_date)
+            }
+        }
+
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE_IN,
+            data_input=data_input
+        )
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SUMMARY_BP_TRANS_BY_INVOICE}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE_OUT,
+            service_name=GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE
+        )
+        return response_data
+
+    async def open_mb(self, current_user: UserInfoResponse, data_input):
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_OPEN_MB_IN,
+            data_input=data_input
+        )
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_OPEN_MB}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_OPEN_MB_OUT,
+            service_name=GW_FUNC_OPEN_MB
+        )
+        return response_data
+
+    async def select_service_pack_ib(self, current_user: UserInfoResponse):
+
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_SELECT_SERVICE_PACK_IB_IN,
+            data_input={}
+        )
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_SERVICE_PACK_IB}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_SELECT_SERVICE_PACK_IB_OUT,
+            service_name=GW_FUNC_SELECT_SERVICE_PACK_IB
         )
         return response_data
 

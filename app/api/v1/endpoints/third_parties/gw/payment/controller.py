@@ -49,7 +49,7 @@ from app.utils.constant.cif import (
 )
 from app.utils.constant.gw import (
     GW_ACCOUNT_CHARGE_ON_ORDERING, GW_ACCOUNT_CHARGE_ON_RECEIVER,
-    GW_CORE_DATE_FORMAT, GW_DATE_FORMAT, GW_DATETIME_FORMAT,
+    GW_CORE_DATE_FORMAT, GW_DATE_FORMAT, GW_DATETIME_FORMAT, GW_DEFAULT_VALUE,
     GW_FUNC_INTERNAL_TRANSFER_OUT, GW_GL_BRANCH_CODE,
     GW_RESPONSE_STATUS_SUCCESS
 )
@@ -81,19 +81,19 @@ class CtrGWPayment(BaseController):
                 to_format=GW_CORE_DATE_FORMAT
             )
 
-            sender_place_of_issue_id = gw_customer_info_id_info['id_issued_location']
+            sender_place_of_issue = gw_customer_info_id_info['id_issued_location']
         else:
             sender_full_name_vn = form_data['sender_full_name_vn']
             sender_address_full = form_data['sender_address_full']
             sender_identity_number = form_data['sender_identity_number']
             sender_issued_date = form_data['sender_issued_date']
             sender_place_of_issue_id = form_data['sender_place_of_issue']['id']
-        sender_place_of_issue = await self.get_model_object_by_id(
-            model_id=sender_place_of_issue_id,
-            model=PlaceOfIssue,
-            loc='sender_place_of_issue_id'
-        )
-        sender_place_of_issue = sender_place_of_issue.name
+            sender_place_of_issue = await self.get_model_object_by_id(
+                model_id=sender_place_of_issue_id,
+                model=PlaceOfIssue,
+                loc='sender_place_of_issue_id'
+            )
+            sender_place_of_issue = sender_place_of_issue.name
 
         return (
             sender_cif_number, sender_full_name_vn, sender_address_full, sender_identity_number, sender_issued_date,
@@ -253,8 +253,7 @@ class CtrGWPayment(BaseController):
         ))
 
         response_data = {
-            "booking_id": BOOKING_ID,
-            "account_list": gw_payment_amount_block
+            "booking_id": gw_payment_amount_block
         }
 
         return self.response(data=response_data)
@@ -516,9 +515,11 @@ class CtrGWPayment(BaseController):
     ####################################################################################################################
     async def ctr_gw_pay_in_cash(
             self,
+            maker: str,
             form_data
     ):
         current_user = self.current_user
+        current_user_info = current_user.user_info
         sender_place_of_issue_id = form_data['sender_place_of_issue']['id']
         sender_place_of_issue = await self.get_model_object_by_id(
             model_id=sender_place_of_issue_id,
@@ -616,20 +617,19 @@ class CtrGWPayment(BaseController):
                 }
             ],
             "staff_info_checker": {
-                "staff_name": "HOANT2"
+                "staff_name": current_user_info.username
             },
             "staff_info_maker": {
-                "staff_name": "KHANHLQ"
+                "staff_name": maker
             }
         }
-        print(data_input)
         gw_pay_in_cash = self.call_repos(await repos_gw_pay_in_cash(
             data_input=data_input,
             current_user=current_user
         ))
         return gw_pay_in_cash
 
-    async def ctr_tele_transfer(self, form_data, pay_in_cash_flag: bool = True):
+    async def ctr_tele_transfer(self, form_data, maker: str, pay_in_cash_flag: bool = True):
         current_user = self.current_user
         receiver_place_of_issue_id = form_data['receiver_place_of_issue']['id']
         receiver_place_of_issue = await self.get_model_object_by_id(
@@ -690,10 +690,10 @@ class CtrGWPayment(BaseController):
             "p_mis": "",
             "p_udf": "",
             "staff_info_checker": {
-                "staff_name": "HOANT2"
+                "staff_name": self.current_user.user_info.username
             },
             "staff_info_maker": {
-                "staff_name": "KHANHLQ"
+                "staff_name": maker
             }
         }
         if not pay_in_cash_flag:
@@ -708,7 +708,7 @@ class CtrGWPayment(BaseController):
         ))
         return gw_tele_transfer
 
-    async def ctr_tt_liquidation(self, p_instrument_number, form_data):
+    async def ctr_tt_liquidation(self, p_instrument_number, maker: str, form_data):
         current_user = self.current_user
         data_input = {
             "account_info": {
@@ -716,7 +716,7 @@ class CtrGWPayment(BaseController):
                 "account_currency": "VND"
             },
             "branch_info": {
-                "branch_code": "000"
+                "branch_code": current_user.user_info.hrm_branch_code
             },
             "p_liquidation_type": "C",
             "p_liquidation_details": "",
@@ -737,10 +737,10 @@ class CtrGWPayment(BaseController):
                 }
             ],
             "staff_info_checker": {
-                "staff_name": "HOANT2"
+                "staff_name": self.current_user.user_info.username
             },
             "staff_info_maker": {
-                "staff_name": "KHANHLQ"
+                "staff_name": maker
             }
         }
         gw_tt_liquidation = self.call_repos(await repos_gw_tt_liquidation(
@@ -752,10 +752,12 @@ class CtrGWPayment(BaseController):
     async def ctr_gw_interbank_transfer(
             self,
             booking_id: str,
+            maker: str,
             form_data: dict,
             receiving_method: str
     ):
         current_user = self.current_user
+        username = current_user.user_info.username
 
         ben = await CtrConfigBank(current_user).ctr_get_bank_branch(bank_id=form_data['receiver_bank']['id'])
 
@@ -780,10 +782,10 @@ class CtrGWPayment(BaseController):
                     "account_product_package": "NC01"
                 },
                 "staff_info_checker": {
-                    "staff_name": "DIEMNTK"     # TODO
+                    "staff_name": username
                 },
                 "staff_info_maker": {
-                    "staff_name": "DIEPTTN1"    # TODO
+                    "staff_name": maker
                 },
                 "p_blk_mis": "",
                 "p_blk_udf": "",
@@ -835,7 +837,7 @@ class CtrGWPayment(BaseController):
                             "ORDERING_NAME": sender_full_name_vn,
                             "ORDERING_ADDRESS": sender_address_full,
                             "ID_NO": sender_identity_number,
-                            "ISSUE_DATE": sender_issued_date,
+                            "ISSUE_DATE": date_string_to_other_date_string_format(sender_issued_date, from_format=GW_CORE_DATE_FORMAT),
                             "ISSUER": sender_place_of_issue
                         }
                     }
@@ -855,10 +857,10 @@ class CtrGWPayment(BaseController):
                     "account_product_package": "NC01"
                 },
                 "staff_info_checker": {
-                    "staff_name": "DIEMNTK"     # TODO
+                    "staff_name": username
                 },
                 "staff_info_maker": {
-                    "staff_name": "DIEPTTN1"    # TODO
+                    "staff_name": maker
                 },
                 "p_blk_mis": "",
                 "p_blk_udf": "",
@@ -930,21 +932,17 @@ class CtrGWPayment(BaseController):
     async def ctr_gw_pay_in_cash_247_by_acc_num(
             self,
             booking_id: str,
+            maker: str,
             form_data: dict
     ):
         current_user = self.current_user
         current_user_info = current_user.user_info
 
-        ben = await CtrConfigBank(current_user).ctr_get_bank_branch(bank_id=form_data['receiver_bank']['id'])
-
+        # ben = await CtrConfigBank(current_user).ctr_get_bank_branch(bank_id=form_data['receiver_bank']['id'])
         data_input = {
             "customer_info": {
                 "full_name": form_data['sender_full_name_vn'],
-                "birthday": date_string_to_other_date_string_format(
-                    date_input=form_data['sender_issued_date'],
-                    from_format=GW_DATETIME_FORMAT,
-                    to_format=GW_DATE_FORMAT
-                )
+                "birthday": form_data['sender_issued_date'] if form_data['sender_issued_date'] else GW_DEFAULT_VALUE
             },
             "id_info": {
                 "id_num": form_data['sender_identity_number']
@@ -960,15 +958,16 @@ class CtrGWPayment(BaseController):
             "account_to_info": {
                 "account_num": form_data['receiver_account_number']
             },
-            "ben_id": ben['data'][0]['id'],
+            # "ben_id": ben['data'][0]['id'],
+            "ben_id": '970436',     # TODO: hiện tại chỉ có mã ngân hàng này dùng được
             "account_from_info": {
                 "account_num": GW_GL_BRANCH_CODE
             },
             "staff_maker": {
-                "staff_code": "annvh"   # TODO
+                "staff_code": maker
             },
             "staff_checker": {
-                "staff_code": "THUYTP"  # TODO
+                "staff_code": current_user_info.username
             },
             "branch_info": {
                 "branch_code": current_user_info.hrm_branch_code
@@ -982,6 +981,7 @@ class CtrGWPayment(BaseController):
 
     async def ctr_gw_pay_in_cash_247_by_card_num(
             self,
+            maker: str,
             booking_id: str,
             form_data: dict
     ):
@@ -993,11 +993,7 @@ class CtrGWPayment(BaseController):
         data_input = {
             "customer_info": {
                 "full_name": form_data['sender_full_name_vn'],
-                "birthday": date_string_to_other_date_string_format(
-                    date_input=form_data['sender_issued_date'],
-                    from_format=GW_DATETIME_FORMAT,
-                    to_format=GW_DATE_FORMAT
-                )
+                "birthday": form_data['sender_issued_date'] if form_data['sender_issued_date'] else GW_DEFAULT_VALUE
             },
             "id_info": {
                 "id_num": form_data['sender_identity_number']
@@ -1018,10 +1014,10 @@ class CtrGWPayment(BaseController):
                 "account_num": "101101001"
             },
             "staff_maker": {
-                "staff_code": "annvh"   # TODO
+                "staff_code": maker,
             },
             "staff_checker": {
-                "staff_code": "THUYTP"  # TODO
+                "staff_code": current_user_info.username
             },
             "branch_info": {
                 "branch_code": current_user_info.hrm_branch_code
@@ -1035,10 +1031,13 @@ class CtrGWPayment(BaseController):
 
     async def ctr_gw_save_casa_transfer_info(self, BOOKING_ID: str):
         current_user = self.current_user
-        get_casa_transfer_info = self.call_repos(await repos_get_casa_transfer_info(
+        current_user_info = current_user.user_info
+        get_casa_transfer_info, booking = self.call_repos(await repos_get_casa_transfer_info(
             booking_id=BOOKING_ID,
             session=self.oracle_session
         ))
+        maker = booking.created_by
+
         form_data = orjson_loads(get_casa_transfer_info.form_data)
         receiving_method = form_data['receiving_method']
         transfer_amount = form_data['amount']
@@ -1100,20 +1099,18 @@ class CtrGWPayment(BaseController):
                         }
                     ],
                     "p_blk_project": "",
-                    # TODO
                     "staff_info_checker": {
-                        "staff_name": "HOANT2"
+                        "staff_name": current_user_info.username
                     },
-                    # TODO
                     "staff_info_maker": {
-                        "staff_name": "KHANHLQ"
+                        "staff_name": maker
                     }
                 }
             }
 
         if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
             is_success, tele_transfer_response_data = await self.ctr_tele_transfer(
-                form_data=form_data, pay_in_cash_flag=False
+                form_data=form_data, maker=maker, pay_in_cash_flag=False
             )
             if not is_success:
                 return self.response_exception(
@@ -1135,7 +1132,7 @@ class CtrGWPayment(BaseController):
                     "p_liquidation_type": "A",
                     "p_liquidation_details": "",
                     "branch_info": {
-                        "branch_code": "000"  # TODO
+                        "branch_code": current_user.user_info.hrm_branch_code
                     },
                     "p_instrument_number": p_instrument_number,
                     "p_instrument_status": "LIQD",
@@ -1158,10 +1155,10 @@ class CtrGWPayment(BaseController):
                         }
                     ],
                     "staff_info_checker": {
-                        "staff_name": "HOANT2"  # TODO
+                        "staff_name": current_user_info.username
                     },
                     "staff_info_maker": {
-                        "staff_name": "KHANHLQ"  # TODO
+                        "staff_name": maker
                     }
                 }
             }
@@ -1193,10 +1190,10 @@ class CtrGWPayment(BaseController):
                         "account_product_package": "FT01"
                     },
                     "staff_info_checker": {
-                        "staff_name": "DIEMNTK"  # TODO
+                        "staff_name": current_user_info.username
                     },
                     "staff_info_maker": {
-                        "staff_name": "DIEPTTN1"  # TODO
+                        "staff_name": maker
                     },
                     "p_blk_mis": "",
                     "p_blk_udf": "",
@@ -1281,10 +1278,10 @@ class CtrGWPayment(BaseController):
                         "account_product_package": "FT01"
                     },
                     "staff_info_checker": {
-                        "staff_name": "HOANT2"
+                        "staff_name": current_user_info.username
                     },
                     "staff_info_maker": {
-                        "staff_name": "KHANHLQ"
+                        "staff_name": maker
                     },
                     "p_blk_mis": "",
                     "p_blk_udf": "",
@@ -1366,17 +1363,14 @@ class CtrGWPayment(BaseController):
                     "customer_info": {
                         "full_name": form_data["sender_full_name_vn"]
                     },
-                    # TODO
                     "staff_maker": {
-                        "staff_code": "annvh"
+                        "staff_code": maker
                     },
-                    # TODO
                     "staff_checker": {
-                        "staff_code": "THUYTP"
+                        "staff_code": current_user_info.username
                     },
-                    # TODO
                     "branch_info": {
-                        "branch_code": "001"
+                        "branch_code": current_user_info.hrm_branch_code
                     }
                 }
             }
@@ -1400,24 +1394,21 @@ class CtrGWPayment(BaseController):
                     "customer_info": {
                         "full_name": form_data["sender_full_name_vn"]
                     },
-                    # TODO
                     "staff_maker": {
-                        "staff_code": "annvh"
+                        "staff_code": maker
                     },
-                    # TODO
                     "staff_checker": {
-                        "staff_code": "THUYTP"
+                        "staff_code": current_user_info.username
                     },
-                    # TODO
                     "branch_info": {
-                        "branch_code": "001"
+                        "branch_code": current_user_info.hrm_branch_code
                     },
                     "card_to_info": {
                         "card_num": form_data["receiver_card_number"]
                     }
                 }
             }
-        response_data, gw_casa_transfer = self.call_repos(await repos_gw_save_casa_transfer_info(
+        response_data, gw_casa_transfer, is_completed = self.call_repos(await repos_gw_save_casa_transfer_info(
             current_user=self.current_user,
             receiving_method=receiving_method,
             booking_id=BOOKING_ID,
@@ -1428,6 +1419,7 @@ class CtrGWPayment(BaseController):
         self.call_repos(await repos_save_gw_output_data(
             booking_id=BOOKING_ID,
             business_type_id=BUSINESS_TYPE_CASA_TRANSFER,
+            is_completed=is_completed,
             gw_output_data=orjson_dumps(gw_casa_transfer),
             session=self.oracle_session
         ))

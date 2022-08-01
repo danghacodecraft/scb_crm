@@ -35,7 +35,7 @@ async def view_create_co_owner(
 
 
 @router.get(
-    path="/co-owner/",
+    path="/",
     name="B. Thông tin đồng sở hữu",
     description="Thông tin đồng sở hữu",
     responses=swagger_response(

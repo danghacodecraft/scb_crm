@@ -4,6 +4,9 @@ CIF_ID_NEW_TEST = 'NEW123'  # cif_id dùng tạm để test khi tạo
 IDENTITY_TYPE_CODE_NON_RESIDENT = 'VANG_LAI'
 ADDRESS_TYPE_CODE_UNDEFINDED = 'KHONG_XAC_DINH'
 
+CIF_METHOD_SIGN_ALL = 1
+CIF_METHOD_SIGN_ONE = 2
+CIF_METHOD_SIGN_PARTLY = 3
 CIF_NUMBER_MIN_LENGTH = 7
 CIF_NUMBER_MAX_LENGTH = 7
 UUID_MIN_LENGTH = 32
@@ -20,6 +23,8 @@ BUSINESS_TYPE_CODE_OPEN_TD_ACCOUNT = "OPEN_TD_ACCOUNT"
 BUSINESS_TYPE_CODE_AMOUNT_BLOCK = "AMOUNT_BLOCK"
 BUSINESS_TYPE_CODE_AMOUNT_UNBLOCK = "AMOUNT_UNBLOCK"
 BUSINESS_TYPE_CODE_TRANSFER = "TRANSFER"
+
+BUSINESS_TYPE_CODE_OPEN_SEC = "OPEN_SEC"
 
 
 IDENTITY_DOCUMENT_TYPE_IDENTITY_CARD = 'CMND'
@@ -273,6 +278,10 @@ PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_ACCOUNT = "Mở tài khoản tiết ki�
 PROFILE_HISTORY_DESCRIPTIONS_INIT_DEBIT_CARD = "Tạo thẻ ghi nợ"
 PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING = "Tạo E-Banking"
 PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING_SMS_CASA = "Đăng ký SMS cho tài khoản thanh toán"
+
+PROFILE_HISTORY_DESCRIPTIONS_INIT_OPEN_SEC = "Phát hành SEC"
+
+>>>>>>> app/utils/constant/cif.py
 PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_BLOCK = "Phong tỏa tài khoản"
 PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_UNBLOCK = "Giải tỏa tài khoản"
 PROFILE_HISTORY_DESCRIPTIONS_OPEN_TD_ACCOUNT = "Mở tài khoản tiết kiệm"
@@ -339,8 +348,13 @@ PROFILE_HISTORY_DESCRIPTIONS = {
         'description': PROFILE_HISTORY_DESCRIPTIONS_TRANSFER_CASA_ACCOUNT,
         'content': "Giao dịch viên đang chuẩn bị hồ sơ. "
                    "Mốc thời gian tính từ lúc GDV điền thông tin tab đầu tiên [Giải tỏa tài khoản]"
+    },
+    BUSINESS_TYPE_CODE_OPEN_SEC: {
+        'description': PROFILE_HISTORY_DESCRIPTIONS_INIT_OPEN_SEC,
+        'content': "Giao dịch viên đang chuẩn bị hồ sơ. "
+                   "Mốc thời gian tính từ lúc GDV điền thông tin tab đầu tiên "
+                   f"[{PROFILE_HISTORY_DESCRIPTIONS_INIT_OPEN_SEC}]"
     }
-
 }
 
 EB_QUESTION_TYPE_BASIC_01 = 'BASIC_01'

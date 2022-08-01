@@ -1,8 +1,10 @@
+
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.payment_account.co_owner.repository import (
     repos_account_co_owner, repos_check_acc_agree, repos_check_cif_id,
     repos_check_file_id, repos_get_casa_account, repos_get_co_owner,
-    repos_get_co_owner_signatures, repos_get_file_uuid, repos_save_co_owner
+    repos_get_co_owner_signatures, repos_get_file_uuid, repos_method_sign_info,
+    repos_save_co_owner
 )
 from app.api.v1.endpoints.cif.payment_account.co_owner.schema import (
     AccountHolderRequest
@@ -18,10 +20,14 @@ from app.api.v1.others.booking.controller import CtrBooking
 from app.third_parties.oracle.models.master_data.address import AddressCountry
 from app.third_parties.oracle.models.master_data.customer import CustomerGender
 from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
+from app.utils.constant.cif import (
+    CIF_METHOD_SIGN_ALL, CIF_METHOD_SIGN_ONE, CIF_METHOD_SIGN_PARTLY
+)
 from app.utils.constant.gw import GW_REQUEST_PARAMETER_CO_OWNER
 from app.utils.error_messages import (
     ERROR_ACCOUNT_ID_DOES_NOT_EXIST, ERROR_CIF_ID_NOT_EXIST,
-    ERROR_CIF_NUMBER_EXIST, ERROR_CIF_NUMBER_NOT_EXIST,
+    ERROR_CIF_NUMBER_EXIST, ERROR_CIF_NUMBER_NOT_DUPLICATE,
+    ERROR_CIF_NUMBER_NOT_EXIST, ERROR_CIF_NUMBER_NOT_EXIST_IN_CO_OWNER,
     ERROR_DOCUMENT_ID_DOES_NOT_EXIST
 )
 from app.utils.functions import dropdown, generate_uuid
@@ -37,7 +43,6 @@ class CtrCoOwner(BaseController):
             check_correct_booking_flag=False,
             loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
         )
-
         current_user = self.current_user.user_info
         # lấy casa_account_id theo số cif_id
         casa_account = self.call_repos(
@@ -55,7 +60,6 @@ class CtrCoOwner(BaseController):
                 session=self.oracle_session
             )
         )
-
         file_id = ""
         if co_owner.file_uuid:
             # Check exist file_id
@@ -99,7 +103,14 @@ class CtrCoOwner(BaseController):
             "casa_account_id": casa_account,
             "joint_acc_agree_document_file_id": file_id
         }
-
+        cif_number_info = []
+        for cif_info in co_owner.joint_account_holders:
+            cif_number_info.append(cif_info.cif_number)
+        if len(cif_number_info) != len(set(cif_number_info)):
+            return self.response_exception(
+                msg=ERROR_CIF_NUMBER_NOT_DUPLICATE,
+                loc=f"joint_account_holders -> cif_number : {cif_number_info}"
+            )
         save_account_holder = [{
             "joint_account_holder_id": generate_uuid(),
             "cif_num": item.cif_number,
@@ -107,18 +118,91 @@ class CtrCoOwner(BaseController):
             "joint_acc_agree_id": uuid,
             "created_at": co_owner.created_at
         } for item in co_owner.joint_account_holders]
+
+        list_cif_num = []
+        list_signature_cif_num_1 = []
+        list_signature_cif_num_3 = []
+        for cif_num in co_owner.joint_account_holders:
+            list_cif_num.append(cif_num.cif_number)
         save_agreement_authorization = []
+
+        for agreement_authorization in co_owner.agreement_authorization:
+            for signature_info in agreement_authorization.signature_list:
+                if agreement_authorization.method_sign == CIF_METHOD_SIGN_ALL:
+                    list_signature_cif_num_1.append(signature_info.cif_number)
+                elif agreement_authorization.method_sign == CIF_METHOD_SIGN_PARTLY:
+                    list_signature_cif_num_3.append(signature_info.cif_number)
+
         for agreement_authorization in co_owner.agreement_authorization:
             for signature_item in agreement_authorization.signature_list:
-                save_agreement_authorization.append({
-                    "agreement_author_id": agreement_authorization.agreement_author_id,
-                    "joint_acc_agree_id": uuid,
-                    "created_at": co_owner.created_at,
-                    "agreement_flag": agreement_authorization.agreement_flag,
-                    "method_sign_type": agreement_authorization.method_sign,
-                    "agree_join_acc_cif_num": signature_item.cif_number,
-                    "agree_join_acc_name": signature_item.full_name_vn
-                })
+                if agreement_authorization.method_sign == CIF_METHOD_SIGN_ALL:
+                    if signature_item.cif_number not in list_cif_num:
+                        return self.response_exception(
+                            msg=ERROR_CIF_NUMBER_NOT_EXIST,
+                            loc=f"agreement_authorization -> cif_number : {signature_item.cif_number}"
+                        )
+                    if len(list_signature_cif_num_1) != len(set(list_signature_cif_num_1)):
+                        return self.response_exception(
+                            msg=ERROR_CIF_NUMBER_NOT_DUPLICATE,
+                            loc=f"signature_list -> cif_number : {list_signature_cif_num_1}"
+                        )
+                    if len(set(list_signature_cif_num_1)) != len(list_cif_num):
+                        return self.response_exception(
+                            msg=ERROR_CIF_NUMBER_NOT_EXIST_IN_CO_OWNER,
+                            loc=f"signature_method_sign: 1 -> cif_number : {list_signature_cif_num_1}"
+                        )
+                    save_agreement_authorization.append({
+                        "agreement_author_id": agreement_authorization.agreement_author_id,
+                        "joint_acc_agree_id": uuid,
+                        "created_at": co_owner.created_at,
+                        "agreement_flag": agreement_authorization.agreement_flag,
+                        "method_sign_type": agreement_authorization.method_sign,
+                        "agree_join_acc_cif_num": signature_item.cif_number,
+                        "agree_join_acc_name": signature_item.full_name_vn
+                    })
+
+                elif agreement_authorization.method_sign == CIF_METHOD_SIGN_ONE:
+                    if signature_item.cif_number not in list_cif_num:
+                        return self.response_exception(
+                            msg=ERROR_CIF_NUMBER_NOT_EXIST,
+                            loc=f"agreement_authorization -> cif_number : {signature_item.cif_number}"
+                        )
+                    save_agreement_authorization.append({
+                        "agreement_author_id": agreement_authorization.agreement_author_id,
+                        "joint_acc_agree_id": uuid,
+                        "created_at": co_owner.created_at,
+                        "agreement_flag": agreement_authorization.agreement_flag,
+                        "method_sign_type": agreement_authorization.method_sign,
+                        "agree_join_acc_cif_num": signature_item.cif_number,
+                        "agree_join_acc_name": signature_item.full_name_vn
+                    })
+
+                else:
+                    if signature_item.cif_number not in list_cif_num:
+                        return self.response_exception(
+                            msg=ERROR_CIF_NUMBER_NOT_EXIST,
+                            loc=f"agreement_authorization -> cif_number : {signature_item.cif_number}"
+                        )
+
+                    if len(list_signature_cif_num_3) != len(set(list_signature_cif_num_3)):
+                        return self.response_exception(
+                            msg=ERROR_CIF_NUMBER_NOT_DUPLICATE,
+                            loc=f"signature_method_sign: 3 -> cif_number : {list_signature_cif_num_3}"
+                        )
+                    if len(set(list_signature_cif_num_3)) > len(list_cif_num):
+                        return self.response_exception(
+                            msg=ERROR_CIF_NUMBER_NOT_EXIST_IN_CO_OWNER,
+                            loc=f"agreement_authorization -> cif_number : {list_signature_cif_num_3}"
+                        )
+                    save_agreement_authorization.append({
+                        "agreement_author_id": agreement_authorization.agreement_author_id,
+                        "joint_acc_agree_id": uuid,
+                        "created_at": co_owner.created_at,
+                        "agreement_flag": agreement_authorization.agreement_flag,
+                        "method_sign_type": agreement_authorization.method_sign,
+                        "agree_join_acc_cif_num": signature_item.cif_number,
+                        "agree_join_acc_name": signature_item.full_name_vn
+                    })
 
         co_owner_data = self.call_repos(
             await repos_save_co_owner(
@@ -208,7 +292,6 @@ class CtrCoOwner(BaseController):
         number_of_joint_account_holder = 0
         joint_account_holders = []
         agreement_authorizations = []
-        signature_list = []
         cif_numbers = []
 
         for casa_account, acc_joint_acc_agree, joint_account_holder, customer_relationship_type in account_holders:
@@ -261,23 +344,68 @@ class CtrCoOwner(BaseController):
                 ),
             ))
 
-            number_of_joint_account_holder += 1
-            for _, joint_acc_agree_id, method_sign, agreement_authorization in account_holder_signs:
-                if acc_joint_acc_agree.joint_acc_agree_id == joint_acc_agree_id:
-                    agreement_authorizations.append(dict(
-                        id=agreement_authorization.id,
-                        code=agreement_authorization.code,
-                        name=agreement_authorization.name,
-                        agreement_flag=agreement_authorization.active_flag,
-                        method_sign=method_sign.method_sign_type,
-                        signature_list=[]
-                    ))
-                    agree_join_acc = dict(
-                        cif_number=method_sign.agree_join_acc_cif_num,
-                        full_name_vn=method_sign.agree_join_acc_name,
-                    )
+        number_of_joint_account_holder += 1
+        signature_list_2 = []
+        signature_list_1 = []
+        signature_list_3 = []
+        signature_list = []
+        test_sign_type = []
+        for _, joint_acc_agree_id, method_sign, agreement_authorization in account_holder_signs:
+
+            if agreement_authorization.id in test_sign_type:
+                continue
+            else:
+                test_sign_type.append(agreement_authorization.id)
+
+            method_sign_info = self.call_repos(
+                await repos_method_sign_info(
+                    joint_acc_agree_id=joint_acc_agree_id,
+                    agreement_author_id=agreement_authorization.id,
+                    session=self.oracle_session
+                )
+            )
+
+            for signature_info in method_sign_info:
+                agree_join_acc = dict(
+                    cif_number=signature_info.agree_join_acc_cif_num,
+                    full_name_vn=signature_info.agree_join_acc_name,
+                )
+                if method_sign.method_sign_type == CIF_METHOD_SIGN_ALL:
                     if agree_join_acc not in signature_list:
-                        signature_list.append(agree_join_acc)
+                        signature_list_1.append(agree_join_acc)
+                if method_sign.method_sign_type == CIF_METHOD_SIGN_PARTLY:
+                    if agree_join_acc not in signature_list:
+                        signature_list_3.append(agree_join_acc)
+                if method_sign.method_sign_type == CIF_METHOD_SIGN_ONE:
+                    signature_list_2.append(agree_join_acc)
+
+            if method_sign.method_sign_type == CIF_METHOD_SIGN_ALL:
+                agreement_authorizations.append(dict(
+                    id=agreement_authorization.id,
+                    code=agreement_authorization.code,
+                    name=agreement_authorization.name,
+                    agreement_flag=agreement_authorization.active_flag,
+                    method_sign=method_sign.method_sign_type,
+                    signature_list=signature_list_1
+                ))
+            if method_sign.method_sign_type == CIF_METHOD_SIGN_ONE:
+                agreement_authorizations.append(dict(
+                    id=agreement_authorization.id,
+                    code=agreement_authorization.code,
+                    name=agreement_authorization.name,
+                    agreement_flag=agreement_authorization.active_flag,
+                    method_sign=method_sign.method_sign_type,
+                    signature_list=signature_list_2
+                ))
+            if method_sign.method_sign_type == CIF_METHOD_SIGN_PARTLY:
+                agreement_authorizations.append(dict(
+                    id=agreement_authorization.id,
+                    code=agreement_authorization.code,
+                    name=agreement_authorization.name,
+                    agreement_flag=agreement_authorization.active_flag,
+                    method_sign=method_sign.method_sign_type,
+                    signature_list=signature_list_3
+                ))
 
         signatures = self.call_repos(await repos_get_co_owner_signatures(
             cif_numbers=cif_numbers, session=self.oracle_session))
@@ -290,8 +418,6 @@ class CtrCoOwner(BaseController):
                         id=signature.id,
                         image_url=image_info['file_url']
                     ))
-            if agreement_authorizations[idx]['method_sign'] == 3:
-                agreement_authorizations[idx]["signature_list"] = signature_list
 
         if document_uuid:
             file_info = file_uuid

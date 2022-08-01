@@ -21,7 +21,6 @@ from app.third_parties.oracle.models.cif.payment_account.model import (
 )
 from app.utils.constant.approval import CIF_STAGE_INIT
 from app.utils.constant.business_type import BUSINESS_TYPES
-from app.utils.constant.casa import CASA_ACCOUNT_STATUS_APPROVED
 from app.utils.constant.cif import (
     BUSINESS_TYPE_CODE_AMOUNT_BLOCK, BUSINESS_TYPE_CODE_AMOUNT_UNBLOCK,
     BUSINESS_TYPE_CODE_CIF, BUSINESS_TYPE_CODE_CLOSE_CASA,
@@ -33,9 +32,9 @@ from app.utils.constant.idm import (
 from app.utils.error_messages import (
     ERROR_BOOKING_ALREADY_USED, ERROR_BOOKING_BUSINESS_FORM_NOT_EXIST,
     ERROR_BOOKING_ID_NOT_EXIST, ERROR_BOOKING_INCORRECT,
-    ERROR_BUSINESS_TYPE_CODE_INCORRECT, ERROR_BUSINESS_TYPE_NOT_EXIST,
-    ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_CIF_ID_NOT_EXIST,
-    ERROR_CUSTOMER_NOT_EXIST, ERROR_PERMISSION
+    ERROR_BOOKING_IS_COMPLETED, ERROR_BUSINESS_TYPE_CODE_INCORRECT,
+    ERROR_BUSINESS_TYPE_NOT_EXIST, ERROR_CASA_ACCOUNT_NOT_EXIST,
+    ERROR_CIF_ID_NOT_EXIST, ERROR_CUSTOMER_NOT_EXIST, ERROR_PERMISSION
 )
 
 
@@ -86,9 +85,11 @@ class CtrBooking(BaseController):
             business_type_code: str,
             cif_id: Optional[str] = None,
             check_correct_booking_flag: Optional[bool] = True,
+            check_completed_booking: bool = True
     ):
         """
         check_correct_booking_flag: Đối với step đầu tiên của module, param này bằng False và phải truyền cif id
+        check_completed_booking: Kiểm tra booking đã hoàn thành chưa
         """
         booking = None
         if booking_id:
@@ -114,6 +115,9 @@ class CtrBooking(BaseController):
             )
             if not is_correct_booking:
                 return self.response_exception(msg=ERROR_BOOKING_INCORRECT, loc="header -> booking_id")
+
+        if check_completed_booking and booking.completed_flag:
+            return self.response_exception(msg=ERROR_BOOKING_IS_COMPLETED)
 
         return self.response(data=booking)
 
@@ -197,14 +201,17 @@ class CtrBooking(BaseController):
         if not casa_accounts:
             return self.response_exception(msg=ERROR_CASA_ACCOUNT_NOT_EXIST, loc=f'booking_id: {booking_id}')
 
-        approved_casa_account_ids = []
-        for casa_account in casa_accounts:
-            if casa_account.approve_status == CASA_ACCOUNT_STATUS_APPROVED:
-                approved_casa_account_ids.append(casa_account.id)
-
         return casa_accounts
 
-    async def ctr_get_booking_business_form(self, booking_id: str, session: Session):
+    async def ctr_get_booking_business_form(
+            self,
+            booking_id: str,
+            session: Session,
+            check_completed_booking: bool = True
+    ):
+        """
+        check_completed_booking: True -> Trả lỗi nếu booking hoàn thành
+        """
         booking_business_form = session.execute(
             select(
                 BookingBusinessForm,
@@ -219,4 +226,8 @@ class CtrBooking(BaseController):
         ).scalars().all()
         if not booking_business_form:
             return self.response_exception(msg=ERROR_BOOKING_BUSINESS_FORM_NOT_EXIST, loc=f"booking_id: {booking_id}")
+
+        if check_completed_booking and booking_business_form[0].booking.completed_flag:
+            return self.response_exception(msg=ERROR_BOOKING_IS_COMPLETED)
+
         return booking_business_form[0]

@@ -25,14 +25,10 @@ from app.third_parties.oracle.models.master_data.customer import (
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.services.file import ServiceFile
 from app.third_parties.services.idm import ServiceIDM
-from app.utils.constant.cif import (
-    CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE, DROPDOWN_NONE_DICT,
-    PROFILE_HISTORY_STATUS
-)
+from app.utils.constant.cif import DROPDOWN_NONE_DICT, PROFILE_HISTORY_STATUS
 from app.utils.constant.gw import (
     GW_DATE_FORMAT, GW_DATETIME_FORMAT,
-    GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE_OUT, GW_GENDER_FEMALE,
-    GW_GENDER_MALE, GW_LOC_CHECK_CIF_EXIST
+    GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE_OUT, GW_LOC_CHECK_CIF_EXIST
 )
 from app.utils.functions import (
     date_string_to_other_date_string_format, dropdown, dropdown_name,
@@ -301,18 +297,14 @@ class CtrCustomer(BaseController):
         # Tách Họ, Tên và Ten đệm
         last_name, middle_name, first_name = split_name(full_name_vn)
 
-        gender_name = customer_info["gender"]
-        if gender_name == GW_GENDER_MALE:
-            gender_name = CRM_GENDER_TYPE_MALE
-        if gender_name == GW_GENDER_FEMALE:
-            gender_name = CRM_GENDER_TYPE_FEMALE
+        gender_code = customer_info["gender"]
         gender = await get_optional_model_object_by_code_or_name(
             model=CustomerGender,
-            model_code=None,
-            model_name=gender_name,
+            model_code=gender_code,
+            model_name=None,
             session=self.oracle_session
         )
-        dropdown_gender = dropdown(gender) if gender else dropdown_name(gender_name)
+        dropdown_gender = dropdown(gender) if gender else dropdown_name(gender_code)
 
         nationality_code = customer_info["nationality_code"]
         nationality = await get_optional_model_object_by_code_or_name(
@@ -342,14 +334,16 @@ class CtrCustomer(BaseController):
         )
 
         identity_info = customer_info['id_info']
-        place_of_issue_name = identity_info["id_issued_location"]
+        place_of_issue_code = identity_info["id_issued_location"]
         place_of_issue = await get_optional_model_object_by_code_or_name(
             model=PlaceOfIssue,
+            model_id=place_of_issue_code,
             model_code=None,
-            model_name=place_of_issue_name,
+            model_name=None,
             session=self.oracle_session
         )
-        dropdown_place_of_issue = dropdown(place_of_issue) if place_of_issue else dropdown_name(place_of_issue_name)
+        dropdown_place_of_issue = dropdown(place_of_issue) if place_of_issue else dropdown_name(place_of_issue_code)
+
         identity_information = dict(
             identity_number=identity_info['id_num'],
             issued_date=date_string_to_other_date_string_format(

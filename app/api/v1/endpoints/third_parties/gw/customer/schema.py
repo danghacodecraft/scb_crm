@@ -127,6 +127,7 @@ class GWCustomerInfoDetailResponse(BaseGWSchema):
     job_info: JobInfoResponse = Field(..., description="Thông tin việc làm")
     branch_info: OptionalDropdownResponse = Field(..., description="Thông tin đơn vị")
     avatar_url: Optional[str] = Field(..., description="URL hình ảnh đại diện của người dùng")
+    ekyc_level: Optional[str] = Field(..., description="Mức độ eKYC")
 
 
 class GWCoOwnerResponse(BaseGWSchema):

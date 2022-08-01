@@ -79,10 +79,13 @@ async def repos_get_model_objects_by_ids(model_ids: List[str], model: Base, sess
 
 
 async def get_optional_model_object_by_code_or_name(
-        model: Base, session: Session,
+        model: Base, session: Session, model_id: Optional[str] = None,
         model_code: Optional[str] = None, model_name: Optional[str] = None
 ) -> Optional[object]:
     statement = None
+
+    if model_id:
+        statement = select(model).filter(model.id == model_id)
 
     if model_code:
         statement = select(model).filter(model.code == model_code)
