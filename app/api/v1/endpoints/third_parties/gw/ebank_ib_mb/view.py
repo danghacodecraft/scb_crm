@@ -8,9 +8,12 @@ from app.api.v1.endpoints.third_parties.gw.ebank_ib_mb.controller import (
     CtrGWEbankIbMb
 )
 from app.api.v1.endpoints.third_parties.gw.ebank_ib_mb.schema import (
-    CheckUsernameIBMBExistRequest, CheckUsernameIBMBExistResponse
+    CheckUsernameIBMBExistRequest, CheckUsernameIBMBExistResponse,
+    RetrieveIBInfoByCifRequest, RetrieveIBInfoByCifResponse
 )
-from app.utils.constant.gw import GW_FUNC_CHECK_USERNAME_IB_MB_EXIST_OUT
+from app.utils.constant.gw import (
+    GW_FUNC_CHECK_USERNAME_IB_MB_EXIST_OUT, GW_FUNC_RETRIEVE_IB_INFO_BY_CIF_OUT
+)
 
 router = APIRouter()
 
@@ -38,3 +41,27 @@ async def view_gw_get_check_username_ib_mb_exist(
         'data').get(GW_FUNC_CHECK_USERNAME_IB_MB_EXIST_OUT).get('data_output')
 
     return ResponseData[CheckUsernameIBMBExistResponse](**gw_get_check_username_ib_mb_exist)
+
+
+@router.post(
+    path="/retrieve-ib-info-by-cif/",
+    name="[GW] Lấy chi tiết thông tin dịch vụ IB của khách hàng",
+    description="[GW] Lấy chi tiết thông tin dịch vụ IB của khách hàng",
+    responses=swagger_response(
+        response_model=ResponseData[RetrieveIBInfoByCifResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_retrieve_ib_info_by_cif(
+        request: RetrieveIBInfoByCifRequest = Body(..., ),
+        current_user=Depends(get_current_user_from_header())
+):
+    gw_get_retrieve_ib_info_by_cif = await CtrGWEbankIbMb(
+        current_user).ctr_gw_retrieve_ib_info_by_cif(
+        cif_num=request.cif_info.cif_num
+    )
+
+    gw_get_retrieve_ib_info_by_cif['data'] = gw_get_retrieve_ib_info_by_cif.get(
+        'data').get(GW_FUNC_RETRIEVE_IB_INFO_BY_CIF_OUT).get('data_output')
+
+    return ResponseData[RetrieveIBInfoByCifResponse](**gw_get_retrieve_ib_info_by_cif)
