@@ -84,6 +84,7 @@ GW_ENDPOINT_URL_CHECK_USERNAME_IB_MB_EXIST = "/ebankibmb/v1.0/rest/checkUsername
 GW_ENDPOINT_URL_RETRIEVE_IB_INFO_BY_CIF = "/ebankibmb/v1.0/rest/retrieveIBInfoByCif"
 GW_ENDPOINT_URL_RETRIEVE_MB_INFO_BY_CIF = "/ebankibmb/v1.0/rest/retrieveMBInfoByCif"
 GW_ENDPOINT_URL_SUMMARY_BP_TRANS_BY_SERVICE = "/ebankibmb/v1.0/rest/summaryBPTransByService"
+GW_ENDPOINT_URL_SUMMARY_BP_TRANS_BY_INVOICE = "/ebankibmb/v1.0/rest/summaryBPTransByInvoice"
 
 ########################################################################################################################
 #                                         GW FUNCTION NAME
@@ -246,6 +247,10 @@ GW_FUNC_RETRIEVE_MB_INFO_BY_CIF = "retrieveMBInfoByCif"
 GW_FUNC_SUMMARY_BP_TRANS_BY_SERVICE_IN = "summaryBPTransByService_in"
 GW_FUNC_SUMMARY_BP_TRANS_BY_SERVICE_OUT = "summaryBPTransByService_out"
 GW_FUNC_SUMMARY_BP_TRANS_BY_SERVICE = "summaryBPTransByService"
+
+GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE_IN = "SummaryBPTransByInvoice_in"
+GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE_OUT = "SummaryBPTransByInvoice_out"
+GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE = "summaryBPTransByInvoice"
 
 ########################################################################################################################
 #                                         END GW FUNCTION NAME

@@ -87,3 +87,27 @@ async def repos_gw_summary_bp_trans_by_service(
         )
 
     return ReposReturn(data=summary_bp_trans_by_service)
+
+
+async def repos_gw_summary_bp_trans_by_invoice(
+        current_user,
+        cif_num,
+        transaction_val_date,
+        transaction_val_date_to_date
+):
+    current_user = current_user.user_info
+    is_success, summary_bp_trans_by_invoice = await service_gw.summary_bp_trans_by_invoice(
+        current_user=current_user,
+        cif_num=cif_num,
+        transaction_val_date=transaction_val_date,
+        transaction_val_date_to_date=transaction_val_date_to_date
+    )
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="get_summary_bp_trans_by_invoice",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(summary_bp_trans_by_invoice)
+        )
+
+    return ReposReturn(data=summary_bp_trans_by_invoice)

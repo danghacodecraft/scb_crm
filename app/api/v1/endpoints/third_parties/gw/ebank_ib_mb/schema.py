@@ -194,13 +194,40 @@ class SummaryBPTransByServiceInvoiceTopupInfoListResponse(BaseSchema):
 class SummaryBPTransByServiceResponse(BaseSchema):
     invoice_topup_info_list: List[SummaryBPTransByServiceInvoiceTopupInfoListResponse]
 
+
 ########################################################################################################################
 # GW summaryBPTransByInvoice
 
 # request
 
+class SummaryBPTransByInvoiceTransactionInfoRequest(BaseSchema):
+    transaction_val_date: date = Field(..., description="Từ ngày", example='2022-04-15')
+    transaction_val_date_to_date: date = Field(..., description="Đến ngày", example='2022-06-15')
+
+
+class SummaryBPTransByInvoiceCIFInfoRequest(BaseSchema):
+    cif_num: str = Field(..., description="Số CIF", example='135719')
+
+
+class SummaryBPTransByInvoiceRequest(BaseSchema):
+    transaction_info: SummaryBPTransByInvoiceTransactionInfoRequest
+    cif_info: SummaryBPTransByInvoiceCIFInfoRequest
+
 
 # response
+
+class SummaryBPTransByInvoiceInvoiceTopupInfoItemResponse(BaseSchema):
+    topup_date_end: date = Field(..., description="Ngày giao dịch")
+    topup_count: str = Field(..., description="Tổng số hóa đơn trong ngày")
+    topup_amount: str = Field(..., description="Tổng số tiền giao dịch trong ngày")
+
+
+class SummaryBPTransByInvoiceInvoiceTopupInfoListResponse(BaseSchema):
+    invoice_topup_info_item: SummaryBPTransByInvoiceInvoiceTopupInfoItemResponse
+
+
+class SummaryBPTransByInvoiceResponse(BaseSchema):
+    invoice_topup_info_list: List[SummaryBPTransByInvoiceInvoiceTopupInfoListResponse]
 
 ########################################################################################################################
 # GW selectBPTransByCif

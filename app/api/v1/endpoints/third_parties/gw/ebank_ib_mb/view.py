@@ -11,11 +11,13 @@ from app.api.v1.endpoints.third_parties.gw.ebank_ib_mb.schema import (
     CheckUsernameIBMBExistRequest, CheckUsernameIBMBExistResponse,
     RetrieveIBInfoByCifRequest, RetrieveIBInfoByCifResponse,
     RetrieveMBInfoByCifRequest, RetrieveMBInfoByCifResponse,
+    SummaryBPTransByInvoiceRequest, SummaryBPTransByInvoiceResponse,
     SummaryBPTransByServiceRequest, SummaryBPTransByServiceResponse
 )
 from app.utils.constant.gw import (
     GW_FUNC_CHECK_USERNAME_IB_MB_EXIST_OUT,
     GW_FUNC_RETRIEVE_IB_INFO_BY_CIF_OUT, GW_FUNC_RETRIEVE_MB_INFO_BY_CIF_OUT,
+    GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE_OUT,
     GW_FUNC_SUMMARY_BP_TRANS_BY_SERVICE_OUT
 )
 
@@ -108,7 +110,6 @@ async def view_gw_summary_bp_trans_by_service(
         request: SummaryBPTransByServiceRequest = Body(..., ),
         current_user=Depends(get_current_user_from_header())
 ):
-
     gw_get_summary_bp_trans_by_service = await CtrGWEbankIbMb(
         current_user).ctr_gw_summary_bp_trans_by_service(
         cif_num=request.cif_info.cif_num,
@@ -120,3 +121,30 @@ async def view_gw_summary_bp_trans_by_service(
         'data').get(GW_FUNC_SUMMARY_BP_TRANS_BY_SERVICE_OUT).get('data_output')
 
     return ResponseData[SummaryBPTransByServiceResponse](**gw_get_summary_bp_trans_by_service)
+
+
+@router.post(
+    path="/summary-bp-trans-by-invoice/",
+    name="[GW] Thống kê giao dịch sồ tiền /số lượng hóa đơn của dịch vụ TTHD theo ngày, từ ngày đến ngày theo Cif",
+    description="[GW] Thống kê giao dịch sồ tiền /số lượng hóa đơn của dịch vụ TTHD theo ngày,"
+                " từ ngày đến ngày theo Cif",
+    responses=swagger_response(
+        response_model=ResponseData[SummaryBPTransByInvoiceResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_summary_bp_trans_by_invoice(
+        request: SummaryBPTransByInvoiceRequest = Body(..., ),
+        current_user=Depends(get_current_user_from_header())
+):
+    gw_get_summary_bp_trans_by_invoice = await CtrGWEbankIbMb(
+        current_user).ctr_gw_summary_bp_trans_by_invoice(
+        cif_num=request.cif_info.cif_num,
+        transaction_val_date=request.transaction_info.transaction_val_date,
+        transaction_val_date_to_date=request.transaction_info.transaction_val_date_to_date
+    )
+
+    gw_get_summary_bp_trans_by_invoice['data'] = gw_get_summary_bp_trans_by_invoice.get(
+        'data').get(GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE_OUT).get('data_output')
+
+    return ResponseData[SummaryBPTransByInvoiceResponse](**gw_get_summary_bp_trans_by_invoice)
