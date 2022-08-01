@@ -43,3 +43,23 @@ async def repos_gw_retrieve_ib_info_by_cif(
         )
 
     return ReposReturn(data=retrieve_ib_info_by_cif)
+
+
+async def repos_gw_retrieve_mb_info_by_cif(
+        current_user,
+        cif_num
+):
+    current_user = current_user.user_info
+    is_success, retrieve_mb_info_by_cif = await service_gw.retrieve_mb_info_by_cif(
+        current_user=current_user,
+        cif_num=cif_num
+    )
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="get_retrieve_mb_info_by_cif",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(retrieve_mb_info_by_cif)
+        )
+
+    return ReposReturn(data=retrieve_mb_info_by_cif)

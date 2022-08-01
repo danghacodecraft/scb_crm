@@ -82,6 +82,7 @@ GW_ENDPOINT_URL_REGISTER_SMS_SERVICE_BY_MOBILE_NUMBER = "/ebanksms/v1.0/rest/reg
 # ---------------------------------------------- EBANK IB MB ---------------------------------------------- #
 GW_ENDPOINT_URL_CHECK_USERNAME_IB_MB_EXIST = "/ebankibmb/v1.0/rest/checkUsernameIBMBExist"
 GW_ENDPOINT_URL_RETRIEVE_IB_INFO_BY_CIF = "/ebankibmb/v1.0/rest/retrieveIBInfoByCif"
+GW_ENDPOINT_URL_RETRIEVE_MB_INFO_BY_CIF = "/ebankibmb/v1.0/rest/retrieveMBInfoByCif"
 
 ########################################################################################################################
 #                                         GW FUNCTION NAME
@@ -235,6 +236,11 @@ GW_FUNC_CHECK_USERNAME_IB_MB_EXIST = "checkUsernameIBMBExist"
 GW_FUNC_RETRIEVE_IB_INFO_BY_CIF_IN = "retrieveIBInfoByCif_in"
 GW_FUNC_RETRIEVE_IB_INFO_BY_CIF_OUT = "retrieveIBInfoByCif_out"
 GW_FUNC_RETRIEVE_IB_INFO_BY_CIF = "retrieveIBInfoByCif"
+
+
+GW_FUNC_RETRIEVE_MB_INFO_BY_CIF_IN = "RetrieveMBInfoByCif_in"
+GW_FUNC_RETRIEVE_MB_INFO_BY_CIF_OUT = "RetrieveMBInfoByCif_out"
+GW_FUNC_RETRIEVE_MB_INFO_BY_CIF = "retrieveMBInfoByCif"
 
 ########################################################################################################################
 #                                         END GW FUNCTION NAME
