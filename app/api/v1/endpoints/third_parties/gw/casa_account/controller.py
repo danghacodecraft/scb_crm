@@ -727,6 +727,7 @@ class CtrGWCasaAccount(BaseController):
     async def ctr_gw_withdraw(self, booking_id: str):
 
         current_user = self.current_user
+        current_user_info = current_user.user_info
         booking_business_form = self.call_repos(
             await repos_get_booking_business_form_by_booking_id(
                 booking_id=booking_id,
@@ -735,6 +736,7 @@ class CtrGWCasaAccount(BaseController):
 
             ))
 
+        maker = booking_business_form.booking.created_by
         request_data_gw = orjson_loads(booking_business_form.form_data)
         p_blk_udf = []
         p_blk_udf.append(dict(
@@ -742,23 +744,23 @@ class CtrGWCasaAccount(BaseController):
             UDF_VALUE='MUC_DICH_KHAC'
         ))
 
-        data_input = dict(
-            account_info=dict(
-                account_num=request_data_gw['transaction_info']['source_accounts']['account_num'],
-                account_currency='VND',
-                account_withdrawals_amount=request_data_gw['transaction_info']['receiver_info']['amount']
-            ),
-            staff_info_checker=dict(
-                staff_name='DIEMNTK'
-            ),
-            staff_info_maker=dict(
-                staff_name='DIEPTTN1'
-            ),
-            p_blk_detail="",
-            p_blk_mis="",
-            p_blk_udf=p_blk_udf,
-            p_blk_charge=""
-        )
+        data_input = {
+            "account_info": {
+                "account_num": request_data_gw['transaction_info']['source_accounts']['account_num'],
+                "account_currency": 'VND',
+                "account_withdrawals_amount": request_data_gw['transaction_info']['receiver_info']['amount']
+            },
+            "staff_info_checker": {
+                "staff_name": current_user_info.username
+            },
+            "staff_info_maker": {
+                "staff_name": maker
+            },
+            "p_blk_detail": "",
+            "p_blk_mis": "",
+            "p_blk_udf": p_blk_udf,
+            "p_blk_charge": ""
+        }
 
         _, gw_payment_amount_block = self.call_repos(await repos_gw_withdraw(
             current_user=current_user,
