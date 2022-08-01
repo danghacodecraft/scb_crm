@@ -1,8 +1,12 @@
 from app.api.base.controller import BaseController
+from app.api.v1.endpoints.cif.payment_account.detail.repository import (
+    repos_get_detail_payment_account
+)
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_check_mobile_num, repos_get_customer_avatar_url_from_cif,
     repos_get_customer_ids_from_cif_numbers, repos_get_customer_open_cif,
-    repos_get_teller_info, repos_get_transaction_jobs, repos_gw_get_authorized,
+    repos_get_teller_info, repos_get_transaction_jobs,
+    repos_gw_cif_open_casa_account, repos_gw_get_authorized,
     repos_gw_get_co_owner, repos_gw_get_customer_info_detail,
     repos_gw_get_customer_info_list, repos_gw_open_cif,
     repos_update_cif_number_customer
@@ -23,7 +27,8 @@ from app.third_parties.oracle.models.master_data.others import (
     Branch, Career, MaritalStatus, ResidentStatus
 )
 from app.utils.constant.approval import (
-    BUSINESS_JOB_CODE_CIF_INFO, BUSINESS_JOB_CODE_INIT
+    BUSINESS_JOB_CODE_CASA_INFO, BUSINESS_JOB_CODE_CIF_INFO,
+    BUSINESS_JOB_CODE_INIT
 )
 from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import (
@@ -758,6 +763,8 @@ class CtrGWCustomer(BaseController):
     async def ctr_gw_open_cif(self, cif_id: str, BOOKING_ID: str):
         current_user = self.current_user
 
+        account_number = None
+
         # Check exist Booking
         await CtrBooking().ctr_get_booking_and_validate(
             business_type_code=BUSINESS_TYPE_INIT_CIF,
@@ -980,17 +987,17 @@ class CtrGWCustomer(BaseController):
         # Những Transaction Job bao gồm những job khác nhau và mới nhất
         is_retry_cif = False
         first_newest_transaction_jobs = []
-        pre_bussiness_job = None
+        pre_business_job = None
         for transaction_job in transaction_jobs:
-            if not pre_bussiness_job:
+            if not pre_business_job:
                 first_newest_transaction_jobs.append(transaction_job)
-                pre_bussiness_job = transaction_job.business_job_id
+                pre_business_job = transaction_job.business_job_id
                 continue
-            if transaction_job.business_job_id != pre_bussiness_job:
+            if transaction_job.business_job_id != pre_business_job:
                 first_newest_transaction_jobs.append(transaction_job)
                 if transaction_job.business_job_id == BUSINESS_JOB_CODE_CIF_INFO and not transaction_job.complete_flag:
                     is_retry_cif = True
-            pre_bussiness_job = transaction_job.business_job_id
+            pre_business_job = transaction_job.business_job_id
 
         # TH1: CIF chưa mở hoặc cif đã mở nhưng thất bại
         if not first_newest_transaction_jobs or is_retry_cif:
@@ -1061,10 +1068,54 @@ class CtrGWCustomer(BaseController):
             first_row = response_customers[0]
             cif_number = first_row.Customer.cif_number
 
+            detail_payment_account_info = self.call_repos(
+                await repos_get_detail_payment_account(
+                    cif_id=cif_id,
+                    session=self.oracle_session
+                )
+            )
+            if detail_payment_account_info:
+                # Gọi DB tìm transaction job là TKTT mới nhất kiểm tra tiếp tục
+                transaction_jobs = self.call_repos(await repos_get_transaction_jobs(
+                    booking_id=BOOKING_ID, session=self.oracle_session
+                ))
+                casa_transaction_jobs = [transaction_job for transaction_job in transaction_jobs if transaction_job.business_job_id == BUSINESS_JOB_CODE_CASA_INFO]
+                # TH1: Casa chưa mở hoặc Casa đã mở nhưng thất bại
+                if casa_transaction_jobs and not casa_transaction_jobs[0].complete_flag:
+                    (
+                        casa_account, currency, account_class, account_type, account_structure_type,
+                        account_structure_type_level_2, account_structure_type_level_1, address_country
+                    ) = detail_payment_account_info
+                    is_success, gw_open_casa_account_info = await repos_gw_cif_open_casa_account(
+                        cif_number=cif_number,
+                        self_selected_account_flag=casa_account.self_selected_account_flag,
+                        casa_account_info=casa_account,
+                        current_user=self.current_user,
+                        booking_id=BOOKING_ID,
+                        session=self.oracle_session
+                    )
+                    if not is_success:
+                        return self.response_exception(
+                            msg=ERROR_CALL_SERVICE_GW,
+                            detail=str(gw_open_casa_account_info)
+                        )
+                    account_number = gw_open_casa_account_info['openCASA_out']['data_output']['account_info']['account_num']
+
+                # TH2: Casa Mở thành công
+                else:
+                    # Lấy thông tin TKTT đã lưu trong DB
+                    detail_payment_account = self.call_repos(await repos_get_detail_payment_account(
+                        cif_id=cif_id,
+                        session=self.oracle_session
+                    ))
+                    casa_account, _, _, _, _, _, _, _ = detail_payment_account
+                    account_number = casa_account.account_number
+
         response = {
             "booking_id": BOOKING_ID,
             "cif_id": cif_id,
-            "cif_number": cif_number
+            "cif_number": cif_number,
+            "account_number": account_number
         }
         return self.response(data=response)
 

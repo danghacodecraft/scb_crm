@@ -30,6 +30,7 @@ from app.third_parties.oracle.models.master_data.address import (
 from app.third_parties.oracle.models.master_data.others import (
     AverageIncomeAmount, TransactionJob
 )
+from app.utils.constant.approval import BUSINESS_JOB_CODE_CASA_INFO
 from app.utils.constant.cif import BUSINESS_FORM_OPEN_CIF_PD, IMAGE_TYPE_FACE
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_GW, ERROR_NO_DATA, ERROR_OPEN_CIF
@@ -133,7 +134,6 @@ async def repos_gw_get_authorized(
 
 @auto_commit
 async def repos_gw_open_cif(
-        cif_id: str,
         booking_id: str,
         customer_info: dict,
         account_info: dict,
@@ -307,3 +307,39 @@ async def repos_get_transaction_jobs(
         .order_by(TransactionJob.business_job_id, desc(TransactionJob.created_at))
     ).scalars().all()
     return ReposReturn(data=transaction_jobs)
+
+
+async def repos_gw_cif_open_casa_account(
+        cif_number: str,
+        self_selected_account_flag: str,
+        casa_account_info: str,
+        current_user,
+        booking_id: str,
+        session: Session
+):
+    """
+    Repo dùng cho mở TKTT cùng lúc với mở CIF
+    """
+    is_success, gw_open_casa_account_info, form_data = await service_gw.get_open_casa_account(
+        cif_number=cif_number,
+        self_selected_account_flag=self_selected_account_flag,
+        casa_account_info=casa_account_info,
+        current_user=current_user
+    )
+    error_code = None
+    error_desc = None
+    if not is_success:
+        error_code = ERROR_CALL_SERVICE_GW
+        error_desc = gw_open_casa_account_info
+
+    session.add(TransactionJob(**dict(
+        transaction_id=generate_uuid(),
+        booking_id=booking_id,
+        business_job_id=BUSINESS_JOB_CODE_CASA_INFO,
+        complete_flag=is_success,
+        error_code=error_code,
+        error_desc=error_desc,
+        created_at=now()
+    )))
+    session.commit()
+    return ReposReturn()
