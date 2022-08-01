@@ -262,26 +262,6 @@ class EBankingNotificationRequest(DropdownRequest):
     checked_flag: bool = Field(..., description='Trạng thái. `False`: Không. `True`: Có')
 
 
-class RegisterBalanceCasaRequest(BaseSchema):
-    account_id: str = Field(..., description='Số tài khoản')
-    # EBankingRegisterBalance.name (Tên Đăng ký Biến động số dư các loại tài khoản)
-    account_name: str = Field(..., description='Tên tài khoản', max_length=100)
-    primary_phone_number: str = Field(..., description='Số điện thoại', regex=REGULAR_PHONE_NUMBER)
-    notification_casa_relationships: List[NotificationCasaRelationshipRequest] = Field(..., description='Mối quan hê')
-    e_banking_notifications: List[EBankingNotificationRequest] = Field(
-        ...,
-        min_items=1,
-        description='Tùy chọn hình thức nhận thông báo'
-    )
-
-
-class BalancePaymentAccountRequest(BaseSchema):
-    register_flag: bool = Field(..., description='Trạng thái. `False`: Không. `True`: Có')
-    customer_contact_types: List[ContactTypeRequest] = Field(..., description='Hình thức nhận thông báo')
-    register_balance_casas: List[RegisterBalanceCasaRequest] = Field(...,
-                                                                     description='Thông tin tài khoản nhận thông báo')
-
-
 class AccountRequest(BaseSchema):
     id: str = Field(..., description='Mã định danh tài khoản')
     checked_flag: bool = Field(..., description='Trạng thái. `False`: Không. `True`: Có')
@@ -289,19 +269,6 @@ class AccountRequest(BaseSchema):
 
 class TdAccountRequest(BaseSchema):
     td_accounts: List[AccountRequest] = Field(..., description='Danh sách số tài khoản tiết kiệm')
-
-
-class BalanceSavingAccountRequest(BaseSchema):
-    register_flag: bool = Field(..., description='Trạng thái. `False`: Không. `True`: Có')
-    customer_contact_types: List[ContactTypeRequest] = Field(..., description='Hình thức nhận thông báo')
-    mobile_number: str = Field(..., description='Số điện thoại')
-    """ Tình huống này cũng dùng cho CIF hiện hữu và KH có tk tiền gửi tiết kiệm """
-    # range: TdAccountRequest = Field(..., description='Phạm vi áp dụng')
-    e_banking_notifications: List[EBankingNotificationRequest] = Field(
-        ...,
-        min_items=1,
-        description='Tùy chọn hình thức nhận thông báo'
-    )
 
 
 class ResetPasswordMethodRequest(DropdownRequest):
@@ -329,15 +296,32 @@ class OptionalEBankingAccountRequest(BaseSchema):
 
 class AccountInformationEBankingRequest(BaseSchema):
     account_information: AccountInformation = Field(..., description='Tài khoản E-Banking')
-    # Mở CIF chưa cần
-    # optional_e_banking_account: OptionalEBankingAccountRequest = Field(..., description='Hình thức nhận thông báo')
+
+
+class GetInitialAuthenticationCode(str, Enum):
+    XACTHUC_SMS: str = 'SMS'
+    XACTHUC_SOFTTOKEN: str = 'SOFT_TOKEN'
+    XACTHUC_HARDTOKEN: str = 'HARD_TOKEN'
+
+
+class MobileNumber(BaseSchema):
+    mobile_number: str = Field(..., description='Số điện thoại', regex=REGULAR_PHONE_NUMBER)
 
 
 class EBankingRequest(BaseSchema):
-    change_of_balance_payment_account: BalancePaymentAccountRequest = Field(..., description='Tài khoản thanh toán')
-    change_of_balance_saving_account: BalanceSavingAccountRequest = Field(None,
-                                                                          description='Tài khoản tiết kiệm')
-    e_banking_information: AccountInformationEBankingRequest = Field(..., description='Thông tin E-Banking')
+    username: str = Field(...)
+    receive_password_code: GetInitialPasswordMethod = Field(...)
+    authentication_code_list: List[GetInitialAuthenticationCode] = Field(..., description='Hình thức xác thực')
+
+
+class EBankingSMSCasaRequest(BaseSchema):
+    casa_account_id: str = Field(..., description='Số tài khoản Casa ảo')
+    indentify_phone_num_list: List[MobileNumber] = Field(..., description='Danh sách số điện thoại đăng ký sử dụng dịch vụ SMS Banking')
+
+
+class EBankingAndSMSCasaRequest(BaseSchema):
+    ebank_info: Optional[EBankingRequest] = Field(..., description="")
+    ebank_sms_casa_info: Optional[EBankingSMSCasaRequest] = Field(..., description="")
 
 
 class BalanceSavingAccountsResponse(BaseSchema):
