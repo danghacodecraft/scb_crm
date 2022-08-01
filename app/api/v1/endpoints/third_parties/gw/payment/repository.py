@@ -125,31 +125,33 @@ async def repos_payment_amount_block(
     return ReposReturn(data=booking_id)
 
 
-@auto_commit
 async def repos_gw_payment_amount_block(
     current_user,
     request_data_gw: list,
     booking_id,
     session: Session
 ):
-    response_data = []
     for item in request_data_gw:
         is_success, gw_payment_amount_block = await service_gw.gw_payment_amount_block(
             current_user=current_user.user_info, data_input=item
         )
-
         # lưu form data request GW
-        session.add(
-            BookingBusinessForm(**dict(
-                booking_business_form_id=generate_uuid(),
-                booking_id=booking_id,
-                form_data=orjson_dumps(item),
-                business_form_id=BUSINESS_FORM_AMOUNT_BLOCK_PD,
-                save_flag=True,
-                created_at=now(),
-                log_data=orjson_dumps(gw_payment_amount_block)
-            ))
-        )
+        saving_booking_business_form = {
+            "booking_business_form_id": generate_uuid(),
+            "booking_id": booking_id,
+            "form_data": orjson_dumps(item),
+            "business_form_id": BUSINESS_FORM_AMOUNT_BLOCK_PD,
+            "save_flag": True,
+            "is_success": True,
+            "created_at": now(),
+            "out_data": orjson_dumps(gw_payment_amount_block)
+        }
+        if not is_success:
+            saving_booking_business_form.update({
+                "is_success": False
+            })
+
+        session.add(BookingBusinessForm(**saving_booking_business_form))
 
         session.add(TransactionJob(**dict(
             transaction_id=generate_uuid(),
@@ -160,21 +162,27 @@ async def repos_gw_payment_amount_block(
             error_desc=gw_payment_amount_block.get(GW_FUNC_AMOUNT_BLOCK_OUT).get('transaction_info').get('transaction_error_msg'),
             created_at=now()
         )))
+        session.commit()
+        if not is_success:
+            return ReposReturn(
+                is_error=True,
+                msg=gw_payment_amount_block.get(GW_FUNC_AMOUNT_BLOCK_OUT)['transaction_info']['transaction_error_msg']
+            )
 
-        amount_block = gw_payment_amount_block.get(GW_FUNC_AMOUNT_BLOCK_OUT).get('data_output')
+        # amount_block = gw_payment_amount_block.get(GW_FUNC_AMOUNT_BLOCK_OUT).get('data_output')
+        #
+        # if isinstance(amount_block, dict):
+        #     response_data.append({
+        #         'account_number': item.get('account_info').get('account_num'),
+        #         'account_ref_no': amount_block.get('account_info').get('blance_lock_info').get('account_ref_no')
+        #     })
+        # else:
+        #     response_data.append({
+        #         'account_number': item.get('account_info').get('account_num'),
+        #         'account_ref_no': amount_block
+        #     })
 
-        if isinstance(amount_block, dict):
-            response_data.append({
-                'account_number': item.get('account_info').get('account_num'),
-                'account_ref_no': amount_block.get('account_info').get('blance_lock_info').get('account_ref_no')
-            })
-        else:
-            response_data.append({
-                'account_number': item.get('account_info').get('account_num'),
-                'account_ref_no': amount_block
-            })
-
-    return ReposReturn(data=response_data)
+    return ReposReturn(data=booking_id)
 
 
 @auto_commit
