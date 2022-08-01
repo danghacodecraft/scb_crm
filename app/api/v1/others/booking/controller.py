@@ -85,9 +85,11 @@ class CtrBooking(BaseController):
             business_type_code: str,
             cif_id: Optional[str] = None,
             check_correct_booking_flag: Optional[bool] = True,
+            check_completed_booking: bool = True
     ):
         """
         check_correct_booking_flag: Đối với step đầu tiên của module, param này bằng False và phải truyền cif id
+        check_completed_booking: Kiểm tra booking đã hoàn thành chưa
         """
         booking = None
         if booking_id:
@@ -113,6 +115,9 @@ class CtrBooking(BaseController):
             )
             if not is_correct_booking:
                 return self.response_exception(msg=ERROR_BOOKING_INCORRECT, loc="header -> booking_id")
+
+        if check_completed_booking and booking.completed_flag:
+            return self.response_exception(msg=ERROR_BOOKING_IS_COMPLETED)
 
         return self.response(data=booking)
 
