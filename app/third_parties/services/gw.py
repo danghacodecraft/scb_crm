@@ -45,6 +45,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_CODE,
     GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_INFO_FROM_USER_NAME,
     GW_ENDPOINT_URL_RETRIEVE_EMPLOYEE_LIST_FROM_ORG_ID,
+    GW_ENDPOINT_URL_RETRIEVE_IB_INFO_BY_CIF,
     GW_ENDPOINT_URL_RETRIEVE_INTERNET_BANKING_BY_CIF_NUMBER,
     GW_ENDPOINT_URL_RETRIEVE_KPIS_INFO_FROM_CODE,
     GW_ENDPOINT_URL_RETRIEVE_OPEN_CASA_ACCOUNT,
@@ -98,8 +99,9 @@ from app.utils.constant.gw import (
     GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE,
     GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_IN,
     GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_OUT,
-    GW_FUNC_RETRIEVE_SERIAL_NUMBER, GW_FUNC_RETRIEVE_SERIAL_NUMBER_IN,
-    GW_FUNC_RETRIEVE_SERIAL_NUMBER_OUT,
+    GW_FUNC_RETRIEVE_IB_INFO_BY_CIF, GW_FUNC_RETRIEVE_IB_INFO_BY_CIF_IN,
+    GW_FUNC_RETRIEVE_IB_INFO_BY_CIF_OUT, GW_FUNC_RETRIEVE_SERIAL_NUMBER,
+    GW_FUNC_RETRIEVE_SERIAL_NUMBER_IN, GW_FUNC_RETRIEVE_SERIAL_NUMBER_OUT,
     GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM,
     GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM_IN,
     GW_FUNC_SELECT_ACCOUNT_TD_BY_MOBILE_NUM_OUT,
@@ -2278,6 +2280,26 @@ class ServiceGW:
             api_url=api_url,
             output_key=GW_FUNC_CHECK_USERNAME_IB_MB_EXIST_OUT,
             service_name=GW_FUNC_CHECK_USERNAME_IB_MB_EXIST
+        )
+        return response_data
+
+    async def retrieve_ib_info_by_cif(self, current_user: UserInfoResponse, cif_num):
+        data_input = {
+            "cif_info":
+                {
+                    "cif_num": cif_num
+                }
+        }
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_RETRIEVE_IB_INFO_BY_CIF_IN,
+            data_input=data_input
+        )
+        api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_IB_INFO_BY_CIF}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_RETRIEVE_IB_INFO_BY_CIF_OUT,
+            service_name=GW_FUNC_RETRIEVE_IB_INFO_BY_CIF
         )
         return response_data
 
