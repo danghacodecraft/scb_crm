@@ -11,12 +11,14 @@ from app.api.v1.endpoints.third_parties.gw.ebank_ib_mb.schema import (
     CheckUsernameIBMBExistRequest, CheckUsernameIBMBExistResponse,
     OpenMBRequest, RetrieveIBInfoByCifRequest, RetrieveIBInfoByCifResponse,
     RetrieveMBInfoByCifRequest, RetrieveMBInfoByCifResponse,
-    SummaryBPTransByInvoiceRequest, SummaryBPTransByInvoiceResponse,
-    SummaryBPTransByServiceRequest, SummaryBPTransByServiceResponse
+    SelectServicePackIBResponse, SummaryBPTransByInvoiceRequest,
+    SummaryBPTransByInvoiceResponse, SummaryBPTransByServiceRequest,
+    SummaryBPTransByServiceResponse
 )
 from app.utils.constant.gw import (
     GW_FUNC_CHECK_USERNAME_IB_MB_EXIST_OUT,
     GW_FUNC_RETRIEVE_IB_INFO_BY_CIF_OUT, GW_FUNC_RETRIEVE_MB_INFO_BY_CIF_OUT,
+    GW_FUNC_SELECT_SERVICE_PACK_IB_OUT,
     GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE_OUT,
     GW_FUNC_SUMMARY_BP_TRANS_BY_SERVICE_OUT
 )
@@ -169,3 +171,24 @@ async def view_gw_open_mb(
     )
 
     return ResponseData(**gw_get_open_mb)
+
+
+@router.get(
+    path="/select-service-pack-ib/",
+    name="[GW] Lấy danh mục gói hạn mức giao dịch của InternetBanking",
+    description="[GW] Lấy danh mục gói hạn mức giao dịch của InternetBanking",
+    responses=swagger_response(
+        response_model=SelectServicePackIBResponse,
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_select_service_pack_ib(
+        current_user=Depends(get_current_user_from_header())
+):
+    gw_get_select_service_pack_ib = await CtrGWEbankIbMb(
+        current_user).ctr_gw_select_service_pack_ib(
+    )
+    gw_get_select_service_pack_ib['data'] = gw_get_select_service_pack_ib.get(
+        'data').get(GW_FUNC_SELECT_SERVICE_PACK_IB_OUT).get('data_output')
+
+    return ResponseData[SelectServicePackIBResponse](**gw_get_select_service_pack_ib)

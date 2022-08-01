@@ -131,3 +131,22 @@ async def repos_gw_open_mb(
         )
 
     return ReposReturn(data=open_mb)
+
+
+async def repos_gw_select_service_pack_ib(
+        current_user
+):
+    current_user = current_user.user_info
+    is_success, select_service_pack_ib = await service_gw.select_service_pack_ib(
+        current_user=current_user
+    )
+
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="get_select_service_pack_ib",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(select_service_pack_ib)
+        )
+
+    return ReposReturn(data=select_service_pack_ib)

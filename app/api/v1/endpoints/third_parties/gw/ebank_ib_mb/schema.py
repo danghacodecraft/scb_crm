@@ -351,5 +351,17 @@ class OpenMBRequest(BaseSchema):
 
 
 # response
+class SelectServicePackIBItemResponse(BaseSchema):
+    service_package_code: str = Field(..., description="Mã gói dịch vụ")
+    service_package_name: str = Field(..., description="Tên gói dịch vụ")
+
+
+class SelectServicePackIBListResponse(BaseSchema):
+    service_package_info_item: SelectServicePackIBItemResponse
+
+
+class SelectServicePackIBResponse(BaseSchema):
+    service_package_info_list: List[SelectServicePackIBListResponse]
+
 
 ########################################################################################################################

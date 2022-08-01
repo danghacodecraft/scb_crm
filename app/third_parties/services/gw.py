@@ -67,6 +67,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE,
     GW_ENDPOINT_URL_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA,
     GW_ENDPOINT_URL_SELECT_SERIAL_NUMBER,
+    GW_ENDPOINT_URL_SELECT_SERVICE_PACK_IB,
     GW_ENDPOINT_URL_SELECT_STATISTIC_BANKING_BY_PERIOD,
     GW_ENDPOINT_URL_SELECT_SUMMARY_CARD_BY_DATE,
     GW_ENDPOINT_URL_SELECT_USER_INFO,
@@ -134,7 +135,8 @@ from app.utils.constant.gw import (
     GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA_OUT,
     GW_FUNC_SELECT_REWARD_INFO_FROM_CODE,
     GW_FUNC_SELECT_REWARD_INFO_FROM_CODE_IN,
-    GW_FUNC_SELECT_REWARD_INFO_FROM_CODE_OUT,
+    GW_FUNC_SELECT_REWARD_INFO_FROM_CODE_OUT, GW_FUNC_SELECT_SERVICE_PACK_IB,
+    GW_FUNC_SELECT_SERVICE_PACK_IB_IN, GW_FUNC_SELECT_SERVICE_PACK_IB_OUT,
     GW_FUNC_SELECT_STAFF_OTHER_INFO_FROM_CODE,
     GW_FUNC_SELECT_STAFF_OTHER_INFO_FROM_CODE_IN,
     GW_FUNC_SELECT_STAFF_OTHER_INFO_FROM_CODE_OUT,
@@ -1789,7 +1791,7 @@ class ServiceGW:
                         "branch_code": current_user.hrm_branch_code
                     }
                 },
-                "data_input": data_input
+                "data_input": data_input if len(data_input) != 0 else ""
             }
         }
 
@@ -2399,6 +2401,22 @@ class ServiceGW:
             api_url=api_url,
             output_key=GW_FUNC_OPEN_MB_OUT,
             service_name=GW_FUNC_OPEN_MB
+        )
+        return response_data
+
+    async def select_service_pack_ib(self, current_user: UserInfoResponse):
+
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_SELECT_SERVICE_PACK_IB_IN,
+            data_input={}
+        )
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_SERVICE_PACK_IB}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_SELECT_SERVICE_PACK_IB_OUT,
+            service_name=GW_FUNC_SELECT_SERVICE_PACK_IB
         )
         return response_data
 

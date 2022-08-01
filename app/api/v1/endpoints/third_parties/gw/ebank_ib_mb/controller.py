@@ -4,7 +4,8 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.ebank_ib_mb.repository import (
     repos_gw_get_check_username_ib_mb_exist, repos_gw_open_mb,
     repos_gw_retrieve_ib_info_by_cif, repos_gw_retrieve_mb_info_by_cif,
-    repos_gw_summary_bp_trans_by_invoice, repos_gw_summary_bp_trans_by_service
+    repos_gw_select_service_pack_ib, repos_gw_summary_bp_trans_by_invoice,
+    repos_gw_summary_bp_trans_by_service
 )
 
 
@@ -66,6 +67,15 @@ class CtrGWEbankIbMb(BaseController):
         ebank_info = self.call_repos(await repos_gw_open_mb(
             current_user=current_user,
             data_input=data_input
+        ))
+
+        return self.response(data=ebank_info)
+
+    async def ctr_gw_select_service_pack_ib(self):
+        current_user = self.current_user
+
+        ebank_info = self.call_repos(await repos_gw_select_service_pack_ib(
+            current_user=current_user
         ))
 
         return self.response(data=ebank_info)
