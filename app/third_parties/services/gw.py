@@ -69,7 +69,9 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_SELECT_SERIAL_NUMBER,
     GW_ENDPOINT_URL_SELECT_STATISTIC_BANKING_BY_PERIOD,
     GW_ENDPOINT_URL_SELECT_SUMMARY_CARD_BY_DATE,
-    GW_ENDPOINT_URL_SELECT_USER_INFO, GW_ENDPOINT_URL_TELE_TRANSFER,
+    GW_ENDPOINT_URL_SELECT_USER_INFO,
+    GW_ENDPOINT_URL_SUMMARY_BP_TRANS_BY_INVOICE,
+    GW_ENDPOINT_URL_SUMMARY_BP_TRANS_BY_SERVICE, GW_ENDPOINT_URL_TELE_TRANSFER,
     GW_ENDPOINT_URL_TT_LIQUIDATION, GW_ENDPOINT_URL_WITHDRAW,
     GW_FUNC_AMOUNT_BLOCK, GW_FUNC_AMOUNT_BLOCK_IN, GW_FUNC_AMOUNT_BLOCK_OUT,
     GW_FUNC_AMOUNT_UNBLOCK, GW_FUNC_AMOUNT_UNBLOCK_IN,
@@ -146,7 +148,13 @@ from app.utils.constant.gw import (
     GW_FUNC_SELECT_USER_INFO_BY_USER_ID_OUT,
     GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE,
     GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE_IN,
-    GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE_OUT, GW_FUNC_TELE_TRANSFER,
+    GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE_OUT,
+    GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE,
+    GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE_IN,
+    GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE_OUT,
+    GW_FUNC_SUMMARY_BP_TRANS_BY_SERVICE,
+    GW_FUNC_SUMMARY_BP_TRANS_BY_SERVICE_IN,
+    GW_FUNC_SUMMARY_BP_TRANS_BY_SERVICE_OUT, GW_FUNC_TELE_TRANSFER,
     GW_FUNC_TELE_TRANSFER_IN, GW_FUNC_TELE_TRANSFER_OUT,
     GW_FUNC_TT_LIQUIDATION, GW_FUNC_TT_LIQUIDATION_IN,
     GW_FUNC_TT_LIQUIDATION_OUT, GW_FUNCTION_OPEN_CASA, GW_HISTORY_ACCOUNT_NUM,
@@ -2323,6 +2331,58 @@ class ServiceGW:
             api_url=api_url,
             output_key=GW_FUNC_RETRIEVE_MB_INFO_BY_CIF_OUT,
             service_name=GW_FUNC_RETRIEVE_MB_INFO_BY_CIF
+        )
+        return response_data
+
+    async def summary_bp_trans_by_service(self, current_user: UserInfoResponse, cif_num, transaction_val_date,
+                                          transaction_val_date_to_date):
+        data_input = {
+            "cif_info": {
+                "cif_num": cif_num
+            },
+            "transaction_info": {
+                "transaction_val_date": str(transaction_val_date),
+                "transaction_val_date_to_date": str(transaction_val_date_to_date)
+            }
+        }
+
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_SUMMARY_BP_TRANS_BY_SERVICE_IN,
+            data_input=data_input
+        )
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SUMMARY_BP_TRANS_BY_SERVICE}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_SUMMARY_BP_TRANS_BY_SERVICE_OUT,
+            service_name=GW_FUNC_SUMMARY_BP_TRANS_BY_SERVICE
+        )
+        return response_data
+
+    async def summary_bp_trans_by_invoice(self, current_user: UserInfoResponse, cif_num, transaction_val_date,
+                                          transaction_val_date_to_date):
+        data_input = {
+            "cif_info": {
+                "cif_num": cif_num
+            },
+            "transaction_info": {
+                "transaction_val_date": str(transaction_val_date),
+                "transaction_val_date_to_date": str(transaction_val_date_to_date)
+            }
+        }
+
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE_IN,
+            data_input=data_input
+        )
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SUMMARY_BP_TRANS_BY_INVOICE}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE_OUT,
+            service_name=GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE
         )
         return response_data
 
