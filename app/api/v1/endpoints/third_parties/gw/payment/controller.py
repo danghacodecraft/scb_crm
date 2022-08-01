@@ -744,7 +744,6 @@ class CtrGWPayment(BaseController):
                 "staff_name": maker
             }
         }
-        print(data_input)
         gw_tt_liquidation = self.call_repos(await repos_gw_tt_liquidation(
             data_input=data_input,
             current_user=current_user
