@@ -3,7 +3,7 @@ from app.api.v1.endpoints.casa.open_casa.open_casa.controller import (
     CtrCasaOpenCasa
 )
 from app.api.v1.endpoints.cif.payment_account.detail.repository import (
-    repos_check_casa_account, repos_detail_payment_account,
+    repos_check_casa_account, repos_get_detail_payment_account,
     repos_gw_check_exist_casa_account_number, repos_save_payment_account
 )
 from app.api.v1.endpoints.cif.payment_account.detail.schema import (
@@ -43,7 +43,7 @@ class CtrPaymentAccount(BaseController):
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
 
         detail_payment_account_info = self.call_repos(
-            await repos_detail_payment_account(
+            await repos_get_detail_payment_account(
                 cif_id=cif_id,
                 session=self.oracle_session
             )

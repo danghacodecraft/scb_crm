@@ -22,7 +22,7 @@ from app.utils.error_messages import ERROR_CALL_SERVICE_GW
 from app.utils.functions import now
 
 
-async def repos_detail_payment_account(cif_id: str, session: Session) -> ReposReturn:
+async def repos_get_detail_payment_account(cif_id: str, session: Session) -> ReposReturn:
     account_structure_type_level_2 = aliased(AccountStructureType, name='account_structure_type_level_2')
     account_structure_type_level_1 = aliased(AccountStructureType, name='account_structure_type_level_1')
     detail = session.execute(
