@@ -208,23 +208,27 @@ class CtrDashboard(BaseController):
             cif_number = customer_info['cif_number']
             withdraw__cif_numbers.append(cif_number)
 
-            cif_info = self.call_repos(
-                await repos_get_customers_by_cif_number(
-                    cif_numbers=cif_number,
-                    session=self.oracle_session
-                )
-            )
-            mapping_datas[booking.id].update(
-                full_name_vn=cif_info.full_name_vn,
-                cif_id=cif_info.id,
-                cif_number=cif_number,
-            )
-            mapping_datas[booking.id]['business_type'].update(
-                numbers=[dict(
-                    number=customer_info['cif_number'],
-                    approval_status=customer_info['cif_flag']
-                )]
-            )
+        withdraw_cif_infos = self.call_repos(await repos_get_customers_by_cif_number(
+            cif_numbers=withdraw__cif_numbers,
+            session=self.oracle_session
+        ))
+
+        for booking, booking_business_form in withdraw_infos:
+            form_data = orjson_loads(booking_business_form.form_data)
+            cif_number = form_data['customer_info']['sender_info']['cif_number']
+            for cif_info in withdraw_cif_infos:
+                if cif_number == cif_info.cif_number:
+                    mapping_datas[booking.id].update(
+                        full_name_vn=cif_info.full_name_vn,
+                        cif_id=cif_info.id,
+                        cif_number=cif_number,
+                    )
+                    mapping_datas[booking.id]['business_type'].update(
+                        numbers=[dict(
+                            number=customer_info['cif_number'],
+                            approval_status=customer_info['cif_flag']
+                        )]
+                    )
 
         # Lấy tất cả người thực hiện của giao dịch
         if booking_ids:
