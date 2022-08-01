@@ -78,12 +78,14 @@ async def repos_save_casa_transfer_info(
 async def repos_get_casa_transfer_info(booking_id: str, session: Session):
     get_casa_transfer_info = session.execute(
         select(
-            BookingBusinessForm
+            BookingBusinessForm,
+            Booking
         )
+        .join(Booking, BookingBusinessForm.booking_id == Booking.id)
         .filter(BookingBusinessForm.booking_id == booking_id,
                 BookingBusinessForm.business_form_id == BUSINESS_FORM_CASA_TRANSFER)
         .order_by(desc(BookingBusinessForm.created_at))
-    ).scalars().first()
+    ).first()
     return ReposReturn(data=get_casa_transfer_info)
 
 

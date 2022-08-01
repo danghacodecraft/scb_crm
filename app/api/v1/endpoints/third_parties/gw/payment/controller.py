@@ -1032,10 +1032,13 @@ class CtrGWPayment(BaseController):
 
     async def ctr_gw_save_casa_transfer_info(self, BOOKING_ID: str):
         current_user = self.current_user
-        get_casa_transfer_info = self.call_repos(await repos_get_casa_transfer_info(
+        current_user_info = current_user.user_info
+        get_casa_transfer_info, booking = self.call_repos(await repos_get_casa_transfer_info(
             booking_id=BOOKING_ID,
             session=self.oracle_session
         ))
+        maker = booking.created_by
+
         form_data = orjson_loads(get_casa_transfer_info.form_data)
         receiving_method = form_data['receiving_method']
         transfer_amount = form_data['amount']
@@ -1097,20 +1100,18 @@ class CtrGWPayment(BaseController):
                         }
                     ],
                     "p_blk_project": "",
-                    # TODO
                     "staff_info_checker": {
-                        "staff_name": "HOANT2"
+                        "staff_name": current_user_info.username
                     },
-                    # TODO
                     "staff_info_maker": {
-                        "staff_name": "KHANHLQ"
+                        "staff_name": maker
                     }
                 }
             }
 
         if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
             is_success, tele_transfer_response_data = await self.ctr_tele_transfer(
-                form_data=form_data, pay_in_cash_flag=False
+                form_data=form_data, maker=maker, pay_in_cash_flag=False
             )
             if not is_success:
                 return self.response_exception(
@@ -1132,7 +1133,7 @@ class CtrGWPayment(BaseController):
                     "p_liquidation_type": "A",
                     "p_liquidation_details": "",
                     "branch_info": {
-                        "branch_code": "000"  # TODO
+                        "branch_code": current_user.user_info.hrm_branch_code
                     },
                     "p_instrument_number": p_instrument_number,
                     "p_instrument_status": "LIQD",
@@ -1155,10 +1156,10 @@ class CtrGWPayment(BaseController):
                         }
                     ],
                     "staff_info_checker": {
-                        "staff_name": "HOANT2"  # TODO
+                        "staff_name": current_user_info.username
                     },
                     "staff_info_maker": {
-                        "staff_name": "KHANHLQ"  # TODO
+                        "staff_name": maker
                     }
                 }
             }
@@ -1190,10 +1191,10 @@ class CtrGWPayment(BaseController):
                         "account_product_package": "FT01"
                     },
                     "staff_info_checker": {
-                        "staff_name": "DIEMNTK"  # TODO
+                        "staff_name": current_user_info.username
                     },
                     "staff_info_maker": {
-                        "staff_name": "DIEPTTN1"  # TODO
+                        "staff_name": maker
                     },
                     "p_blk_mis": "",
                     "p_blk_udf": "",
@@ -1278,10 +1279,10 @@ class CtrGWPayment(BaseController):
                         "account_product_package": "FT01"
                     },
                     "staff_info_checker": {
-                        "staff_name": "HOANT2"
+                        "staff_name": current_user_info.username
                     },
                     "staff_info_maker": {
-                        "staff_name": "KHANHLQ"
+                        "staff_name": maker
                     },
                     "p_blk_mis": "",
                     "p_blk_udf": "",
@@ -1363,17 +1364,14 @@ class CtrGWPayment(BaseController):
                     "customer_info": {
                         "full_name": form_data["sender_full_name_vn"]
                     },
-                    # TODO
                     "staff_maker": {
-                        "staff_code": "annvh"
+                        "staff_code": maker
                     },
-                    # TODO
                     "staff_checker": {
-                        "staff_code": "THUYTP"
+                        "staff_code": current_user_info.username
                     },
-                    # TODO
                     "branch_info": {
-                        "branch_code": "001"
+                        "branch_code": current_user_info.hrm_branch_code
                     }
                 }
             }
@@ -1397,24 +1395,21 @@ class CtrGWPayment(BaseController):
                     "customer_info": {
                         "full_name": form_data["sender_full_name_vn"]
                     },
-                    # TODO
                     "staff_maker": {
-                        "staff_code": "annvh"
+                        "staff_code": maker
                     },
-                    # TODO
                     "staff_checker": {
-                        "staff_code": "THUYTP"
+                        "staff_code": current_user_info.username
                     },
-                    # TODO
                     "branch_info": {
-                        "branch_code": "001"
+                        "branch_code": current_user_info.hrm_branch_code
                     },
                     "card_to_info": {
                         "card_num": form_data["receiver_card_number"]
                     }
                 }
             }
-        response_data, gw_casa_transfer = self.call_repos(await repos_gw_save_casa_transfer_info(
+        response_data, gw_casa_transfer, is_completed = self.call_repos(await repos_gw_save_casa_transfer_info(
             current_user=self.current_user,
             receiving_method=receiving_method,
             booking_id=BOOKING_ID,
@@ -1425,6 +1420,7 @@ class CtrGWPayment(BaseController):
         self.call_repos(await repos_save_gw_output_data(
             booking_id=BOOKING_ID,
             business_type_id=BUSINESS_TYPE_CASA_TRANSFER,
+            is_completed=is_completed,
             gw_output_data=orjson_dumps(gw_casa_transfer),
             session=self.oracle_session
         ))
