@@ -49,7 +49,7 @@ from app.utils.constant.cif import (
 )
 from app.utils.constant.gw import (
     GW_ACCOUNT_CHARGE_ON_ORDERING, GW_ACCOUNT_CHARGE_ON_RECEIVER,
-    GW_CORE_DATE_FORMAT, GW_DATE_FORMAT, GW_DATETIME_FORMAT,
+    GW_CORE_DATE_FORMAT, GW_DATE_FORMAT, GW_DATETIME_FORMAT, GW_DEFAULT_VALUE,
     GW_FUNC_INTERNAL_TRANSFER_OUT, GW_GL_BRANCH_CODE,
     GW_RESPONSE_STATUS_SUCCESS
 )
@@ -940,15 +940,10 @@ class CtrGWPayment(BaseController):
         current_user_info = current_user.user_info
 
         ben = await CtrConfigBank(current_user).ctr_get_bank_branch(bank_id=form_data['receiver_bank']['id'])
-
         data_input = {
             "customer_info": {
                 "full_name": form_data['sender_full_name_vn'],
-                "birthday": date_string_to_other_date_string_format(
-                    date_input=form_data['sender_issued_date'],
-                    from_format=GW_DATETIME_FORMAT,
-                    to_format=GW_DATE_FORMAT
-                )
+                "birthday": form_data['sender_issued_date'] if form_data['sender_issued_date'] else GW_DEFAULT_VALUE
             },
             "id_info": {
                 "id_num": form_data['sender_identity_number']

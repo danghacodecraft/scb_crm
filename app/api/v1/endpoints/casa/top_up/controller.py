@@ -661,7 +661,7 @@ class CtrCasaTopUp(BaseController):
             data.sender_full_name_vn = customer_detail['full_name']
             customer_identity_detail = customer_detail['id_info']
             data.sender_identity_number = customer_identity_detail['id_num']
-            data.sender_issued_date = string_to_date(customer_identity_detail['id_issued_date'])
+            data.sender_issued_date = string_to_date(customer_identity_detail['id_issued_date'], _format=GW_DATETIME_FORMAT)
             data.sender_address_full = customer_detail['t_address_info']['contact_address_full']
             data.sender_mobile_number = customer_detail['mobile_phone']
         # TH2: Không nhập CIF

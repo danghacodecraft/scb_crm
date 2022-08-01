@@ -577,7 +577,7 @@ class CtrGWCasaAccount(BaseController):
                 return self.response_exception(
                     loc='tele_transfer',
                     msg=ERROR_CALL_SERVICE_GW,
-                    detail=str(response_data)
+                    detail=str(tele_transfer_response_data)
                 )
             p_instrument_number = tele_transfer_response_data[GW_FUNC_TELE_TRANSFER_OUT]['data_output']['p_instrument_number']
 
@@ -585,7 +585,7 @@ class CtrGWCasaAccount(BaseController):
                 return self.response_exception(
                     loc='tele_transfer',
                     msg=ERROR_NO_INSTRUMENT_NUMBER,
-                    detail=str(response_data)
+                    detail=str(tele_transfer_response_data)
                 )
 
             is_success, tt_liquidation_response_data = await CtrGWPayment(current_user).ctr_tt_liquidation(
@@ -627,7 +627,7 @@ class CtrGWCasaAccount(BaseController):
                 return self.response_exception(
                     loc='pay_in_cash_247_by_acc_num',
                     msg=ERROR_CALL_SERVICE_GW,
-                    detail=str(response_data)
+                    detail=str(gw_response_data)
                 )
             response_data = gw_response_data
 
