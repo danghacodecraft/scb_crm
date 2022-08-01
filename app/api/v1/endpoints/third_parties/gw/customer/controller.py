@@ -495,6 +495,7 @@ class CtrGWCustomer(BaseController):
                 biz_line=customer_info['biz_line'],
                 biz_license_issue_date=biz_license_issue_date,
                 is_staff=customer_info['is_staff'],
+                ekyc_level=customer_info['ekyc_level'],
                 cif_info=dict(
                     cif_number=cif_number,
                     issued_date=cif_issued_date

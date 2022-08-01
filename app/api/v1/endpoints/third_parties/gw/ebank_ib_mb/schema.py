@@ -241,7 +241,106 @@ class SummaryBPTransByInvoiceResponse(BaseSchema):
 # GW openMB
 
 # request
+class OpenMBEbankIBMBInfoRequest(BaseSchema):
+    ebank_ibmb_username: str = Field(..., description="Tên đăng nhập Mobile Banking",
+                                     example='')
+    ebank_ibmb_account_charge_fee: str = Field(..., description="Số tài khoản thanh toán",
+                                               example='11223344')
+    ebank_ibmb_mobilephone: str = Field(..., description="Số điện thoại nhận OTP,0933444938,0167,…",
+                                        example='')
+    ebank_ibmb_reg_date: date = Field(..., description="CreatedDate: Thời gian tạo user, "
+                                                       " Format:yyyy-MM-dd "
+                                                       "Ex: 2022-05-25",
+                                      example='2022-05-25')
 
+
+class OpenMBCIFInfoRequest(BaseSchema):
+    cif_num: str = Field(..., description="Số CIF", example='')
+
+
+class OpenMBAddressInfoRequest(BaseSchema):
+    address_full: str = Field(..., description="Địa chỉ liên hệ", example='927 Trần Hưng Đạo, P.1, Q.5, TP.HCM')
+
+
+class OpenMBCustomerInfoRequest(BaseSchema):
+    full_name: str = Field(..., description="Họ tên khách hàng", example='HOÀNG THỊ DUNG')
+    birthday: date = Field(..., description="Ngày sinh. Format yyyy-MM-dd ", example='1990-05-22')
+    gender: str = Field(..., description="Giới tính: 1: Nam, 0: nữ", example='1')
+    id_num: str = Field(..., description="Số CMTND/HC", example='033467895')
+    email: str = Field(..., description="Email", example='hoangthidung@gmail.com')
+    customer_vip_type: str = Field(..., description="Mã loại Khách hàng Ex: 000: Vip,….", example='001')
+
+
+class OpenMBAccountInfoRequest(BaseSchema):
+    account_type: str = Field(..., description="""Mã nhóm loại tài khoản
+- U: tk thanh toán
+
+- Y: tk tiết kiệm
+
+- L: tk vay
+
+- M: tk thẻ tín dụng""", example='U')
+    account_type_name: date = Field(..., description="Mã Loại tài khoản", example='000')
+    account_currency: str = Field(..., description="Loại tiền", example='VND')
+
+
+class OpenMBAuthenticationSMSRequest(BaseSchema):
+    authentication_code: str = Field(..., description="""Hình thức xác thực SMS
+- 0: Không sử dụng,
+
+- 1: Sử dụng""", example='1')
+
+
+class OpenMBAuthenticationTokenRequest(BaseSchema):
+    authentication_code: str = Field(..., description="""Hình thức xác thực Token
+- 0: Không sử dụng,
+
+- 1: Sử dụng""", example='00')
+    authentication_name: str = Field(..., description="Giá trị của token", example='1950')
+
+
+class OpenMBStaffRegRequest(BaseSchema):
+    staff_code: str = Field(..., description="Mã nhân viên", example='00789')
+    staff_name: str = Field(..., description="Họ tên nhân viên", example='LÊ THANH THẢN')
+
+
+class OpenMBServicePackageInfoRequest(BaseSchema):
+    service_package_code: str = Field(..., description="Mã gói dịch vụ MB", example='MC01')
+
+
+class OpenMBStaffMakerInfoRequest(BaseSchema):
+    staff_code: str = Field(..., description="User tạo tài khoản", example='HOANLKT')
+
+
+class OpenMBStaffCheckerInfoRequest(BaseSchema):
+    staff_code: str = Field(..., description="User duyệt tài khoản", example='KHANHLQ')
+
+
+class OpenMBBranchCIFRequest(BaseSchema):
+    branch_code: str = Field(..., description="Cif mở ở chi nhánh", example='001')
+
+
+class OpenMBBranchRegRequest(BaseSchema):
+    branch_code: str = Field(..., description="Chi nhánh của giao dịch viên tạo và duyệt tài khoản.", example='020')
+
+
+class OpenMBRequest(BaseSchema):
+    ebank_ibmb_info: OpenMBEbankIBMBInfoRequest
+    comfirm_date: date = Field(..., description="CreatedDate: Thời gian tạo user, "
+                                                " Format:yyyy-MM-dd "
+                                                "Ex: 2022-05-25 ", example='2022-05-25')
+    cif_info: OpenMBCIFInfoRequest
+    address_info: OpenMBAddressInfoRequest
+    customer_info: OpenMBCustomerInfoRequest
+    account_info: OpenMBAccountInfoRequest
+    authentication_sms: OpenMBAuthenticationSMSRequest
+    authentication_token: OpenMBAuthenticationTokenRequest
+    staff_reg: OpenMBStaffRegRequest
+    service_package_info: OpenMBServicePackageInfoRequest
+    staff_maker: OpenMBStaffMakerInfoRequest
+    staff_checker: OpenMBStaffCheckerInfoRequest
+    branch_cif: OpenMBBranchCIFRequest
+    branch_reg: OpenMBBranchRegRequest
 
 # response
 
@@ -252,5 +351,17 @@ class SummaryBPTransByInvoiceResponse(BaseSchema):
 
 
 # response
+class SelectServicePackIBItemResponse(BaseSchema):
+    service_package_code: str = Field(..., description="Mã gói dịch vụ")
+    service_package_name: str = Field(..., description="Tên gói dịch vụ")
+
+
+class SelectServicePackIBListResponse(BaseSchema):
+    service_package_info_item: SelectServicePackIBItemResponse
+
+
+class SelectServicePackIBResponse(BaseSchema):
+    service_package_info_list: List[SelectServicePackIBListResponse]
+
 
 ########################################################################################################################

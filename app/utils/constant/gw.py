@@ -85,6 +85,8 @@ GW_ENDPOINT_URL_RETRIEVE_IB_INFO_BY_CIF = "/ebankibmb/v1.0/rest/retrieveIBInfoBy
 GW_ENDPOINT_URL_RETRIEVE_MB_INFO_BY_CIF = "/ebankibmb/v1.0/rest/retrieveMBInfoByCif"
 GW_ENDPOINT_URL_SUMMARY_BP_TRANS_BY_SERVICE = "/ebankibmb/v1.0/rest/summaryBPTransByService"
 GW_ENDPOINT_URL_SUMMARY_BP_TRANS_BY_INVOICE = "/ebankibmb/v1.0/rest/summaryBPTransByInvoice"
+GW_ENDPOINT_URL_OPEN_MB = "/ebankibmb/v1.0/rest/openMB"
+GW_ENDPOINT_URL_SELECT_SERVICE_PACK_IB = "/ebankibmb/v1.0/rest/selectServicePackIB"
 
 ########################################################################################################################
 #                                         GW FUNCTION NAME
@@ -251,6 +253,15 @@ GW_FUNC_SUMMARY_BP_TRANS_BY_SERVICE = "summaryBPTransByService"
 GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE_IN = "SummaryBPTransByInvoice_in"
 GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE_OUT = "SummaryBPTransByInvoice_out"
 GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE = "summaryBPTransByInvoice"
+
+
+GW_FUNC_OPEN_MB_IN = "openMB_in"
+GW_FUNC_OPEN_MB_OUT = "openMB_out"
+GW_FUNC_OPEN_MB = "openMB"
+
+GW_FUNC_SELECT_SERVICE_PACK_IB_IN = "selectServicePackIB_in"
+GW_FUNC_SELECT_SERVICE_PACK_IB_OUT = "selectServicePackIB_out"
+GW_FUNC_SELECT_SERVICE_PACK_IB = "selectServicePackIB"
 
 ########################################################################################################################
 #                                         END GW FUNCTION NAME
