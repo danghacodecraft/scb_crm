@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlalchemy import select, update
+from sqlalchemy import desc, select, update
 from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -240,8 +240,8 @@ async def repos_get_customer_open_cif(
         .join(AddressDistrict, CustomerAddress.address_district_id == AddressDistrict.id)
         .join(AddressProvince, CustomerAddress.address_province_id == AddressProvince.id)
         .join(AddressCountry, CustomerAddress.address_country_id == AddressCountry.id)
-        .join(CustomerProfessional, Customer.customer_professional_id == CustomerProfessional.id)
-        .join(AverageIncomeAmount, CustomerProfessional.average_income_amount_id == AverageIncomeAmount.id)
+        .outerjoin(CustomerProfessional, Customer.customer_professional_id == CustomerProfessional.id)
+        .outerjoin(AverageIncomeAmount, CustomerProfessional.average_income_amount_id == AverageIncomeAmount.id)
         .filter(Customer.id == cif_id)
     ).all()
 
@@ -293,3 +293,17 @@ async def repos_check_mobile_num(mobile_num, session: Session):
     ).scalar()
 
     return ReposReturn(data=mobile_num_info)
+
+
+async def repos_get_transaction_jobs(
+        booking_id: str,
+        session: Session
+):
+    transaction_jobs = session.execute(
+        select(
+            TransactionJob
+        )
+        .filter(TransactionJob.booking_id == booking_id)
+        .order_by(TransactionJob.business_job_id, desc(TransactionJob.created_at))
+    ).scalars().all()
+    return ReposReturn(data=transaction_jobs)

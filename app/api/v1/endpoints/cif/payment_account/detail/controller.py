@@ -31,7 +31,7 @@ from app.utils.constant.cif import (
 from app.utils.error_messages import (
     ERROR_ACCOUNT_NUMBER_NOT_NULL, ERROR_CASA_ACCOUNT_EXIST,
     ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_FIELD_REQUIRED, ERROR_ID_NOT_EXIST,
-    ERROR_INVALID_NUMBER
+    ERROR_INVALID_NUMBER, ERROR_NO_DATA
 )
 from app.utils.functions import dropdown, is_valid_number, now, orjson_dumps
 
@@ -48,6 +48,8 @@ class CtrPaymentAccount(BaseController):
                 session=self.oracle_session
             )
         )
+        if not detail_payment_account_info:
+            return self.response_exception(msg=ERROR_NO_DATA)
 
         account_structure_type_level_1 = detail_payment_account_info.account_structure_type_level_1
         account_structure_type_level_2 = detail_payment_account_info.account_structure_type_level_2

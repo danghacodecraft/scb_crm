@@ -1,11 +1,11 @@
 from app.api.base.controller import BaseController
-from app.api.v1.endpoints.cif.repository import repos_get_initializing_customer
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_check_mobile_num, repos_get_customer_avatar_url_from_cif,
     repos_get_customer_ids_from_cif_numbers, repos_get_customer_open_cif,
-    repos_get_teller_info, repos_gw_get_authorized, repos_gw_get_co_owner,
-    repos_gw_get_customer_info_detail, repos_gw_get_customer_info_list,
-    repos_gw_open_cif, repos_update_cif_number_customer
+    repos_get_teller_info, repos_get_transaction_jobs, repos_gw_get_authorized,
+    repos_gw_get_co_owner, repos_gw_get_customer_info_detail,
+    repos_gw_get_customer_info_list, repos_gw_open_cif,
+    repos_update_cif_number_customer
 )
 from app.api.v1.endpoints.third_parties.gw.customer.schema import (
     CheckMobileNumRequest
@@ -42,8 +42,8 @@ from app.utils.constant.gw import (
     GW_UDF_NAME, GW_YES, GW_YES_AGREEMENT_FLAG
 )
 from app.utils.error_messages import (
-    ERROR_CALL_SERVICE_GW, ERROR_PHONE_NUMBER, ERROR_PHONE_NUMBER_NOT_EXITS,
-    ERROR_VALIDATE_ONE_FIELD_REQUIRED
+    ERROR_CALL_SERVICE_GW, ERROR_NO_DATA, ERROR_PHONE_NUMBER,
+    ERROR_PHONE_NUMBER_NOT_EXITS, ERROR_VALIDATE_ONE_FIELD_REQUIRED
 )
 from app.utils.functions import (
     date_string_to_other_date_string_format, date_to_string,
@@ -767,7 +767,7 @@ class CtrGWCustomer(BaseController):
         )
 
         # check cif đang tạo
-        self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
+        # self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
 
         response_customers = self.call_repos(await repos_get_customer_open_cif(
             cif_id=cif_id, session=self.oracle_session))
@@ -864,6 +864,9 @@ class CtrGWCustomer(BaseController):
         marketing_flag = GW_YES if customer.advertising_marketing_flag else GW_NO_MARKETING_FLAG
         # thỏa thuận pháo lý
         agreement_flag = GW_YES_AGREEMENT_FLAG if customer.legal_agreement_flag else GW_NO_AGREEMENT_FLAG
+
+        if not first_row.AverageIncomeAmount:
+            return self.response_exception(msg=ERROR_NO_DATA, loc="Contact Info")
 
         # TODO hard core CN_00_CUNG_CAP_TT_FATCA, KHTC_DOI_TUONG, CUNG_CAP_DOANH_THU_THUAN
         udf_value = f"KHONG~{first_row.AverageIncomeAmount.id}~{cust_professional.career_id}~{marketing_flag}~KHONG~{agreement_flag}~{GW_DEFAULT_KHTC_DOI_TUONG}"
@@ -968,67 +971,96 @@ class CtrGWCustomer(BaseController):
         #     cif_id=cif_id, session=self.oracle_session
         # ))
 
-        transaction_jobs = [
-            {
-                "booking_id": BOOKING_ID,
-                "business_job_id": BUSINESS_JOB_CODE_INIT,
-                "complete_flag": True,
-                "error_code": "",
-                "error_desc": "",
-                "created_at": now(),
-                "updated_at": now()
-            },
-            {
-                "booking_id": BOOKING_ID,
-                "business_job_id": BUSINESS_JOB_CODE_CIF_INFO,
-                "complete_flag": True,
-                "error_code": "",
-                "error_desc": "",
-                "created_at": now(),
-                "updated_at": now()
-            }
-        ]
+        # Kiểm tra CIF đã mở chưa
+        transaction_jobs = self.call_repos(await repos_get_transaction_jobs(
+            booking_id=BOOKING_ID, session=self.oracle_session
+        ))
 
-        is_success, response_data = self.call_repos(
-            await repos_gw_open_cif(
+        # Lấy thông tin những Transaction Job
+        # Những Transaction Job bao gồm những job khác nhau và mới nhất
+        is_retry_cif = False
+        first_newest_transaction_jobs = []
+        pre_bussiness_job = None
+        for transaction_job in transaction_jobs:
+            if not pre_bussiness_job:
+                first_newest_transaction_jobs.append(transaction_job)
+                pre_bussiness_job = transaction_job.business_job_id
+                continue
+            if transaction_job.business_job_id != pre_bussiness_job:
+                first_newest_transaction_jobs.append(transaction_job)
+                if transaction_job.business_job_id == BUSINESS_JOB_CODE_CIF_INFO and not transaction_job.complete_flag:
+                    is_retry_cif = True
+            pre_bussiness_job = transaction_job.business_job_id
+
+        # TH1: CIF chưa mở hoặc cif đã mở nhưng thất bại
+        if not first_newest_transaction_jobs or is_retry_cif:
+            transaction_jobs = [
+                {
+                    "booking_id": BOOKING_ID,
+                    "business_job_id": BUSINESS_JOB_CODE_INIT,
+                    "complete_flag": True,
+                    "error_code": "",
+                    "error_desc": "",
+                    "created_at": now(),
+                    "updated_at": now()
+                },
+                {
+                    "booking_id": BOOKING_ID,
+                    "business_job_id": BUSINESS_JOB_CODE_CIF_INFO,
+                    "complete_flag": True,
+                    "error_code": "",
+                    "error_desc": "",
+                    "created_at": now(),
+                    "updated_at": now()
+                }
+            ]
+
+            is_success, response_data = self.call_repos(
+                await repos_gw_open_cif(
+                    cif_id=cif_id,
+                    booking_id=BOOKING_ID,
+                    customer_info=customer_info,
+                    account_info=account_info,
+                    current_user=current_user.user_info,
+                    transaction_jobs=transaction_jobs,
+                    session=self.oracle_session
+                )
+            )
+            # check open_cif success
+            if not is_success:
+                return self.response_exception(
+                    msg=ERROR_CALL_SERVICE_GW,
+                    detail=response_data.get('openCIFAuthorise_out').get("transaction_info").get('transaction_error_msg')
+                )
+            cif_number = response_data['openCIFAuthorise_out']['data_output']['customner_info']['cif_info']['cif_num']
+            # TODO chưa thể mở tài khoản thanh toán
+            # account_number = response_data['openCIFAuthorise_out']['data_output']['account_info']['account_num']
+
+            data_update_customer = {
+                "cif_number": cif_number,
+                "complete_flag": CUSTOMER_COMPLETED_FLAG
+            }
+
+            # data_update_casa_account = {}
+            # TODO data update casa_account
+            # if account_number:
+            #     data_update_casa_account = {
+            #         "casa_account_number": account_number
+            #     }
+
+            # call repos update cif_number and account_number
+            await repos_update_cif_number_customer(
                 cif_id=cif_id,
-                booking_id=BOOKING_ID,
-                customer_info=customer_info,
-                account_info=account_info,
-                current_user=current_user.user_info,
-                transaction_jobs=transaction_jobs,
+                data_update_customer=data_update_customer,
+                # data_update_casa_account=data_update_casa_account,
                 session=self.oracle_session
             )
-        )
-        # check open_cif success
-        if not is_success:
-            return self.response_exception(
-                msg=ERROR_CALL_SERVICE_GW,
-                detail=response_data.get('openCIFAuthorise_out').get("transaction_info").get('transaction_error_msg')
-            )
-        cif_number = response_data['openCIFAuthorise_out']['data_output']['customner_info']['cif_info']['cif_num']
-        # TODO chưa thể mở tài khoản thanh toán
-        # account_number = response_data['openCIFAuthorise_out']['data_output']['account_info']['account_num']
+        # TH2: CIF đã mở thành công
+        else:
+            self.call_repos(await repos_get_customer_open_cif(cif_id=cif_id, session=self.oracle_session))
+            first_row = response_customers[0]
+            cif_number = first_row.Customer.cif_number
 
-        data_update_customer = {
-            "cif_number": cif_number,
-            "complete_flag": CUSTOMER_COMPLETED_FLAG
-        }
-
-        # data_update_casa_account = {}
-        # TODO data update casa_account
-        # if account_number:
-        #     data_update_casa_account = {
-        #         "casa_account_number": account_number
-        #     }
-
-        # call repos update cif_number and account_number
-        await repos_update_cif_number_customer(
-            cif_id=cif_id,
-            data_update_customer=data_update_customer,
-            # data_update_casa_account=data_update_casa_account,
-            session=self.oracle_session
-        )
         response = {
             "booking_id": BOOKING_ID,
             "cif_id": cif_id,
