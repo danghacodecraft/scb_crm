@@ -9,7 +9,7 @@ from app.api.v1.endpoints.third_parties.gw.ebank_ib_mb.controller import (
 )
 from app.api.v1.endpoints.third_parties.gw.ebank_ib_mb.schema import (
     CheckUsernameIBMBExistRequest, CheckUsernameIBMBExistResponse,
-    RetrieveIBInfoByCifRequest, RetrieveIBInfoByCifResponse,
+    OpenMBRequest, RetrieveIBInfoByCifRequest, RetrieveIBInfoByCifResponse,
     RetrieveMBInfoByCifRequest, RetrieveMBInfoByCifResponse,
     SummaryBPTransByInvoiceRequest, SummaryBPTransByInvoiceResponse,
     SummaryBPTransByServiceRequest, SummaryBPTransByServiceResponse
@@ -148,3 +148,24 @@ async def view_gw_summary_bp_trans_by_invoice(
         'data').get(GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE_OUT).get('data_output')
 
     return ResponseData[SummaryBPTransByInvoiceResponse](**gw_get_summary_bp_trans_by_invoice)
+
+
+@router.post(
+    path="/open-mb/",
+    name="[GW] Khởi tạo tài khoản mobile banking",
+    description="[GW] Khởi tạo tài khoản mobile banking",
+    responses=swagger_response(
+        response_model="",
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_open_mb(
+        request: OpenMBRequest = Body(..., ),
+        current_user=Depends(get_current_user_from_header())
+):
+    gw_get_open_mb = await CtrGWEbankIbMb(
+        current_user).ctr_gw_open_mb(
+        data_input=request.json()
+    )
+
+    return ResponseData(**gw_get_open_mb)

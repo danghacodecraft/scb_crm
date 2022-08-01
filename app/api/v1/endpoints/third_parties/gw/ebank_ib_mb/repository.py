@@ -111,3 +111,23 @@ async def repos_gw_summary_bp_trans_by_invoice(
         )
 
     return ReposReturn(data=summary_bp_trans_by_invoice)
+
+
+async def repos_gw_open_mb(
+        current_user,
+        data_input
+):
+    current_user = current_user.user_info
+    is_success, open_mb = await service_gw.open_mb(
+        current_user=current_user,
+        data_input=data_input
+    )
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="get_open_mb",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(open_mb)
+        )
+
+    return ReposReturn(data=open_mb)

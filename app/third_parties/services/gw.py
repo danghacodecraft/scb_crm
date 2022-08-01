@@ -20,7 +20,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_INTERBANK_TRANSFER_247_BY_ACCOUNT_NUMBER,
     GW_ENDPOINT_URL_INTERBANK_TRANSFER_247_BY_CARD_NUMBER,
     GW_ENDPOINT_URL_INTERNAL_TRANSFER, GW_ENDPOINT_URL_OPEN_INTERNET_BANKING,
-    GW_ENDPOINT_URL_PAY_IN_CASH,
+    GW_ENDPOINT_URL_OPEN_MB, GW_ENDPOINT_URL_PAY_IN_CASH,
     GW_ENDPOINT_URL_PAY_IN_CASH_247_BY_ACCOUNT_NUMBER,
     GW_ENDPOINT_URL_PAY_IN_CASH_247_BY_CARD_NUMBER,
     GW_ENDPOINT_URL_PAYMENT_AMOUNT_BLOCK,
@@ -87,7 +87,8 @@ from app.utils.constant.gw import (
     GW_FUNC_INTERBANK_TRANSFER_247_BY_CARD_NUM_OUT,
     GW_FUNC_INTERBANK_TRANSFER_IN, GW_FUNC_INTERBANK_TRANSFER_OUT,
     GW_FUNC_INTERNAL_TRANSFER, GW_FUNC_INTERNAL_TRANSFER_IN,
-    GW_FUNC_INTERNAL_TRANSFER_OUT, GW_FUNC_PAY_IN_CARD,
+    GW_FUNC_INTERNAL_TRANSFER_OUT, GW_FUNC_OPEN_MB, GW_FUNC_OPEN_MB_IN,
+    GW_FUNC_OPEN_MB_OUT, GW_FUNC_PAY_IN_CARD,
     GW_FUNC_PAY_IN_CARD_247_BY_ACC_NUM, GW_FUNC_PAY_IN_CARD_247_BY_ACC_NUM_IN,
     GW_FUNC_PAY_IN_CARD_247_BY_ACC_NUM_OUT,
     GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM,
@@ -2383,6 +2384,21 @@ class ServiceGW:
             api_url=api_url,
             output_key=GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE_OUT,
             service_name=GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE
+        )
+        return response_data
+
+    async def open_mb(self, current_user: UserInfoResponse, data_input):
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_OPEN_MB_IN,
+            data_input=data_input
+        )
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_OPEN_MB}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_OPEN_MB_OUT,
+            service_name=GW_FUNC_OPEN_MB
         )
         return response_data
 
