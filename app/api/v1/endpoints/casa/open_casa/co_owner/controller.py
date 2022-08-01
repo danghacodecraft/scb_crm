@@ -404,6 +404,17 @@ class CtrCoOwner(BaseController):
                         method_sign=method_sign.method_sign_type,
                         signature_list=signature_list_3
                     ))
+        signatures = self.call_repos(await repos_get_co_owner_signatures(
+            cif_numbers=cif_numbers, session=self.oracle_session))
+
+        for idx, (_, _, joint_account_holder, _) in enumerate(account_holders):
+            for signature in signatures:
+                if joint_account_holder.cif_num == signature.cif_number:
+                    image_info = self.call_repos(await repos_download_file(signature.image_url))
+                    joint_account_holders[idx]['basic_information']['signature'].append(dict(
+                        id=signature.id,
+                        image_url=image_info['file_url']
+                    ))
 
         if document_uuid:
             file_info = file_uuid

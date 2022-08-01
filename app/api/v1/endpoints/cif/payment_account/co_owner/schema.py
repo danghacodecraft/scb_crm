@@ -63,7 +63,7 @@ class AgreementAuthorResponse(BaseSchema):
         description="Thỏa thuận chữ ký các hồ sơ chứng từ.True: Có , False: Không",
     )
     method_sign: Optional[int] = Field(..., description="Phương thức ký")
-    signature_list: Optional[SignatureAgreementAuthorResponse] = Field(
+    signature_list: Optional[List[SignatureAgreementAuthorResponse]] = Field(
         ..., description="Chữ ký của đồng sở hữu"
     )
 

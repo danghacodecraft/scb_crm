@@ -312,3 +312,17 @@ async def repos_get_account_holders(cif_id: str, session: Session) -> ReposRetur
     ).all()
 
     return ReposReturn(data=casa_account_holder)
+
+
+async def repos_method_sign_info(joint_acc_agree_id: str, agreement_author_id: str, session: Session) -> ReposReturn:
+    method_sign_info = session.execute(
+        select(
+            MethodSign
+        )
+        .filter(
+            MethodSign.joint_acc_agree_id == joint_acc_agree_id,
+            MethodSign.agreement_author_id == agreement_author_id,
+        )
+    ).scalars().all()
+
+    return ReposReturn(data=method_sign_info)
