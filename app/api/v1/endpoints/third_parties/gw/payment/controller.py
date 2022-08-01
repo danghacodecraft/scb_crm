@@ -939,7 +939,7 @@ class CtrGWPayment(BaseController):
         current_user = self.current_user
         current_user_info = current_user.user_info
 
-        ben = await CtrConfigBank(current_user).ctr_get_bank_branch(bank_id=form_data['receiver_bank']['id'])
+        # ben = await CtrConfigBank(current_user).ctr_get_bank_branch(bank_id=form_data['receiver_bank']['id'])
         data_input = {
             "customer_info": {
                 "full_name": form_data['sender_full_name_vn'],
@@ -959,7 +959,8 @@ class CtrGWPayment(BaseController):
             "account_to_info": {
                 "account_num": form_data['receiver_account_number']
             },
-            "ben_id": ben['data'][0]['id'],
+            # "ben_id": ben['data'][0]['id'],
+            "ben_id": '970436',     # TODO: hiện tại chỉ có mã ngân hàng này dùng được
             "account_from_info": {
                 "account_num": GW_GL_BRANCH_CODE
             },
@@ -993,11 +994,7 @@ class CtrGWPayment(BaseController):
         data_input = {
             "customer_info": {
                 "full_name": form_data['sender_full_name_vn'],
-                "birthday": date_string_to_other_date_string_format(
-                    date_input=form_data['sender_issued_date'],
-                    from_format=GW_DATETIME_FORMAT,
-                    to_format=GW_DATE_FORMAT
-                )
+                "birthday": form_data['sender_issued_date'] if form_data['sender_issued_date'] else GW_DEFAULT_VALUE
             },
             "id_info": {
                 "id_num": form_data['sender_identity_number']

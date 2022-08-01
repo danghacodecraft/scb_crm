@@ -2,7 +2,7 @@ import json
 import re
 from typing import List
 
-from sqlalchemy import desc, select
+from sqlalchemy import desc, select, update
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -204,6 +204,7 @@ async def repos_validate_cif_number(cif_number: str):
 @auto_commit
 async def repos_save_gw_output_data(
         booking_id: str,
+        is_completed: bool,
         business_type_id: str,
         gw_output_data: json,
         session: Session
@@ -216,5 +217,12 @@ async def repos_save_gw_output_data(
         created_at=now(),
         out_data=gw_output_data
     ))
+    session.execute(
+        update(Booking)
+        .filter(Booking.id == booking_id)
+        .values(
+            completed_flag=is_completed
+        )
+    )
     session.flush()
     return ReposReturn(data=None)
