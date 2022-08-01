@@ -253,8 +253,7 @@ class CtrGWPayment(BaseController):
         ))
 
         response_data = {
-            "booking_id": BOOKING_ID,
-            "account_list": gw_payment_amount_block
+            "booking_id": gw_payment_amount_block
         }
 
         return self.response(data=response_data)
