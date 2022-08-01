@@ -89,7 +89,7 @@ async def repos_create_booking(
             branch_id=current_user_branch_code,
             created_at=now(),
             updated_at=now(),
-            created_by=current_user.code
+            created_by=current_user.username
         )
     ]
     if business_type_code == BUSINESS_TYPE_CODE_CIF:

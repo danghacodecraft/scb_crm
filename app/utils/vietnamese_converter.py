@@ -29,7 +29,6 @@ def split_name(full_name: str) -> Union[Tuple[str, str, str], Tuple[str, None, s
     Split full_name into first_name, middle_name, last_name
     """
     data = full_name.split(" ")
-    print(data)
     if len(data) >= 3:
         return data[-1], " ".join(data[1:-1]), data[0]
     elif len(data) == 2:

@@ -6,9 +6,10 @@ from pydantic import Field, validator
 from app.api.base.schema import ResponseRequestSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
 from app.api.v1.schemas.utils import DropdownRequest, DropdownResponse
-from app.utils.constant.casa import DENOMINATIONS__AMOUNTS
+from app.utils.constant.casa import DENOMINATIONS__AMOUNTS, RECEIVING_METHODS
 from app.utils.functions import (
-    is_valid_mobile_number, make_description_from_dict_to_list
+    is_valid_mobile_number, make_description_from_dict,
+    make_description_from_dict_to_list
 )
 from app.utils.regex import (
     MAX_LENGTH_TRANSFER_CONTENT, REGEX_NUMBER_ONLY, REGEX_TRANSFER_CONTENT
@@ -42,7 +43,7 @@ class CasaTopUpCommonRequest(ResponseRequestSchema):
     sender_place_of_issue: Optional[DropdownRequest] = Field(None, description="Nơi cấp")
     sender_address_full: Optional[str] = Field(None, description="Địa chỉ")
     sender_mobile_number: Optional[str] = Field(None, description="Số điện thoại", regex=REGEX_NUMBER_ONLY)
-    receiving_method: str = Field(None, description="Hình thức nhận")
+    receiving_method: str = Field(None, description=f"Hình thức nhận: {make_description_from_dict(RECEIVING_METHODS)}")
     is_fee: bool = Field(..., description="Có thu phí không")
     fee_info: Optional[FeeInfoRequest] = Field(..., description="Thông tin phí")
     statement: List[StatementInfoRequest] = Field(..., description="Thông tin bảng kê")
@@ -140,7 +141,7 @@ class CasaTopUpThirdParty247ToCardRequest(CasaTopUpThirdPartyCommonRequest):
 
 
 class CasaTopUpRequest(ResponseRequestSchema):
-    receiving_method: str = Field(..., description="Hình thức nhận")
+    receiving_method: str = Field(..., description=f"Hình thức nhận: {make_description_from_dict(RECEIVING_METHODS)}")
     data: Union[
         CasaTopUpThirdPartyByIdentityRequest,
         CasaTopUpSCBByIdentityRequest,
@@ -159,7 +160,9 @@ class DropdownCodeNameResponse(ResponseRequestSchema):
 
 class TransferTypeResponse(ResponseRequestSchema):
     receiving_method_type: Optional[str] = Field(..., description="Loại")
-    receiving_method: Optional[str] = Field(..., description="Hình thức nhận")
+    receiving_method: Optional[str] = Field(
+        ..., description=f"Hình thức nhận: {make_description_from_dict(RECEIVING_METHODS)}"
+    )
 
 
 class ReceiverResponse(ResponseRequestSchema):

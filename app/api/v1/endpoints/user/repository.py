@@ -61,7 +61,7 @@ async def repos_login(username: str, password: str) -> ReposReturn:
             gw_data_output = gw_data_output[0]
             user_info = data_idm['user_info']
             user_info['hrm_title_name'] = gw_data_output['staff_info']['title_name']
-            user_info['hrm_branch_name'] = gw_data_output['branch_info']['branch_code']
+            user_info['hrm_branch_code'] = gw_data_output['branch_info']['branch_code']
             user_info['hrm_branch_name'] = gw_data_output['branch_info']['branch_name']
             user_info['fcc_current_date'] = string_to_date(gw_data_output['current_date'])
 
