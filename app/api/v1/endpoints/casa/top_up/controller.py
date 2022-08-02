@@ -74,7 +74,7 @@ class CtrCasaTopUp(BaseController):
     async def ctr_get_casa_top_up_info(self, booking_id: str):
         current_user = self.current_user
 
-        booking = await CtrBooking().ctr_get_initializing_booking(booking_id=booking_id)
+        booking = await CtrBooking().ctr_get_booking(booking_id=booking_id, business_type_code=BUSINESS_TYPE_CASA_TOP_UP)
         if booking.business_type.id != BUSINESS_TYPE_CASA_TOP_UP:
             return self.response_exception(
                 msg=ERROR_BOOKING_INCORRECT, loc=f"business_type: {booking.business_type.id}"
