@@ -25,9 +25,10 @@ from app.utils.constant.cif import (
 )
 from app.utils.constant.ekyc import (
     EKYC_DATE_FORMAT, EKYC_DEFAULT_VALUE, EKYC_REGION_ZONE_MAPPING,
-    ERROR_CODE_EKYC, GROUP_ROLE_CODE_AP, GROUP_ROLE_CODE_IN,
-    GROUP_ROLE_CODE_VIEW, MENU_CODE, MENU_CODE_VIEW, STATUS_CLOSE,
-    STATUS_FAILED, STATUS_OPEN
+    ERROR_CODE_EKYC, ERROR_UPLOAD_ATTACHMENT_ID_BACK,
+    ERROR_UPLOAD_ATTACHMENT_ID_FRONT, ERROR_UPLOAD_ATTACHMENT_PORTRAIT,
+    GROUP_ROLE_CODE_AP, GROUP_ROLE_CODE_IN, GROUP_ROLE_CODE_VIEW, MENU_CODE,
+    MENU_CODE_VIEW, STATUS_CLOSE, STATUS_FAILED, STATUS_OPEN
 )
 from app.utils.error_messages import ERROR_PERMISSION, MESSAGE_STATUS
 from app.utils.functions import (
@@ -449,6 +450,11 @@ class CtrKSS(BaseController):
         if customer_detail['ekyc_step']:
             first_row = customer_detail['ekyc_step'][0]
             if STATUS_FAILED in first_row['step_status']:
+                if first_row['step'] == ERROR_UPLOAD_ATTACHMENT_PORTRAIT\
+                        or first_row['step'] == ERROR_UPLOAD_ATTACHMENT_ID_BACK\
+                        or first_row['step'] == ERROR_UPLOAD_ATTACHMENT_ID_FRONT:
+                    customer_detail['error_code_ekyc'] = "TC08: Khác"
+
                 customer_detail['error_code_ekyc'] = ERROR_CODE_EKYC[first_row['step']]
 
         return self.response(data=customer_detail)
