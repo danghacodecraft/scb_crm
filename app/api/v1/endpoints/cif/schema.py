@@ -85,7 +85,7 @@ class CifCustomerInformationResponse(BaseSchema):
     gender: DropdownResponse = Field(..., description="Giới tính")
     email: Optional[str] = Field(..., description="Địa chỉ email")
     mobile_number: Optional[str] = Field(..., description="Số điện thoại")
-    resident_status: DropdownResponse = Field(..., description="Tình trạng cư trú")
+    resident_status: OptionalDropdownResponse = Field(..., description="Tình trạng cư trú")
     identity_number: str = Field(..., description="Số giấy tờ định danh")
     place_of_issue: DropdownResponse = Field(..., description="Nơi cấp")
     issued_date: date = Field(..., description="Ngày cấp")
