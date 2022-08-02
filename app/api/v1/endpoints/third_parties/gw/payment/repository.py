@@ -27,8 +27,8 @@ from app.utils.constant.cif import (
     BUSINESS_FORM_AMOUNT_BLOCK_PD, BUSINESS_FORM_AMOUNT_UNBLOCK_PD
 )
 from app.utils.constant.gw import (
-    GW_FUNC_AMOUNT_BLOCK_OUT, GW_FUNC_INTERBANK_TRANSFER_247_BY_ACC_NUM_IN,
-    GW_FUNC_INTERBANK_TRANSFER_247_BY_CARD_NUM_IN,
+    GW_FUNC_AMOUNT_BLOCK_OUT, GW_FUNC_INTERBANK_TRANSFER_247_BY_ACC_NUM_OUT,
+    GW_FUNC_INTERBANK_TRANSFER_247_BY_CARD_NUM_OUT,
     GW_FUNC_INTERBANK_TRANSFER_OUT, GW_FUNC_INTERNAL_TRANSFER_OUT,
     GW_FUNC_TT_LIQUIDATION_OUT, GW_RESPONSE_STATUS_SUCCESS
 )
@@ -373,24 +373,19 @@ async def repos_gw_save_casa_transfer_info(
         is_success, gw_casa_transfer = await service_gw.gw_interbank_transfer(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )
-
-    if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
-        is_success, gw_casa_transfer = await service_gw.gw_interbank_transfer(
-            current_user=current_user.user_info, data_input=request_data["data_input"]
-        )
         function_out = GW_FUNC_INTERBANK_TRANSFER_OUT
 
     if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
         is_success, gw_casa_transfer = await service_gw.gw_payment_interbank_transfer_247_by_account_number(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )
-        function_out = GW_FUNC_INTERBANK_TRANSFER_247_BY_ACC_NUM_IN
+        function_out = GW_FUNC_INTERBANK_TRANSFER_247_BY_ACC_NUM_OUT
 
     if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
         is_success, gw_casa_transfer = await service_gw.gw_payment_interbank_transfer_247_by_card_number(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )
-        function_out = GW_FUNC_INTERBANK_TRANSFER_247_BY_CARD_NUM_IN
+        function_out = GW_FUNC_INTERBANK_TRANSFER_247_BY_CARD_NUM_OUT
 
     if not gw_casa_transfer:
         return ReposReturn(is_error=True, msg="No GW Casa Transfer")
@@ -407,4 +402,4 @@ async def repos_gw_save_casa_transfer_info(
         if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY else None
     }
 
-    return ReposReturn(data=(response_data, gw_casa_transfer))
+    return ReposReturn(data=(response_data, gw_casa_transfer, is_success))

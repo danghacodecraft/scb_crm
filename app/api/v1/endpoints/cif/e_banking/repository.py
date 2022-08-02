@@ -1,5 +1,5 @@
 from pydantic import json
-from sqlalchemy import delete, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -28,68 +28,44 @@ from app.third_parties.oracle.models.master_data.e_banking import (
 from app.third_parties.oracle.models.master_data.others import (
     MethodAuthentication
 )
-from app.utils.constant.cif import BUSINESS_FORM_EB, CIF_ID_TEST
+from app.utils.constant.cif import (
+    BUSINESS_FORM_EB, BUSINESS_FORM_SMS_CASA, CIF_ID_TEST
+)
 from app.utils.error_messages import ERROR_CIF_ID_NOT_EXIST, ERROR_NO_DATA
 from app.utils.functions import now
 
 
 @auto_commit
-async def repos_save_e_banking_data(
+async def repos_save_e_banking(
         session: Session,
+        data_insert: json,
         log_data: json,
         cif_id: str,
-        balance_option,
-        reg_balance,
-        relationship,
-        balance_noti,
-        account_info,
-        auth_method,
         created_by: str,
         history_datas: json
 ) -> ReposReturn:
-    """
-    1. Customer đã có E-banking => xóa dữ liệu cũ => Tạo dữ liệu mới
-    2. Tạo E-banking
-    """
-    e_banking_info = session.execute(select(EBankingInfo).filter(EBankingInfo.customer_id == cif_id)).first()
-
-    # 1. Xóa dữ liệu cũ
-    if e_banking_info:
-        session.execute(delete(EBankingInfoAuthentication).filter(
-            EBankingInfoAuthentication.e_banking_info_id == e_banking_info.EBankingInfo.id))
-
-        session.delete(e_banking_info.EBankingInfo)
-
-        e_banking_reg_balance_id = session.execute(select(EBankingRegisterBalance.id).filter(
-            EBankingRegisterBalance.customer_id == cif_id,
-        )).scalars().all()
-
-        if e_banking_reg_balance_id:
-            session.execute(delete(EBankingReceiverNotificationRelationship).filter(
-                EBankingReceiverNotificationRelationship.e_banking_register_balance_casa_id.in_
-                (e_banking_reg_balance_id),
-            ))
-
-            session.execute(delete(EBankingRegisterBalanceNotification).filter(
-                EBankingRegisterBalanceNotification.eb_reg_balance_id.in_(e_banking_reg_balance_id),
-            ))
-
-            session.execute(delete(EBankingRegisterBalanceOption).filter(
-                EBankingRegisterBalanceOption.customer_id == cif_id,
-            ))
-
-            session.execute(
-                delete(EBankingRegisterBalance).filter(EBankingRegisterBalance.id.in_(e_banking_reg_balance_id)))
-
-    session.bulk_save_objects([EBankingRegisterBalanceOption(**item) for item in balance_option])
-    session.bulk_save_objects([EBankingRegisterBalance(**item) for item in reg_balance])
-    session.bulk_save_objects([EBankingReceiverNotificationRelationship(**item) for item in relationship])
-    session.bulk_save_objects([EBankingRegisterBalanceNotification(**item) for item in balance_noti])
-
-    session.add(EBankingInfo(**account_info))
+    ebank_info = data_insert['ebank_info']
+    ebank_info.update(dict(
+        note=None,
+        ib_mb_flag=None,
+        method_payment_fee_flag=None,
+        reset_password_flag=None,
+        active_account_flag=None,
+        account_payment_fee=None
+    ))
+    ebank = EBankingInfo(**ebank_info)
+    session.add(ebank)
     session.flush()
 
-    session.bulk_save_objects([EBankingInfoAuthentication(**item) for item in auth_method])
+    ebank_info_authen_list = data_insert['ebank_info_authen_list']
+    for ebank_info_authen in ebank_info_authen_list:
+        ebank_info_authen.update(dict(
+            e_banking_info_id=ebank.id
+        ))
+    session.bulk_save_objects([
+        EBankingInfoAuthentication(**ebank_info_authen) for ebank_info_authen in ebank_info_authen_list
+    ])
+    session.flush()
 
     is_success, booking_response = await write_transaction_log_and_update_booking(
         log_data=log_data,
@@ -98,6 +74,48 @@ async def repos_save_e_banking_data(
         customer_id=cif_id,
         business_form_id=BUSINESS_FORM_EB
     )
+    if not is_success:
+        return ReposReturn(is_error=True, msg=booking_response['msg'])
+
+    return ReposReturn(data={
+        "cif_id": cif_id,
+        "created_at": now(),
+        "created_by": created_by
+    })
+
+
+# @TODO: notification_type hiện giờ chưa đồng bộ , nên chưa cần nhập
+@auto_commit
+async def repos_save_sms_casa(
+        cif_id: str,
+        data_insert: dict,
+        log_data: json,
+        history_datas: json,
+        created_by: str,
+        session: Session
+):
+    sms_casa_list = []
+    for mobile_number in data_insert['identity_phone_num_list']:
+        sms_casa = dict(
+            e_banking_register_balance_casa_id=data_insert['casa_account_id'],
+            mobile_number=mobile_number.mobile_number,
+            relationship_type_id=1,
+            full_name=" "
+        )
+        sms_casa_list.append(sms_casa)
+    session.bulk_save_objects([
+        EBankingReceiverNotificationRelationship(**sms_casa) for sms_casa in sms_casa_list
+    ])
+    session.flush()
+
+    is_success, booking_response = await write_transaction_log_and_update_booking(
+        log_data=log_data,
+        history_datas=history_datas,
+        session=session,
+        customer_id=cif_id,
+        business_form_id=BUSINESS_FORM_SMS_CASA
+    )
+
     if not is_success:
         return ReposReturn(is_error=True, msg=booking_response['msg'])
 

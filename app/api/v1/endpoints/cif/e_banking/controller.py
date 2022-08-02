@@ -2,239 +2,140 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.e_banking.repository import (
     repos_balance_saving_account_data, repos_check_e_banking,
     repos_get_detail_reset_password, repos_get_detail_reset_password_teller,
-    repos_get_e_banking_data, repos_get_payment_accounts,
-    repos_save_e_banking_data
+    repos_get_e_banking_data, repos_get_payment_accounts, repos_save_e_banking,
+    repos_save_sms_casa
 )
 from app.api.v1.endpoints.cif.e_banking.schema import (
-    EBankingRequest, GetInitialPasswordMethod
+    EBankingRequest, EBankingSMSCasaRequest, GetInitialPasswordMethod
 )
 from app.api.v1.endpoints.cif.repository import (
     repos_get_booking, repos_get_initializing_customer
 )
 from app.api.v1.validator import validate_history_data
-from app.third_parties.oracle.models.master_data.customer import (
-    CustomerContactType, CustomerRelationshipType
-)
-from app.third_parties.oracle.models.master_data.e_banking import (
-    EBankingNotification
-)
-from app.third_parties.oracle.models.master_data.others import (
-    MethodAuthentication
-)
 from app.utils.constant.cif import (
-    EBANKING_ACCOUNT_TYPE_CHECKING, EBANKING_ACTIVE_PASSWORD_EMAIL,
-    EBANKING_ACTIVE_PASSWORD_SMS, EBANKING_NOT_PAYMENT_FEE,
-    EBANKING_PAYMENT_FEE, METHOD_TYPE_HARD_TOKEN,
-    PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING, PROFILE_HISTORY_STATUS_INIT
+    EBANKING_ACCOUNT_TYPE_CHECKING,
+    PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING,
+    PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING_SMS_CASA,
+    PROFILE_HISTORY_STATUS_INIT
 )
-from app.utils.error_messages import ERROR_E_BANKING
-from app.utils.functions import dropdown, generate_uuid, now, orjson_dumps
+from app.utils.functions import dropdown, orjson_dumps
 
 
 class CtrEBanking(BaseController):
-    async def ctr_save_e_banking(self, cif_id: str, e_banking: EBankingRequest):
-        """
-        func dùng để tạo mới E-banking phần (I, III.A)
-        """
-        current_user = self.current_user.user_info
+    ####################################################################################################################
+    # Đăng ký Ebanking
+    ####################################################################################################################
 
-        data_reg_balance_option = []  # OTT/SMS
-        data_eb_reg_balance = []  # dữ liệu thông tin người nhận thông báo (primary)
-        data_eb_receiver_noti_relationship = []  # dữ liệu thông tin người nhận thông báo (relationship)
-        data_eb_reg_balance_noti = []  # dư liệu tùy chọn thông báo
-        data_account_info = {}  # Thông tin tài khoản
-        auth_method = []  # Hình thức xác thực
-        current_customer = self.call_repos(
-            await repos_get_initializing_customer(
-                cif_id=cif_id,
-                session=self.oracle_session
-            ))
+    # @ TODO: đăng ký SMS CASA bên GW chỉ cần nhập SĐT, các field khác khi nào bên GW cần sẽ làm sau.
+    async def ctr_save_e_banking_and_sms(self, cif_id: str, e_banking_info: EBankingRequest = None,
+                                         ebank_sms_casa_info: EBankingSMSCasaRequest = None):
 
-        # I. Thông tin biến động số dư tài khoản thanh toán
-        change_of_balance_payment_account = e_banking.change_of_balance_payment_account
+        current_user = self.current_user
+        current_user_info = current_user.user_info
 
-        if e_banking.change_of_balance_payment_account.register_flag:
-            # kiểm tra hình thức liên lạc
-            contact_types = await self.get_model_objects_by_ids(
-                model=CustomerContactType,
-                model_ids=[contact_type.id for contact_type in change_of_balance_payment_account.customer_contact_types
-                           if contact_type.checked_flag],
-                loc="change_of_balance_payment_account -> customer_contact_types"
+        save_e_banking_info = None
+        save_sms_casa_info = None
+
+        if not e_banking_info and not ebank_sms_casa_info:
+            return self.response_exception(
+                msg="Missing data, need at least e_banking_info or ebank_sms_casa_info"
             )
 
-            register_balance_casas = change_of_balance_payment_account.register_balance_casas
+        if e_banking_info:
+            ebank_ibmb_username = e_banking_info.username
+            ebank_ibmb_receive_password_code = e_banking_info.receive_password_code
+            authentication_code_list = e_banking_info.authentication_code_list
 
-            # kiểm tra tùy chọn thông báo, mối quan hệ
-            notification_ids, relationship_ids, casa_account_ids = [], set(), []
-            for register_balance_casa in register_balance_casas:
-                for notification in register_balance_casa.e_banking_notifications:
-                    notification_ids.append(notification.id)
-                for relationship in register_balance_casa.notification_casa_relationships:
-                    relationship_ids.add(relationship.relationship_type.id)
-                casa_account_ids.append(register_balance_casa.account_id)
-
-            # kiểm tra tùy chọn thông báo
-            await self.get_model_objects_by_ids(
-                model=EBankingNotification,
-                model_ids=notification_ids,
-                loc="change_of_balance_payment_account -> register_balance_casas -> e_banking_notifications"
-            )
-
-            # kiểm tra mối quan hệ
-            await self.get_model_objects_by_ids(
-                model=CustomerRelationshipType,
-                model_ids=list(relationship_ids),
-                loc="notification_casa_relationships -> relationship_type -> id"
-            )
-
-            # TODO kiểm tra tài khoản nhận thông báo, hiện tại mới tạo tài khoản thanh toán => chưa có account_id
-            # if register_balance_casas.account_id:
-            #     await self.get_model_objects_by_ids(
-            #         model=CasaAccount,
-            #         model_ids=casa_account_ids,
-            #         loc="register_balance_casas -> account_id"
-            #     )
-
-            # Hình thức nhận thông báo
-            for contact_type in contact_types:
-                data_reg_balance_option.append({
+            # dữ liệu để tạo ebanking trong DB (CRM_EBANKING_INFO)
+            data_insert = {
+                "ebank_info": {
                     "customer_id": cif_id,
-                    "e_banking_register_account_type": EBANKING_ACCOUNT_TYPE_CHECKING,
-                    "customer_contact_type_id": contact_type.id,
-                    "created_at": now()
-                })
-
-            # Thông tin nhận thông báo
-            for register_balance_casa in register_balance_casas:
-                eb_reg_balance_id = generate_uuid()
-                data_eb_reg_balance.append({
-                    "id": eb_reg_balance_id,
-                    "customer_id": cif_id,
-                    "e_banking_register_account_type": EBANKING_ACCOUNT_TYPE_CHECKING,
-                    "full_name": current_customer.full_name_vn,
-                    "mobile_number": register_balance_casa.primary_phone_number,
-                    "account_id": register_balance_casa.account_id,
-                    "name": register_balance_casa.account_name,
-
-                })
-                for relationship in register_balance_casa.notification_casa_relationships:
-                    data_eb_receiver_noti_relationship.append({
-                        "e_banking_register_balance_casa_id": eb_reg_balance_id,
-                        "relationship_type_id": relationship.relationship_type.id,
-                        "mobile_number": relationship.mobile_number,
-                        "full_name": relationship.full_name_vn
-                    })
-                # Tùy chọn nhận thông báo
-                for notification in register_balance_casa.e_banking_notifications:
-                    if notification.checked_flag:
-                        data_eb_reg_balance_noti.append({
-                            "eb_notify_id": notification.id,
-                            "eb_reg_balance_id": eb_reg_balance_id
-
-                        })
-
-        # III. Thông tin e-banking
-        # Thông tin tài khoản
-        account_information = e_banking.e_banking_information.account_information
-
-        if account_information.register_flag:
-            # kiểm tra hình thức xác nhận mật khẩu lần đầu
-            auth_method_ids = [method.id for method in account_information.method_authentication if method.checked_flag]
-            auth_types = await self.get_model_objects_by_ids(
-                model=MethodAuthentication,
-                model_ids=auth_method_ids,
-                loc="method_authentication -> id"
-            )
-            flag = EBANKING_NOT_PAYMENT_FEE
-            account = None
-
-            list_data = []
-            for auth_type in auth_types:
-                if auth_type.active_flag:
-                    list_data.append(auth_type.id)
-
-            if METHOD_TYPE_HARD_TOKEN in list_data:
-                if not account_information.payment_fee:
-                    return self.response_exception(
-                        msg=ERROR_E_BANKING,
-                        detail='payment_fee must be value {}',
-                        loc='account_information -> payment_fee'
-                    )
-                flag = EBANKING_PAYMENT_FEE
-                if account_information.payment_fee.flag:
-                    account = account_information.payment_fee.account
-
-            if account_information.payment_fee and METHOD_TYPE_HARD_TOKEN not in list_data:
-                return self.response_exception(
-                    msg=ERROR_E_BANKING,
-                    detail='method_authentication must have hard token',
-                    loc='account_information -> method_authentication -> hard token'
-                )
-
-            method_active_password_id = EBANKING_ACTIVE_PASSWORD_EMAIL if \
-                account_information.get_initial_password_method == GetInitialPasswordMethod.Email \
-                else EBANKING_ACTIVE_PASSWORD_SMS
-
-            e_banking_info_id = generate_uuid()
-            data_account_info = {
-                "id": e_banking_info_id,
-                "customer_id": cif_id,
-                "method_active_password_id": method_active_password_id,
-                "account_name": account_information.account_name,
-                "ib_mb_flag": account_information.register_flag,
-                "method_payment_fee_flag": flag,
-                "account_payment_fee": account
+                    "account_name": ebank_ibmb_username,
+                    "method_active_password_id": ebank_ibmb_receive_password_code,
+                },
+                "ebank_info_authen_list": [{
+                    "method_authentication_id": authentication_code
+                } for authentication_code in authentication_code_list]
             }
 
-            # Hình thức xác thực
-            for auth_method_id in auth_method_ids:
-                auth_method.append({
-                    "e_banking_info_id": e_banking_info_id,
-                    "method_authentication_id": auth_method_id
-                })
-
-        history_datas = self.make_history_log_data(
-            description=PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING,
-            history_status=PROFILE_HISTORY_STATUS_INIT,
-            current_user=current_user
-        )
-
-        # Validate history data
-        is_success, history_response = validate_history_data(history_datas)
-        if not is_success:
-            return self.response_exception(
-                msg=history_response['msg'],
-                loc=history_response['loc'],
-                detail=history_response['detail']
+            history_datas = self.make_history_log_data(
+                description=PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING,
+                history_status=PROFILE_HISTORY_STATUS_INIT,
+                current_user=current_user_info
             )
+            # Validate history data
+            is_success, history_response = validate_history_data(history_datas)
+            if not is_success:
+                return self.response_exception(
+                    msg=history_response['msg'],
+                    loc=history_response['loc'],
+                    detail=history_response['detail']
+                )
 
-        e_banking_data = self.call_repos(
-            await repos_save_e_banking_data(
-                log_data=e_banking.json(),
-                history_datas=orjson_dumps(history_datas),
-                session=self.oracle_session,
-                cif_id=cif_id,
-                balance_option=data_reg_balance_option,
-                reg_balance=data_eb_reg_balance,
-                relationship=data_eb_receiver_noti_relationship,
-                balance_noti=data_eb_reg_balance_noti,
-                account_info=data_account_info,
-                auth_method=auth_method,
-                created_by=current_user.username
+            save_e_banking_info = self.call_repos(
+                await repos_save_e_banking(
+                    cif_id=cif_id,
+                    data_insert=data_insert,
+                    log_data=e_banking_info.json(),
+                    history_datas=orjson_dumps(history_datas),
+                    created_by=current_user_info.username,
+                    session=self.oracle_session
+                ))
+
+            # Lấy Booking Code
+            booking = self.call_repos(await repos_get_booking(
+                cif_id=cif_id, session=self.oracle_session
+            ))
+            save_e_banking_info.update(booking=dict(
+                id=booking.id,
+                code=booking.code
+            ))
+
+        if ebank_sms_casa_info:
+            data_insert = {
+                "casa_account_id": ebank_sms_casa_info.casa_account_id,
+                "identity_phone_num_list": ebank_sms_casa_info.indentify_phone_num_list
+            }
+
+            history_datas = self.make_history_log_data(
+                description=PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING_SMS_CASA,
+                history_status=PROFILE_HISTORY_STATUS_INIT,
+                current_user=current_user_info
             )
-        )
+            # Validate history data
+            is_success, history_response = validate_history_data(history_datas)
+            if not is_success:
+                return self.response_exception(
+                    msg=history_response['msg'],
+                    loc=history_response['loc'],
+                    detail=history_response['detail']
+                )
 
-        # Lấy Booking Code
-        booking = self.call_repos(await repos_get_booking(
-            cif_id=cif_id, session=self.oracle_session
-        ))
-        e_banking_data.update(booking=dict(
-            id=booking.id,
-            code=booking.code
-        ))
+            save_sms_casa_info = self.call_repos(
+                await repos_save_sms_casa(
+                    cif_id=cif_id,
+                    data_insert=data_insert,
+                    log_data=ebank_sms_casa_info.json(),
+                    history_datas=orjson_dumps(history_datas),
+                    created_by=current_user_info.username,
+                    session=self.oracle_session,
+                ))
+            # Lấy Booking Code
+            booking = self.call_repos(await repos_get_booking(
+                cif_id=cif_id, session=self.oracle_session
+            ))
+            save_sms_casa_info.update(booking=dict(
+                id=booking.id,
+                code=booking.code
+            ))
 
-        return self.response(data=e_banking_data)
+        response_data = save_e_banking_info if save_e_banking_info else save_sms_casa_info
 
+        return self.response(data=response_data)
+
+    ####################################################################################################################
+    # End: Đăng ký Ebanking
+    ####################################################################################################################
     async def ctr_get_e_banking(self, cif_id: str):
         """
         1. Kiểm tra tồn tại của cif_id
