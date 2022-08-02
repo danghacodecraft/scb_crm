@@ -112,7 +112,8 @@ class PaymentSuccessResponse(BaseSchema):
 
 
 class AccountAmountBlockResponse(PaymentSuccessResponse):
-    account_list: List = Field(..., description="Danh sách account và số tham chiếu của lệnh phong tỏa tài khoản")
+    booking_id: str = Field(..., description="Booking_id")
+    # account_list: List = Field(..., description="Danh sách account và số tham chiếu của lệnh phong tỏa tài khoản")
 
 
 class GWCasaTransferAccountResponse(BaseSchema):
