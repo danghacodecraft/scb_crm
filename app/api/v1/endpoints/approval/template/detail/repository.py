@@ -22,7 +22,6 @@ from app.third_parties.oracle.models.cif.basic_information.personal.model import
 )
 from app.third_parties.oracle.models.cif.debit_card.model import DebitCard
 from app.third_parties.oracle.models.cif.e_banking.model import EBankingInfo
-from app.third_parties.oracle.models.cif.form.model import Booking
 from app.third_parties.oracle.models.cif.payment_account.model import (
     CasaAccount, JointAccountHolder, JointAccountHolderAgreementAuthorization
 )
@@ -43,16 +42,6 @@ from app.third_parties.oracle.models.master_data.others import (
 from app.third_parties.services.file import ServiceFile
 from app.third_parties.services.tms import ServiceTMS
 from app.utils.error_messages import ERROR_CALL_SERVICE_TEMPLATE
-
-
-async def ctr_get_business_type(booking_id: str, session: Session):
-    get_business_type = session.execute(
-        select(
-            Booking.business_type_id
-        ).filter(Booking.id == booking_id)
-    ).scalars()
-
-    return ReposReturn(data=get_business_type)
 
 
 async def repo_form(data_request: dict, path: str) -> ReposReturn:
