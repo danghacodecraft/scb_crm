@@ -320,7 +320,7 @@ async def repos_gw_cif_open_casa_account(
     """
     Repo dùng cho mở TKTT cùng lúc với mở CIF
     """
-    is_success, gw_open_casa_account_info, form_data = await service_gw.get_open_casa_account(
+    is_success, gw_open_casa_account_info, _ = await service_gw.get_open_casa_account(
         cif_number=cif_number,
         self_selected_account_flag=self_selected_account_flag,
         casa_account_info=casa_account_info,
@@ -332,14 +332,32 @@ async def repos_gw_cif_open_casa_account(
         error_code = ERROR_CALL_SERVICE_GW
         error_desc = gw_open_casa_account_info
 
-    session.add(TransactionJob(**dict(
+    session.add(TransactionJob(
         transaction_id=generate_uuid(),
         booking_id=booking_id,
         business_job_id=BUSINESS_JOB_CODE_CASA_INFO,
         complete_flag=is_success,
         error_code=error_code,
-        error_desc=error_desc,
+        error_desc=orjson_dumps(error_desc),
         created_at=now()
-    )))
+    ))
     session.commit()
-    return ReposReturn()
+    return ReposReturn(data=(is_success, gw_open_casa_account_info))
+
+
+@auto_commit
+async def repos_update_casa_account(
+        casa_account: CasaAccount,
+        account_number: str,
+        session: Session
+):
+    session.execute(
+        update(
+            CasaAccount
+        )
+        .filter(CasaAccount.id == casa_account.id)
+        .values(
+            casa_account_number=account_number
+        )
+    )
+    return ReposReturn(data=None)

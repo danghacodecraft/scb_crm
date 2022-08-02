@@ -176,7 +176,7 @@ class CtrPaymentAccount(BaseController):
             "staff_type_id": STAFF_TYPE_BUSINESS_CODE,
             "acc_salary_org_name": acc_salary_org_name,
             "acc_salary_org_acc": account_salary_organization_account,
-            "maker_id": current_user_info.code,
+            "maker_id": current_user_info.username,
             "maker_at": now(),
             "checker_id": None,
             "checker_at": None,

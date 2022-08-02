@@ -9,7 +9,7 @@ from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_gw_cif_open_casa_account, repos_gw_get_authorized,
     repos_gw_get_co_owner, repos_gw_get_customer_info_detail,
     repos_gw_get_customer_info_list, repos_gw_open_cif,
-    repos_update_cif_number_customer
+    repos_update_cif_number_customer, repos_update_casa_account
 )
 from app.api.v1.endpoints.third_parties.gw.customer.schema import (
     CheckMobileNumRequest
@@ -1081,25 +1081,29 @@ class CtrGWCustomer(BaseController):
                 ))
                 casa_transaction_jobs = [transaction_job for transaction_job in transaction_jobs if transaction_job.business_job_id == BUSINESS_JOB_CODE_CASA_INFO]
                 # TH1: Casa chưa mở hoặc Casa đã mở nhưng thất bại
-                if casa_transaction_jobs and not casa_transaction_jobs[0].complete_flag:
+                if not casa_transaction_jobs or (casa_transaction_jobs and not casa_transaction_jobs[0].complete_flag):
                     (
                         casa_account, currency, account_class, account_type, account_structure_type,
                         account_structure_type_level_2, account_structure_type_level_1, address_country
                     ) = detail_payment_account_info
-                    is_success, gw_open_casa_account_info = await repos_gw_cif_open_casa_account(
+                    is_success, gw_open_casa_account_info = self.call_repos(await repos_gw_cif_open_casa_account(
                         cif_number=cif_number,
                         self_selected_account_flag=casa_account.self_selected_account_flag,
                         casa_account_info=casa_account,
-                        current_user=self.current_user,
+                        current_user=self.current_user.user_info,
                         booking_id=BOOKING_ID,
                         session=self.oracle_session
-                    )
+                    ))
                     if not is_success:
                         return self.response_exception(
+                            loc="open_casa",
                             msg=ERROR_CALL_SERVICE_GW,
                             detail=str(gw_open_casa_account_info)
                         )
                     account_number = gw_open_casa_account_info['openCASA_out']['data_output']['account_info']['account_num']
+                    self.call_repos(await repos_update_casa_account(
+                        casa_account=casa_account, account_number=account_number, session=self.oracle_session
+                    ))
 
                 # TH2: Casa Mở thành công
                 else:
@@ -1109,7 +1113,7 @@ class CtrGWCustomer(BaseController):
                         session=self.oracle_session
                     ))
                     casa_account, _, _, _, _, _, _, _ = detail_payment_account
-                    account_number = casa_account.account_number
+                    account_number = casa_account.casa_account_number
 
         response = {
             "booking_id": BOOKING_ID,
