@@ -1,8 +1,11 @@
 from app.api.base.controller import BaseController
 from app.utils.constant.cif import (
     APPROVE_STATUS_APPROVED, APPROVE_STATUS_PENDING, APPROVE_STATUS_REFUSE,
-    POST_CHECK_TYPE, TRANSACTION_STATUS_FALSE, TRANSACTION_STATUS_TRUE,
-    TRANSACTION_VTM, TRANSACTIONS_TYPE, TRANSACTION_eKYC, TRANSACTION_LiveBank
+    POST_CHECK_TYPE, TRANSACTION_STATUS_ALL, TRANSACTION_STATUS_CANCELED,
+    TRANSACTION_STATUS_FAILED, TRANSACTION_STATUS_PROCESSING,
+    TRANSACTION_STATUS_REJECTED, TRANSACTION_STATUS_SUCCESS,
+    TRANSACTION_STATUS_TYPE, TRANSACTION_VTM, TRANSACTIONS_TYPE,
+    TRANSACTION_eKYC, TRANSACTION_LiveBank
 )
 
 
@@ -10,14 +13,34 @@ class CtrPostCheck(BaseController):
     async def ctr_transaction_status(self):
         transaction_status = [
             {
-                'id': TRANSACTION_STATUS_FALSE,
-                'code': TRANSACTION_STATUS_FALSE,
-                'name': POST_CHECK_TYPE[TRANSACTION_STATUS_FALSE]
+                'id': TRANSACTION_STATUS_ALL,
+                'code': TRANSACTION_STATUS_ALL,
+                'name': TRANSACTION_STATUS_TYPE[TRANSACTION_STATUS_ALL]
             },
             {
-                'id': TRANSACTION_STATUS_TRUE,
-                'code': TRANSACTION_STATUS_TRUE,
-                'name': POST_CHECK_TYPE[TRANSACTION_STATUS_TRUE]
+                'id': TRANSACTION_STATUS_PROCESSING,
+                'code': TRANSACTION_STATUS_PROCESSING,
+                'name': TRANSACTION_STATUS_TYPE[TRANSACTION_STATUS_PROCESSING]
+            },
+            {
+                'id': TRANSACTION_STATUS_SUCCESS,
+                'code': TRANSACTION_STATUS_SUCCESS,
+                'name': TRANSACTION_STATUS_TYPE[TRANSACTION_STATUS_SUCCESS]
+            },
+            {
+                'id': TRANSACTION_STATUS_REJECTED,
+                'code': TRANSACTION_STATUS_REJECTED,
+                'name': TRANSACTION_STATUS_TYPE[TRANSACTION_STATUS_REJECTED]
+            },
+            {
+                'id': TRANSACTION_STATUS_FAILED,
+                'code': TRANSACTION_STATUS_FAILED,
+                'name': TRANSACTION_STATUS_TYPE[TRANSACTION_STATUS_FAILED]
+            },
+            {
+                'id': TRANSACTION_STATUS_CANCELED,
+                'code': TRANSACTION_STATUS_CANCELED,
+                'name': TRANSACTION_STATUS_TYPE[TRANSACTION_STATUS_CANCELED]
             }
         ]
         return self.response(data=transaction_status)

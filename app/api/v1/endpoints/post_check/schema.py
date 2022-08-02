@@ -122,7 +122,10 @@ class StatisticsMonth(BaseSchema):
     month: str = Field(..., description='Thống kê theo tháng')
     total: int = Field(..., description='Thống kê giao dịch của khách hàng')
     success: int = Field(..., description='Tổng hợp giao dịch thành công của khách hàng.')
-    refuse: int = Field(..., description='Tổng số giao dịch bị khách hàng từ chối')
+    failed: int = Field(..., description='Tổng số giao dịch bị thất bại')
+    canceled: int = Field(..., description='Tổng số giao dịch bị hủy bỏ')
+    rejected: int = Field(..., description='Tổng số giao dịch Cần xác minh')
+    processing: int = Field(..., description='Tổng số giao dịch Chờ hậu kiểm')
 
 
 ####################################################################################################
@@ -146,6 +149,10 @@ class StatisticsResponse(BaseSchema):
     time: str = Field(..., description='Thống kê theo thời gian')
     total: int = Field(..., description='Thống kê giao dịch của khách hàng')
     success: int = Field(..., description='Tổng hợp giao dịch thành công của khách hàng.')
+    processing: int = Field(..., description='Số giao dịch Chờ hậu kiểm')
+    failed: int = Field(..., description='Số giao dịch bị thất bại')
+    canceled: int = Field(..., description='Số giao dịch bị hủy bỏ')
+    rejected: int = Field(..., description='Số giao dịch Cần xác minh')
 
 
 ####################################################################################################
