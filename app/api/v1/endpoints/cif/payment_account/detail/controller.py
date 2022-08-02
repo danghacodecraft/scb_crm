@@ -3,7 +3,7 @@ from app.api.v1.endpoints.casa.open_casa.open_casa.controller import (
     CtrCasaOpenCasa
 )
 from app.api.v1.endpoints.cif.payment_account.detail.repository import (
-    repos_check_casa_account, repos_detail_payment_account,
+    repos_check_casa_account, repos_get_detail_payment_account,
     repos_gw_check_exist_casa_account_number, repos_save_payment_account
 )
 from app.api.v1.endpoints.cif.payment_account.detail.schema import (
@@ -31,7 +31,7 @@ from app.utils.constant.cif import (
 from app.utils.error_messages import (
     ERROR_ACCOUNT_NUMBER_NOT_NULL, ERROR_CASA_ACCOUNT_EXIST,
     ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_FIELD_REQUIRED, ERROR_ID_NOT_EXIST,
-    ERROR_INVALID_NUMBER
+    ERROR_INVALID_NUMBER, ERROR_NO_DATA
 )
 from app.utils.functions import dropdown, is_valid_number, now, orjson_dumps
 
@@ -43,11 +43,13 @@ class CtrPaymentAccount(BaseController):
         self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
 
         detail_payment_account_info = self.call_repos(
-            await repos_detail_payment_account(
+            await repos_get_detail_payment_account(
                 cif_id=cif_id,
                 session=self.oracle_session
             )
         )
+        if not detail_payment_account_info:
+            return self.response_exception(msg=ERROR_NO_DATA)
 
         account_structure_type_level_1 = detail_payment_account_info.account_structure_type_level_1
         account_structure_type_level_2 = detail_payment_account_info.account_structure_type_level_2
@@ -174,7 +176,7 @@ class CtrPaymentAccount(BaseController):
             "staff_type_id": STAFF_TYPE_BUSINESS_CODE,
             "acc_salary_org_name": acc_salary_org_name,
             "acc_salary_org_acc": account_salary_organization_account,
-            "maker_id": current_user_info.code,
+            "maker_id": current_user_info.username,
             "maker_at": now(),
             "checker_id": None,
             "checker_at": None,

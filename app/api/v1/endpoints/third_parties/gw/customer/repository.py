@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlalchemy import select, update
+from sqlalchemy import desc, select, update
 from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -30,6 +30,7 @@ from app.third_parties.oracle.models.master_data.address import (
 from app.third_parties.oracle.models.master_data.others import (
     AverageIncomeAmount, TransactionJob
 )
+from app.utils.constant.approval import BUSINESS_JOB_CODE_CASA_INFO
 from app.utils.constant.cif import BUSINESS_FORM_OPEN_CIF_PD, IMAGE_TYPE_FACE
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_GW, ERROR_NO_DATA, ERROR_OPEN_CIF
@@ -133,7 +134,6 @@ async def repos_gw_get_authorized(
 
 @auto_commit
 async def repos_gw_open_cif(
-        cif_id: str,
         booking_id: str,
         customer_info: dict,
         account_info: dict,
@@ -240,8 +240,8 @@ async def repos_get_customer_open_cif(
         .join(AddressDistrict, CustomerAddress.address_district_id == AddressDistrict.id)
         .join(AddressProvince, CustomerAddress.address_province_id == AddressProvince.id)
         .join(AddressCountry, CustomerAddress.address_country_id == AddressCountry.id)
-        .join(CustomerProfessional, Customer.customer_professional_id == CustomerProfessional.id)
-        .join(AverageIncomeAmount, CustomerProfessional.average_income_amount_id == AverageIncomeAmount.id)
+        .outerjoin(CustomerProfessional, Customer.customer_professional_id == CustomerProfessional.id)
+        .outerjoin(AverageIncomeAmount, CustomerProfessional.average_income_amount_id == AverageIncomeAmount.id)
         .filter(Customer.id == cif_id)
     ).all()
 
@@ -293,3 +293,71 @@ async def repos_check_mobile_num(mobile_num, session: Session):
     ).scalar()
 
     return ReposReturn(data=mobile_num_info)
+
+
+async def repos_get_transaction_jobs(
+        booking_id: str,
+        session: Session
+):
+    transaction_jobs = session.execute(
+        select(
+            TransactionJob
+        )
+        .filter(TransactionJob.booking_id == booking_id)
+        .order_by(TransactionJob.business_job_id, desc(TransactionJob.created_at))
+    ).scalars().all()
+    return ReposReturn(data=transaction_jobs)
+
+
+async def repos_gw_cif_open_casa_account(
+        cif_number: str,
+        self_selected_account_flag: str,
+        casa_account_info: str,
+        current_user,
+        booking_id: str,
+        session: Session
+):
+    """
+    Repo dùng cho mở TKTT cùng lúc với mở CIF
+    """
+    is_success, gw_open_casa_account_info, _ = await service_gw.get_open_casa_account(
+        cif_number=cif_number,
+        self_selected_account_flag=self_selected_account_flag,
+        casa_account_info=casa_account_info,
+        current_user=current_user
+    )
+    error_code = None
+    error_desc = None
+    if not is_success:
+        error_code = ERROR_CALL_SERVICE_GW
+        error_desc = gw_open_casa_account_info
+
+    session.add(TransactionJob(
+        transaction_id=generate_uuid(),
+        booking_id=booking_id,
+        business_job_id=BUSINESS_JOB_CODE_CASA_INFO,
+        complete_flag=is_success,
+        error_code=error_code,
+        error_desc=orjson_dumps(error_desc),
+        created_at=now()
+    ))
+    session.commit()
+    return ReposReturn(data=(is_success, gw_open_casa_account_info))
+
+
+@auto_commit
+async def repos_update_casa_account(
+        casa_account: CasaAccount,
+        account_number: str,
+        session: Session
+):
+    session.execute(
+        update(
+            CasaAccount
+        )
+        .filter(CasaAccount.id == casa_account.id)
+        .values(
+            casa_account_number=account_number
+        )
+    )
+    return ReposReturn(data=None)

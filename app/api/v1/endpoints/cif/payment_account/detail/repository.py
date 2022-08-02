@@ -18,13 +18,11 @@ from app.third_parties.oracle.models.master_data.account import (
 from app.third_parties.oracle.models.master_data.address import AddressCountry
 from app.third_parties.oracle.models.master_data.others import Currency
 from app.utils.constant.cif import BUSINESS_FORM_TKTT_CTTKTT
-from app.utils.error_messages import (
-    ERROR_CALL_SERVICE_GW, ERROR_NO_DATA, MESSAGE_STATUS
-)
+from app.utils.error_messages import ERROR_CALL_SERVICE_GW
 from app.utils.functions import now
 
 
-async def repos_detail_payment_account(cif_id: str, session: Session) -> ReposReturn:
+async def repos_get_detail_payment_account(cif_id: str, session: Session) -> ReposReturn:
     account_structure_type_level_2 = aliased(AccountStructureType, name='account_structure_type_level_2')
     account_structure_type_level_1 = aliased(AccountStructureType, name='account_structure_type_level_1')
     detail = session.execute(
@@ -53,9 +51,6 @@ async def repos_detail_payment_account(cif_id: str, session: Session) -> ReposRe
         )
         .filter(CasaAccount.customer_id == cif_id)
     ).first()
-
-    if not detail:
-        return ReposReturn(is_error=True, msg=ERROR_NO_DATA, detail=MESSAGE_STATUS[ERROR_NO_DATA])
 
     return ReposReturn(data=detail)
 
