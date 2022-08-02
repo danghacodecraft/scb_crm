@@ -222,6 +222,24 @@ async def repos_get_initializing_booking(
     return ReposReturn(data=booking)
 
 
+async def repos_get_booking(
+        booking_id: str,
+        business_type_code: str,
+        session: Session
+):
+    booking = session.execute(
+        select(
+            Booking
+        )
+        .filter(and_(
+            Booking.id == booking_id,
+            Booking.business_type_id == business_type_code
+        ))
+    ).scalar()
+
+    return ReposReturn(data=booking)
+
+
 async def repos_get_customer_from_booking_customer(booking_id: str, session: Session):
     customer = session.execute(
         select(
