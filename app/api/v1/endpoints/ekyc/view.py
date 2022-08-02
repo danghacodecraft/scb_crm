@@ -23,8 +23,7 @@ router = APIRouter()
     status_code=status.HTTP_201_CREATED
 )
 async def view_create_ekyc_customer(
-        request: CreateEKYCCustomerRequest,
-        current_user=Depends(get_current_user_from_header())
+        request: CreateEKYCCustomerRequest
 ):
-    create_ekyc_customer_info = await CtrEKYC(current_user=current_user).ctr_create_ekyc_customer(request=request)
+    create_ekyc_customer_info = await CtrEKYC().ctr_create_ekyc_customer(request=request)
     return ResponseData[CreateEKYCCustomerResponse](**create_ekyc_customer_info)
