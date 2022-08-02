@@ -4,6 +4,7 @@ from typing import Optional
 
 import aiohttp
 from loguru import logger
+from sqlalchemy.util import asyncio
 from starlette import status
 
 from app.api.v1.endpoints.user.schema import UserInfoResponse
@@ -154,6 +155,7 @@ from app.utils.constant.gw import (
     GW_RETRIEVE_CASA_ACCOUNT_DETAIL, GW_SELF_SELECTED_ACCOUNT_FLAG,
     GW_SELF_UNSELECTED_ACCOUNT_FLAG
 )
+from app.utils.error_messages import ERROR_CALL_SERVICE_GW
 from app.utils.functions import date_to_string
 
 
@@ -191,6 +193,8 @@ class ServiceGW:
                             status=response.status,
                             errors=return_error['errors']
                         )
+                    else:
+                        return_data.update(status=response.status)
                     return False, return_data
                 else:
                     return_data = await response.json()
@@ -200,6 +204,18 @@ class ServiceGW:
                     return True, return_data
         except aiohttp.ClientConnectorError as ex:
             logger.error(str(ex))
+            return False, return_data
+        except asyncio.exceptions.TimeoutError as ex:
+            logger.error(str(ex))
+            return_error['errors'] = dict(
+                loc="SERVICE GW",
+                msg=ERROR_CALL_SERVICE_GW,
+                detail="Time out"
+            )
+            return_data.update(
+                status=response.status,
+                errors=return_error['errors']
+            )
             return False, return_data
 
     ####################################################################################################################

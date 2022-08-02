@@ -32,7 +32,9 @@ from app.utils.constant.gw import (
     GW_FUNC_INTERBANK_TRANSFER_OUT, GW_FUNC_INTERNAL_TRANSFER_OUT,
     GW_FUNC_TT_LIQUIDATION_OUT, GW_RESPONSE_STATUS_SUCCESS
 )
-from app.utils.error_messages import ERROR_BOOKING_CODE_EXISTED, MESSAGE_STATUS
+from app.utils.error_messages import (
+    ERROR_BOOKING_CODE_EXISTED, ERROR_CALL_SERVICE_GW, MESSAGE_STATUS
+)
 from app.utils.functions import generate_uuid, now, orjson_dumps
 
 
@@ -334,49 +336,65 @@ async def repos_pay_in_cash_247_by_card_num(
     return ReposReturn(data=gw_pay_in_cash_247_by_card_num)
 
 
-@auto_commit
 async def repos_gw_save_casa_transfer_info(
         current_user,
         receiving_method: str,
         request_data,
-        booking_id,
-        session: Session
+        booking_id
 ):
     gw_casa_transfer, function_out, is_success = None, None, False
     if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
         is_success, gw_casa_transfer = await service_gw.gw_payment_internal_transfer(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )
+        if not is_success:
+            return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_GW,
+                               detail=str(gw_casa_transfer), loc='gw_payment_internal_transfer')
         function_out = GW_FUNC_INTERNAL_TRANSFER_OUT
 
     if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
         is_success, gw_casa_transfer = await service_gw.gw_payment_tt_liquidation(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )
+        if not is_success:
+            return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_GW,
+                               detail=str(gw_casa_transfer), loc='repos_gw_save_casa_transfer_info')
         function_out = GW_FUNC_TT_LIQUIDATION_OUT
 
     if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
         is_success, gw_casa_transfer = await service_gw.gw_payment_interbank_transfer(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )
+        if not is_success:
+            return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_GW,
+                               detail=str(gw_casa_transfer), loc='repos_gw_save_casa_transfer_info')
         function_out = GW_FUNC_INTERBANK_TRANSFER_OUT
 
     if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
         is_success, gw_casa_transfer = await service_gw.gw_interbank_transfer(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )
+        if not is_success:
+            return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_GW,
+                               detail=str(gw_casa_transfer), loc='repos_gw_save_casa_transfer_info')
         function_out = GW_FUNC_INTERBANK_TRANSFER_OUT
 
     if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
         is_success, gw_casa_transfer = await service_gw.gw_payment_interbank_transfer_247_by_account_number(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )
+        if not is_success:
+            return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_GW,
+                               detail=str(gw_casa_transfer), loc='repos_gw_save_casa_transfer_info')
         function_out = GW_FUNC_INTERBANK_TRANSFER_247_BY_ACC_NUM_OUT
 
     if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
         is_success, gw_casa_transfer = await service_gw.gw_payment_interbank_transfer_247_by_card_number(
             current_user=current_user.user_info, data_input=request_data["data_input"]
         )
+        if not is_success:
+            return ReposReturn(is_error=True, msg=ERROR_CALL_SERVICE_GW,
+                               detail=str(gw_casa_transfer), loc='repos_gw_save_casa_transfer_info')
         function_out = GW_FUNC_INTERBANK_TRANSFER_247_BY_CARD_NUM_OUT
 
     if not gw_casa_transfer:

@@ -1413,8 +1413,7 @@ class CtrGWPayment(BaseController):
             current_user=self.current_user,
             receiving_method=receiving_method,
             booking_id=BOOKING_ID,
-            request_data=request_data,
-            session=self.oracle_session
+            request_data=request_data
         ))
 
         self.call_repos(await repos_save_gw_output_data(
