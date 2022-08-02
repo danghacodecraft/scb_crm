@@ -1,10 +1,10 @@
+import asyncio
 import json
 from datetime import date
 from typing import Optional
 
 import aiohttp
 from loguru import logger
-from sqlalchemy.util import asyncio
 from starlette import status
 
 from app.api.v1.endpoints.user.schema import UserInfoResponse
