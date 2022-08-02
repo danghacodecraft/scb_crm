@@ -172,6 +172,7 @@ class GWOpenCIFResponse(BaseGWSchema):
     booking_id: str = Field(..., description="BOOKING")
     cif_id: str = Field(..., description="CIF_ID Customer")
     cif_number: str = Field(..., description="CIF_NUMBER Customer")
+    account_number: Optional[str] = Field(..., description="Số TKTT")
 
 
 ########################################################################################################################
