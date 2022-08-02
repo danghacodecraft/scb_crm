@@ -31,7 +31,8 @@ from app.third_parties.oracle.models.master_data.customer import (
 )
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import (
-    AverageIncomeAmount, Career, KYCLevel, MaritalStatus, Position
+    AverageIncomeAmount, Career, KYCLevel, MaritalStatus, Position,
+    ResidentStatus
 )
 from app.utils.error_messages import (
     ERROR_BOOKING_CODE_NOT_EXIST, ERROR_CIF_ID_NOT_EXIST,
@@ -115,6 +116,7 @@ async def repos_customer_information(cif_id: str, session: Session) -> ReposRetu
             Customer,
             CustomerIdentity,
             CustomerIndividualInfo,
+            ResidentStatus,
             CustomerAddress,
             CustomerStatus,
             PlaceOfIssue,
@@ -127,6 +129,7 @@ async def repos_customer_information(cif_id: str, session: Session) -> ReposRetu
         )
         .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id)
         .join(CustomerIndividualInfo, Customer.id == CustomerIndividualInfo.customer_id)
+        .join(ResidentStatus, CustomerIndividualInfo.resident_status_id == ResidentStatus.id)
         .join(CustomerStatus, Customer.customer_status_id == CustomerStatus.id)
         .join(CustomerAddress, Customer.id == CustomerAddress.customer_id)
         .join(PlaceOfIssue, CustomerIdentity.place_of_issue_id == PlaceOfIssue.id)
