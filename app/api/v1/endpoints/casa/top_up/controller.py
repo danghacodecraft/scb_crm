@@ -59,7 +59,7 @@ from app.utils.error_messages import (
     ERROR_DENOMINATIONS_NOT_EXIST, ERROR_FIELD_REQUIRED,
     ERROR_INTERBANK_ACCOUNT_NUMBER_NOT_EXIST,
     ERROR_INTERBANK_CARD_NUMBER_NOT_EXIST, ERROR_MAPPING_MODEL, ERROR_NOT_NULL,
-    ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
+    ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST, ERROR_BOOKING_INCORRECT
 )
 from app.utils.functions import (
     date_string_to_other_date_string_format, dropdown, generate_uuid, now,
@@ -73,6 +73,13 @@ from app.utils.vietnamese_converter import (
 class CtrCasaTopUp(BaseController):
     async def ctr_get_casa_top_up_info(self, booking_id: str):
         current_user = self.current_user
+
+        booking = await CtrBooking().ctr_get_booking(booking_id=booking_id, business_type_code=BUSINESS_TYPE_CASA_TOP_UP)
+        if booking.business_type.id != BUSINESS_TYPE_CASA_TOP_UP:
+            return self.response_exception(
+                msg=ERROR_BOOKING_INCORRECT, loc=f"business_type: {booking.business_type.id}"
+            )
+
         get_casa_top_up_info = self.call_repos(await repos_get_casa_top_up_info(
             booking_id=booking_id,
             session=self.oracle_session

@@ -10,7 +10,7 @@ from app.api.v1.others.booking.repository import (
     repos_get_customer_from_booking_account,
     repos_get_customer_from_booking_account_amount_block,
     repos_get_customer_from_booking_customer, repos_get_initializing_booking,
-    repos_is_correct_booking, repos_is_used_booking
+    repos_is_correct_booking, repos_is_used_booking, repos_get_booking
 )
 from app.api.v1.others.permission.controller import PermissionController
 from app.third_parties.oracle.models.cif.form.model import (
@@ -148,6 +148,22 @@ class CtrBooking(BaseController):
         ))
         if not booking:
             return self.response_exception(msg=ERROR_BOOKING_ID_NOT_EXIST, loc=f"booking_id: {booking_id}")
+        return booking
+
+    async def ctr_get_booking(self, booking_id: str, business_type_code: str):
+        """
+        Lấy thông tin booking
+        """
+        booking = self.call_repos(await repos_get_booking(
+            booking_id=booking_id,
+            business_type_code=business_type_code,
+            session=self.oracle_session
+        ))
+        if not booking:
+            return self.response_exception(
+                msg=ERROR_BOOKING_ID_NOT_EXIST,
+                loc=f"booking_id: {booking_id}, business_type: {business_type_code}"
+            )
         return booking
 
     async def ctr_get_customer_from_booking(self, booking_id: str):
