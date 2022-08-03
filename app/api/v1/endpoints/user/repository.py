@@ -7,7 +7,7 @@ from starlette import status
 
 from app.api.base.repository import ReposReturn
 from app.api.v1.endpoints.user.schema import UserInfoResponse
-from app.settings.event import service_gw, service_idm
+from app.settings.event import service_gw, service_idm, service_redis
 from app.settings.service import SERVICE
 from app.third_parties.services.idm import ServiceIDM
 from app.utils.constant.gw import GW_FUNC_SELECT_USER_INFO_BY_USER_ID_OUT
@@ -67,8 +67,10 @@ async def repos_login(username: str, password: str) -> ReposReturn:
 
     data_idm["user_info"]["avatar_url"] = ServiceIDM().replace_with_cdn(data_idm["user_info"]["avatar_url"])
     data_idm['user_info']['token'] = base64.b64encode(
-        zlib.compress(orjson.dumps(data_idm))
+        zlib.compress(orjson.dumps(data_idm['user_info']))
     ).decode('utf-8')
+
+    await service_redis.set(data_idm["user_info"]['username'], data_idm['menu_list'])
 
     lst_data = []
     list(map(lambda x: lst_data.extend(x['group_role_list']), data_idm['menu_list']))
@@ -104,15 +106,23 @@ async def repos_check_token(token: str) -> ReposReturn:
             error_status_code=status.HTTP_402_PAYMENT_REQUIRED
         )
 
-    sts, check_token = await service_idm.check_token(username=auth_parts['user_info']['username'], bearer_token=auth_parts['user_info']['token'])
+    username = auth_parts['username']
 
-    if not sts:
+    is_success, check_token = await service_idm.check_token(username=username, bearer_token=auth_parts['token'])
+
+    if not is_success:
         return ReposReturn(
             is_error=True,
             msg=ERROR_CALL_SERVICE_IDM,
             detail="Token is invalid"
         )
-    return ReposReturn(data=auth_parts)
+
+    menu_list = await service_redis.get(username)
+
+    return ReposReturn(data=dict(
+        user_info=auth_parts,
+        menu_list=menu_list
+    ))
 
 
 async def repos_get_user_info(user_id: str) -> ReposReturn:
