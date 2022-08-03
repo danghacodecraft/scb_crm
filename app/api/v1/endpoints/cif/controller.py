@@ -217,6 +217,7 @@ class CtrCustomer(BaseController):
             "gender": dropdown(first_row.CustomerGender),
             "email": first_row.Customer.email,
             "mobile_number": first_row.Customer.mobile_number,
+            "resident_status": dropdown(first_row.ResidentStatus) if first_row.ResidentStatus else DROPDOWN_NONE_DICT,
             "identity_number": first_row.CustomerIdentity.identity_num,
             "place_of_issue": dropdown(first_row.PlaceOfIssue),
             "issued_date": first_row.CustomerIdentity.issued_date,
