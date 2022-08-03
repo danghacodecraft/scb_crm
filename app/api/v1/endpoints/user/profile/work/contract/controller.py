@@ -1,9 +1,13 @@
 from app.api.base.controller import BaseController
-from app.api.v1.endpoints.user.profile.work.contract.repository import (
-    repos_contract
+from app.api.v1.endpoints.third_parties.gw.employee.repository import (
+    repos_gw_get_retrieve_employee_info_from_code
+)
+from app.utils.constant.gw import (
+    GW_DATE_FORMAT, GW_DATETIME_FORMAT,
+    GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_OUT
 )
 from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
-from app.utils.functions import datetime_to_date, string_to_datetime
+from app.utils.functions import date_string_to_other_date_string_format
 
 
 class CtrContract(BaseController):
@@ -18,49 +22,53 @@ class CtrContract(BaseController):
 
         employee_id = current_user.code
 
-        is_success, contract_info = self.call_repos(
-            await repos_contract(
-                employee_id=employee_id,
-                session=self.oracle_session
-            )
-        )
-        if not is_success:
-            return self.response_exception(msg=str(contract_info))
+        contract = self.call_repos(await repos_gw_get_retrieve_employee_info_from_code(
+            staff_code=employee_id, current_user=self.current_user
+        ))
+        contract_info = contract[GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_OUT][
+            "data_output"]["employee_info"]['contract_info']
 
-        response_contract = dict(
-            type=None,
-            number=None,
-            start_date=None,
-            end_date=None,
-            addendum=None,
-            resign_date=None
-        )
-        response_contract["addendum"] = dict(
-            number=None,
-            start_date=None,
-            end_date=None
+        start_date = date_string_to_other_date_string_format(
+            date_input=contract_info['contract_effected_date'],
+            from_format=GW_DATETIME_FORMAT,
+            to_format=GW_DATE_FORMAT
         )
 
-        if contract_info:
-            contract_info = contract_info['profile']['contract']
+        end_date = date_string_to_other_date_string_format(
+            date_input=contract_info['contract_expired_date'],
+            from_format=GW_DATETIME_FORMAT,
+            to_format=GW_DATE_FORMAT
+        )
 
-            start_date = contract_info['start_date']
-            start_date = datetime_to_date(string_to_datetime(start_date)) if start_date else None
+        addendum_start_date = date_string_to_other_date_string_format(
+            date_input=contract_info['schedule_of_contract_effected_date'],
+            from_format=GW_DATETIME_FORMAT,
+            to_format=GW_DATE_FORMAT
+        )
 
-            end_date = contract_info['start_date']
-            end_date = datetime_to_date(string_to_datetime(end_date)) if end_date else None
+        addendum_end_date = date_string_to_other_date_string_format(
+            date_input=contract_info['schedule_of_contract_expired_date'],
+            from_format=GW_DATETIME_FORMAT,
+            to_format=GW_DATE_FORMAT
+        )
 
-            response_contract = {
-                "type": contract_info['type'],
-                "number": contract_info['name'],
-                "start_date": start_date,
-                "end_date": end_date,
-                "addendum": {
-                    "number": None,  # TODO: Số phụ lục hợp đồng không thấy
-                    "start_date": None,  # TODO: ngày bắt đầu không thấy
-                    "end_date": None,  # TODO: Ngày kết thúc không thấy
-                },
-                "resign_date": end_date
-            }
+        resign_date = date_string_to_other_date_string_format(
+            date_input=contract_info['stop_job_date'],
+            from_format=GW_DATETIME_FORMAT,
+            to_format=GW_DATE_FORMAT
+        )
+
+        response_contract = {
+            "type": contract_info['contract_type'],
+            "number": contract_info['contract_name'],
+            "start_date": start_date,
+            "end_date": end_date,
+            "addendum": {
+                "number": contract_info['schedule_of_contract_num'],
+                "start_date": addendum_start_date,
+                "end_date": addendum_end_date,
+            },
+            "resign_date": resign_date
+        }
 
         return self.response(data=response_contract)

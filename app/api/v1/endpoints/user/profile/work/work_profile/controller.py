@@ -1,9 +1,13 @@
 from app.api.base.controller import BaseController
-from app.api.v1.endpoints.user.profile.work.work_profile.repository import (
-    repos_work_profile_info
+from app.api.v1.endpoints.third_parties.gw.employee.repository import (
+    repos_gw_get_retrieve_employee_info_from_code
+)
+from app.utils.constant.gw import (
+    GW_DATE_FORMAT, GW_DATETIME_FORMAT,
+    GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_OUT
 )
 from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
-from app.utils.functions import datetime_to_date, string_to_datetime
+from app.utils.functions import date_string_to_other_date_string_format
 
 
 class CtrWorkProfile(BaseController):
@@ -18,73 +22,57 @@ class CtrWorkProfile(BaseController):
 
         employee_id = current_user.code
 
-        is_success, work_profile_info = self.call_repos(
-            await repos_work_profile_info(
-                employee_id=employee_id,
-                session=self.oracle_session
-            )
-        )
-        if not is_success:
-            return self.response_exception(msg=str(work_profile_info))
+        work_profile = self.call_repos(await repos_gw_get_retrieve_employee_info_from_code(
+            staff_code=employee_id, current_user=self.current_user
+        ))
+        employee_info = work_profile[GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_OUT][
+            "data_output"]["employee_info"]
 
-        response_foreign = dict(
-            avatar=None,
-            working_date=None,
-            probationary_date=None,
-            official_date=None,
-            current=None,
-            root=None,
-            temporary=None,
-            seniority_date=None,
-            is_resident=None
-        )
-        response_foreign["current"] = dict(
-            branch=None,
-            position=None
-        )
-        response_foreign["root"] = dict(
-            branch=None,
-            position=None
-        )
-        response_foreign["temporary"] = dict(
-            branch=None,
-            position=None
+        work_profile_info = employee_info['profile_info']
+
+        working_date = date_string_to_other_date_string_format(
+            date_input=work_profile_info['join_date'],
+            from_format=GW_DATETIME_FORMAT,
+            to_format=GW_DATE_FORMAT
         )
 
-        if work_profile_info:
-            work_profile_info = work_profile_info['profile']['work']
+        probation_date = date_string_to_other_date_string_format(
+            date_input=work_profile_info['probation_date'],
+            from_format=GW_DATETIME_FORMAT,
+            to_format=GW_DATE_FORMAT
+        )
 
-            working_date = work_profile_info['thu_viec']
-            working_date = datetime_to_date(string_to_datetime(working_date)) if working_date else None
+        official_date = date_string_to_other_date_string_format(
+            date_input=work_profile_info['official_date'],
+            from_format=GW_DATETIME_FORMAT,
+            to_format=GW_DATE_FORMAT
+        )
 
-            probationary_date = work_profile_info['thu_viec']
-            probationary_date = datetime_to_date(string_to_datetime(probationary_date)) if probationary_date else None
+        seniority_date = date_string_to_other_date_string_format(
+            date_input=work_profile_info['seniority_date'],
+            from_format=GW_DATETIME_FORMAT,
+            to_format=GW_DATE_FORMAT
+        )
 
-            official_date = work_profile_info['thu_viec']
-            official_date = datetime_to_date(string_to_datetime(official_date)) if official_date else None
-
-            current_work_profile_info = work_profile_info['cur']
-            root_work_profile_info = work_profile_info['org']
-            temporary_work_profile_info = work_profile_info['cur']
-
-            response_foreign = {
-                "working_date": working_date,  # TODO: Ngày làm việc không thấy
-                "probationary_date": probationary_date,
-                "official_date": official_date,
-                "current": {
-                    "branch": current_work_profile_info['branch_name'],
-                    "position": current_work_profile_info['job_title_name']
-                },
-                "root": {
-                    "branch": root_work_profile_info['branch_name'],
-                    "position": root_work_profile_info['job_title_name']
-                },
-                "temporary": {
-                    "branch": temporary_work_profile_info['branch_name'],
-                    "position": temporary_work_profile_info['branch_name']
-                },
-                "seniority_date": probationary_date,
-                "is_resident": True  # TODO: Đối tượng cư trú không thấy
-            }
+        response_foreign = {
+            "avatar": employee_info['avatar'],
+            "working_date": working_date,
+            "probationary_date": probation_date,
+            "official_date": official_date,
+            "current": {
+                "branch": work_profile_info['department_info']['department_name'],
+                "position": work_profile_info['jobtitle_name']
+            },
+            "root": {
+                "branch": work_profile_info['org_department_info']['department_name'],
+                "position": work_profile_info['jobtitle_name']
+            },
+            "temporary": {
+                "branch": work_profile_info['temp_department_info']['department_name'],
+                "position": work_profile_info['temp_jobtitle_name']
+            },
+            "seniority_date": seniority_date,
+            "is_resident": work_profile_info['resident_status']
+        }
 
         return self.response(data=response_foreign)
