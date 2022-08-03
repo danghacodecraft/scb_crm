@@ -2,13 +2,13 @@ from datetime import date
 
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.dashboard.repository import (
-    repos_accounting_entry, repos_count_total_item,
-    repos_get_amount_block_from_booking, repos_get_customer,
-    repos_get_customers_by_cif_number, repos_get_open_casa_info_from_booking,
+    repos_count_total_item, repos_get_amount_block_from_booking,
+    repos_get_customer, repos_get_customers_by_cif_number,
+    repos_get_open_casa_info_from_booking,
     repos_get_open_cif_info_from_booking, repos_get_senders,
     repos_get_sla_transaction_infos, repos_get_td_account_from_booking,
     repos_get_total_item, repos_get_transaction_list,
-    repos_get_withdraw_info_from_booking, repos_region
+    repos_get_withdraw_info_from_booking
 )
 from app.api.v1.endpoints.third_parties.gw.category.controller import (
     CtrSelectCategory
@@ -461,40 +461,23 @@ class CtrDashboard(BaseController):
 
         return self.response(data=response_data)
 
-    async def ctr_accounting_entry(self):
-        current_user = self.current_user.user_info
-        if not current_user:
-            return self.response_exception(
-                msg=USER_NOT_EXIST,
-                detail=MESSAGE_STATUS[USER_NOT_EXIST],
-                loc="current_user"
-            )
-
-        branch_code = current_user.hrm_branch_code
-
-        is_success, contract_info = self.call_repos(
-            await repos_accounting_entry(
-                branch_code=branch_code
-            )
-        )
-        if not is_success:
-            return self.response_exception(msg=str(contract_info))
-
-        return self.response(data=contract_info)
-
-    async def ctr_region(self):
-        current_user = self.current_user.user_info
-        if not current_user:
-            return self.response_exception(
-                msg=USER_NOT_EXIST,
-                detail=MESSAGE_STATUS[USER_NOT_EXIST],
-                loc="current_user"
-            )
-
-        is_success, contract_info = self.call_repos(
-            await repos_region()
-        )
-        if not is_success:
-            return self.response_exception(msg=str(contract_info))
-
-        return self.response(data=contract_info)
+    # async def ctr_accounting_entry(self):
+    #     current_user = self.current_user.user_info
+    #     if not current_user:
+    #         return self.response_exception(
+    #             msg=USER_NOT_EXIST,
+    #             detail=MESSAGE_STATUS[USER_NOT_EXIST],
+    #             loc="current_user"
+    #         )
+    #
+    #     branch_code = current_user.hrm_branch_code
+    #
+    #     is_success, contract_info = self.call_repos(
+    #         await repos_accounting_entry(
+    #             branch_code=branch_code
+    #         )
+    #     )
+    #     if not is_success:
+    #         return self.response_exception(msg=str(contract_info))
+    #
+    #     return self.response(data=contract_info)

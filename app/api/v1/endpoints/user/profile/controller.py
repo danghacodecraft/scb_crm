@@ -1,9 +1,15 @@
 from app.api.base.controller import BaseController
-from app.api.v1.endpoints.user.profile.repository import repos_profile
-from app.utils.address_functions.functions import combine_full_address
-from app.utils.error_messages import (
-    ERROR_CALL_SERVICE_DWH, MESSAGE_STATUS, USER_NOT_EXIST
+from app.api.v1.endpoints.third_parties.gw.employee.repository import (
+    repos_gw_get_retrieve_employee_info_from_code
 )
+from app.third_parties.oracle.models.master_data.customer import CustomerGender
+from app.utils.address_functions.functions import combine_full_address
+from app.utils.constant.cif import CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE
+from app.utils.constant.gw import (
+    GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_OUT, GW_GENDER_FEMALE,
+    GW_GENDER_MALE
+)
+from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
 
 
 class CtrProfile(BaseController):
@@ -17,39 +23,50 @@ class CtrProfile(BaseController):
             )
 
         employee_id = current_user.code
-        is_success, profile = self.call_repos(
-            await repos_profile(
-                employee_id=employee_id,
-                session=self.oracle_session
-            )
+        profile = self.call_repos(await repos_gw_get_retrieve_employee_info_from_code(
+            staff_code=employee_id, current_user=self.current_user
+        ))
+        employee_info = profile[GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_OUT][
+            "data_output"]["employee_info"]
+
+        address_info = employee_info['address_info']
+
+        gender_code_or_name = employee_info["sex"]
+        if gender_code_or_name == GW_GENDER_MALE:
+            gender_code_or_name = CRM_GENDER_TYPE_MALE
+        if gender_code_or_name == GW_GENDER_FEMALE:
+            gender_code_or_name = CRM_GENDER_TYPE_FEMALE
+
+        dropdown_gender = await self.dropdown_mapping_crm_model_or_dropdown_name(
+            model=CustomerGender, name=gender_code_or_name, code=gender_code_or_name
         )
 
-        if not is_success:
-            return self.response_exception(msg=ERROR_CALL_SERVICE_DWH, loc="EMP_DETAIL", detail=str(profile))
-
-        number_and_street = profile['curriculum_vitae']['contact']['contact']['address']
-        ward = profile['curriculum_vitae']['contact']['contact']['ward']
-        district = profile['curriculum_vitae']['contact']['contact']['district']
-        province = profile['curriculum_vitae']['contact']['contact']['province']
-
         profile = {
-            "avatar": current_user.avatar_url,
-            "gender": profile['curriculum_vitae']['individual']['gender'],
-            "full_name_vn": profile['emp_name'],
+            "avatar": employee_info['avatar'],
+            "gender": dropdown_gender,
+            "full_name_vn": employee_info['full_name'],
             "address": combine_full_address(
-                number_and_street=number_and_street,
-                ward=ward,
-                district=district,
-                province=province
+                number_and_street=address_info['contact_address_line'],
+                ward=address_info['contact_address_ward_name'],
+                district=address_info['contact_address_district_name'],
+                province=address_info['contact_address_city_name']
             ),
-            "user_name": profile['email'].split("@SCB.COM.VN")[0],
-            "email": profile['email'],
-            "mobile_number": profile['mobile'],
-            "code": profile['emp_id'],
-            "department": profile['dep_name'],
-            "titles": profile['title'],
-            "manager": profile['manager'],
-            "telephone_number": None
+            "user_name": employee_info['staff_name'],
+            "email": employee_info['email_scb'],
+            "mobile_number": employee_info['contact_mobile'],
+            "code": employee_info['staff_code'],
+            "department": {
+                "id": employee_info['department_info']['department_code'],
+                "code": employee_info['department_info']['department_code'],
+                "name": employee_info['department_info']['department_name']
+            },
+            "title": {
+                "id": employee_info['title_code'],
+                "code": employee_info['title_code'],
+                "name": employee_info['title_name']
+            },
+            "manager": employee_info['direct_management'],
+            "telephone_number": employee_info['internal_mobile']
         }
 
         return self.response(data=profile)
