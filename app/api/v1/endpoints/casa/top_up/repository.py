@@ -1,4 +1,4 @@
-from sqlalchemy import desc, select, update
+from sqlalchemy import desc, select, update, and_
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -9,6 +9,7 @@ from app.third_parties.oracle.models.master_data.others import (
     SlaTransaction, TransactionJob, TransactionStage, TransactionStageLane,
     TransactionStagePhase, TransactionStageRole, TransactionStageStatus
 )
+from app.utils.constant.cif import BUSINESS_FORM_CASA_TOP_UP
 from app.utils.error_messages import ERROR_BOOKING_BUSINESS_FORM_NOT_EXIST
 
 
@@ -77,7 +78,10 @@ async def repos_get_casa_top_up_info(booking_id: str, session: Session):
         select(
             BookingBusinessForm
         )
-        .filter(BookingBusinessForm.booking_id == booking_id)
+        .filter(and_(
+            BookingBusinessForm.booking_id == booking_id,
+            BookingBusinessForm.business_form_id == BUSINESS_FORM_CASA_TOP_UP
+        ))
         .order_by(desc(BookingBusinessForm.created_at))
     ).scalars().first()
     if not get_casa_top_up_info:
