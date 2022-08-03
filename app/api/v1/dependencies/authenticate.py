@@ -44,7 +44,7 @@ async def _get_authorization_header(
     if result_check_token.is_error:
         raise ExceptionHandle(
             errors=[{'loc': None, 'msg': ERROR_INVALID_TOKEN}],
-            status_code=status.HTTP_400_BAD_REQUEST
+            status_code=status.HTTP_402_PAYMENT_REQUIRED
         )
     return AuthResponse(**result_check_token.data)
 
