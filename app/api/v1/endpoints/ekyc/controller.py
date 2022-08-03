@@ -1,3 +1,5 @@
+from starlette import status
+
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.ekyc.repository import (
     repos_create_ekyc_customer, repos_get_ekyc_customer,
@@ -6,14 +8,17 @@ from app.api.v1.endpoints.ekyc.repository import (
 from app.api.v1.endpoints.ekyc.schema import (
     CreateEKYCCustomerRequest, UpdateEKYCCustomerRequest
 )
+from app.settings.service import SERVICE
 from app.utils.error_messages import (
-    ERROR_CUSTOMER_EKYC_EXIST, ERROR_CUSTOMER_EKYC_NOT_EXIST
+    ERROR_CUSTOMER_EKYC_EXIST, ERROR_CUSTOMER_EKYC_NOT_EXIST,
+    ERROR_INVALID_TOKEN
 )
 from app.utils.functions import orjson_dumps
 
 
 class CtrEKYC(BaseController):
-    async def ctr_create_ekyc_customer(self, request: CreateEKYCCustomerRequest):
+    async def ctr_create_ekyc_customer(self, request: CreateEKYCCustomerRequest, server_auth: str):
+        self.check_ekyc_input_token(server_auth=server_auth)
         customer_ekyc_id = request.customer_id
         customer_ekyc = self.call_repos(
             await repos_get_ekyc_customer(customer_ekyc_id=customer_ekyc_id, session=self.oracle_session)
@@ -100,7 +105,9 @@ class CtrEKYC(BaseController):
             customer_id=customer_ekyc_id
         ))
 
-    async def ctr_update_ekyc_customer(self, request: UpdateEKYCCustomerRequest):
+    async def ctr_update_ekyc_customer(self, request: UpdateEKYCCustomerRequest, server_auth: str):
+        self.check_ekyc_input_token(server_auth=server_auth)
+
         customer_ekyc_id = request.customer_id
 
         customer_ekyc = self.call_repos(
@@ -141,3 +148,11 @@ class CtrEKYC(BaseController):
         return self.response(data=dict(
             customer_id=customer_ekyc_id
         ))
+
+    def check_ekyc_input_token(self, server_auth: str):
+        if server_auth != SERVICE['ekyc']['server-auth']:
+            return self.response_exception(
+                msg=ERROR_INVALID_TOKEN,
+                error_status_code=status.HTTP_403_FORBIDDEN
+            )
+        return None

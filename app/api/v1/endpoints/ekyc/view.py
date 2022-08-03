@@ -1,11 +1,12 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Header
 from starlette import status
 
 from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
 from app.api.v1.endpoints.ekyc.controller import CtrEKYC
 from app.api.v1.endpoints.ekyc.schema import (
-    CreateEKYCCustomerRequest, CreateUpdateEKYCCustomerResponse, UpdateEKYCCustomerRequest
+    CreateEKYCCustomerRequest, CreateUpdateEKYCCustomerResponse,
+    UpdateEKYCCustomerRequest
 )
 
 router = APIRouter()
@@ -22,9 +23,10 @@ router = APIRouter()
     status_code=status.HTTP_201_CREATED
 )
 async def view_create_ekyc_customer(
-        request: CreateEKYCCustomerRequest
+        request: CreateEKYCCustomerRequest,
+        server_auth: str = Header(..., alias="Server-Auth")
 ):
-    create_ekyc_customer_info = await CtrEKYC().ctr_create_ekyc_customer(request=request)
+    create_ekyc_customer_info = await CtrEKYC().ctr_create_ekyc_customer(request=request, server_auth=server_auth)
     return ResponseData[CreateUpdateEKYCCustomerResponse](**create_ekyc_customer_info)
 
 
@@ -39,7 +41,8 @@ async def view_create_ekyc_customer(
     status_code=status.HTTP_201_CREATED
 )
 async def view_update_ekyc_customer(
-        request: UpdateEKYCCustomerRequest
+        request: UpdateEKYCCustomerRequest,
+        server_auth: str = Header(..., alias="Server-Auth")
 ):
-    update_ekyc_customer_info = await CtrEKYC().ctr_update_ekyc_customer(request=request)
+    update_ekyc_customer_info = await CtrEKYC().ctr_update_ekyc_customer(request=request, server_auth=server_auth)
     return ResponseData[CreateUpdateEKYCCustomerResponse](**update_ekyc_customer_info)
