@@ -3,18 +3,16 @@ from app.api.v1.endpoints.ekyc.repository import (
     repos_create_ekyc_customer
 )
 from app.api.v1.endpoints.ekyc.schema import CreateEKYCCustomerRequest
-from app.utils.functions import generate_uuid, orjson_dumps, orjson_loads
+from app.utils.functions import orjson_dumps
 
 
 class CtrEKYC(BaseController):
     async def ctr_create_ekyc_customer(self, request: CreateEKYCCustomerRequest):
         customer_ekyc_id = request.customer_id
 
-        # print(orjson_dumps(request.dict()))
-
         customer_ekyc = dict(
             customer_id=customer_ekyc_id,
-            # transaction_data=orjson_dumps(request.dict()),
+            transaction_data=orjson_dumps(request.dict()),
             date_of_issue=request.date_of_issue,
             date_of_birth=request.date_of_birth,
             transaction_id=request.transaction_id,

@@ -49,6 +49,7 @@ class EKYCCustomer(Base):
     open_biometric = Column(NUMBER(1), nullable=True)
     date_of_expiry = Column(DATE, nullable=True)
     user_eb = Column(VARCHAR(500), nullable=True)
+    transaction_data = Column(CLOB, nullable=False)
 
 
 class EKYCCustomerStep(Base):
