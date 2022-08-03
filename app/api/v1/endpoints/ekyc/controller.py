@@ -1,14 +1,27 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.ekyc.repository import (
-    repos_create_ekyc_customer, repos_get_ekyc_customer, repos_update_ekyc_customer
+    repos_create_ekyc_customer, repos_get_ekyc_customer,
+    repos_update_ekyc_customer
 )
-from app.api.v1.endpoints.ekyc.schema import CreateEKYCCustomerRequest, UpdateEKYCCustomerRequest
+from app.api.v1.endpoints.ekyc.schema import (
+    CreateEKYCCustomerRequest, UpdateEKYCCustomerRequest
+)
+from app.utils.error_messages import (
+    ERROR_CUSTOMER_EKYC_EXIST, ERROR_CUSTOMER_EKYC_NOT_EXIST
+)
 from app.utils.functions import orjson_dumps
 
 
 class CtrEKYC(BaseController):
     async def ctr_create_ekyc_customer(self, request: CreateEKYCCustomerRequest):
         customer_ekyc_id = request.customer_id
+        customer_ekyc = self.call_repos(
+            await repos_get_ekyc_customer(customer_ekyc_id=customer_ekyc_id, session=self.oracle_session)
+        )
+        if customer_ekyc:
+            return self.response_exception(
+                msg=ERROR_CUSTOMER_EKYC_EXIST, loc=f"customer_ekyc_id: {customer_ekyc_id}"
+            )
 
         customer_ekyc = dict(
             customer_id=customer_ekyc_id,
@@ -90,8 +103,13 @@ class CtrEKYC(BaseController):
     async def ctr_update_ekyc_customer(self, request: UpdateEKYCCustomerRequest):
         customer_ekyc_id = request.customer_id
 
-        self.call_repos(await repos_get_ekyc_customer(customer_ekyc_id=customer_ekyc_id, session=self.oracle_session))
-
+        customer_ekyc = self.call_repos(
+            await repos_get_ekyc_customer(customer_ekyc_id=customer_ekyc_id, session=self.oracle_session)
+        )
+        if not customer_ekyc:
+            return self.response_exception(
+                msg=ERROR_CUSTOMER_EKYC_NOT_EXIST, loc=f"customer_ekyc_id: {customer_ekyc_id}"
+            )
         step_info = dict(
             step=request.step,
             start_date=request.start_date,
