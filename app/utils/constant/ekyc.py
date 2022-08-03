@@ -24,15 +24,28 @@ ERROR_VERIFIED = "VERIFIED"
 ERROR_CHECK_ALM = "CHECK_ALM"
 ERROR_CREATE_E_BANKING = "ERROR_CREATE_E_BANKING"
 
+ERROR_CODE_FAILED_EKYC = {
+    ERROR_CREATE_CIF: "TC01: Tạo CIF thất bại (GTDD, SĐT, Email)",
+    ERROR_VERIFIED: "TC02: Trùng họ tên và ngày tháng năm sinh với KH hiện hữu",
+    ERROR_CHECK_ALM: "TC03: Check AML"
+}
+
+ERROR_CODE_PROCESSING_EKYC = {
+    ERROR_CREATE_E_BANKING: "XL01: Tạo user Ebanking thất bại",
+    ERROR_UPLOAD_ATTACHMENT_PORTRAIT: "XL02: Lỗi tải lên ảnh chân dung",
+    ERROR_UPLOAD_ATTACHMENT_ID_BACK: "XL03: Lỗi tải lên ảnh mặt sau",
+    ERROR_UPLOAD_ATTACHMENT_ID_FRONT: "XL04: Lỗi tải lên ảnh mặt trước",
+}
+
 ERROR_CODE_EKYC = {
-    ERROR_CREATE_USER: "TC02: User tồn tại",
-    ERROR_CREATE_CIF: "TC01: CIF tồn tại",
-    ERROR_CREATE_CARD_VIRTUAL: "TC04: Thẻ ảo tồn tại",
-    ERROR_VERIFIED: "TC03: Trùng họ tên và ngày tháng năm sinh với KH hiện hữu",
+    ERROR_CREATE_USER: "User tồn tại",
+    ERROR_CREATE_CIF: "Tạo CIF thất bại",
+    ERROR_CREATE_CARD_VIRTUAL: "Thẻ ảo tồn tại",
+    ERROR_VERIFIED: "Trùng họ tên và ngày tháng năm sinh với KH hiện hữu",
     ERROR_UPLOAD_ATTACHMENT_PORTRAIT: "Lỗi tải lên ảnh chân dung",
     ERROR_UPLOAD_ATTACHMENT_ID_BACK: "Lỗi tải lên ảnh mặt sau",
     ERROR_UPLOAD_ATTACHMENT_ID_FRONT: "Lỗi tải lên ảnh mặt trước",
-    ERROR_CREATE_E_BANKING: "TC05: Tạo user Ebanking thất bại",
+    ERROR_CREATE_E_BANKING: "Tạo DV Ebank thất bại",
     ERROR_CHECK_ALM: "CHECK_ALM",
 }
 
