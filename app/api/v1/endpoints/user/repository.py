@@ -7,7 +7,7 @@ from starlette import status
 
 from app.api.base.repository import ReposReturn
 from app.api.v1.endpoints.user.schema import UserInfoResponse
-from app.settings.event import service_gw, service_idm
+from app.settings.event import service_gw, service_idm, service_redis
 from app.settings.service import SERVICE
 from app.third_parties.services.idm import ServiceIDM
 from app.utils.constant.gw import GW_FUNC_SELECT_USER_INFO_BY_USER_ID_OUT
@@ -67,8 +67,10 @@ async def repos_login(username: str, password: str) -> ReposReturn:
 
     data_idm["user_info"]["avatar_url"] = ServiceIDM().replace_with_cdn(data_idm["user_info"]["avatar_url"])
     data_idm['user_info']['token'] = base64.b64encode(
-        zlib.compress(orjson.dumps(data_idm))
+        zlib.compress(orjson.dumps(data_idm['user_info']))
     ).decode('utf-8')
+
+    await service_redis.set(data_idm["user_info"]['username'], data_idm['menu_list'])
 
     lst_data = []
     list(map(lambda x: lst_data.extend(x['group_role_list']), data_idm['menu_list']))

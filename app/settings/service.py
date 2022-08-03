@@ -64,5 +64,11 @@ SERVICE = {
         "sasl_plain_password": os.getenv("KAFKA_SASL_PLAIN_PASSWORD"),
         "producer_topic": os.getenv("KAFKA_PRODUCER_TOPIC"),
         "message_max_bytes": os.getenv("KAFKA_MESSAGE_MAX_BYTES"),
+    },
+    "redis": {
+        "host": os.getenv("REDIS_HOST"),
+        "port": os.getenv("REDIS_PORT"),
+        "password": os.getenv("REDIS_PASSWORD"),
+        "database": os.getenv("REDIS_DATABASE"),
     }
 }
