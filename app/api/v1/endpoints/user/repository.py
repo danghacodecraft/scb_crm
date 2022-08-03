@@ -101,7 +101,7 @@ async def repos_check_token(token: str) -> ReposReturn:
             is_error=True,
             msg=ERROR_INVALID_TOKEN,
             loc='token',
-            error_status_code=status.HTTP_401_UNAUTHORIZED
+            error_status_code=status.HTTP_402_PAYMENT_REQUIRED
         )
 
     sts, check_token = await service_idm.check_token(username=auth_parts['user_info']['username'], bearer_token=auth_parts['user_info']['token'])
