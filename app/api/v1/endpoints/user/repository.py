@@ -106,15 +106,23 @@ async def repos_check_token(token: str) -> ReposReturn:
             error_status_code=status.HTTP_402_PAYMENT_REQUIRED
         )
 
-    sts, check_token = await service_idm.check_token(username=auth_parts['user_info']['username'], bearer_token=auth_parts['user_info']['token'])
+    username = auth_parts['username']
 
-    if not sts:
+    is_success, check_token = await service_idm.check_token(username=username, bearer_token=auth_parts['token'])
+
+    if not is_success:
         return ReposReturn(
             is_error=True,
             msg=ERROR_CALL_SERVICE_IDM,
             detail="Token is invalid"
         )
-    return ReposReturn(data=auth_parts)
+
+    menu_list = await service_redis.get(username)
+
+    return ReposReturn(data=dict(
+        user_info=auth_parts,
+        menu_list=menu_list
+    ))
 
 
 async def repos_get_user_info(user_id: str) -> ReposReturn:
