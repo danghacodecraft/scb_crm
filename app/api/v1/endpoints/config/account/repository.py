@@ -5,18 +5,38 @@ from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn
 from app.third_parties.oracle.models.master_data.account import (
-    AccountClass, AccountClassCustomerCategory
+    AccountClass, AccountClassCustomerCategory, AccountClassType
 )
 
 
-async def repos_get_account_class(session: Session, customer_category_id: Optional[str] = None):
-    raw_sql = select(
-        AccountClass,
-        AccountClassCustomerCategory).\
-        join(AccountClass, AccountClassCustomerCategory.account_class_id == AccountClass.id)
-    if customer_category_id:
-        raw_sql = raw_sql.filter(AccountClassCustomerCategory.customer_category_id == customer_category_id)
-    account_class = session.execute(raw_sql).scalars().all()
+async def repos_get_account_class(
+        session: Session,
+        customer_category_id: Optional[str] = None,
+        currency_id: Optional[str] = None,
+        account_type_id: Optional[str] = None,
+):
+
+    account_class = session.execute(
+        select(
+            AccountClass,
+            AccountClassType,
+            AccountClassCustomerCategory,
+            # AccountClassCurrency,     # TODO: Đợi data Currency
+        )
+        .join(AccountClassType, and_(
+            AccountClass.id == AccountClassType.account_class_id,
+            AccountClassType.account_type_id == account_type_id
+        ))
+        .join(AccountClassCustomerCategory, and_(
+            AccountClass.id == AccountClassCustomerCategory.account_class_id,
+            AccountClassCustomerCategory.customer_category_id == customer_category_id
+        ))
+        # .join(AccountClassCurrency, and_(
+        #     AccountClass.id == AccountClassCurrency.account_class_id,
+        #     # AccountClassCurrency.currency_id == currency_id
+        # ))
+    ).scalars().all()
+
     return ReposReturn(data=account_class)
 
 

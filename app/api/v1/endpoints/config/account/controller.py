@@ -18,11 +18,18 @@ class CtrConfigAccount(BaseController):
         )
         return self.response(account_type_info)
 
-    async def ctr_account_class_info(self, customer_category_id: Optional[str] = None):
+    async def ctr_account_class_info(
+            self,
+            customer_category_id: Optional[str] = None,
+            currency_id: Optional[str] = None,
+            account_type_id: Optional[str] = None
+    ):
         account_class_info = self.call_repos(
             await repos_get_account_class(
                 session=self.oracle_session,
-                customer_category_id=customer_category_id
+                customer_category_id=customer_category_id,
+                currency_id=currency_id,
+                account_type_id=account_type_id
             )
         )
 
