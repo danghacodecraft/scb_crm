@@ -90,5 +90,19 @@ class CreateEKYCCustomerRequest(BaseSchema):
         return v
 
 
-class CreateEKYCCustomerResponse(BaseSchema):
-    customer_id: Optional[str] = Field(..., description='Mã khách hàng (ekyc)')
+class CreateUpdateEKYCCustomerResponse(BaseSchema):
+    customer_id: str = Field(..., description='Mã khách hàng (ekyc)')
+
+
+class UpdateEKYCCustomerRequest(BaseSchema):
+    customer_id: str = Field(...)
+    transaction_id: str = Field(...)
+    step: Optional[str] = Field(None)
+    step_status: Optional[str] = Field(None)
+    start_date: Optional[datetime] = Field(None)
+    end_date: Optional[datetime] = Field(None)
+    update_at: datetime = Field(None)
+    reason: Optional[str] = Field(None)
+    customer_cif: Optional[str] = Field(None)
+    customer_user: Optional[str] = Field(None)
+    customer_account_number: Optional[str] = Field(None)

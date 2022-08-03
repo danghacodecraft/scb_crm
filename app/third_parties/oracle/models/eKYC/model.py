@@ -30,7 +30,7 @@ class EKYCCustomer(Base):
     receive_ads = Column(NUMBER(1), nullable=True)
     longitude = Column(NUMBER, nullable=True)
     latitude = Column(NUMBER, nullable=True)
-    cif = Column(VARCHAR(500), nullable=True)
+    cif = Column('cif', VARCHAR(500), nullable=True)
     account_number = Column(VARCHAR(100), nullable=True)
     ekyc_step_info = Column(CLOB, nullable=True)
     job_title = Column(VARCHAR(100), nullable=True)

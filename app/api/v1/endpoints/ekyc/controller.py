@@ -1,8 +1,8 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.ekyc.repository import (
-    repos_create_ekyc_customer
+    repos_create_ekyc_customer, repos_get_ekyc_customer, repos_update_ekyc_customer
 )
-from app.api.v1.endpoints.ekyc.schema import CreateEKYCCustomerRequest
+from app.api.v1.endpoints.ekyc.schema import CreateEKYCCustomerRequest, UpdateEKYCCustomerRequest
 from app.utils.functions import orjson_dumps
 
 
@@ -80,6 +80,43 @@ class CtrEKYC(BaseController):
         self.call_repos(await repos_create_ekyc_customer(
             customer=customer_ekyc,
             steps=steps,
+            session=self.oracle_session
+        ))
+
+        return self.response(data=dict(
+            customer_id=customer_ekyc_id
+        ))
+
+    async def ctr_update_ekyc_customer(self, request: UpdateEKYCCustomerRequest):
+        customer_ekyc_id = request.customer_id
+
+        self.call_repos(await repos_get_ekyc_customer(customer_ekyc_id=customer_ekyc_id, session=self.oracle_session))
+
+        step_info = dict(
+            step=request.step,
+            start_date=request.start_date,
+            end_date=request.end_date,
+            step_status=request.step_status,
+            update_at=request.update_at,
+            reason=request.reason,
+            customer_id=request.customer_id,
+            transaction_id=request.transaction_id,
+        )
+
+        update_customer_info = {}
+        cif = request.customer_cif
+        user_eb = request.customer_user
+        account_number = request.customer_account_number
+        if cif:
+            update_customer_info.update(cif=cif)
+        if user_eb:
+            update_customer_info.update(user_eb=user_eb)
+        if account_number:
+            update_customer_info.update(account_number=account_number)
+
+        self.call_repos(await repos_update_ekyc_customer(
+            step_info=step_info,
+            update_customer_info=update_customer_info,
             session=self.oracle_session
         ))
 
