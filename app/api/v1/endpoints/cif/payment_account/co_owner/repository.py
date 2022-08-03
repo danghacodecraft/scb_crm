@@ -136,6 +136,14 @@ async def repos_get_casa_account(cif_id: str, session: Session) -> ReposReturn:
     return ReposReturn(data=casa_account)
 
 
+async def repos_get_info_customer(cif_number: str, session: Session) -> ReposReturn:
+    customer_info = session.execute(
+        select(Customer).filter(Customer.cif_number == cif_number)
+    ).scalar()
+
+    return ReposReturn(data=customer_info)
+
+
 @auto_commit
 async def repos_check_acc_agree(account_id: str, session: Session) -> ReposReturn:
     acc_agree_info = session.execute(
@@ -164,7 +172,7 @@ async def repos_check_file_id(file_uuid: str, session: Session) -> ReposReturn:
     return ReposReturn(data=file_uuid_info)
 
 
-@auto_commit
+# @auto_commit
 async def repos_save_co_owner(
         save_info_co_owner,
         save_account_holder,
