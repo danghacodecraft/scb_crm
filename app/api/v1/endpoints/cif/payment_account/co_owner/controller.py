@@ -21,14 +21,14 @@ from app.third_parties.oracle.models.master_data.address import AddressCountry
 from app.third_parties.oracle.models.master_data.customer import CustomerGender
 from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import (
+    CIF_AGREEMENT_AUTHORIZATION_1, CIF_AGREEMENT_AUTHORIZATION_2,
     CIF_METHOD_SIGN_ALL, CIF_METHOD_SIGN_ONE, CIF_METHOD_SIGN_PARTLY
 )
 from app.utils.constant.gw import GW_REQUEST_PARAMETER_CO_OWNER
 from app.utils.error_messages import (
     ERROR_ACCOUNT_ID_DOES_NOT_EXIST, ERROR_CIF_ID_NOT_EXIST,
-    ERROR_CIF_NUMBER_EXIST, ERROR_CIF_NUMBER_MORE_THAN_ONE,
-    ERROR_CIF_NUMBER_NOT_DUPLICATE, ERROR_CIF_NUMBER_NOT_EXIST,
-    ERROR_CIF_NUMBER_NOT_EXIST_IN_CO_OWNER, ERROR_DOCUMENT_ID_DOES_NOT_EXIST
+    ERROR_CIF_NUMBER_EXIST, ERROR_CIF_NUMBER_NOT_DUPLICATE,
+    ERROR_CIF_NUMBER_NOT_EXIST, ERROR_DOCUMENT_ID_DOES_NOT_EXIST
 )
 from app.utils.functions import dropdown, generate_uuid
 
@@ -120,18 +120,9 @@ class CtrCoOwner(BaseController):
         } for item in co_owner.joint_account_holders]
 
         list_cif_num = []
-        list_signature_cif_num_2 = []
-        list_signature_cif_num_3 = []
         for cif_num in co_owner.joint_account_holders:
             list_cif_num.append(cif_num.cif_number)
         save_agreement_authorization = []
-
-        for agreement_authorization in co_owner.agreement_authorization:
-            for signature_info in agreement_authorization.signature_list:
-                if agreement_authorization.method_sign == CIF_METHOD_SIGN_ONE:
-                    list_signature_cif_num_2.append(signature_info.cif_number)
-                elif agreement_authorization.method_sign == CIF_METHOD_SIGN_PARTLY:
-                    list_signature_cif_num_3.append(signature_info.cif_number)
 
         for agreement_authorization in co_owner.agreement_authorization:
             if agreement_authorization.method_sign == CIF_METHOD_SIGN_ALL:
@@ -152,11 +143,6 @@ class CtrCoOwner(BaseController):
                     })
 
             elif agreement_authorization.method_sign == CIF_METHOD_SIGN_ONE:
-                if len(list_signature_cif_num_2) != 1:
-                    return self.response_exception(
-                        msg=ERROR_CIF_NUMBER_MORE_THAN_ONE,
-                        loc=f"signature_list -> cif_number : {list_signature_cif_num_2}"
-                    )
                 for signature_item in agreement_authorization.signature_list:
                     if signature_item.cif_number not in list_cif_num:
                         return self.response_exception(
@@ -179,16 +165,6 @@ class CtrCoOwner(BaseController):
                         return self.response_exception(
                             msg=ERROR_CIF_NUMBER_NOT_EXIST,
                             loc=f"agreement_authorization -> cif_number : {signature_item.cif_number}"
-                        )
-                    if len(list_signature_cif_num_3) != len(set(list_signature_cif_num_3)):
-                        return self.response_exception(
-                            msg=ERROR_CIF_NUMBER_NOT_DUPLICATE,
-                            loc=f"signature_list: 3 -> cif_number : {list_signature_cif_num_3}"
-                        )
-                    if len(set(list_signature_cif_num_3)) > len(list_cif_num):
-                        return self.response_exception(
-                            msg=ERROR_CIF_NUMBER_NOT_EXIST_IN_CO_OWNER,
-                            loc=f"agreement_authorization -> cif_number : {list_signature_cif_num_3}"
                         )
 
                     save_agreement_authorization.append({
@@ -344,8 +320,6 @@ class CtrCoOwner(BaseController):
         number_of_joint_account_holder += 1
         signature_list_2 = []
         signature_list_1 = []
-        signature_list_3 = []
-        signature_list = []
         test_sign_type = []
         for _, joint_acc_agree_id, method_sign, agreement_authorization in account_holder_signs:
 
@@ -362,21 +336,13 @@ class CtrCoOwner(BaseController):
                 )
             )
 
-            for signature_info in method_sign_info:
-                agree_join_acc = dict(
-                    cif_number=signature_info.agree_join_acc_cif_num,
-                    full_name_vn=signature_info.agree_join_acc_name,
-                )
-                if method_sign.method_sign_type == CIF_METHOD_SIGN_ALL:
-                    if agree_join_acc not in signature_list:
-                        signature_list_1.append(agree_join_acc)
-                if method_sign.method_sign_type == CIF_METHOD_SIGN_PARTLY:
-                    if agree_join_acc not in signature_list:
-                        signature_list_3.append(agree_join_acc)
-                if method_sign.method_sign_type == CIF_METHOD_SIGN_ONE:
-                    signature_list_2.append(agree_join_acc)
-
-            if method_sign.method_sign_type == CIF_METHOD_SIGN_ALL:
+            if agreement_authorization.id == CIF_AGREEMENT_AUTHORIZATION_1:
+                for signature_info in method_sign_info:
+                    agree_join_acc = dict(
+                        cif_number=signature_info.agree_join_acc_cif_num,
+                        full_name_vn=signature_info.agree_join_acc_name,
+                    )
+                    signature_list_1.append(agree_join_acc)
                 agreement_authorizations.append(dict(
                     id=agreement_authorization.id,
                     code=agreement_authorization.code,
@@ -385,7 +351,13 @@ class CtrCoOwner(BaseController):
                     method_sign=method_sign.method_sign_type,
                     signature_list=signature_list_1
                 ))
-            if method_sign.method_sign_type == CIF_METHOD_SIGN_ONE:
+            elif agreement_authorization.id == CIF_AGREEMENT_AUTHORIZATION_2:
+                for signature_info in method_sign_info:
+                    agree_join_acc = dict(
+                        cif_number=signature_info.agree_join_acc_cif_num,
+                        full_name_vn=signature_info.agree_join_acc_name,
+                    )
+                    signature_list_2.append(agree_join_acc)
                 agreement_authorizations.append(dict(
                     id=agreement_authorization.id,
                     code=agreement_authorization.code,
@@ -393,15 +365,6 @@ class CtrCoOwner(BaseController):
                     agreement_flag=agreement_authorization.active_flag,
                     method_sign=method_sign.method_sign_type,
                     signature_list=signature_list_2
-                ))
-            if method_sign.method_sign_type == CIF_METHOD_SIGN_PARTLY:
-                agreement_authorizations.append(dict(
-                    id=agreement_authorization.id,
-                    code=agreement_authorization.code,
-                    name=agreement_authorization.name,
-                    agreement_flag=agreement_authorization.active_flag,
-                    method_sign=method_sign.method_sign_type,
-                    signature_list=signature_list_3
                 ))
 
         signatures = self.call_repos(await repos_get_co_owner_signatures(
