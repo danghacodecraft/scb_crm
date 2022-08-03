@@ -2,7 +2,6 @@ from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
-from app.api.v1.endpoints.ekyc.schema import UpdateEKYCCustomerRequest
 from app.third_parties.oracle.models.eKYC.model import EKYCCustomer, EKYCCustomerStep
 from app.utils.error_messages import ERROR_CUSTOMER_EKYC_NOT_EXIST
 
@@ -43,5 +42,7 @@ async def repos_get_ekyc_customer(customer_ekyc_id: str, session: Session):
         .filter(EKYCCustomer.customer_id == customer_ekyc_id)
     ).scalar()
     if not customer_ekyc:
-        return ReposReturn(is_error=True, msg=ERROR_CUSTOMER_EKYC_NOT_EXIST, loc=f"customer_ekyc_id: {customer_ekyc_id}")
+        return ReposReturn(
+            is_error=True, msg=ERROR_CUSTOMER_EKYC_NOT_EXIST, loc=f"customer_ekyc_id: {customer_ekyc_id}"
+        )
     return ReposReturn(data=customer_ekyc)

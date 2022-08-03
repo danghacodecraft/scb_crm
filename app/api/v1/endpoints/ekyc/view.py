@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from starlette import status
 
 from app.api.base.schema import ResponseData
