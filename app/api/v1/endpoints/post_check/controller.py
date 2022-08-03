@@ -434,16 +434,17 @@ class CtrKSS(BaseController):
                 current_user=self.current_user.user_info
             ))
             account_status = account_detail['retrieveCurrentAccountCASA_out']['data_output']['customer_info']['account_info']['account_status']
-            for key, value in account_status[0].items():
-                if key == "AC_STAT_NO_DR":
-                    if value == "N":
-                        customer_detail.update(dict(
-                            account_status=STATUS_OPEN
-                        ))
-                    else:
-                        customer_detail.update(dict(
-                            account_status=STATUS_CLOSE
-                        ))
+            if account_status:
+                for key, value in account_status[0].items():
+                    if key == "AC_STAT_NO_DR":
+                        if value == "N":
+                            customer_detail.update(dict(
+                                account_status=STATUS_OPEN
+                            ))
+                        else:
+                            customer_detail.update(dict(
+                                account_status=STATUS_CLOSE
+                            ))
         if customer_detail['status'] == "Thất bại":
             customer_detail['ekyc_level'] = None
 
