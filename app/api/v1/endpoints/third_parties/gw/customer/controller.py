@@ -9,7 +9,7 @@ from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_gw_cif_open_casa_account, repos_gw_get_authorized,
     repos_gw_get_co_owner, repos_gw_get_customer_info_detail,
     repos_gw_get_customer_info_list, repos_gw_open_cif,
-    repos_update_cif_number_customer, repos_update_casa_account
+    repos_update_casa_account, repos_update_cif_number_customer
 )
 from app.api.v1.endpoints.third_parties.gw.customer.schema import (
     CheckMobileNumRequest
@@ -1025,7 +1025,6 @@ class CtrGWCustomer(BaseController):
 
             is_success, response_data = self.call_repos(
                 await repos_gw_open_cif(
-                    cif_id=cif_id,
                     booking_id=BOOKING_ID,
                     customer_info=customer_info,
                     account_info=account_info,
