@@ -229,15 +229,6 @@ class CtrCoOwner(BaseController):
                 msg=ERROR_ACCOUNT_ID_DOES_NOT_EXIST, loc=account_id
             )
 
-        account_co_owner = self.call_repos(await repos_account_co_owner(
-            account_id=account_id,
-            session=self.oracle_session
-        ))
-        if not account_co_owner:
-            return self.response_exception(
-                msg=ERROR_ACCOUNT_ID_DOES_NOT_EXIST, loc=account_id
-            )
-
         document_uuid = ""
         file_uuid = ""
         if account_co_owner.joint_acc_agree_document_file_id:
