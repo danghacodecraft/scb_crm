@@ -590,23 +590,24 @@ class BaseController(ServiceKafka):
         )
 
     @staticmethod
-    def check_permission(current_user: AuthResponse, menu_code: str, group_role_code: str):
+    def check_permission(current_user: AuthResponse, menu_code: str, group_role_code_ex: str, group_role_code: str):
         permissions = []
         list_role_code = []
         for item in current_user.menu_list:
-            if item.menu_code == menu_code:
+            if item.menu_code == menu_code or item.menu_code == "EKYC_EXC":
                 permissions.extend(item.group_role_list)
 
         if not permissions:
             return False, {'msg': MESSAGE_STATUS[ERROR_MENU_CODE]}
-
+        # check permission ex
         for permission in permissions:
             # kiểm tra group_role_code có tồn tại không, kiểm tra permision có được kích hoạt
-            if permission.group_role_code == group_role_code and not permission.is_permission:
-                return False, {"msg": MESSAGE_STATUS[ERROR_GROUP_ROLE_CODE]}
-            list_role_code.append(permission.group_role_code)
-        # check group_role_code k tồn tại
-        if group_role_code not in list_role_code:
+            if permission.group_role_code == group_role_code and permission.is_permission:
+                list_role_code.append(permission.group_role_code)
+            if permission.group_role_code == group_role_code_ex and permission.is_permission:
+                list_role_code.append(permission.group_role_code)
+
+        if not list_role_code:
             return False, {'msg': MESSAGE_STATUS[ERROR_GROUP_ROLE_CODE]}
 
         return True, {"msg": is_success}
