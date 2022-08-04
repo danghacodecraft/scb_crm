@@ -26,7 +26,8 @@ from app.utils.constant.cif import (
 from app.utils.constant.ekyc import (
     EKYC_DATE_FORMAT, EKYC_DEFAULT_VALUE, EKYC_REGION_ZONE_MAPPING,
     ERROR_CODE_FAILED_EKYC, ERROR_CODE_PROCESSING_EKYC, GROUP_ROLE_CODE_AP,
-    GROUP_ROLE_CODE_IN, GROUP_ROLE_CODE_VIEW, MENU_CODE, MENU_CODE_VIEW,
+    GROUP_ROLE_CODE_AP_EX, GROUP_ROLE_CODE_IN, GROUP_ROLE_CODE_IN_EX,
+    GROUP_ROLE_CODE_VIEW, GROUP_ROLE_CODE_VIEW_EX, MENU_CODE, MENU_CODE_VIEW,
     STATUS_CLOSE, STATUS_FAILED, STATUS_OPEN
 )
 from app.utils.error_messages import ERROR_PERMISSION, MESSAGE_STATUS
@@ -46,7 +47,9 @@ class CtrKSS(BaseController):
         is_success, response = self.check_permission(
             current_user=current_user,
             menu_code=MENU_CODE,
-            group_role_code=GROUP_ROLE_CODE_VIEW)
+            group_role_code_ex=GROUP_ROLE_CODE_VIEW_EX,
+            group_role_code=GROUP_ROLE_CODE_VIEW
+        )
         if not is_success:
             return self.response_exception(
                 msg=MESSAGE_STATUS[ERROR_PERMISSION],
@@ -101,6 +104,7 @@ class CtrKSS(BaseController):
         is_success, response = self.check_permission(
             current_user=current_user,
             menu_code=MENU_CODE,
+            group_role_code_ex=GROUP_ROLE_CODE_VIEW_EX,
             group_role_code=GROUP_ROLE_CODE_VIEW)
 
         if not is_success:
@@ -133,6 +137,7 @@ class CtrKSS(BaseController):
         is_success, response = self.check_permission(
             current_user=current_user,
             menu_code=MENU_CODE,
+            group_role_code_ex=GROUP_ROLE_CODE_VIEW_EX,
             group_role_code=GROUP_ROLE_CODE_VIEW)
 
         if not is_success:
@@ -156,6 +161,7 @@ class CtrKSS(BaseController):
         is_success, response = self.check_permission(
             current_user=current_user,
             menu_code=MENU_CODE,
+            group_role_code_ex=GROUP_ROLE_CODE_VIEW_EX,
             group_role_code=GROUP_ROLE_CODE_VIEW)
 
         if not is_success:
@@ -184,6 +190,7 @@ class CtrKSS(BaseController):
         is_success, response = self.check_permission(
             current_user=current_user,
             menu_code=MENU_CODE,
+            group_role_code_ex=GROUP_ROLE_CODE_VIEW_EX,
             group_role_code=GROUP_ROLE_CODE_VIEW)
 
         if not is_success:
@@ -215,6 +222,7 @@ class CtrKSS(BaseController):
         is_success, response = self.check_permission(
             current_user=current_user,
             menu_code=MENU_CODE,
+            group_role_code_ex=GROUP_ROLE_CODE_VIEW_EX,
             group_role_code=GROUP_ROLE_CODE_VIEW)
 
         if not is_success:
@@ -267,6 +275,7 @@ class CtrKSS(BaseController):
         is_success, response = self.check_permission(
             current_user=current_user,
             menu_code=MENU_CODE,
+            group_role_code_ex=GROUP_ROLE_CODE_VIEW_EX,
             group_role_code=GROUP_ROLE_CODE_VIEW)
 
         if not is_success:
@@ -287,6 +296,7 @@ class CtrKSS(BaseController):
         is_success, response = self.check_permission(
             current_user=current_user,
             menu_code=MENU_CODE,
+            group_role_code_ex=GROUP_ROLE_CODE_VIEW_EX,
             group_role_code=GROUP_ROLE_CODE_VIEW)
 
         if not is_success:
@@ -312,6 +322,7 @@ class CtrKSS(BaseController):
         is_success, response = self.check_permission(
             current_user=current_user,
             menu_code=MENU_CODE_VIEW,
+            group_role_code_ex=GROUP_ROLE_CODE_IN_EX,
             group_role_code=GROUP_ROLE_CODE_IN)
 
         if not is_success:
@@ -350,6 +361,7 @@ class CtrKSS(BaseController):
         is_success, response = self.check_permission(
             current_user=current_user,
             menu_code=MENU_CODE_VIEW,
+            group_role_code_ex=GROUP_ROLE_CODE_AP_EX,
             group_role_code=GROUP_ROLE_CODE_AP)
 
         if not is_success:
@@ -392,6 +404,7 @@ class CtrKSS(BaseController):
         is_success, response = self.check_permission(
             current_user=current_user,
             menu_code=MENU_CODE,
+            group_role_code_ex=GROUP_ROLE_CODE_VIEW_EX,
             group_role_code=GROUP_ROLE_CODE_VIEW)
 
         if not is_success:
