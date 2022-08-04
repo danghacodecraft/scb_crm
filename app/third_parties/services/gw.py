@@ -485,7 +485,8 @@ class ServiceGW:
             current_user: UserInfoResponse,
             cif_number,
             self_selected_account_flag: bool,
-            casa_account_info
+            casa_account_info,
+            maker_staff_name
     ):
         """
         Mở tài khoản thanh toán
@@ -565,7 +566,7 @@ class ServiceGW:
                     # "staff_name": current_user.username
                 },
                 "staff_info_maker": {
-                    "staff_name": casa_account_info.maker_id
+                    "staff_name": maker_staff_name
                 },
                 "udf_info": {
                     "udf_json_array": []
@@ -575,7 +576,7 @@ class ServiceGW:
         request_data = self.gw_create_request_body(
             current_user=current_user, function_name=GW_FUNCTION_OPEN_CASA, data_input=data_input
         )
-
+        print(json.dumps(data_input, indent=2))
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_OPEN_CASA_ACCOUNT}"
 
         return_errors = dict(
@@ -1086,44 +1087,7 @@ class ServiceGW:
     ####################################################################################################################
     # START --- OPEN INTERNET BANKING
     ####################################################################################################################
-    async def get_open_ib(self, current_user: UserInfoResponse, request):
-        authentication_info = []
-        for authentication in request.authentication_info:
-            authentication_info.append({
-                "authentication_code": authentication.authentication_code
-            })
-
-        data_input = {
-            "ebank_ibmb_info": {
-                "ebank_ibmb_username": request.ebank_ibmb_info.ebank_ibmb_username,
-                "ebank_ibmb_mobilephone": request.ebank_ibmb_info.ebank_ibmb_mobilephone
-            },
-            "cif_info": {
-                "cif_num": request.cif_info.cif_num
-            },
-            "address_info": {
-                "line": request.address_info.line,
-                "ward_name": request.address_info.ward_name,
-                "district_name": request.address_info.district_name,
-                "city_name": request.address_info.city_name,
-                "city_code": request.address_info.city_code,
-            },
-            "customer_info": {
-                "full_name": request.customer_info.full_name,
-                "first_name": request.customer_info.first_name,
-                "middle_name": request.customer_info.middle_name,
-                "last_name": request.customer_info.last_name,
-                "birthday": date_to_string(request.customer_info.birthday),
-                "email": request.customer_info.email,
-            },
-            "authentication_info": authentication_info,
-            "service_package_info": {
-                "service_package_code": request.service_package_info.service_package_code
-            },
-            "staff_referer": {
-                "staff_code": request.staff_referer.staff_code
-            }
-        }
+    async def get_open_ib(self, current_user: UserInfoResponse, data_input):
 
         request_data = self.gw_create_request_body(
             current_user=current_user, function_name="openIB_in", data_input=data_input
@@ -1135,38 +1099,9 @@ class ServiceGW:
             request_data=request_data,
             api_url=api_url,
             output_key='openIB_out',
-            service_name='openIB'
+            service_name='OPEN_EBANK'
         )
         return response_data
-
-        # return_errors = dict(
-        #     loc="SERVICE GW",
-        #     msg="",
-        #     detail=""
-        # )
-        # return_data = dict(
-        #     status=None,
-        #     data=None,
-        #     errors=return_errors
-        # )
-        #
-        # try:
-        #     async with self.session.post(url=api_url, json=request_data) as response:
-        #         logger.log("SERVICE", f"[GW] {response.status} {api_url}")
-        #         if response.status != status.HTTP_200_OK:
-        #             if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-        #                 return_error = await response.json()
-        #                 return_data.update(
-        #                     status=response.status,
-        #                     errors=return_error['errors']
-        #                 )
-        #             return False, return_data
-        #         else:
-        #             return_data = await response.json()
-        #             return True, return_data
-        # except aiohttp.ClientConnectorError as ex:
-        #     logger.error(str(ex))
-        #     return False, return_data
 
     ####################################################################################################################
     # END --- OPEN INTERNET BANKING

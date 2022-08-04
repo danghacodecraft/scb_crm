@@ -1,4 +1,4 @@
-from sqlalchemy import CLOB, VARCHAR, Column, DateTime, text, DATE
+from sqlalchemy import CLOB, DATE, VARCHAR, Column
 from sqlalchemy.dialects.oracle import NUMBER
 
 from app.third_parties.oracle.base import Base
