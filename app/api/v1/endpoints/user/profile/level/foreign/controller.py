@@ -1,8 +1,13 @@
 from app.api.base.controller import BaseController
-from app.api.v1.endpoints.user.profile.level.foreign.repository import (
-    repos_foreign
+from app.api.v1.endpoints.third_parties.gw.employee.repository import (
+    repos_gw_get_retrieve_employee_info_from_code
+)
+from app.utils.constant.gw import (
+    GW_DATE_FORMAT, GW_DATETIME_FORMAT,
+    GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_OUT
 )
 from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
+from app.utils.functions import date_string_to_other_date_string_format
 
 
 class CtrForeign(BaseController):
@@ -17,24 +22,23 @@ class CtrForeign(BaseController):
 
         employee_id = current_user.code
 
-        is_success, foreign = self.call_repos(
-            await repos_foreign(
-                employee_id=employee_id,
-                session=self.oracle_session
-            )
+        foreign = self.call_repos(await repos_gw_get_retrieve_employee_info_from_code(
+            staff_code=employee_id, current_user=self.current_user
+        ))
+
+        foreign_info = foreign[GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_OUT]["data_output"][
+            "employee_info"]['language_info_item']
+
+        certification_date = date_string_to_other_date_string_format(
+            date_input=foreign_info['english_issue_date'],
+            from_format=GW_DATETIME_FORMAT,
+            to_format=GW_DATE_FORMAT
         )
-
-        if not is_success:
-            return self.response_exception(msg=str(foreign))
-
-        response_foreign = []
-        foreign_language = foreign['level']['foreign_language']
-        if foreign_language['certificate'] and foreign_language['level'] and foreign_language['mark'] and foreign_language['mark']:
-            response_foreign = [dict(
-                language_type=foreign_language['certificate'],
-                level=foreign_language['level'],
-                gpa=foreign_language['mark'],
-                certification_date=foreign_language['mark']
-            )]
+        response_foreign = [dict(
+            language_type=foreign_info['english'],
+            level=foreign_info['english_level'],
+            gpa=foreign_info['english_mark'],
+            certification_date=certification_date
+        )]
 
         return self.response(data=response_foreign)

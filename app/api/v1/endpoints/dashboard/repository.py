@@ -5,7 +5,6 @@ from sqlalchemy import and_, desc, distinct, func, or_, select
 from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn
-from app.settings.event import service_dwh
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
     CustomerAddress
 )
@@ -31,7 +30,6 @@ from app.third_parties.oracle.models.master_data.others import (
     TransactionStageStatus
 )
 from app.utils.constant.cif import BUSINESS_FORM_WITHDRAW, CONTACT_ADDRESS_CODE
-from app.utils.constant.dwh import NAME_ACCOUNTING_ENTRY
 from app.utils.functions import date_to_datetime, end_time_of_day
 from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese
 
@@ -421,20 +419,20 @@ async def repos_get_customer(
 
     return ReposReturn(data=customers)
 
-
-async def repos_accounting_entry(
-        branch_code: str,
-) -> ReposReturn:
-    data_response = await service_dwh.accounting_entry(branch_code=branch_code, module=NAME_ACCOUNTING_ENTRY)
-
-    return ReposReturn(data=data_response)
-
-
-async def repos_region(
-) -> ReposReturn:
-    data_response = await service_dwh.get_region()
-
-    return ReposReturn(data=data_response)
+#
+# async def repos_accounting_entry(
+#         branch_code: str,
+# ) -> ReposReturn:
+#     data_response = await service_dwh.accounting_entry(branch_code=branch_code, module=NAME_ACCOUNTING_ENTRY)
+#
+#     return ReposReturn(data=data_response)
+#
+#
+# async def repos_region(
+# ) -> ReposReturn:
+#     data_response = await service_dwh.get_region()
+#
+#     return ReposReturn(data=data_response)
 
 
 async def repos_get_open_casa_info_from_booking(
