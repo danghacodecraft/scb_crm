@@ -1,5 +1,6 @@
 from app.api.base.repository import ReposReturn
 from app.settings.event import service_ekyc
+from app.utils.constant.ekyc import STATUS_SUCCESS
 from app.utils.error_messages import ERROR_CALL_SERVICE_EKYC
 
 
@@ -12,7 +13,7 @@ async def repos_get_list_kss(
     if not is_success:
         return ReposReturn(is_error=True, loc="LIST KSS", detail=response.get('message'))
     for item in response.get('detail'):
-        if item['status'] == "Thành công" and not item['kss_status']:
+        if item['status'] == STATUS_SUCCESS and not item['kss_status']:
             item['kss_status'] = "Chờ hậu kiểm"
             item['date_kss'] = item['trans_date']
 

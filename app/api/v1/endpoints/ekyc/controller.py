@@ -13,7 +13,7 @@ from app.utils.error_messages import (
     ERROR_CUSTOMER_EKYC_EXIST, ERROR_CUSTOMER_EKYC_NOT_EXIST,
     ERROR_INVALID_TOKEN
 )
-from app.utils.functions import orjson_dumps
+from app.utils.functions import now, orjson_dumps
 
 
 class CtrEKYC(BaseController):
@@ -76,7 +76,8 @@ class CtrEKYC(BaseController):
             # ekyc_step=request.ekyc_step,
             # kss_status=request.kss_status,
             # status=request.status,
-            user_eb=request.user_eb
+            user_eb=request.user_eb,
+            created_at=now()
         )
 
         steps = []
@@ -93,7 +94,8 @@ class CtrEKYC(BaseController):
                         reason=info.reason,
                         update_at=info.update_at,
                         start_date=info.start_date,
-                        end_date=info.end_date
+                        end_date=info.end_date,
+                        created_at=now()
                     ))
         self.call_repos(await repos_create_ekyc_customer(
             customer=customer_ekyc,
@@ -126,6 +128,7 @@ class CtrEKYC(BaseController):
             reason=request.reason,
             customer_id=request.customer_id,
             transaction_id=request.transaction_id,
+            created_at=now()
         )
 
         update_customer_info = {}

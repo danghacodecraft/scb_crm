@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import List, Optional
 
 from pydantic import Field, validator
@@ -64,11 +64,11 @@ class BranchResponse(BaseSchema):
     branch_name: str = Field(..., description="Tên chi nhánh")
 
 
-class AccountingEntryResponse(BaseSchema):
-    id: str = Field(..., description="Mã bút toán")
-    title: str = Field(..., description="Tiêu đề bút toán")
-    val: float = Field(..., description="Giá trị bút toán")
-    unit: str = Field(..., description="Đơn vị bút toán")
+class SelectDataForChardDashBoardRequest(BaseSchema):
+    from_date: date = Field(..., description="Từ ngày")
+    to_date: date = Field(..., description="Đến ngày")
+    region_id: str = Field('ALL', description="Mã vùng")
+    branch_code: str = Field('ALL', description="Mã chi nhánh")
 
 
 class ListRegionResponse(BaseSchema):

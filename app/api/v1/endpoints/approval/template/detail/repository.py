@@ -36,12 +36,20 @@ from app.third_parties.oracle.models.master_data.customer import (
 )
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import (
-    AverageIncomeAmount, Career, FatcaCategory, MaritalStatus, Position,
-    ResidentStatus
+    AverageIncomeAmount, Branch, Career, FatcaCategory, MaritalStatus,
+    Position, ResidentStatus
 )
 from app.third_parties.services.file import ServiceFile
 from app.third_parties.services.tms import ServiceTMS
 from app.utils.error_messages import ERROR_CALL_SERVICE_TEMPLATE
+
+
+async def repos_branch_name(branch_id: str, session: Session):
+    branch_name_info = session.execute(
+        select(Branch.name).filter(Branch.id == branch_id)
+    ).scalar()
+
+    return ReposReturn(data=branch_name_info)
 
 
 async def repo_form(data_request: dict, path: str) -> ReposReturn:
