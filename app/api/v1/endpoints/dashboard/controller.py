@@ -13,6 +13,9 @@ from app.api.v1.endpoints.dashboard.repository import (
 from app.api.v1.endpoints.third_parties.gw.category.controller import (
     CtrSelectCategory
 )
+from app.api.v1.endpoints.third_parties.gw.statistics.controller import (
+    CtrGWStatistic
+)
 from app.utils.constant.business_type import (
     BUSINESS_TYPE_AMOUNT_BLOCK, BUSINESS_TYPE_AMOUNT_UNBLOCK,
     BUSINESS_TYPE_CASA_TOP_UP, BUSINESS_TYPE_CASA_TRANSFER,
@@ -461,23 +464,14 @@ class CtrDashboard(BaseController):
 
         return self.response(data=response_data)
 
-    # async def ctr_accounting_entry(self):
-    #     current_user = self.current_user.user_info
-    #     if not current_user:
-    #         return self.response_exception(
-    #             msg=USER_NOT_EXIST,
-    #             detail=MESSAGE_STATUS[USER_NOT_EXIST],
-    #             loc="current_user"
-    #         )
-    #
-    #     branch_code = current_user.hrm_branch_code
-    #
-    #     is_success, contract_info = self.call_repos(
-    #         await repos_accounting_entry(
-    #             branch_code=branch_code
-    #         )
-    #     )
-    #     if not is_success:
-    #         return self.response_exception(msg=str(contract_info))
-    #
-    #     return self.response(data=contract_info)
+    async def ctr_accounting_entry(self, request):
+        current_user = self.current_user.user_info
+        if not current_user:
+            return self.response_exception(
+                msg=USER_NOT_EXIST,
+                detail=MESSAGE_STATUS[USER_NOT_EXIST],
+                loc="current_user"
+            )
+        contract_info = await CtrGWStatistic(current_user).ctr_gw_select_data_for_chard_dashboard(request=request)
+
+        return self.response(data=contract_info.get('data'))
