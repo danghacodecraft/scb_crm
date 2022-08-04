@@ -25,9 +25,9 @@ from app.utils.constant.cif import (
 )
 from app.utils.constant.ekyc import (
     EKYC_DATE_FORMAT, EKYC_DEFAULT_VALUE, EKYC_REGION_ZONE_MAPPING,
-    ERROR_CODE_EKYC, ERROR_CODE_FAILED_EKYC, ERROR_CODE_PROCESSING_EKYC,
-    GROUP_ROLE_CODE_AP, GROUP_ROLE_CODE_IN, GROUP_ROLE_CODE_VIEW, MENU_CODE,
-    MENU_CODE_VIEW, STATUS_CLOSE, STATUS_FAILED, STATUS_OPEN
+    ERROR_CODE_FAILED_EKYC, ERROR_CODE_PROCESSING_EKYC, GROUP_ROLE_CODE_AP,
+    GROUP_ROLE_CODE_IN, GROUP_ROLE_CODE_VIEW, MENU_CODE, MENU_CODE_VIEW,
+    STATUS_CLOSE, STATUS_FAILED, STATUS_OPEN
 )
 from app.utils.error_messages import ERROR_PERMISSION, MESSAGE_STATUS
 from app.utils.functions import (
@@ -454,8 +454,6 @@ class CtrKSS(BaseController):
                     customer_detail['error_code_ekyc'] = ERROR_CODE_FAILED_EKYC[first_row['step']]
                 if customer_detail.get('status') == "PROCESSING":
                     customer_detail['error_code_ekyc'] = ERROR_CODE_PROCESSING_EKYC[first_row['step']]
-                if customer_detail.get('status') == "FAILED":
-                    customer_detail['error_code_ekyc'] = ERROR_CODE_EKYC[first_row['step']]
 
         return self.response(data=customer_detail)
 
