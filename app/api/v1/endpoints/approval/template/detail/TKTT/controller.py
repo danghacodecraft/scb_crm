@@ -1,4 +1,4 @@
-from num2words import num2words
+# from num2words import num2words
 
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.repository import (
@@ -162,7 +162,8 @@ class CtrTemplateDetailTKTT(BaseController):
                 "S1.A.1.5.12": str(amount),
                 "S1.A.1.5.13": '100000',               # Todo
                 "S1.A.1.5.14": '10000',                # Todo
-                "S1.A.1.5.15": num2words(amount, lang='vi') + " đồng",
+                "S1.A.1.5.15": " đồng",
+                # "S1.A.1.5.15": num2words(amount, lang='vi') + " đồng",
                 "S1.A.1.5.16": 'Phong tỏa tài khoản',  # Todo
                 "S1.A.1.5.17": 'Đặng Thị Hồng Hà',     # Todo
                 "S1.A.1.5.18": '0989868686',           # Todo
@@ -229,7 +230,8 @@ class CtrTemplateDetailTKTT(BaseController):
                 "S1.A.1.5.12": str(amount),
                 "S1.A.1.5.13": '100000',  # Todo
                 "S1.A.1.5.14": '10000',  # Todo
-                "S1.A.1.5.15": num2words(amount, lang='vi') + " đồng",
+                "S1.A.1.5.15": " đồng",
+                # "S1.A.1.5.15": num2words(amount, lang='vi') + " đồng",
                 "S1.A.1.5.16": 'Phong tỏa tài khoản',  # Todo
                 "S1.A.1.5.17": 'Đặng Thị Hồng Hà',  # Todo
                 "S1.A.1.5.18": '0989868686',  # Todo
