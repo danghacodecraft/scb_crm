@@ -70,7 +70,7 @@ async def repos_login(username: str, password: str) -> ReposReturn:
         zlib.compress(orjson.dumps(data_idm['user_info']))
     ).decode('utf-8')
 
-    await service_redis.set(data_idm["user_info"]['username'], data_idm['menu_list'])
+    await service_redis.getset(data_idm["user_info"]['username'], data_idm['menu_list'])
 
     lst_data = []
     list(map(lambda x: lst_data.extend(x['group_role_list']), data_idm['menu_list']))
