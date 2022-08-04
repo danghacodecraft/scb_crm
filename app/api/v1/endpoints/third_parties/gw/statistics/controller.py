@@ -127,7 +127,7 @@ class CtrGWStatistic(BaseController):
                     from_date=request.from_date,
                     to_date=request.to_date,
                     search_name=search_name,
-                    current_user=self.current_user,
+                    current_user=self.current_user.user_info,
                     region_id=request.region_id,
                     branch_code=request.branch_code
                 ))
