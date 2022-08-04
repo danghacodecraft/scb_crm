@@ -49,7 +49,7 @@ class CtrTemplateDetailCIF(BaseController):
         if template_id == CIF_TEMPLATE_6:
             template = await self.ctr_form_6(cif_id)
 
-        return self.response(template)
+        return template
 
     async def ctr_form_1(self, cif_id: str):
         """
@@ -273,7 +273,7 @@ class CtrTemplateDetailCIF(BaseController):
 
         data_tms = self.call_repos(
             await repo_form(data_request=data_request, path=PATH_FORM_1))
-        return self.response(data_tms)
+        return data_tms
 
     async def ctr_form_2(self, cif_id: str):
         """
@@ -496,7 +496,7 @@ class CtrTemplateDetailCIF(BaseController):
 
         data_tms = self.call_repos(
             await repo_form(data_request=data_request, path=PATH_FORM_2))
-        return self.response(data_tms)
+        return data_tms
 
     async def ctr_form_3(self, cif_id: str):
         """
@@ -557,7 +557,7 @@ class CtrTemplateDetailCIF(BaseController):
 
         data_tms = self.call_repos(
             await repo_form(data_request=data_request, path=PATH_FORM_6))
-        return self.response(data_tms)
+        return data_tms
 
     async def ctr_form_4(self, cif_id: str):
         """
@@ -617,7 +617,7 @@ class CtrTemplateDetailCIF(BaseController):
 
         data_tms = self.call_repos(
             await repo_form(data_request=data_request, path=PATH_FORM_4))
-        return self.response(data_tms)
+        return data_tms
 
     async def ctr_form_5(self, cif_id: str):
         """
@@ -679,7 +679,7 @@ class CtrTemplateDetailCIF(BaseController):
 
         data_tms = self.call_repos(
             await repo_form(data_request=data_request, path=PATH_FORM_5))
-        return self.response(data_tms)
+        return data_tms
 
     async def ctr_form_6(self, cif_id: str):
         """
@@ -744,4 +744,4 @@ class CtrTemplateDetailCIF(BaseController):
 
         data_tms = self.call_repos(
             await repo_form(data_request=data_request, path=PATH_FORM_3))
-        return self.response(data_tms)
+        return data_tms
