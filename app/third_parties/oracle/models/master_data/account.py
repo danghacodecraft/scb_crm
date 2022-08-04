@@ -5,6 +5,7 @@ from sqlalchemy.orm import relationship
 from app.third_parties.oracle.base import Base
 from app.third_parties.oracle.models.master_data.customer import \
     CustomerCategory  # noqa
+from app.third_parties.oracle.models.master_data.others import Currency  # noqa
 
 
 class AccountClass(Base):
@@ -44,6 +45,28 @@ class AccountClassCustomerCategory(Base):
 
     account_class = relationship('AccountClass')
     customer_category = relationship('CustomerCategory')
+
+
+class AccountClassType(Base):
+    __tablename__ = 'crm_acc_class_type'
+    account_class_id = Column(
+        'acc_class_id', ForeignKey('crm_acc_class.acc_class_id'), primary_key=True, comment='Mã loại hình khoản'
+    )
+    account_type_id = Column('acc_type_id', ForeignKey('crm_acc_type.acc_type_id'))
+
+    account_class = relationship('AccountClass')
+    account_type = relationship('AccountType')
+
+
+class AccountClassCurrency(Base):
+    __tablename__ = 'crm_acc_class_currency'
+    account_class_id = Column(
+        'acc_class_id', ForeignKey('crm_acc_class.acc_class_id'), primary_key=True, comment='Mã loại hình khoản'
+    )
+    currency_id = Column('currency_id', ForeignKey('crm_currency.currency_id'))
+
+    account_class = relationship('AccountClass')
+    currency = relationship('Currency')
 
 
 class AccountType(Base):

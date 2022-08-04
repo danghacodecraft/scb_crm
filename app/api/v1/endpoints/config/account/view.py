@@ -38,10 +38,14 @@ async def view_account_type_info(
     )
 )
 async def view_account_class_info(
-        customer_category_id=Query(None, description="Loại khách hàng"),
+        customer_category_id=Query(..., description="Loại khách hàng"),
+        currency_id=Query(..., description="Loại tiền tệ"),
+        account_type_id=Query(..., description="Gói tài khoản"),
         current_user=Depends(get_current_user_from_header())
 ):
     account_class_info = await CtrConfigAccount(current_user).ctr_account_class_info(
-        customer_category_id=customer_category_id
+        customer_category_id=customer_category_id,
+        currency_id=currency_id,
+        account_type_id=account_type_id
     )
     return ResponseData[List[DropdownResponse]](**account_class_info)
