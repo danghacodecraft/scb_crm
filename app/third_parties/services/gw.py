@@ -576,7 +576,7 @@ class ServiceGW:
         request_data = self.gw_create_request_body(
             current_user=current_user, function_name=GW_FUNCTION_OPEN_CASA, data_input=data_input
         )
-        print(json.dumps(data_input, indent=2))
+
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_OPEN_CASA_ACCOUNT}"
 
         return_errors = dict(
