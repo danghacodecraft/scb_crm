@@ -755,6 +755,10 @@ async def repos_push_internet_banking_to_gw(booking_id: str, session: Session, r
         )
     e_banking = e_banking_result.data
 
+    # Không tìm thấy thông tin Ebanking có thể do khách hàng không đăng ký
+    if not e_banking:
+        return ReposReturn(data=None)
+
     authentication_info = []
     for authentication_code in e_banking["authentication_info_list"]:
         authentication_info.append({
@@ -846,6 +850,10 @@ async def repos_push_sms_casa_to_gw(booking_id: str, session: Session, current_u
             detail=sms_casa_result.detail,
             error_status_code=sms_casa_result.error_status_code
         )
+
+    # Không tìm thấy sms_casa có thể do khách hàng không đăng ký
+    if not sms_casa_result.data:
+        return ReposReturn(data=None)
 
     # @TODO: hard code account_type là "TT" biến động số dư
     account_info = {

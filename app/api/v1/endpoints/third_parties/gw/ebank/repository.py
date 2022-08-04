@@ -79,8 +79,9 @@ async def repos_get_e_banking_from_db_by_cif_id(cif_id: str, session: Session):
         .filter(EBankingInfo.customer_id == cif_id)
     ).first()
 
+    # Không tìm thấy thông tin Ebanking có thể do khách hàng không đăng ký
     if not e_banking_row:
-        return ReposReturn(is_error=True, msg=ERROR_NO_DATA, loc="E_BANKING_NOT_FOUND")
+        return ReposReturn(data=None)
 
     e_banking = {
         "id": e_banking_row.id,
@@ -122,6 +123,6 @@ async def repos_get_sms_casa_from_db_by_cif_id(cif_id, session: Session):
     ).scalars().all()
 
     if not sms_casa_row:
-        return ReposReturn(is_error=True, msg=ERROR_NO_DATA, loc="repos_get_sms_casa_from_db_by_cif_id -> sms_casa")
+        return ReposReturn(data=None)
 
     return ReposReturn(data=sms_casa_row)

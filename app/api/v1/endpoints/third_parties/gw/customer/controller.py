@@ -835,7 +835,8 @@ class CtrGWCustomer(BaseController):
                     ))
 
             # Push Registry SMS CASA
-            if not is_complete_sms:
+            # RULE: có ebanking mới được đăng ký sms cho TKTT
+            if is_complete_eb and not is_complete_sms:
                 if not casa_account_number:
                     casa_account_number = self.call_repos(await repos_get_casa_account_number_open_cif(
                         cif_id=cif_id, session=self.oracle_session))
