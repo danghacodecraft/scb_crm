@@ -1,5 +1,3 @@
-from typing import Optional
-
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.config.account.repository import (
     repos_get_account_class
@@ -20,9 +18,9 @@ class CtrConfigAccount(BaseController):
 
     async def ctr_account_class_info(
             self,
-            customer_category_id: Optional[str] = None,
-            currency_id: Optional[str] = None,
-            account_type_id: Optional[str] = None
+            customer_category_id: str,
+            currency_id: str,
+            account_type_id: str
     ):
         account_class_info = self.call_repos(
             await repos_get_account_class(
