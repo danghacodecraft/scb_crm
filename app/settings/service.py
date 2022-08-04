@@ -16,7 +16,8 @@ SERVICE = {
         "x-transaction-id": "CRM_TEST",
         "authorization": f"bearer {os.getenv('SERVICE_EKYC_BEARER_TOKEN')}",
         'otp': os.getenv('SERVICE_EKYC_OTP'),
-        'token': os.getenv('SERVICE_EKYC_BEARER_TOKEN')
+        'token': os.getenv('SERVICE_EKYC_BEARER_TOKEN'),
+        'server-auth': os.getenv('SERVICE_EKYC_SERVER_TOKEN')
     },
     "template": {
         "url": os.getenv("SERVICE_TEMPLATE_URL"),
@@ -63,5 +64,11 @@ SERVICE = {
         "sasl_plain_password": os.getenv("KAFKA_SASL_PLAIN_PASSWORD"),
         "producer_topic": os.getenv("KAFKA_PRODUCER_TOPIC"),
         "message_max_bytes": os.getenv("KAFKA_MESSAGE_MAX_BYTES"),
+    },
+    "redis": {
+        "host": os.getenv("REDIS_HOST"),
+        "port": os.getenv("REDIS_PORT"),
+        "password": os.getenv("REDIS_PASSWORD"),
+        "database": os.getenv("REDIS_DATABASE"),
     }
 }

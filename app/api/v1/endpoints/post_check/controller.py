@@ -25,8 +25,7 @@ from app.utils.constant.cif import (
 )
 from app.utils.constant.ekyc import (
     EKYC_DATE_FORMAT, EKYC_DEFAULT_VALUE, EKYC_REGION_ZONE_MAPPING,
-    ERROR_CODE_EKYC, ERROR_UPLOAD_ATTACHMENT_ID_BACK,
-    ERROR_UPLOAD_ATTACHMENT_ID_FRONT, ERROR_UPLOAD_ATTACHMENT_PORTRAIT,
+    ERROR_CODE_EKYC, ERROR_CODE_FAILED_EKYC, ERROR_CODE_PROCESSING_EKYC,
     GROUP_ROLE_CODE_AP, GROUP_ROLE_CODE_IN, GROUP_ROLE_CODE_VIEW, MENU_CODE,
     MENU_CODE_VIEW, STATUS_CLOSE, STATUS_FAILED, STATUS_OPEN
 )
@@ -434,28 +433,29 @@ class CtrKSS(BaseController):
                 current_user=self.current_user.user_info
             ))
             account_status = account_detail['retrieveCurrentAccountCASA_out']['data_output']['customer_info']['account_info']['account_status']
-            for key, value in account_status[0].items():
-                if key == "AC_STAT_NO_DR":
-                    if value == "N":
-                        customer_detail.update(dict(
-                            account_status=STATUS_OPEN
-                        ))
-                    else:
-                        customer_detail.update(dict(
-                            account_status=STATUS_CLOSE
-                        ))
+            if account_status:
+                for key, value in account_status[0].items():
+                    if key == "AC_STAT_NO_DR":
+                        if value == "N":
+                            customer_detail.update(dict(
+                                account_status=STATUS_OPEN
+                            ))
+                        else:
+                            customer_detail.update(dict(
+                                account_status=STATUS_CLOSE
+                            ))
         if customer_detail['status'] == "Thất bại":
             customer_detail['ekyc_level'] = None
 
         if customer_detail['ekyc_step']:
             first_row = customer_detail['ekyc_step'][0]
             if STATUS_FAILED in first_row['step_status']:
-                if first_row['step'] == ERROR_UPLOAD_ATTACHMENT_PORTRAIT\
-                        or first_row['step'] == ERROR_UPLOAD_ATTACHMENT_ID_BACK\
-                        or first_row['step'] == ERROR_UPLOAD_ATTACHMENT_ID_FRONT:
-                    customer_detail['error_code_ekyc'] = "TC08: Khác"
-
-                customer_detail['error_code_ekyc'] = ERROR_CODE_EKYC[first_row['step']]
+                if customer_detail.get('status') == "REJECTED":
+                    customer_detail['error_code_ekyc'] = ERROR_CODE_FAILED_EKYC[first_row['step']]
+                if customer_detail.get('status') == "PROCESSING":
+                    customer_detail['error_code_ekyc'] = ERROR_CODE_PROCESSING_EKYC[first_row['step']]
+                if customer_detail.get('status') == "FAILED":
+                    customer_detail['error_code_ekyc'] = ERROR_CODE_EKYC[first_row['step']]
 
         return self.response(data=customer_detail)
 

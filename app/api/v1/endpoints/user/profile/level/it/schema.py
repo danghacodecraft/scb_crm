@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 from pydantic import Field
 
@@ -9,4 +9,4 @@ from app.api.base.schema import BaseSchema
 class ITLevelInfoResponse(BaseSchema):
     certification: Optional[str] = Field(..., description="Chứng chỉ")
     level: Optional[str] = Field(..., description="Trình độ")
-    gpa: Optional[int] = Field(None, description="Điểm số/Xếp loại")
+    gpa: Optional[Union[int, str]] = Field(None, description="Điểm số/Xếp loại")

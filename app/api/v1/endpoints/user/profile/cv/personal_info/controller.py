@@ -1,10 +1,16 @@
 from app.api.base.controller import BaseController
-from app.api.v1.endpoints.user.profile.cv.personal_info.repository import (
-    repos_personal_info
+from app.api.v1.endpoints.third_parties.gw.employee.repository import (
+    repos_gw_get_retrieve_employee_info_from_code
 )
-from app.utils.constant.date_datetime import DATE_TYPE_DMY_WITH_SLASH
+from app.third_parties.oracle.models.master_data.customer import CustomerGender
+from app.utils.constant.cif import CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE
+from app.utils.constant.gw import (
+    GW_DATE_FORMAT, GW_DATETIME_FORMAT,
+    GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_OUT, GW_GENDER_FEMALE,
+    GW_GENDER_MALE
+)
 from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
-from app.utils.functions import datetime_to_date, string_to_datetime
+from app.utils.functions import date_string_to_other_date_string_format
 
 
 class CtrPersonalInfo(BaseController):
@@ -19,87 +25,79 @@ class CtrPersonalInfo(BaseController):
 
         employee_id = current_user.code
 
-        is_success, personal_info = self.call_repos(
-            await repos_personal_info(
-                employee_id=employee_id,
-                session=self.oracle_session
-            )
-        )
-        if not is_success:
-            return self.response_exception(msg=str(personal_info))
+        personal_info = self.call_repos(await repos_gw_get_retrieve_employee_info_from_code(
+            staff_code=employee_id, current_user=self.current_user
+        ))
 
-        place_of_birth = dict(
-            id=None,
-            code=None,
-            name=None
-        )
+        employee_info = personal_info[GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_OUT]["data_output"]["employee_info"]
 
-        response_personal_info = dict(
-            date_of_birth=None,
-            place_of_birth=place_of_birth,
-            gender=place_of_birth,
-            ethnic=place_of_birth,
-            religion=place_of_birth,
-            nationality=place_of_birth,
-            marital_status=place_of_birth,
-            identity_number=None,
-            issued_date=None,
-            expired_date=None,
-            place_of_issue=place_of_birth,
+        identity_info = employee_info['id_info']
+
+        date_of_birth = date_string_to_other_date_string_format(
+            date_input=employee_info['birth_date'],
+            from_format=GW_DATETIME_FORMAT,
+            to_format=GW_DATE_FORMAT
         )
 
-        if personal_info:
-            birth_date = personal_info['curriculum_vitae']['individual']['birth_date']
-            date_of_birth = None
-            if birth_date is not None:
-                date_of_birth = datetime_to_date(string_to_datetime(birth_date, _format=DATE_TYPE_DMY_WITH_SLASH))
+        gender_code_or_name = employee_info["sex"]
 
-            issued_date = personal_info['curriculum_vitae']['individual']['passport']['issue_date']
-            issued_date = datetime_to_date(string_to_datetime(issued_date)) if issued_date else None
+        if gender_code_or_name == GW_GENDER_MALE:
+            gender_code_or_name = CRM_GENDER_TYPE_MALE
+        if gender_code_or_name == GW_GENDER_FEMALE:
+            gender_code_or_name = CRM_GENDER_TYPE_FEMALE
 
-            expired_date = personal_info['curriculum_vitae']['individual']['passport']['expire_date']
-            expired_date = datetime_to_date(string_to_datetime(expired_date)) if expired_date else None
+        dropdown_gender = await self.dropdown_mapping_crm_model_or_dropdown_name(
+            model=CustomerGender, name=gender_code_or_name, code=gender_code_or_name
+        )
 
-            response_personal_info = {
-                "date_of_birth": date_of_birth,
-                "place_of_birth": {
-                    "id": "1",
-                    "code": "Code",
-                    "name": personal_info['curriculum_vitae']['individual']['birth_province']
-                },
-                "gender": {
-                    "id": "1",
-                    "code": "Code",
-                    "name": personal_info['curriculum_vitae']['individual']['gender']
-                },
-                "ethnic": {
-                    "id": "1",
-                    "code": "Code",
-                    "name": "Kinh"    # Todo Dân tộc không tìm thấy
-                },
-                "religion": {
-                    "id": "1",
-                    "code": "Code",
-                    "name": personal_info['curriculum_vitae']['individual']['religion']
-                },
-                "nationality": {
-                    "id": "1",
-                    "code": "Code",
-                    "name": personal_info['curriculum_vitae']['contact']['temp']['nation']
-                },
-                "marital_status": {
-                    "id": "1",
-                    "code": "Code",
-                    "name": personal_info['curriculum_vitae']['individual']['marital']
-                },
-                "identity_number": personal_info['curriculum_vitae']['individual']['passport']['id'],
-                "issued_date": issued_date,
-                "expired_date": expired_date,
-                "place_of_issue": {
-                    "id": "1",
-                    "code": "Code",
-                    "name": personal_info['curriculum_vitae']['individual']['passport']['issue_place']
-                }
+        identity_issued_date = date_string_to_other_date_string_format(
+            date_input=identity_info['id_issued_date'],
+            from_format=GW_DATETIME_FORMAT,
+            to_format=GW_DATE_FORMAT
+        )
+
+        identity_expired_date = date_string_to_other_date_string_format(
+            date_input=identity_info['id_expired_date'],
+            from_format=GW_DATETIME_FORMAT,
+            to_format=GW_DATE_FORMAT
+        )
+
+        response_personal_info = {
+            "date_of_birth": date_of_birth,
+            "place_of_birth": {
+                "id": "1",
+                "code": "Code",
+                "name": employee_info['birth_province']
+            },
+            "gender": dropdown_gender,
+            "ethnic": {
+                "id": "1",
+                "code": "Code",
+                "name": "Kinh"    # Todo Dân tộc không tìm thấy
+            },
+            "religion": {
+                "id": "1",
+                "code": "Code",
+                "name": employee_info['religion']
+            },
+            "nationality": {
+                "id": "1",
+                "code": "Code",
+                "name": employee_info['nationality']
+            },
+            "marital_status": {
+                "id": "1",
+                "code": "Code",
+                "name": employee_info['marital_status']
+            },
+            "identity_number": identity_info['id_num'],
+            "issued_date": identity_issued_date,
+            "expired_date": identity_expired_date,
+            "place_of_issue": {
+                "id": "1",
+                "code": "Code",
+                "name": identity_info['id_issued_location']
             }
+        }
 
         return self.response(data=response_personal_info)
