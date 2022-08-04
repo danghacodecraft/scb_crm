@@ -23,9 +23,15 @@ class ServiceRedis:
         return None
 
     async def get(self, key) -> str:
+        """
+        Lấy giá trị lưu trữ bởi key
+        """
         logger.log("SERVICE", f"[{self.service_name}] GET {key}")
         return orjson_loads(await self.redis.get(key))
 
-    async def set(self, key, value):
-        logger.log("SERVICE", f"[{self.service_name}] SET {key}")
-        await self.redis.set(key, orjson_dumps(value))
+    async def getset(self, key, value):
+        """
+        Lấy ra giá trị cũ và đặt giá trị mới cho key
+        """
+        logger.log("SERVICE", f"[{self.service_name}] GET SET {key}")
+        await self.redis.getset(key, orjson_dumps(value))

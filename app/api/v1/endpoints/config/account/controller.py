@@ -1,5 +1,3 @@
-from typing import Optional
-
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.config.account.repository import (
     repos_get_account_class
@@ -18,11 +16,18 @@ class CtrConfigAccount(BaseController):
         )
         return self.response(account_type_info)
 
-    async def ctr_account_class_info(self, customer_category_id: Optional[str] = None):
+    async def ctr_account_class_info(
+            self,
+            customer_category_id: str,
+            currency_id: str,
+            account_type_id: str
+    ):
         account_class_info = self.call_repos(
             await repos_get_account_class(
                 session=self.oracle_session,
-                customer_category_id=customer_category_id
+                customer_category_id=customer_category_id,
+                currency_id=currency_id,
+                account_type_id=account_type_id
             )
         )
 
