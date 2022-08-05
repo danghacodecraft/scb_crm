@@ -88,6 +88,9 @@ GW_ENDPOINT_URL_SUMMARY_BP_TRANS_BY_INVOICE = "/ebankibmb/v1.0/rest/summaryBPTra
 GW_ENDPOINT_URL_OPEN_MB = "/ebankibmb/v1.0/rest/openMB"
 GW_ENDPOINT_URL_SELECT_SERVICE_PACK_IB = "/ebankibmb/v1.0/rest/selectServicePackIB"
 
+# ---------------------------------------------- EMAIL ---------------------------------------------- #
+GW_ENDPOINT_URL_SEND_EMAIL = "/email/v1.0/rest/sendEmail"
+
 ########################################################################################################################
 #                                         GW FUNCTION NAME
 ########################################################################################################################
@@ -263,6 +266,9 @@ GW_FUNC_SELECT_SERVICE_PACK_IB_IN = "selectServicePackIB_in"
 GW_FUNC_SELECT_SERVICE_PACK_IB_OUT = "selectServicePackIB_out"
 GW_FUNC_SELECT_SERVICE_PACK_IB = "selectServicePackIB"
 
+# EMAIL
+GW_FUNC_SEND_EMAIL_OUT = "sendEmail_out"
+GW_FUNC_SEND_EMAIL = "sendEmail"
 ########################################################################################################################
 #                                         END GW FUNCTION NAME
 ########################################################################################################################
