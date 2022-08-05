@@ -1,24 +1,21 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.e_banking.repository import (
-    repos_balance_saving_account_data, repos_check_e_banking,
-    repos_get_detail_reset_password, repos_get_detail_reset_password_teller,
-    repos_get_e_banking_data, repos_get_payment_accounts, repos_save_e_banking,
+    repos_balance_saving_account_data, repos_get_detail_reset_password,
+    repos_get_detail_reset_password_teller, repos_get_e_banking,
+    repos_get_payment_accounts, repos_get_sms_data, repos_save_e_banking,
     repos_save_sms_casa
 )
 from app.api.v1.endpoints.cif.e_banking.schema import (
-    EBankingRequest, EBankingSMSCasaRequest, GetInitialPasswordMethod
+    EBankingRequest, EBankingSMSCasaRequest
 )
-from app.api.v1.endpoints.cif.repository import (
-    repos_get_booking, repos_get_initializing_customer
-)
+from app.api.v1.endpoints.cif.repository import repos_get_booking
 from app.api.v1.validator import validate_history_data
 from app.utils.constant.cif import (
-    EBANKING_ACCOUNT_TYPE_CHECKING,
     PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING,
     PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING_SMS_CASA,
     PROFILE_HISTORY_STATUS_INIT
 )
-from app.utils.functions import dropdown, orjson_dumps
+from app.utils.functions import orjson_dumps
 
 
 class CtrEBanking(BaseController):
@@ -27,7 +24,7 @@ class CtrEBanking(BaseController):
     ####################################################################################################################
 
     # @ TODO: đăng ký SMS CASA bên GW chỉ cần nhập SĐT, các field khác khi nào bên GW cần sẽ làm sau.
-    async def ctr_save_e_banking_and_sms(self, cif_id: str, e_banking_info: EBankingRequest = None,
+    async def ctr_save_e_banking_and_sms(self, cif_id: str, e_banking_info: EBankingRequest,
                                          ebank_sms_casa_info: EBankingSMSCasaRequest = None):
 
         current_user = self.current_user
@@ -36,17 +33,12 @@ class CtrEBanking(BaseController):
         save_e_banking_info = None
         save_sms_casa_info = None
 
-        if not e_banking_info and not ebank_sms_casa_info:
-            return self.response_exception(
-                msg="Missing data, need at least e_banking_info or ebank_sms_casa_info"
-            )
-
         if e_banking_info:
             ebank_ibmb_username = e_banking_info.username
             ebank_ibmb_receive_password_code = e_banking_info.receive_password_code
             authentication_code_list = e_banking_info.authentication_code_list
 
-            # dữ liệu để tạo ebanking trong DB (CRM_EBANKING_INFO)
+            # dữ liệu để tạo ebanking trong DB
             data_insert = {
                 "ebank_info": {
                     "customer_id": cif_id,
@@ -137,166 +129,18 @@ class CtrEBanking(BaseController):
     # End: Đăng ký Ebanking
     ####################################################################################################################
     async def ctr_get_e_banking(self, cif_id: str):
-        """
-        1. Kiểm tra tồn tại của cif_id
-        2. Kiểm tra cif_id đã có E-banking chưa
-        3. Trả data E-banking
-        """
+        # 1. lấy data E-banking
+        e_banking_result = await repos_get_e_banking(cif_id=cif_id, session=self.oracle_session)
 
-        # 1. Kiểm tra tồn tại của cif_id
-        _ = self.call_repos(
-            await repos_get_initializing_customer(
-                cif_id=cif_id,
-                session=self.oracle_session))
+        # 2. lấy data sms casa
+        sms_casa_result = await repos_get_sms_data(cif_id=cif_id, session=self.oracle_session)
 
-        # 2. Kiểm tra cif_id đã có E-banking chưa
-        data_e_banking = await repos_check_e_banking(cif_id=cif_id, session=self.oracle_session)
-        if not data_e_banking:
-            return self.response_exception(
-                msg='ERROR_E-BANKING',
-                loc='cif_id not have E-Banking',
-                detail=f'E-Banking -> cif_id -> {cif_id}'
-            )
+        response = dict(
+            e_banking=e_banking_result.data if e_banking_result.data else None,
+            sms_casa=sms_casa_result.data if sms_casa_result.data else None,
+        )
 
-        # 3. Trả data E-banking
-        data = self.call_repos(
-            await repos_get_e_banking_data(
-                cif_id=cif_id,
-                session=self.oracle_session))
-
-        contact_types = data['contact_types']
-        data_e_banking = data['data_e_banking']
-        e_bank_info = data['e_bank_info']
-
-        relationship_ids = []
-        list_relationships = []
-
-        notification_ids = []
-        list_notification = []
-
-        for item in data_e_banking:
-            id_notification = item.EBankingNotification.id
-            if id_notification not in notification_ids:
-                notification_ids.append(id_notification)
-                list_notification.append(item.EBankingNotification)
-
-            if not item.EBankingReceiverNotificationRelationship:
-                continue
-
-            id_relationship = item.EBankingReceiverNotificationRelationship.id
-            if id_relationship not in relationship_ids:
-                relationship_ids.append(id_relationship)
-                list_relationships.append(
-                    (item.EBankingReceiverNotificationRelationship, item.CustomerRelationshipType))
-
-        notification_casa_relationships = [
-            {
-                "id": relationship[0].id,
-                "mobile_number": relationship[0].mobile_number,
-                "full_name_vn": relationship[0].full_name,
-                "relationship_type": dropdown(relationship[1])
-            } for relationship in list_relationships
-        ]
-
-        e_banking_notifications = [
-            {
-                "id": notification.id,
-                "code": notification.code,
-                "name": notification.name,
-                "checked_flag": notification.active_flag
-            } for notification in list_notification
-        ]
-
-        checking_registration_info, saving_registration_info = {}, {}
-        for register in data_e_banking:
-            if register.EBankingRegisterBalance.e_banking_register_account_type == EBANKING_ACCOUNT_TYPE_CHECKING:
-                if not checking_registration_info.get(register.EBankingRegisterBalance.account_id):
-                    checking_registration_info[
-                        register.EBankingRegisterBalance.account_id] = register.EBankingRegisterBalance.__dict__
-                    checking_registration_info[register.EBankingRegisterBalance.account_id]["notifications"] = [
-                        register.EBankingNotification]
-                    checking_registration_info[register.EBankingRegisterBalance.account_id]["relationships"] = [{
-                        "info": register.EBankingReceiverNotificationRelationship,
-                        "relation_type": register.CustomerRelationshipType
-                    }]
-                else:
-                    checking_registration_info[register.EBankingRegisterBalance.account_id]["notifications"].append(
-                        register.EBankingNotification)
-                    checking_registration_info[register.EBankingRegisterBalance.account_id]["relationships"].append({
-                        "info": register.EBankingReceiverNotificationRelationship,
-                        "relation_type": register.CustomerRelationshipType
-                    })
-            else:
-                if not saving_registration_info.get(register.EBankingRegisterBalance.account_id):
-                    saving_registration_info[
-                        register.EBankingRegisterBalance.account_id] = register.EBankingRegisterBalance.__dict__
-                    checking_registration_info[register.EBankingRegisterBalance.account_id]["notifications"] = [
-                        register.EBankingNotification]
-                    checking_registration_info[register.EBankingRegisterBalance.account_id]["relationships"] = [{
-                        "info": register.EBankingReceiverNotificationRelationship,
-                        "relation_type": register.CustomerRelationshipType
-                    }]
-                else:
-                    checking_registration_info[register.EBankingRegisterBalance.account_id]["notifications"].append(
-                        register.EBankingNotification)
-                    checking_registration_info[register.EBankingRegisterBalance.account_id]["relationships"].append({
-                        "info": register.EBankingReceiverNotificationRelationship,
-                        "relation_type": register.CustomerRelationshipType
-                    })
-
-        account_info = {}
-        for auth_method in e_bank_info:
-            if auth_method.EBankingInfo:
-                payment_fee = {
-                    "flag": auth_method.EBankingInfo.method_payment_fee_flag,
-                    "account": auth_method.EBankingInfo.account_payment_fee
-                }
-
-                account_info["register_flag"] = auth_method.EBankingInfo.ib_mb_flag
-                account_info["account_name"] = auth_method.EBankingInfo.account_name
-                account_info["payment_fee"] = payment_fee
-                account_info["get_initial_password_method"] = GetInitialPasswordMethod(
-                    auth_method.EBankingInfo.method_active_password_id)
-                break
-        data = {
-            "change_of_balance_payment_account": {
-                "register_flag": True if checking_registration_info else False,
-                "customer_contact_types": [
-                    {
-                        "id": contact_type.CustomerContactType.id,
-                        "name": contact_type.CustomerContactType.name,
-                        "group": contact_type.CustomerContactType.group,
-                        "description": contact_type.CustomerContactType.description,
-                        "checked_flag": True if contact_type.EBankingRegisterBalanceOption else False
-                    } for contact_type in contact_types if
-                    contact_type.EBankingRegisterBalanceOption.e_banking_register_account_type == EBANKING_ACCOUNT_TYPE_CHECKING
-                ],
-                "register_balance_casas": [
-                    {
-                        "account_id": registration_info['account_id'],
-                        "checking_account_name": registration_info['name'],
-                        "primary_phone_number": registration_info.get('mobile_number'),
-                        "full_name_vn": registration_info['full_name'],
-                        "notification_casa_relationships": notification_casa_relationships,
-                        "e_banking_notifications": e_banking_notifications
-
-                    } for registration_info in checking_registration_info.values()
-                ]
-            },
-            "e_banking_information": {
-                "account_information": {
-                    **account_info,
-                    "method_authentication": [
-                        {
-                            **dropdown(method.MethodAuthentication),
-                            "checked_flag": True if method.EBankingInfo else False
-                        } for method in e_bank_info
-                    ],
-                },
-            }
-        }
-
-        return self.response(data=data)
+        return self.response(data=response)
 
     async def ctr_balance_payment_account(self, cif_id: str):
 
