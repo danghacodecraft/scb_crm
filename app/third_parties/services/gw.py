@@ -260,7 +260,20 @@ class ServiceGW:
                 status=response.status,
                 errors=return_error['errors']
             )
-            return False, return_data
+        except Exception as ex:
+            logger.error(str(ex))
+            return_error = dict(
+                loc="SERVICE GW",
+                msg=ERROR_CALL_SERVICE_GW,
+                detail=ex
+            )
+
+            return_data.update(
+                status=response.status,
+                errors=return_error.get('detail')
+            )
+
+        return False, return_data
 
     ####################################################################################################################
     # START --- CASA
