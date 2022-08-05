@@ -1099,7 +1099,7 @@ class ServiceGW:
             request_data=request_data,
             api_url=api_url,
             output_key='openIB_out',
-            service_name='OPEN_EBANK'
+            service_name='openIB'
         )
         return response_data
 
