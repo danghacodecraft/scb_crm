@@ -21,7 +21,6 @@ class CtrGWBranchLocation(BaseController):
         region_info_list = gw_select_branch_by_region_id['selectBranchByRegionID_out']['data_output'][
             'region_info_list']
 
-        print(gw_select_branch_by_region_id)
         region_list_item = [item['region_info_item'] for item in region_info_list]
 
         response_datas = {}
@@ -73,10 +72,10 @@ class CtrGWBranchLocation(BaseController):
                 longitude = branch['longitude']
                 latitude = branch['latitude']
                 if branch_id != 'ALL':
-                    left = left if left < longitude else longitude
+                    left = left if 0 < left < longitude else longitude
                     right = right if right > longitude else longitude
                     top = top if top > latitude else latitude
-                    bottom = bottom if bottom < latitude else latitude
+                    bottom = bottom if 0 < bottom < latitude else latitude
 
             region.update(left=left, right=right, top=top, bottom=bottom)
             res.append(region)
