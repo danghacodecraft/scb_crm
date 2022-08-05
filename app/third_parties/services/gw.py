@@ -2473,7 +2473,8 @@ class ServiceGW:
     # Email
     ####################################################################################################################
 
-    async def send_email(self, current_user: UserInfoResponse,
+    async def send_email(self,
+                         current_user: UserInfoResponse,
                          product_code,
                          list_email_to,
                          list_email_cc,
@@ -2482,31 +2483,33 @@ class ServiceGW:
                          email_content_html,
                          list_email_attachment_file
                          ):
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_SEND_EMAIL,
+            data_input={}
+        ).get(GW_FUNC_SEND_EMAIL, {}).get('transaction_info', {})
 
-        request_data = {
-            'sendEmail_in.transaction_info.client_code': "CRM",
-            'sendEmail_in.transaction_info.client_ref_num': "20190702091907_4232781",
-            'sendEmail_in.transaction_info.client_ip': "10.4.4.x",
-            'sendEmail_in.transaction_info.server_ref_num': "string",
-            'sendEmail_in.transaction_info.branch_info.branch_name': current_user.hrm_branch_name,
-            'sendEmail_in.transaction_info.branch_info.branch_code': current_user.hrm_branch_code,
-            'sendEmail_in.data_input.product_code': product_code,
-            'sendEmail_in.data_input.email_to': list_email_to,
-            'sendEmail_in.data_input.email_cc': list_email_cc,
-            'sendEmail_in.data_input.email_bcc': list_email_bcc,
-            'sendEmail_in.data_input.email_subject': email_subject,
-            'sendEmail_in.data_input.email_content_html': email_content_html,
-            'sendEmail_in.data_input.email_attachment_file': list_email_attachment_file,
-        }
-
-        api_url = f"{self.url}{GW_ENDPOINT_URL_SEND_EMAIL}"
-        response_data = await self.call_api(
-            request_data=request_data,
-            api_url=api_url,
+        return await self.call_api(
+            request_data={
+                'sendEmail_in.transaction_info.client_code': request_data.get('client_code'),
+                'sendEmail_in.transaction_info.client_ref_num': request_data.get('client_ref_num'),
+                'sendEmail_in.transaction_info.client_ip': request_data.get('client_ip'),
+                'sendEmail_in.transaction_info.server_ref_num': request_data.get('server_ref_num'),
+                'sendEmail_in.transaction_info.branch_info.branch_name':
+                    request_data.get('branch_info', {}).get('branch_name'),
+                'sendEmail_in.transaction_info.branch_info.branch_code': request_data.get('branch_info',
+                                                                                          {}).get('branch_code'),
+                'sendEmail_in.data_input.product_code': product_code,
+                'sendEmail_in.data_input.email_to': list_email_to,
+                'sendEmail_in.data_input.email_cc': list_email_cc,
+                'sendEmail_in.data_input.email_bcc': list_email_bcc,
+                'sendEmail_in.data_input.email_subject': email_subject,
+                'sendEmail_in.data_input.email_content_html': email_content_html,
+                'sendEmail_in.data_input.email_attachment_file': list_email_attachment_file,
+            },
+            api_url=f"{self.url}{GW_ENDPOINT_URL_SEND_EMAIL}",
             output_key=GW_FUNC_SEND_EMAIL_OUT,
             service_name=GW_FUNC_SEND_EMAIL,
             is_form_data=True
         )
-        return response_data
 
 ####################################################################################################################
