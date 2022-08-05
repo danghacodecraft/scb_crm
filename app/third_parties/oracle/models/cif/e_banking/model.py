@@ -106,7 +106,7 @@ class EBankingInfo(Base):
                                        comment='Hình thức nhận mật khẩu kích hoạt lần đầu')
     account_name = Column('eb_account_name', VARCHAR(100), comment='Tên đăng nhập')
     note = Column('eb_note', VARCHAR(1000), comment='Ghi chú nội dungg')
-    ib_mb_flag = Column(NUMBER(1, 0, False), comment='Cờ có đăng ký Mobile -  Internet banking hay không')
+    approval_status = Column(NUMBER(1, 0, False), comment='Tình trạng phê duyệt')
     method_payment_fee_flag = Column('eb_method_payment_fee_flag', NUMBER(1, 0, False),
                                      comment='Cờ thanh toán phí tiền mặt - chuyển khoản')
     reset_password_flag = Column('eb_reset_password_flag', NUMBER(1, 0, False), comment='Cờ tùy chọn reset password')
