@@ -32,3 +32,5 @@ openpyxl==2.6.1 #https://pypi.org/project/openpyxl/2.6.1/
 confluent-kafka==1.9.0 #https://docs.confluent.io/kafka-clients/python/current/overview.html
 
 aioredis==2.0.1
+
+email-validator==1.2.1
