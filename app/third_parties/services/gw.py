@@ -71,7 +71,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_SELECT_SERVICE_PACK_IB,
     GW_ENDPOINT_URL_SELECT_STATISTIC_BANKING_BY_PERIOD,
     GW_ENDPOINT_URL_SELECT_SUMMARY_CARD_BY_DATE,
-    GW_ENDPOINT_URL_SELECT_USER_INFO,
+    GW_ENDPOINT_URL_SELECT_USER_INFO, GW_ENDPOINT_URL_SEND_EMAIL,
     GW_ENDPOINT_URL_SUMMARY_BP_TRANS_BY_INVOICE,
     GW_ENDPOINT_URL_SUMMARY_BP_TRANS_BY_SERVICE, GW_ENDPOINT_URL_TELE_TRANSFER,
     GW_ENDPOINT_URL_TT_LIQUIDATION, GW_ENDPOINT_URL_WITHDRAW,
@@ -152,8 +152,8 @@ from app.utils.constant.gw import (
     GW_FUNC_SELECT_USER_INFO_BY_USER_ID_OUT,
     GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE,
     GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE_IN,
-    GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE_OUT,
-    GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE,
+    GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE_OUT, GW_FUNC_SEND_EMAIL,
+    GW_FUNC_SEND_EMAIL_OUT, GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE,
     GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE_IN,
     GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE_OUT,
     GW_FUNC_SUMMARY_BP_TRANS_BY_SERVICE,
@@ -182,7 +182,7 @@ class ServiceGW:
         await self.session.close()
         self.session = None
 
-    async def call_api(self, api_url: str, request_data: json, output_key: str, service_name: str):
+    async def call_api(self, api_url: str, request_data: json, output_key: str, service_name: str, is_form_data=False):
         return_errors = dict(
             loc="SERVICE GW",
             msg="",
@@ -195,24 +195,52 @@ class ServiceGW:
         )
 
         try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW][{service_name}] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    else:
-                        return_data.update(status=response.status)
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    if return_data[output_key]['transaction_info']['transaction_error_code'] \
-                            != GW_RESPONSE_STATUS_SUCCESS:
+            if not is_form_data:
+                async with self.session.post(url=api_url, json=request_data) as response:
+                    logger.log("SERVICE", f"[GW][{service_name}] {response.status} {api_url}")
+                    if response.status != status.HTTP_200_OK:
+                        if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                            return_error = await response.json()
+                            return_data.update(
+                                status=response.status,
+                                errors=return_error['errors']
+                            )
+                        else:
+                            return_data.update(status=response.status)
                         return False, return_data
-                    return True, return_data
+                    else:
+                        return_data = await response.json()
+                        if return_data[output_key]['transaction_info']['transaction_error_code'] \
+                                != GW_RESPONSE_STATUS_SUCCESS:
+                            return False, return_data
+                        return True, return_data
+            else:
+                form_data = aiohttp.FormData()
+                for key, value in request_data.items():
+                    if isinstance(value, str):
+                        form_data.add_field(key, value)
+                    else:
+                        form_data.add_field(name=key, value=await value.read(), filename=value.filename,
+                                            content_type=value.content_type)
+
+                async with self.session.post(url=api_url, data=form_data) as response:
+                    logger.log("SERVICE", f"[GW][{service_name}] {response.status} {api_url}")
+                    if response.status != status.HTTP_200_OK:
+                        if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
+                            return_error = await response.json()
+                            return_data.update(
+                                status=response.status,
+                                errors=return_error['errors']
+                            )
+                        else:
+                            return_data.update(status=response.status)
+                        return False, return_data
+                    else:
+                        return_data = await response.json()
+                        if return_data[output_key]['transaction_info']['transaction_error_code'] \
+                                != GW_RESPONSE_STATUS_SUCCESS:
+                            return False, return_data
+                        return True, return_data
         except aiohttp.ClientConnectorError as ex:
             logger.error(str(ex))
             return False, return_data
@@ -2433,6 +2461,46 @@ class ServiceGW:
             api_url=api_url,
             output_key=GW_FUNC_SELECT_SERVICE_PACK_IB_OUT,
             service_name=GW_FUNC_SELECT_SERVICE_PACK_IB
+        )
+        return response_data
+
+    ####################################################################################################################
+    # Email
+    ####################################################################################################################
+
+    async def send_email(self, current_user: UserInfoResponse,
+                         product_code,
+                         list_email_to,
+                         list_email_cc,
+                         list_email_bcc,
+                         email_subject,
+                         email_content_html,
+                         list_email_attachment_file
+                         ):
+
+        request_data = {
+            'sendEmail_in.transaction_info.client_code': "CRM",
+            'sendEmail_in.transaction_info.client_ref_num': "20190702091907_4232781",
+            'sendEmail_in.transaction_info.client_ip': "10.4.4.x",
+            'sendEmail_in.transaction_info.server_ref_num': "string",
+            'sendEmail_in.transaction_info.branch_info.branch_name': current_user.hrm_branch_name,
+            'sendEmail_in.transaction_info.branch_info.branch_code': current_user.hrm_branch_code,
+            'sendEmail_in.data_input.product_code': product_code,
+            'sendEmail_in.data_input.email_to': list_email_to,
+            'sendEmail_in.data_input.email_cc': list_email_cc,
+            'sendEmail_in.data_input.email_bcc': list_email_bcc,
+            'sendEmail_in.data_input.email_subject': email_subject,
+            'sendEmail_in.data_input.email_content_html': email_content_html,
+            'sendEmail_in.data_input.email_attachment_file': list_email_attachment_file,
+        }
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SEND_EMAIL}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_SEND_EMAIL_OUT,
+            service_name=GW_FUNC_SEND_EMAIL,
+            is_form_data=True
         )
         return response_data
 
