@@ -21,6 +21,7 @@ class CtrGWBranchLocation(BaseController):
         region_info_list = gw_select_branch_by_region_id['selectBranchByRegionID_out']['data_output'][
             'region_info_list']
 
+        print(gw_select_branch_by_region_id)
         region_list_item = [item['region_info_item'] for item in region_info_list]
 
         response_datas = {}
@@ -28,6 +29,10 @@ class CtrGWBranchLocation(BaseController):
             branch = {
                 "branch_id": region_item['branch_code'],
                 "branch_name": region_item['branch_name'],
+                "area_id": region_item['area_id'],
+                "area_name": region_item['area_name'],
+                "branch_console": region_item['branch_console'],
+                "branch_console_name": region_item['branch_console_name'],
                 "latitude": float(region_item['latitude']) if region_item['latitude'] != '' else 0,
                 "longitude": float(region_item['longtitude']) if region_item['longtitude'] != '' else 0,
                 "type": region_item['region_type']
@@ -49,6 +54,10 @@ class CtrGWBranchLocation(BaseController):
                 {
                     'branch_id': 'ALL',
                     'branch_name': 'Tất cả',
+                    "area_id": '',
+                    "area_name": '',
+                    "branch_console": '',
+                    "branch_console_name": '',
                     'longitude': GW_LONGITUDE_DEFAULT,
                     'latitude': GW_LATITUDE_DEFAULT,
                     'type': GW_TYPE_DEFAULT
@@ -80,6 +89,10 @@ class CtrGWBranchLocation(BaseController):
                     {
                         "branch_id": "ALL",
                         "branch_name": "Tất cả",
+                        "area_id": '',
+                        "area_name": '',
+                        "branch_console": '',
+                        "branch_console_name": '',
                         'longitude': GW_LONGITUDE_DEFAULT,
                         'latitude': GW_LATITUDE_DEFAULT,
                         "type": GW_TYPE_DEFAULT
@@ -107,6 +120,10 @@ class CtrGWBranchLocation(BaseController):
             'region_name': response_data['region_name'],
             'branch_id': response_data['branch_code'],
             'branch_name': response_data['branch_name'],
+            "area_id": response_data['area_id'],
+            "area_name": response_data['area_name'],
+            "branch_console": response_data['branch_console'],
+            "branch_console_name": response_data['branch_console_name'],
             'latitude': response_data['latitude'],
             'longitude': response_data['longtitude'],
             'type': response_data['region_type'],
