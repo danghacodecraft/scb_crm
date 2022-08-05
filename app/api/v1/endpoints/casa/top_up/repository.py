@@ -1,4 +1,4 @@
-from sqlalchemy import desc, select, update, and_
+from sqlalchemy import and_, desc, select, update
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
