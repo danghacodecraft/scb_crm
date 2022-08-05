@@ -217,11 +217,16 @@ class ServiceGW:
             else:
                 form_data = aiohttp.FormData()
                 for key, value in request_data.items():
-                    if isinstance(value, str):
-                        form_data.add_field(key, value)
-                    else:
-                        form_data.add_field(name=key, value=await value.read(), filename=value.filename,
-                                            content_type=value.content_type)
+                    if key == "sendEmail_in.data_input.email_attachment_file" and value is not None:
+                        for file in value:
+                            form_data.add_field(name=key, value=await file.read(), filename=file.filename,
+                                                content_type=file.content_type)
+                    elif value:
+                        if isinstance(value, list):
+                            for item in value:
+                                form_data.add_field(key, item)
+                        else:
+                            form_data.add_field(key, value)
 
                 async with self.session.post(url=api_url, data=form_data) as response:
                     logger.log("SERVICE", f"[GW][{service_name}] {response.status} {api_url}")
