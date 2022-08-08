@@ -78,6 +78,8 @@ GW_ENDPOINT_URL_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA = "/ebanksms/v1.0/rest/
 GW_ENDPOINT_URL_SELECT_ACCOUNT_TD_BY_MOBILE_NUM = "/ebanksms/v1.0/rest/selectAccountTDByMobileNum"
 GW_ENDPOINT_URL_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA = "/ebanksms/v1.0/rest/registerSMSServiceByAccountCASA"
 GW_ENDPOINT_URL_REGISTER_SMS_SERVICE_BY_MOBILE_NUMBER = "/ebanksms/v1.0/rest/registerSMSServiceByMobileNumber"
+GW_ENDPOINT_URL_SEND_SMS_VIA_EB_GW = "/ebanksms/v1.0/rest/sendSMSviaEBGW"
+
 
 # ---------------------------------------------- EBANK IB MB ---------------------------------------------- #
 GW_ENDPOINT_URL_CHECK_USERNAME_IB_MB_EXIST = "/ebankibmb/v1.0/rest/checkUsernameIBMBExist"
@@ -234,6 +236,10 @@ GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA = "registerSMSServiceByAccountCASA"
 GW_FUNC_REGISTER_SMS_SERVICE_BY_MOBILE_NUMBER_IN = "registerSMSServiceByMobileNumber_in"
 GW_FUNC_REGISTER_SMS_SERVICE_BY_MOBILE_NUMBER_OUT = "registerSMSServiceByMobileNumber_out"
 GW_FUNC_REGISTER_SMS_SERVICE_BY_MOBILE_NUMBER = "registerSMSServiceByMobileNumber"
+
+GW_FUNC_SEND_SMS_VIA_EB_GW_IN = "sendSMSviaEBGW_in"
+GW_FUNC_SEND_SMS_VIA_EB_GW_OUT = "sendSMSviaEBGW_out"
+GW_FUNC_SEND_SMS_VIA_EB_GW = "sendSMSviaEBGW"
 
 # EbankIBMB
 GW_FUNC_CHECK_USERNAME_IB_MB_EXIST_IN = "checkUsernameIBMBExist_in"
