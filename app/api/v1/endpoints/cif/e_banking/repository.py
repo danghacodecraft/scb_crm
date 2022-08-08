@@ -11,23 +11,12 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
 )
 from app.third_parties.oracle.models.cif.e_banking.model import (
     EBankingInfo, EBankingInfoAuthentication,
-    EBankingReceiverNotificationRelationship, EBankingRegisterBalance,
-    EBankingRegisterBalanceNotification, EBankingRegisterBalanceOption,
-    TdAccount
+    EBankingReceiverNotificationRelationship, TdAccount
 )
 from app.third_parties.oracle.models.cif.payment_account.model import (
     CasaAccount
 )
 from app.third_parties.oracle.models.master_data.account import AccountType
-from app.third_parties.oracle.models.master_data.customer import (
-    CustomerContactType, CustomerRelationshipType
-)
-from app.third_parties.oracle.models.master_data.e_banking import (
-    EBankingNotification
-)
-from app.third_parties.oracle.models.master_data.others import (
-    MethodAuthentication
-)
 from app.utils.constant.cif import (
     BUSINESS_FORM_EB, BUSINESS_FORM_SMS_CASA, CIF_ID_TEST
 )
@@ -131,71 +120,73 @@ async def repos_check_e_banking(cif_id: str, session: Session):
     return e_banking_info
 
 
-async def repos_get_e_banking_data(cif_id: str, session: Session) -> ReposReturn:
-    """
-    Lấy data E-banking
-    1. SMS-OTT
-    2. Thông tin nhận thông báo
-    3. Thông tin E-banking
-    """
-
-    # 1. SMS-OTT
-    contact_types = session.execute(
-        select(
-            EBankingRegisterBalanceOption,
-            CustomerContactType,
-        ).outerjoin(
-            EBankingRegisterBalanceOption,
-            CustomerContactType.id == EBankingRegisterBalanceOption.customer_contact_type_id
-        ).filter(
-            EBankingRegisterBalanceOption.customer_id == cif_id
-        )
-    ).all()
-
-    # 2. Thông tin nhận thông báo
-    data_e_banking = session.execute(select(
-        EBankingRegisterBalance,
-        EBankingRegisterBalanceNotification,
-        EBankingNotification,
-        EBankingReceiverNotificationRelationship,
-        CustomerRelationshipType
-    ).join(
-        EBankingRegisterBalanceNotification,
-        EBankingRegisterBalance.id == EBankingRegisterBalanceNotification.eb_reg_balance_id
-    ).outerjoin(
-        EBankingReceiverNotificationRelationship,
-        EBankingRegisterBalance.id == EBankingReceiverNotificationRelationship.e_banking_register_balance_casa_id
-    ).outerjoin(
-        CustomerRelationshipType,
-        EBankingReceiverNotificationRelationship.relationship_type_id == CustomerRelationshipType.id
-    ).join(
-        EBankingNotification, EBankingRegisterBalanceNotification.eb_notify_id == EBankingNotification.id
-    ).filter(
-        EBankingRegisterBalance.customer_id == cif_id,
-    )).all()
-
-    # Thông tin E-banking
+async def repos_get_e_banking(cif_id: str, session: Session) -> ReposReturn:
     e_bank_info = session.execute(
         select(
-            EBankingInfo,
-            EBankingInfoAuthentication,
-            MethodAuthentication
-        ).outerjoin(
-            EBankingInfoAuthentication,
-            MethodAuthentication.id == EBankingInfoAuthentication.method_authentication_id
+            EBankingInfo.account_name,
+            EBankingInfo.method_active_password_id,
+            EBankingInfoAuthentication.method_authentication_id
         ).join(
-            EBankingInfo,
-            EBankingInfoAuthentication.e_banking_info_id == EBankingInfo.id
+            EBankingInfoAuthentication, EBankingInfoAuthentication.e_banking_info_id == EBankingInfo.id
         ).filter(
             EBankingInfo.customer_id == cif_id
         )
     ).all()
-    return ReposReturn(data={
-        "contact_types": contact_types,
-        "data_e_banking": data_e_banking,
-        "e_bank_info": e_bank_info
 
-    })
+    if not e_bank_info:
+        return ReposReturn(data=None)
+
+    data = dict(
+        username=e_bank_info[0].account_name,
+        receive_password_code=e_bank_info[0].method_active_password_id,
+        authentication_code_list=[authentication_info.method_authentication_id for authentication_info in e_bank_info]
+    )
+
+    return ReposReturn(data=data)
+
+
+async def repos_get_sms_data(cif_id: str, session: Session) -> ReposReturn:
+    # Lấy TKTT theo số cif ảo
+    casa_ids = session.execute(
+        select(
+            CasaAccount.id
+        ).filter(
+            CasaAccount.customer_id == cif_id
+        )
+    ).scalars().all()
+
+    sms_casa_data = session.execute(
+        select(
+            EBankingReceiverNotificationRelationship.mobile_number,
+            EBankingReceiverNotificationRelationship.relationship_type_id,
+            EBankingReceiverNotificationRelationship.full_name,
+            EBankingReceiverNotificationRelationship.e_banking_register_balance_casa_id
+        ).filter(
+            EBankingReceiverNotificationRelationship.e_banking_register_balance_casa_id.in_(casa_ids)
+        )
+    ).all()
+
+    if not sms_casa_data:
+        return ReposReturn(data=None)
+
+    sms_casa_info_list = []
+
+    for casa_id in casa_ids:
+        sms_casa_info = dict(
+            casa_id=casa_id,
+            sms_casa_items=[]
+        )
+        for sms_casa in sms_casa_data:
+            if sms_casa.e_banking_register_balance_casa_id == casa_id:
+                sms_casa_info["sms_casa_items"].append(dict(
+                    full_name=sms_casa.full_name,
+                    mobile_number=sms_casa.mobile_number,
+                    relationship_type_id=sms_casa.relationship_type_id
+                ))
+
+        sms_casa_info_list.append(sms_casa_info)
+    print(sms_casa_info_list)
+    return ReposReturn(data=sms_casa_info_list)
 
 
 DETAIL_RESET_PASSWORD_E_BANKING_DATA = {

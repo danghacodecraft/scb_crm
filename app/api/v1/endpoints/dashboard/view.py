@@ -1,7 +1,7 @@
 from datetime import date
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Body, Depends, Query
 from starlette import status
 
 from app.api.base.schema import PagingResponse, ResponseData
@@ -10,8 +10,11 @@ from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.dependencies.paging import PaginationParams
 from app.api.v1.endpoints.dashboard.controller import CtrDashboard
 from app.api.v1.endpoints.dashboard.schema import (
-    AccountingEntryResponse, BranchResponse, CustomerInfoResponse,
-    RegionResponse, TransactionListResponse
+    BranchResponse, CustomerInfoResponse, RegionResponse,
+    SelectDataForChardDashBoardRequest, TransactionListResponse
+)
+from app.api.v1.endpoints.third_parties.gw.statistics.schema import (
+    SelectDataForChardDashBoardResponse
 )
 
 router = APIRouter()
@@ -100,15 +103,16 @@ async def view_branch(
     name="Accounting entry",
     description="Tổng bút toán",
     responses=swagger_response(
-        response_model=ResponseData[AccountingEntryResponse],
+        response_model=ResponseData[SelectDataForChardDashBoardResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
 async def view_accounting_entry(
+        request: SelectDataForChardDashBoardRequest = Body(...),
         current_user=Depends(get_current_user_from_header())
 ):
-    accounting_entry = await CtrDashboard(current_user).ctr_accounting_entry()
-    return ResponseData[List[AccountingEntryResponse]](**accounting_entry)
+    accounting_entry = await CtrDashboard(current_user).ctr_accounting_entry(request=request)
+    return ResponseData[SelectDataForChardDashBoardResponse](**accounting_entry)
 
 
 @router.get(
