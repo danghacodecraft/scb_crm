@@ -14,7 +14,7 @@ from app.api.v1.endpoints.third_parties.gw.ebank_sms.schema import (
     GWSelectMobileNumberSMSByAccountCASAResponse,
     RegisterSmsServiceByAccountCasaRequest,
     RegisterSmsServiceByMobileNumberRequest, SelectAccountTDByMobileNumRequest,
-    SelectAccountTDByMobileNumResponse
+    SelectAccountTDByMobileNumResponse, SendSMSviaEBGWRequest
 )
 from app.utils.constant.gw import (
     GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA_OUT,
@@ -128,3 +128,28 @@ async def view_gw_register_sms_service_by_mobile_number(
         'data').get(GW_FUNC_REGISTER_SMS_SERVICE_BY_MOBILE_NUMBER_OUT).get('data_output')
 
     return ResponseData(**gw_get_register_sms_service_by_mobile_number)
+
+
+@router.post(
+    path="/send-sms-via-eb-gw/",
+    name="[GW] Gửi tin nhắn SMS đến khách hàng thông qua cổng Ebank mở rộng",
+    description="[GW] Gửi tin nhắn SMS đến khách hàng thông qua cổng Ebank mở rộng",
+    responses=swagger_response(
+        response_model=None,
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_send_sms_via_eb_gw(
+        request: SendSMSviaEBGWRequest = Body(..., ),
+        current_user=Depends(get_current_user_from_header())
+):
+
+    gw_send_sms_via_eb_gw = await CtrGWEbankSms(
+        current_user).ctr_gw_send_sms_via_eb_gw(
+        message=request.message,
+        mobile=request.mobile
+    )
+
+    gw_send_sms_via_eb_gw['data'] = None
+
+    return ResponseData(**gw_send_sms_via_eb_gw)

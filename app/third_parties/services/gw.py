@@ -72,6 +72,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_SELECT_STATISTIC_BANKING_BY_PERIOD,
     GW_ENDPOINT_URL_SELECT_SUMMARY_CARD_BY_DATE,
     GW_ENDPOINT_URL_SELECT_USER_INFO, GW_ENDPOINT_URL_SEND_EMAIL,
+    GW_ENDPOINT_URL_SEND_SMS_VIA_EB_GW,
     GW_ENDPOINT_URL_SUMMARY_BP_TRANS_BY_INVOICE,
     GW_ENDPOINT_URL_SUMMARY_BP_TRANS_BY_SERVICE, GW_ENDPOINT_URL_TELE_TRANSFER,
     GW_ENDPOINT_URL_TT_LIQUIDATION, GW_ENDPOINT_URL_WITHDRAW,
@@ -153,7 +154,9 @@ from app.utils.constant.gw import (
     GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE,
     GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE_IN,
     GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE_OUT, GW_FUNC_SEND_EMAIL,
-    GW_FUNC_SEND_EMAIL_OUT, GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE,
+    GW_FUNC_SEND_EMAIL_OUT, GW_FUNC_SEND_SMS_VIA_EB_GW,
+    GW_FUNC_SEND_SMS_VIA_EB_GW_IN, GW_FUNC_SEND_SMS_VIA_EB_GW_OUT,
+    GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE,
     GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE_IN,
     GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE_OUT,
     GW_FUNC_SUMMARY_BP_TRANS_BY_SERVICE,
@@ -2330,6 +2333,30 @@ class ServiceGW:
             api_url=api_url,
             output_key=GW_FUNC_REGISTER_SMS_SERVICE_BY_MOBILE_NUMBER_OUT,
             service_name=GW_FUNC_REGISTER_SMS_SERVICE_BY_MOBILE_NUMBER
+        )
+        return response_data
+
+    async def send_sms_via_eb_gw(self,
+                                 current_user: UserInfoResponse,
+                                 message,
+                                 mobile=None):
+        data_input = {
+            "message": message,
+            "mobile": mobile,
+        } if mobile else {
+            "message": message
+        }
+
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_SEND_SMS_VIA_EB_GW_IN,
+            data_input=data_input
+        )
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SEND_SMS_VIA_EB_GW}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_SEND_SMS_VIA_EB_GW_OUT,
+            service_name=GW_FUNC_SEND_SMS_VIA_EB_GW
         )
         return response_data
 
