@@ -4,8 +4,8 @@ from typing import List
 from pydantic import Field
 
 from app.api.base.schema import BaseSchema
-
 # GW selectMobileNumberSMSByAccountCASA
+from app.settings.service import SERVICE
 
 
 class SelectMobileNumberSMSByAccountCASAEbankSMSInfoRequest(BaseSchema):
@@ -178,9 +178,9 @@ class RegisterSmsServiceByMobileNumberRequest(BaseSchema):
 ########################################################################################################################
 
 # sendSMSviaEBGW
-
 class SendSMSviaEBGWRequest(BaseSchema):
-    mobile: str = Field(..., description="""Số điện thoại người nhận. Hỗ trợ định dạng
+    mobile: str = Field(SERVICE.get('gw', {}).get('ebank_sms', {}).get('sendSMSviaEBGW', {}).get('mobile'),
+                        description="""Số điện thoại người nhận. Hỗ trợ định dạng
 - +84..... hoặc 0909.....""", example="0969138082")
     message: str = Field(..., description="""
 - Nội dung gửi tin nhắn. Không dấu , >=5 ký tự và < 160 ký tự""",

@@ -56,6 +56,11 @@ SERVICE = {
         "url": os.getenv("SERVICE_GW_URL"),
         "email": {
             "data_input__email_to": os.getenv("GW_EMAIL_DATA_INPUT__EMAIL_TO")
+        },
+        "ebank_sms": {
+            "sendSMSviaEBGW": {
+                "mobile": os.getenv("GW_SEND_SMS_VIA_EB_GW_MOBILE")
+            }
         }
     },
     "kafka": {
