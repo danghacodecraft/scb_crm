@@ -1,8 +1,8 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.casa.open_casa.co_owner.repository import (
     repos_account_co_owner, repos_check_acc_agree, repos_check_casa_account,
-    repos_check_file_id, repos_get_booking, repos_get_co_owner,
-    repos_method_sign_info, repos_save_co_owner
+    repos_check_file_id, repos_get_co_owner, repos_method_sign_info,
+    repos_save_co_owner
 )
 from app.api.v1.endpoints.casa.open_casa.co_owner.schema import (
     AccountHolderRequest
@@ -190,13 +190,8 @@ class CtrCoOwner(BaseController):
                 session=self.oracle_session
             )
         )
-        # Lấy Booking Code
-        booking = self.call_repos(await repos_get_booking(
-            account_id=account_id, session=self.oracle_session
-        ))
         co_owner_data.update(booking=dict(
-            id=booking.id,
-            code=booking.code
+            id=booking_id
         ))
 
         return self.response(data=co_owner_data)
