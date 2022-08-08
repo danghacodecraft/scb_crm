@@ -54,7 +54,10 @@ SERVICE = {
     },
     "gw": {
         "url": os.getenv("SERVICE_GW_URL"),
-        "bypass": bool(os.getenv("SERVICE_GW_BYPASS", "") if os.getenv("SERVICE_GW_BYPASS", "") in ["True", "true", "1"] else False)
+        "bypass": bool(os.getenv("SERVICE_GW_BYPASS", "") if os.getenv("SERVICE_GW_BYPASS", "") in ["True", "true", "1"] else False),
+        "email": {
+            "data_input__email_to": os.getenv("GW_EMAIL_DATA_INPUT__EMAIL_TO")
+        }
     },
     "kafka": {
         "sasl_mechanism": os.getenv("KAFKA_SASL_MECHANISM"),
