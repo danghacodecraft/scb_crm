@@ -7,6 +7,7 @@ from app.api.v1.endpoints.approval.repository import (
 from app.api.v1.endpoints.approval.template.detail.repository import (
     repo_form, repos_branch_name
 )
+from app.api.v1.endpoints.casa.controller import CtrCasa
 from app.api.v1.endpoints.casa.top_up.repository import (
     repos_get_casa_top_up_info
 )
@@ -40,8 +41,9 @@ from app.utils.constant.tms_dms import (
     TKTT_AMOUNT_UNBLOCK_TEMPLATE_5176, TKTT_AMOUNT_UNBLOCK_TEMPLATE_5177,
     TKTT_AMOUNT_UNBLOCK_TEMPLATE_5178, TKTT_AMOUNT_UNBLOCK_TEMPLATE_5179,
     TKTT_AMOUNT_UNBLOCK_TEMPLATE_5180, TKTT_AMOUNT_UNBLOCK_TEMPLATES,
-    TKTT_PATH_FORM_5181, TKTT_PATH_FORM_5183, TKTT_PATH_FORM_5184,
-    TKTT_TOP_UP_TEMPLATE_5181, TKTT_TOP_UP_TEMPLATE_5182, TKTT_TOP_UP_TEMPLATES
+    TKTT_PATH_FORM_5181, TKTT_PATH_FORM_5182, TKTT_PATH_FORM_5183,
+    TKTT_PATH_FORM_5184, TKTT_TOP_UP_TEMPLATE_5181, TKTT_TOP_UP_TEMPLATE_5182,
+    TKTT_TOP_UP_TEMPLATES
 )
 from app.utils.error_messages import ERROR_BOOKING_INCORRECT
 from app.utils.functions import date_to_string, now, orjson_loads
@@ -127,7 +129,6 @@ class CtrTemplateDetailTKTT(BaseController):
 
         form_data = orjson_loads(get_casa_top_up_info.form_data)
         log_data = orjson_loads(get_casa_top_up_info.log_data)[0]
-
         transfer_amount = form_data['amount']
 
         ################################################################################################################
@@ -175,10 +176,10 @@ class CtrTemplateDetailTKTT(BaseController):
                 receiver_full_name_vn = form_data['receiver_full_name_vn']
 
             if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
-                receiver_full_name_vn = "abc"
+                receiver_full_name_vn = "abc"  # TODO
 
         elif receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
-            receiver_full_name_vn = "abc"
+            receiver_full_name_vn = "abc"  # TODO
         else:
             if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
                 receiver_full_name_vn = form_data['receiver_full_name_vn']
@@ -186,6 +187,7 @@ class CtrTemplateDetailTKTT(BaseController):
             if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
                 receiver_full_name_vn = form_data['receiver_full_name_vn']
 
+        statement = await CtrCasa(current_user).get_statement_info(statement_request=form_data['statement'])
         data_request.update({
             "S1.A.1.3.3": log_data['branch_name'],
             "S1.A.1.3.4": log_data['created_at'],
@@ -194,12 +196,14 @@ class CtrTemplateDetailTKTT(BaseController):
             "S1.A.1.3.5": log_data['user_id'],
 
             "S1.A.1.3.6": form_data['receiver_account_number'] if 'receiver_account_number' in form_data.keys() else '',
+
+            'S1.A.1.3.7': "VND",  # TODO đơn vị tính
             "S1.A.1.3.8": receiver_full_name_vn,
             "S1.A.1.3.12": "",  # TODO sản phẩm
             "S1.A.1.3.13": str(actual_total),
             "S1.A.1.3.14": str(fee_amount),
             "S1.A.1.3.15": str(vat_tax),
-            "S1.A.1.3.16": num2words(actual_total, lang='vi') + " đồng",
+            "S1.A.1.3.16": num2words(actual_total, lang='vi'),
             "S1.A.1.3.17": form_data['content'] if 'content' in form_data.keys() else '',
             'S1.A.1.3.18': form_data['sender_full_name_vn'] if 'sender_full_name_vn' in form_data.keys() else '',
             'S1.A.1.3.19': form_data['sender_mobile_number'] if 'sender_mobile_number' in form_data.keys() else '',
@@ -209,9 +213,18 @@ class CtrTemplateDetailTKTT(BaseController):
             'S1.A.1.3.23': form_data['sender_address_full'] if 'sender_address_full' in form_data.keys() else '',
 
             'S1.A.1.3.26': maker_name,
-            'S1.A.1.3.27': current_user.user_info.name
+            'S1.A.1.3.27': current_user.user_info.name,
 
+            'S1.A.1.3.24': str(statement['total_number_of_bills']),
+            'S1.A.1.3.25': str(statement['total']),
 
+            'S1.A.1.3.9': [
+                {
+                    'S1.A.1.3.9': str(statement_item['denominations']),
+                    'S1.A.1.3.10': str(statement_item['amount']),
+                    'S1.A.1.3.11': str(statement_item['into_money'])
+                } for statement_item in statement['statements']
+            ]
         })
 
         data_tms = self.call_repos(
@@ -221,7 +234,128 @@ class CtrTemplateDetailTKTT(BaseController):
         return data_tms
 
     async def ctr_tktk_top_up_form_5182(self, booking_id: str, current_user: AuthResponse):
-        pass
+        data_request = {}
+
+        booking = await CtrBooking().ctr_get_booking(booking_id=booking_id,
+                                                     business_type_code=BUSINESS_TYPE_CASA_TOP_UP)
+        if booking.business_type.id != BUSINESS_TYPE_CASA_TOP_UP:
+            return self.response_exception(
+                msg=ERROR_BOOKING_INCORRECT, loc=f"business_type: {booking.business_type.id}"
+            )
+
+        maker = booking.created_by
+
+        maker_info = await CtrGWEmployee(current_user).ctr_gw_get_employee_info_from_code(
+            employee_code=maker, return_raw_data_flag=True)
+
+        maker_name = maker_info['full_name']
+
+        get_casa_top_up_info = self.call_repos(await repos_get_casa_top_up_info(
+            booking_id=booking_id,
+            session=self.oracle_session
+        ))
+
+        form_data = orjson_loads(get_casa_top_up_info.form_data)
+        log_data = orjson_loads(get_casa_top_up_info.log_data)[0]
+        transfer_amount = form_data['amount']
+
+        ################################################################################################################
+        # Thông tin phí
+        ################################################################################################################
+        if form_data['is_fee']:
+            fee_info = form_data['fee_info']
+            fee_amount = fee_info['fee_amount']
+            vat_tax = int(fee_amount / 10)
+            total = fee_amount + vat_tax
+            actual_total = total + transfer_amount
+        else:
+            fee_amount = 0
+            vat_tax = 0
+            actual_total = transfer_amount
+
+        sender_place_of_issue = form_data['sender_place_of_issue']
+        place_of_issue_name = ""
+        if form_data['sender_place_of_issue']:
+            identity_place_of_issue = await self.get_model_object_by_id(
+                model_id=sender_place_of_issue['id'],
+                model=PlaceOfIssue,
+                loc='sender_place_of_issue -> id'
+            )
+            place_of_issue_name = identity_place_of_issue.name
+
+        receiving_method = form_data['receiving_method']
+        receiver_full_name_vn = ""
+
+        if receiving_method in RECEIVING_METHOD_ACCOUNT_CASES:
+            receiver_account_number = form_data['receiver_account_number']
+
+            if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
+                gw_casa_account_info = await CtrGWCasaAccount(
+                    current_user=current_user).ctr_gw_get_casa_account_info(
+                    account_number=receiver_account_number,
+                    return_raw_data_flag=True
+                )
+
+                gw_casa_account_info_customer_info = gw_casa_account_info['customer_info']
+
+                receiver_full_name_vn = gw_casa_account_info_customer_info['full_name']
+
+            if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
+                receiver_full_name_vn = form_data['receiver_full_name_vn']
+
+            if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
+                receiver_full_name_vn = "abc"  # TODO
+
+        elif receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
+            receiver_full_name_vn = "abc"  # TODO
+        else:
+            if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
+                receiver_full_name_vn = form_data['receiver_full_name_vn']
+
+            if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
+                receiver_full_name_vn = form_data['receiver_full_name_vn']
+
+        statement = await CtrCasa(current_user).get_statement_info(statement_request=form_data['statement'])
+        data_request.update({
+            "S1.A.1.3.3": log_data['branch_name'],
+            "S1.A.1.3.4": log_data['created_at'],
+            "S1.A.1.3.1": "",  # TODO số chứng từ
+            "S1.A.1.3.2": log_data['completed_at'],
+            "S1.A.1.3.5": log_data['user_id'],
+
+            "S1.A.1.3.6": form_data['receiver_account_number'] if 'receiver_account_number' in form_data.keys() else '',
+
+            'S1.A.1.3.7': "VND",  # TODO hard code đơn vị tính
+            "S1.A.1.3.8": receiver_full_name_vn,
+            "S1.A.1.3.12": "",  # TODO sản phẩm
+            "S1.A.1.3.13": str(actual_total),
+            "S1.A.1.3.14": str(fee_amount),
+            "S1.A.1.3.15": str(vat_tax),
+            "S1.A.1.3.16": num2words(actual_total, lang='vi'),
+            "S1.A.1.3.17": form_data['content'] if 'content' in form_data.keys() else '',
+            'S1.A.1.3.18': form_data['sender_full_name_vn'] if 'sender_full_name_vn' in form_data.keys() else '',
+            'S1.A.1.3.19': form_data['sender_mobile_number'] if 'sender_mobile_number' in form_data.keys() else '',
+            'S1.A.1.3.20': form_data['sender_identity_number'] if 'sender_identity_number' in form_data.keys() else '',
+            'S1.A.1.3.21': form_data['sender_issued_date'] if 'sender_issued_date' in form_data.keys() else '',
+            'S1.A.1.3.22': place_of_issue_name,
+            'S1.A.1.3.23': form_data['sender_address_full'] if 'sender_address_full' in form_data.keys() else '',
+
+            'S1.A.1.3.26': maker_name,
+            'S1.A.1.3.27': current_user.user_info.name,
+
+            'S1.A.1.3.24': str(statement['total_number_of_bills']),
+            'S1.A.1.3.25': str(statement['total']),
+
+            'S1.A.1.3.9': str(statement['statements'][0]['denominations']) if statement['statements'] else '',  # TODO
+            'S1.A.1.3.10': str(statement['statements'][0]['amount']) if statement['statements'] else '',  # TODO
+            'S1.A.1.3.11': str(statement['statements'][0]['into_money']) if statement['statements'] else ''  # TODO
+        })
+
+        data_tms = self.call_repos(
+            await repo_form(data_request=data_request, path=TKTT_PATH_FORM_5182)
+        )
+
+        return data_tms
 
     async def ctr_get_template_detail_amount_block(self, template_id, booking_id):
 

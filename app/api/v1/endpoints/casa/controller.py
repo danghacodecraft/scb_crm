@@ -199,6 +199,7 @@ class CtrCasa(CtrGWCustomer, CtrGWEmployee):
 
         statements = []
         total_amount = 0
+        total_number_of_bills = 0
         for denominations, amount in statement.items():
             into_money = int(denominations) * amount
             statements.append(dict(
@@ -206,10 +207,11 @@ class CtrCasa(CtrGWCustomer, CtrGWEmployee):
                 amount=amount,
                 into_money=into_money
             ))
+            total_number_of_bills += int(amount)
             total_amount += into_money
-
         statement_response = dict(
             statements=statements,
+            total_number_of_bills=total_number_of_bills,
             total=total_amount,
         )
         return statement_response
