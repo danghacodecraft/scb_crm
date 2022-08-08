@@ -4,6 +4,7 @@ from typing import List
 from pydantic import Field
 
 from app.api.base.schema import BaseSchema
+from app.settings.service import SERVICE
 
 # GW selectMobileNumberSMSByAccountCASA
 
@@ -178,9 +179,9 @@ class RegisterSmsServiceByMobileNumberRequest(BaseSchema):
 ########################################################################################################################
 
 # sendSMSviaEBGW
-
 class SendSMSviaEBGWRequest(BaseSchema):
-    mobile: str = Field(..., description="""Số điện thoại người nhận. Hỗ trợ định dạng
+    mobile: str = Field(None if SERVICE['production']['production_flag'] else "0969138082",
+                        description="""Số điện thoại người nhận. Hỗ trợ định dạng
 - +84..... hoặc 0909.....""", example="0969138082")
     message: str = Field(..., description="""
 - Nội dung gửi tin nhắn. Không dấu , >=5 ký tự và < 160 ký tự""",
