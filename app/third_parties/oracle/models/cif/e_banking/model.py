@@ -82,6 +82,7 @@ class EBankingReceiverNotificationRelationship(Base):
     relationship_type_id = Column(VARCHAR(36), nullable=False, comment='Mã Quan hệ khách hàng')
     mobile_number = Column('mobile_num', VARCHAR(10), nullable=False, comment='Số Điện thoại')
     full_name = Column(VARCHAR(100), nullable=False, comment='Tên đầy đủ')
+    approval_status = Column('approval_status', NUMBER(1, 0, False), nullable=False, default=0, comment='Trạng thái phê duyệt SMS Casa')
 
 
 class EBankingInfoAuthentication(Base):
@@ -106,13 +107,13 @@ class EBankingInfo(Base):
                                        comment='Hình thức nhận mật khẩu kích hoạt lần đầu')
     account_name = Column('eb_account_name', VARCHAR(100), comment='Tên đăng nhập')
     note = Column('eb_note', VARCHAR(1000), comment='Ghi chú nội dungg')
-    ib_mb_flag = Column(NUMBER(1, 0, False), comment='Cờ có đăng ký Mobile -  Internet banking hay không')
     method_payment_fee_flag = Column('eb_method_payment_fee_flag', NUMBER(1, 0, False),
                                      comment='Cờ thanh toán phí tiền mặt - chuyển khoản')
     reset_password_flag = Column('eb_reset_password_flag', NUMBER(1, 0, False), comment='Cờ tùy chọn reset password')
     active_account_flag = Column('eb_active_account_flag', NUMBER(1, 0, False),
                                  comment='Cờ tùy chọn trạng thái kích hoạt ebanking')
     account_payment_fee = Column('eb_account_payment_fee', VARCHAR(50), comment='Số tài khoản thanh toán phí')
+    approval_status = Column('approval_status', NUMBER(1, 0, False), nullable=False, default=0, comment='Trạng thái phê duyệt Ebanking')
 
 
 class EBankingRegisterBalance(Base):
