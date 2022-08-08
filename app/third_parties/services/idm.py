@@ -38,7 +38,7 @@ class ServiceIDM:
         data_user_login = {
             "username": username,
             "password": password,
-            "app_code": SERVICE["idm"]['my_service']
+            "app_code": SERVICE["idm"]['service_name']
         }
 
         try:
@@ -122,7 +122,7 @@ class ServiceIDM:
                 async with session.request(
                         method='get',
                         url=url,
-                        params={'app_code': SERVICE["idm"]['my_service']},
+                        params={'app_code': SERVICE["idm"]['service_name']},
                         headers=headers,
                         verify_ssl=False
                 ) as response:

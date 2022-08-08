@@ -1,4 +1,3 @@
-import os
 from typing import Optional
 
 from starlette import status
@@ -6,6 +5,7 @@ from starlette import status
 from app.api.base.controller import BaseController
 from app.api.base.repository import ReposReturn
 from app.api.v1.endpoints.user.schema import AuthResponse
+from app.settings.service import SERVICE
 from app.utils.error_messages import ERROR_PERMISSION, MESSAGE_STATUS
 
 
@@ -54,7 +54,7 @@ class PermissionController(BaseController):
             )
 
         # check core rule
-        if os.getenv("PRODUCTION", False):
+        if SERVICE['production']['production_flag']:
             if not current_user.fcc_current_date:
                 return ReposReturn(
                     is_error=True,
