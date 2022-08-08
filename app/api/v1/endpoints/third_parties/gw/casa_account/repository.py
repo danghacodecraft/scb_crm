@@ -422,10 +422,10 @@ async def repos_gw_change_status_account(current_user, account_number):
         "p_udf": "",
         # TODO hard checker, maker
         "staff_info_checker": {
-            "staff_name": "HOANT2"
+            "staff_name": "PLGDKSS"
         },
         "staff_info_maker": {
-            "staff_name": "KHANHLQ"
+            "staff_name": "PLGDKSS"
         }
     }
 
