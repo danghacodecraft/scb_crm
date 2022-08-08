@@ -91,3 +91,25 @@ async def repos_gw_register_sms_service_by_mobile_number(
         )
 
     return ReposReturn(data=register_sms_service_by_mobile_number)
+
+
+async def repos_gw_send_sms_via_eb_gw(
+        message,
+        current_user,
+        mobile=None
+):
+    current_user = current_user.user_info
+    is_success, send_sms_via_eb_gw = await service_gw.send_sms_via_eb_gw(
+        message=message,
+        mobile=mobile,
+        current_user=current_user
+    )
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="send_sms_via_eb_gw",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(send_sms_via_eb_gw)
+        )
+
+    return ReposReturn(data=send_sms_via_eb_gw)
