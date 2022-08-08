@@ -95,7 +95,6 @@ class CtrTemplateDetailTKTT(BaseController):
             return self.response_exception(msg='template_id not exist in amount block',
                                            detail=f'template_id: {template_id}')
         if template_id == TKTT_AMOUNT_BLOCK_TEMPLATE_5183:
-            print('dailb 2222')
             template = await self.ctr_tktk_amount_block_form_5183(booking_id=booking_id)
         if template_id == TKTT_AMOUNT_BLOCK_TEMPLATE_5184:
             template = await self.ctr_tktk_amount_block_form_5184(booking_id=booking_id)
