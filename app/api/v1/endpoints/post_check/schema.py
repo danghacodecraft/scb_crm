@@ -139,6 +139,7 @@ class StatisticsProfilesResponse(BaseSchema):
     canceled: int = Field(..., description="Hủy bỏ")
     processing: int = Field(..., description="Chờ hậu kiểm")
     rejected: int = Field(..., description="Cần xác minh")
+    failed: int = Field(..., description="Thất bại")
 
 
 ####################################################################################################

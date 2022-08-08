@@ -28,6 +28,10 @@ class CtrGWBranchLocation(BaseController):
             branch = {
                 "branch_id": region_item['branch_code'],
                 "branch_name": region_item['branch_name'],
+                "area_id": region_item['area_id'],
+                "area_name": region_item['area_name'],
+                "branch_console": region_item['branch_console'],
+                "branch_console_name": region_item['branch_console_name'],
                 "latitude": float(region_item['latitude']) if region_item['latitude'] != '' else 0,
                 "longitude": float(region_item['longtitude']) if region_item['longtitude'] != '' else 0,
                 "type": region_item['region_type']
@@ -49,6 +53,10 @@ class CtrGWBranchLocation(BaseController):
                 {
                     'branch_id': 'ALL',
                     'branch_name': 'Tất cả',
+                    "area_id": '',
+                    "area_name": '',
+                    "branch_console": '',
+                    "branch_console_name": '',
                     'longitude': GW_LONGITUDE_DEFAULT,
                     'latitude': GW_LATITUDE_DEFAULT,
                     'type': GW_TYPE_DEFAULT
@@ -64,10 +72,10 @@ class CtrGWBranchLocation(BaseController):
                 longitude = branch['longitude']
                 latitude = branch['latitude']
                 if branch_id != 'ALL':
-                    left = left if left < longitude else longitude
+                    left = left if 0 < left < longitude else longitude
                     right = right if right > longitude else longitude
                     top = top if top > latitude else latitude
-                    bottom = bottom if bottom < latitude else latitude
+                    bottom = bottom if 0 < bottom < latitude else latitude
 
             region.update(left=left, right=right, top=top, bottom=bottom)
             res.append(region)
@@ -80,6 +88,10 @@ class CtrGWBranchLocation(BaseController):
                     {
                         "branch_id": "ALL",
                         "branch_name": "Tất cả",
+                        "area_id": '',
+                        "area_name": '',
+                        "branch_console": '',
+                        "branch_console_name": '',
                         'longitude': GW_LONGITUDE_DEFAULT,
                         'latitude': GW_LATITUDE_DEFAULT,
                         "type": GW_TYPE_DEFAULT
@@ -107,6 +119,10 @@ class CtrGWBranchLocation(BaseController):
             'region_name': response_data['region_name'],
             'branch_id': response_data['branch_code'],
             'branch_name': response_data['branch_name'],
+            "area_id": response_data['area_id'],
+            "area_name": response_data['area_name'],
+            "branch_console": response_data['branch_console'],
+            "branch_console_name": response_data['branch_console_name'],
             'latitude': response_data['latitude'],
             'longitude': response_data['longtitude'],
             'type': response_data['region_type'],
