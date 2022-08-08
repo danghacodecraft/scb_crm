@@ -180,7 +180,7 @@ class RegisterSmsServiceByMobileNumberRequest(BaseSchema):
 
 # sendSMSviaEBGW
 class SendSMSviaEBGWRequest(BaseSchema):
-    mobile: str = Field(None if SERVICE.get('production', {}).get('production_flag') else "0969138082",
+    mobile: str = Field(None if SERVICE['production']['production_flag'] else "0969138082",
                         description="""Số điện thoại người nhận. Hỗ trợ định dạng
 - +84..... hoặc 0909.....""", example="0969138082")
     message: str = Field(..., description="""
