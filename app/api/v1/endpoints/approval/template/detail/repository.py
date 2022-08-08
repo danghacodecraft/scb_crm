@@ -52,6 +52,14 @@ async def repos_branch_name(branch_id: str, session: Session):
     return ReposReturn(data=branch_name_info)
 
 
+async def repos_teller_info(branch_id: str, session: Session):
+    teller_info = session.execute(
+        select(Branch.name).filter(Branch.id == branch_id)
+    ).scalar()
+
+    return ReposReturn(data=teller_info)
+
+
 async def repo_form(data_request: dict, path: str) -> ReposReturn:
     body = {
         "parameter_values": {},
