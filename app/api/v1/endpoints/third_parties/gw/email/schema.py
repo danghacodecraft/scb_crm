@@ -36,9 +36,7 @@ def open_ebank_failure_response(customers):
             <p style="line-height: 120%; margin-left: 0.25in; margin-top: 0.2in; margin-bottom: 0.2in;" lang="pt-BR"
                 align="justify">&nbsp;</p>
             </div>
-        </div>
-            """
-
+        </div>"""
     footer = """
             <div class="footer" style="margin-left: 3%;  font-size: 20px;">
             <p class="western" style="line-height: 120%; margin-top: 0.2in; margin-bottom: 0.2in;"><span
