@@ -1,5 +1,3 @@
-# from num2words import num2words
-
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.repository import (
     repos_get_booking_business_form_by_booking_id
@@ -203,7 +201,7 @@ class CtrTemplateDetailTKTT(BaseController):
             "S1.A.1.3.13": str(actual_total),
             "S1.A.1.3.14": str(fee_amount),
             "S1.A.1.3.15": str(vat_tax),
-            "S1.A.1.3.16": num2words(actual_total, lang='vi'),
+            "S1.A.1.3.16": str(actual_total),
             "S1.A.1.3.17": form_data['content'] if 'content' in form_data.keys() else '',
             'S1.A.1.3.18': form_data['sender_full_name_vn'] if 'sender_full_name_vn' in form_data.keys() else '',
             'S1.A.1.3.19': form_data['sender_mobile_number'] if 'sender_mobile_number' in form_data.keys() else '',
@@ -331,7 +329,7 @@ class CtrTemplateDetailTKTT(BaseController):
             "S1.A.1.3.13": str(actual_total),
             "S1.A.1.3.14": str(fee_amount),
             "S1.A.1.3.15": str(vat_tax),
-            "S1.A.1.3.16": num2words(actual_total, lang='vi'),
+            "S1.A.1.3.16": str(actual_total),
             "S1.A.1.3.17": form_data['content'] if 'content' in form_data.keys() else '',
             'S1.A.1.3.18': form_data['sender_full_name_vn'] if 'sender_full_name_vn' in form_data.keys() else '',
             'S1.A.1.3.19': form_data['sender_mobile_number'] if 'sender_mobile_number' in form_data.keys() else '',
