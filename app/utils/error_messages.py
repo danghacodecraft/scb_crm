@@ -1,8 +1,7 @@
 # status error
 from app.utils.constant.approval import CIF_APPROVE_STAGES
 from app.utils.constant.casa import (
-    ACCOUNT_ALLOW_NUMBER_LENGTH, CASA_FEE_METHODS, DENOMINATIONS__AMOUNTS,
-    RECEIVING_METHODS
+    ACCOUNT_ALLOW_NUMBER_LENGTH, CASA_FEE_METHODS, RECEIVING_METHODS
 )
 
 PAGING_ERROR = "PAGING_ERROR"
@@ -284,7 +283,6 @@ MESSAGE_STATUS = {
     ERROR_ACCOUNT_LENGTH_NOT_ALLOWED: f'Account number length must be in range {ACCOUNT_ALLOW_NUMBER_LENGTH}',
 
     ERROR_RECEIVING_METHOD_NOT_EXIST: f'Receiving method not in {RECEIVING_METHODS}',
-    ERROR_DENOMINATIONS_NOT_EXIST: f'Denominations not in {DENOMINATIONS__AMOUNTS.keys()}',
 
     ERROR_ISSUED_DATE: 'Issue date must be lower than today',
 
@@ -305,3 +303,5 @@ MESSAGE_STATUS = {
     ERROR_ACCOUNT_CLASS_NOT_EXIST: "Account Class not exist",
     ERROR_USER_NOT_THE_SAME_BRANCH: "User not the same branch",
 }
+
+ERROR_EMAIL_TEMPLATES_GW = 'ERROR_EMAIL_TEMPLATES_GW'

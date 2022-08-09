@@ -5,7 +5,6 @@ from app.api.v1.endpoints.approval.repository import (
 from app.api.v1.endpoints.approval.template.detail.repository import (
     repo_form, repos_branch_name
 )
-from app.api.v1.endpoints.casa.controller import CtrCasa
 from app.api.v1.endpoints.casa.top_up.repository import (
     repos_get_casa_top_up_info
 )
@@ -18,6 +17,7 @@ from app.api.v1.endpoints.third_parties.gw.employee.controller import (
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.booking.repository import repos_get_booking
+from app.api.v1.others.statement.controller import CtrStatement
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.utils.constant.business_type import (
     BUSINESS_TYPE_AMOUNT_BLOCK, BUSINESS_TYPE_CASA_TOP_UP
@@ -30,6 +30,8 @@ from app.utils.constant.casa import (
     RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY,
     RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT
 )
+from app.utils.constant.date_datetime import DATE_TYPE_DMY_WITH_SLASH
+from app.utils.constant.gw import GW_DATETIME_FORMAT
 from app.utils.constant.tms_dms import (
     TKTT_AMOUNT_BLOCK_TEMPLATE_5183, TKTT_AMOUNT_BLOCK_TEMPLATE_5184,
     TKTT_AMOUNT_BLOCK_TEMPLATE_5185, TKTT_AMOUNT_BLOCK_TEMPLATE_5186,
@@ -44,7 +46,9 @@ from app.utils.constant.tms_dms import (
     TKTT_TOP_UP_TEMPLATES
 )
 from app.utils.error_messages import ERROR_BOOKING_INCORRECT
-from app.utils.functions import date_to_string, now, orjson_loads
+from app.utils.functions import (
+    date_string_to_other_date_string_format, date_to_string, now, orjson_loads
+)
 
 
 class CtrTemplateDetailTKTT(BaseController):
@@ -185,12 +189,14 @@ class CtrTemplateDetailTKTT(BaseController):
             if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
                 receiver_full_name_vn = form_data['receiver_full_name_vn']
 
-        statement = await CtrCasa(current_user).get_statement_info(statement_request=form_data['statement'])
+        statement = await CtrStatement(current_user).ctr_statement_info(statement_request=form_data['statement'])
         data_request.update({
             "S1.A.1.3.3": log_data['branch_name'],
-            "S1.A.1.3.4": log_data['created_at'],
+            "S1.A.1.3.4": date_string_to_other_date_string_format(
+                log_data['created_at'], from_format=GW_DATETIME_FORMAT, to_format=DATE_TYPE_DMY_WITH_SLASH),
             "S1.A.1.3.1": "",  # TODO số chứng từ
-            "S1.A.1.3.2": log_data['completed_at'],
+            "S1.A.1.3.2": date_string_to_other_date_string_format(
+                log_data['completed_at'], from_format=GW_DATETIME_FORMAT, to_format=DATE_TYPE_DMY_WITH_SLASH),
             "S1.A.1.3.5": log_data['user_id'],
 
             "S1.A.1.3.6": form_data['receiver_account_number'] if 'receiver_account_number' in form_data.keys() else '',
@@ -313,12 +319,14 @@ class CtrTemplateDetailTKTT(BaseController):
             if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
                 receiver_full_name_vn = form_data['receiver_full_name_vn']
 
-        statement = await CtrCasa(current_user).get_statement_info(statement_request=form_data['statement'])
+        statement = await CtrStatement(current_user).ctr_statement_info(statement_request=form_data['statement'])
         data_request.update({
             "S1.A.1.3.3": log_data['branch_name'],
-            "S1.A.1.3.4": log_data['created_at'],
+            "S1.A.1.3.4": date_string_to_other_date_string_format(
+                log_data['created_at'], from_format=GW_DATETIME_FORMAT, to_format=DATE_TYPE_DMY_WITH_SLASH),
             "S1.A.1.3.1": "",  # TODO số chứng từ
-            "S1.A.1.3.2": log_data['completed_at'],
+            "S1.A.1.3.2": date_string_to_other_date_string_format(
+                log_data['completed_at'], from_format=GW_DATETIME_FORMAT, to_format=DATE_TYPE_DMY_WITH_SLASH),
             "S1.A.1.3.5": log_data['user_id'],
 
             "S1.A.1.3.6": form_data['receiver_account_number'] if 'receiver_account_number' in form_data.keys() else '',

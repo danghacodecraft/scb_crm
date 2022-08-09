@@ -10,6 +10,9 @@ from app.api.v1.endpoints.cif.e_banking.schema import (
 )
 from app.api.v1.endpoints.cif.repository import repos_get_booking
 from app.api.v1.validator import validate_history_data
+from app.third_parties.oracle.models.master_data.customer import (
+    CustomerRelationshipType
+)
 from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING,
     PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING_SMS_CASA,
@@ -22,8 +25,6 @@ class CtrEBanking(BaseController):
     ####################################################################################################################
     # Đăng ký Ebanking
     ####################################################################################################################
-
-    # @ TODO: đăng ký SMS CASA bên GW chỉ cần nhập SĐT, các field khác khi nào bên GW cần sẽ làm sau.
     async def ctr_save_e_banking_and_sms(self, cif_id: str, e_banking_info: EBankingRequest,
                                          ebank_sms_casa_info: EBankingSMSCasaRequest = None):
 
@@ -33,62 +34,79 @@ class CtrEBanking(BaseController):
         save_e_banking_info = None
         save_sms_casa_info = None
 
-        if e_banking_info:
-            ebank_ibmb_username = e_banking_info.username
-            ebank_ibmb_receive_password_code = e_banking_info.receive_password_code
-            authentication_code_list = e_banking_info.authentication_code_list
+        ebank_ibmb_username = e_banking_info.username
+        ebank_ibmb_receive_password_code = e_banking_info.receive_password_code
+        authentication_code_list = e_banking_info.authentication_code_list
 
-            # dữ liệu để tạo ebanking trong DB
-            data_insert = {
-                "ebank_info": {
-                    "customer_id": cif_id,
-                    "account_name": ebank_ibmb_username,
-                    "method_active_password_id": ebank_ibmb_receive_password_code,
-                },
-                "ebank_info_authen_list": [{
-                    "method_authentication_id": authentication_code
-                } for authentication_code in authentication_code_list]
-            }
+        # dữ liệu để tạo ebanking trong DB
+        data_insert = {
+            "ebank_info": {
+                "customer_id": cif_id,
+                "account_name": ebank_ibmb_username,
+                "method_active_password_id": ebank_ibmb_receive_password_code,
+            },
+            "ebank_info_authen_list": [{
+                "method_authentication_id": authentication_code
+            } for authentication_code in authentication_code_list]
+        }
 
-            history_datas = self.make_history_log_data(
-                description=PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING,
-                history_status=PROFILE_HISTORY_STATUS_INIT,
-                current_user=current_user_info
+        history_datas = self.make_history_log_data(
+            description=PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING,
+            history_status=PROFILE_HISTORY_STATUS_INIT,
+            current_user=current_user_info
+        )
+        # Validate history data
+        is_success, history_response = validate_history_data(history_datas)
+        if not is_success:
+            return self.response_exception(
+                msg=history_response['msg'],
+                loc=history_response['loc'],
+                detail=history_response['detail']
             )
-            # Validate history data
-            is_success, history_response = validate_history_data(history_datas)
-            if not is_success:
-                return self.response_exception(
-                    msg=history_response['msg'],
-                    loc=history_response['loc'],
-                    detail=history_response['detail']
-                )
 
-            save_e_banking_info = self.call_repos(
-                await repos_save_e_banking(
-                    cif_id=cif_id,
-                    data_insert=data_insert,
-                    log_data=e_banking_info.json(),
-                    history_datas=orjson_dumps(history_datas),
-                    created_by=current_user_info.username,
-                    session=self.oracle_session
-                ))
+        save_e_banking_info = self.call_repos(
+            await repos_save_e_banking(
+                cif_id=cif_id,
+                data_insert=data_insert,
+                log_data=e_banking_info.json(),
+                history_datas=orjson_dumps(history_datas),
+                created_by=current_user_info.username,
+                session=self.oracle_session
+            ))
 
-            # Lấy Booking Code
-            booking = self.call_repos(await repos_get_booking(
-                cif_id=cif_id, session=self.oracle_session
-            ))
-            save_e_banking_info.update(booking=dict(
-                id=booking.id,
-                code=booking.code
-            ))
+        # Lấy Booking Code
+        booking = self.call_repos(await repos_get_booking(
+            cif_id=cif_id, session=self.oracle_session
+        ))
+        save_e_banking_info.update(booking={
+            "id": booking.id,
+            "code": booking.code,
+            "name": current_user.user_info.username
+        })
 
         if ebank_sms_casa_info:
-            data_insert = {
-                "casa_account_id": ebank_sms_casa_info.casa_account_id,
-                "identity_phone_num_list": ebank_sms_casa_info.indentify_phone_num_list
-            }
 
+            # Kiểm tra mối quan hệ
+            relationship_ids = []
+            for registry_balance_item in ebank_sms_casa_info.registry_balance_items:
+                for register_balance_casa in registry_balance_item.receiver_noti_relationship_items:
+                    relationship_ids.append(register_balance_casa.relationship_type_id)
+            await self.get_model_objects_by_ids(
+                model=CustomerRelationshipType,
+                model_ids=list(relationship_ids),
+                loc="receiver_noti_relationship_items -> relationship_type_id"
+            )
+
+            # Dữ liệu để tạo sms_casa trong DB
+            data_insert = {
+                "reg_balance_options": ebank_sms_casa_info.reg_balance_options,
+                "registry_balance_items": [{
+                    "casa_id": registry_balance_item.casa_id,
+                    "main_phone_number_info": registry_balance_item.main_phone_number_info,
+                    "receiver_noti_relationship_items": registry_balance_item.receiver_noti_relationship_items,
+                    "notify_code_list": registry_balance_item.notify_code_list
+                } for registry_balance_item in ebank_sms_casa_info.registry_balance_items]
+            }
             history_datas = self.make_history_log_data(
                 description=PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING_SMS_CASA,
                 history_status=PROFILE_HISTORY_STATUS_INIT,
@@ -116,10 +134,11 @@ class CtrEBanking(BaseController):
             booking = self.call_repos(await repos_get_booking(
                 cif_id=cif_id, session=self.oracle_session
             ))
-            save_sms_casa_info.update(booking=dict(
-                id=booking.id,
-                code=booking.code
-            ))
+            save_sms_casa_info.update(booking={
+                "id": booking.id,
+                "code": booking.code,
+                "name": current_user.user_info.username
+            })
 
         response_data = save_e_banking_info if save_e_banking_info else save_sms_casa_info
 
@@ -135,10 +154,10 @@ class CtrEBanking(BaseController):
         # 2. lấy data sms casa
         sms_casa_result = await repos_get_sms_data(cif_id=cif_id, session=self.oracle_session)
 
-        response = dict(
-            e_banking=e_banking_result.data if e_banking_result.data else None,
-            sms_casa=sms_casa_result.data if sms_casa_result.data else None,
-        )
+        response = {
+            "e_banking": e_banking_result.data if e_banking_result.data else None,
+            "sms_casa": sms_casa_result.data if sms_casa_result.data else None
+        }
 
         return self.response(data=response)
 

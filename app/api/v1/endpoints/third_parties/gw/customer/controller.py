@@ -805,8 +805,7 @@ class CtrGWCustomer(BaseController):
         # Push EB, SMS, Debit (Trả lỗi sau)
         # RULE: Phải hoàn thành CIF với CASA trước
         error_list = []
-        if is_complete_cif:
-
+        if is_complete_cif and is_complete_casa:
             # Push EB
             if not is_complete_eb:
                 if not casa_account_number:

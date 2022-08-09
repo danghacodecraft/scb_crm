@@ -9,8 +9,8 @@ from app.api.v1.endpoints.third_parties.gw.customer.controller import (
 from app.api.v1.endpoints.third_parties.gw.employee.controller import (
     CtrGWEmployee
 )
+from app.api.v1.others.statement.repository import repos_get_denominations
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
-from app.utils.constant.casa import DENOMINATIONS__AMOUNTS
 from app.utils.constant.cif import DROPDOWN_NONE_DICT
 from app.utils.constant.gw import GW_DATE_FORMAT, GW_DATETIME_FORMAT
 from app.utils.error_messages import (
@@ -27,11 +27,18 @@ class CtrCasa(CtrGWCustomer, CtrGWEmployee):
         """
         Validate thông tin bảng kê
         """
-        denominations__amounts = DENOMINATIONS__AMOUNTS
+        denominations__amounts = {}
+        statement_info = self.call_repos(await repos_get_denominations(currency_id="VND", session=self.oracle_session))
+
+        for item in statement_info:
+            denominations__amounts.update({
+                str(int(item.denominations)): 0
+            })
+
         denominations_errors = []
         for index, row in enumerate(statement):
             denominations = row.denominations
-            if denominations not in DENOMINATIONS__AMOUNTS:
+            if denominations not in denominations__amounts:
                 denominations_errors.append(dict(
                     index=index,
                     value=denominations
@@ -181,37 +188,3 @@ class CtrCasa(CtrGWCustomer, CtrGWEmployee):
         # )
 
         return sender_response
-
-    @staticmethod
-    async def get_statement_info(statement_request: list):
-        """
-        Thông tin bảng kê
-        statement: [
-            {
-                "denominations": "500000",
-                "amount": 1
-            }
-        ]
-        """
-        statement = DENOMINATIONS__AMOUNTS
-        for row in statement_request:
-            statement.update({row['denominations']: row['amount']})
-
-        statements = []
-        total_amount = 0
-        total_number_of_bills = 0
-        for denominations, amount in statement.items():
-            into_money = int(denominations) * amount
-            statements.append(dict(
-                denominations=denominations,
-                amount=amount,
-                into_money=into_money
-            ))
-            total_number_of_bills += int(amount)
-            total_amount += into_money
-        statement_response = dict(
-            statements=statements,
-            total_number_of_bills=total_number_of_bills,
-            total=total_amount,
-        )
-        return statement_response

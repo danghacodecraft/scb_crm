@@ -51,6 +51,13 @@ class EKYCCustomer(Base):
     user_eb = Column(VARCHAR(500), nullable=True)
     transaction_data = Column(CLOB, nullable=False)
     created_at = Column(DATE, nullable=False)
+    updated_at = Column(DATE, nullable=False, default=None)
+    kss_status = Column(VARCHAR(500), default=None)
+    user_kss = Column(VARCHAR(500), default=None)
+    date_kss = Column(DATE, default=None)
+    approve_status = Column(VARCHAR(500), default=None)
+    user_approve = Column(VARCHAR(500), default=None)
+    date_approve = Column(DATE, default=None)
 
 
 class EKYCCustomerStep(Base):
