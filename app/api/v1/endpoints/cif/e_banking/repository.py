@@ -280,8 +280,8 @@ async def repos_get_sms_data(cif_id: str, session: Session) -> ReposReturn:
             EBankingRegisterBalance.id == EBankingRegisterBalanceNotification.eb_reg_balance_id
         ).filter(
             EBankingRegisterBalance.account_id.in_(casa_ids),
-            EBankingRegisterBalance.e_banking_register_account_type == EBANKING_ACCOUNT_TYPE_CHECKING
-            # EBankingRegisterBalance.approval_status == False
+            EBankingRegisterBalance.e_banking_register_account_type == EBANKING_ACCOUNT_TYPE_CHECKING,
+            EBankingRegisterBalance.approval_status == False  # noqa
         )
     ).all()
 
@@ -336,7 +336,7 @@ async def repos_get_sms_data(cif_id: str, session: Session) -> ReposReturn:
     response_data = {
         "reg_balance_options": sms_casa_reg_balance_options,
         "registry_balance_items": registry_balance_items
-    }
+    } if registry_balance_items else None  # Nếu không có đăng ký sms, trả None
 
     return ReposReturn(data=response_data)
 
