@@ -11,7 +11,9 @@ async def repos_gw_send_email(
         email_subject,
         email_content_html,
         list_email_attachment_file,
-        current_user
+        current_user,
+        customers=None,
+        is_open_ebank_success=False
 ):
     current_user = current_user.user_info
     is_success, send_email = await service_gw.send_email(
@@ -22,7 +24,9 @@ async def repos_gw_send_email(
         email_subject=email_subject,
         email_content_html=email_content_html,
         list_email_attachment_file=list_email_attachment_file,
-        current_user=current_user
+        current_user=current_user,
+        customers=customers,
+        is_open_ebank_success=is_open_ebank_success
     )
     if not is_success:
         return ReposReturn(

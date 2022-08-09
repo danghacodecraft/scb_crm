@@ -42,7 +42,7 @@ async def view_gw_send_email(
                                                                            " không có thì không gửi lên"),
         data_input__email_subject: str = Form(..., alias="sendEmail_in.data_input.email_subject",
                                               description="Tiêu đề"),
-        data_input__email_content_html: str = Form(..., alias="sendEmail_in.data_input.email_content_html",
+        data_input__email_content_html: str = Form(None, alias="sendEmail_in.data_input.email_content_html",
                                                    description="Nội dung HTML"),
         data_input__email_attachment_file: Optional[List[UploadFile]] = File(None,
                                                                              alias="sendEmail_in.data_input"
@@ -50,9 +50,20 @@ async def view_gw_send_email(
                                                                              description="Tệp đính kèm, cần gửi nhiều"
                                                                                          " file thì gửi lên nhiều"
                                                                                          " key này,"
-                                                                                         " không có thì không gửi lên")
-):
+                                                                                         " không có thì không gửi lên"),
+        data_input__customers: Optional[List[str]] = Form(None, alias="data_input__customers",
+                                                          description="danh sách họ và tên khách hàng gửi mail,"
+                                                                      " nếu sử dụng `data_input__customers` "
+                                                                      "thì hệ thống sẽ sử dụng email template"
+                                                                      " mẫu không sử dụng"
+                                                                      " `data_input__email_content_html`"),
+        data_input__is_open_ebank_success: bool = Form(False, alias="data_input__is_open_ebank_success",
+                                                       description="""
+- True: Email trong trường hợp phê duyệt trạng thái Chờ hậu kiểm / cần xác minh sang Không hợp lệ.
 
+- False Email trong trường hợp phê duyệt trạng thái Không hợp lệ sang Hợp lệ.
+                                                                  """)
+):
     ctr_send_email = await CtrGWEmail(
         current_user).ctr_gw_send_email(
         product_code=data_input__product_code,
@@ -62,6 +73,8 @@ async def view_gw_send_email(
         email_subject=data_input__email_subject,
         email_content_html=data_input__email_content_html,
         list_email_attachment_file=data_input__email_attachment_file,
+        customers=data_input__customers,
+        is_open_ebank_success=data_input__is_open_ebank_success
     )
 
     ctr_send_email['data'] = None
