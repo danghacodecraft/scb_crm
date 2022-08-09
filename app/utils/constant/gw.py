@@ -78,6 +78,8 @@ GW_ENDPOINT_URL_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA = "/ebanksms/v1.0/rest/
 GW_ENDPOINT_URL_SELECT_ACCOUNT_TD_BY_MOBILE_NUM = "/ebanksms/v1.0/rest/selectAccountTDByMobileNum"
 GW_ENDPOINT_URL_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA = "/ebanksms/v1.0/rest/registerSMSServiceByAccountCASA"
 GW_ENDPOINT_URL_REGISTER_SMS_SERVICE_BY_MOBILE_NUMBER = "/ebanksms/v1.0/rest/registerSMSServiceByMobileNumber"
+GW_ENDPOINT_URL_SEND_SMS_VIA_EB_GW = "/ebanksms/v1.0/rest/sendSMSviaEBGW"
+
 
 # ---------------------------------------------- EBANK IB MB ---------------------------------------------- #
 GW_ENDPOINT_URL_CHECK_USERNAME_IB_MB_EXIST = "/ebankibmb/v1.0/rest/checkUsernameIBMBExist"
@@ -87,6 +89,9 @@ GW_ENDPOINT_URL_SUMMARY_BP_TRANS_BY_SERVICE = "/ebankibmb/v1.0/rest/summaryBPTra
 GW_ENDPOINT_URL_SUMMARY_BP_TRANS_BY_INVOICE = "/ebankibmb/v1.0/rest/summaryBPTransByInvoice"
 GW_ENDPOINT_URL_OPEN_MB = "/ebankibmb/v1.0/rest/openMB"
 GW_ENDPOINT_URL_SELECT_SERVICE_PACK_IB = "/ebankibmb/v1.0/rest/selectServicePackIB"
+
+# ---------------------------------------------- EMAIL ---------------------------------------------- #
+GW_ENDPOINT_URL_SEND_EMAIL = "/email/v1.0/rest/sendEmail"
 
 ########################################################################################################################
 #                                         GW FUNCTION NAME
@@ -232,6 +237,10 @@ GW_FUNC_REGISTER_SMS_SERVICE_BY_MOBILE_NUMBER_IN = "registerSMSServiceByMobileNu
 GW_FUNC_REGISTER_SMS_SERVICE_BY_MOBILE_NUMBER_OUT = "registerSMSServiceByMobileNumber_out"
 GW_FUNC_REGISTER_SMS_SERVICE_BY_MOBILE_NUMBER = "registerSMSServiceByMobileNumber"
 
+GW_FUNC_SEND_SMS_VIA_EB_GW_IN = "sendSMSviaEBGW_in"
+GW_FUNC_SEND_SMS_VIA_EB_GW_OUT = "sendSMSviaEBGW_out"
+GW_FUNC_SEND_SMS_VIA_EB_GW = "sendSMSviaEBGW"
+
 # EbankIBMB
 GW_FUNC_CHECK_USERNAME_IB_MB_EXIST_IN = "checkUsernameIBMBExist_in"
 GW_FUNC_CHECK_USERNAME_IB_MB_EXIST_OUT = "checkUsernameIBMBExist_out"
@@ -262,6 +271,11 @@ GW_FUNC_OPEN_MB = "openMB"
 GW_FUNC_SELECT_SERVICE_PACK_IB_IN = "selectServicePackIB_in"
 GW_FUNC_SELECT_SERVICE_PACK_IB_OUT = "selectServicePackIB_out"
 GW_FUNC_SELECT_SERVICE_PACK_IB = "selectServicePackIB"
+
+# EMAIL
+GW_FUNC_SEND_EMAIL_OUT = "sendEmail_out"
+GW_FUNC_SEND_EMAIL = "sendEmail"
+GW_FUNC_SEND_EMAIL_KEY = "{HovatenKhachHang}"
 
 ########################################################################################################################
 #                                         END GW FUNCTION NAME

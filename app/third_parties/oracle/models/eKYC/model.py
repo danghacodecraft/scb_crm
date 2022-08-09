@@ -50,6 +50,8 @@ class EKYCCustomer(Base):
     date_of_expiry = Column(DATE, nullable=True)
     user_eb = Column(VARCHAR(500), nullable=True)
     transaction_data = Column(CLOB, nullable=False)
+    created_at = Column(DATE, nullable=False)
+    updated_at = Column(DATE, nullable=False, default=None)
 
 
 class EKYCCustomerStep(Base):
@@ -63,3 +65,4 @@ class EKYCCustomerStep(Base):
     reason = Column(VARCHAR(500), nullable=True)
     customer_id = Column(VARCHAR(100), nullable=False)
     transaction_id = Column(VARCHAR(100), nullable=False)
+    created_at = Column(DATE, nullable=False)

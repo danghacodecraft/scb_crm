@@ -57,8 +57,8 @@ from app.utils.error_messages import (
     ERROR_APPROVAL_NO_SIGNATURE_IN_IDENTITY_STEP,
     ERROR_APPROVAL_UPLOAD_SIGNATURE, ERROR_BUSINESS_TYPE_NOT_EXIST,
     ERROR_CIF_ID_NOT_EXIST, ERROR_CONTENT_NOT_NULL, ERROR_FIELD_REQUIRED,
-    ERROR_PERMISSION, ERROR_STAGE_COMPLETED, ERROR_VALIDATE,
-    ERROR_WRONG_STAGE_ACTION, MESSAGE_STATUS
+    ERROR_PERMISSION, ERROR_STAGE_COMPLETED, ERROR_USER_NOT_THE_SAME_BRANCH,
+    ERROR_VALIDATE, ERROR_WRONG_STAGE_ACTION, MESSAGE_STATUS
 )
 from app.utils.functions import (
     dropdown, generate_uuid, now, orjson_dumps, orjson_loads
@@ -760,6 +760,7 @@ class CtrApproval(BaseController):
         previous_transaction_stage_is_reject = previous_transaction_stage.is_reject
         previous_stage_is_reject = False
         is_give_back = False
+        print("===")
         if previous_transaction_stage:
             is_stage_init = False
             _, previous_stage, _, _, _, _, _, _, _ = self.call_repos(
@@ -894,7 +895,6 @@ class CtrApproval(BaseController):
                     next_stage=None
                 )
             )
-
         (
             current_stage_status, current_stage, _, current_lane, current_stage_phase, current_phase, current_stage_role,
             current_stage_action, current_stage_sla
@@ -938,6 +938,20 @@ class CtrApproval(BaseController):
                     permission_code=IDM_PERMISSION_CODE_KSV,
                     stage_code=CIF_STAGE_APPROVE_KSV
                 ))
+
+                # RULE: KSV phải cùng branch với GDV
+                booking = await CtrBooking().ctr_get_booking(
+                    booking_id=booking_id, business_type_code=business_type.code
+                )
+                booking_branch_id = booking.branch_id
+                if booking_branch_id != current_user.hrm_branch_code:
+                    return self.response_exception(
+                        msg=ERROR_USER_NOT_THE_SAME_BRANCH,
+                        loc=f"Teller: {booking.created_by}-{booking_branch_id}, "
+                            f"Supervisor: {current_user.username}-{current_user.hrm_branch_id}",
+                        error_status_code=status.HTTP_403_FORBIDDEN
+                    )
+
             elif current_stage_code in APPROVE_AUDIT_STAGES:
                 self.call_repos(await PermissionController().ctr_approval_check_permission(
                     auth_response=auth_response,

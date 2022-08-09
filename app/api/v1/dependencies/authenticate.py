@@ -1,4 +1,5 @@
 import base64
+import binascii
 from typing import Callable, Optional, Union
 
 from fastapi import Security, status
@@ -26,6 +27,8 @@ def check_token_ekyc(credentials) -> bool:
         auth_parts = base64.b64decode(credentials)
         auth_parts = auth_parts.decode('utf-8').split(':')
     except UnicodeDecodeError:
+        return False
+    except binascii.Error:
         return False
 
     if auth_parts:
