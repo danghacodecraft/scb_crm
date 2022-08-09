@@ -51,6 +51,7 @@ class EKYCCustomer(Base):
     user_eb = Column(VARCHAR(500), nullable=True)
     transaction_data = Column(CLOB, nullable=False)
     created_at = Column(DATE, nullable=False)
+    updated_at = Column(DATE, nullable=False, default=None)
 
 
 class EKYCCustomerStep(Base):

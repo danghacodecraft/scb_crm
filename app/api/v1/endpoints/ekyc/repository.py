@@ -5,6 +5,7 @@ from app.api.base.repository import ReposReturn, auto_commit
 from app.third_parties.oracle.models.eKYC.model import (
     EKYCCustomer, EKYCCustomerStep
 )
+from app.utils.functions import now
 
 
 @auto_commit
@@ -26,6 +27,9 @@ async def repos_update_ekyc_customer(
 ):
     session.add(EKYCCustomerStep(**step_info))
     if update_customer_info:
+        update_customer_info.update(
+            updated_at=now()
+        )
         session.execute(
             update(EKYCCustomer)
             .filter(EKYCCustomer.customer_id == step_info['customer_id'])

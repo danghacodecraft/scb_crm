@@ -7,6 +7,9 @@ import aiohttp
 from loguru import logger
 from starlette import status
 
+from app.api.v1.endpoints.third_parties.gw.email.schema import (
+    open_ebank_failure_response, open_ebank_success_response
+)
 from app.api.v1.endpoints.user.schema import UserInfoResponse
 from app.settings.service import SERVICE
 from app.utils.constant.gw import (
@@ -154,7 +157,7 @@ from app.utils.constant.gw import (
     GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE,
     GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE_IN,
     GW_FUNC_SELECT_WORKING_PROCESS_INFO_FROM_CODE_OUT, GW_FUNC_SEND_EMAIL,
-    GW_FUNC_SEND_EMAIL_OUT, GW_FUNC_SEND_SMS_VIA_EB_GW,
+    GW_FUNC_SEND_EMAIL_KEY, GW_FUNC_SEND_EMAIL_OUT, GW_FUNC_SEND_SMS_VIA_EB_GW,
     GW_FUNC_SEND_SMS_VIA_EB_GW_IN, GW_FUNC_SEND_SMS_VIA_EB_GW_OUT,
     GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE,
     GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE_IN,
@@ -169,13 +172,14 @@ from app.utils.constant.gw import (
     GW_RETRIEVE_CASA_ACCOUNT_DETAIL, GW_SELF_SELECTED_ACCOUNT_FLAG,
     GW_SELF_UNSELECTED_ACCOUNT_FLAG
 )
+from app.utils.email_templates.email_template import EMAIL_TEMPLATES
 from app.utils.error_messages import ERROR_CALL_SERVICE_GW
 from app.utils.functions import date_to_string
 
 
 class ServiceGW:
     session: Optional[aiohttp.ClientSession] = None
-
+    email_templates = EMAIL_TEMPLATES
     url = SERVICE["gw"]['url']
 
     def start(self):
@@ -185,7 +189,8 @@ class ServiceGW:
         await self.session.close()
         self.session = None
 
-    async def call_api(self, api_url: str, request_data: json, output_key: str, service_name: str, is_form_data=False):
+    async def call_api(self, api_url: str, request_data: json, output_key: str, service_name: str, is_form_data=False,
+                       customers=None, is_open_ebank_success=False):
         return_errors = dict(
             loc="SERVICE GW",
             msg="",
@@ -219,6 +224,19 @@ class ServiceGW:
                         return True, return_data
             else:
                 form_data = aiohttp.FormData()
+                if customers and not is_open_ebank_success:
+                    open_ebank_response = open_ebank_failure_response(
+                        customers=customers,
+                        email_templates=self.email_templates, template_key=GW_FUNC_SEND_EMAIL_KEY)
+                    request_data['sendEmail_in.data_input.email_content_html'] = open_ebank_response.get('data')
+                    request_data['sendEmail_in.data_input.email_subject'] = open_ebank_response.get('title')
+                elif customers and is_open_ebank_success:
+                    open_ebank_response = open_ebank_success_response(
+                        customers=customers,
+                        email_templates=self.email_templates, template_key=GW_FUNC_SEND_EMAIL_KEY)
+                    request_data['sendEmail_in.data_input.email_content_html'] = open_ebank_response.get('data')
+                    request_data['sendEmail_in.data_input.email_subject'] = open_ebank_response.get('title')
+
                 for key, value in request_data.items():
                     if key == "sendEmail_in.data_input.email_attachment_file" and value is not None:
                         for file in value:
@@ -2456,7 +2474,10 @@ class ServiceGW:
                          list_email_bcc,
                          email_subject,
                          email_content_html,
-                         list_email_attachment_file
+                         list_email_attachment_file,
+                         email_template=None,
+                         customers=None,
+                         is_open_ebank_success=False
                          ):
         request_data = self.gw_create_request_body(
             current_user=current_user, function_name=GW_FUNC_SEND_EMAIL,
@@ -2478,13 +2499,16 @@ class ServiceGW:
                 'sendEmail_in.data_input.email_cc': list_email_cc,
                 'sendEmail_in.data_input.email_bcc': list_email_bcc,
                 'sendEmail_in.data_input.email_subject': email_subject,
-                'sendEmail_in.data_input.email_content_html': email_content_html,
+                'sendEmail_in.data_input.email_content_html': email_content_html
+                if not email_template else email_template,
                 'sendEmail_in.data_input.email_attachment_file': list_email_attachment_file,
             },
             api_url=f"{self.url}{GW_ENDPOINT_URL_SEND_EMAIL}",
             output_key=GW_FUNC_SEND_EMAIL_OUT,
             service_name=GW_FUNC_SEND_EMAIL,
-            is_form_data=True
+            is_form_data=True,
+            customers=customers,
+            is_open_ebank_success=is_open_ebank_success
         )
 
 ####################################################################################################################
