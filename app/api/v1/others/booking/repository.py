@@ -64,11 +64,11 @@ async def repos_create_booking(
         booking_code_flag: cần trả ra booking code thì truyền vào
     """
     booking_id = generate_uuid()
-    current_user_branch_id = current_user.hrm_branch_id
+    current_user_branch_code = current_user.hrm_branch_code
     booking_code = None
     if booking_code_flag:
         is_existed, booking_code = await generate_booking_code(
-            branch_code=current_user_branch_id,
+            branch_code=current_user_branch_code,
             business_type_code=business_type_code,
             session=session
         )
@@ -86,7 +86,7 @@ async def repos_create_booking(
             transaction_id=transaction_id,
             code=booking_code,
             business_type_id=business_type_code,
-            branch_id=current_user_branch_id,
+            branch_id=current_user_branch_code,
             created_at=now(),
             updated_at=now(),
             created_by=current_user.username
