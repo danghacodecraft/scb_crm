@@ -1,8 +1,11 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.booking.repository import (
-    get_list_comment, repo_add_comment
+    get_list_comment, repo_add_comment, repo_get_state_by_booking_id,
+    repo_update_state_booking
 )
-from app.api.v1.endpoints.booking.schema import NewsCommentRequest
+from app.api.v1.endpoints.booking.schema import (
+    NewsCommentRequest, StateResponse
+)
 from app.third_parties.oracle.models.cif.form.model import Booking
 from app.utils.functions import generate_uuid, now
 
@@ -79,3 +82,30 @@ class CtrNewsComment(BaseController):
             updated_at=cmt_item.updated_at,
             file_uuid=cmt_item.file_uuid
         ) for cmt_item in comments])
+
+
+class CtrNewState(BaseController):
+    async def ctr_update_state(self, booking_id, data_update: StateResponse):
+        # Validate: check tồn tại booking_id
+        await self.get_model_object_by_id(model_id=booking_id, model=Booking, loc="booking_id")
+        self.call_repos(
+            await repo_update_state_booking(
+                booking_id=booking_id,
+                state_id=data_update.state_id,
+                session=self.oracle_session
+            )
+        )
+        return self.response(data={
+            "state_id": data_update.state_id
+        })
+
+    async def get_state(self, booking_id):
+        state = self.call_repos(
+            await repo_get_state_by_booking_id(
+                booking_id=booking_id,
+                session=self.oracle_session
+            )
+        )
+        return self.response(data={
+            "state_id": state.data
+        })
