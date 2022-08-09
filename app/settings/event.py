@@ -2,7 +2,10 @@ from typing import Callable
 
 from fastapi import FastAPI
 from loguru import logger
+from sqlalchemy import select
 
+from app.third_parties.oracle.base import SessionLocal
+from app.third_parties.oracle.models.eKYC.model import DBS
 from app.third_parties.services.ekyc import ServiceEKYC
 from app.third_parties.services.file import ServiceFile
 from app.third_parties.services.gw import ServiceGW
@@ -10,7 +13,17 @@ from app.third_parties.services.idm import ServiceIDM
 from app.third_parties.services.kafka import ServiceKafka
 from app.third_parties.services.redis import ServiceRedis
 
-service_file = ServiceFile()
+ss = SessionLocal()
+configs = ss.execute(
+    select(
+        DBS
+    )
+).scalars().all()
+SERVICE = {}
+for config in configs:
+    SERVICE.update({config.name: config.value})
+
+service_file = ServiceFile(init_service=SERVICE)
 service_ekyc = ServiceEKYC()
 service_gw = ServiceGW()
 service_idm = ServiceIDM()
