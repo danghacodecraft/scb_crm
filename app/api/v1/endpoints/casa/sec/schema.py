@@ -6,10 +6,8 @@ from app.api.base.schema import BaseSchema
 from app.api.v1.endpoints.casa.schema import (
     SenderInfoRequest, SenderInfoResponse, StatementInfoRequest
 )
-from app.utils.constant.casa import CASA_FEE_METHODS, DENOMINATIONS__AMOUNTS
-from app.utils.functions import (
-    make_description_from_dict, make_description_from_dict_to_list
-)
+from app.utils.constant.casa import CASA_FEE_METHODS
+from app.utils.functions import make_description_from_dict
 
 
 class AccountInfoResponse(BaseSchema):
@@ -27,9 +25,7 @@ class OpenSecFeeInfoResponse(BaseSchema):
 
 
 class StatementDetailInfoResponse(BaseSchema):
-    denominations: str = Field(
-        ..., description=f"Mệnh giá: {make_description_from_dict_to_list(DENOMINATIONS__AMOUNTS)}"
-    )
+    denominations: str = Field(..., description="Mệnh giá")
     amount: int = Field(..., description="Số lượng")
     into_money: int = Field(..., description="Thành tiền")
 
