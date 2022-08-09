@@ -7,8 +7,6 @@ from app.api.base.schema import BaseSchema, ResponseRequestSchema
 from app.api.v1.schemas.utils import (
     OptionalDropdownRequest, OptionalDropdownResponse
 )
-from app.utils.constant.casa import DENOMINATIONS__AMOUNTS
-from app.utils.functions import make_description_from_dict_to_list
 
 
 class BookingAccountResponse(BaseSchema):
@@ -22,9 +20,7 @@ class SaveCasaSuccessResponse(BaseSchema):
 
 
 class StatementInfoRequest(ResponseRequestSchema):
-    denominations: str = Field(
-        ..., description=f"Mệnh giá: {make_description_from_dict_to_list(DENOMINATIONS__AMOUNTS)}"
-    )
+    denominations: str = Field(..., description="Mệnh giá")
     amount: int = Field(..., description="Số lượng")
 
 
