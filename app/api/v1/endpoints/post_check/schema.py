@@ -140,9 +140,9 @@ class StatisticsProfilesResponse(BaseSchema):
     processing: int = Field(..., description="Chờ hậu kiểm")
     rejected: int = Field(..., description="Cần xác minh")
     failed: int = Field(..., description="Thất bại")
-    invalid: int = Field(..., description="Hợp lí")
+    valid: int = Field(..., description="Hợp lệ")
     verification: int = Field(..., description="Cần xác minh")
-    notvalid: int = Field(..., description="Không hợp lệ")
+    invalid: int = Field(..., description="Không hợp lệ")
     pending: int = Field(..., description="Chờ")
 
 
