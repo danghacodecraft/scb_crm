@@ -5,7 +5,7 @@ from app.api.base.repository import ReposReturn
 from app.settings.event import service_gw
 from app.third_parties.oracle.models.cif.e_banking.model import (
     EBankingInfo, EBankingInfoAuthentication,
-    EBankingReceiverNotificationRelationship
+    EBankingReceiverNotificationRelationship, EBankingRegisterBalance
 )
 from app.third_parties.oracle.models.cif.payment_account.model import (
     CasaAccount
@@ -104,7 +104,8 @@ async def repos_get_e_banking_from_db_by_cif_id(cif_id: str, session: Session):
     return ReposReturn(data=e_banking)
 
 
-async def repos_get_sms_casa_from_db_by_cif_id(cif_id, session: Session):
+async def repos_get_sms_casa_mobile_number_from_db_by_cif_id(cif_id, session: Session):
+    # Quá trình mở cif chỉ một tài khoản Casa
     casa_id = session.execute(
         select(
             CasaAccount.id,
@@ -115,14 +116,25 @@ async def repos_get_sms_casa_from_db_by_cif_id(cif_id, session: Session):
     if not casa_id:
         return ReposReturn(is_error=True, msg=ERROR_NO_DATA, loc="repos_get_sms_casa_from_db_by_cif_id -> casa_id")
 
-    sms_casa_row = session.execute(
+    balance_and_relationship_info = session.execute(
         select(
+            EBankingRegisterBalance.id.label('reg_balance_id'),
+            EBankingReceiverNotificationRelationship.mobile_number
+        ).outerjoin(
             EBankingReceiverNotificationRelationship,
+            EBankingReceiverNotificationRelationship.e_banking_register_balance_casa_id == EBankingRegisterBalance.id
         )
-        .filter(EBankingReceiverNotificationRelationship.e_banking_register_balance_casa_id == casa_id)
-    ).scalars().all()
+        .filter(EBankingRegisterBalance.account_id == casa_id)
+    ).all()
 
-    if not sms_casa_row:
+    balance_id__relationship_mobile_numbers = {}
+    for item in balance_and_relationship_info:
+        if item['reg_balance_id'] not in balance_id__relationship_mobile_numbers:
+            balance_id__relationship_mobile_numbers[item['reg_balance_id']] = []
+
+        balance_id__relationship_mobile_numbers[item['reg_balance_id']].append(item.mobile_number)
+
+    if not balance_id__relationship_mobile_numbers:
         return ReposReturn(data=None)
 
-    return ReposReturn(data=sms_casa_row)
+    return ReposReturn(data=balance_id__relationship_mobile_numbers)
