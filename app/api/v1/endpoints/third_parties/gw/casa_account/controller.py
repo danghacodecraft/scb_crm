@@ -35,7 +35,9 @@ from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
 from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.utils.constant.approval import CIF_STAGE_APPROVE_KSV
-from app.utils.constant.business_type import BUSINESS_TYPE_CASA_TOP_UP
+from app.utils.constant.business_type import (
+    BUSINESS_TYPE_CASA_TOP_UP, BUSINESS_TYPE_OPEN_CASA
+)
 from app.utils.constant.casa import (
     CASA_ACCOUNT_STATUS_UNAPPROVED, RECEIVING_METHOD_SCB_BY_IDENTITY,
     RECEIVING_METHOD_SCB_TO_ACCOUNT,
@@ -419,6 +421,9 @@ class CtrGWCasaAccount(BaseController):
         )
 
         casa_account_ids = []
+        booking = await CtrBooking().ctr_get_booking(booking_id=booking_id, business_type_code=BUSINESS_TYPE_OPEN_CASA)
+        maker_staff_name = booking.created_by
+
         for casa_account in casa_accounts:
             if casa_account.approve_status == CASA_ACCOUNT_STATUS_UNAPPROVED:
                 casa_account_ids.append(casa_account.id)
@@ -447,7 +452,8 @@ class CtrGWCasaAccount(BaseController):
                 casa_account_info=casa_account_info,
                 current_user=self.current_user,
                 booking_parent_id=booking_id,
-                session=self.oracle_session
+                session=self.oracle_session,
+                maker_staff_name=maker_staff_name
             )
             if not is_success:
                 gw_errors.append(dict(
