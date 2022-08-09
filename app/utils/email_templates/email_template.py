@@ -15,7 +15,7 @@ def email_template_response():
         if html_files:
             result = {}
             for html_file in html_files:
-                file = codecs.open(html_file, 'r')
+                file = codecs.open(html_file, 'r', encoding='utf-8')
                 result[file.name] = file.read()
                 file.close()
 
