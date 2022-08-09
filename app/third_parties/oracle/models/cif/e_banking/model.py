@@ -129,6 +129,8 @@ class EBankingRegisterBalance(Base):
     name = Column('eb_reg_balance_name', VARCHAR(100), comment='Tên Đăng ký Biến động số dư các loại tài khoản ')
     mobile_number = Column('mobile_num', VARCHAR(10), comment='Số điện thoại')
     full_name = Column(VARCHAR(100), comment='Tên đầy đủ')
+    approval_status = Column('approval_status', NUMBER(1, 0, False), nullable=False, default=0,
+                             comment='Trạng thái phê duyệt đăng ký SMS casa')
 
     customer = relationship('Customer')
 
