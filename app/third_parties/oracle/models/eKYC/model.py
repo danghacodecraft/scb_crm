@@ -65,9 +65,3 @@ class EKYCCustomerStep(Base):
     customer_id = Column(VARCHAR(100), nullable=False)
     transaction_id = Column(VARCHAR(100), nullable=False)
     created_at = Column(DATE, nullable=False)
-
-
-class DBS(Base):
-    __tablename__ = 'env_global_system'
-    name = Column(VARCHAR(50), primary_key=True)
-    value = Column(VARCHAR(255), nullable=True)

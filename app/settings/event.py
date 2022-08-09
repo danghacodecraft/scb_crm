@@ -5,7 +5,7 @@ from loguru import logger
 from sqlalchemy import select
 
 from app.third_parties.oracle.base import SessionLocal
-from app.third_parties.oracle.models.eKYC.model import DBS
+from app.third_parties.oracle.models.env.model import DBS
 from app.third_parties.services.ekyc import ServiceEKYC
 from app.third_parties.services.file import ServiceFile
 from app.third_parties.services.gw import ServiceGW
