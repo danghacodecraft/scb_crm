@@ -18,10 +18,17 @@ configs = ss.execute(
     select(
         DBS
     )
+    .order_by(DBS.server_name)
 ).scalars().all()
 SERVICE = {}
 for config in configs:
-    SERVICE.update({config.name: config.value})
+    config_data = {config.name: config.value}
+    if not config.server_name:
+        SERVICE.update(config_data)
+    elif config.server_name not in SERVICE:
+        SERVICE.update({config.server_name: {config.name: config.value}})
+    else:
+        SERVICE[config.server_name][config.name] = config.value
 
 service_file = ServiceFile(init_service=SERVICE)
 service_ekyc = ServiceEKYC()
