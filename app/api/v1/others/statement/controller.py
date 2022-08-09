@@ -17,6 +17,7 @@ class CtrStatement(BaseController):
 
         statements = []
         total_amount = 0
+        total_number_of_bills = 0
         for denominations, amount in statement.items():
             into_money = int(denominations) * amount
             statements.append(dict(
@@ -24,9 +25,11 @@ class CtrStatement(BaseController):
                 amount=amount,
                 into_money=into_money
             ))
+            total_number_of_bills += amount
             total_amount += into_money
 
         statement_response = dict(
+            total_number_of_bills=total_number_of_bills,
             statements=statements,
             total=total_amount,
         )
