@@ -262,7 +262,7 @@ async def repos_get_sms_data(cif_id: str, session: Session) -> ReposReturn:
 
     reg_balance_rows = session.execute(
         select(
-            EBankingRegisterBalance.id,
+            EBankingRegisterBalance.id.label('reg_balance_id'),
             EBankingRegisterBalance.full_name,
             EBankingRegisterBalance.mobile_number,
             EBankingRegisterBalance.account_id,
@@ -285,42 +285,46 @@ async def repos_get_sms_data(cif_id: str, session: Session) -> ReposReturn:
         )
     ).all()
 
+    # mapping receiver_noti_relationship_items
+    reg_balance_id__receiver_noti_relationship_items = {}
+    for reg_balance_row in reg_balance_rows:
+        receiver_noti_relationship_item = {
+            "mobile_number": reg_balance_row.relationship_mobile_number,
+            "full_name": reg_balance_row.relationship_full_name,
+            "relationship_type_id": reg_balance_row.relationship_relationship_type_id
+        }
+        if reg_balance_row.reg_balance_id not in reg_balance_id__receiver_noti_relationship_items:
+            reg_balance_id__receiver_noti_relationship_items[reg_balance_row.reg_balance_id] = [receiver_noti_relationship_item]
+        elif receiver_noti_relationship_item not in reg_balance_id__receiver_noti_relationship_items[reg_balance_row.reg_balance_id]:
+            reg_balance_id__receiver_noti_relationship_items[reg_balance_row.reg_balance_id].append(receiver_noti_relationship_item)
+
+    # mapping notify_code_list
+    reg_balance_id__notify_code_list = {}
+    for reg_balance_row in reg_balance_rows:
+        if reg_balance_row.reg_balance_id not in reg_balance_id__notify_code_list:
+            reg_balance_id__notify_code_list[reg_balance_row.reg_balance_id] = [reg_balance_row.eb_notify_id]
+        elif reg_balance_row.eb_notify_id not in reg_balance_id__notify_code_list[reg_balance_row.reg_balance_id]:
+            reg_balance_id__notify_code_list[reg_balance_row.reg_balance_id].append(reg_balance_row.eb_notify_id)
+
+    # mapping for response data
     registry_balance_items = []
+    checked_casa_ids = []
     for casa_id in casa_ids:
-        is_missed_info = False
         reg_balance_item = {}
         for reg_balance_row in reg_balance_rows:
-            if reg_balance_row.account_id == casa_id:
-
+            if reg_balance_row.account_id == casa_id and casa_id not in checked_casa_ids:
+                checked_casa_ids.append(casa_id)
                 reg_balance_item = {
                     "casa_id": casa_id,
                     "main_phone_number_info": {
-                        "main_phone_number": "",
-                        "customer_full_name": ""
+                        "main_phone_number": reg_balance_row.mobile_number,
+                        "customer_full_name": reg_balance_row.full_name
                     },
-                    "receiver_noti_relationship_items": [],
-                    "notify_code_list": []
+                    "receiver_noti_relationship_items": reg_balance_id__receiver_noti_relationship_items[reg_balance_row.reg_balance_id],
+                    "notify_code_list": reg_balance_id__notify_code_list[reg_balance_row.reg_balance_id]
                 }
 
-                reg_balance_item["main_phone_number_info"]["main_phone_number"] = reg_balance_row.mobile_number
-                reg_balance_item["main_phone_number_info"]["customer_full_name"] = reg_balance_row.full_name
-
-                if reg_balance_row.eb_notify_id and reg_balance_row.eb_notify_id not in reg_balance_item["notify_code_list"]:
-                    reg_balance_item["notify_code_list"].append(reg_balance_row.eb_notify_id)
-
-                if reg_balance_row.relationship_mobile_number:
-                    relationship_info = {
-                        "mobile_number": reg_balance_row.relationship_mobile_number,
-                        "relationship_type_id": reg_balance_row.relationship_relationship_type_id,
-                        "full_name": reg_balance_row.relationship_full_name
-                    }
-                    if relationship_info not in reg_balance_item["receiver_noti_relationship_items"]:
-                        reg_balance_item["receiver_noti_relationship_items"].append(relationship_info)
-                else:
-                    # Nếu chưa đăng ký số điện thoại nào, không cần append thông tin vào registry_balance_items
-                    is_missed_info = True
-
-        if not is_missed_info and reg_balance_item:
+        if reg_balance_item:
             registry_balance_items.append(reg_balance_item)
 
     # 2. OTT-SMS
