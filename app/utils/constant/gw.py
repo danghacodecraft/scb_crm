@@ -275,6 +275,8 @@ GW_FUNC_SELECT_SERVICE_PACK_IB = "selectServicePackIB"
 # EMAIL
 GW_FUNC_SEND_EMAIL_OUT = "sendEmail_out"
 GW_FUNC_SEND_EMAIL = "sendEmail"
+GW_FUNC_SEND_EMAIL_KEY = "{HovatenKhachHang}"
+
 ########################################################################################################################
 #                                         END GW FUNCTION NAME
 ########################################################################################################################

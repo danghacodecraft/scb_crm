@@ -16,6 +16,19 @@ class GetInitialAuthenticationCode(str, Enum):
     XACTHUC_HARDTOKEN: str = 'HARD_TOKEN'
 
 
+class GetInitialSMSNotifyCode(str, Enum):
+    ALL: str = 'ALL'
+    BDSD: str = 'BDSD'
+    RT: str = 'RT'
+    NT: str = 'NT'
+    TTTK: str = 'TTTK'
+
+
+class GetInitialSMSRegistryBalanceOptionResponse(str, Enum):
+    OTT: str = 'OTT'
+    SMS: str = 'SMS'
+
+
 class GetInitialPasswordMethod(str, Enum):
     SMS: str = 'SMS'
     Email: str = 'Email'
@@ -27,40 +40,61 @@ class AccountInformationResponse(BaseSchema):
     authentication_code_list: List[GetInitialAuthenticationCode] = Field(..., description='Hình thức xác thực')
 
 
-class SMSCasaItemResposnse(BaseSchema):
+class SMSCasaCustomerInfoResponse(BaseSchema):
+    main_phone_number: str = Field(..., description='Số điện thoại', regex=REGULAR_PHONE_NUMBER)
+    customer_full_name: str = Field(..., description="Họ tên")
+
+
+class SMSCasaRelationshipItemResponse(BaseSchema):
+    mobile_number: str = Field(..., description="SĐT nhận thông báo", regex=REGULAR_PHONE_NUMBER)
+    relationship_type_id: str = Field(..., description="Mối quan hệ")
     full_name: str = Field(..., description="Họ tên người nhận thông báo")
-    mobile_number: str = Field(..., description="SĐT nhận thông báo")
-    relationship_type_id: int = Field(..., description="Mối quan hệ")
+
+
+class SMSCasaItemResponse(BaseSchema):
+    casa_id: str = Field(..., description="`id` của TKTT")
+    main_phone_number_info: Optional[SMSCasaCustomerInfoResponse] = Field(..., description="Thông tin SĐT, chủ tài khoản đăng ký sms")
+    receiver_noti_relationship_items: List[SMSCasaRelationshipItemResponse] = Field(..., description="Thông tin SĐT và MQH đăng ký sms")
+    notify_code_list: List[GetInitialSMSNotifyCode] = Field(..., description="Tùy chọn thông báo")
 
 
 class SMSCasaInfoResponse(BaseSchema):
-    casa_id: str = Field(..., description="`id` của TKTT")
-    sms_casa_items: List[SMSCasaItemResposnse] = Field(..., description="")
+    reg_balance_options: List[GetInitialSMSRegistryBalanceOptionResponse] = Field(..., description='Thông báo OTT - SMS')
+    registry_balance_items: List[SMSCasaItemResponse] = Field(..., description="")
 
 
 class EBankingResponse(BaseSchema):
-    e_banking: AccountInformationResponse = Field(default=None, description='Thông tin E-Banking')
-    sms_casa: List[SMSCasaInfoResponse] = Field(default=None, description="Thông tin đăng ký sms cho TKTT")
+    e_banking: Optional[AccountInformationResponse] = Field(..., description='Thông tin E-Banking')
+    sms_casa: Optional[SMSCasaInfoResponse] = Field(..., description="Thông tin đăng ký sms cho TKTT")
 
 
 ########################################################################################################################
 # Request
 ########################################################################################################################
-class MobileNumber(BaseSchema):
-    mobile_number: str = Field(..., description='Số điện thoại', regex=REGULAR_PHONE_NUMBER)
-
-
 class EBankingRequest(BaseSchema):
     username: str = Field(...)
     receive_password_code: GetInitialPasswordMethod = Field(..., description='Hình thức nhận kích hoạt mật khẩu lần đầu')
     authentication_code_list: List[GetInitialAuthenticationCode] = Field(..., description='Hình thức xác thực')
 
 
+class SMSCasaCustomerInfoRequest(BaseSchema):
+    main_phone_number: str = Field(..., description='Số điện thoại', regex=REGULAR_PHONE_NUMBER)
+    customer_full_name: str = Field(..., description="Họ tên")
+
+
+class SMSCasaRelationshipItemRequest(BaseSchema):
+    mobile_number: str = Field(..., description="SĐT nhận thông báo", regex=REGULAR_PHONE_NUMBER)
+    full_name: str = Field(..., description="Họ tên người nhận thông báo")
+    relationship_type_id: str = Field(..., description="Mối quan hệ")
+
+
+class SMSCasaItemRequest(BaseSchema):
+    casa_id: str = Field(..., description="`id` của TKTT")
+    main_phone_number_info: SMSCasaCustomerInfoRequest = Field(..., description="Thông tin SĐT, chủ tài khoản đăng ký sms")
+    receiver_noti_relationship_items: List[SMSCasaRelationshipItemRequest] = Field(..., description="Thông tin SĐT và MQH đăng ký sms")
+    notify_code_list: List[GetInitialSMSNotifyCode] = Field(..., description="Tùy chọn thông báo")
+
+
 class EBankingSMSCasaRequest(BaseSchema):
-    casa_account_id: str = Field(..., description='Số tài khoản Casa ảo')
-    indentify_phone_num_list: List[MobileNumber] = Field(..., description='Danh sách số điện thoại đăng ký sử dụng dịch vụ SMS Banking')
-
-
-class EBankingAndSMSCasaRequest(BaseSchema):
-    ebank_info: Optional[EBankingRequest] = Field(..., description="")
-    ebank_sms_casa_info: Optional[EBankingSMSCasaRequest] = Field(..., description="")
+    reg_balance_options: List[GetInitialSMSRegistryBalanceOptionResponse] = Field(..., description='Thông báo OTT - SMS')
+    registry_balance_items: List[SMSCasaItemRequest] = Field(..., description="")
