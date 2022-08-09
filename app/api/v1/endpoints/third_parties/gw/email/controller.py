@@ -13,6 +13,8 @@ class CtrGWEmail(BaseController):
                                 email_subject,
                                 email_content_html,
                                 list_email_attachment_file,
+                                customers=None,
+                                is_open_ebank_success=False
                                 ):
         current_user = self.current_user
         send_email = self.call_repos(await repos_gw_send_email(
@@ -23,6 +25,8 @@ class CtrGWEmail(BaseController):
             email_subject,
             email_content_html,
             list_email_attachment_file,
-            current_user=current_user))
+            current_user=current_user,
+            customers=customers,
+            is_open_ebank_success=is_open_ebank_success))
 
         return self.response(data=send_email)

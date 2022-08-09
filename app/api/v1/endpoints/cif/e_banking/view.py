@@ -1,5 +1,3 @@
-from typing import Optional
-
 from fastapi import APIRouter, Body, Depends, Path
 from starlette import status
 
@@ -26,7 +24,7 @@ router = APIRouter()
 )
 async def view_save_e_banking_and_sms_casa(
         e_banking_info: EBankingRequest = Body(..., description="Dữ liệu để tạo E-banking"),
-        ebank_sms_casa_info: Optional[EBankingSMSCasaRequest] = Body(default=None, description="Dữ liệu để đăng ký SMS cho TKTT"),
+        ebank_sms_casa_info: EBankingSMSCasaRequest = Body(default=None, description="Dữ liệu để đăng ký SMS cho TKTT"),
         cif_id: str = Path(..., description='Id CIF ảo'),
         current_user=Depends(get_current_user_from_header())
 ):

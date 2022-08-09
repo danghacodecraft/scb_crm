@@ -8,7 +8,8 @@ from app.api.v1.endpoints.cif.payment_account.detail.repository import (
     repos_get_detail_payment_account
 )
 from app.api.v1.endpoints.third_parties.gw.ebank.repository import (
-    repos_get_e_banking_from_db_by_cif_id, repos_get_sms_casa_from_db_by_cif_id
+    repos_get_e_banking_from_db_by_cif_id,
+    repos_get_sms_casa_mobile_number_from_db_by_cif_id
 )
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.settings.event import service_gw
@@ -23,6 +24,9 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
 )
 from app.third_parties.oracle.models.cif.basic_information.personal.model import (
     CustomerIndividualInfo
+)
+from app.third_parties.oracle.models.cif.e_banking.model import (
+    EBankingInfo, EBankingRegisterBalance
 )
 from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingBusinessForm, TransactionDaily, TransactionSender
@@ -382,6 +386,40 @@ async def repos_update_casa_account(
         .filter(CasaAccount.id == casa_account.id)
         .values(
             casa_account_number=account_number
+        )
+    )
+    return ReposReturn(data=None)
+
+
+@auto_commit
+async def repos_update_approval_status_for_ebank(
+        ebank_id: str,
+        session: Session
+):
+    session.execute(
+        update(
+            EBankingInfo
+        )
+        .filter(EBankingInfo.id == ebank_id)
+        .values(
+            approval_status=True
+        )
+    )
+    return ReposReturn(data=None)
+
+
+@auto_commit
+async def repos_update_approval_status_for_reg_balance(
+        reg_balance_id: str,
+        session: Session
+):
+    session.execute(
+        update(
+            EBankingRegisterBalance
+        )
+        .filter(EBankingRegisterBalance.id == reg_balance_id)
+        .values(
+            approval_status=True
         )
     )
     return ReposReturn(data=None)
@@ -835,42 +873,56 @@ async def repos_push_internet_banking_to_gw(booking_id: str, session: Session, r
             detail=str(response_data)
         )
 
+    # cập nhật lại approval_status cho ebank
+    await repos_update_approval_status_for_ebank(
+        ebank_id=e_banking['id'], session=session
+    )
+
     return ReposReturn(data=None)
 
 
 async def repos_push_sms_casa_to_gw(booking_id: str, session: Session, current_user, cif_id: str, cif_number: str,
                                     casa_account_number, maker_staff_name):
-    sms_casa_result = await repos_get_sms_casa_from_db_by_cif_id(
+    balance_id__relationship_mobile_numbers_result = await repos_get_sms_casa_mobile_number_from_db_by_cif_id(
         cif_id=cif_id, session=session)
-    if sms_casa_result.is_error:
+    if balance_id__relationship_mobile_numbers_result.is_error:
         return ReposReturn(
             is_error=True,
-            msg=sms_casa_result.msg,
-            loc=sms_casa_result.loc,
-            detail=sms_casa_result.detail,
-            error_status_code=sms_casa_result.error_status_code
+            msg=balance_id__relationship_mobile_numbers_result.msg,
+            loc=balance_id__relationship_mobile_numbers_result.loc,
+            detail=balance_id__relationship_mobile_numbers_result.detail,
+            error_status_code=balance_id__relationship_mobile_numbers_result.error_status_code
         )
 
+    balance_id__relationship_mobile_numbers = balance_id__relationship_mobile_numbers_result.data
+
     # Không tìm thấy sms_casa có thể do khách hàng không đăng ký
-    if not sms_casa_result.data:
+    if not balance_id__relationship_mobile_numbers:
         return ReposReturn(data=None)
+
+    ebank_sms_info_list = []
+    reg_balance_id = None
+    for balance_id, mobile_numbers in balance_id__relationship_mobile_numbers.items():
+
+        ebank_sms_info_list = [{
+            "ebank_sms_info_item": {
+                "ebank_sms_indentify_num": mobile_number,
+                "cif_info": {
+                    "cif_num": cif_number
+                },
+                "branch_info": {
+                    "branch_code": current_user.user_info.hrm_branch_code
+                }
+            }
+        } for mobile_number in mobile_numbers]
+
+        reg_balance_id = balance_id
 
     # @TODO: hard code account_type là "TT" biến động số dư
     account_info = {
         "account_num": casa_account_number,
         "account_type": "TT"
     }
-    ebank_sms_info_list = [{
-        "ebank_sms_info_item": {
-            "ebank_sms_indentify_num": sms_casa.mobile_number,
-            "cif_info": {
-                "cif_num": cif_number
-            },
-            "branch_info": {
-                "branch_code": current_user.user_info.hrm_branch_code
-            }
-        }
-    } for sms_casa in sms_casa_result.data]
     staff_info_checker = {
         "staff_name": current_user.user_info.username
     }
@@ -878,12 +930,12 @@ async def repos_push_sms_casa_to_gw(booking_id: str, session: Session, current_u
         "staff_name": maker_staff_name
     }
 
-    sms_casa_info = dict(
-        account_info=account_info,
-        ebank_sms_info_list=ebank_sms_info_list,
-        staff_info_checker=staff_info_checker,
-        staff_info_maker=staff_info_maker
-    )
+    sms_casa_info = {
+        "account_info": account_info,
+        "ebank_sms_info_list": ebank_sms_info_list,
+        "staff_info_checker": staff_info_checker,
+        "staff_info_maker": staff_info_maker
+    }
 
     is_success, response_data = await service_gw.register_sms_service_by_account_casa(
         current_user=current_user.user_info,
@@ -920,10 +972,15 @@ async def repos_push_sms_casa_to_gw(booking_id: str, session: Session, current_u
     if not is_success:
         return ReposReturn(
             is_error=True,
-            loc="open_cif -> e-banking",
+            loc="open_cif -> sms_casa",
             msg=ERROR_CALL_SERVICE_GW,
             detail=str(response_data)
         )
+
+    # cập nhật lại approval_status cho sms_casa
+    await repos_update_approval_status_for_reg_balance(
+        reg_balance_id=reg_balance_id, session=session
+    )
 
     return ReposReturn(data=None)
 
