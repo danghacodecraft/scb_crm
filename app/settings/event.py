@@ -31,7 +31,7 @@ for config in configs:
         SERVICE[config.server_name][config.name] = config.value
 
 service_file = ServiceFile(init_service=SERVICE)
-service_ekyc = ServiceEKYC()
+service_ekyc = ServiceEKYC(init_service=SERVICE)
 service_gw = ServiceGW()
 service_idm = ServiceIDM()
 service_kafka = ServiceKafka()

@@ -8,7 +8,6 @@ from starlette import status
 
 from app.api.base.repository import ReposReturn
 from app.settings import event
-from app.settings.service import SERVICE
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_EKYC, ERROR_CALL_SERVICE_FILE, ERROR_INVALID_URL
 )
@@ -18,12 +17,13 @@ from app.utils.functions import replace_with_cdn
 class ServiceEKYC:
     session: Optional[aiohttp.ClientSession] = None
 
-    url = SERVICE["ekyc"]['url']
-    proxy: Optional[StrOrURL] = None
-    authorization = SERVICE["ekyc"]['authorization']
-    device_info = "eyJkZXZpY2VOYW1lIjogIkNSTSIsICJvcyI6ICJSZWRoYXQiLCAibW9kZWwiOiAiIiwgInBob25lX251bWJlciI6ICIiLCJ" \
-                  "tYW51ZmFjdHVyZXIiOiAiIiwgIm9zVmVyc2lvbiI6ICI3LjkifQ=="
-    otp = SERVICE["ekyc"]['otp']
+    def __init__(self, init_service):
+        self.url = init_service["EKYC"]['SERVICE_EKYC_URL']
+        self.proxy: Optional[StrOrURL] = None
+        self.authorization = f"bearer {init_service['EKYC']['SERVICE_EKYC_BEARER_TOKEN']}"
+        self.device_info = "eyJkZXZpY2VOYW1lIjogIkNSTSIsICJvcyI6ICJSZWRoYXQiLCAibW9kZWwiOiAiIiwgInBob25lX251bWJlciI6I" \
+                           "CIiLCJtYW51ZmFjdHVyZXIiOiAiIiwgIm9zVmVyc2lvbiI6ICI3LjkifQ=="
+        self.otp = init_service["EKYC"]['SERVICE_EKYC_OTP']
 
     def start(self):
         self.session = aiohttp.ClientSession()
