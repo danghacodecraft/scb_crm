@@ -2,6 +2,7 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.employee.repository import (
     repos_gw_get_employee_info_from_code
 )
+from app.settings.event import INIT_SERVICE
 from app.third_parties.services.idm import ServiceIDM
 from app.utils.constant.gw import GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE_OUT
 
@@ -25,7 +26,7 @@ class CtrContact(BaseController):
             "emp_id": "6036",
             "title_name": employee_info["title_name"],
             "unit": employee_info["branch_org"],
-            "avatar_link": ServiceIDM().replace_with_cdn(employee_info["avatar"])
+            "avatar_link": ServiceIDM(init_service=INIT_SERVICE).replace_with_cdn(employee_info["avatar"])
         }
 
         return self.response(data=response_data)
