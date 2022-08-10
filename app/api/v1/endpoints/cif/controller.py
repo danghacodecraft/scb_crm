@@ -16,6 +16,7 @@ from app.api.v1.endpoints.third_parties.gw.employee.repository import (
     repos_gw_get_employee_info_from_code
 )
 from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
+from app.settings.event import INIT_SERVICE
 from app.third_parties.oracle.models.master_data.address import (
     AddressDistrict, AddressProvince
 )
@@ -108,7 +109,7 @@ class CtrCustomer(BaseController):
         for _, _, _, transaction_sender, transaction_root_daily in transactions:
             employee_info = self.call_repos(await repos_gw_get_employee_info_from_code(
                 employee_code=transaction_sender.user_id, current_user=self.current_user))
-            avatar = ServiceIDM().replace_with_cdn(employee_info[GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE_OUT]['data_output']['employee_info']['avatar'])
+            avatar = ServiceIDM(init_service=INIT_SERVICE).replace_with_cdn(employee_info[GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE_OUT]['data_output']['employee_info']['avatar'])
 
             if transaction_sender.user_id not in list_distinct_user_code:
                 list_distinct_employee.append(dict(
@@ -210,7 +211,9 @@ class CtrCustomer(BaseController):
             "completed_flag": first_row.Customer.complete_flag,
             "status": dropdownflag(first_row.CustomerStatus),
             "cif_number": first_row.Customer.cif_number,
-            "avatar_url": ServiceFile().replace_with_cdn(uuid__link_downloads[first_row.Customer.avatar_url]),
+            "avatar_url": ServiceFile(init_service=INIT_SERVICE).replace_with_cdn(
+                uuid__link_downloads[first_row.Customer.avatar_url]
+            ),
             "customer_classification": dropdown(first_row.CustomerClassification),
             "full_name": first_row.Customer.full_name,
             "full_name_vn": first_row.Customer.full_name_vn,
