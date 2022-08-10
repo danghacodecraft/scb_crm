@@ -2,7 +2,9 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.employee.repository import (
     repos_gw_get_retrieve_employee_info_from_code
 )
-from app.third_parties.oracle.models.master_data.address import AddressCountry
+from app.third_parties.oracle.models.master_data.address import (
+    AddressCountry, AddressProvince
+)
 from app.third_parties.oracle.models.master_data.customer import CustomerGender
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import (
@@ -67,7 +69,7 @@ class CtrPersonalInfo(BaseController):
         )
 
         dropdown_place_of_birth = await self.dropdown_mapping_crm_model_or_dropdown_name(
-            model=Religion, name=employee_info['birth_province']
+            model=AddressProvince, name=employee_info['birth_province']
         )
         dropdown_religion = await self.dropdown_mapping_crm_model_or_dropdown_name(
             model=Religion, name=employee_info['religion']
