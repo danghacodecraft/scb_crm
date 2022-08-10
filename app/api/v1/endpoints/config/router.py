@@ -12,6 +12,8 @@ from app.api.v1.endpoints.config.customer.contact_type import \
     view as view_contact_type_info
 from app.api.v1.endpoints.config.dashboard import view as view_dashboard
 from app.api.v1.endpoints.config.debit_card import view as view_debit_card_info
+from app.api.v1.endpoints.config.denominations import \
+    view as view_denominations
 from app.api.v1.endpoints.config.deposit import view as view_deposit
 from app.api.v1.endpoints.config.e_banking import view as view_e_banking_info
 from app.api.v1.endpoints.config.fatca import view as view_fatca_info
@@ -75,3 +77,5 @@ router.include_router(router=view_deposit.router)
 router.include_router(router=views_bank_info.router, prefix="/bank")
 
 router.include_router(router=views_product_info.router, prefix="/product")
+
+router.include_router(router=view_denominations.router)
