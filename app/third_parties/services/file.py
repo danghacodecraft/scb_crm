@@ -7,7 +7,6 @@ from loguru import logger
 from starlette import status
 
 from app.api.v1.endpoints.user.schema import UserInfoResponse
-from app.settings.service import SERVICE
 from app.third_parties.oracle.base import SessionLocal
 from app.third_parties.plugin.document_file import plugin_create_document_file
 from app.utils.constant.document_file import (
@@ -20,12 +19,16 @@ class ServiceFile:
     session: Optional[aiohttp.ClientSession] = None
     oracle_session: Optional[SessionLocal] = None
 
-    url = SERVICE["file"]['url']
-    cdn = SERVICE["file"]['service_file_cdn']
-    headers = {
-        "server-auth": SERVICE["file"]['server-auth'],
-        "AUTHORIZATION": SERVICE["file"]['authorization']
-    }
+    SERVICE = None
+
+    def __init__(self, init_service):
+        self.SERVICE = init_service
+        self.url = self.SERVICE["SERVICE_FILE_URL"]
+        self.cdn = self.SERVICE["SERVICE_FILE_CDN"]
+        self.headers = {
+            "server-auth": self.SERVICE["SERVICE_FILE_SERVICE_AUTH"],
+            "AUTHORIZATION": "bearer 3"
+        }
 
     def start(self):
         self.session = aiohttp.ClientSession()
