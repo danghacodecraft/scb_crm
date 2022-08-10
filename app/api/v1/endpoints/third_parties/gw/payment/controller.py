@@ -1,4 +1,3 @@
-from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.repository import (
     repos_get_booking_business_form_by_booking_id
 )
@@ -22,12 +21,13 @@ from app.api.v1.endpoints.third_parties.gw.payment.repository import (
     repos_payment_amount_unblock
 )
 from app.api.v1.endpoints.third_parties.gw.payment.schema import (
-    RedeemAccountRequest
+    AccountAmountBlockRequest, RedeemAccountRequest
 )
 from app.api.v1.endpoints.third_parties.repository import (
     repos_save_gw_output_data
 )
 from app.api.v1.others.booking.controller import CtrBooking
+from app.api.v1.others.fee.controller import BaseAccountFee
 from app.api.v1.validator import validate_history_data
 from app.third_parties.oracle.models.master_data.address import AddressProvince
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
@@ -62,7 +62,7 @@ from app.utils.functions import (
 )
 
 
-class CtrGWPayment(BaseController):
+class CtrGWPayment(BaseAccountFee):
 
     async def get_sender_info(self, form_data):
         sender_cif_number = form_data['sender_cif_number']
@@ -103,7 +103,7 @@ class CtrGWPayment(BaseController):
     async def ctr_payment_amount_block(
             self,
             BOOKING_ID: str,
-            account_amount_blocks: list
+            request: AccountAmountBlockRequest
     ):
         current_user = self.current_user # noqa
 
@@ -114,6 +114,11 @@ class CtrGWPayment(BaseController):
             check_correct_booking_flag=False,
             loc=f'booking_id: {BOOKING_ID}'
         )
+
+        ################################################################################################################
+        # Thông tin Tài khoản
+        ################################################################################################################
+        account_amount_blocks = request.account_amount_blocks
         request_datas = []
         account_numbers = []
         for item in account_amount_blocks:
@@ -182,6 +187,18 @@ class CtrGWPayment(BaseController):
                 "booking_id": BOOKING_ID,
                 "customer_id": response_data.get('customer_id')
             })
+        ################################################################################################################
+
+        ################################################################################################################
+        # Thông tin Phí
+        ################################################################################################################
+        saving_fee_info = await self.calculate_fee( # noqa
+            fee_info_request=request.fee_info,
+            business_type_id="AMOUNT_BLOCK"
+        )
+
+        ################################################################################################################
+
         history_datas = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_BLOCK,
             history_status=PROFILE_HISTORY_STATUS_INIT,
