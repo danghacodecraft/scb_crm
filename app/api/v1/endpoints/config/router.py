@@ -25,6 +25,7 @@ from app.api.v1.endpoints.config.payment_account.detail import \
     view as view_payment_detail_info
 from app.api.v1.endpoints.config.personal import view as views_personal_info
 from app.api.v1.endpoints.config.post_check import view as view_post_check
+from app.api.v1.endpoints.config.product import view as views_product_info
 from app.api.v1.endpoints.config.staff import view as views_staff_info
 
 router = APIRouter()
@@ -72,3 +73,5 @@ router.include_router(router=view_dashboard.router)
 router.include_router(router=view_deposit.router)
 
 router.include_router(router=views_bank_info.router, prefix="/bank")
+
+router.include_router(router=views_product_info.router, prefix="/product")
