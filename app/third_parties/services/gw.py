@@ -11,7 +11,6 @@ from app.api.v1.endpoints.third_parties.gw.email.schema import (
     open_ebank_failure_response, open_ebank_success_response
 )
 from app.api.v1.endpoints.user.schema import UserInfoResponse
-from app.settings.service import SERVICE
 from app.utils.constant.gw import (
     GW_AUTHORIZED_REF_DATA_MGM_ACC_NUM, GW_CO_OWNER_REF_DATA_MGM_ACC_NUM,
     GW_CURRENT_ACCOUNT_CASA, GW_CURRENT_ACCOUNT_FROM_CIF,
@@ -181,8 +180,10 @@ from app.utils.functions import date_to_string
 
 class ServiceGW:
     session: Optional[aiohttp.ClientSession] = None
-    email_templates = EMAIL_TEMPLATES
-    url = SERVICE["gw"]['url']
+
+    def __init__(self, init_service):
+        self.email_templates = EMAIL_TEMPLATES
+        self.url = init_service['GW']['SERVICE_GW_URL']
 
     def start(self):
         self.session = aiohttp.ClientSession()
