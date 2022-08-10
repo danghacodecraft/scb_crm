@@ -42,7 +42,11 @@ async def view_product_fee_category(
 )
 async def view_product_fee(
         category_id: str = Query(...),
+        business_type_id: str = Query(...),
         current_user=Depends(get_current_user_from_header())
 ):
-    product_fee = await CtrConfigProduct(current_user).ctr_product_fee_info(category_id=category_id)
+    product_fee = await CtrConfigProduct(current_user).ctr_product_fee_info(
+        category_id=category_id,
+        business_type_id=business_type_id
+    )
     return ResponseData[List[DropdownResponse]](**product_fee)
