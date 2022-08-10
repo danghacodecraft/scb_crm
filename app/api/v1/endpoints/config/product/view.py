@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -26,3 +26,20 @@ async def view_product_fee_category(
 ):
     product_fee_category = await CtrConfigProduct(current_user).ctr_product_fee_category_info()
     return ResponseData[List[DropdownResponse]](**product_fee_category)
+
+
+@router.get(
+    path="/fee/",
+    name="Fee",
+    description="Lấy dữ liệu phí tài khoản",
+    responses=swagger_response(
+        response_model=ResponseData[List[DropdownResponse]],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_product_fee(
+        category_id: str = Query(...),
+        current_user=Depends(get_current_user_from_header())
+):
+    product_fee = await CtrConfigProduct(current_user).ctr_product_fee_info(category_id=category_id)
+    return ResponseData[List[DropdownResponse]](**product_fee)
