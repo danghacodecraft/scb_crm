@@ -1,7 +1,9 @@
-from sqlalchemy import VARCHAR, Column, ForeignKey, text
+from sqlalchemy import VARCHAR, Column, ForeignKey, PrimaryKeyConstraint, text
 from sqlalchemy.orm import relationship
 
 from app.third_parties.oracle.base import Base
+from app.third_parties.oracle.models.master_data.others import \
+    BusinessType  # noqa
 
 
 class ProductFeeCategory(Base):
@@ -21,3 +23,20 @@ class ProductFee(Base):
     category_id = Column('product_category_id', ForeignKey('crm_product_fee_category.category_id'), comment='Mã loại phí')
 
     category = relationship('ProductFeeCategory')
+
+
+class ProductFeeBusiness(Base):
+    __tablename__ = 'crm_product_fee_business'
+
+    business_type_id = Column(VARCHAR(36), comment='Mã phí')
+    product_fee_id = Column(VARCHAR(50), comment='Mã phí')
+    category_id = Column('product_category_id', ForeignKey('crm_product_fee_category.category_id'), comment='Mã loại phí')
+
+    __table_args__ = (
+        PrimaryKeyConstraint(business_type_id, business_type_id, business_type_id),
+        {},
+    )
+
+    # category = relationship('ProductFeeCategory')
+    # business_type = relationship('BusinessType')
+    # product_fee = relationship('ProductFee')
