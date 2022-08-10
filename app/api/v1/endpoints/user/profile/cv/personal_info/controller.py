@@ -90,9 +90,9 @@ class CtrPersonalInfo(BaseController):
             "place_of_birth": dropdown_place_of_birth,
             "gender": dropdown_gender,
             "ethnic": {
-                "id": "KINH",
-                "code": "KINH",
-                "name": "Kinh"    # Todo Dân tộc không tìm thấy
+                "id": None,
+                "code": None,
+                "name": None    # Todo Dân tộc không tìm thấy
             },
             "religion": dropdown_religion,
             "nationality": dropdown_nationality,
