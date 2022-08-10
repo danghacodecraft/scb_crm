@@ -32,7 +32,7 @@ for config in configs:
 
 service_file = ServiceFile(init_service=SERVICE)
 service_ekyc = ServiceEKYC(init_service=SERVICE)
-service_gw = ServiceGW()
+service_gw = ServiceGW(init_service=SERVICE)
 service_idm = ServiceIDM()
 service_kafka = ServiceKafka()
 service_redis = ServiceRedis()
