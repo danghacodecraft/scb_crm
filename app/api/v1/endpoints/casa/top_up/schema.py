@@ -6,10 +6,9 @@ from pydantic import Field, validator
 from app.api.base.schema import ResponseRequestSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
 from app.api.v1.schemas.utils import DropdownRequest, DropdownResponse
-from app.utils.constant.casa import DENOMINATIONS__AMOUNTS, RECEIVING_METHODS
+from app.utils.constant.casa import RECEIVING_METHODS
 from app.utils.functions import (
-    is_valid_mobile_number, make_description_from_dict,
-    make_description_from_dict_to_list
+    is_valid_mobile_number, make_description_from_dict
 )
 from app.utils.regex import (
     MAX_LENGTH_TRANSFER_CONTENT, REGEX_NUMBER_ONLY, REGEX_TRANSFER_CONTENT
@@ -28,9 +27,7 @@ class FeeInfoRequest(ResponseRequestSchema):
 
 
 class StatementInfoRequest(ResponseRequestSchema):
-    denominations: str = Field(
-        ..., description=f"Mệnh giá: {make_description_from_dict_to_list(DENOMINATIONS__AMOUNTS)}"
-    )
+    denominations: str = Field(..., description="Mệnh giá")
     amount: int = Field(..., description="Số lượng")
 
 
@@ -199,9 +196,7 @@ class FeeInfoResponse(ResponseRequestSchema):
 
 
 class StatementsResponse(ResponseRequestSchema):
-    denominations: Optional[str] = Field(
-        ..., description=f"Mệnh giá: {make_description_from_dict_to_list(DENOMINATIONS__AMOUNTS)}"
-    )
+    denominations: Optional[str] = Field(..., description="Mệnh giá")
     amount: int = Field(..., description="Số lượng")
 
 

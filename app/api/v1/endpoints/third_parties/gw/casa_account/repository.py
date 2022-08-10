@@ -146,14 +146,16 @@ async def repos_gw_open_casa_account(
     casa_account_info,
     booking_parent_id: str,
     session: Session,
-    current_user: AuthResponse
+    current_user: AuthResponse,
+    maker_staff_name: str
 ):
     current_user = current_user.user_info
     is_success, gw_open_casa_account_info, form_data = await service_gw.get_open_casa_account(
         cif_number=cif_number,
         self_selected_account_flag=self_selected_account_flag,
         casa_account_info=casa_account_info,
-        current_user=current_user
+        current_user=current_user,
+        maker_staff_name=maker_staff_name
     )
     await repos_add_business_form_and_transaction_job(
         booking_id=booking_parent_id,

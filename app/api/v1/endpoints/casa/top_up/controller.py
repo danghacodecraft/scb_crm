@@ -25,6 +25,7 @@ from app.api.v1.endpoints.third_parties.gw.employee.controller import (
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
+from app.api.v1.others.statement.repository import repos_get_denominations
 from app.api.v1.validator import validate_history_data
 from app.third_parties.oracle.models.master_data.address import AddressProvince
 from app.third_parties.oracle.models.master_data.bank import Bank
@@ -33,9 +34,8 @@ from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.approval import CASA_TOP_UP_STAGE_BEGIN
 from app.utils.constant.business_type import BUSINESS_TYPE_CASA_TOP_UP
 from app.utils.constant.casa import (
-    DENOMINATIONS__AMOUNTS, RECEIVING_METHOD__METHOD_TYPES,
-    RECEIVING_METHOD_ACCOUNT_CASES, RECEIVING_METHOD_SCB_BY_IDENTITY,
-    RECEIVING_METHOD_SCB_TO_ACCOUNT,
+    RECEIVING_METHOD__METHOD_TYPES, RECEIVING_METHOD_ACCOUNT_CASES,
+    RECEIVING_METHOD_SCB_BY_IDENTITY, RECEIVING_METHOD_SCB_TO_ACCOUNT,
     RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT,
     RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD,
     RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY,
@@ -233,7 +233,14 @@ class CtrCasaTopUp(BaseController):
         ################################################################################################################
         # Bảng kê
         ################################################################################################################
-        statement = DENOMINATIONS__AMOUNTS
+        statement = {}
+        statement_info = self.call_repos(await repos_get_denominations(currency_id="VND", session=self.oracle_session))
+
+        for item in statement_info:
+            statement.update({
+                str(int(item.denominations)): 0
+            })
+
         for row in form_data['statement']:
             statement.update({row['denominations']: row['amount']})
 
@@ -593,11 +600,17 @@ class CtrCasaTopUp(BaseController):
             return self.response_exception(msg=ERROR_NOT_NULL, loc="fee_info")
             # TODO: Case cho bên chuyển/ Bên nhận
 
-        denominations__amounts = DENOMINATIONS__AMOUNTS
+        denominations__amounts = {}
+        statement_info = self.call_repos(await repos_get_denominations(currency_id="VND", session=self.oracle_session))
+
+        for item in statement_info:
+            denominations__amounts.update({
+                str(int(item.denominations)): 0
+            })
         denominations_errors = []
         for index, row in enumerate(statement):
             denominations = row.denominations
-            if denominations not in DENOMINATIONS__AMOUNTS:
+            if denominations not in denominations__amounts:
                 denominations_errors.append(dict(
                     index=index,
                     value=denominations

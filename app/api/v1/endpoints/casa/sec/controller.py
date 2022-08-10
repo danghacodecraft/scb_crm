@@ -8,6 +8,7 @@ from app.api.v1.endpoints.third_parties.gw.customer.controller import (
     CtrGWCustomer
 )
 from app.api.v1.others.booking.controller import CtrBooking
+from app.api.v1.others.statement.controller import CtrStatement
 from app.api.v1.validator import validate_history_data
 from app.utils.constant.business_type import BUSINESS_TYPE_OPEN_SEC
 from app.utils.constant.casa import CASA_FEE_METHOD_CASA, CASA_FEE_METHODS
@@ -42,7 +43,8 @@ class CtrSecInfo(CtrCasa, CtrBooking, CtrGWCasaAccount, CtrGWCustomer):
         sender_response = await self.get_sender_info(sender=form_data['transaction_info']['sender'])
 
         # Lấy thông tin statement, trong controller Casa
-        statement_response = await self.get_statement_info(statement_request=form_data['transaction_info']['statement'])
+        statement_response = await CtrStatement(current_user=self.current_user).ctr_statement_info(
+            statement_request=form_data['transaction_info']['statement'])
         form_data['transaction_info'].update(
             sender=sender_response,
             statement=statement_response,
