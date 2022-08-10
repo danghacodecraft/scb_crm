@@ -274,13 +274,12 @@ class CtrWithdraw(BaseController):
             else:
                 vat_tax = fee_amount / 10
                 total = fee_amount + vat_tax
-                actual_total = total
                 is_transfer_payer = False
                 fee_info_response.update(dict(
                     fee_amount=fee_info['amount'],
                     vat_tax=vat_tax,
                     total=total,
-                    actual_total=actual_total,
+                    actual_total=amount,
                     is_transfer_payer=is_transfer_payer,
                     payer_flag=payer_flag,
                     note=note
