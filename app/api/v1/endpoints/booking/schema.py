@@ -49,3 +49,12 @@ class CommentResponse(BaseSchema):
     created_at: Optional[datetime] = Field(..., description="Ngày tạo")
     updated_at: Optional[datetime] = Field(..., description="Ngày cập nhập")
     file_uuid: Optional[str] = Field(..., description="URL file đính kèm")
+
+
+class StateResponse(BaseSchema):
+    state_id: str = Field(..., description="id của trạng thái hồ sơ")
+
+
+class StateReq(BaseSchema):
+    state_id: str = Field(..., description="id của trạng thái hồ sơ")
+    booking_id: str = Field(...)

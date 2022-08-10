@@ -2,6 +2,8 @@ from fastapi import APIRouter
 
 from app.api.v1.endpoints.third_parties.gw.branch_location import \
     view as views_branch_location
+from app.api.v1.endpoints.third_parties.gw.card_works import \
+    view as views_card_works
 from app.api.v1.endpoints.third_parties.gw.casa_account import \
     view as views_casa_account
 from app.api.v1.endpoints.third_parties.gw.category import \
@@ -64,3 +66,6 @@ router_module.include_router(router=views_ebank_ib_mb.router, prefix="/ebank-ib-
 
 router_module.include_router(router=views_email.router, prefix="/email",
                              tags=["[Third-Party][GW][Email]"])
+
+router_module.include_router(router=views_card_works.router, prefix="/email",
+                             tags=["[Third-Party][GW][CardWorks]"])
