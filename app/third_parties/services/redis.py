@@ -1,7 +1,6 @@
 import aioredis
 from loguru import logger
 
-from app.settings.service import SERVICE
 from app.utils.functions import orjson_dumps, orjson_loads
 
 
@@ -9,12 +8,16 @@ class ServiceRedis:
     redis = None
     service_name = "REDIS"
 
+    def __init__(self, init_service):
+        self.init_service = init_service
+
     def start(self):
         logger.info("Start Call Redis")
+        init_service = self.init_service
         self.redis = aioredis.from_url(
-            f"redis://{SERVICE['redis']['host']}:{SERVICE['redis']['port']}",
-            password=SERVICE['redis']['password'],
-            db=SERVICE['redis']['database']
+            f"redis://{init_service['REDIS']['REDIS_HOST']}:{init_service['REDIS']['REDIS_PORT']}",
+            password=init_service['REDIS']['REDIS_PASSWORD'],
+            db=init_service['REDIS']['REDIS_DATABASE']
         )
 
     async def stop(self):

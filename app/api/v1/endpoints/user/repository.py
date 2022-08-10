@@ -7,7 +7,9 @@ from starlette import status
 
 from app.api.base.repository import ReposReturn
 from app.api.v1.endpoints.user.schema import UserInfoResponse
-from app.settings.event import service_gw, service_idm, service_redis
+from app.settings.event import (
+    INIT_SERVICE, service_gw, service_idm, service_redis
+)
 from app.third_parties.services.idm import ServiceIDM
 from app.utils.constant.gw import GW_FUNC_SELECT_USER_INFO_BY_USER_ID_OUT
 from app.utils.error_messages import (
@@ -63,7 +65,7 @@ async def repos_login(username: str, password: str) -> ReposReturn:
         user_info['hrm_branch_name'] = gw_data_output['branch_info']['branch_name']
         user_info['fcc_current_date'] = string_to_date(gw_data_output['current_date'])
 
-    data_idm["user_info"]["avatar_url"] = ServiceIDM().replace_with_cdn(data_idm["user_info"]["avatar_url"])
+    data_idm["user_info"]["avatar_url"] = ServiceIDM(init_service=INIT_SERVICE).replace_with_cdn(data_idm["user_info"]["avatar_url"])
     data_idm['user_info']['token'] = base64.b64encode(
         zlib.compress(orjson.dumps(data_idm['user_info']))
     ).decode('utf-8')

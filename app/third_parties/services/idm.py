@@ -11,14 +11,13 @@ from app.utils.error_messages import ERROR_CALL_SERVICE_IDM
 
 
 class ServiceIDM:
-    HOST = SERVICE["idm"]['host']
-    cdn = {
-        'thumb': '/cdn-profile/thumb',
-        'avatar': '/cdn-profile',
-    }
-
-    def __init__(self):
+    def __init__(self, init_service):
         self.session = None
+        self.HOST = init_service['IDM']['SERVICE_IDM_URL']
+        self.cdn = {
+            'thumb': '/cdn-profile/thumb',
+            'avatar': '/cdn-profile',
+        }
 
     def start(self):
         self.session = aiohttp.ClientSession()

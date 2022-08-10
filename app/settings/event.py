@@ -20,22 +20,22 @@ configs = ss.execute(
     )
     .order_by(DBS.server_name)
 ).scalars().all()
-SERVICE = {}
+INIT_SERVICE = {}
 for config in configs:
     config_data = {config.name: config.value}
     if not config.server_name:
-        SERVICE.update(config_data)
-    elif config.server_name not in SERVICE:
-        SERVICE.update({config.server_name: {config.name: config.value}})
+        INIT_SERVICE.update(config_data)
+    elif config.server_name not in INIT_SERVICE:
+        INIT_SERVICE.update({config.server_name: {config.name: config.value}})
     else:
-        SERVICE[config.server_name][config.name] = config.value
+        INIT_SERVICE[config.server_name][config.name] = config.value
 
-service_file = ServiceFile(init_service=SERVICE)
-service_ekyc = ServiceEKYC(init_service=SERVICE)
-service_gw = ServiceGW(init_service=SERVICE)
-service_idm = ServiceIDM()
-service_kafka = ServiceKafka()
-service_redis = ServiceRedis()
+service_file = ServiceFile(init_service=INIT_SERVICE)
+service_ekyc = ServiceEKYC(init_service=INIT_SERVICE)
+service_gw = ServiceGW(init_service=INIT_SERVICE)
+service_idm = ServiceIDM(init_service=INIT_SERVICE)
+service_kafka = ServiceKafka(init_service=INIT_SERVICE)
+service_redis = ServiceRedis(init_service=INIT_SERVICE)
 
 
 
