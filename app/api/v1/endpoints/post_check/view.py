@@ -226,7 +226,7 @@ async def update_post_check(
         postcheck_update_request=postcheck_update_request
     )
 
-    return ResponseData[UpdatePostCheckRequest](**update_postcheck)
+    return ResponseData(**update_postcheck)
 
 
 @router.get(
