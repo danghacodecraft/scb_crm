@@ -944,7 +944,7 @@ class CtrApproval(BaseController):
                     booking_id=booking_id, business_type_code=business_type.code
                 )
                 booking_branch_id = booking.branch_id
-                if booking_branch_id != current_user.hrm_branch_id:
+                if booking_branch_id != current_user.hrm_branch_code:
                     return self.response_exception(
                         msg=ERROR_USER_NOT_THE_SAME_BRANCH,
                         loc=f"Teller: {booking.created_by}-{booking_branch_id}, "

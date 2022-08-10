@@ -13,7 +13,6 @@ from app.third_parties.oracle.models.cif.basic_information.identity.model import
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
 )
-from app.third_parties.oracle.models.cif.form.model import Booking
 from app.third_parties.oracle.models.cif.payment_account.model import (
     AgreementAuthorization, CasaAccount, JointAccountHolder,
     JointAccountHolderAgreementAuthorization, MethodSign
@@ -22,20 +21,8 @@ from app.third_parties.oracle.models.document_file.model import DocumentFile
 from app.third_parties.oracle.models.master_data.customer import (
     CustomerRelationshipType
 )
-from app.utils.constant.business_type import BUSINESS_TYPE_OPEN_CASA
 from app.utils.constant.cif import BUSINESS_FORM_TKTT_DSH, IMAGE_TYPE_SIGNATURE
 from app.utils.functions import now
-
-
-async def ctr_get_booking_parent(booking_id, session: Session) -> ReposReturn:
-    booking_parent = session.execute(
-        select(Booking).filter(
-            Booking.parent_id == booking_id,
-            Booking.business_type_id == BUSINESS_TYPE_OPEN_CASA
-        )
-    ).scalar()
-
-    return ReposReturn(data=booking_parent)
 
 
 async def repos_check_casa_account(account_id: str, session: Session) -> ReposReturn:

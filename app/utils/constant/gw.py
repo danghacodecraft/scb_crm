@@ -93,6 +93,10 @@ GW_ENDPOINT_URL_SELECT_SERVICE_PACK_IB = "/ebankibmb/v1.0/rest/selectServicePack
 # ---------------------------------------------- EMAIL ---------------------------------------------- #
 GW_ENDPOINT_URL_SEND_EMAIL = "/email/v1.0/rest/sendEmail"
 
+
+# ---------------------------------------------- CardWorks ---------------------------------------------- #
+GW_ENDPOINT_URL_OPEN_CARDS = "/cardworks/v1.0/rest/openCards"
+
 ########################################################################################################################
 #                                         GW FUNCTION NAME
 ########################################################################################################################
@@ -275,6 +279,15 @@ GW_FUNC_SELECT_SERVICE_PACK_IB = "selectServicePackIB"
 # EMAIL
 GW_FUNC_SEND_EMAIL_OUT = "sendEmail_out"
 GW_FUNC_SEND_EMAIL = "sendEmail"
+GW_FUNC_SEND_EMAIL_KEY = "{HovatenKhachHang}"
+
+# CardWorks ############################
+# openCards
+GW_FUNC_OPEN_CARDS_IN = "openCards_in"
+GW_FUNC_OPEN_CARDS_OUT = "openCards_out"
+GW_FUNC_OPEN_CARDS = "openCards"
+
+
 ########################################################################################################################
 #                                         END GW FUNCTION NAME
 ########################################################################################################################

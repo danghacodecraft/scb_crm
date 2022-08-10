@@ -118,7 +118,8 @@ async def repos_get_data_model_config(
         session: Session, model: Base, country_id: Optional[str] = None, province_id: Optional[str] = None,
         district_id: Optional[str] = None, region_id: Optional[str] = None, ward_id: Optional[str] = None,
         level: Optional[str] = None, parent_id: Optional[str] = None, is_special_dropdown: bool = False,
-        type_id: Optional[str] = None, napas_flag: bool = False, citad_flag: bool = False, bank_id: Optional[str] = None
+        type_id: Optional[str] = None, napas_flag: bool = False, citad_flag: bool = False,
+        bank_id: Optional[str] = None, category_id: Optional[str] = None
 ):
     list_data_engine = select(model)
     if hasattr(model, "country_id"):
@@ -147,6 +148,9 @@ async def repos_get_data_model_config(
 
     if hasattr(model, 'type'):
         list_data_engine = list_data_engine.filter(model.type == type_id)
+
+    if hasattr(model, 'category_id'):
+        list_data_engine = list_data_engine.filter(model.category_id == category_id)
 
     # Bank
     if hasattr(model, 'napas_flag') and napas_flag:

@@ -34,7 +34,7 @@ SERVICE = {
             'Content-Type': 'application/json',
             'Authorization': f'Bearer {os.getenv("SERVICE_IDM_BEARER_TOKEN")}'
         },
-        "my_service": "CRM"
+        "service_name": "CRM"
 
     },
     "tms": {
@@ -54,7 +54,9 @@ SERVICE = {
     },
     "gw": {
         "url": os.getenv("SERVICE_GW_URL"),
-        "bypass": bool(os.getenv("SERVICE_GW_BYPASS", "") if os.getenv("SERVICE_GW_BYPASS", "") in ["True", "true", "1"] else False)
+        "email": {
+            "data_input__email_to": os.getenv("GW_EMAIL_DATA_INPUT__EMAIL_TO")
+        },
     },
     "kafka": {
         "sasl_mechanism": os.getenv("KAFKA_SASL_MECHANISM"),
@@ -70,5 +72,8 @@ SERVICE = {
         "port": os.getenv("REDIS_PORT"),
         "password": os.getenv("REDIS_PASSWORD"),
         "database": os.getenv("REDIS_DATABASE"),
+    },
+    "production": {
+        "production_flag": bool(os.getenv("PRODUCTION") if os.getenv("PRODUCTION") in ["True", "true", "1"] else False)
     }
 }

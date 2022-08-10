@@ -2,6 +2,7 @@ from sqlalchemy import DATE, DATETIME, VARCHAR, Column, ForeignKey, text
 from sqlalchemy.orm import relationship
 
 from app.third_parties.oracle.base import Base
+from app.third_parties.oracle.models.cif.form.model import Booking  # noqa
 
 
 class DocumentFileFolder(Base):
