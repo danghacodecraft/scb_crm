@@ -621,7 +621,7 @@ class BaseController(ServiceKafka):
         obj_mapping_crm = await get_optional_model_object_by_code_or_name(
             model=model,
             model_code=code,
-            model_name=None,
+            model_name=name if not code else None,
             session=self.oracle_session
         )
 
