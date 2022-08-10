@@ -132,7 +132,7 @@ class Booking(Base):
 
     business_type = relationship('BusinessType')
     transaction = relationship('TransactionDaily')
-    data = Column('data', CLOB, comment='Dữ liệu workflow của giao dịch')
+    # data = Column('data', VARCHAR, comment='Dữ liệu workflow của giao dịch')
 
 
 class BookingAccount(Base):
