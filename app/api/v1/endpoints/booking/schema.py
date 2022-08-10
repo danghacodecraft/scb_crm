@@ -53,3 +53,8 @@ class CommentResponse(BaseSchema):
 
 class StateResponse(BaseSchema):
     state_id: str = Field(..., description="id của trạng thái hồ sơ")
+
+
+class StateReq(BaseSchema):
+    state_id: str = Field(..., description="id của trạng thái hồ sơ")
+    booking_id: str = Field(...)
