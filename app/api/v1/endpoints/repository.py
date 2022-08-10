@@ -124,7 +124,9 @@ async def repos_get_data_currency_denominations_config(session, currency_id: str
             CurrencyDenomination
         )
         .filter(CurrencyDenomination.currency_id == currency_id)
+        .order_by(CurrencyDenomination.denominations)
     ).scalars().all()
+
     return ReposReturn(data=response_data)
 
 
