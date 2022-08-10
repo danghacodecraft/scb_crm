@@ -27,19 +27,19 @@ def orjson_default(o):
 
 
 class ServiceKafka:
-    def __init__(self, kafka_message=None):
+    def __init__(self, init_service, kafka_message=None):
         self.kafka_message = kafka_message
         if self.kafka_message is None:
             self.kafka_message = {}
 
         self.producer = Producer({
             # không handle lỗi để config sai .env thì raise luôn
-            "bootstrap.servers": ",".join(json.loads(config.get("KAFKA_BOOTSTRAP_SERVERS"))),
-            "security.protocol": config.get("KAFKA_SECURITY_PROTOCOL"),
-            "sasl.mechanism": config.get("KAFKA_SASL_MECHANISM"),
-            "sasl.username": config.get("KAFKA_SASL_PLAIN_USERNAME"),
-            "sasl.password": config.get("KAFKA_SASL_PLAIN_PASSWORD"),
-            "message.max.bytes": config.get("KAFKA_MESSAGE_MAX_BYTES")
+            "bootstrap.servers": ",".join(json.loads(init_service['KAFKA']["KAFKA_BOOTSTRAP_SERVERS"])),
+            "security.protocol": init_service['KAFKA']["KAFKA_SECURITY_PROTOCOL"],
+            "sasl.mechanism": init_service['KAFKA']["KAFKA_SASL_MECHANISM"],
+            "sasl.username": init_service['KAFKA']["KAFKA_SASL_PLAIN_USERNAME"],
+            "sasl.password": init_service['KAFKA']["KAFKA_SASL_PLAIN_PASSWORD"],
+            "message.max.bytes": init_service['KAFKA']["KAFKA_MESSAGE_MAX_BYTES"]
         })
         self.default_topic = config.get("KAFKA_PRODUCER_TOPIC")
 
