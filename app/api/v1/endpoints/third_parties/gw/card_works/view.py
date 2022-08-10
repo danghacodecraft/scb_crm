@@ -29,7 +29,7 @@ async def view_gw_open_cards(
         request: OpenCardsRequest = Body(...),
         current_user=Depends(get_current_user_from_header())
 ):
-    gw_sopen_cards = await CtrGWCardWorks(current_user).ctr_gw_open_cards(
+    gw_open_cards = await CtrGWCardWorks(current_user).ctr_gw_open_cards(
         data=json.loads(request.json())
     )
-    return ResponseData(**gw_sopen_cards)
+    return ResponseData(**gw_open_cards)
