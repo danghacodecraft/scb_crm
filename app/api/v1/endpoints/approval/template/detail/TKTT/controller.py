@@ -154,9 +154,6 @@ class CtrTemplateDetailTKTT(BaseController):
 
         # Thông tin phiếu thu
         request_data_gw = orjson_loads(booking_business_form.form_data)
-        print('request_data_gwwwwwwwwwwwww')
-        print(request_data_gw)
-
         supervisor_info = request_data_gw['staff_info_checker']['staff_name']
         employee_info = await CtrGWEmployee(current_user).ctr_gw_get_employee_info_from_user_name(
             employee_name=supervisor_info
