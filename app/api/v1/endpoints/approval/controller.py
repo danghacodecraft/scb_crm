@@ -23,6 +23,7 @@ from app.api.v1.endpoints.third_parties.gw.employee.repository import (
 )
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
+from app.settings.event import INIT_SERVICE
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
 )
@@ -84,7 +85,7 @@ class CtrApproval(BaseController):
                 content = orjson_loads(transaction_root_daily.data)
                 employee_info = self.call_repos(await repos_gw_get_employee_info_from_code(
                     employee_code=transaction_sender.user_id, current_user=self.current_user))
-                avatar = ServiceIDM().replace_with_cdn(employee_info[GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE_OUT]['data_output']['employee_info']['avatar'])
+                avatar = ServiceIDM(init_service=INIT_SERVICE).replace_with_cdn(employee_info[GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE_OUT]['data_output']['employee_info']['avatar'])
                 if parent_key == transaction_root_daily.created_at.date():
                     childs.append({
                         "user_id": transaction_sender.user_id,
