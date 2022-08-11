@@ -20,6 +20,7 @@ configs = ss.execute(
     )
     .order_by(DBS.server_name)
 ).scalars().all()
+print(configs)
 INIT_SERVICE = {}
 for config in configs:
     config_data = {config.name: config.value}
