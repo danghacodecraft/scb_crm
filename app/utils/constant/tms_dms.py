@@ -9,7 +9,7 @@ PATH_FORM_4 = "/api/v2/crm/khach-hang-ca-nhan/cif/mo-cif/crm-bm2-02/fill_data_an
 PATH_FORM_5 = "/api/v2/crm/khach-hang-ca-nhan/cif/mo-cif/crm-bm3-02/fill_data_and_show_list_detail_field/"
 PATH_FORM_6 = "/api/v2/crm/khach-hang-ca-nhan/cif/mo-cif/crm-bm4-02/fill_data_and_show_list_detail_field/"
 
-TKTT_PATH_FORM_5175 = "/api/v2/crm/TKTT/BM_PHONG_TOA_GIAI_TOA_GIAY_NOP_TIEN/BM_GIAI_TOA/bm26gdncdks/fill_data_and_show_list_detail_field/"
+TKTT_PATH_FORM_5175 = "/api/v2/crm/TKTT/BM_PHONG_TOA_GIAI_TOA_GIAY_NOP_TIEN/BM_GIAI_TOA/bm26gdncdksn/fill_data_and_show_list_detail_field/"
 TKTT_PATH_FORM_5176 = "/api/v2/crm/TKTT/BM_PHONG_TOA_GIAI_TOA_GIAY_NOP_TIEN/BM_GIAI_TOA/bm29tbdthkthcdptsn/fill_data_and_show_list_detail_field/"
 TKTT_PATH_FORM_5177 = "/api/v2/crm/TKTT/BM_PHONG_TOA_GIAI_TOA_GIAY_NOP_TIEN/BM_GIAI_TOA/bm30tbgkhthptcdptsn/fill_data_and_show_list_detail_field/"
 TKTT_PATH_FORM_5178 = "/api/v2/crm/TKTT/BM_PHONG_TOA_GIAI_TOA_GIAY_NOP_TIEN/BM_GIAI_TOA/bm26g/fill_data_and_show_list_detail_field/"
@@ -42,7 +42,7 @@ CIF_TEMPLATES = [
     CIF_TEMPLATE_6
 ]
 
-TKTT_AMOUNT_UNBLOCK_TEMPLATE_5175 = 'bm26gdncdks'
+TKTT_AMOUNT_UNBLOCK_TEMPLATE_5175 = 'bm26gdncdksn'
 TKTT_AMOUNT_UNBLOCK_TEMPLATE_5176 = 'bm29tbdthkthcdptsn'
 TKTT_AMOUNT_UNBLOCK_TEMPLATE_5177 = 'bm30tbgkhthptcdptsn'
 TKTT_AMOUNT_UNBLOCK_TEMPLATE_5178 = 'bm26g'

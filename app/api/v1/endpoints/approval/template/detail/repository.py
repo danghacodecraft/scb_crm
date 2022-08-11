@@ -39,7 +39,6 @@ from app.third_parties.oracle.models.master_data.others import (
     AverageIncomeAmount, Branch, Career, FatcaCategory, MaritalStatus,
     Position, ResidentStatus
 )
-from app.third_parties.services.file import ServiceFile
 from app.third_parties.services.tms import ServiceTMS
 from app.utils.error_messages import ERROR_CALL_SERVICE_TEMPLATE
 
@@ -68,8 +67,6 @@ async def repo_form(data_request: dict, path: str) -> ReposReturn:
             detail=str(response['message'])
         )
 
-    if response.get('file_url'):
-        response['file_url'] = ServiceFile().replace_with_cdn(response['file_url'])
     return ReposReturn(data=response)
 
 

@@ -119,8 +119,8 @@ class CtrTemplateDetailTKTT(BaseController):
                 "S1.A.1.12.12": '<50000000> <100000000>',     # TODO
                 "S1.A.1.12.13": 'Năm mươi triệu',     # TODO
                 "S1.A.1.12.14": str(now().strftime("%d")),
-                "S1.A.1.12.15": str(now().strftime("%m")),
-                "S1.A.1.12.16": str(now().strftime("%Y")),
+                # "S1.A.1.12.15": str(now().strftime("%m")),
+                # "S1.A.1.12.16": str(now().strftime("%Y")),
                 "S1.A.1.12.17": str(now().strftime("%d")),
                 "S1.A.1.12.18": current_user.user_info.name,
                 "S1.A.1.12.19": supervisor if not supervisor else ''
@@ -130,7 +130,6 @@ class CtrTemplateDetailTKTT(BaseController):
         data_tms = self.call_repos(
             await repo_form(data_request=data_request, path=TKTT_PATH_FORM_5175))
         return data_tms
-        # return data_request
 
     async def ctr_tktk_amount_unblock_form_5176(self, booking_id: str):
         pass
