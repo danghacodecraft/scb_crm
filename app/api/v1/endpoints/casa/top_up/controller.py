@@ -123,15 +123,8 @@ class CtrCasaTopUp(BaseController):
             currency=account_info['account_currency']
         )
 
-        transfer = dict(
-            amount=data.amount,
-            content=data.content,
-            entry_number=data.p_instrument_number
-        )
-
         return dict(
             receiver=receiver,
-            transfer=transfer
         )
 
     async def ctr_save_casa_top_up_scb_by_identity(
@@ -147,20 +140,20 @@ class CtrCasaTopUp(BaseController):
 
         # validate province
         receiver_province_id = data.receiver_province.id
-        await self.get_model_object_by_id(
+        province = await self.get_model_object_by_id(
             model_id=receiver_province_id,
             model=AddressProvince,
             loc=f'receiver_province -> id: {receiver_province_id}'
         )
 
         # validate branch
-        await self.get_model_object_by_id(model_id=data.receiver_branch.id, model=Branch, loc='branch -> id')
+        branch = await self.get_model_object_by_id(model_id=data.receiver_branch.id, model=Branch, loc='branch -> id')
 
         # validate issued_date
-        await self.validate_issued_date(issued_date=data.receiver_issued_date, loc='receiver_issued_date')
+        issued_date = await self.validate_issued_date(issued_date=data.receiver_issued_date, loc='receiver_issued_date')
 
         # validate receiver_place_of_issue
-        await self.get_model_object_by_id(
+        place_of_issue = await self.get_model_object_by_id(
             model_id=data.receiver_place_of_issue.id, model=PlaceOfIssue, loc='receiver_place_of_issue -> id'
         )
 
@@ -172,7 +165,16 @@ class CtrCasaTopUp(BaseController):
 
         data.receiving_method = receiving_method
 
-        return data
+        receiver = dict(
+            province=dropdown(province),
+            branch=dropdown(branch),
+            issued_date=issued_date,
+            place_of_issue=dropdown(place_of_issue)
+        )
+
+        return dict(
+            receiver=receiver
+        )
 
     async def ctr_save_casa_top_up_third_party_to_account(
             self,
@@ -224,15 +226,8 @@ class CtrCasaTopUp(BaseController):
             address_full=data.receiver_address_full
         )
 
-        transfer = dict(
-            amount=data.amount,
-            content=data.content,
-            entry_number="BBCC"
-        )
-
         return dict(
             receiver=receiver,
-            transfer=transfer
         )
 
     async def ctr_save_casa_top_up_third_party_by_identity(
@@ -548,6 +543,15 @@ class CtrCasaTopUp(BaseController):
         if not casa_top_up_info:
             return self.response_exception(msg="No Casa Top Up")
 
+        ################################################################################################################
+        # Thông tin giao dịch
+        ################################################################################################################
+        transfer_response = dict(
+            amount=data.amount,
+            content=data.content,
+            entry_number=data.p_instrument_number
+        )
+
         transfer_type_response = dict(
             receiving_method_type=RECEIVING_METHOD__METHOD_TYPES[receiving_method],
             receiving_method=receiving_method
@@ -651,6 +655,7 @@ class CtrCasaTopUp(BaseController):
         )
 
         casa_top_up_info.update(
+            transfer=transfer_response,
             fee_info=fee_info_response,
             transfer_type=transfer_type_response,
             statement=statement_response,

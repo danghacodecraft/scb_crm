@@ -7,7 +7,7 @@ from app.api.base.schema import ResponseRequestSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
 from app.api.v1.others.fee.schema import FeeDetailInfoResponse
 from app.api.v1.others.statement.schema import StatementResponse
-from app.api.v1.schemas.utils import DropdownRequest, DropdownResponse
+from app.api.v1.schemas.utils import DropdownRequest, OptionalDropdownResponse
 from app.utils.constant.casa import CASA_PAYERS, RECEIVING_METHODS
 from app.utils.functions import (
     is_valid_mobile_number, make_description_from_dict
@@ -182,7 +182,7 @@ class TransferResponse(ResponseRequestSchema):
 class IdentityInfoResponse(ResponseRequestSchema):
     number: Optional[str] = Field(..., description="Số GTDD")
     issued_date: Optional[date] = Field(..., description="Ngày cấp")
-    place_of_issue: Optional[DropdownResponse] = Field(..., description="Nơi cấp")
+    place_of_issue: OptionalDropdownResponse = Field(..., description="Nơi cấp")
 
 
 class CustomerResponse(ResponseRequestSchema):
