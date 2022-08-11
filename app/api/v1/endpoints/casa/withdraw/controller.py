@@ -312,8 +312,6 @@ class CtrWithdraw(BaseController):
         ################################################################################################################
         # Thông tin khách hàng giao dịch
         ################################################################################################################
-        print('form_dataaaaaaaaaa')
-        print(form_data)
         cif_flag = form_data['customer_info']['sender_info']['cif_flag']
         sender_response = {}
         customer_info = form_data['customer_info']['sender_info']
@@ -345,7 +343,6 @@ class CtrWithdraw(BaseController):
         else:
             sender_response.update(
                 cif_flag=cif_flag,
-                # cif_number=cif_number,
                 full_name_vn=customer_info['fullname_vn'],
                 address_full=customer_info['address_full'],
                 identity=customer_info['identity'],
