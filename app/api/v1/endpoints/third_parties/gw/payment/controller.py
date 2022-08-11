@@ -138,7 +138,7 @@ class CtrGWPayment(CtrGWCasaAccount, BaseAccountFee):
         fee_info_request = request.fee_info
         # Kiểm tra TKTT có tồn tại không
         gw_casa_account = await self.ctr_gw_check_exist_casa_account_info(
-            account_number=fee_info_request.fee_details[0].account_number
+            account_number=fee_info_request.account_number
         )
 
         saving_fee_info = await self.calculate_fee(
