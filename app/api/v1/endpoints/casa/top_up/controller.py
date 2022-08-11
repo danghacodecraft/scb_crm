@@ -363,7 +363,18 @@ class CtrCasaTopUp(BaseController):
                                     loc=f'card_number: {card_number}')
 
         data.receiving_method = receiving_method
-        return data
+        receiver_full_name = await CtrGWCasaAccount(self.current_user).ctr_gw_get_retrieve_ben_name_by_card_number(
+            card_number=card_number
+        )
+        receiver = dict(
+            bank=dropdown(receiver_bank),
+            card_number=card_number,
+            fullname_vn=receiver_full_name['data']['full_name'],
+            address_full=data.receiver_address_full
+        )
+        return dict(
+            receiver=receiver
+        )
 
     async def ctr_save_casa_top_up_info(
             self,
