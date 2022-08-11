@@ -354,6 +354,18 @@ class CtrKSS(BaseController):
             "post_control": post_control_request
         }
 
+        # lấy lịch sử trạng thái hậu kiểm cuối cùng
+        history_status = self.call_repos(await repos_get_history_post_post_check(
+            postcheck_uuid=post_check_request.customer_id
+        ))
+        if history_status:
+            if history_status[-1]['kss_status'] == "Không hợp lệ" and history_status[-1]['approve_status'] == "Đã Duyệt":
+                return self.response_exception(
+                    loc=f"customer_id: {post_check_request.customer_id}",
+                    msg=ERROR_PERMISSION,
+                    detail=ERROR_PERMISSION,
+                    error_status_code=status.HTTP_403_FORBIDDEN
+                )
         post_check_response = self.call_repos(await repos_create_post_check(payload_data=payload_data))
 
         return self.response(data=post_check_response)
