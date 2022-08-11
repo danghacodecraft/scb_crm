@@ -144,4 +144,5 @@ MESSAGE_SMS_INVALID = 'SCB kinh thong bao, Tai khoan truc tuyen cua Quy khach ca
 
 MESSAGE_SMS_VALID = 'SCB kinh thong bao, Tai khoan truc tuyen cua Quy khach da duoc kich hoat.' \
                     ' Vui long dang nhap SCB S-Connect de tiep tuc su dung dich vu. Tran trong cam on.'
+
 MESSAGE_EMAIL_SUBJECT = 'SCB kính thông báo'
