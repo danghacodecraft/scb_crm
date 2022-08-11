@@ -12,7 +12,6 @@ class FeeDetailInfoRequest(BaseSchema):
     fee_id: Optional[str] = Field(..., description="Mã loại phí")
     amount: int = Field(..., description='Số tiền phí')
     content: str = Field(..., description='Nội dung')
-    account_number: str = Field(..., description='STK')
 
 
 class FeeInfoRequest(BaseSchema):
@@ -20,6 +19,7 @@ class FeeInfoRequest(BaseSchema):
     Schema dùng chung cho phí
     """
     method_type: str = Field(..., description=f"Phương thức tính phí: {make_description_from_dict(CASA_FEE_METHODS)}")
+    account_number: str = Field(..., description='STK')
     fee_details: List[FeeDetailInfoRequest] = Field(..., description="Danh sách phí")
 
 

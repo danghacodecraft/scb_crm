@@ -28,14 +28,14 @@ class BaseAccountFee(BaseController):
         fee_details = []
         total_fee = 0
         response_account_number = None
-        for index, fee_detail_request in enumerate(fee_info_request.fee_details):
-            request_account_number = fee_detail_request.account_number
-            if method_type == CASA_FEE_METHOD_CASA:
-                if not request_account_number:
-                    return self.response_exception(msg=ERROR_VALIDATE)
-                else:
-                    response_account_number = request_account_number
+        request_account_number = fee_info_request.account_number
+        if method_type == CASA_FEE_METHOD_CASA:
+            if not request_account_number:
+                return self.response_exception(msg=ERROR_VALIDATE)
+            else:
+                response_account_number = request_account_number
 
+        for index, fee_detail_request in enumerate(fee_info_request.fee_details):
             fee_id = fee_detail_request.fee_id
             fee_detail = self.call_repos(await repos_get_fee_detail(
                 fee_id=fee_id,
