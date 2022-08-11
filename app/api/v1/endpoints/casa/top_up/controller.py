@@ -117,11 +117,6 @@ class CtrCasaTopUp(BaseController):
         gw_casa_account_info_customer_info = gw_casa_account_info['customer_info']
         account_info = gw_casa_account_info_customer_info['account_info']
 
-        transfer_type = dict(
-            receiving_method_type=RECEIVING_METHOD__METHOD_TYPES[receiving_method],
-            receiving_method=receiving_method
-        )
-
         receiver = dict(
             account_number=data.receiver_account_number,
             fullname_vn=gw_casa_account_info_customer_info['full_name'],
@@ -134,40 +129,9 @@ class CtrCasaTopUp(BaseController):
             entry_number=data.p_instrument_number
         )
 
-        fee_info_request = data.fee_info
-        fee_info_response = dict(
-            is_fee=False,
-            payer=None,
-            fee_amount=None,
-            vat_tax=None,
-            total=None,
-            actual_total=None,
-            note=None
-        )
-        if fee_info_request:
-            amount = fee_info_request.amount
-            vat = amount / 10
-            total = amount + vat
-            actual_total = amount + total
-
-            fee_info_response.update(
-                is_fee=True,
-                payer=fee_info_request.payer,
-                amount=amount,
-                vat=vat,
-                total=total,
-                actual_total=actual_total,
-                note=fee_info_request.note
-            )
-
-        statement = await CtrStatement().ctr_get_statement_info(statement_requests=data.statement)
-
         return dict(
-            transfer_type=transfer_type,
             receiver=receiver,
-            transfer=transfer,
-            fee_info=fee_info_response,
-            statement=statement
+            transfer=transfer
         )
 
     async def ctr_save_casa_top_up_scb_by_identity(
@@ -243,7 +207,33 @@ class CtrCasaTopUp(BaseController):
 
         data.receiving_method = receiving_method
 
-        return data
+        receiver_bank_id = data.receiver_bank.id
+        receiver_bank = await self.get_model_object_by_id(
+            model_id=receiver_bank_id, model=Bank, loc=f"receiver_bank_id: {receiver_bank_id}"
+        )
+        receiver_province_id = data.receiver_province.id
+        receiver_province = await self.get_model_object_by_id(
+            model_id=receiver_province_id, model=AddressProvince, loc=f"receiver_province_id: {receiver_province_id}"
+        )
+
+        receiver = dict(
+            bank=dropdown(receiver_bank),
+            province=dropdown(receiver_province),
+            account_number=data.receiver_account_number,
+            fullname_vn=data.receiver_full_name_vn,
+            address_full=data.receiver_address_full
+        )
+
+        transfer = dict(
+            amount=data.amount,
+            content=data.content,
+            entry_number="BBCC"
+        )
+
+        return dict(
+            receiver=receiver,
+            transfer=transfer
+        )
 
     async def ctr_save_casa_top_up_third_party_by_identity(
             self,
@@ -558,6 +548,39 @@ class CtrCasaTopUp(BaseController):
         if not casa_top_up_info:
             return self.response_exception(msg="No Casa Top Up")
 
+        transfer_type_response = dict(
+            receiving_method_type=RECEIVING_METHOD__METHOD_TYPES[receiving_method],
+            receiving_method=receiving_method
+        )
+
+        fee_info_request = data.fee_info
+        fee_info_response = dict(
+            is_fee=False,
+            payer=None,
+            fee_amount=None,
+            vat_tax=None,
+            total=None,
+            actual_total=None,
+            note=None
+        )
+        if fee_info_request:
+            amount = fee_info_request.amount
+            vat = amount / 10
+            total = amount + vat
+            actual_total = amount + total
+
+            fee_info_response.update(
+                is_fee=True,
+                payer=fee_info_request.payer,
+                amount=amount,
+                vat=vat,
+                total=total,
+                actual_total=actual_total,
+                note=fee_info_request.note
+            )
+
+        statement_response = await CtrStatement().ctr_get_statement_info(statement_requests=data.statement)
+
         ################################################################################################################
         # Thông tin khách hàng giao dịch
         ################################################################################################################
@@ -594,6 +617,7 @@ class CtrCasaTopUp(BaseController):
                     loc='sender_place_of_issue -> id'
                 )
             sender_response = dict(
+                cif_number=sender_cif_number,
                 fullname_vn=data.sender_full_name_vn,
                 address_full=data.sender_address_full,
                 identity_info=dict(
@@ -601,7 +625,9 @@ class CtrCasaTopUp(BaseController):
                     issued_date=data.sender_issued_date,
                     place_of_issue=dropdown(identity_place_of_issue)
                 ),
-                mobile_phone=data.sender_mobile_number
+                mobile_phone=data.sender_mobile_number,
+                telephone=None,
+                otherphone=None
             )
 
         controller_gw_employee = CtrGWEmployee(current_user)
@@ -624,8 +650,10 @@ class CtrCasaTopUp(BaseController):
             name=gw_indirect_staff['staff_name']
         )
 
-        casa_top_up_info = casa_top_up_info.dict()
         casa_top_up_info.update(
+            fee_info=fee_info_response,
+            transfer_type=transfer_type_response,
+            statement=statement_response,
             sender=sender_response,
             direct_staff=direct_staff,
             indirect_staff=indirect_staff
