@@ -15,3 +15,4 @@ class FeeInfoRequest(BaseSchema):
     fee_id: Optional[str] = Field(..., description="Mã loại phí")
     amount: int = Field(..., description='Số tiền phí')
     content: str = Field(..., description='Nội dung')
+    account_number: str = Field(..., description='STK')
