@@ -24,13 +24,15 @@ class FeeInfoRequest(BaseSchema):
 
 
 class FeeDetailInfoResponse(BaseSchema):
-    fee_category: DropdownResponse = Field(..., description="Nhóm phí")
-    fee: DropdownResponse = Field(..., description="Mã loại phí")
+    payer: Optional[str] = Field(..., description="Bên thanh toán phí")
+    fee_category: Optional[DropdownResponse] = Field(None, description="Nhóm phí")
+    fee: Optional[DropdownResponse] = Field(None, description="Mã loại phí")
     amount: int = Field(..., description='Số tiền phí')
     vat: int = Field(..., description='Thuế VAT')
     total: int = Field(..., description='Tổng phí')
-    content: str = Field(..., description='Nội dung')
-    ref_num: str = Field(..., description='Số bút toán')
+    actual_total: Optional[float] = Field(..., description="Số tiền thực chuyển")
+    content: str = Field(None, description='Nội dung')
+    ref_num: str = Field(None, description='Số bút toán')
 
 
 class FeeInfoResponse(BaseSchema):
