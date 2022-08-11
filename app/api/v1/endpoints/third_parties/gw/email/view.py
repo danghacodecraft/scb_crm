@@ -26,8 +26,7 @@ async def view_gw_send_email(
         current_user=Depends(get_current_user_from_header()),
         data_input__product_code: str = Form(..., alias="sendEmail_in.data_input.product_code",
                                              description="Mã chương trình -> Để chọn đúng SMTP config"),
-        data_input__email_to: Optional[List[EmailStr]] = Form(SERVICE.get('gw', {}).get('email', {}).
-                                                              get('data_input__email_to'),
+        data_input__email_to: Optional[List[EmailStr]] = Form(SERVICE.get('gw', {}).get('email', {}),
                                                               alias="sendEmail_in.data_input.email_to",
                                                               description="Địa chỉ email cần gửi, cần gửi tới nhiều "
                                                                           "người thì gửi lên nhiều key này,"

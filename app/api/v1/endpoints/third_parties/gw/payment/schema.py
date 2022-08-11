@@ -3,12 +3,13 @@ from typing import List, Optional
 from pydantic import Field
 
 from app.api.base.schema import BaseSchema
-
-
 ########################################################################################################################
 # Request
 ########################################################################################################################
-class AccountAmountBlockRequest(BaseSchema):
+from app.api.v1.others.fee.schema import FeeInfoRequest
+
+
+class AccountAmountBlockDetailRequest(BaseSchema):
     account_number: str = Field(..., description="Số tài khoản")
     amount: int = Field(..., description="Số dư bị phong tỏa")
     amount_block_type: str = Field(
@@ -27,6 +28,11 @@ class AccountAmountBlockRequest(BaseSchema):
         ...,
         description="Có hoặc không kiểm tra giá trị số dư trước khi phong tỏa. Giá trị Y/N"
     )
+
+
+class AccountAmountBlockRequest(BaseSchema):
+    account_amount_blocks: List[AccountAmountBlockDetailRequest] = Field(..., description="Danh sách tài khoản")
+    fee_info: FeeInfoRequest = Field(..., description="Phương thức tính phí")
 
 
 class AmountUnblockDetail(BaseSchema):
