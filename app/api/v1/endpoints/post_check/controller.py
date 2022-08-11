@@ -413,7 +413,8 @@ class CtrKSS(BaseController):
         ))
 
         fcc_customer_detail = self.call_repos(await repos_gw_get_customer_info_detail(
-            cif_number=customer_detail['cif'], current_user=current_user.user_info
+            cif_number=customer_detail['cif'],
+            current_user=current_user
         ))
 
         response_data = {
