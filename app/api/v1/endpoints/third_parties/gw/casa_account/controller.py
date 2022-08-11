@@ -928,11 +928,11 @@ class CtrGWCasaAccount(BaseController):
         current_user = self.current_user
         current_user_info = current_user.user_info
         sender_place_of_issue_id = form_data['sender_place_of_issue']['id']
-        sender_place_of_issue = await self.get_model_object_by_id(
-            model_id=sender_place_of_issue_id,
-            model=PlaceOfIssue,
-            loc=f"sender_place_of_issue_id: {sender_place_of_issue_id}"
-        )
+        # sender_place_of_issue = await self.get_model_object_by_id(
+        #     model_id=sender_place_of_issue_id,
+        #     model=PlaceOfIssue,
+        #     loc=f"sender_place_of_issue_id: {sender_place_of_issue_id}"
+        # )
 
         data_input = {
             "account_info": {
@@ -968,7 +968,7 @@ class CtrGWCasaAccount(BaseController):
                 },
                 {
                     "UDF_NAME": "NOI_CAP",
-                    "UDF_VALUE": sender_place_of_issue.name
+                    "UDF_VALUE": sender_place_of_issue_id
                 },
                 {
                     "UDF_NAME": "DIA_CHI",

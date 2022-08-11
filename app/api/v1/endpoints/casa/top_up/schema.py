@@ -184,9 +184,10 @@ class TransferResponse(ResponseRequestSchema):
 
 
 class FeeInfoResponse(ResponseRequestSchema):
-    is_transfer_payer: bool = Field(..., description="`true`: Có thu phí cùng giao dịch, Bên thanh toán phí: Bên chuyển"
-                                                     "`false`: Có thu phí cùng giao dịch, Bên thanh toán phí: Bên nhận"
-                                                     "`null`: Không thu phí cùng giao dịch")
+    is_transfer_payer: Optional[str] = Field(
+        ..., description="`true`: Có thu phí cùng giao dịch, Bên thanh toán phí: Bên chuyển"
+                         "`false`: Có thu phí cùng giao dịch, Bên thanh toán phí: Bên nhận"
+                         "`null`: Không thu phí cùng giao dịch")
     payer: Optional[str] = Field(..., description="Bên thanh toán phí")
     fee_amount: Optional[int] = Field(..., description="Số tiền phí")
     vat_tax: Optional[float] = Field(..., description="Thuế VAT")
