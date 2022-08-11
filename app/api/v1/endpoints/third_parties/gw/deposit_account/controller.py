@@ -16,6 +16,7 @@ from app.api.v1.endpoints.third_parties.gw.deposit_account.schema import (
 )
 from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.utils.constant.gw import GW_DEFAULT_VALUE
+from app.utils.error_messages import ERROR_NO_DATA
 from app.utils.functions import string_to_date
 
 
@@ -271,6 +272,14 @@ class CtrGWDepositAccount(BaseController):
             booking_id=BOOKING_ID,
             session=self.oracle_session
         ))
+        pay_in_casa_account = []
+
+        for td_account in td_accounts:
+            if td_account.TdAccount.pay_in_casa_account:
+                pay_in_casa_account.append(td_account.TdAccount.pay_in_casa_account)
+        if len(pay_in_casa_account) != len(td_accounts):
+            return self.response_exception(msg="DEPOSIT_ACCOUNT", detail=ERROR_NO_DATA)
+
         for item in td_accounts:
             # TODO hard core data_input open_account_td
             data_input = {
