@@ -231,7 +231,7 @@ class ServiceGW:
                         return True, return_data
             else:
                 form_data = aiohttp.FormData()
-                if customers and not is_open_ebank_success:
+                if customers and is_open_ebank_success:
                     open_ebank_response = open_ebank_failure_response(
                         customers=customers,
                         email_templates=self.email_templates, template_key=GW_FUNC_SEND_EMAIL_KEY)
@@ -240,7 +240,7 @@ class ServiceGW:
                     if not self.production:
                         request_data['sendEmail_in.data_input.email_to'] = self.GW_EMAIL_DATA_INPUT__EMAIL_TO
 
-                elif customers and is_open_ebank_success:
+                elif customers and not is_open_ebank_success:
                     open_ebank_response = open_ebank_success_response(
                         customers=customers,
                         email_templates=self.email_templates, template_key=GW_FUNC_SEND_EMAIL_KEY)

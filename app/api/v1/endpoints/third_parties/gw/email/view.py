@@ -58,9 +58,9 @@ async def view_gw_send_email(
                                                                       " `data_input__email_content_html`"),
         data_input__is_open_ebank_success: bool = Form(False, alias="data_input__is_open_ebank_success",
                                                        description="""
-- True: Email trong trường hợp phê duyệt trạng thái Chờ hậu kiểm / cần xác minh sang Không hợp lệ.
+- True Email trong trường hợp phê duyệt trạng thái Không hợp lệ sang Hợp lệ.
 
-- False Email trong trường hợp phê duyệt trạng thái Không hợp lệ sang Hợp lệ.
+- False: Email trong trường hợp phê duyệt trạng thái Chờ hậu kiểm / cần xác minh sang Không hợp lệ.
                                                                   """)
 ):
     ctr_send_email = await CtrGWEmail(
