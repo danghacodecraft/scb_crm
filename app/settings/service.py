@@ -1,79 +1,84 @@
-import os
+from sqlalchemy import select
+
+from app.third_parties.oracle.base import SessionLocal
+from app.third_parties.oracle.models.enviroment.model import DBS
+
+ss = SessionLocal()
+configs = ss.execute(
+    select(
+        DBS
+    )
+).scalars().all()
+
+configs = {config.name: config.value for config in configs}
 
 SERVICE = {
     "file": {
-        "url": os.getenv("SERVICE_FILE_URL"),
-        "server-auth": os.getenv("SERVICE_FILE_SERVICE_AUTH"),
+        "url": configs.get("SERVICE_FILE_URL"),
+        "server-auth": configs.get("SERVICE_FILE_SERVICE_AUTH"),
         "authorization": "bearer 3",
-        "service_file_cdn": os.getenv("SERVICE_FILE_CDN")
+        "service_file_cdn": configs.get("SERVICE_FILE_CDN")
     },
     "file-upload": {
-        "file_limit": int(os.getenv("FILE_LIMIT", 10)),
-        "file_size_max": int(os.getenv("FILE_SIZE_MAX", 5000000))
+        "file_limit": int(configs.get("FILE_LIMIT", 10)),
+        "file_size_max": int(configs.get("FILE_SIZE_MAX", 5000000))
     },
     "ekyc": {
-        "url": os.getenv("SERVICE_EKYC_URL"),
+        "url": configs.get("SERVICE_EKYC_URL"),
         "x-transaction-id": "CRM_TEST",
-        "authorization": f"bearer {os.getenv('SERVICE_EKYC_BEARER_TOKEN')}",
-        'otp': os.getenv('SERVICE_EKYC_OTP'),
-        'token': os.getenv('SERVICE_EKYC_BEARER_TOKEN'),
-        'server-auth': os.getenv('SERVICE_EKYC_SERVER_TOKEN')
+        "authorization": f"bearer {configs.get('SERVICE_EKYC_BEARER_TOKEN')}",
+        'otp': configs.get('SERVICE_EKYC_OTP'),
+        'token': configs.get('SERVICE_EKYC_BEARER_TOKEN'),
+        'server-auth': configs.get('SERVICE_EKYC_SERVER_TOKEN')
     },
     "template": {
-        "url": os.getenv("SERVICE_TEMPLATE_URL"),
-        "server-auth": os.getenv("SERVICE_TEMPLATE_SERVICE_AUTH")
+        "url": configs.get("SERVICE_TEMPLATE_URL"),
+        "server-auth": configs.get("SERVICE_TEMPLATE_SERVICE_AUTH")
     },
     "card": {
-        "url": os.getenv("SERVICE_CARD_URL"),
-        "authorization": f"bearer {os.getenv('SERVICE_CARD_BEARER_TOKEN')}",
+        "url": configs.get("SERVICE_CARD_URL"),
+        "authorization": f"bearer {configs.get('SERVICE_CARD_BEARER_TOKEN')}",
         "x-transaction-id": "CRM_TEST"
     },
     "idm": {
-        "host": os.getenv("SERVICE_IDM_URL"),
+        "host": configs.get("SERVICE_IDM_URL"),
         "headers": {
             'Content-Type': 'application/json',
-            'Authorization': f'Bearer {os.getenv("SERVICE_IDM_BEARER_TOKEN")}'
+            'Authorization': f'Bearer {configs.get("SERVICE_IDM_BEARER_TOKEN")}'
         },
         "service_name": "CRM"
 
     },
     "tms": {
-        "url": os.getenv("SERVICE_TEMPLATE_URL"),
+        "url": configs.get("SERVICE_TEMPLATE_URL"),
         "headers": {
             'Content-Type': 'application/json',
             "server-auth": "BCQjyTXFB0TWJiLjKcuzAenpYsbXV5O0",
             "authorization": "Bearer 1"
         }
     },
-    "dwh": {
-        "url": os.getenv("SERVICE_DWH_URL"),
-        "headers": {
-            'Content-Type': 'application/json',
-            "server-auth": os.getenv("SERVICE_DWH_SERVER_AUTH")
-        }
-    },
     "gw": {
-        "url": os.getenv("SERVICE_GW_URL"),
+        "url": configs.get("SERVICE_GW_URL"),
         "email": {
-            "data_input__email_to": os.getenv("GW_EMAIL_DATA_INPUT__EMAIL_TO")
+            "data_input__email_to": configs.get("GW_EMAIL_DATA_INPUT__EMAIL_TO")
         },
     },
     "kafka": {
-        "sasl_mechanism": os.getenv("KAFKA_SASL_MECHANISM"),
-        "bootstrap_servers": os.getenv("KAFKA_BOOTSTRAP_SERVERS"),
-        "security_protocol": os.getenv("KAFKA_SECURITY_PROTOCOL"),
-        "sasl_plain_username": os.getenv("KAFKA_SASL_PLAIN_USERNAME"),
-        "sasl_plain_password": os.getenv("KAFKA_SASL_PLAIN_PASSWORD"),
-        "producer_topic": os.getenv("KAFKA_PRODUCER_TOPIC"),
-        "message_max_bytes": os.getenv("KAFKA_MESSAGE_MAX_BYTES"),
+        "sasl_mechanism": configs.get("KAFKA_SASL_MECHANISM"),
+        "bootstrap_servers": configs.get("KAFKA_BOOTSTRAP_SERVERS"),
+        "security_protocol": configs.get("KAFKA_SECURITY_PROTOCOL"),
+        "sasl_plain_username": configs.get("KAFKA_SASL_PLAIN_USERNAME"),
+        "sasl_plain_password": configs.get("KAFKA_SASL_PLAIN_PASSWORD"),
+        "producer_topic": configs.get("KAFKA_PRODUCER_TOPIC"),
+        "message_max_bytes": configs.get("KAFKA_MESSAGE_MAX_BYTES"),
     },
     "redis": {
-        "host": os.getenv("REDIS_HOST"),
-        "port": os.getenv("REDIS_PORT"),
-        "password": os.getenv("REDIS_PASSWORD"),
-        "database": os.getenv("REDIS_DATABASE"),
+        "host": configs.get("REDIS_HOST"),
+        "port": configs.get("REDIS_PORT"),
+        "password": configs.get("REDIS_PASSWORD"),
+        "database": configs.get("REDIS_DATABASE"),
     },
     "production": {
-        "production_flag": bool(os.getenv("PRODUCTION") if os.getenv("PRODUCTION") in ["True", "true", "1"] else False)
+        "production_flag": bool(configs.get("PRODUCTION") if configs.get("PRODUCTION") in ["True", "true", "1"] else False)
     }
 }

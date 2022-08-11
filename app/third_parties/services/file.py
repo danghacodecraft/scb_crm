@@ -23,10 +23,10 @@ class ServiceFile:
 
     def __init__(self, init_service):
         self.SERVICE = init_service
-        self.url = self.SERVICE["FILE"]["SERVICE_FILE_URL"]
-        self.cdn = self.SERVICE["FILE"]["SERVICE_FILE_CDN"]
+        self.url = self.SERVICE["file"]["url"]
+        self.cdn = self.SERVICE["file"]["service_file_cdn"]
         self.headers = {
-            "server-auth": self.SERVICE["FILE"]["SERVICE_FILE_SERVICE_AUTH"],
+            "server-auth": self.SERVICE["file"]["server-auth"],
             "AUTHORIZATION": "bearer 3"
         }
 

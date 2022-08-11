@@ -15,9 +15,9 @@ class ServiceRedis:
         logger.info("Start Call Redis")
         init_service = self.init_service
         self.redis = aioredis.from_url(
-            f"redis://{init_service['REDIS']['REDIS_HOST']}:{init_service['REDIS']['REDIS_PORT']}",
-            password=init_service['REDIS']['REDIS_PASSWORD'],
-            db=init_service['REDIS']['REDIS_DATABASE']
+            f"redis://{init_service['redis']['host']}:{init_service['redis']['port']}",
+            password=init_service['redis']['password'],
+            db=init_service['redis']['database']
         )
 
     async def stop(self):

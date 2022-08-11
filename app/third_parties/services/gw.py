@@ -183,7 +183,7 @@ class ServiceGW:
 
     def __init__(self, init_service):
         self.email_templates = EMAIL_TEMPLATES
-        self.url = init_service['GW']['SERVICE_GW_URL']
+        self.url = init_service['gw']['url']
 
     def start(self):
         self.session = aiohttp.ClientSession()

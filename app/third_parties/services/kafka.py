@@ -34,14 +34,14 @@ class ServiceKafka:
 
         self.producer = Producer({
             # không handle lỗi để config sai .env thì raise luôn
-            "bootstrap.servers": ",".join(json.loads(init_service['KAFKA']["KAFKA_BOOTSTRAP_SERVERS"])),
-            "security.protocol": init_service['KAFKA']["KAFKA_SECURITY_PROTOCOL"],
-            "sasl.mechanism": init_service['KAFKA']["KAFKA_SASL_MECHANISM"],
-            "sasl.username": init_service['KAFKA']["KAFKA_SASL_PLAIN_USERNAME"],
-            "sasl.password": init_service['KAFKA']["KAFKA_SASL_PLAIN_PASSWORD"],
-            "message.max.bytes": init_service['KAFKA']["KAFKA_MESSAGE_MAX_BYTES"]
+            "bootstrap.servers": ",".join(json.loads(init_service['kafka']["bootstrap_servers"])),
+            "security.protocol": init_service['kafka']["security_protocol"],
+            "sasl.mechanism": init_service['kafka']["sasl_mechanism"],
+            "sasl.username": init_service['kafka']["sasl_plain_username"],
+            "sasl.password": init_service['kafka']["sasl_plain_password"],
+            "message.max.bytes": init_service['kafka']["message_max_bytes"]
         })
-        self.default_topic = config.get("KAFKA_PRODUCER_TOPIC")
+        self.default_topic = init_service['kafka'].get("producer_topic")
 
         if WRITE_LOG and kafka_message:
             logger.debug("Started send message to KAFKA")

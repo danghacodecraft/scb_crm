@@ -2,10 +2,8 @@ from typing import Callable
 
 from fastapi import FastAPI
 from loguru import logger
-from sqlalchemy import select
 
-from app.third_parties.oracle.base import SessionLocal
-from app.third_parties.oracle.models.enviroment.model import DBS
+from app.settings.service import SERVICE
 from app.third_parties.services.ekyc import ServiceEKYC
 from app.third_parties.services.file import ServiceFile
 from app.third_parties.services.gw import ServiceGW
@@ -13,23 +11,7 @@ from app.third_parties.services.idm import ServiceIDM
 from app.third_parties.services.kafka import ServiceKafka
 from app.third_parties.services.redis import ServiceRedis
 
-ss = SessionLocal()
-configs = ss.execute(
-    select(
-        DBS
-    )
-    .order_by(DBS.server_name)
-).scalars().all()
-INIT_SERVICE = {}
-for config in configs:
-    config_data = {config.name: config.value}
-    if not config.server_name:
-        INIT_SERVICE.update(config_data)
-    elif config.server_name not in INIT_SERVICE:
-        INIT_SERVICE.update({config.server_name: {config.name: config.value}})
-    else:
-        INIT_SERVICE[config.server_name][config.name] = config.value
-
+INIT_SERVICE = SERVICE
 service_file = ServiceFile(init_service=INIT_SERVICE)
 service_ekyc = ServiceEKYC(init_service=INIT_SERVICE)
 service_gw = ServiceGW(init_service=INIT_SERVICE)
