@@ -5,22 +5,18 @@ from pydantic import Field, validator
 
 from app.api.base.schema import ResponseRequestSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
-from app.api.v1.others.fee.schema import FeeDetailInfoResponse
+from app.api.v1.others.fee.schema import (
+    FeeDetailInfoResponse, OneFeeInfoRequest
+)
 from app.api.v1.others.statement.schema import StatementResponse
 from app.api.v1.schemas.utils import DropdownRequest, OptionalDropdownResponse
-from app.utils.constant.casa import CASA_PAYERS, RECEIVING_METHODS
+from app.utils.constant.casa import RECEIVING_METHODS
 from app.utils.functions import (
     is_valid_mobile_number, make_description_from_dict
 )
 from app.utils.regex import (
     MAX_LENGTH_TRANSFER_CONTENT, REGEX_NUMBER_ONLY, REGEX_TRANSFER_CONTENT
 )
-
-
-class FeeInfoRequest(ResponseRequestSchema):
-    payer: str = Field(..., description=f"{make_description_from_dict(CASA_PAYERS)}")
-    amount: int = Field(..., description="Số tiền phí")
-    note: Optional[str] = Field(..., description="Ghi chú")
 
 
 class StatementInfoRequest(ResponseRequestSchema):
@@ -38,7 +34,7 @@ class CasaTopUpCommonRequest(ResponseRequestSchema):
     sender_address_full: Optional[str] = Field(None, description="Địa chỉ")
     sender_mobile_number: Optional[str] = Field(None, description="Số điện thoại", regex=REGEX_NUMBER_ONLY)
     receiving_method: str = Field(None, description=f"Hình thức nhận: {make_description_from_dict(RECEIVING_METHODS)}")
-    fee_info: Optional[FeeInfoRequest] = Field(..., description="Thông tin phí")
+    fee_info: Optional[OneFeeInfoRequest] = Field(..., description="Thông tin phí")
     statement: List[StatementInfoRequest] = Field(..., description="Thông tin bảng kê")
     direct_staff_code: Optional[str] = Field(..., description="Mã nhân viên kinh doanh")
     indirect_staff_code: Optional[str] = Field(..., description="Mã nhân viên quản lý gián tiếp")

@@ -21,6 +21,7 @@ from app.api.v1.endpoints.third_parties.gw.employee.controller import (
 )
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.api.v1.others.booking.controller import CtrBooking
+from app.api.v1.others.fee.controller import BaseAccountFee
 from app.api.v1.others.permission.controller import PermissionController
 from app.api.v1.others.sender.controller import CtrPaymentSender
 from app.api.v1.others.statement.controller import CtrStatement
@@ -530,29 +531,10 @@ class CtrCasaTopUp(BaseController):
 
         # Thông tin phí
         fee_info_request = data.fee_info
-        fee_info_response = dict(
-            is_fee=False,
-            payer=None,
-            fee_amount=None,
-            vat_tax=None,
-            total=None,
-            actual_total=None,
-            note=None
-        )
+        fee_info_response = None
         if fee_info_request:
-            amount = fee_info_request.amount
-            vat = amount / 10
-            total = amount + vat
-            actual_total = amount + total
-
-            fee_info_response.update(
-                is_fee=True,
-                payer=fee_info_request.payer,
-                amount=amount,
-                vat=vat,
-                total=total,
-                actual_total=actual_total,
-                note=fee_info_request.note
+            fee_info_response = await BaseAccountFee().calculate_fee(
+                one_fee_info_request=fee_info_request
             )
 
         statement_response = await CtrStatement().ctr_get_statement_info(statement_requests=data.statement)

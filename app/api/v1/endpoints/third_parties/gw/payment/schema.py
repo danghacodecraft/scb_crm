@@ -6,7 +6,9 @@ from app.api.base.schema import BaseSchema
 ########################################################################################################################
 # Request
 ########################################################################################################################
-from app.api.v1.others.fee.schema import FeeInfoRequest, FeeInfoResponse
+from app.api.v1.others.fee.schema import (
+    FeeInfoResponse, MultipleFeeInfoRequest
+)
 
 
 class AccountAmountBlockDetailRequest(BaseSchema):
@@ -32,7 +34,7 @@ class AccountAmountBlockDetailRequest(BaseSchema):
 
 class AccountAmountBlockRequest(BaseSchema):
     account_amount_blocks: List[AccountAmountBlockDetailRequest] = Field(..., description="Danh sách tài khoản")
-    fee_info: FeeInfoRequest = Field(..., description="Phương thức tính phí")
+    fee_info: MultipleFeeInfoRequest = Field(..., description="Phương thức tính phí")
 
 
 class AmountUnblockDetail(BaseSchema):

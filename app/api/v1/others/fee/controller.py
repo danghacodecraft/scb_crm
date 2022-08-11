@@ -1,9 +1,14 @@
 from app.api.base.controller import BaseController
 from app.api.v1.others.fee.repository import repos_get_fee_detail
-from app.api.v1.others.fee.schema import FeeInfoRequest
-from app.utils.constant.casa import CASA_FEE_METHOD_CASA, CASA_FEE_METHODS
+from app.api.v1.others.fee.schema import (
+    MultipleFeeInfoRequest, OneFeeInfoRequest
+)
+from app.utils.constant.casa import (
+    CASA_FEE_METHOD_CASA, CASA_FEE_METHODS, CASA_PAYERS
+)
 from app.utils.error_messages import (
-    ERROR_CASA_FEE_METHOD_NOT_EXIST, ERROR_FEE_ID_NOT_EXIST, ERROR_VALIDATE
+    ERROR_CASA_FEE_METHOD_NOT_EXIST, ERROR_FEE_ID_NOT_EXIST,
+    ERROR_PAYER_NOT_EXIST, ERROR_VALIDATE
 )
 from app.utils.functions import dropdown
 
@@ -14,12 +19,12 @@ class BaseAccountFee(BaseController):
     """
     async def calculate_fees(
             self,
-            fee_info_request: FeeInfoRequest,
+            fee_info_request: MultipleFeeInfoRequest,
             account_owner: str,
             business_type_id: str
     ):
         """
-        Tính phí dành cho nhiều loại phí
+        Tính phí dành cho NHIỀU loại phí
         """
         method_type = fee_info_request.method_type
         if method_type not in CASA_FEE_METHODS:
@@ -69,3 +74,41 @@ class BaseAccountFee(BaseController):
             fee_details=fee_details,
             total_fee=total_fee
         )
+
+    async def calculate_fee(
+            self,
+            one_fee_info_request: OneFeeInfoRequest
+    ):
+        """
+        Tính phí dành cho MỘT loại phí
+        """
+
+        if one_fee_info_request.payer not in CASA_PAYERS:
+            return self.response_exception(msg=ERROR_PAYER_NOT_EXIST)
+
+        fee_info_response = dict(
+            is_fee=False,
+            payer=None,
+            fee_amount=None,
+            vat_tax=None,
+            total=None,
+            actual_total=None,
+            note=None
+        )
+        if one_fee_info_request:
+            amount = one_fee_info_request.amount
+            vat = amount / 10
+            total = amount + vat
+            actual_total = amount + total
+
+            fee_info_response.update(
+                is_fee=True,
+                payer=one_fee_info_request.payer,
+                amount=amount,
+                vat=vat,
+                total=total,
+                actual_total=actual_total,
+                note=one_fee_info_request.note
+            )
+
+        return fee_info_response
