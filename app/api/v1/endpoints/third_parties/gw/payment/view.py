@@ -30,7 +30,7 @@ router = APIRouter()
         success_status_code=status.HTTP_200_OK
     )
 )
-async def view_amount_block(
+async def view_save_amount_block(
         request: AccountAmountBlockRequest = Body(...),
         current_user=Depends(get_current_user_from_header()),
         BOOKING_ID: str = Header(..., description="Mã phiên giao dịch")
@@ -41,6 +41,26 @@ async def view_amount_block(
     )
 
     return ResponseData[PaymentSuccessResponse](**payment_amount_block)
+
+
+@router.get(
+    path="/amount-block/",
+    name="Amount Block",
+    description="Phong tỏa tài khoản",
+    responses=swagger_response(
+        response_model=ResponseData,
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_get_amount_block(
+        current_user=Depends(get_current_user_from_header()),
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch")
+):
+    payment_amount_block = await CtrGWPayment(current_user).ctr_get_payment_amount_block(
+        BOOKING_ID=BOOKING_ID
+    )
+
+    return ResponseData[AccountAmountBlockResponse](**payment_amount_block)
 
 
 @router.post(

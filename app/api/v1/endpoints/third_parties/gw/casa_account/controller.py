@@ -274,9 +274,8 @@ class CtrGWCasaAccount(BaseController):
         ))
         if not gw_check_exist_casa_account_info:
             return self.response(data=dict(is_existed=False))
-        account_info = \
-            gw_check_exist_casa_account_info['retrieveCurrentAccountCASA_out']['data_output']['customer_info'][
-                'account_info']
+        customer_info = gw_check_exist_casa_account_info['retrieveCurrentAccountCASA_out']['data_output']['customer_info']
+        account_info = customer_info['account_info']
         is_lower_core_fcc_date = False
         account_open_date = string_to_date(account_info['account_open_date'], _format=DATETIME_INPUT_OUTPUT_FORMAT)
         if account_open_date and current_user_info.fcc_current_date and account_open_date <= current_user_info.fcc_current_date:
@@ -284,6 +283,7 @@ class CtrGWCasaAccount(BaseController):
 
         return self.response(data=dict(
             is_existed=True if account_info['account_num'] else False,
+            account_owner=customer_info['full_name'],
             is_lower_core_fcc_date=is_lower_core_fcc_date
         ))
 

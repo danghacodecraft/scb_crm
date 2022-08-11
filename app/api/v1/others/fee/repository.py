@@ -19,4 +19,4 @@ async def repos_get_fee_detail(fee_id: str, business_type_id: str, session: Sess
         ))
         .filter(ProductFee.id == fee_id)
     ).scalar()
-    return ReposReturn(fee_detail)
+    return ReposReturn(data=fee_detail)
