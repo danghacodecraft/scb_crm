@@ -140,7 +140,7 @@ EKYC_CUSTOMER_KSS_STATUS = {
 }
 
 MESSAGE_SMS_INVALID = 'SCB kinh thong bao, Tai khoan truc tuyen cua Quy khach can xac minh them thong tin, ' \
-                      'Quy Khach vui long den SCB gan nhat/lien he Hotline 19006538 de duoc ho tro.'
+                      'Quy Khach vui long den SCB gan nhat/lien he Hotline 19006538 de duoc ho tro'
 MESSAGE_SMS_VALID = 'SCB kinh thong bao, Tai khoan truc tuyen cua Quy khach da duoc kich hoat.' \
                     ' Vui long dang nhap SCB S-Connect de tiep tuc su dung dich vu. Tran trong cam on.'
 MESSAGE_EMAIL_SUBJECT = 'SCB kính thông báo'
