@@ -4,7 +4,7 @@ from pydantic import Field
 
 from app.api.base.schema import BaseSchema
 from app.api.v1.schemas.utils import DropdownResponse
-from app.utils.constant.casa import CASA_FEE_METHODS
+from app.utils.constant.casa import CASA_FEE_METHODS, PAYMENT_PAYERS
 from app.utils.functions import make_description_from_dict
 
 
@@ -14,7 +14,7 @@ class FeeDetailInfoRequest(BaseSchema):
     content: str = Field(..., description='Nội dung')
 
 
-class FeeInfoRequest(BaseSchema):
+class MultipleFeeInfoRequest(BaseSchema):
     """
     Schema dùng chung cho phí
     """
@@ -41,3 +41,9 @@ class FeeInfoResponse(BaseSchema):
     account_owner: str = Field(..., description="Chủ tài khoản")
     fee_details: List[FeeDetailInfoResponse] = Field(..., description="Danh sách phí")
     total_fee: int = Field(..., description="Tổng phí")
+
+
+class OneFeeInfoRequest(BaseSchema):
+    payer: str = Field(..., description=f"{make_description_from_dict(PAYMENT_PAYERS)}")
+    amount: int = Field(..., description="Số tiền phí")
+    note: Optional[str] = Field(..., description="Ghi chú")

@@ -16,15 +16,14 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
 from app.api.v1.endpoints.third_parties.gw.category.controller import (
     CtrSelectCategory
 )
-from app.api.v1.endpoints.third_parties.gw.customer.controller import (
-    CtrGWCustomer
-)
 from app.api.v1.endpoints.third_parties.gw.employee.controller import (
     CtrGWEmployee
 )
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.api.v1.others.booking.controller import CtrBooking
+from app.api.v1.others.fee.controller import CtrAccountFee
 from app.api.v1.others.permission.controller import PermissionController
+from app.api.v1.others.sender.controller import CtrPaymentSender
 from app.api.v1.others.statement.controller import CtrStatement
 from app.api.v1.others.statement.repository import repos_get_denominations
 from app.api.v1.validator import validate_history_data
@@ -43,27 +42,23 @@ from app.utils.constant.casa import (
     RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT, RECEIVING_METHODS
 )
 from app.utils.constant.cif import (
-    ADDRESS_TYPE_CODE_UNDEFINDED, DROPDOWN_NONE_DICT,
-    IDENTITY_TYPE_CODE_NON_RESIDENT,
+    ADDRESS_TYPE_CODE_UNDEFINDED, IDENTITY_TYPE_CODE_NON_RESIDENT,
     PROFILE_HISTORY_DESCRIPTIONS_TOP_UP_CASA_ACCOUNT,
     PROFILE_HISTORY_STATUS_INIT
 )
-from app.utils.constant.gw import (
-    GW_DATETIME_FORMAT, GW_REQUEST_DIRECT_INDIRECT
-)
+from app.utils.constant.gw import GW_REQUEST_DIRECT_INDIRECT
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_GDV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_GDV
 )
 from app.utils.error_messages import (
     ERROR_BANK_NOT_IN_CITAD, ERROR_BANK_NOT_IN_NAPAS, ERROR_BOOKING_INCORRECT,
-    ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_CIF_NUMBER_NOT_EXIST,
-    ERROR_DENOMINATIONS_NOT_EXIST, ERROR_FIELD_REQUIRED,
+    ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_DENOMINATIONS_NOT_EXIST,
     ERROR_INTERBANK_ACCOUNT_NUMBER_NOT_EXIST,
     ERROR_INTERBANK_CARD_NUMBER_NOT_EXIST, ERROR_MAPPING_MODEL,
     ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
 )
 from app.utils.functions import (
-    dropdown, generate_uuid, now, orjson_dumps, orjson_loads, string_to_date
+    dropdown, generate_uuid, now, orjson_dumps, orjson_loads
 )
 from app.utils.vietnamese_converter import (
     convert_to_unsigned_vietnamese, make_short_name, split_name
@@ -383,7 +378,6 @@ class CtrCasaTopUp(BaseController):
     ):
         data = request.data
         receiving_method = request.receiving_method
-        sender_cif_number = data.sender_cif_number
         statement = data.statement
         direct_staff_code = data.direct_staff_code
         indirect_staff_code = data.indirect_staff_code
@@ -471,58 +465,6 @@ class CtrCasaTopUp(BaseController):
                     msg=USER_CODE_NOT_EXIST, loc=f'indirect_staff_code: {indirect_staff_code}'
                 )
 
-        # TH1: có nhập cif -> Kiểm tra số CIF có tồn tại trong CRM không
-        if sender_cif_number:
-            # self.call_repos(await repos_get_customer_by_cif_number(
-            #     cif_number=cif_number,
-            #     session=self.oracle_session
-            # ))
-            customer_detail = await CtrGWCustomer(current_user).ctr_gw_get_customer_info_detail(
-                cif_number=sender_cif_number,
-                return_raw_data_flag=True
-            )
-            if not customer_detail['full_name']:
-                return self.response_exception(
-                    msg=ERROR_CIF_NUMBER_NOT_EXIST,
-                    loc=f"sender_cif_number {sender_cif_number}"
-                )
-
-            data.sender_full_name_vn = customer_detail['full_name']
-            customer_identity_detail = customer_detail['id_info']
-            data.sender_identity_number = customer_identity_detail['id_num']
-            data.sender_issued_date = string_to_date(customer_identity_detail['id_issued_date'], _format=GW_DATETIME_FORMAT)
-            data.sender_address_full = customer_detail['t_address_info']['contact_address_full']
-            data.sender_mobile_number = customer_detail['mobile_phone']
-        # TH2: Không nhập CIF
-        else:
-            sender_full_name_vn = data.sender_full_name_vn
-            sender_identity_number = data.sender_identity_number
-            sender_issued_date = data.sender_issued_date
-            sender_address_full = data.sender_address_full
-            sender_mobile_number = data.sender_mobile_number
-
-            sender_place_of_issue_id = data.sender_place_of_issue.id
-            await self.get_model_object_by_id(
-                model_id=sender_place_of_issue_id,
-                model=PlaceOfIssue,
-                loc=f'sender_place_of_issue_id: {sender_place_of_issue_id}'
-            )
-
-            errors = []
-            if not sender_full_name_vn:
-                errors.append(f'sender_full_name_vn: {sender_full_name_vn}')
-            if not sender_identity_number:
-                errors.append(f'sender_identity_number: {sender_identity_number}')
-            if not sender_issued_date:
-                errors.append(f'sender_issued_date: {sender_issued_date}')
-            if not sender_address_full:
-                errors.append(f'sender_address_full: {sender_address_full}')
-            if not sender_mobile_number:
-                errors.append(f'sender_mobile_number: {sender_mobile_number}')
-
-            if errors:
-                return self.response_exception(msg=ERROR_FIELD_REQUIRED, loc=', '.join(errors))
-
         if receiving_method not in RECEIVING_METHODS:
             return self.response_exception(
                 msg=ERROR_RECEIVING_METHOD_NOT_EXIST,
@@ -538,17 +480,11 @@ class CtrCasaTopUp(BaseController):
                 data=data
             )
 
-        # saving_customer = {}
-        # saving_customer_identity = {}
-        # saving_customer_address = {}
         if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
             casa_top_up_info = await self.ctr_save_casa_top_up_scb_by_identity(
                 receiving_method=receiving_method,
                 data=data
             )
-            # (
-            #     saving_customer, saving_customer_identity, saving_customer_address
-            # ) = await CtrCustomer(current_user).ctr_create_non_resident_customer(request=request)
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
             casa_top_up_info = await self.ctr_save_casa_top_up_third_party_to_account(
@@ -580,99 +516,42 @@ class CtrCasaTopUp(BaseController):
         if not casa_top_up_info:
             return self.response_exception(msg="No Casa Top Up")
 
-        ################################################################################################################
         # Thông tin giao dịch
-        ################################################################################################################
         transfer_response = dict(
             amount=data.amount,
             content=data.content,
             entry_number=data.p_instrument_number
         )
 
+        # Thông tin loại giao dịch
         transfer_type_response = dict(
             receiving_method_type=RECEIVING_METHOD__METHOD_TYPES[receiving_method],
             receiving_method=receiving_method
         )
 
+        # Thông tin phí
         fee_info_request = data.fee_info
-        fee_info_response = dict(
-            is_fee=False,
-            payer=None,
-            fee_amount=None,
-            vat_tax=None,
-            total=None,
-            actual_total=None,
-            note=None
-        )
+        fee_info_response = None
         if fee_info_request:
-            amount = fee_info_request.amount
-            vat = amount / 10
-            total = amount + vat
-            actual_total = amount + total
-
-            fee_info_response.update(
-                is_fee=True,
-                payer=fee_info_request.payer,
-                amount=amount,
-                vat=vat,
-                total=total,
-                actual_total=actual_total,
-                note=fee_info_request.note
+            fee_info_response = await CtrAccountFee().calculate_fee(
+                one_fee_info_request=fee_info_request
             )
 
         statement_response = await CtrStatement().ctr_get_statement_info(statement_requests=data.statement)
 
-        ################################################################################################################
         # Thông tin khách hàng giao dịch
-        ################################################################################################################
-        sender_cif_number = data.sender_cif_number
-        if sender_cif_number:
-            gw_customer_info = await CtrGWCustomer(current_user).ctr_gw_get_customer_info_detail(
-                cif_number=sender_cif_number,
-                return_raw_data_flag=True
-            )
-            gw_customer_info_identity_info = gw_customer_info['id_info']
-            sender_response = dict(
-                cif_number=sender_cif_number,
-                fullname_vn=gw_customer_info['full_name'],
-                address_full=gw_customer_info['t_address_info']['contact_address_full'],
-                identity_info=dict(
-                    number=gw_customer_info_identity_info['id_num'],
-                    issued_date=data.sender_issued_date,
-                    place_of_issue=await self.dropdown_mapping_crm_model_or_dropdown_name(
-                        model=PlaceOfIssue,
-                        code=gw_customer_info_identity_info['id_issued_location'],
-                        name=gw_customer_info_identity_info['id_issued_location']
-                    )
-                ),
-                mobile_phone=gw_customer_info['mobile_phone'],
-                telephone=gw_customer_info['telephone'],
-                otherphone=gw_customer_info['otherphone']
-            )
-        else:
-            identity_place_of_issue = DROPDOWN_NONE_DICT
-            if data.sender_place_of_issue:
-                identity_place_of_issue = await self.get_model_object_by_id(
-                    model_id=data.sender_place_of_issue.id,
-                    model=PlaceOfIssue,
-                    loc='sender_place_of_issue -> id'
-                )
-            sender_response = dict(
-                cif_number=sender_cif_number,
-                fullname_vn=data.sender_full_name_vn,
-                address_full=data.sender_address_full,
-                identity_info=dict(
-                    number=data.sender_identity_number,
-                    issued_date=data.sender_issued_date,
-                    place_of_issue=dropdown(identity_place_of_issue)
-                ),
-                mobile_phone=data.sender_mobile_number,
-                telephone=None,
-                otherphone=None
-            )
+        sender_response = await CtrPaymentSender(self.current_user).get_payment_sender(
+            sender_cif_number=data.sender_cif_number,
+            sender_full_name_vn=data.sender_full_name_vn,
+            sender_address_full=data.sender_address_full,
+            sender_identity_number=data.sender_identity_number,
+            sender_issued_date=data.sender_issued_date,
+            sender_mobile_number=data.sender_mobile_number,
+            sender_place_of_issue=data.sender_place_of_issue
+        )
 
         controller_gw_employee = CtrGWEmployee(current_user)
-
+        # Thông tin NV trực tiếp
         gw_direct_staff = await controller_gw_employee.ctr_gw_get_employee_info_from_code(
             employee_code=data.direct_staff_code,
             return_raw_data_flag=True
@@ -682,6 +561,7 @@ class CtrCasaTopUp(BaseController):
             name=gw_direct_staff['staff_name']
         )
 
+        # Thông tin NV gián tiếp
         gw_indirect_staff = await controller_gw_employee.ctr_gw_get_employee_info_from_code(
             employee_code=data.indirect_staff_code,
             return_raw_data_flag=True
