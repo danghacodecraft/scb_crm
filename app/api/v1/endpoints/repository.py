@@ -10,6 +10,9 @@ from app.third_parties.oracle.base import Base
 from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingAccount, BookingBusinessForm, BookingCustomer
 )
+from app.third_parties.oracle.models.denomination.denomination import (
+    CurrencyDenomination
+)
 from app.third_parties.oracle.models.master_data.account import (
     AccountStructureType
 )
@@ -49,7 +52,8 @@ async def repos_get_model_object_by_id_or_code(model_id: Optional[str], model_co
     return ReposReturn(data=obj)
 
 
-async def repos_get_model_objects_by_ids(model_ids: List[str], model: Base, session: Session, loc: Optional[str] = None) -> ReposReturn:
+async def repos_get_model_objects_by_ids(model_ids: List[str], model: Base, session: Session,
+                                         loc: Optional[str] = None) -> ReposReturn:
     """
     Get model objects by ids
     Chỉ cần truyền vào list id -> hàm sẽ tự chuyển về set(model_ids)
@@ -111,6 +115,18 @@ async def repos_get_data_currency_config(session):
             AddressCountry, Currency.country_code == AddressCountry.code
         )
     ).all()
+    return ReposReturn(data=response_data)
+
+
+async def repos_get_data_currency_denominations_config(session, currency_id: str):
+    response_data = session.execute(
+        select(
+            CurrencyDenomination
+        )
+        .filter(CurrencyDenomination.currency_id == currency_id)
+        .order_by(CurrencyDenomination.denominations)
+    ).scalars().all()
+
     return ReposReturn(data=response_data)
 
 

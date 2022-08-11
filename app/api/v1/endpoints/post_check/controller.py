@@ -17,6 +17,12 @@ from app.api.v1.endpoints.post_check.schema import (
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_change_status_account, repos_gw_get_casa_account_info
 )
+from app.api.v1.endpoints.third_parties.gw.ebank_sms.repository import (
+    repos_gw_send_sms_via_eb_gw
+)
+from app.api.v1.endpoints.third_parties.gw.email.repository import (
+    repos_gw_send_email
+)
 from app.settings.config import DATE_INPUT_OUTPUT_FORMAT
 from app.utils.constant.cif import (
     CRM_GENDER_TYPE_FEMALE, EKYC_DOCUMENT_TYPE_NEW_CITIZEN,
@@ -28,7 +34,8 @@ from app.utils.constant.ekyc import (
     ERROR_CODE_FAILED_EKYC, ERROR_CODE_PROCESSING_EKYC, GROUP_ROLE_CODE_AP,
     GROUP_ROLE_CODE_AP_EX, GROUP_ROLE_CODE_IN, GROUP_ROLE_CODE_IN_EX,
     GROUP_ROLE_CODE_VIEW, GROUP_ROLE_CODE_VIEW_EX, MENU_CODE, MENU_CODE_VIEW,
-    STATUS_CLOSE, STATUS_FAILED, STATUS_OPEN
+    MESSAGE_EMAIL_SUBJECT, MESSAGE_SMS_INVALID, STATUS_CLOSE, STATUS_FAILED,
+    STATUS_OPEN
 )
 from app.utils.error_messages import ERROR_PERMISSION, MESSAGE_STATUS
 from app.utils.functions import (
@@ -389,14 +396,38 @@ class CtrKSS(BaseController):
         customer_detail = self.call_repos(await repos_get_customer_detail(
             postcheck_uuid=postcheck_update_request.customer_id
         ))
+        response_data = {
+            "customer_id": update_post_check['customer_id'],
+            'error_msg': None
+        }
         if history_status:
             if history_status[-1]['kss_status'] == "Không hợp lệ" and history_status[-1]['approve_status'] == "Đã Duyệt":
-                account_number = self.call_repos(await repos_gw_change_status_account(  # noqa
+                is_success_gw, account_number = self.call_repos(await repos_gw_change_status_account(  # noqa
                     current_user=current_user.user_info,
                     account_number=customer_detail.get('account_number')
                 ))
+                if not is_success_gw:
+                    response_data['error_msg'] = str(account_number)
 
-        return self.response(data=update_post_check)
+                # khóa tài khoản mới gửi email and sms
+                self.call_repos(await repos_gw_send_sms_via_eb_gw(
+                    message=MESSAGE_SMS_INVALID,
+                    mobile=customer_detail['phone_number'],
+                    current_user=current_user))
+
+                self.call_repos(await repos_gw_send_email(
+                    product_code='CRM',
+                    list_email_to=customer_detail.get('extra_info').get('email'),
+                    list_email_cc=None,
+                    list_email_bcc=None,
+                    email_subject=MESSAGE_EMAIL_SUBJECT,
+                    email_content_html=None,
+                    list_email_attachment_file=None,
+                    current_user=current_user,
+                    customers=customer_detail.get('full_name'),
+                    is_open_ebank_success=True))
+
+        return self.response(data=response_data)
 
     async def ctr_get_customer_detail(self, postcheck_uuid: str):
         current_user = self.current_user

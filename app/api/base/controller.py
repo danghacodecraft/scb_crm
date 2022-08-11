@@ -21,6 +21,7 @@ from app.api.v1.endpoints.repository import (
     repos_get_model_object_by_id_or_code, repos_get_model_objects_by_ids
 )
 from app.api.v1.endpoints.user.schema import AuthResponse, UserInfoResponse
+from app.settings.event import INIT_SERVICE
 from app.third_parties.oracle.base import Base, SessionLocal
 from app.third_parties.services.kafka import ServiceKafka
 from app.utils.constant.cif import PROFILE_HISTORY_DESCRIPTIONS
@@ -40,7 +41,7 @@ class BaseController(ServiceKafka):
     """
 
     def __init__(self, current_user=None, pagination_params=None, is_init_oracle_session=True, kafka_message=None):
-        super().__init__(kafka_message=kafka_message)
+        super().__init__(kafka_message=kafka_message, init_service=INIT_SERVICE)
         self.current_user = current_user
         self.pagination_params = pagination_params
         self.errors = []

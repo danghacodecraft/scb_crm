@@ -433,12 +433,4 @@ async def repos_gw_change_status_account(current_user, account_number):
 
     is_success, response_data, request_data = await service_gw.change_status_account(current_user, data_input)
 
-    if not is_success:
-        return ReposReturn(
-            is_error=True,
-            loc="repos_gw_change_status_account",
-            msg=ERROR_CALL_SERVICE_GW,
-            detail=str(response_data)
-        )
-
-    return ReposReturn(data=response_data)
+    return ReposReturn(data=(is_success, response_data))
