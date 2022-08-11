@@ -6,7 +6,7 @@ from app.api.base.schema import BaseSchema
 ########################################################################################################################
 # Request
 ########################################################################################################################
-from app.api.v1.others.fee.schema import FeeInfoRequest
+from app.api.v1.others.fee.schema import FeeInfoRequest, FeeInfoResponse
 
 
 class AccountAmountBlockDetailRequest(BaseSchema):
@@ -119,7 +119,8 @@ class PaymentSuccessResponse(BaseSchema):
 
 class AccountAmountBlockResponse(PaymentSuccessResponse):
     booking_id: str = Field(..., description="Booking_id")
-    # account_list: List = Field(..., description="Danh sách account và số tham chiếu của lệnh phong tỏa tài khoản")
+    account_amount_blocks: List[AccountAmountBlockDetailRequest] = Field(..., description="Danh sách tài khoản")
+    fee_info: FeeInfoResponse = Field(..., description="Phương thức tính phí")
 
 
 class GWCasaTransferAccountResponse(BaseSchema):

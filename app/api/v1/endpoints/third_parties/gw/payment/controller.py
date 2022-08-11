@@ -32,6 +32,16 @@ from app.utils.functions import now, orjson_dumps, orjson_loads
 
 
 class CtrGWPayment(CtrGWCasaAccount, BaseAccountFee):
+    async def ctr_get_payment_amount_block(
+        self,
+        BOOKING_ID: str
+    ):
+        booking_business_form = await CtrBooking().ctr_get_booking_business_form(booking_id=BOOKING_ID, session=self.oracle_session)
+        form_data = orjson_loads(booking_business_form.form_data)
+        form_data.update(
+            booking_id=BOOKING_ID
+        )
+        return self.response(data=form_data)
 
     async def ctr_payment_amount_block(
             self,
@@ -127,17 +137,19 @@ class CtrGWPayment(CtrGWCasaAccount, BaseAccountFee):
         ################################################################################################################
         fee_info_request = request.fee_info
         # Kiểm tra TKTT có tồn tại không
-        await self.ctr_gw_check_exist_casa_account_info(account_number=fee_info_request.account_number)
+        gw_casa_account = await self.ctr_gw_check_exist_casa_account_info(
+            account_number=fee_info_request.fee_details[0].account_number
+        )
 
         saving_fee_info = await self.calculate_fee(
             fee_info_request=fee_info_request,
+            account_owner=gw_casa_account['data']['account_owner'],
             business_type_id=BUSINESS_TYPE_AMOUNT_BLOCK
         )
         request_data = request.dict()
         request_data.update(
             fee_info=saving_fee_info
         )
-        print(request_data)
 
         ################################################################################################################
 
