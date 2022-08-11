@@ -187,7 +187,7 @@ class ServiceGW:
         self.url = init_service['gw']['url']
         self.GW_EMAIL_DATA_INPUT__EMAIL_TO = init_service['gw']['email']
         self.GW_SMS_MOBILE = init_service['gw']['sms_mobile']
-        self.production = int(init_service['production']['production_flag'])
+        self.production = init_service['production']['production_flag']
 
     def start(self):
         self.session = aiohttp.ClientSession()
