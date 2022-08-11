@@ -15,9 +15,10 @@ from app.settings.service import SERVICE
 from app.utils.constant.gw import (
     GW_AUTHORIZED_REF_DATA_MGM_ACC_NUM, GW_CO_OWNER_REF_DATA_MGM_ACC_NUM,
     GW_CURRENT_ACCOUNT_CASA, GW_CURRENT_ACCOUNT_FROM_CIF,
-    GW_CUSTOMER_REF_DATA_MGMT_CIF_NUM, GW_DEPOSIT_ACCOUNT_FROM_CIF,
-    GW_DEPOSIT_ACCOUNT_TD, GW_EMPLOYEE_FROM_CODE, GW_EMPLOYEE_FROM_NAME,
-    GW_EMPLOYEES, GW_ENDPOINT_URL_CHECK_EXITS_ACCOUNT_CASA,
+    GW_CUSTOMER_REF_DATA_MGMT_CIF_NUM, GW_DEFAULT_VALUE,
+    GW_DEPOSIT_ACCOUNT_FROM_CIF, GW_DEPOSIT_ACCOUNT_TD, GW_EMPLOYEE_FROM_CODE,
+    GW_EMPLOYEE_FROM_NAME, GW_EMPLOYEES,
+    GW_ENDPOINT_URL_CHECK_EXITS_ACCOUNT_CASA,
     GW_ENDPOINT_URL_CHECK_USERNAME_IB_MB_EXIST,
     GW_ENDPOINT_URL_DEPOSIT_OPEN_ACCOUNT_TD,
     GW_ENDPOINT_URL_HISTORY_CHANGE_FIELD, GW_ENDPOINT_URL_INTERBANK_TRANSFER,
@@ -170,13 +171,14 @@ from app.utils.constant.gw import (
     GW_FUNC_TELE_TRANSFER_IN, GW_FUNC_TELE_TRANSFER_OUT,
     GW_FUNC_TT_LIQUIDATION, GW_FUNC_TT_LIQUIDATION_IN,
     GW_FUNC_TT_LIQUIDATION_OUT, GW_FUNCTION_OPEN_CASA, GW_HISTORY_ACCOUNT_NUM,
-    GW_HISTORY_CHANGE_FIELD_ACCOUNT, GW_RESPONSE_STATUS_SUCCESS,
-    GW_RETRIEVE_CASA_ACCOUNT_DETAIL, GW_SELF_SELECTED_ACCOUNT_FLAG,
-    GW_SELF_UNSELECTED_ACCOUNT_FLAG
+    GW_HISTORY_CHANGE_FIELD_ACCOUNT, GW_NO_AGREEMENT_FLAG,
+    GW_RESPONSE_STATUS_SUCCESS, GW_RETRIEVE_CASA_ACCOUNT_DETAIL,
+    GW_SELF_SELECTED_ACCOUNT_FLAG, GW_SELF_UNSELECTED_ACCOUNT_FLAG,
+    GW_YES_AGREEMENT_FLAG
 )
 from app.utils.email_templates.email_template import EMAIL_TEMPLATES
 from app.utils.error_messages import ERROR_CALL_SERVICE_GW
-from app.utils.functions import date_to_string
+from app.utils.functions import date_to_string, datetime_to_string, now
 
 
 class ServiceGW:
@@ -2516,7 +2518,232 @@ class ServiceGW:
 ########################################################################################################################
     # CardWorks
 ########################################################################################################################
-    async def open_cards(self, current_user: UserInfoResponse, data_input):
+    async def open_cards(self, current_user: UserInfoResponse,
+                         cif_number: str = None,
+                         card_info=None,
+                         customer_info=None,
+                         maker_staff_name: str = None
+                         ):
+
+        data_input = {
+            "sequenceNo": datetime_to_string(now(), _format="%Y%m%d%H%M%S%f")[:-4],
+            "fi": "970429",
+            "srcSystm": "CRM",
+            "cif_info": {
+                "cif_num": cif_number
+            },
+            "account_info": {
+                "account_type": "2"
+            },
+            "card_info": {
+                "card_indicator": card_info["card_indicator"],
+                "card_type": card_info["card_type"],
+                "card_auto_renew": card_info["card_auto_renew"],
+                "card_release_form": card_info["card_release_form"],
+                "card_block_online_trans": card_info["card_block_online_trans"],
+                "card_contact_less": card_info["card_contact_less"],
+                "card_relation_to_primany": card_info["card_relation_to_primany"],
+                "card_mother_name": card_info["card_mother_name"],
+                "card_secure_question": card_info["card_secure_question"],
+                "card_bill_option": card_info["card_bill_option"],
+                "card_statement_delivery_option": card_info["card_statement_delivery_option"]
+            },
+            "prinCrdNo": GW_DEFAULT_VALUE,
+            "customer_info": {
+                "birthday": datetime_to_string(customer_info.CustomerIndividualInfo.date_of_birth, _format="%Y%m%d"),
+                "title": customer_info.CustomerIndividualInfo.title_id,
+                "full_name_vn": customer_info.Customer.full_name_vn,
+                "last_name": customer_info.Customer.last_name,
+                "first_name": customer_info.Customer.first_name,
+                "middle_name": customer_info.Customer.middle_name,
+                "current_official": GW_DEFAULT_VALUE,
+                "embPhoto": GW_DEFAULT_VALUE,
+                "gender": customer_info.CustomerIndividualInfo.gender_id,
+                "nationality": customer_info.CustomerIndividualInfo.nation_id,
+                "martial_status": customer_info.CustomerIndividualInfo.marital_status_id,
+                "resident_status": customer_info.CustomerIndividualInfo.resident_status_id,
+                "mthToStay": GW_DEFAULT_VALUE,
+                "prStat": GW_DEFAULT_VALUE,
+                "vsExpDate": GW_DEFAULT_VALUE,
+                "education": GW_DEFAULT_VALUE,
+                "customer_type": GW_DEFAULT_VALUE
+            },
+            "id_info": {
+                "id_name": customer_info.CustomerIdentity.identity_type_id,
+                "id_num": customer_info.CustomerIdentity.identity_num,
+                "id_num_by_cif": GW_DEFAULT_VALUE,
+                "id_issued_location": customer_info.CustomerIdentity.place_of_issue_id,
+                "id_issued_date": datetime_to_string(customer_info.CustomerIdentity.issued_date, _format="%Y%m%d"),
+            },
+            "srcCde": "DM412",
+            "promoCde": "P404",
+            "branch_issued": {
+                "branhch_code": current_user.hrm_branch_code
+            },
+            "direct_staff": {
+                "staff_code": "19461"
+            },
+            "indirect_staff": {
+                "staff_code": "12345"
+            },
+            "imgId": GW_DEFAULT_VALUE,
+            "contract_info": {
+                "contract_name": GW_DEFAULT_VALUE
+            },
+            "resident_info": {
+                "address_info": {
+                    "line": customer_info.CustomerAddress.address,
+                    "ward_name": customer_info.AddressWard.name,
+                    "contact_address_line": customer_info.AddressDistrict.name,
+                    "city_code": customer_info.AddressProvince.name,
+                    "district_name": customer_info.AddressDistrict.name,
+                    "city_name": customer_info.CustomerAddress.address,
+                    "country_name": customer_info.AddressCountry.id,
+                    "telephone1": customer_info.Customer.telephone_number,
+                },
+                "customer_info": {
+                    "resident_type": "O",
+                    "resident_since": "000000"
+                }
+            },
+            # @TODO: hard code đồng sở hữu
+            "correspondence_info": {
+                "address_info": {
+                    "line": "927 TRAN HUNG DAO",
+                    "ward_name": "PHUONG 1",
+                    "contact_address_line": GW_DEFAULT_VALUE,
+                    "city_code": "70",
+                    "district_name": "QUAN 5",
+                    "city_name": "TP HCM",
+                    "country_name": "VN",
+                    "telephone1": "02815698630",
+                    "mobile_phone": "0909555800"
+                },
+                "smsInd": GW_YES_AGREEMENT_FLAG,
+                "email": "quanlt@scb.com.vn"
+            },
+            "office_info": {
+                "customer_info": {
+                    "biz_line": GW_DEFAULT_VALUE,
+                    "employee_nature": GW_DEFAULT_VALUE,
+                    "cor_capital": GW_DEFAULT_VALUE,
+                    "biz_position": GW_DEFAULT_VALUE,
+                    "employee_since": "000000",
+                    "office_name": GW_DEFAULT_VALUE
+                },
+                "address_info": {
+                    "line": GW_DEFAULT_VALUE,
+                    "ward_name": GW_DEFAULT_VALUE,
+                    "contact_address_line": GW_DEFAULT_VALUE,
+                    "city_code": GW_DEFAULT_VALUE,
+                    "district_name": GW_DEFAULT_VALUE,
+                    "city_name": GW_DEFAULT_VALUE,
+                    "country_name": GW_DEFAULT_VALUE,
+                    "telephone1": GW_DEFAULT_VALUE,
+                    "phone_ext1": GW_DEFAULT_VALUE,
+                    "telephone2": GW_DEFAULT_VALUE,
+                    "phone_ext2": GW_DEFAULT_VALUE,
+                    "fax_no": GW_DEFAULT_VALUE
+                }
+            },
+            "previous_employer_info": {
+                "customer_info": {
+                    "office_name": GW_DEFAULT_VALUE,
+                    "employee_since": "000000",
+                    "employee_duration": "0"
+                },
+                "address_info": {
+                    "line": GW_DEFAULT_VALUE,
+                    "ward_name": GW_DEFAULT_VALUE,
+                    "contact_address_line": GW_DEFAULT_VALUE,
+                    "city_code": GW_DEFAULT_VALUE,
+                    "district_name": GW_DEFAULT_VALUE,
+                    "city_name": GW_DEFAULT_VALUE,
+                    "country_name": GW_DEFAULT_VALUE,
+                    "telephone1": GW_DEFAULT_VALUE,
+                    "phone_ext1": GW_DEFAULT_VALUE
+                }
+            },
+            "personal_details": {
+                "ownHouseLand": GW_NO_AGREEMENT_FLAG,
+                "ownCar": GW_NO_AGREEMENT_FLAG,
+                "noOfDepen": "0",
+                "avgSpendMth": "0",
+                "bankPrd": GW_DEFAULT_VALUE,
+                "bankOthrPrd": GW_DEFAULT_VALUE,
+                "othrCCBankName": GW_DEFAULT_VALUE,
+                "othrCCLimit": GW_DEFAULT_VALUE,
+                "othrLoanBankName": GW_DEFAULT_VALUE,
+                "othrLoanInstallMth": GW_DEFAULT_VALUE,
+                "delivByBrchInd": card_info["delivByBrchInd"],
+                "delivOpt": "O"
+            },
+            "delivery_info": {
+                "address_info": {
+                    "line": card_info["address_info_line"],
+                    "ward_name": card_info["address_info_ward_name"],
+                    "contact_address_line": GW_DEFAULT_VALUE,
+                    "city_code": GW_DEFAULT_VALUE,
+                    "district_name": card_info["address_info_district_name"],
+                    "city_name": card_info["address_info_city_name"],
+                    "country_name": GW_DEFAULT_VALUE
+                },
+                "delivBrchId": card_info["delivBrchId"]
+            },
+            "spouse_company_info": {
+                "spcName": GW_DEFAULT_VALUE,
+                "spcIdInd": GW_DEFAULT_VALUE,
+                "spcNewId": GW_DEFAULT_VALUE,
+                "spcEmpName": GW_DEFAULT_VALUE,
+                "address_info": {
+                    "line": GW_DEFAULT_VALUE,
+                    "ward_name": GW_DEFAULT_VALUE,
+                    "contact_address_line": GW_DEFAULT_VALUE,
+                    "city_code": GW_DEFAULT_VALUE,
+                    "district_name": GW_DEFAULT_VALUE,
+                    "city_name": GW_DEFAULT_VALUE,
+                    "country_name": GW_DEFAULT_VALUE,
+                    "telephone1": GW_DEFAULT_VALUE,
+                    "phone_ext1": GW_DEFAULT_VALUE
+                },
+                "spcEmpPosi": GW_DEFAULT_VALUE,
+                "spcEmpSince": "000000",
+                "spcEmpWorkNat": "S"
+            },
+            "emergency_info": {
+                "emerContcPrsn": "NGUYEN VAN A",
+                "emerGender": "M",
+                "emerPhoneNo": "0908555999",
+                "emerMobileNo": "0909555866",
+                "emerRelt": "O"
+            },
+            "card_addon_data": {
+                "payMeth": "0",
+                "payCASA": "0",
+                "payAmt": "0",
+                "casaAcctNo": "1370106438990001",
+                "casaAcctTyp": "20",
+                "casaCurCde": "704",
+                "recomCrdNo": GW_DEFAULT_VALUE,
+                "recomName": GW_DEFAULT_VALUE,
+                "remark": GW_DEFAULT_VALUE,
+                "apprvDeviation": "NOTE",
+                "addData1": GW_DEFAULT_VALUE,
+                "addData2": GW_DEFAULT_VALUE,
+                "smsInfo": "0",
+                "narrative": "CRM WS",
+                "attachment": GW_DEFAULT_VALUE,
+                "decsnStat": "AM"
+            },
+            "checker_info": {
+                "staff_code": current_user.username
+            },
+            # @TODO: chưa có approver
+            "approver_info": {
+                "staff_code": current_user.username
+            }
+        }
+
         request_data = self.gw_create_request_body(
             current_user=current_user, function_name=GW_FUNC_OPEN_CARDS_IN,
             data_input=data_input

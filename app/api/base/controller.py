@@ -182,19 +182,19 @@ class BaseController(ServiceKafka):
         """
         self.errors.append(Error(msg=msg, detail=detail, loc=loc))
 
-    def _raise_exception(self, error_status_code=status.HTTP_400_BAD_REQUEST):
+    def _raise_exception(self, error_status_code=status.HTTP_400_BAD_REQUEST, data=None):
         errors = []
         for temp in self.errors:
             errors.append(temp.dict())
-        raise ExceptionHandle(errors=errors, status_code=error_status_code)
+        raise ExceptionHandle(errors=errors, status_code=error_status_code, data=data)
 
-    def response_exception(self, msg, loc="", detail="", error_status_code=status.HTTP_400_BAD_REQUEST):
+    def response_exception(self, msg, loc="", detail="", error_status_code=status.HTTP_400_BAD_REQUEST, data=None):
         self._close_oracle_session()
 
         self.append_error(msg=msg, loc=loc, detail=detail)
-        self._raise_exception(error_status_code=error_status_code)
+        self._raise_exception(error_status_code=error_status_code, data=data)
 
-    def response(self, data, error_status_code=status.HTTP_400_BAD_REQUEST):
+    def response(self, data, error_status_code=status.HTTP_400_BAD_REQUEST, errors=None):
         self._close_oracle_session()
 
         if self.errors:
@@ -202,7 +202,7 @@ class BaseController(ServiceKafka):
         else:
             return {
                 "data": data,
-                "errors": self.errors,
+                "errors": errors if errors else []
             }
 
     def response_paging(
