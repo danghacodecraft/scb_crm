@@ -162,79 +162,12 @@ class CtrCasaTopUp(BaseController):
 
         statement = await CtrStatement().ctr_get_statement_info(statement_requests=data.statement)
 
-        # Thông tin khách hàng giao dịch
-        sender_cif_number = data.sender_cif_number
-        if sender_cif_number:
-            gw_customer_info = await CtrGWCustomer(current_user).ctr_gw_get_customer_info_detail(
-                cif_number=sender_cif_number,
-                return_raw_data_flag=True
-            )
-            gw_customer_info_identity_info = gw_customer_info['id_info']
-            sender_response = dict(
-                cif_number=sender_cif_number,
-                fullname_vn=gw_customer_info['full_name'],
-                address_full=gw_customer_info['t_address_info']['contact_address_full'],
-                identity_info=dict(
-                    number=gw_customer_info_identity_info['id_num'],
-                    issued_date=data.sender_issued_date,
-                    place_of_issue=await self.dropdown_mapping_crm_model_or_dropdown_name(
-                        model=PlaceOfIssue,
-                        code=gw_customer_info_identity_info['id_issued_location'],
-                        name=gw_customer_info_identity_info['id_issued_location']
-                    )
-                ),
-                mobile_phone=gw_customer_info['mobile_phone'],
-                telephone=gw_customer_info['telephone'],
-                otherphone=gw_customer_info['otherphone']
-            )
-        else:
-            identity_place_of_issue = DROPDOWN_NONE_DICT
-            if data.sender_place_of_issue:
-                identity_place_of_issue = await self.get_model_object_by_id(
-                    model_id=data.sender_place_of_issue.id,
-                    model=PlaceOfIssue,
-                    loc='sender_place_of_issue -> id'
-                )
-            sender_response = dict(
-                fullname_vn=data.sender_full_name_vn,
-                address_full=data.sender_address_full,
-                identity_info=dict(
-                    number=data.sender_identity_number,
-                    issued_date=data.sender_issued_date,
-                    place_of_issue=dropdown(identity_place_of_issue)
-                ),
-                mobile_phone=data.sender_mobile_number
-            )
-
-        controller_gw_employee = CtrGWEmployee(current_user)
-
-        gw_direct_staff = await controller_gw_employee.ctr_gw_get_employee_info_from_code(
-            employee_code=data.direct_staff_code,
-            return_raw_data_flag=True
-        )
-        direct_staff = dict(
-            code=gw_direct_staff['staff_code'],
-            name=gw_direct_staff['staff_name']
-        )
-
-        gw_indirect_staff = await controller_gw_employee.ctr_gw_get_employee_info_from_code(
-            employee_code=data.indirect_staff_code,
-            return_raw_data_flag=True
-        )
-        indirect_staff = dict(
-            code=gw_indirect_staff['staff_code'],
-            name=gw_indirect_staff['staff_name']
-        )
-
         return dict(
             transfer_type=transfer_type,
             receiver=receiver,
             transfer=transfer,
             fee_info=fee_info_response,
-            statement=statement,
-            sender=sender_response,
-            direct_staff=direct_staff,
-            indirect_staff=indirect_staff
+            statement=statement
         )
 
     async def ctr_save_casa_top_up_scb_by_identity(
@@ -624,6 +557,79 @@ class CtrCasaTopUp(BaseController):
 
         if not casa_top_up_info:
             return self.response_exception(msg="No Casa Top Up")
+
+        ################################################################################################################
+        # Thông tin khách hàng giao dịch
+        ################################################################################################################
+        sender_cif_number = data.sender_cif_number
+        if sender_cif_number:
+            gw_customer_info = await CtrGWCustomer(current_user).ctr_gw_get_customer_info_detail(
+                cif_number=sender_cif_number,
+                return_raw_data_flag=True
+            )
+            gw_customer_info_identity_info = gw_customer_info['id_info']
+            sender_response = dict(
+                cif_number=sender_cif_number,
+                fullname_vn=gw_customer_info['full_name'],
+                address_full=gw_customer_info['t_address_info']['contact_address_full'],
+                identity_info=dict(
+                    number=gw_customer_info_identity_info['id_num'],
+                    issued_date=data.sender_issued_date,
+                    place_of_issue=await self.dropdown_mapping_crm_model_or_dropdown_name(
+                        model=PlaceOfIssue,
+                        code=gw_customer_info_identity_info['id_issued_location'],
+                        name=gw_customer_info_identity_info['id_issued_location']
+                    )
+                ),
+                mobile_phone=gw_customer_info['mobile_phone'],
+                telephone=gw_customer_info['telephone'],
+                otherphone=gw_customer_info['otherphone']
+            )
+        else:
+            identity_place_of_issue = DROPDOWN_NONE_DICT
+            if data.sender_place_of_issue:
+                identity_place_of_issue = await self.get_model_object_by_id(
+                    model_id=data.sender_place_of_issue.id,
+                    model=PlaceOfIssue,
+                    loc='sender_place_of_issue -> id'
+                )
+            sender_response = dict(
+                fullname_vn=data.sender_full_name_vn,
+                address_full=data.sender_address_full,
+                identity_info=dict(
+                    number=data.sender_identity_number,
+                    issued_date=data.sender_issued_date,
+                    place_of_issue=dropdown(identity_place_of_issue)
+                ),
+                mobile_phone=data.sender_mobile_number
+            )
+
+        controller_gw_employee = CtrGWEmployee(current_user)
+
+        gw_direct_staff = await controller_gw_employee.ctr_gw_get_employee_info_from_code(
+            employee_code=data.direct_staff_code,
+            return_raw_data_flag=True
+        )
+        direct_staff = dict(
+            code=gw_direct_staff['staff_code'],
+            name=gw_direct_staff['staff_name']
+        )
+
+        gw_indirect_staff = await controller_gw_employee.ctr_gw_get_employee_info_from_code(
+            employee_code=data.indirect_staff_code,
+            return_raw_data_flag=True
+        )
+        indirect_staff = dict(
+            code=gw_indirect_staff['staff_code'],
+            name=gw_indirect_staff['staff_name']
+        )
+
+        casa_top_up_info = casa_top_up_info.dict()
+        casa_top_up_info.update(
+            sender=sender_response,
+            direct_staff=direct_staff,
+            indirect_staff=indirect_staff
+        )
 
         history_datas = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_TOP_UP_CASA_ACCOUNT,
