@@ -234,7 +234,7 @@ class CtrCasaTopUp(BaseController):
             self,
             receiving_method: str,
             data: CasaTopUpThirdPartyByIdentityRequest
-    ):
+    ) -> dict:
         if not isinstance(data, CasaTopUpThirdPartyByIdentityRequest):
             return self.response_exception(
                 msg=ERROR_MAPPING_MODEL,
@@ -255,20 +255,34 @@ class CtrCasaTopUp(BaseController):
 
         # validate province
         receiver_province_id = data.receiver_province.id
-        await self.get_model_object_by_id(
+        receiver_province = await self.get_model_object_by_id(
             model_id=receiver_province_id,
             model=AddressProvince,
             loc=f'receiver_province -> id: {receiver_province_id}'
         )
 
         # validate receiver_place_of_issue
-        await self.get_model_object_by_id(
+        receiver_place_of_issue = await self.get_model_object_by_id(
             model_id=data.receiver_place_of_issue.id, model=PlaceOfIssue, loc='receiver_place_of_issue -> id'
         )
 
         data.receiving_method = receiving_method
-
-        return data
+        receiver = dict(
+            bank=dropdown(receiver_bank),
+            bank_branch=data.receiver_bank_branch,
+            fullname_vn=data.receiver_full_name_vn,
+            identity_info=dict(
+                number=data.receiver_identity_number,
+                issued_date=data.receiver_issued_date,
+                place_of_issue=dropdown(receiver_place_of_issue),
+            ),
+            province=dropdown(receiver_province),
+            mobile_number=data.receiver_mobile_number,
+            address_full=data.receiver_address_full
+        )
+        return dict(
+            receiver=receiver
+        )
 
     async def ctr_save_casa_top_up_third_party_247_to_account(
             self,
