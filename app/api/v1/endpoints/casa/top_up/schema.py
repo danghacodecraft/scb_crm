@@ -5,8 +5,10 @@ from pydantic import Field, validator
 
 from app.api.base.schema import ResponseRequestSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
+from app.api.v1.others.fee.schema import FeeDetailInfoResponse
+from app.api.v1.others.statement.schema import StatementResponse
 from app.api.v1.schemas.utils import DropdownRequest, DropdownResponse
-from app.utils.constant.casa import RECEIVING_METHODS
+from app.utils.constant.casa import CASA_PAYERS, RECEIVING_METHODS
 from app.utils.functions import (
     is_valid_mobile_number, make_description_from_dict
 )
@@ -16,13 +18,8 @@ from app.utils.regex import (
 
 
 class FeeInfoRequest(ResponseRequestSchema):
-    is_transfer_payer: Optional[bool] = Field(
-        ..., description="Bên thanh toán phí "
-                         "<br/>`true`: Bên chuyển "
-                         "<br/>`false`: Bên nhận "
-                         "<br/>`null`: Không thu phí cùng giao dịch"
-    )
-    fee_amount: Optional[int] = Field(..., description="Số tiền phí")
+    payer: str = Field(..., description=f"{make_description_from_dict(CASA_PAYERS)}")
+    amount: int = Field(..., description="Số tiền phí")
     note: Optional[str] = Field(..., description="Ghi chú")
 
 
@@ -41,7 +38,6 @@ class CasaTopUpCommonRequest(ResponseRequestSchema):
     sender_address_full: Optional[str] = Field(None, description="Địa chỉ")
     sender_mobile_number: Optional[str] = Field(None, description="Số điện thoại", regex=REGEX_NUMBER_ONLY)
     receiving_method: str = Field(None, description=f"Hình thức nhận: {make_description_from_dict(RECEIVING_METHODS)}")
-    is_fee: bool = Field(..., description="Có thu phí không")
     fee_info: Optional[FeeInfoRequest] = Field(..., description="Thông tin phí")
     statement: List[StatementInfoRequest] = Field(..., description="Thông tin bảng kê")
     direct_staff_code: Optional[str] = Field(..., description="Mã nhân viên kinh doanh")
@@ -50,7 +46,7 @@ class CasaTopUpCommonRequest(ResponseRequestSchema):
     content: str = Field(
         ..., description="Nội dung chuyển tiền", regex=REGEX_TRANSFER_CONTENT, max_length=MAX_LENGTH_TRANSFER_CONTENT
     )
-    p_instrument_number: Optional[str] = Field(None, description="")
+    p_instrument_number: Optional[str] = Field(None, description="Số bút toán")
     core_fcc_request: Optional[str] = Field(None, description="")
 
     @validator("sender_mobile_number")
@@ -183,30 +179,6 @@ class TransferResponse(ResponseRequestSchema):
     entry_number: Optional[str] = Field(..., description="Số bút toán")
 
 
-class FeeInfoResponse(ResponseRequestSchema):
-    is_transfer_payer: Optional[str] = Field(
-        ..., description="`true`: Có thu phí cùng giao dịch, Bên thanh toán phí: Bên chuyển"
-                         "`false`: Có thu phí cùng giao dịch, Bên thanh toán phí: Bên nhận"
-                         "`null`: Không thu phí cùng giao dịch")
-    payer: Optional[str] = Field(..., description="Bên thanh toán phí")
-    fee_amount: Optional[int] = Field(..., description="Số tiền phí")
-    vat_tax: Optional[float] = Field(..., description="Thuế VAT")
-    total: Optional[float] = Field(..., description="Tổng số tiền phí")
-    actual_total: Optional[float] = Field(..., description="Số tiền thực chuyển")
-    note: Optional[str] = Field(..., description="Ghi chú")
-
-
-class StatementsResponse(ResponseRequestSchema):
-    denominations: Optional[str] = Field(..., description="Mệnh giá")
-    amount: int = Field(..., description="Số lượng")
-
-
-class StatementResponse(ResponseRequestSchema):
-    statements: List[StatementsResponse] = Field(..., description="Thông tin chi tiết bảng kê")
-    total: int = Field(..., description="Tổng thành tiền")
-    odd_difference: float = Field(..., description="Chênh lệch lẻ")
-
-
 class IdentityInfoResponse(ResponseRequestSchema):
     number: Optional[str] = Field(..., description="Số GTDD")
     issued_date: Optional[date] = Field(..., description="Ngày cấp")
@@ -232,7 +204,7 @@ class CasaTopUpResponse(ResponseRequestSchema):
     transfer_type: TransferTypeResponse = Field(..., description="Loại chuyển")
     receiver: ReceiverResponse = Field(..., description="Thông tin người thụ hưởng")
     transfer: TransferResponse = Field(..., description="Thông tin giao dịch")
-    fee_info: FeeInfoResponse = Field(..., description="Thông tin phí")
+    fee_info: FeeDetailInfoResponse = Field(..., description="Thông tin phí")
     statement: StatementResponse = Field(..., description="Thông tin bảng kê")
     sender: CustomerResponse = Field(..., description="Thông tin khách hàng giao dịch")
     direct_staff: StaffInfoResponse = Field(..., description="Thông tin khách hàng giao dịch")
