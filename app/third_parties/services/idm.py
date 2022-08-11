@@ -14,6 +14,7 @@ class ServiceIDM:
     def __init__(self, init_service):
         self.session = None
         self.HOST = init_service['idm']['host']
+        self.headers = init_service['idm']['headers']
         self.cdn = {
             'thumb': '/cdn-profile/thumb',
             'avatar': '/cdn-profile',
@@ -30,7 +31,7 @@ class ServiceIDM:
         Input: username,password, app_code từ login của CRM
         Output: Thông tin user từ IDM
         """
-        headers = SERVICE["idm"]['headers']
+        headers = self.headers
         path = "/api/v1/staff/login"
         url = f'{self.HOST}{path}'
 
@@ -67,7 +68,7 @@ class ServiceIDM:
         Input: username,token, app_code từ login của CRM
         Output: Thông tin user từ IDM
         """
-        headers = SERVICE["idm"]['headers']
+        headers = self.headers
         path = "/api/v1/staff/check_token"
         url = f'{self.HOST}{path}'
 
@@ -112,10 +113,9 @@ class ServiceIDM:
         Input: app_code từ login của CRM
         Output: Thông tin banner từ IDM
         """
-        headers = SERVICE["idm"]['headers']
+        headers = self.headers
         path = "/api/v1/staff/banner_list"
         url = f'{self.HOST}{path}'
-
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.request(
