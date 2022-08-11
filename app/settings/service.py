@@ -60,7 +60,7 @@ SERVICE = {
     "gw": {
         "url": configs.get("SERVICE_GW_URL"),
         "email": configs.get("SERVICE_GW_EMAIL_DATA_INPUT__EMAIL_TO"),
-        "sms_mobile": configs.get('GW_SMS_MOBILE')
+        "sms_mobile": configs.get('SERVICE_GW_SMS_MOBILE')
     },
     "kafka": {
         "sasl_mechanism": configs.get("KAFKA_SASL_MECHANISM"),
