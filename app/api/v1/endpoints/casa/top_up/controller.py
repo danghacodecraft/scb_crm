@@ -316,7 +316,19 @@ class CtrCasaTopUp(BaseController):
             self.response_exception(msg=ERROR_INTERBANK_ACCOUNT_NUMBER_NOT_EXIST, loc=f'account_number: {account_number}')
 
         data.receiving_method = receiving_method
-        return data
+
+        receiver_full_name = await CtrGWCasaAccount(self.current_user).ctr_gw_get_retrieve_ben_name_by_account_number(
+            account_number=account_number
+        )
+        receiver = dict(
+            bank=dropdown(receiver_bank),
+            account_number=account_number,
+            fullname_vn=receiver_full_name['data']['full_name'],
+            address_full=data.receiver_address_full
+        )
+        return dict(
+            receiver=receiver
+        )
 
     async def ctr_save_casa_top_up_third_party_247_to_card(
             self,
