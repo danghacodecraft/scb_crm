@@ -12,14 +12,14 @@ class BaseAccountFee(BaseController):
     """
     Thông tin phí dành cho TKTT/TKTK
     """
-    async def calculate_fee(
+    async def calculate_fees(
             self,
             fee_info_request: FeeInfoRequest,
             account_owner: str,
             business_type_id: str
     ):
         """
-        Tính phí
+        Tính phí dành cho nhiều loại phí
         """
         method_type = fee_info_request.method_type
         if method_type not in CASA_FEE_METHODS:

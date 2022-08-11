@@ -141,7 +141,7 @@ class CtrGWPayment(CtrGWCasaAccount, BaseAccountFee):
             account_number=fee_info_request.account_number
         )
 
-        saving_fee_info = await self.calculate_fee(
+        saving_fee_info = await self.calculate_fees(
             fee_info_request=fee_info_request,
             account_owner=gw_casa_account['data']['account_owner'],
             business_type_id=BUSINESS_TYPE_AMOUNT_BLOCK
