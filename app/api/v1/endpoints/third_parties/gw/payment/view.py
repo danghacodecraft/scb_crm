@@ -48,7 +48,7 @@ async def view_save_amount_block(
     name="Amount Block",
     description="Phong tỏa tài khoản",
     responses=swagger_response(
-        response_model=ResponseData,
+        response_model=ResponseData[AccountAmountBlockResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
