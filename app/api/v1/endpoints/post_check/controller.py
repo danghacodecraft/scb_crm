@@ -409,12 +409,6 @@ class CtrKSS(BaseController):
                 if not is_success_gw:
                     response_data['error_msg'] = str(account_number)
 
-                # khóa tài khoản mới gửi email and sms
-                self.call_repos(await repos_gw_send_sms_via_eb_gw(
-                    message=MESSAGE_SMS_INVALID,
-                    mobile=customer_detail['phone_number'],
-                    current_user=current_user))
-
                 self.call_repos(await repos_gw_send_email(
                     product_code='CRM',
                     list_email_to=customer_detail.get('extra_info').get('email'),
@@ -426,6 +420,12 @@ class CtrKSS(BaseController):
                     current_user=current_user,
                     customers=customer_detail.get('full_name'),
                     is_open_ebank_success=True))
+
+                # khóa tài khoản mới gửi email and sms
+                self.call_repos(await repos_gw_send_sms_via_eb_gw(
+                    message=MESSAGE_SMS_INVALID,
+                    mobile=customer_detail['phone_number'],
+                    current_user=current_user))
 
         return self.response(data=response_data)
 
