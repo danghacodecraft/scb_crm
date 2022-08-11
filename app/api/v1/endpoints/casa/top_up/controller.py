@@ -21,7 +21,7 @@ from app.api.v1.endpoints.third_parties.gw.employee.controller import (
 )
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.api.v1.others.booking.controller import CtrBooking
-from app.api.v1.others.fee.controller import BaseAccountFee
+from app.api.v1.others.fee.controller import CtrAccountFee
 from app.api.v1.others.permission.controller import PermissionController
 from app.api.v1.others.sender.controller import CtrPaymentSender
 from app.api.v1.others.statement.controller import CtrStatement
@@ -533,7 +533,7 @@ class CtrCasaTopUp(BaseController):
         fee_info_request = data.fee_info
         fee_info_response = None
         if fee_info_request:
-            fee_info_response = await BaseAccountFee().calculate_fee(
+            fee_info_response = await CtrAccountFee().calculate_fee(
                 one_fee_info_request=fee_info_request
             )
 

@@ -13,7 +13,7 @@ from app.utils.error_messages import (
 from app.utils.functions import dropdown
 
 
-class BaseAccountFee(BaseController):
+class CtrAccountFee(BaseController):
     """
     Thông tin phí dành cho TKTT/TKTK
     """

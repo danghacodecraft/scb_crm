@@ -16,7 +16,7 @@ from app.api.v1.endpoints.third_parties.gw.payment.schema import (
     AccountAmountBlockRequest, RedeemAccountRequest
 )
 from app.api.v1.others.booking.controller import CtrBooking
-from app.api.v1.others.fee.controller import BaseAccountFee
+from app.api.v1.others.fee.controller import CtrAccountFee
 from app.api.v1.validator import validate_history_data
 from app.utils.constant.business_type import (
     BUSINESS_TYPE_AMOUNT_BLOCK, BUSINESS_TYPE_AMOUNT_UNBLOCK,
@@ -31,7 +31,7 @@ from app.utils.constant.gw import GW_RESPONSE_STATUS_SUCCESS
 from app.utils.functions import now, orjson_dumps, orjson_loads
 
 
-class CtrGWPayment(CtrGWCasaAccount, BaseAccountFee):
+class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
     async def ctr_get_payment_amount_block(
         self,
         BOOKING_ID: str
