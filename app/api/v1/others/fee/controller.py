@@ -103,7 +103,7 @@ class CtrAccountFee(BaseController):
 
             fee_info_response.update(
                 is_fee=True,
-                payer=one_fee_info_request.payer,
+                payer=PAYMENT_PAYERS[one_fee_info_request.payer],
                 amount=amount,
                 vat=vat,
                 total=total,
