@@ -4,7 +4,7 @@ from app.api.v1.others.fee.schema import (
     MultipleFeeInfoRequest, OneFeeInfoRequest
 )
 from app.utils.constant.casa import (
-    CASA_FEE_METHOD_CASA, CASA_FEE_METHODS, CASA_PAYERS
+    CASA_FEE_METHOD_CASA, CASA_FEE_METHODS, PAYMENT_PAYERS
 )
 from app.utils.error_messages import (
     ERROR_CASA_FEE_METHOD_NOT_EXIST, ERROR_FEE_ID_NOT_EXIST,
@@ -83,7 +83,7 @@ class BaseAccountFee(BaseController):
         Tính phí dành cho MỘT loại phí
         """
 
-        if one_fee_info_request.payer not in CASA_PAYERS:
+        if one_fee_info_request.payer not in PAYMENT_PAYERS:
             return self.response_exception(msg=ERROR_PAYER_NOT_EXIST)
 
         fee_info_response = dict(

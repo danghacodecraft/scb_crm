@@ -1,7 +1,7 @@
 # status error
 from app.utils.constant.approval import CIF_APPROVE_STAGES
 from app.utils.constant.casa import (
-    ACCOUNT_ALLOW_NUMBER_LENGTH, CASA_FEE_METHODS, CASA_PAYERS,
+    ACCOUNT_ALLOW_NUMBER_LENGTH, CASA_FEE_METHODS, PAYMENT_PAYERS,
     RECEIVING_METHODS
 )
 
@@ -308,7 +308,7 @@ MESSAGE_STATUS = {
     ERROR_ACCOUNT_CLASS_NOT_EXIST: "Account Class not exist",
     ERROR_USER_NOT_THE_SAME_BRANCH: "User not the same branch",
 
-    ERROR_PAYER_NOT_EXIST: f"Payer not exist in {CASA_PAYERS}",
+    ERROR_PAYER_NOT_EXIST: f"Payer not exist in {PAYMENT_PAYERS}",
 }
 
 ERROR_EMAIL_TEMPLATES_GW = 'ERROR_EMAIL_TEMPLATES_GW'
