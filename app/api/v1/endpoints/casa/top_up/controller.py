@@ -48,22 +48,19 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_TOP_UP_CASA_ACCOUNT,
     PROFILE_HISTORY_STATUS_INIT
 )
-from app.utils.constant.gw import (
-    GW_DATETIME_FORMAT, GW_REQUEST_DIRECT_INDIRECT
-)
+from app.utils.constant.gw import GW_REQUEST_DIRECT_INDIRECT
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_GDV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_GDV
 )
 from app.utils.error_messages import (
     ERROR_BANK_NOT_IN_CITAD, ERROR_BANK_NOT_IN_NAPAS, ERROR_BOOKING_INCORRECT,
-    ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_CIF_NUMBER_NOT_EXIST,
-    ERROR_DENOMINATIONS_NOT_EXIST, ERROR_FIELD_REQUIRED,
-    ERROR_INTERBANK_ACCOUNT_NUMBER_NOT_EXIST,
+    ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_DENOMINATIONS_NOT_EXIST,
+    ERROR_FIELD_REQUIRED, ERROR_INTERBANK_ACCOUNT_NUMBER_NOT_EXIST,
     ERROR_INTERBANK_CARD_NUMBER_NOT_EXIST, ERROR_MAPPING_MODEL,
     ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
 )
 from app.utils.functions import (
-    dropdown, generate_uuid, now, orjson_dumps, orjson_loads, string_to_date
+    dropdown, generate_uuid, now, orjson_dumps, orjson_loads
 )
 from app.utils.vietnamese_converter import (
     convert_to_unsigned_vietnamese, make_short_name, split_name
@@ -383,7 +380,6 @@ class CtrCasaTopUp(BaseController):
     ):
         data = request.data
         receiving_method = request.receiving_method
-        sender_cif_number = data.sender_cif_number
         statement = data.statement
         direct_staff_code = data.direct_staff_code
         indirect_staff_code = data.indirect_staff_code
@@ -471,58 +467,6 @@ class CtrCasaTopUp(BaseController):
                     msg=USER_CODE_NOT_EXIST, loc=f'indirect_staff_code: {indirect_staff_code}'
                 )
 
-        # TH1: có nhập cif -> Kiểm tra số CIF có tồn tại trong CRM không
-        if sender_cif_number:
-            # self.call_repos(await repos_get_customer_by_cif_number(
-            #     cif_number=cif_number,
-            #     session=self.oracle_session
-            # ))
-            customer_detail = await CtrGWCustomer(current_user).ctr_gw_get_customer_info_detail(
-                cif_number=sender_cif_number,
-                return_raw_data_flag=True
-            )
-            if not customer_detail['full_name']:
-                return self.response_exception(
-                    msg=ERROR_CIF_NUMBER_NOT_EXIST,
-                    loc=f"sender_cif_number {sender_cif_number}"
-                )
-
-            data.sender_full_name_vn = customer_detail['full_name']
-            customer_identity_detail = customer_detail['id_info']
-            data.sender_identity_number = customer_identity_detail['id_num']
-            data.sender_issued_date = string_to_date(customer_identity_detail['id_issued_date'], _format=GW_DATETIME_FORMAT)
-            data.sender_address_full = customer_detail['t_address_info']['contact_address_full']
-            data.sender_mobile_number = customer_detail['mobile_phone']
-        # TH2: Không nhập CIF
-        else:
-            sender_full_name_vn = data.sender_full_name_vn
-            sender_identity_number = data.sender_identity_number
-            sender_issued_date = data.sender_issued_date
-            sender_address_full = data.sender_address_full
-            sender_mobile_number = data.sender_mobile_number
-
-            sender_place_of_issue_id = data.sender_place_of_issue.id
-            await self.get_model_object_by_id(
-                model_id=sender_place_of_issue_id,
-                model=PlaceOfIssue,
-                loc=f'sender_place_of_issue_id: {sender_place_of_issue_id}'
-            )
-
-            errors = []
-            if not sender_full_name_vn:
-                errors.append(f'sender_full_name_vn: {sender_full_name_vn}')
-            if not sender_identity_number:
-                errors.append(f'sender_identity_number: {sender_identity_number}')
-            if not sender_issued_date:
-                errors.append(f'sender_issued_date: {sender_issued_date}')
-            if not sender_address_full:
-                errors.append(f'sender_address_full: {sender_address_full}')
-            if not sender_mobile_number:
-                errors.append(f'sender_mobile_number: {sender_mobile_number}')
-
-            if errors:
-                return self.response_exception(msg=ERROR_FIELD_REQUIRED, loc=', '.join(errors))
-
         if receiving_method not in RECEIVING_METHODS:
             return self.response_exception(
                 msg=ERROR_RECEIVING_METHOD_NOT_EXIST,
@@ -538,17 +482,11 @@ class CtrCasaTopUp(BaseController):
                 data=data
             )
 
-        # saving_customer = {}
-        # saving_customer_identity = {}
-        # saving_customer_address = {}
         if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
             casa_top_up_info = await self.ctr_save_casa_top_up_scb_by_identity(
                 receiving_method=receiving_method,
                 data=data
             )
-            # (
-            #     saving_customer, saving_customer_identity, saving_customer_address
-            # ) = await CtrCustomer(current_user).ctr_create_non_resident_customer(request=request)
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
             casa_top_up_info = await self.ctr_save_casa_top_up_third_party_to_account(
@@ -657,19 +595,38 @@ class CtrCasaTopUp(BaseController):
                     model=PlaceOfIssue,
                     loc='sender_place_of_issue -> id'
                 )
+            sender_full_name_vn = data.sender_full_name_vn
+            sender_address_full = data.sender_address_full
+            sender_identity_number = data.sender_identity_number
+            sender_issued_date = data.sender_issued_date
+            sender_mobile_number = data.sender_mobile_number
             sender_response = dict(
                 cif_number=sender_cif_number,
-                fullname_vn=data.sender_full_name_vn,
-                address_full=data.sender_address_full,
+                fullname_vn=sender_full_name_vn,
+                address_full=sender_address_full,
                 identity_info=dict(
-                    number=data.sender_identity_number,
-                    issued_date=data.sender_issued_date,
+                    number=sender_identity_number,
+                    issued_date=sender_issued_date,
                     place_of_issue=dropdown(identity_place_of_issue)
                 ),
-                mobile_phone=data.sender_mobile_number,
+                mobile_phone=sender_mobile_number,
                 telephone=None,
                 otherphone=None
             )
+            errors = []
+            if not sender_full_name_vn:
+                errors.append(f'sender_full_name_vn: {sender_full_name_vn}')
+            if not sender_identity_number:
+                errors.append(f'sender_identity_number: {sender_identity_number}')
+            if not sender_issued_date:
+                errors.append(f'sender_issued_date: {sender_issued_date}')
+            if not sender_address_full:
+                errors.append(f'sender_address_full: {sender_address_full}')
+            if not sender_mobile_number:
+                errors.append(f'sender_mobile_number: {sender_mobile_number}')
+
+            if errors:
+                return self.response_exception(msg=ERROR_FIELD_REQUIRED, loc=', '.join(errors))
 
         controller_gw_employee = CtrGWEmployee(current_user)
 
