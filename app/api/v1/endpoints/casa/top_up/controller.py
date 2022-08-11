@@ -515,20 +515,20 @@ class CtrCasaTopUp(BaseController):
         if not casa_top_up_info:
             return self.response_exception(msg="No Casa Top Up")
 
-        ################################################################################################################
         # Thông tin giao dịch
-        ################################################################################################################
         transfer_response = dict(
             amount=data.amount,
             content=data.content,
             entry_number=data.p_instrument_number
         )
 
+        # Thông tin loại giao dịch
         transfer_type_response = dict(
             receiving_method_type=RECEIVING_METHOD__METHOD_TYPES[receiving_method],
             receiving_method=receiving_method
         )
 
+        # Thông tin phí
         fee_info_request = data.fee_info
         fee_info_response = dict(
             is_fee=False,
@@ -557,9 +557,7 @@ class CtrCasaTopUp(BaseController):
 
         statement_response = await CtrStatement().ctr_get_statement_info(statement_requests=data.statement)
 
-        ################################################################################################################
         # Thông tin khách hàng giao dịch
-        ################################################################################################################
         sender_response = await CtrPaymentSender(self.current_user).get_payment_sender(
             sender_cif_number=data.sender_cif_number,
             sender_full_name_vn=data.sender_full_name_vn,
@@ -569,8 +567,9 @@ class CtrCasaTopUp(BaseController):
             sender_mobile_number=data.sender_mobile_number,
             sender_place_of_issue=data.sender_place_of_issue
         )
-        controller_gw_employee = CtrGWEmployee(current_user)
 
+        controller_gw_employee = CtrGWEmployee(current_user)
+        # Thông tin NV trực tiếp
         gw_direct_staff = await controller_gw_employee.ctr_gw_get_employee_info_from_code(
             employee_code=data.direct_staff_code,
             return_raw_data_flag=True
@@ -580,6 +579,7 @@ class CtrCasaTopUp(BaseController):
             name=gw_direct_staff['staff_name']
         )
 
+        # Thông tin NV gián tiếp
         gw_indirect_staff = await controller_gw_employee.ctr_gw_get_employee_info_from_code(
             employee_code=data.indirect_staff_code,
             return_raw_data_flag=True
