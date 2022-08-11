@@ -17,7 +17,7 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_STATUS_INIT
 )
 from app.utils.error_messages import (
-    CASA_FEE_METHOD_NOT_EXIST, ERROR_CASA_ACCOUNT_NOT_EXIST
+    ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_CASA_FEE_METHOD_NOT_EXIST
 )
 from app.utils.functions import orjson_dumps, orjson_loads
 
@@ -92,7 +92,7 @@ class CtrSecInfo(CtrCasa, CtrBooking, CtrGWCasaAccount, CtrGWCustomer):
         if fee_info:
             method = fee_info.method
             if method not in CASA_FEE_METHODS:
-                return self.response_exception(msg=CASA_FEE_METHOD_NOT_EXIST)
+                return self.response_exception(msg=ERROR_CASA_FEE_METHOD_NOT_EXIST)
 
             if method == CASA_FEE_METHOD_CASA:
                 # Kiểm tra số tài khoản có tồn tại hay không

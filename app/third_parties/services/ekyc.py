@@ -18,12 +18,12 @@ class ServiceEKYC:
     session: Optional[aiohttp.ClientSession] = None
 
     def __init__(self, init_service):
-        self.url = init_service["EKYC"]['SERVICE_EKYC_URL']
+        self.url = init_service["ekyc"]['url']
         self.proxy: Optional[StrOrURL] = None
-        self.authorization = f"bearer {init_service['EKYC']['SERVICE_EKYC_BEARER_TOKEN']}"
+        self.authorization = f"bearer {init_service['ekyc']['token']}"
         self.device_info = "eyJkZXZpY2VOYW1lIjogIkNSTSIsICJvcyI6ICJSZWRoYXQiLCAibW9kZWwiOiAiIiwgInBob25lX251bWJlciI6I" \
                            "CIiLCJtYW51ZmFjdHVyZXIiOiAiIiwgIm9zVmVyc2lvbiI6ICI3LjkifQ=="
-        self.otp = init_service["EKYC"]['SERVICE_EKYC_OTP']
+        self.otp = init_service["ekyc"]['otp']
 
     def start(self):
         self.session = aiohttp.ClientSession()
