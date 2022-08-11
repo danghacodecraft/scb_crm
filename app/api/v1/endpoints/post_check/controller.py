@@ -17,6 +17,9 @@ from app.api.v1.endpoints.post_check.schema import (
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_change_status_account, repos_gw_get_casa_account_info
 )
+from app.api.v1.endpoints.third_parties.gw.customer.repository import (
+    repos_gw_get_customer_info_detail
+)
 from app.api.v1.endpoints.third_parties.gw.ebank_sms.repository import (
     repos_gw_send_sms_via_eb_gw
 )
@@ -408,6 +411,11 @@ class CtrKSS(BaseController):
         customer_detail = self.call_repos(await repos_get_customer_detail(
             postcheck_uuid=postcheck_update_request.customer_id
         ))
+
+        fcc_customer_detail = self.call_repos(await repos_gw_get_customer_info_detail(
+            cif_number=customer_detail['cif'], current_user=current_user.user_info
+        ))
+
         response_data = {
             "customer_id": update_post_check['customer_id'],
             'error_msg': None
@@ -420,7 +428,7 @@ class CtrKSS(BaseController):
                 ))
                 if not is_success_gw:
                     response_data['error_msg'] = str(account_number)
-                if customer_detail['ekyc_level'] != "EKYC_3":
+                if customer_detail['ekyc_level'] != "EKYC_3" or fcc_customer_detail['ekyc_level'] != "EKYC_3":
                     self.call_repos(await repos_gw_send_email(
                         product_code='CRM',
                         list_email_to=customer_detail.get('extra_info').get('email'),
