@@ -186,7 +186,8 @@ class ServiceGW:
         self.email_templates = EMAIL_TEMPLATES
         self.url = init_service['GW']['SERVICE_GW_URL']
         self.GW_EMAIL_DATA_INPUT__EMAIL_TO = init_service['GW']['GW_EMAIL_DATA_INPUT__EMAIL_TO']
-        self.production = bool(init_service['PRODUCTION'])
+        self.GW_SMS_MOBILE = init_service['GW']['GW_SMS_MOBILE']
+        self.production = int(init_service['PRODUCTION'])
 
     def start(self):
         self.session = aiohttp.ClientSession()
@@ -2305,9 +2306,7 @@ class ServiceGW:
                                  mobile=None):
         data_input = {
             "message": message,
-            "mobile": mobile,
-        } if mobile else {
-            "message": message
+            "mobile": self.GW_SMS_MOBILE if not self.production else mobile,
         }
 
         request_data = self.gw_create_request_body(
