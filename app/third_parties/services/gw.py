@@ -246,8 +246,9 @@ class ServiceGW:
                         email_templates=self.email_templates, template_key=GW_FUNC_SEND_EMAIL_KEY)
                     request_data['sendEmail_in.data_input.email_content_html'] = open_ebank_response.get('data')
                     request_data['sendEmail_in.data_input.email_subject'] = open_ebank_response.get('title')
-                    if self.production:
+                    if not self.production:
                         request_data['sendEmail_in.data_input.email_to'] = self.GW_EMAIL_DATA_INPUT__EMAIL_TO
+
                 for key, value in request_data.items():
                     if key == "sendEmail_in.data_input.email_attachment_file" and value is not None:
                         for file in value:
