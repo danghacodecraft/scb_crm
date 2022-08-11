@@ -208,25 +208,36 @@ class CtrCasaTopUp(BaseController):
         ################################################################################################################
         # Thông tin phí
         ################################################################################################################
-        fee_info = form_data['fee_info']
-        fee_amount = fee_info['fee_amount']
-        vat_tax = fee_amount / 10
-        total = fee_amount + vat_tax
-        actual_total = total + transfer_amount
-        is_transfer_payer = False
-        payer = None
-        if fee_info['is_transfer_payer'] is not None:
-            payer = "RECEIVER"
-            if fee_info['is_transfer_payer'] is True:
-                is_transfer_payer = True
-                payer = "SENDER"
+        fee_info = {}
+        if form_data['is_fee']:
+            fee_info = form_data['fee_info']
+            fee_amount = fee_info['fee_amount']
+            vat_tax = fee_amount / 10
+            total = fee_amount + vat_tax
+            actual_total = total + transfer_amount
+            is_transfer_payer = False
+            payer = None
+            if fee_info['is_transfer_payer'] is not None:
+                payer = "RECEIVER"
+                if fee_info['is_transfer_payer'] is True:
+                    is_transfer_payer = True
+                    payer = "SENDER"
+        else:
+            fee_amount = None
+            vat_tax = None
+            total = None
+            actual_total = transfer_amount
+            is_transfer_payer = None
+            payer = None
 
         fee_info.update(dict(
+            fee_amount=fee_amount,
             vat_tax=vat_tax,
             total=total,
             actual_total=actual_total,
             is_transfer_payer=is_transfer_payer,
-            payer=payer
+            payer=payer,
+            note=form_data['fee_info']['note']
         ))
         ################################################################################################################
 
