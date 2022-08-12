@@ -423,7 +423,7 @@ class CtrKSS(BaseController):
         }
         if history_status:
             if history_status[-1]['kss_status'] == "Không hợp lệ" and history_status[-1]['approve_status'] == "Đã Duyệt":
-                if customer_detail['ekyc_level'] != "EKYC_3" or fcc_customer_detail['ekyc_level'] != "EKYC_3":
+                if customer_detail['ekyc_level'] != "EKYC_3" and fcc_customer_detail['ekyc_level'] != "EKYC_3":
                     is_success_gw, account_number = self.call_repos(await repos_gw_change_status_account(  # noqa
                         current_user=current_user.user_info,
                         account_number=customer_detail.get('account_number')
