@@ -1,9 +1,9 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.e_banking.repository import (
-    repos_balance_saving_account_data, repos_get_detail_reset_password,
-    repos_get_detail_reset_password_teller, repos_get_e_banking,
-    repos_get_payment_accounts, repos_get_sms_data, repos_save_e_banking,
-    repos_save_sms_casa
+    repos_balance_saving_account_data, repos_check_and_remove_exist_sms_casa,
+    repos_get_detail_reset_password, repos_get_detail_reset_password_teller,
+    repos_get_e_banking, repos_get_payment_accounts, repos_get_sms_data,
+    repos_save_e_banking, repos_save_sms_casa
 )
 from app.api.v1.endpoints.cif.e_banking.schema import (
     EBankingRequest, EBankingSMSCasaRequest
@@ -18,6 +18,7 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING_SMS_CASA,
     PROFILE_HISTORY_STATUS_INIT
 )
+from app.utils.error_messages import ERROR_NOT_NULL
 from app.utils.functions import orjson_dumps
 
 
@@ -86,6 +87,14 @@ class CtrEBanking(BaseController):
 
         if ebank_sms_casa_info:
 
+            # Validate nếu truyền thiếu một số thông tin cần thiết:
+            if not ebank_sms_casa_info.registry_balance_items:
+                return self.response_exception(
+                    msg=ERROR_NOT_NULL,
+                    loc='ctr_save_e_banking_and_sms -> ebank_sms_casa_info',
+                    detail='registry_balance_items cannot empty',
+                )
+
             # Kiểm tra mối quan hệ
             relationship_ids = []
             for registry_balance_item in ebank_sms_casa_info.registry_balance_items:
@@ -139,6 +148,12 @@ class CtrEBanking(BaseController):
                 "code": booking.code,
                 "name": current_user.user_info.username
             })
+        # TH không đăng ký sms, xóa các thông tin cũ
+        else:
+            self.call_repos(await repos_check_and_remove_exist_sms_casa(
+                cif_id=cif_id,
+                session=self.oracle_session
+            ))
 
         response_data = save_e_banking_info if save_e_banking_info else save_sms_casa_info
 
