@@ -1333,25 +1333,29 @@ class CtrGWCasaAccount(BaseController):
         current_user = self.current_user
         current_user_info = current_user.user_info
 
-        # ben = await CtrConfigBank(current_user).ctr_get_bank_branch(bank_id=form_data['receiver_bank']['id'])
+        sender = form_data['sender']
+        sender_identity = sender['identity_info']
+        receiver = form_data['receiver']
+        transfer = form_data['transfer']
+
         data_input = {
             "customer_info": {
-                "full_name": form_data['sender_full_name_vn'],
-                "birthday": form_data['sender_issued_date'] if form_data['sender_issued_date'] else GW_DEFAULT_VALUE
+                "full_name": sender['fullname_vn'],
+                "birthday": sender_identity['issued_date']
             },
             "id_info": {
-                "id_num": form_data['sender_identity_number']
+                "id_num": sender_identity['number']
             },
             "address_info": {
-                "address_full": form_data['sender_address_full']
+                "address_full": sender['address_full'] if 'address_full' in sender else GW_DEFAULT_VALUE
             },
             "trans_date": datetime_to_string(now()),
             "time_stamp": datetime_to_string(now()),
             "trans_id": booking_id,
-            "amount": form_data['amount'],
-            "description": form_data['content'],
+            "amount": transfer['amount'],
+            "description": transfer['content'],
             "account_to_info": {
-                "account_num": form_data['receiver_account_number']
+                "account_num": receiver['account_number']
             },
             # "ben_id": ben['data'][0]['id'],
             "ben_id": '970436',  # TODO: hiện tại chỉ có mã ngân hàng này dùng được
