@@ -2,7 +2,7 @@ import json
 from typing import List, Optional, Tuple
 
 import inflection as inflection
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, desc, func, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn
@@ -124,7 +124,7 @@ async def repos_get_data_currency_denominations_config(session, currency_id: str
             CurrencyDenomination
         )
         .filter(CurrencyDenomination.currency_id == currency_id)
-        .order_by(CurrencyDenomination.denominations)
+        .order_by(desc(CurrencyDenomination.denominations))
     ).scalars().all()
 
     return ReposReturn(data=response_data)
