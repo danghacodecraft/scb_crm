@@ -20,7 +20,8 @@ class CtrPaymentSender(BaseController):
             sender_identity_number: Optional[str],
             sender_issued_date: Optional[str],
             sender_mobile_number: Optional[str],
-            sender_place_of_issue: Optional[DropdownRequest]
+            sender_place_of_issue: Optional[DropdownRequest],
+            sender_note: Optional[str]
     ):
         if sender_cif_number:
             gw_customer_info = await CtrGWCustomer(self.current_user).ctr_gw_get_customer_info_detail(
@@ -43,7 +44,9 @@ class CtrPaymentSender(BaseController):
                 ),
                 mobile_phone=gw_customer_info['mobile_phone'],
                 telephone=gw_customer_info['telephone'],
-                otherphone=gw_customer_info['otherphone']
+                otherphone=gw_customer_info['otherphone'],
+                note=sender_note
+
             )
         else:
             identity_place_of_issue = DROPDOWN_NONE_DICT
@@ -69,7 +72,8 @@ class CtrPaymentSender(BaseController):
                 ),
                 mobile_phone=sender_mobile_number,
                 telephone=None,
-                otherphone=None
+                otherphone=None,
+                note=sender_note
             )
             errors = []
             if not sender_full_name_vn:

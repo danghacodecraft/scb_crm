@@ -4,7 +4,9 @@ from typing import List, Optional
 from pydantic import Field
 
 from app.api.base.schema import BaseSchema, ResponseRequestSchema
-from app.api.v1.schemas.utils import OptionalDropdownRequest
+from app.api.v1.schemas.utils import (
+    DropdownRequest, OptionalDropdownRequest, OptionalDropdownResponse
+)
 
 
 # II. Thông tin người hưởng thụ
@@ -46,6 +48,12 @@ class ManagementInfoResponse(BaseSchema):
     indirect_staff: DropdownCodeNameResponse = Field(..., description="Mã nhân viên quản lý gián tiếp")
 
 
+class IdentityInfoResponse(ResponseRequestSchema):
+    number: Optional[str] = Field(..., description="Số GTDD")
+    issued_date: Optional[date] = Field(..., description="Ngày cấp")
+    place_of_issue: OptionalDropdownResponse = Field(..., description="Nơi cấp")
+
+
 # II. Thông tin khách hàng giao dịch
 class SenderInfoResponse(BaseSchema):
     cif_flag: bool = Field(
@@ -53,12 +61,12 @@ class SenderInfoResponse(BaseSchema):
         description="Cờ kiểm tra có CIF chưa, `true` = Có, `false` = Không"
     )
     cif_number: Optional[str] = Field(None, description="Mã khách hàng giao dịch")
-    full_name_vn: Optional[str] = Field(None, description="Người giao dịch")
-    identity: Optional[str] = Field(None, description="Giấy tờ định danh")
-    issued_date: Optional[date] = Field(None, description="Ngày cấp")
-    place_of_issue: Optional[str] = Field(None, description="Nơi cấp")
+    fullname_vn: Optional[str] = Field(None, description="Người giao dịch")
     address_full: Optional[str] = Field(None, description="Địa chỉ")
-    mobile_phone: Optional[str] = Field(None, description="Điện thoại")
+    identity_info: IdentityInfoResponse = Field(..., description="Thông tin giấy tờ định danh")
+    mobile_phone: Optional[str] = Field(None, description="SĐT")
+    telephone: Optional[str] = Field(None, description="SĐT")
+    otherphone: Optional[str] = Field(None, description="SĐT")
     note: Optional[str] = Field(None, description="Ghi chú")
 
 
@@ -150,7 +158,7 @@ class SenderInfoRequest(BaseSchema):
     fullname_vn: Optional[str] = Field(None, description="Người giao dịch")
     identity: Optional[str] = Field(None, description="Thông tin giấy tờ định danh")
     issued_date: Optional[date] = Field(None, description="Ngày cấp")
-    place_of_issue: Optional[str] = Field(None, description="Nơi cấp")
+    place_of_issue: Optional[DropdownRequest] = Field(None, description="Nơi cấp")
     address_full: Optional[str] = Field(None, description="Địa chỉ")
     mobile_phone: Optional[str] = Field(None, description="SĐT")
     telephone: Optional[str] = Field(None, description="SĐT")
