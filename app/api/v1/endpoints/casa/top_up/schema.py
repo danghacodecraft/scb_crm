@@ -75,12 +75,6 @@ class CasaTopUpSCBByIdentityRequest(CasaTopUpCommonRequest):
     receiver_mobile_number: Optional[str] = Field(..., description="Số điện thoại")
     receiver_address_full: Optional[str] = Field(..., description="Địa chỉ", max_length=500)
 
-    @validator("receiver_mobile_number")
-    def check_valid_mobile_number(cls, v):
-        if not is_valid_mobile_number(v):
-            raise TypeError('')
-        return v
-
 
 class CasaTopUpThirdPartyCommonRequest(CasaTopUpCommonRequest):
     receiver_bank: DropdownRequest = Field(..., description="Ngân hàng")
@@ -132,8 +126,8 @@ class CasaTopUpThirdParty247ToCardRequest(CasaTopUpThirdPartyCommonRequest):
 class CasaTopUpRequest(ResponseRequestSchema):
     receiving_method: str = Field(..., description=f"Hình thức nhận: {make_description_from_dict(RECEIVING_METHODS)}")
     data: Union[
-        CasaTopUpThirdPartyByIdentityRequest,
         CasaTopUpSCBByIdentityRequest,
+        CasaTopUpThirdPartyByIdentityRequest,
         CasaTopUpThirdPartyToAccountRequest,
         CasaTopUpThirdParty247ToAccountRequest,
         CasaTopUpSCBToAccountRequest,
