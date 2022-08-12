@@ -20,7 +20,8 @@ from app.api.v1.others.booking.repository import repos_get_booking
 from app.api.v1.others.statement.controller import CtrStatement
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.utils.constant.business_type import (
-    BUSINESS_TYPE_AMOUNT_BLOCK, BUSINESS_TYPE_CASA_TOP_UP
+    BUSINESS_TYPE_AMOUNT_BLOCK, BUSINESS_TYPE_AMOUNT_UNBLOCK,
+    BUSINESS_TYPE_CASA_TOP_UP
 )
 from app.utils.constant.casa import (
     RECEIVING_METHOD_ACCOUNT_CASES, RECEIVING_METHOD_SCB_BY_IDENTITY,
@@ -31,7 +32,9 @@ from app.utils.constant.casa import (
     RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT
 )
 from app.utils.constant.date_datetime import DATE_TYPE_DMY_WITH_SLASH
-from app.utils.constant.gw import GW_DATETIME_FORMAT
+from app.utils.constant.gw import (
+    GW_DATETIME_FORMAT, GW_FUNC_AMOUNT_UNBLOCK_OUT
+)
 from app.utils.constant.tms_dms import (
     TKTT_AMOUNT_BLOCK_TEMPLATE_5183, TKTT_AMOUNT_BLOCK_TEMPLATE_5184,
     TKTT_AMOUNT_BLOCK_TEMPLATE_5185, TKTT_AMOUNT_BLOCK_TEMPLATE_5186,
@@ -41,8 +44,9 @@ from app.utils.constant.tms_dms import (
     TKTT_AMOUNT_UNBLOCK_TEMPLATE_5176, TKTT_AMOUNT_UNBLOCK_TEMPLATE_5177,
     TKTT_AMOUNT_UNBLOCK_TEMPLATE_5178, TKTT_AMOUNT_UNBLOCK_TEMPLATE_5179,
     TKTT_AMOUNT_UNBLOCK_TEMPLATE_5180, TKTT_AMOUNT_UNBLOCK_TEMPLATES,
-    TKTT_PATH_FORM_5181, TKTT_PATH_FORM_5182, TKTT_PATH_FORM_5183,
-    TKTT_PATH_FORM_5184, TKTT_TOP_UP_TEMPLATE_5181, TKTT_TOP_UP_TEMPLATE_5182,
+    TKTT_PATH_FORM_5175, TKTT_PATH_FORM_5178, TKTT_PATH_FORM_5181,
+    TKTT_PATH_FORM_5182, TKTT_PATH_FORM_5183, TKTT_PATH_FORM_5184,
+    TKTT_PATH_FORM_5187, TKTT_TOP_UP_TEMPLATE_5181, TKTT_TOP_UP_TEMPLATE_5182,
     TKTT_TOP_UP_TEMPLATES
 )
 from app.utils.error_messages import ERROR_BOOKING_INCORRECT
@@ -71,11 +75,61 @@ class CtrTemplateDetailTKTT(BaseController):
             template = await self.ctr_tktk_amount_unblock_form_5179(booking_id=booking_id)
         if template_id == TKTT_AMOUNT_UNBLOCK_TEMPLATE_5180:
             template = await self.ctr_tktk_amount_unblock_form_5180(booking_id=booking_id)
+        if template_id == TKTT_AMOUNT_UNBLOCK_TEMPLATE_5180:
+            template = await self.ctr_tktk_amount_unblock_form_5180(booking_id=booking_id)
 
         return template
 
     async def ctr_tktk_amount_unblock_form_5175(self, booking_id: str):
-        pass
+        """
+        Biểu mẫu 5175
+        """
+        data_request = {}
+        current_user = self.current_user
+        booking_business_form = self.call_repos(
+            await repos_get_booking_business_form_by_booking_id(
+                booking_id=booking_id,
+                business_form_id=BUSINESS_TYPE_AMOUNT_UNBLOCK,
+                session=self.oracle_session
+
+            ))
+
+        # Thông tin phiếu thu
+        request_data_gw = orjson_loads(booking_business_form.form_data)
+        supervisor_info = request_data_gw['staff_info_checker']['staff_name']
+        employee_info = await CtrGWEmployee(current_user).ctr_gw_get_employee_info_from_user_name(
+            employee_name=supervisor_info
+        )
+        supervisor = employee_info['data']['fullname_vn']
+        log_data = orjson_loads(booking_business_form.log_data)
+        branch_name = log_data[GW_FUNC_AMOUNT_UNBLOCK_OUT]['transaction_info']['branch_info']['branch_name']
+
+        data_request.update(
+            {
+                "S1.A.1.12.1": branch_name,
+                "S1.A.1.12.2": 'Lê Quang Anh',   # TODO
+                "S1.A.1.12.3": '189785456',      # TODO
+                "S1.A.1.12.4": '20/01/2010',     # TODO
+                "S1.A.1.12.5": 'Tp.Hồ Chí Minh',     # TODO
+                "S1.A.1.12.7": branch_name,     # TODO
+                "S1.A.1.12.8": '123456789888',     # TODO
+                "S1.A.1.12.9": '20/07/2020',     # TODO
+                # "S1.A.1.12.10": 'True',     # TODO
+                "S1.A.1.12.11": 'True',     # TODO
+                "S1.A.1.12.12": '<50000000> <100000000>',     # TODO
+                "S1.A.1.12.13": 'Năm mươi triệu',     # TODO
+                "S1.A.1.12.14": str(now().strftime("%d")),
+                # "S1.A.1.12.15": str(now().strftime("%m")),
+                # "S1.A.1.12.16": str(now().strftime("%Y")),
+                "S1.A.1.12.17": str(now().strftime("%d")),
+                "S1.A.1.12.18": current_user.user_info.name,
+                "S1.A.1.12.19": supervisor if not supervisor else ''
+            }
+        )
+
+        data_tms = self.call_repos(
+            await repo_form(data_request=data_request, path=TKTT_PATH_FORM_5175))
+        return data_tms
 
     async def ctr_tktk_amount_unblock_form_5176(self, booking_id: str):
         pass
@@ -84,7 +138,56 @@ class CtrTemplateDetailTKTT(BaseController):
         pass
 
     async def ctr_tktk_amount_unblock_form_5178(self, booking_id: str):
-        pass
+        """
+        Biểu mẫu 5178
+        """
+        data_request = {}
+        current_user = self.current_user
+        booking_business_form = self.call_repos(
+            await repos_get_booking_business_form_by_booking_id(
+                booking_id=booking_id,
+                business_form_id=BUSINESS_TYPE_AMOUNT_UNBLOCK,
+                session=self.oracle_session
+
+            ))
+
+        # Thông tin phiếu thu
+        request_data_gw = orjson_loads(booking_business_form.form_data)
+        supervisor_info = request_data_gw['staff_info_checker']['staff_name']
+        employee_info = await CtrGWEmployee(current_user).ctr_gw_get_employee_info_from_user_name(
+            employee_name=supervisor_info
+        )
+        supervisor = employee_info['data']['fullname_vn']
+        log_data = orjson_loads(booking_business_form.log_data)
+        branch_name = log_data[GW_FUNC_AMOUNT_UNBLOCK_OUT]['transaction_info']['branch_info']['branch_name']
+
+        data_request.update(
+            {
+                "S1.A.1.12.1": branch_name,
+                "S1.A.1.12.2": 'Lê Quang Anh',   # TODO
+                "S1.A.1.12.3": '189785456',      # TODO
+                "S1.A.1.12.4": '20/01/2010',     # TODO
+                "S1.A.1.12.5": 'Tp.Hồ Chí Minh',     # TODO
+                "S1.A.1.12.6": '927 Trần Hưng Đạo Phường 1 Quận 5 Tp.HCM',     # TODO
+                "S1.A.1.12.7": branch_name,     # TODO
+                "S1.A.1.12.8": '123456789888',     # TODO
+                "S1.A.1.12.9": '20/07/2020',     # TODO
+                "S1.A.1.12.10": 'True',     # TODO
+                "S1.A.1.12.11": '50000000',     # TODO
+                "S1.A.1.12.12": '50000000',     # TODO
+                "S1.A.1.12.13": 'Năm mươi triệu',     # TODO
+                "S1.A.1.12.14": str(now().strftime("%d")),
+                "S1.A.1.12.15": str(now().strftime("%m")),
+                "S1.A.1.12.16": str(now().strftime("%Y")),
+                "S1.A.1.12.17": str(now().strftime("%d/%m/%Y")),
+                "S1.A.1.12.18": current_user.user_info.name,
+                "S1.A.1.12.19": supervisor if not supervisor else ''
+            }
+        )
+
+        data_tms = self.call_repos(
+            await repo_form(data_request=data_request, path=TKTT_PATH_FORM_5178))
+        return data_tms
 
     async def ctr_tktk_amount_unblock_form_5179(self, booking_id: str):
         pass
@@ -93,8 +196,8 @@ class CtrTemplateDetailTKTT(BaseController):
         pass
 
     async def ctr_get_template_detail_top_up(self, template_id, booking_id):
-        current_user = self.current_user
         template = None
+        current_user = self.current_user
 
         if template_id not in TKTT_TOP_UP_TEMPLATES:
             return self.response_exception(msg='template_id not exist in casa top up',
@@ -393,7 +496,7 @@ class CtrTemplateDetailTKTT(BaseController):
         Biểu mẫu 5183
         """
         data_request = {}
-
+        current_user = self.current_user
         booking_business_form = self.call_repos(
             await repos_get_booking_business_form_by_booking_id(
                 booking_id=booking_id,
@@ -414,6 +517,12 @@ class CtrTemplateDetailTKTT(BaseController):
         ))
         # Thông tin phiếu thu
         request_data_gw = orjson_loads(booking_business_form.form_data)
+        supervisor_info = request_data_gw['staff_info_checker']['staff_name']
+        employee_info = await CtrGWEmployee(current_user).ctr_gw_get_employee_info_from_user_name(
+            employee_name=supervisor_info
+        )
+        supervisor = employee_info['data']['fullname_vn']
+
         account_name = await CtrGWCasaAccount(current_user=self.current_user).ctr_gw_get_casa_account_info(
             account_number=request_data_gw['account_info']['account_num'],
             return_raw_data_flag=True
@@ -422,33 +531,32 @@ class CtrTemplateDetailTKTT(BaseController):
 
         data_request.update(
             {
-                "S1.A.1.5.1": 'Số chứng từ',  # Todo
+                "S1.A.1.5.1": 'Số chứng từ',  # TODO
                 "S1.A.1.5.2": date_to_string(now()),
                 "S1.A.1.5.3": branch_name,
                 "S1.A.1.5.4": date_to_string(now()),
-                "S1.A.1.5.5": str(booking_info.created_by) if booking_info.created_by else "",
+                "S1.A.1.5.5": current_user.user_info.code,
                 "S1.A.1.5.6": request_data_gw['account_info']['account_num'],
                 "S1.A.1.5.7": account_name['customer_info']['full_name'],
-                "S1.A.1.5.8": 'VND',  # Todo
-                "S1.A.1.5.9": '50000',  # Todo
-                "S1.A.1.5.10": '10',                   # Todo
-                "S1.A.1.5.11": '500000',               # Todo
+                "S1.A.1.5.8": 'VND',  # TODO
+                "S1.A.1.5.9": '50000',  # TODO
+                "S1.A.1.5.10": '10',                   # TODO
+                "S1.A.1.5.11": '500000',               # TODO
                 "S1.A.1.5.12": str(amount),
-                "S1.A.1.5.13": '100000',               # Todo
-                "S1.A.1.5.14": '10000',                # Todo
-                "S1.A.1.5.15": " đồng",
-                # "S1.A.1.5.15": num2words(amount, lang='vi') + " đồng",
-                "S1.A.1.5.16": 'Phong tỏa tài khoản',  # Todo
-                "S1.A.1.5.17": 'Đặng Thị Hồng Hà',     # Todo
-                "S1.A.1.5.18": '0989868686',           # Todo
-                "S1.A.1.5.19": '1999',                 # Todo
-                "S1.A.1.5.20": '20/01/2020',           # Todo
-                "S1.A.1.5.21": 'Tp. Hồ Chí Minh',      # Todo
-                "S1.A.1.5.22": '927 Trần Hưng Đạo Phường 1 Quận 5 Tp.HCM',     # Todo
-                "S1.A.1.5.23": '10',                   # Todo
-                "S1.A.1.5.24": '500000',               # Todo
-                "S1.A.1.5.25": 'Đặng Thị Hồng Hà',     # Todo
-                "S1.A.1.5.26": 'Nguyễn Hồng Ánh',      # Todo
+                "S1.A.1.5.13": '100000',               # TODO
+                "S1.A.1.5.14": '10000',                # TODO
+                "S1.A.1.5.15": str(amount),
+                "S1.A.1.5.16": 'Phong tỏa tài khoản',  # TODO
+                "S1.A.1.5.17": 'Đặng Thị Hồng Hà',     # TODO
+                "S1.A.1.5.18": '0989868686',           # TODO
+                "S1.A.1.5.19": '1999',                 # TODO
+                "S1.A.1.5.20": '20/01/2020',           # TODO
+                "S1.A.1.5.21": 'Tp. Hồ Chí Minh',      # TODO
+                "S1.A.1.5.22": '927 Trần Hưng Đạo Phường 1 Quận 5 Tp.HCM',     # TODO
+                "S1.A.1.5.23": '10',                   # TODO
+                "S1.A.1.5.24": '500000',               # TODO
+                "S1.A.1.5.25": current_user.user_info.name,
+                "S1.A.1.5.26": supervisor if not supervisor else ''
             }
         )
 
@@ -460,8 +568,8 @@ class CtrTemplateDetailTKTT(BaseController):
         """
         Biểu mẫu 5184
         """
+        current_user = self.current_user
         data_request = {}
-
         booking_business_form = self.call_repos(
             await repos_get_booking_business_form_by_booking_id(
                 booking_id=booking_id,
@@ -469,6 +577,25 @@ class CtrTemplateDetailTKTT(BaseController):
                 session=self.oracle_session
 
             ))
+        request_data_gw = orjson_loads(booking_business_form.form_data)
+        supervisor_info = request_data_gw['staff_info_checker']['staff_name']
+        employee_info = await CtrGWEmployee(current_user).ctr_gw_get_employee_info_from_user_name(
+            employee_name=supervisor_info
+        )
+        supervisor = employee_info['data']['fullname_vn']
+
+        account_info = await CtrGWCasaAccount(current_user).ctr_gw_get_casa_account_info(
+            account_number=request_data_gw['account_info']['account_num']
+        )
+
+        account_holder = account_info['data']['customer_info']['fullname_vn']
+        account_no = account_info['data']['account_info']['number']
+        open_date = account_info['data']['account_info']['open_date']
+        balance = account_info['data']['account_info']['balance']
+        amount_locked = request_data_gw['p_blk_detail']['AMOUNT']
+        effective_date = request_data_gw['p_blk_detail']['EFFECTIVE_DATE']
+        expiry_date = request_data_gw['p_blk_detail']['EXPIRY_DATE']
+        reasons = request_data_gw['p_blk_detail']['HOLD_CODE']
 
         booking_info = self.call_repos(await repos_get_booking(
             booking_id=booking_id,
@@ -480,45 +607,38 @@ class CtrTemplateDetailTKTT(BaseController):
             branch_id=booking_info.branch_id,
             session=self.oracle_session
         ))
-        # Thông tin phiếu thu
-        request_data_gw = orjson_loads(booking_business_form.form_data)
-        account_name = await CtrGWCasaAccount(current_user=self.current_user).ctr_gw_get_casa_account_info(
-            account_number=request_data_gw['account_info']['account_num'],
-            return_raw_data_flag=True
-        )
-        amount = request_data_gw['p_blk_detail']['AMOUNT']
 
-        data_request.update(
-            {
-                "S1.A.1.5.1": 'Số chứng từ',  # Todo
-                "S1.A.1.5.2": date_to_string(now()),
-                "S1.A.1.5.3": branch_name,
-                "S1.A.1.5.4": date_to_string(now()),
-                "S1.A.1.5.5": str(booking_info.created_by) if booking_info.created_by else "",
-                "S1.A.1.5.6": request_data_gw['account_info']['account_num'],
-                "S1.A.1.5.7": account_name['customer_info']['full_name'],
-                "S1.A.1.5.8": 'VND',  # Todo
-                "S1.A.1.5.9": '50000',  # Todo
-                "S1.A.1.5.10": '10',  # Todo
-                "S1.A.1.5.11": '500000',  # Todo
-                "S1.A.1.5.12": str(amount),
-                "S1.A.1.5.13": '100000',  # Todo
-                "S1.A.1.5.14": '10000',  # Todo
-                "S1.A.1.5.15": " đồng",
-                # "S1.A.1.5.15": num2words(amount, lang='vi') + " đồng",
-                "S1.A.1.5.16": 'Phong tỏa tài khoản',  # Todo
-                "S1.A.1.5.17": 'Đặng Thị Hồng Hà',  # Todo
-                "S1.A.1.5.18": '0989868686',  # Todo
-                "S1.A.1.5.19": '1999',  # Todo
-                "S1.A.1.5.20": '20/01/2020',  # Todo
-                "S1.A.1.5.21": 'Tp. Hồ Chí Minh',  # Todo
-                "S1.A.1.5.22": '927 Trần Hưng Đạo Phường 1 Quận 5 Tp.HCM',  # Todo
-                "S1.A.1.5.23": '10',  # Todo
-                "S1.A.1.5.24": '500000',  # Todo
-                "S1.A.1.5.25": 'Đặng Thị Hồng Hà',  # Todo
-                "S1.A.1.5.26": 'Nguyễn Hồng Ánh',  # Todo
-            }
-        )
+        data_request.update({
+            "S1.A.1.11.1": branch_name,
+            "S1.A.1.11.2": account_holder,
+            "S1.A.1.11.3": '175896586',         # TODO
+            "S1.A.1.11.4": '20/11/2010',         # TODO
+            "S1.A.1.11.5": 'Hồ Chí Minh',         # TODO
+            "S1.A.1.11.6": branch_name,
+            "S1.A.1.11.7": account_no,
+            "S1.A.1.11.8": str(open_date),
+            "S1.A.1.11.9": balance,
+            "S1.A.1.11.10": str(amount_locked),
+            "S1.A.1.11.11": '500000000',
+            "S1.A.1.11.12": 'Năm trăm triệu',
+            "S1.A.1.11.13": str(effective_date),
+            "S1.A.1.11.14": str(expiry_date),
+            "S1.A.1.11.15": reasons,
+            # "S1.A.1.11.16": ['Trích tiền từ tài khoản thanh toán'],  # TODO
+            "S1.A.1.11.16": ['Nộp tiền mặt /In cash'],  # TODO
+            "S1.A.1.11.18": '123456789',     # TODO
+            "S1.A.1.11.19": 'DANG THI HA',      # TODO
+            "S1.A.1.11.20": str(now().strftime("%d")),
+            "S1.A.1.11.21": str(now().strftime("%m")),
+            "S1.A.1.11.22": str(now().strftime("%Y")),
+            "S1.A.1.11.28": str(now().strftime("%H:%M")),
+            "S1.A.1.11.29": str(date_to_string(now())),
+            "S1.A.1.11.30": "500000",     # TODO
+            "S1.A.1.11.31": str(now().strftime("%H:%M")),
+            "S1.A.1.11.32": str(date_to_string(now())),
+            "S1.A.1.11.33": current_user.user_info.name,
+            "S1.A.1.11.34": supervisor if not supervisor else '',
+        })
 
         data_tms = self.call_repos(
             await repo_form(data_request=data_request, path=TKTT_PATH_FORM_5184))
@@ -531,7 +651,77 @@ class CtrTemplateDetailTKTT(BaseController):
         pass
 
     async def ctr_tktk_amount_block_form_5187(self, booking_id: str):
-        pass
+        """
+        Biểu mẫu 5187
+        """
+        data_request = {}
+        current_user = self.current_user
+        booking_business_form = self.call_repos(
+            await repos_get_booking_business_form_by_booking_id(
+                booking_id=booking_id,
+                business_form_id=BUSINESS_TYPE_AMOUNT_BLOCK,
+                session=self.oracle_session
+
+            ))
+
+        booking_info = self.call_repos(await repos_get_booking(
+            booking_id=booking_id,
+            business_type_code=BUSINESS_TYPE_AMOUNT_BLOCK,
+            session=self.oracle_session
+        ))
+
+        branch_name = self.call_repos(await repos_branch_name(
+            branch_id=booking_info.branch_id,
+            session=self.oracle_session
+        ))
+        # Thông tin phiếu thu
+        request_data_gw = orjson_loads(booking_business_form.form_data)
+        supervisor_info = request_data_gw['staff_info_checker']['staff_name']
+        employee_info = await CtrGWEmployee(current_user).ctr_gw_get_employee_info_from_user_name(
+            employee_name=supervisor_info
+        )
+        supervisor = employee_info['data']['fullname_vn']
+
+        account_name = await CtrGWCasaAccount(current_user=self.current_user).ctr_gw_get_casa_account_info(
+            account_number=request_data_gw['account_info']['account_num'],
+            return_raw_data_flag=True
+        )
+        amount = request_data_gw['p_blk_detail']['AMOUNT']
+
+        data_request.update(
+            {
+                "S1.A.1.5.1": 'Số chứng từ',  # Todo
+                "S1.A.1.5.2": date_to_string(now()),
+                "S1.A.1.5.3": branch_name,
+                "S1.A.1.5.4": date_to_string(now()),
+                "S1.A.1.5.5": current_user.user_info.code,
+                "S1.A.1.5.6": request_data_gw['account_info']['account_num'],
+                "S1.A.1.5.7": account_name['customer_info']['full_name'],
+                "S1.A.1.5.8": 'VND',  # Todo
+                "S1.A.1.5.9": '50000',  # Todo
+                "S1.A.1.5.10": '10',  # Todo
+                "S1.A.1.5.11": '500000',  # Todo
+                "S1.A.1.5.12": str(amount),
+                "S1.A.1.5.13": '100000',  # Todo
+                "S1.A.1.5.14": '10000',  # Todo
+                "S1.A.1.5.15": str(amount),
+                "S1.A.1.5.16": 'Phong tỏa tài khoản',  # Todo
+                "S1.A.1.5.17": 'Đặng Thị Hồng Hà',  # Todo
+                "S1.A.1.5.18": '0989868686',  # Todo
+                "S1.A.1.5.19": '1999',  # Todo
+                "S1.A.1.5.20": '20/01/2020',  # Todo
+                "S1.A.1.5.21": 'Tp. Hồ Chí Minh',  # Todo
+                "S1.A.1.5.22": '927 Trần Hưng Đạo Phường 1 Quận 5 Tp.HCM',  # Todo
+                "S1.A.1.5.23": '10',  # Todo
+                "S1.A.1.5.24": '500000',  # Todo
+                "S1.A.1.5.25": current_user.user_info.name,
+                "S1.A.1.5.26": supervisor if supervisor else ""
+            }
+        )
+
+        data_tms = self.call_repos(
+            await repo_form(data_request=data_request, path=TKTT_PATH_FORM_5187))
+        return data_tms
 
     async def ctr_tktk_amount_block_form_5188(self, booking_id: str):
         pass
