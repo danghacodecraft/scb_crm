@@ -761,7 +761,6 @@ class CtrApproval(BaseController):
         previous_transaction_stage_is_reject = previous_transaction_stage.is_reject
         previous_stage_is_reject = False
         is_give_back = False
-        print("===")
         if previous_transaction_stage:
             is_stage_init = False
             _, previous_stage, _, _, _, _, _, _, _ = self.call_repos(
