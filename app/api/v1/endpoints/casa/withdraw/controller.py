@@ -13,7 +13,6 @@ from app.api.v1.endpoints.third_parties.gw.employee.controller import (
     CtrGWEmployee
 )
 from app.api.v1.others.booking.controller import CtrBooking
-from app.api.v1.others.sender_info.controller import CtrSenderInfo
 from app.api.v1.validator import validate_history_data
 from app.utils.constant.business_type import BUSINESS_TYPE_WITHDRAW
 from app.utils.constant.cif import (
@@ -67,7 +66,6 @@ class CtrWithdraw(BaseController):
         fee = request.transaction_info.fee_info
         management = request.customer_info.management_info
         sender = request.customer_info.sender_info
-        sender_info = await CtrSenderInfo(current_user).ctr_sender_info(sender_request=sender)
 
         data_input = {
             "transaction_info": {
@@ -91,7 +89,12 @@ class CtrWithdraw(BaseController):
                     "direct_staff_code": management.direct_staff_code,
                     "indirect_staff_code": management.indirect_staff_code,
                 },
-                "sender_info": sender_info
+                "sender_info": {
+                    "cif_flag": sender.cif_flag,
+                    "cif_number": sender.cif_number,
+                    "note": sender.note
+                }
+
             }
         }
         # Kiểm tra số tiền rút có đủ hay không
