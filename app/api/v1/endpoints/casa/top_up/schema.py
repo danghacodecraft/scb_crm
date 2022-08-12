@@ -194,7 +194,7 @@ class CasaTopUpResponse(ResponseRequestSchema):
     transfer_type: TransferTypeResponse = Field(..., description="Loại chuyển")
     receiver: ReceiverResponse = Field(..., description="Thông tin người thụ hưởng")
     transfer: TransferResponse = Field(..., description="Thông tin giao dịch")
-    fee_info: FeeDetailInfoResponse = Field(..., description="Thông tin phí")
+    fee_info: Optional[FeeDetailInfoResponse] = Field(..., description="Thông tin phí")
     statement: StatementResponse = Field(..., description="Thông tin bảng kê")
     sender: CustomerResponse = Field(..., description="Thông tin khách hàng giao dịch")
     direct_staff: StaffInfoResponse = Field(..., description="Thông tin khách hàng giao dịch")
