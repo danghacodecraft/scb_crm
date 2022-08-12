@@ -423,13 +423,15 @@ class CtrKSS(BaseController):
         }
         if history_status:
             if history_status[-1]['kss_status'] == "Không hợp lệ" and history_status[-1]['approve_status'] == "Đã Duyệt":
-                is_success_gw, account_number = self.call_repos(await repos_gw_change_status_account(  # noqa
-                    current_user=current_user.user_info,
-                    account_number=customer_detail.get('account_number')
-                ))
-                if not is_success_gw:
-                    response_data['error_msg'] = str(account_number)
                 if customer_detail['ekyc_level'] != "EKYC_3" or fcc_customer_detail['ekyc_level'] != "EKYC_3":
+                    is_success_gw, account_number = self.call_repos(await repos_gw_change_status_account(  # noqa
+                        current_user=current_user.user_info,
+                        account_number=customer_detail.get('account_number')
+                    ))
+
+                    if not is_success_gw:
+                        response_data['error_msg'] = str(account_number)
+
                     self.call_repos(await repos_gw_send_email(
                         product_code='CRM',
                         list_email_to=customer_detail.get('extra_info').get('email'),
