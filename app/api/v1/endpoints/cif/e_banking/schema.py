@@ -54,8 +54,8 @@ class SMSCasaRelationshipItemResponse(BaseSchema):
 class SMSCasaItemResponse(BaseSchema):
     casa_id: str = Field(..., description="`id` của TKTT")
     main_phone_number_info: Optional[SMSCasaCustomerInfoResponse] = Field(..., description="Thông tin SĐT, chủ tài khoản đăng ký sms")
-    receiver_noti_relationship_items: List[SMSCasaRelationshipItemResponse] = Field(description="Thông tin SĐT và MQH đăng ký sms")
-    notify_code_list: List[GetInitialSMSNotifyCode] = Field(description="Tùy chọn thông báo")
+    receiver_noti_relationship_items: List[SMSCasaRelationshipItemResponse] = Field(..., description="Thông tin SĐT và MQH đăng ký sms")
+    notify_code_list: List[GetInitialSMSNotifyCode] = Field(..., description="Tùy chọn thông báo")
 
 
 class SMSCasaInfoResponse(BaseSchema):
