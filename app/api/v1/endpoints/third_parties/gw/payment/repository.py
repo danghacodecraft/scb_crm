@@ -129,11 +129,11 @@ async def repos_payment_amount_block(
 
 async def repos_gw_payment_amount_block(
     current_user,
-    request_data_gw: list,
+    request_data_gw,
     booking_id,
     session: Session
 ):
-    for item in request_data_gw:
+    for item in request_data_gw.get('account_amount_blocks'):
         is_success, gw_payment_amount_block = await service_gw.gw_payment_amount_block(
             current_user=current_user.user_info, data_input=item
         )
@@ -155,20 +155,33 @@ async def repos_gw_payment_amount_block(
 
         session.add(BookingBusinessForm(**saving_booking_business_form))
 
-        session.add(TransactionJob(**dict(
-            transaction_id=generate_uuid(),
-            booking_id=booking_id,
-            business_job_id=BUSINESS_JOB_CODE_AMOUNT_BLOCK,
-            complete_flag=is_success,
-            error_code=gw_payment_amount_block.get(GW_FUNC_AMOUNT_BLOCK_OUT).get('transaction_info').get('transaction_error_code'),
-            error_desc=gw_payment_amount_block.get(GW_FUNC_AMOUNT_BLOCK_OUT).get('transaction_info').get('transaction_error_msg'),
-            created_at=now()
-        )))
+        if is_success:
+            session.add(TransactionJob(**dict(
+                transaction_id=generate_uuid(),
+                booking_id=booking_id,
+                business_job_id=BUSINESS_JOB_CODE_AMOUNT_BLOCK,
+                complete_flag=is_success,
+                error_code=gw_payment_amount_block.get(GW_FUNC_AMOUNT_BLOCK_OUT).get('transaction_info').get('transaction_error_code'),
+                error_desc=gw_payment_amount_block.get(GW_FUNC_AMOUNT_BLOCK_OUT).get('transaction_info').get('transaction_error_msg'),
+                created_at=now()
+            )))
+        else:
+            session.add(TransactionJob(**dict(
+                transaction_id=generate_uuid(),
+                booking_id=booking_id,
+                business_job_id=BUSINESS_JOB_CODE_AMOUNT_BLOCK,
+                complete_flag=is_success,
+                error_code=None,
+                error_desc=None,
+                created_at=now()
+            )))
+
         session.commit()
         if not is_success:
             return ReposReturn(
                 is_error=True,
-                msg=gw_payment_amount_block.get(GW_FUNC_AMOUNT_BLOCK_OUT)['transaction_info']['transaction_error_msg']
+                msg=ERROR_CALL_SERVICE_GW,
+                loc='PAYMENT_AMOUNT_BLOCK'
             )
 
         # amount_block = gw_payment_amount_block.get(GW_FUNC_AMOUNT_BLOCK_OUT).get('data_output')
