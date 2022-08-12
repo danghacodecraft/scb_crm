@@ -1,3 +1,5 @@
+from typing import Optional
+
 from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
 
@@ -48,13 +50,17 @@ async def repos_other_info(cif_id: str, session: Session) -> ReposReturn:
 async def repos_update_other_info(
         cif_id: str, update_other_info_req: OtherInformationUpdateRequest,
         current_user: UserInfoResponse,
+        extra_phone_number: Optional[str],
+        customer_relationship: Optional[str],
         session: Session
 ) -> ReposReturn:
 
     session.execute(
         update(Customer).filter(Customer.id == cif_id).values(
             legal_agreement_flag=update_other_info_req.legal_agreement_flag,
-            advertising_marketing_flag=update_other_info_req.advertising_marketing_flag
+            advertising_marketing_flag=update_other_info_req.advertising_marketing_flag,
+            mobile_number=extra_phone_number,
+            customer_relationship_flag=customer_relationship
         )
     )
 
