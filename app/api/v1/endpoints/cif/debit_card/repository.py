@@ -22,7 +22,7 @@ from app.third_parties.oracle.models.master_data.card import (
 )
 from app.third_parties.oracle.models.master_data.customer import CustomerType
 from app.third_parties.oracle.models.master_data.others import Branch
-from app.utils.constant.cif import BUSINESS_FORM_TGN
+from app.utils.constant.cif import BUSINESS_FORM_DEBIT_CARD
 from app.utils.error_messages import ERROR_CIF_ID_NOT_EXIST, ERROR_NO_DATA
 from app.utils.functions import dropdown, now
 
@@ -34,6 +34,7 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
                            loc="cif_id")
     list_debit_card_info_engine = session.execute(
         select(
+            DebitCard.id.label("debit_card_id"),
             DebitCard.customer_id,
             DebitCard.customer_type_id,
             DebitCard.brand_of_card_id,
@@ -95,6 +96,7 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
 
     if not list_debit_card_info_engine:
         return ReposReturn(is_error=True, msg=ERROR_CIF_ID_NOT_EXIST, loc="cif_id")
+    debit_card_id = list_debit_card_info_engine[0].debit_card_id
     issue_debit_card = None
     information_debit_card = None
     card_delivery_address = None
@@ -189,6 +191,7 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
                 sub_debit_card[item.DebitCard.id]["physical_card_type"].append(dropdown(item.CardType))
 
     return ReposReturn(data={
+        "debit_card_id": debit_card_id,
         "issue_debit_card": issue_debit_card,
         "information_debit_card": information_debit_card,
         "card_delivery_address": card_delivery_address,
@@ -242,7 +245,7 @@ async def repos_add_debit_card(
         history_datas=history_datas,
         session=session,
         customer_id=cif_id,
-        business_form_id=BUSINESS_FORM_TGN
+        business_form_id=BUSINESS_FORM_DEBIT_CARD
     )
     if not is_success:
         return ReposReturn(is_error=True, msg=booking_responses['msg'])
