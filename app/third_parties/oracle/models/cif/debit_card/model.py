@@ -73,6 +73,8 @@ class DebitCard(Base):
     customer_type = relationship('CustomerType')
     customer = relationship('Customer')
     parent_card = relationship('DebitCard', remote_side=[id])
+    approval_status = Column('approval_status', NUMBER(1, 0, False), nullable=False, default=0,
+                             comment='Trạng thái phê duyệt thẻ ghi nợ')
 
 
 class DebitCardType(Base):

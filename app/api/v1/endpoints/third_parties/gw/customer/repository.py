@@ -4,6 +4,7 @@ from sqlalchemy import desc, select, update
 from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn, auto_commit
+from app.api.v1.endpoints.cif.debit_card.repository import repos_debit_card
 from app.api.v1.endpoints.cif.payment_account.detail.repository import (
     repos_get_detail_payment_account
 )
@@ -25,6 +26,7 @@ from app.third_parties.oracle.models.cif.basic_information.model import (
 from app.third_parties.oracle.models.cif.basic_information.personal.model import (
     CustomerIndividualInfo
 )
+from app.third_parties.oracle.models.cif.debit_card.model import DebitCard
 from app.third_parties.oracle.models.cif.e_banking.model import (
     EBankingInfo, EBankingRegisterBalance
 )
@@ -46,9 +48,14 @@ from app.utils.constant.approval import (
     BUSINESS_JOB_CODE_INIT, BUSINESS_JOB_CODE_SMS_CASA
 )
 from app.utils.constant.cif import (
-    BUSINESS_FORM_EB, BUSINESS_FORM_OPEN_CIF_PD, BUSINESS_FORM_SMS_CASA,
-    CUSTOMER_COMPLETED_FLAG, CUSTOMER_TYPE_ORGANIZE, IMAGE_TYPE_FACE,
-    RESIDENT_ADDRESS_CODE
+    BUSINESS_FORM_DEBIT_CARD, BUSINESS_FORM_EB, BUSINESS_FORM_OPEN_CIF_PD,
+    BUSINESS_FORM_SMS_CASA, CUSTOMER_COMPLETED_FLAG, CUSTOMER_TYPE_ORGANIZE,
+    IMAGE_TYPE_FACE, RESIDENT_ADDRESS_CODE
+)
+from app.utils.constant.debit_card import (
+    ATM_CARD_ACCOUNT_PROVIDER, CRM_CUST_TITLE_MR,
+    CRM_DELIVERY_ADDRESS_FLAG_FALSE, GW_CUST_TITLE_MR, GW_CUST_TITLE_MRS,
+    MAIN_CARD, MC_VS_CREDIT_CARD_ACCOUNT_PROVIDER
 )
 from app.utils.constant.gw import (
     GW_AUTO, GW_CUSTOMER_TYPE_B, GW_CUSTOMER_TYPE_I, GW_DATE_FORMAT,
@@ -425,6 +432,23 @@ async def repos_update_approval_status_for_reg_balance(
     return ReposReturn(data=None)
 
 
+@auto_commit
+async def repos_update_approval_status_for_debit_card(
+        debit_card_id: str,
+        session: Session
+):
+    session.execute(
+        update(
+            DebitCard
+        )
+        .filter(DebitCard.id == debit_card_id)
+        .values(
+            approval_status=True
+        )
+    )
+    return ReposReturn(data=None)
+
+
 async def repos_get_progress_open_cif(booking_id: str, session: Session):
     transaction_jobs = session.execute(
         select(
@@ -629,27 +653,6 @@ async def repos_push_cif_to_gw(booking_id: str, session: Session, response_custo
         }
     }
 
-    transaction_jobs = [
-        {
-            "booking_id": booking_id,
-            "business_job_id": BUSINESS_JOB_CODE_INIT,
-            "complete_flag": True,
-            "error_code": "",
-            "error_desc": "",
-            "created_at": now(),
-            "updated_at": now()
-        },
-        {
-            "booking_id": booking_id,
-            "business_job_id": BUSINESS_JOB_CODE_CIF_INFO,
-            "complete_flag": True,
-            "error_code": "",
-            "error_desc": "",
-            "created_at": now(),
-            "updated_at": now()
-        }
-    ]
-
     data_input = {
         "customer_info": customer_info,
         "account_info": account_info
@@ -660,29 +663,15 @@ async def repos_push_cif_to_gw(booking_id: str, session: Session, response_custo
         current_user=current_user.user_info
     )
 
-    session.add(BookingBusinessForm(**{
-        "booking_id": booking_id,
-        "business_form_id": BUSINESS_FORM_OPEN_CIF_PD,
-        "booking_business_form_id": generate_uuid(),
-        "save_flag": True,
-        "is_success": is_success,
-        "created_at": now(),
-        "form_data": orjson_dumps(data_input),
-        "out_data": orjson_dumps(response_data),
-    }))
-
-    if not is_success:
-        for transaction_job in transaction_jobs:
-            transaction_job.update({
-                "complete_flag": False,
-                "error_code": ERROR_OPEN_CIF,
-                "error_desc": orjson_dumps(response_data) if response_data else ""
-            })
-    session.bulk_save_objects(
-        TransactionJob(**transaction_job) for transaction_job in transaction_jobs
+    await repos_save_bussiness_form_and_transaction_jobs(
+        session=session,
+        booking_id=booking_id,
+        is_success=is_success,
+        response_data=response_data,
+        form_data=data_input,
+        business_form_id=BUSINESS_FORM_OPEN_CIF_PD,
+        business_job_ids=[BUSINESS_JOB_CODE_INIT, BUSINESS_JOB_CODE_CIF_INFO]
     )
-
-    session.commit()
 
     # check open_cif success
     if not is_success:
@@ -841,29 +830,15 @@ async def repos_push_internet_banking_to_gw(booking_id: str, session: Session, r
         data_input=e_banking_info
     )
 
-    session.add(BookingBusinessForm(**{
-        "booking_id": booking_id,
-        "business_form_id": BUSINESS_FORM_EB,
-        "booking_business_form_id": generate_uuid(),
-        "save_flag": True,
-        "is_success": is_success,
-        "created_at": now(),
-        "form_data": orjson_dumps(e_banking_info),
-        "out_data": orjson_dumps(response_data),
-    }))
-
-    session.add(TransactionJob(**{
-        "transaction_id": generate_uuid(),
-        "booking_id": booking_id,
-        "business_job_id": BUSINESS_JOB_CODE_E_BANKING,
-        "complete_flag": is_success,
-        "error_code": "" if is_success else ERROR_CALL_SERVICE_GW,
-        "error_desc": "" if is_success else orjson_dumps(response_data),
-        "created_at": now(),
-        "updated_at": now()
-    }))
-
-    session.commit()
+    await repos_save_bussiness_form_and_transaction_jobs(
+        session=session,
+        booking_id=booking_id,
+        is_success=is_success,
+        response_data=response_data,
+        form_data=e_banking_info,
+        business_form_id=BUSINESS_FORM_EB,
+        business_job_ids=[BUSINESS_JOB_CODE_E_BANKING]
+    )
 
     if not is_success:
         return ReposReturn(
@@ -945,29 +920,15 @@ async def repos_push_sms_casa_to_gw(booking_id: str, session: Session, current_u
         staff_info_maker=staff_info_maker
     )
 
-    session.add(BookingBusinessForm(**{
-        "booking_id": booking_id,
-        "business_form_id": BUSINESS_FORM_SMS_CASA,
-        "booking_business_form_id": generate_uuid(),
-        "save_flag": True,
-        "is_success": is_success,
-        "created_at": now(),
-        "form_data": orjson_dumps(sms_casa_info),
-        "out_data": orjson_dumps(response_data),
-    }))
-
-    session.add(TransactionJob(**{
-        "transaction_id": generate_uuid(),
-        "booking_id": booking_id,
-        "business_job_id": BUSINESS_JOB_CODE_SMS_CASA,
-        "complete_flag": is_success,
-        "error_code": "" if is_success else ERROR_CALL_SERVICE_GW,
-        "error_desc": "" if is_success else orjson_dumps(response_data),
-        "created_at": now(),
-        "updated_at": now()
-    }))
-
-    session.commit()
+    await repos_save_bussiness_form_and_transaction_jobs(
+        session=session,
+        booking_id=booking_id,
+        is_success=is_success,
+        response_data=response_data,
+        form_data=sms_casa_info,
+        business_form_id=BUSINESS_FORM_SMS_CASA,
+        business_job_ids=[BUSINESS_JOB_CODE_SMS_CASA]
+    )
 
     if not is_success:
         return ReposReturn(
@@ -980,6 +941,94 @@ async def repos_push_sms_casa_to_gw(booking_id: str, session: Session, current_u
     # cập nhật lại approval_status cho sms_casa
     await repos_update_approval_status_for_reg_balance(
         reg_balance_id=reg_balance_id, session=session
+    )
+
+    return ReposReturn(data=None)
+
+
+async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user, cif_id: str, cif_number: str,
+                                 response_customers, maker_staff_name):
+    card_result = await repos_debit_card(
+        cif_id=cif_id, session=session)
+    if card_result.is_error:
+        return ReposReturn(
+            is_error=True,
+            msg=card_result.msg,
+            loc=card_result.loc,
+            detail=card_result.detail,
+            error_status_code=card_result.error_status_code
+        )
+
+    card_data = card_result.data
+    debit_card_id = card_data['debit_card_id']
+    customer_info = response_customers[0]
+
+    # @TODO: hard code card_type, card_auto_renew, Quan hệ với thẻ chính, Tên mẹ của khách hàng
+    # @TODO: Câu hỏi bí mật, Nơi nhân hóa đơn, Nơi nhân sao kê
+    card_info = {
+        "card_indicator": MAIN_CARD,
+        "card_type": "MDP",
+        "card_auto_renew": "N",
+        "card_release_form": "N" if card_data["issue_debit_card"]["physical_issuance_type"]["code"] else "Q",
+        "card_block_online_trans": "Y" if card_data["issue_debit_card"]["payment_online_flag"] else "N",
+        "card_contact_less": "Y" if card_data["issue_debit_card"]["physical_card_type"][0]["code"] == 1 else "N",
+        "card_relation_to_primany": "W",
+        "card_mother_name": "NGUYEN VAN A",
+        "card_secure_question": "NGUYEN VAN A",
+        "card_bill_option": "H",
+        "card_statement_delivery_option": "B",
+
+        # additional field
+        "account_type": MC_VS_CREDIT_CARD_ACCOUNT_PROVIDER if card_data["issue_debit_card"]["branch_of_card"] else ATM_CARD_ACCOUNT_PROVIDER,
+        "title": GW_CUST_TITLE_MR if customer_info.CustomerIndividualInfo.title_id == CRM_CUST_TITLE_MR else GW_CUST_TITLE_MRS,
+        "full_name_vn": f'{card_data["information_debit_card"]["name_on_card"]["last_name_on_card"]} '
+                        f'{card_data["information_debit_card"]["name_on_card"]["middle_name_on_card"]} '
+                        f'{card_data["information_debit_card"]["name_on_card"]["first_name_on_card"]}',
+        "last_name": card_data["information_debit_card"]["name_on_card"]["last_name_on_card"],
+        "first_name": card_data["information_debit_card"]["name_on_card"]["first_name_on_card"],
+        "middle_name": card_data["information_debit_card"]["name_on_card"]["middle_name_on_card"],
+
+        # địa chỉ nhận thẻ
+        "delivByBrchInd": GW_YES_AGREEMENT_FLAG
+        if card_data["card_delivery_address"]["delivery_address_flag"] == CRM_DELIVERY_ADDRESS_FLAG_FALSE else GW_NO_AGREEMENT_FLAG,
+        "address_info_line": card_data["card_delivery_address"]["delivery_address"]["number_and_street"],
+        "address_info_ward_name": card_data["card_delivery_address"]["delivery_address"]["ward"],
+        "address_info_district_name": card_data["card_delivery_address"]["delivery_address"]["district"],
+        "address_info_city_name": card_data["card_delivery_address"]["delivery_address"]["province"],
+
+        # thông tin chi nhánh nhận thẻ
+        "delivBrchId": card_data["card_delivery_address"]["scb_branch"]["name"]
+    }
+
+    is_success, response_data = await service_gw.open_cards(
+        current_user=current_user.user_info,
+        cif_number=cif_number,
+        card_info=card_info,
+        customer_info=response_customers[0],
+        maker_staff_name=maker_staff_name
+    )
+
+    await repos_save_bussiness_form_and_transaction_jobs(
+        session=session,
+        booking_id=booking_id,
+        is_success=is_success,
+        response_data=response_data,
+        form_data=card_info,
+        business_form_id=BUSINESS_FORM_DEBIT_CARD,
+        business_job_ids=[BUSINESS_JOB_CODE_DEBIT_CARD]
+    )
+
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            loc="open_cif -> debit_card",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(response_data)
+        )
+
+    # cập nhật lại approval_status cho card
+    await repos_update_approval_status_for_debit_card(
+        debit_card_id=debit_card_id, session=session
     )
 
     return ReposReturn(data=None)
@@ -1021,3 +1070,39 @@ async def repos_get_casa_account_number_open_cif(cif_id: str, session: Session):
         )
 
     return ReposReturn(data=casa_account_number)
+
+
+@auto_commit
+async def repos_save_bussiness_form_and_transaction_jobs(
+    session: Session,
+    booking_id: str,
+    is_success: bool,
+    response_data: dict,
+    form_data: dict,
+    business_form_id: str,
+    business_job_ids: List[str]
+):
+    session.add(BookingBusinessForm(**{
+        "booking_id": booking_id,
+        "business_form_id": business_form_id,
+        "booking_business_form_id": generate_uuid(),
+        "save_flag": True,
+        "is_success": is_success,
+        "created_at": now(),
+        "form_data": orjson_dumps(form_data),
+        "out_data": orjson_dumps(response_data),
+    }))
+
+    for business_job_id in business_job_ids:
+        session.add(TransactionJob(**{
+            "transaction_id": generate_uuid(),
+            "booking_id": booking_id,
+            "business_job_id": business_job_id,
+            "complete_flag": is_success,
+            "error_code": "" if is_success else ERROR_CALL_SERVICE_GW,
+            "error_desc": "" if is_success else orjson_dumps(response_data),
+            "created_at": now(),
+            "updated_at": now()
+        }))
+
+    return ReposReturn(data=None)

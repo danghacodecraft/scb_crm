@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from pydantic import Field
 
-from app.api.base.schema import BaseGWSchema
+from app.api.base.schema import BaseGWSchema, BaseSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
 from app.api.v1.schemas.utils import OptionalDropdownResponse
 
@@ -168,11 +168,18 @@ class GWAuthorizedListResponse(BaseGWSchema):
     authorized_info_list: List[GWAuthorizedResponse] = Field(..., description="Danh sách khách hàng")
 
 
+class GWOpenCIFStatusIdNumberResponse(BaseSchema):
+    status: bool = Field(..., description="Trạng thái hoàn thành. <br>`True`: hoàn thành. <br>`False`: chưa")
+    data: str = Field(default=None, description="Id trả về từ GW")
+
+
 class GWOpenCIFResponse(BaseGWSchema):
     booking_id: str = Field(..., description="BOOKING")
     cif_id: str = Field(..., description="CIF_ID Customer")
-    cif_number: str = Field(..., description="CIF_NUMBER Customer")
-    account_number: Optional[str] = Field(..., description="Số TKTT")
+    cif_num: GWOpenCIFStatusIdNumberResponse = Field(..., description="Thông tin CIF_NUMBER Customer")
+    account_num: GWOpenCIFStatusIdNumberResponse = Field(..., description="Thông tin Số TKTT")
+    ebank_num: GWOpenCIFStatusIdNumberResponse = Field(..., description="Thông tin Ebanking")
+    debit_num: GWOpenCIFStatusIdNumberResponse = Field(..., description="Thông tin thẻ ghi nợ")
 
 
 ########################################################################################################################

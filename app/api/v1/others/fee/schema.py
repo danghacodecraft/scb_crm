@@ -24,13 +24,13 @@ class MultipleFeeInfoRequest(BaseSchema):
 
 
 class FeeDetailInfoResponse(BaseSchema):
-    payer: Optional[str] = Field(..., description="Bên thanh toán phí")
+    payer: Optional[str] = Field(None, description="Bên thanh toán phí")
     fee_category: Optional[DropdownResponse] = Field(None, description="Nhóm phí")
     fee: Optional[DropdownResponse] = Field(None, description="Mã loại phí")
     amount: int = Field(..., description='Số tiền phí')
     vat: int = Field(..., description='Thuế VAT')
     total: int = Field(..., description='Tổng phí')
-    actual_total: Optional[float] = Field(..., description="Số tiền thực chuyển")
+    actual_total: Optional[float] = Field(None, description="Số tiền thực chuyển")
     content: str = Field(None, description='Nội dung')
     ref_num: str = Field(None, description='Số bút toán')
 
