@@ -52,8 +52,8 @@ from app.utils.constant.business_type import (
     BUSINESS_TYPE_OPEN_CASA
 )
 from app.utils.constant.casa import (
-    CASA_ACCOUNT_STATUS_UNAPPROVED, RECEIVING_METHOD_SCB_BY_IDENTITY,
-    RECEIVING_METHOD_SCB_TO_ACCOUNT,
+    CASA_ACCOUNT_STATUS_UNAPPROVED, PAYER_RECEIVER, PAYER_TRANSFER,
+    RECEIVING_METHOD_SCB_BY_IDENTITY, RECEIVING_METHOD_SCB_TO_ACCOUNT,
     RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT,
     RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD,
     RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY,
@@ -1158,20 +1158,20 @@ class CtrGWCasaAccount(BaseController):
         current_user = self.current_user
         username = current_user.user_info.username
 
-        ben = await CtrConfigBank(current_user).ctr_get_bank_branch(bank_id=form_data['receiver_bank']['id'])
+        sender = form_data['sender']
+        receiver = form_data['receiver']
+        transfer = form_data['transfer']
+        identity_info = sender['identity_info']
+
+        ben = await CtrConfigBank(current_user).ctr_get_bank_branch(bank_id=receiver['bank']['id'])
 
         fee_info = form_data['fee_info']
-        details_of_charge = ''
+        details_of_charge = GW_DEFAULT_VALUE
         if fee_info:
-            if fee_info['is_transfer_payer'] is True:
+            if fee_info['payer'] == PAYER_TRANSFER:
                 details_of_charge = GW_ACCOUNT_CHARGE_ON_ORDERING
-            if fee_info['is_transfer_payer'] is False:
+            if fee_info['payer'] == PAYER_RECEIVER:
                 details_of_charge = GW_ACCOUNT_CHARGE_ON_RECEIVER
-
-        (
-            sender_cif_number, sender_full_name_vn, sender_address_full, sender_identity_number, sender_issued_date,
-            sender_place_of_issue
-        ) = await self.get_sender_info(form_data=form_data)
 
         data_input = {}
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
@@ -1197,7 +1197,7 @@ class CtrGWCasaAccount(BaseController):
                     },
                     "TRANSACTION_LEG": {
                         "ACCOUNT": "101101001",
-                        "AMOUNT": form_data['amount']
+                        "AMOUNT": transfer['amount']
                     },
                     "RATE": {
                         "EXCHANGE_RATE": 0,
@@ -1205,8 +1205,8 @@ class CtrGWCasaAccount(BaseController):
                         "LCY_AMOUNT": 0
                     },
                     "ADDITIONAL_INFO": {
-                        "RELATED_CUSTOMER": form_data['sender_cif_number'],
-                        "NARRATIVE": form_data['content']
+                        "RELATED_CUSTOMER": sender['cif_number'],
+                        "NARRATIVE": fee_info['note']
                     }
                 },
                 "p_blk_charge": [
@@ -1224,33 +1224,28 @@ class CtrGWCasaAccount(BaseController):
                 "p_blk_settlement_detail": {
                     "SETTLEMENTS": {
                         "TRANSFER_DETAIL": {
-                            "BENEFICIARY_ACCOUNT_NUMBER": form_data['receiver_account_number'],
-                            "BENEFICIARY_NAME": form_data['receiver_full_name_vn'],
-                            "BENEFICIARY_ADRESS": form_data['receiver_address_full'],
+                            "BENEFICIARY_ACCOUNT_NUMBER": receiver['account_number'],
+                            "BENEFICIARY_NAME": receiver['fullname_vn'],
+                            "BENEFICIARY_ADRESS": receiver['address_full'],
                             "ID_NO": '',
                             "ISSUE_DATE": "",
                             "ISSUER": ""
                         },
                         "ORDERING_CUSTOMER": {
                             "ORDERING_ACC_NO": "",
-                            "ORDERING_NAME": sender_full_name_vn,
-                            "ORDERING_ADDRESS": sender_address_full,
-                            "ID_NO": sender_identity_number,
-                            "ISSUE_DATE": date_string_to_other_date_string_format(sender_issued_date,
-                                                                                  from_format=GW_CORE_DATE_FORMAT),
-                            "ISSUER": sender_place_of_issue
+                            "ORDERING_NAME": sender['fullname_vn'],
+                            "ORDERING_ADDRESS": sender['address_full'],
+                            "ID_NO": identity_info['number'],
+                            "ISSUE_DATE": date_string_to_other_date_string_format(
+                                identity_info['issued_date'], from_format=GW_CORE_DATE_FORMAT
+                            ),
+                            "ISSUER": identity_info['place_of_issue']
                         }
                     }
                 }
             })
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
-            receiver_place_of_issue_id = form_data['receiver_place_of_issue']['id']
-            receiver_place_of_issue = await self.get_model_object_by_id(
-                model_id=receiver_place_of_issue_id,
-                model=PlaceOfIssue,
-                loc='receiver_place_of_issue_id'
-            )
             data_input.update({
                 "account_info": {
                     "account_bank_code": ben['data'][0]['id'],
@@ -1273,7 +1268,7 @@ class CtrGWCasaAccount(BaseController):
                     },
                     "TRANSACTION_LEG": {
                         "ACCOUNT": "101101001",
-                        "AMOUNT": form_data['amount']
+                        "AMOUNT": transfer['amount']
                     },
                     "RATE": {
                         "EXCHANGE_RATE": 0,
@@ -1281,8 +1276,8 @@ class CtrGWCasaAccount(BaseController):
                         "LCY_AMOUNT": 0
                     },
                     "ADDITIONAL_INFO": {
-                        "RELATED_CUSTOMER": form_data['sender_cif_number'],
-                        "NARRATIVE": form_data['content']
+                        "RELATED_CUSTOMER": sender['cif_number'],
+                        "NARRATIVE": transfer['content']
                     }
                 },
                 "p_blk_charge": [
@@ -1301,23 +1296,23 @@ class CtrGWCasaAccount(BaseController):
                     "SETTLEMENTS": {
                         "TRANSFER_DETAIL": {
                             "BENEFICIARY_ACCOUNT_NUMBER": '.',  # TODO
-                            "BENEFICIARY_NAME": form_data['receiver_full_name_vn'],
-                            "BENEFICIARY_ADRESS": form_data['receiver_address_full'],
-                            "ID_NO": form_data['receiver_identity_number'],
+                            "BENEFICIARY_NAME": receiver['fullname_vn'],
+                            "BENEFICIARY_ADRESS": receiver['address_full'],
+                            "ID_NO": receiver['identity_number'] if 'identity_number' in receiver else GW_DEFAULT_VALUE,
                             "ISSUE_DATE": date_string_to_other_date_string_format(
-                                date_input=form_data['receiver_issued_date'],
+                                date_input=receiver['issued_date'],
                                 from_format=GW_DATE_FORMAT,
                                 to_format=GW_CORE_DATE_FORMAT
-                            ),
-                            "ISSUER": receiver_place_of_issue.name
+                            ) if 'issued_date' in receiver else GW_DEFAULT_VALUE,
+                            "ISSUER": receiver['place_of_issue'] if 'place_of_issue' in receiver else GW_DEFAULT_VALUE
                         },
                         "ORDERING_CUSTOMER": {
                             "ORDERING_ACC_NO": "",
-                            "ORDERING_NAME": sender_full_name_vn,
-                            "ORDERING_ADDRESS": sender_address_full,
-                            "ID_NO": sender_identity_number,
-                            "ISSUE_DATE": sender_issued_date,
-                            "ISSUER": sender_place_of_issue
+                            "ORDERING_NAME": sender['fullname_vn'],
+                            "ORDERING_ADDRESS": sender['address_full'],
+                            "ID_NO": sender['identity_number'] if 'identity_number' in sender else GW_DEFAULT_VALUE,
+                            "ISSUE_DATE": sender['issued_date'] if 'issued_date' in sender else GW_DEFAULT_VALUE,
+                            "ISSUER": sender['place_of_issue'] if 'place_of_issue' in sender else GW_DEFAULT_VALUE
                         }
                     }
                 }
@@ -1338,25 +1333,29 @@ class CtrGWCasaAccount(BaseController):
         current_user = self.current_user
         current_user_info = current_user.user_info
 
-        # ben = await CtrConfigBank(current_user).ctr_get_bank_branch(bank_id=form_data['receiver_bank']['id'])
+        sender = form_data['sender']
+        sender_identity = sender['identity_info']
+        receiver = form_data['receiver']
+        transfer = form_data['transfer']
+
         data_input = {
             "customer_info": {
-                "full_name": form_data['sender_full_name_vn'],
-                "birthday": form_data['sender_issued_date'] if form_data['sender_issued_date'] else GW_DEFAULT_VALUE
+                "full_name": sender['fullname_vn'],
+                "birthday": sender_identity['issued_date']
             },
             "id_info": {
-                "id_num": form_data['sender_identity_number']
+                "id_num": sender_identity['number']
             },
             "address_info": {
-                "address_full": form_data['sender_address_full']
+                "address_full": sender['address_full'] if 'address_full' in sender else GW_DEFAULT_VALUE
             },
             "trans_date": datetime_to_string(now()),
             "time_stamp": datetime_to_string(now()),
             "trans_id": booking_id,
-            "amount": form_data['amount'],
-            "description": form_data['content'],
+            "amount": transfer['amount'],
+            "description": transfer['content'],
             "account_to_info": {
-                "account_num": form_data['receiver_account_number']
+                "account_num": receiver['account_number']
             },
             # "ben_id": ben['data'][0]['id'],
             "ben_id": '970436',  # TODO: hiện tại chỉ có mã ngân hàng này dùng được
@@ -1387,27 +1386,31 @@ class CtrGWCasaAccount(BaseController):
     ):
         current_user = self.current_user
         current_user_info = current_user.user_info
-
-        ben = await CtrConfigBank(current_user).ctr_get_bank_branch(bank_id=form_data['receiver_bank']['id'])
+        sender = form_data['sender']
+        sender_identity = sender['identity_info']
+        sender_identity_issued_date = sender_identity['issued_date']
+        receiver = form_data['receiver']
+        transfer = form_data['transfer']
+        ben = await CtrConfigBank(current_user).ctr_get_bank_branch(bank_id=receiver['bank']['id'])
 
         data_input = {
             "customer_info": {
-                "full_name": form_data['sender_full_name_vn'],
-                "birthday": form_data['sender_issued_date'] if form_data['sender_issued_date'] else GW_DEFAULT_VALUE
+                "full_name": sender['fullname_vn'],
+                "birthday": sender_identity_issued_date if sender_identity_issued_date else GW_DEFAULT_VALUE
             },
             "id_info": {
-                "id_num": form_data['sender_identity_number']
+                "id_num": sender_identity['number']
             },
             "address_info": {
-                "address_full": form_data['sender_address_full']
+                "address_full": sender['address_full']
             },
             "trans_date": datetime_to_string(now()),
             "time_stamp": datetime_to_string(now()),
             "trans_id": booking_id,
-            "amount": form_data['amount'],
-            "description": form_data['content'],
+            "amount": transfer['amount'],
+            "description": transfer['content'],
             "card_to_info": {
-                "card_num": form_data['receiver_card_number']
+                "card_num": receiver['card_number']
             },
             "ben_id": ben['data'][0]['id'],
             "account_from_info": {

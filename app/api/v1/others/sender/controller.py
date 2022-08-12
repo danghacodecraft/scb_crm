@@ -5,10 +5,15 @@ from app.api.v1.endpoints.third_parties.gw.customer.controller import (
     CtrGWCustomer
 )
 from app.api.v1.schemas.utils import DropdownRequest
+from app.settings.config import (
+    DATE_INPUT_OUTPUT_FORMAT, DATETIME_INPUT_OUTPUT_FORMAT
+)
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.utils.constant.cif import DROPDOWN_NONE_DICT
 from app.utils.error_messages import ERROR_FIELD_REQUIRED
-from app.utils.functions import dropdown
+from app.utils.functions import (
+    date_string_to_other_date_string_format, dropdown
+)
 
 
 class CtrPaymentSender(BaseController):
@@ -34,7 +39,11 @@ class CtrPaymentSender(BaseController):
                 address_full=gw_customer_info['t_address_info']['contact_address_full'],
                 identity_info=dict(
                     number=gw_customer_info_identity_info['id_num'],
-                    issued_date=sender_issued_date,
+                    issued_date=date_string_to_other_date_string_format(
+                        gw_customer_info_identity_info['id_issued_date'],
+                        from_format=DATETIME_INPUT_OUTPUT_FORMAT,
+                        to_format=DATE_INPUT_OUTPUT_FORMAT
+                    ),
                     place_of_issue=await self.dropdown_mapping_crm_model_or_dropdown_name(
                         model=PlaceOfIssue,
                         code=gw_customer_info_identity_info['id_issued_location'],
