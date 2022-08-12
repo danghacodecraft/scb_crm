@@ -23,6 +23,8 @@ class OtherInformationResponse(BaseSchema):
                                                            nullable=True)
     indirect_sale_staff: Optional[EmployeeDropdownResponse] = Field(..., description="Mã nhân viên kinh doanh gián tiếp"
                                                                                      "`có thể null`")
+    extra_phone_number: Optional[str] = Field(None, description='Số điện thoại phụ')
+    customer_relationship: Optional[DropdownRequest] = Field(None, description='Mối quan hệ khách hàng')
 
 
 class OtherInformationUpdateRequest(BaseSchema):
@@ -38,3 +40,5 @@ class OtherInformationUpdateRequest(BaseSchema):
     indirect_sale_staff: Optional[DropdownRequest] = Field(
         ..., description="Mã nhân viên kinh doanh gián tiếp `có thể null`"
     )
+    extra_phone_number: Optional[str] = Field(None, description='Số điện thoại phụ')
+    customer_relationship: Optional[DropdownRequest] = Field(None, description='Mối quan hệ khách hàng')
