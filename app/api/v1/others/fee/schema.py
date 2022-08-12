@@ -19,7 +19,7 @@ class MultipleFeeInfoRequest(BaseSchema):
     Schema dùng chung cho phí
     """
     method_type: str = Field(..., description=f"Phương thức tính phí: {make_description_from_dict(CASA_FEE_METHODS)}")
-    account_number: str = Field(..., description='STK')
+    account_number: Optional[str] = Field(None, description='STK')
     fee_details: List[FeeDetailInfoRequest] = Field(..., description="Danh sách phí")
 
 
