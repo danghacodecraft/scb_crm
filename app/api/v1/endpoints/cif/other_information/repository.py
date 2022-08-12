@@ -54,7 +54,10 @@ async def repos_update_other_info(
     session.execute(
         update(Customer).filter(Customer.id == cif_id).values(
             legal_agreement_flag=update_other_info_req.legal_agreement_flag,
-            advertising_marketing_flag=update_other_info_req.advertising_marketing_flag
+            advertising_marketing_flag=update_other_info_req.advertising_marketing_flag,
+            mobile_number=update_other_info_req.mobile_number,
+            telephone_number=update_other_info_req.telephone_number
+
         )
     )
 
