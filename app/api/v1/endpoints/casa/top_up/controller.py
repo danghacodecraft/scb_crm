@@ -572,6 +572,7 @@ class CtrCasaTopUp(BaseController):
         )
 
         casa_top_up_info.update(
+            receiving_method=data.receiving_method,
             transfer=transfer_response,
             fee_info=fee_info_response,
             transfer_type=transfer_type_response,
