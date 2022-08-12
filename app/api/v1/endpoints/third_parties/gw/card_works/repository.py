@@ -233,3 +233,12 @@ async def repos_gw_open_cards(current_user: UserInfoResponse,
         data_input=data if data else data_input
     )
     return ReposReturn(data=gw_open_cards)
+
+
+async def repos_gw_select_card_info(current_user: UserInfoResponse,
+                                    card_branched):
+    gw_select_card_info = await service_gw.select_card_info(
+        current_user=current_user,
+        card_branched=card_branched
+    )
+    return ReposReturn(data=gw_select_card_info)
