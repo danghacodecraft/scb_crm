@@ -52,8 +52,8 @@ from app.utils.constant.business_type import (
     BUSINESS_TYPE_OPEN_CASA
 )
 from app.utils.constant.casa import (
-    CASA_ACCOUNT_STATUS_UNAPPROVED, RECEIVING_METHOD_SCB_BY_IDENTITY,
-    RECEIVING_METHOD_SCB_TO_ACCOUNT,
+    CASA_ACCOUNT_STATUS_UNAPPROVED, PAYER_RECEIVER, PAYER_TRANSFER,
+    RECEIVING_METHOD_SCB_BY_IDENTITY, RECEIVING_METHOD_SCB_TO_ACCOUNT,
     RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT,
     RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD,
     RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY,
@@ -1158,20 +1158,20 @@ class CtrGWCasaAccount(BaseController):
         current_user = self.current_user
         username = current_user.user_info.username
 
-        ben = await CtrConfigBank(current_user).ctr_get_bank_branch(bank_id=form_data['receiver_bank']['id'])
+        sender = form_data['sender']
+        receiver = form_data['receiver']
+        transfer = form_data['transfer']
+        identity_info = sender['identity_info']
+
+        ben = await CtrConfigBank(current_user).ctr_get_bank_branch(bank_id=receiver['bank']['id'])
 
         fee_info = form_data['fee_info']
-        details_of_charge = ''
+        details_of_charge = GW_DEFAULT_VALUE
         if fee_info:
-            if fee_info['is_transfer_payer'] is True:
+            if fee_info['payer'] == PAYER_TRANSFER:
                 details_of_charge = GW_ACCOUNT_CHARGE_ON_ORDERING
-            if fee_info['is_transfer_payer'] is False:
+            if fee_info['payer'] == PAYER_RECEIVER:
                 details_of_charge = GW_ACCOUNT_CHARGE_ON_RECEIVER
-
-        (
-            sender_cif_number, sender_full_name_vn, sender_address_full, sender_identity_number, sender_issued_date,
-            sender_place_of_issue
-        ) = await self.get_sender_info(form_data=form_data)
 
         data_input = {}
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
@@ -1197,7 +1197,7 @@ class CtrGWCasaAccount(BaseController):
                     },
                     "TRANSACTION_LEG": {
                         "ACCOUNT": "101101001",
-                        "AMOUNT": form_data['amount']
+                        "AMOUNT": transfer['amount']
                     },
                     "RATE": {
                         "EXCHANGE_RATE": 0,
@@ -1205,8 +1205,8 @@ class CtrGWCasaAccount(BaseController):
                         "LCY_AMOUNT": 0
                     },
                     "ADDITIONAL_INFO": {
-                        "RELATED_CUSTOMER": form_data['sender_cif_number'],
-                        "NARRATIVE": form_data['content']
+                        "RELATED_CUSTOMER": sender['cif_number'],
+                        "NARRATIVE": fee_info['note']
                     }
                 },
                 "p_blk_charge": [
@@ -1224,21 +1224,22 @@ class CtrGWCasaAccount(BaseController):
                 "p_blk_settlement_detail": {
                     "SETTLEMENTS": {
                         "TRANSFER_DETAIL": {
-                            "BENEFICIARY_ACCOUNT_NUMBER": form_data['receiver_account_number'],
-                            "BENEFICIARY_NAME": form_data['receiver_full_name_vn'],
-                            "BENEFICIARY_ADRESS": form_data['receiver_address_full'],
+                            "BENEFICIARY_ACCOUNT_NUMBER": receiver['account_number'],
+                            "BENEFICIARY_NAME": receiver['fullname_vn'],
+                            "BENEFICIARY_ADRESS": receiver['address_full'],
                             "ID_NO": '',
                             "ISSUE_DATE": "",
                             "ISSUER": ""
                         },
                         "ORDERING_CUSTOMER": {
                             "ORDERING_ACC_NO": "",
-                            "ORDERING_NAME": sender_full_name_vn,
-                            "ORDERING_ADDRESS": sender_address_full,
-                            "ID_NO": sender_identity_number,
-                            "ISSUE_DATE": date_string_to_other_date_string_format(sender_issued_date,
-                                                                                  from_format=GW_CORE_DATE_FORMAT),
-                            "ISSUER": sender_place_of_issue
+                            "ORDERING_NAME": sender['fullname_vn'],
+                            "ORDERING_ADDRESS": sender['address_full'],
+                            "ID_NO": identity_info['number'],
+                            "ISSUE_DATE": date_string_to_other_date_string_format(
+                                identity_info['issued_date'], from_format=GW_CORE_DATE_FORMAT
+                            ),
+                            "ISSUER": identity_info['place_of_issue']
                         }
                     }
                 }
@@ -1313,11 +1314,11 @@ class CtrGWCasaAccount(BaseController):
                         },
                         "ORDERING_CUSTOMER": {
                             "ORDERING_ACC_NO": "",
-                            "ORDERING_NAME": sender_full_name_vn,
-                            "ORDERING_ADDRESS": sender_address_full,
-                            "ID_NO": sender_identity_number,
-                            "ISSUE_DATE": sender_issued_date,
-                            "ISSUER": sender_place_of_issue
+                            "ORDERING_NAME": sender['fullname_vn'],
+                            "ORDERING_ADDRESS": sender['address_full'],
+                            "ID_NO": sender['identity_number'],
+                            "ISSUE_DATE": sender['issued_date'],
+                            "ISSUER": sender['place_of_issue']
                         }
                     }
                 }
