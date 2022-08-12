@@ -219,6 +219,42 @@ async def repos_save_sms_casa(
     })
 
 
+@auto_commit
+async def repos_check_and_remove_exist_sms_casa(cif_id: str, session: Session):
+    # Kiểm tra các tài khoản casa theo số cif
+    casa_account_numbers = session.execute(
+        select(
+            CasaAccount.id
+        ).filter(
+            CasaAccount.customer_id == cif_id
+        )
+    ).scalars().all()
+
+    for account_number in casa_account_numbers:
+        # 00. Kiểm tra casa_id có đăng ký reg_balance trước chưa -> xóa dữ liệu cũ.
+        exist_registry_balance = session.execute(
+            select(EBankingRegisterBalance).filter(EBankingRegisterBalance.account_id == account_number)).first()
+
+        if exist_registry_balance:
+            # 002
+            session.execute(delete(EBankingReceiverNotificationRelationship).filter(
+                EBankingReceiverNotificationRelationship.e_banking_register_balance_casa_id == exist_registry_balance.EBankingRegisterBalance.id))
+
+            # 003
+            session.execute(delete(EBankingRegisterBalanceNotification).filter(
+                EBankingRegisterBalanceNotification.eb_reg_balance_id == exist_registry_balance.EBankingRegisterBalance.id))
+
+            # 001
+            session.delete(exist_registry_balance.EBankingRegisterBalance)
+
+    # 4. Bảng reg_balance_noti_option
+    # 004, Xóa dữ liệu cũ
+    session.execute(delete(EBankingRegisterBalanceOption).filter(
+        EBankingRegisterBalanceOption.customer_id == cif_id))
+
+    return ReposReturn(data=None)
+
+
 async def repos_check_e_banking(cif_id: str, session: Session):
     e_banking_info = session.execute(select(EBankingInfo).filter(EBankingInfo.customer_id == cif_id)).first()
     return e_banking_info
@@ -230,7 +266,7 @@ async def repos_get_e_banking(cif_id: str, session: Session) -> ReposReturn:
             EBankingInfo.account_name,
             EBankingInfo.method_active_password_id,
             EBankingInfoAuthentication.method_authentication_id
-        ).join(
+        ).outerjoin(
             EBankingInfoAuthentication, EBankingInfoAuthentication.e_banking_info_id == EBankingInfo.id
         ).filter(
             EBankingInfo.customer_id == cif_id,
@@ -241,10 +277,15 @@ async def repos_get_e_banking(cif_id: str, session: Session) -> ReposReturn:
     if not e_bank_info:
         return ReposReturn(data=None)
 
+    authentication_code_list = []
+    for authentication_info in e_bank_info:
+        if authentication_info.method_authentication_id:
+            authentication_code_list.append(authentication_info.method_authentication_id)
+
     data = {
         "username": e_bank_info[0].account_name,
         "receive_password_code": e_bank_info[0].method_active_password_id,
-        "authentication_code_list": [authentication_info.method_authentication_id for authentication_info in e_bank_info]
+        "authentication_code_list": authentication_code_list
     }
 
     return ReposReturn(data=data)
@@ -288,23 +329,33 @@ async def repos_get_sms_data(cif_id: str, session: Session) -> ReposReturn:
     # mapping receiver_noti_relationship_items
     reg_balance_id__receiver_noti_relationship_items = {}
     for reg_balance_row in reg_balance_rows:
-        receiver_noti_relationship_item = {
-            "mobile_number": reg_balance_row.relationship_mobile_number,
-            "full_name": reg_balance_row.relationship_full_name,
-            "relationship_type_id": reg_balance_row.relationship_relationship_type_id
-        }
-        if reg_balance_row.reg_balance_id not in reg_balance_id__receiver_noti_relationship_items:
-            reg_balance_id__receiver_noti_relationship_items[reg_balance_row.reg_balance_id] = [receiver_noti_relationship_item]
-        elif receiver_noti_relationship_item not in reg_balance_id__receiver_noti_relationship_items[reg_balance_row.reg_balance_id]:
-            reg_balance_id__receiver_noti_relationship_items[reg_balance_row.reg_balance_id].append(receiver_noti_relationship_item)
+        # TH không có đủ thông tin MQH, không hiển thị MQH này, điền list rỗng
+        if reg_balance_row.relationship_mobile_number and reg_balance_row.relationship_full_name and reg_balance_row.relationship_relationship_type_id:
+            receiver_noti_relationship_item = {
+                "mobile_number": reg_balance_row.relationship_mobile_number,
+                "full_name": reg_balance_row.relationship_full_name,
+                "relationship_type_id": reg_balance_row.relationship_relationship_type_id
+            }
+            if reg_balance_row.reg_balance_id not in reg_balance_id__receiver_noti_relationship_items:
+                reg_balance_id__receiver_noti_relationship_items[reg_balance_row.reg_balance_id] = [receiver_noti_relationship_item]
+            elif receiver_noti_relationship_item not in reg_balance_id__receiver_noti_relationship_items[reg_balance_row.reg_balance_id]:
+                reg_balance_id__receiver_noti_relationship_items[reg_balance_row.reg_balance_id].append(receiver_noti_relationship_item)
+        # TH không có đủ thông tin MQH, không hiển thị MQH này, điền list rỗng
+        else:
+            reg_balance_id__receiver_noti_relationship_items[reg_balance_row.reg_balance_id] = []
 
     # mapping notify_code_list
     reg_balance_id__notify_code_list = {}
     for reg_balance_row in reg_balance_rows:
-        if reg_balance_row.reg_balance_id not in reg_balance_id__notify_code_list:
-            reg_balance_id__notify_code_list[reg_balance_row.reg_balance_id] = [reg_balance_row.eb_notify_id]
-        elif reg_balance_row.eb_notify_id not in reg_balance_id__notify_code_list[reg_balance_row.reg_balance_id]:
-            reg_balance_id__notify_code_list[reg_balance_row.reg_balance_id].append(reg_balance_row.eb_notify_id)
+        # TH không có thông tin, điền list rỗng
+        if reg_balance_row.eb_notify_id:
+            if reg_balance_row.reg_balance_id not in reg_balance_id__notify_code_list:
+                reg_balance_id__notify_code_list[reg_balance_row.reg_balance_id] = [reg_balance_row.eb_notify_id]
+            elif reg_balance_row.eb_notify_id not in reg_balance_id__notify_code_list[reg_balance_row.reg_balance_id]:
+                reg_balance_id__notify_code_list[reg_balance_row.reg_balance_id].append(reg_balance_row.eb_notify_id)
+        # TH không có thông tin, điền list rỗng
+        else:
+            reg_balance_id__notify_code_list[reg_balance_row.reg_balance_id] = []
 
     # mapping for response data
     registry_balance_items = []
@@ -320,8 +371,8 @@ async def repos_get_sms_data(cif_id: str, session: Session) -> ReposReturn:
                         "main_phone_number": reg_balance_row.mobile_number,
                         "customer_full_name": reg_balance_row.full_name
                     },
-                    "receiver_noti_relationship_items": reg_balance_id__receiver_noti_relationship_items[reg_balance_row.reg_balance_id],
-                    "notify_code_list": reg_balance_id__notify_code_list[reg_balance_row.reg_balance_id]
+                    "receiver_noti_relationship_items": reg_balance_id__receiver_noti_relationship_items.get(reg_balance_row.reg_balance_id),
+                    "notify_code_list": reg_balance_id__notify_code_list.get(reg_balance_row.reg_balance_id)
                 }
 
         if reg_balance_item:
