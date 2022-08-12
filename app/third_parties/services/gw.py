@@ -67,7 +67,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_SELECT_ACCOUNT_TD_BY_MOBILE_NUM,
     GW_ENDPOINT_URL_SELECT_BRANCH_BY_BRANCH_ID,
     GW_ENDPOINT_URL_SELECT_BRANCH_BY_REGION_ID,
-    GW_ENDPOINT_URL_SELECT_CATEGORY,
+    GW_ENDPOINT_URL_SELECT_CARD_INFO, GW_ENDPOINT_URL_SELECT_CATEGORY,
     GW_ENDPOINT_URL_SELECT_DATA_FOR_CHART_DASHBOARD,
     GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE,
     GW_ENDPOINT_URL_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA,
@@ -122,7 +122,8 @@ from app.utils.constant.gw import (
     GW_FUNC_SELECT_BRANCH_BY_BRANCH_ID, GW_FUNC_SELECT_BRANCH_BY_BRANCH_ID_IN,
     GW_FUNC_SELECT_BRANCH_BY_BRANCH_ID_OUT, GW_FUNC_SELECT_BRANCH_BY_REGION_ID,
     GW_FUNC_SELECT_BRANCH_BY_REGION_ID_IN,
-    GW_FUNC_SELECT_BRANCH_BY_REGION_ID_OUT,
+    GW_FUNC_SELECT_BRANCH_BY_REGION_ID_OUT, GW_FUNC_SELECT_CARD_INFO,
+    GW_FUNC_SELECT_CARD_INFO_IN, GW_FUNC_SELECT_CARD_INFO_OUT,
     GW_FUNC_SELECT_DISCIPLINE_INFO_FROM_CODE,
     GW_FUNC_SELECT_DISCIPLINE_INFO_FROM_CODE_IN,
     GW_FUNC_SELECT_DISCIPLINE_INFO_FROM_CODE_OUT,
@@ -2523,9 +2524,9 @@ class ServiceGW:
             is_open_ebank_success=is_open_ebank_success
         )
 
-########################################################################################################################
+    ###################################################################################################################
     # CardWorks
-########################################################################################################################
+    ###################################################################################################################
     async def open_cards(self, current_user: UserInfoResponse,
                          cif_number: str = None,
                          card_info=None,
@@ -2763,6 +2764,25 @@ class ServiceGW:
             api_url=api_url,
             output_key=GW_FUNC_OPEN_CARDS_OUT,
             service_name=GW_FUNC_OPEN_CARDS
+        )
+        return response_data
+
+    async def select_card_info(self, current_user: UserInfoResponse,
+                               card_branched):
+
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_SELECT_CARD_INFO_IN,
+            data_input={
+                "card_branched": card_branched
+            }
+        )
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_CARD_INFO}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_SELECT_CARD_INFO_OUT,
+            service_name=GW_FUNC_SELECT_CARD_INFO
         )
         return response_data
 
