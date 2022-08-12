@@ -66,7 +66,6 @@ class CtrWithdraw(BaseController):
         fee = request.transaction_info.fee_info
         management = request.customer_info.management_info
         sender = request.customer_info.sender_info
-
         data_input = {
             "transaction_info": {
                 "source_accounts": {
@@ -94,7 +93,6 @@ class CtrWithdraw(BaseController):
                     "cif_number": sender.cif_number,
                     "note": sender.note
                 }
-
             }
         }
         # Kiểm tra số tiền rút có đủ hay không
