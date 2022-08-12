@@ -1038,52 +1038,45 @@ class CtrGWCasaAccount(BaseController):
 
     async def ctr_tele_transfer(self, form_data, maker: str, pay_in_cash_flag: bool = True):
         current_user = self.current_user
-        receiver_place_of_issue_id = form_data['receiver_place_of_issue']['id']
-        receiver_place_of_issue = await self.get_model_object_by_id(
-            model_id=receiver_place_of_issue_id,
-            model=PlaceOfIssue,
-            loc='receiver_place_of_issue_id'
-        )
-        (
-            sender_cif_number, sender_full_name_vn, sender_address_full, sender_identity_number, sender_issued_date,
-            sender_place_of_issue
-        ) = await self.get_sender_info(form_data=form_data)
+        sender = form_data['sender']
+        receiver = form_data['receiver']
+        transfer = form_data['transfer']
 
         data_input = {
             "p_tt_type": "C" if pay_in_cash_flag else "A",
             "p_details": {
                 "TT_DETAILS": {
                     "TT_CURRENCY": "VND",
-                    "TT_AMOUNT": form_data['amount'],
+                    "TT_AMOUNT": transfer['amount'],
                     "TRANSACTION_CURRENCY": "VND"
                 },
                 "BENEFICIARY_DETAILS": {
-                    "BENEFICIARY_NAME": form_data['receiver_full_name_vn'],
-                    "BENEFICIARY_PHONE_NO": form_data['receiver_mobile_number'],
-                    "BENEFICIARY_ID_NO": form_data['receiver_identity_number'],
+                    "BENEFICIARY_NAME": receiver['fullname_vn'] if 'fullname_vn' in receiver else GW_DEFAULT_VALUE,
+                    "BENEFICIARY_PHONE_NO": receiver['mobile_number'] if 'mobile_number' in receiver else GW_DEFAULT_VALUE,
+                    "BENEFICIARY_ID_NO": receiver['identity_number'] if 'identity_number' in receiver else GW_DEFAULT_VALUE,
                     # "ID_ISSUE_DATE": date_string_to_other_date_string_format(
-                    #     date_input=form_data['receiver_issued_date'],
+                    #     date_input=receiver['issued_date'],
                     #     from_format=GW_DATE_FORMAT,
                     #     to_format=GW_CORE_DATE_FORMAT
                     # ),
-                    "ID_ISSUE_DATE": form_data['receiver_issued_date'],
-                    "ID_ISSUER": receiver_place_of_issue.name,
-                    "ADDRESS": form_data['receiver_address_full']
+                    "ID_ISSUE_DATE": receiver['issued_date'] if 'identity_number' in receiver else GW_DEFAULT_VALUE,
+                    "ID_ISSUER": transfer['receiver'] if 'identity_number' in receiver else GW_DEFAULT_VALUE,
+                    "ADDRESS": receiver['address_full'] if 'identity_number' in receiver else GW_DEFAULT_VALUE
                 },
                 "REMITTER_DETAILS": {
-                    "REMITTER_NAME": sender_full_name_vn,
-                    "REMITTER_PHONE_NO": form_data['sender_mobile_number'],
-                    "REMITTER_ID_NO": sender_identity_number,
+                    "REMITTER_NAME": sender['fullname_vn'],
+                    "REMITTER_PHONE_NO": sender['mobile_number'] if 'mobile_number' in sender else GW_DEFAULT_VALUE,
+                    "REMITTER_ID_NO": sender['identity_number'] if 'identity_number' in sender else GW_DEFAULT_VALUE,
                     "ID_ISSUE_DATE": date_string_to_other_date_string_format(
-                        date_input=sender_issued_date,
+                        date_input=sender['issued_date'],
                         from_format=GW_CORE_DATE_FORMAT,
                         to_format=GW_DATE_FORMAT
-                    ),
-                    "ID_ISSUER": sender_place_of_issue,
-                    "ADDRESS": sender_address_full
+                    ) if 'issued_date' in sender else GW_DEFAULT_VALUE,
+                    "ID_ISSUER": sender['place_of_issue'] if 'place_of_issue' in sender else GW_DEFAULT_VALUE,
+                    "ADDRESS": sender['address_full'] if 'place_of_issue' in sender else GW_DEFAULT_VALUE
                 },
                 "ADDITIONAL_DETAILS": {
-                    "NARRATIVE": form_data['content']
+                    "NARRATIVE": transfer['content']
                 }
             },
             "p_denomination": "",
@@ -1105,7 +1098,7 @@ class CtrGWCasaAccount(BaseController):
         }
         if not pay_in_cash_flag:
             data_input["p_details"]["ACCOUNT_DETAILS"] = {
-                "ACCOUNT_NUMBER": form_data['sender_account_number'],
+                "ACCOUNT_NUMBER": sender['account_number'],
                 "CHARGE_BY_CASH": "N"
             }
 
