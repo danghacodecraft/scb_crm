@@ -1246,12 +1246,6 @@ class CtrGWCasaAccount(BaseController):
             })
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
-            receiver_place_of_issue_id = form_data['receiver_place_of_issue']['id']
-            receiver_place_of_issue = await self.get_model_object_by_id(
-                model_id=receiver_place_of_issue_id,
-                model=PlaceOfIssue,
-                loc='receiver_place_of_issue_id'
-            )
             data_input.update({
                 "account_info": {
                     "account_bank_code": ben['data'][0]['id'],
@@ -1274,7 +1268,7 @@ class CtrGWCasaAccount(BaseController):
                     },
                     "TRANSACTION_LEG": {
                         "ACCOUNT": "101101001",
-                        "AMOUNT": form_data['amount']
+                        "AMOUNT": transfer['amount']
                     },
                     "RATE": {
                         "EXCHANGE_RATE": 0,
@@ -1282,8 +1276,8 @@ class CtrGWCasaAccount(BaseController):
                         "LCY_AMOUNT": 0
                     },
                     "ADDITIONAL_INFO": {
-                        "RELATED_CUSTOMER": form_data['sender_cif_number'],
-                        "NARRATIVE": form_data['content']
+                        "RELATED_CUSTOMER": sender['cif_number'],
+                        "NARRATIVE": transfer['content']
                     }
                 },
                 "p_blk_charge": [
@@ -1302,23 +1296,23 @@ class CtrGWCasaAccount(BaseController):
                     "SETTLEMENTS": {
                         "TRANSFER_DETAIL": {
                             "BENEFICIARY_ACCOUNT_NUMBER": '.',  # TODO
-                            "BENEFICIARY_NAME": form_data['receiver_full_name_vn'],
-                            "BENEFICIARY_ADRESS": form_data['receiver_address_full'],
-                            "ID_NO": form_data['receiver_identity_number'],
+                            "BENEFICIARY_NAME": receiver['fullname_vn'],
+                            "BENEFICIARY_ADRESS": receiver['address_full'],
+                            "ID_NO": receiver['identity_number'] if 'identity_number' in receiver else GW_DEFAULT_VALUE,
                             "ISSUE_DATE": date_string_to_other_date_string_format(
-                                date_input=form_data['receiver_issued_date'],
+                                date_input=receiver['issued_date'],
                                 from_format=GW_DATE_FORMAT,
                                 to_format=GW_CORE_DATE_FORMAT
-                            ),
-                            "ISSUER": receiver_place_of_issue.name
+                            ) if 'issued_date' in receiver else GW_DEFAULT_VALUE,
+                            "ISSUER": receiver['place_of_issue'] if 'place_of_issue' in receiver else GW_DEFAULT_VALUE
                         },
                         "ORDERING_CUSTOMER": {
                             "ORDERING_ACC_NO": "",
                             "ORDERING_NAME": sender['fullname_vn'],
                             "ORDERING_ADDRESS": sender['address_full'],
-                            "ID_NO": sender['identity_number'],
-                            "ISSUE_DATE": sender['issued_date'],
-                            "ISSUER": sender['place_of_issue']
+                            "ID_NO": sender['identity_number'] if 'identity_number' in sender else GW_DEFAULT_VALUE,
+                            "ISSUE_DATE": sender['issued_date'] if 'issued_date' in sender else GW_DEFAULT_VALUE,
+                            "ISSUER": sender['place_of_issue'] if 'place_of_issue' in sender else GW_DEFAULT_VALUE
                         }
                     }
                 }
