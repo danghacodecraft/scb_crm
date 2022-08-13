@@ -37,7 +37,7 @@ class FeeDetailInfoResponse(BaseSchema):
 
 class FeeInfoResponse(BaseSchema):
     method_type: str = Field(..., description=f"Phương thức tính phí: {make_description_from_dict(CASA_FEE_METHODS)}")
-    account_number: str = Field(..., description='STK')
+    account_number: Optional[str] = Field(..., description='STK')
     account_owner: str = Field(..., description="Chủ tài khoản")
     fee_details: List[FeeDetailInfoResponse] = Field(..., description="Danh sách phí")
     total_fee: int = Field(..., description="Tổng phí")

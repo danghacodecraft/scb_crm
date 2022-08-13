@@ -164,7 +164,11 @@ class CtrCasaTopUp(BaseController):
             province=dropdown(province),
             branch=dropdown(branch),
             issued_date=issued_date,
-            place_of_issue=dropdown(place_of_issue)
+            place_of_issue=dropdown(place_of_issue),
+            fullname_vn=data.receiver_full_name_vn,
+            identity_number=data.receiver_identity_number,
+            mobile_number=data.receiver_mobile_number,
+            address_full=data.receiver_address_full
         )
 
         return dict(
@@ -572,6 +576,7 @@ class CtrCasaTopUp(BaseController):
         )
 
         casa_top_up_info.update(
+            receiving_method=data.receiving_method,
             transfer=transfer_response,
             fee_info=fee_info_response,
             transfer_type=transfer_type_response,

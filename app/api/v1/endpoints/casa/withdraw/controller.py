@@ -6,27 +6,22 @@ from app.api.v1.endpoints.casa.withdraw.schema import WithdrawRequest
 from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
     CtrGWCasaAccount
 )
-from app.api.v1.endpoints.third_parties.gw.customer.controller import (
-    CtrGWCustomer
-)
 from app.api.v1.endpoints.third_parties.gw.employee.controller import (
     CtrGWEmployee
 )
 from app.api.v1.others.booking.controller import CtrBooking
+from app.api.v1.others.sender.controller import CtrPaymentSender
 from app.api.v1.validator import validate_history_data
 from app.utils.constant.business_type import BUSINESS_TYPE_WITHDRAW
 from app.utils.constant.cif import (
     CHECK_CONDITION_VAT, CHECK_CONDITION_WITHDRAW,
     PROFILE_HISTORY_DESCRIPTIONS_WITHDRAW, PROFILE_HISTORY_STATUS_INIT
 )
-from app.utils.constant.gw import GW_DATE_FORMAT, GW_DATETIME_FORMAT
 from app.utils.error_messages import (
     ERROR_AMOUNT_INVALID, ERROR_CASA_ACCOUNT_NOT_EXIST,
     ERROR_CASA_BALANCE_UNAVAILABLE
 )
-from app.utils.functions import (
-    date_string_to_other_date_string_format, orjson_dumps, orjson_loads
-)
+from app.utils.functions import orjson_dumps, orjson_loads
 
 
 class CtrWithdraw(BaseController):
@@ -65,7 +60,19 @@ class CtrWithdraw(BaseController):
         account = request.transaction_info.source_accounts
         fee = request.transaction_info.fee_info
         management = request.customer_info.management_info
-        sender = request.customer_info.sender_info
+        sender_info = request.customer_info.sender_info
+
+        # Thông tin khách hàng giao dịch
+        sender_response = await CtrPaymentSender(self.current_user).get_payment_sender(
+            sender_cif_number=sender_info.cif_number,
+            sender_full_name_vn=sender_info.fullname_vn,
+            sender_address_full=sender_info.address_full,
+            sender_identity_number=sender_info.identity,
+            sender_issued_date=sender_info.issued_date,
+            sender_mobile_number=sender_info.mobile_phone,
+            sender_place_of_issue=sender_info.place_of_issue,
+            sender_note=sender_info.note
+        )
         data_input = {
             "transaction_info": {
                 "source_accounts": {
@@ -88,11 +95,7 @@ class CtrWithdraw(BaseController):
                     "direct_staff_code": management.direct_staff_code,
                     "indirect_staff_code": management.indirect_staff_code,
                 },
-                "sender_info": {
-                    "cif_flag": sender.cif_flag,
-                    "cif_number": sender.cif_number,
-                    "note": sender.note
-                }
+                "sender_info": sender_response
             }
         }
         # Kiểm tra số tiền rút có đủ hay không
@@ -313,45 +316,11 @@ class CtrWithdraw(BaseController):
         ################################################################################################################
         # Thông tin khách hàng giao dịch
         ################################################################################################################
-        cif_flag = form_data['customer_info']['sender_info']['cif_flag']
-        sender_response = {}
-        customer_info = form_data['customer_info']['sender_info']
-
-        if cif_flag:
-            cif_number = form_data['customer_info']['sender_info']['cif_number']
-            gw_customer_info = await CtrGWCustomer(current_user).ctr_gw_get_customer_info_detail(
-                cif_number=cif_number,
-                return_raw_data_flag=True
-            )
-            gw_customer_info_identity_info = gw_customer_info['id_info']
-            gw_customer_info_address_info = gw_customer_info['p_address_info']
-
-            sender_response.update(
-                cif_flag=cif_flag,
-                cif_number=cif_number,
-                full_name_vn=gw_customer_info['full_name'],
-                address_full=gw_customer_info_address_info['address_full'],
-                identity=gw_customer_info_identity_info['id_num'],
-                issued_date=date_string_to_other_date_string_format(
-                    date_input=gw_customer_info_identity_info['id_issued_date'],
-                    from_format=GW_DATETIME_FORMAT,
-                    to_format=GW_DATE_FORMAT
-                ),
-                place_of_issue=gw_customer_info_identity_info['id_issued_location'],
-                mobile_phone=gw_customer_info['mobile_phone'],
-                note=customer_info['note']
-            )
+        sender_response = form_data['customer_info']['sender_info']
+        if sender_response['cif_number']:
+            sender_response.update(cif_flag=True)
         else:
-            sender_response.update(
-                cif_flag=cif_flag,
-                full_name_vn=customer_info['fullname_vn'],
-                address_full=customer_info['address_full'],
-                identity=customer_info['identity'],
-                issued_date=customer_info['issued_date'],
-                place_of_issue=customer_info['place_of_issue'],
-                mobile_phone=customer_info['mobile_phone'],
-                note=customer_info['note']
-            )
+            sender_response.update(cif_flag=False)
 
         response_data = dict(
             casa_account=dict(
