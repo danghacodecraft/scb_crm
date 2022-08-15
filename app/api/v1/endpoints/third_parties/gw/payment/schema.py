@@ -125,6 +125,10 @@ class AccountAmountBlockResponse(PaymentSuccessResponse):
     fee_info: FeeInfoResponse = Field(..., description="Phương thức tính phí")
 
 
+class AccountAmountBlockPDResponse(PaymentSuccessResponse):
+    booking_id: str = Field(..., description="Booking_id")
+
+
 class GWCasaTransferAccountResponse(BaseSchema):
     booking_id: str = Field(..., description="Booking")
     p_contract_ref: Optional[str] = Field(..., description="Mã hợp đồng")
