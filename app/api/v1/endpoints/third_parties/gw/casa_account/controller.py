@@ -925,8 +925,13 @@ class CtrGWCasaAccount(BaseController):
             form_data
     ):
         current_user = self.current_user
+        sender = form_data['sender']
+        receiver = form_data['receiver']
+        transfer = form_data['transfer']
+        identity_info = sender['identity_info']
         current_user_info = current_user.user_info
-        sender_place_of_issue_id = form_data['sender_place_of_issue']['id']
+
+        sender_place_of_issue_id = identity_info['place_of_issue']['id']
         # sender_place_of_issue = await self.get_model_object_by_id(
         #     model_id=sender_place_of_issue_id,
         #     model=PlaceOfIssue,
@@ -935,10 +940,9 @@ class CtrGWCasaAccount(BaseController):
 
         data_input = {
             "account_info": {
-                # "account_num": form_data['receiver_account_number'],
-                "account_num": form_data['receiver_account_number'],
+                "account_num": receiver['account_number'],
                 "account_currency": "VND",  # TODO: hiện tại chuyển tiền chỉ dùng tiền tệ VN
-                "account_opening_amount": form_data['amount']
+                "account_opening_amount": transfer['amount']
             },
             "p_blk_denomination": "",
             "p_blk_charge": [
@@ -959,19 +963,19 @@ class CtrGWCasaAccount(BaseController):
                 },
                 {
                     "UDF_NAME": "CMND_PASSPORT",
-                    "UDF_VALUE": form_data['sender_identity_number'] if form_data['sender_identity_number'] else ''
+                    "UDF_VALUE": identity_info['number'] if identity_info['number'] else ''
                 },
                 {
                     "UDF_NAME": "NGAY_CAP",
-                    "UDF_VALUE": form_data['sender_issued_date'] if form_data['sender_issued_date'] else ''
+                    "UDF_VALUE": identity_info['issued_date'] if identity_info['issued_date'] else ''
                 },
                 {
                     "UDF_NAME": "NOI_CAP",
-                    "UDF_VALUE": sender_place_of_issue_id
+                    "UDF_VALUE": sender_place_of_issue_id if sender_place_of_issue_id else ''  # TODO
                 },
                 {
                     "UDF_NAME": "DIA_CHI",
-                    "UDF_VALUE": form_data['sender_address_full']
+                    "UDF_VALUE": sender['address_full']
                 },
                 {
                     "UDF_NAME": "THU_PHI_DICH_VU",
@@ -979,7 +983,7 @@ class CtrGWCasaAccount(BaseController):
                 },
                 {
                     "UDF_NAME": "TEN_KHACH_HANG",
-                    "UDF_VALUE": form_data['sender_full_name_vn']
+                    "UDF_VALUE": sender['fullname_vn']
                 },
                 {
                     "UDF_NAME": "TY_GIA_GD_DOI_UNG_HO",
@@ -1029,6 +1033,7 @@ class CtrGWCasaAccount(BaseController):
                 "staff_name": maker
             }
         }
+
         gw_pay_in_cash = self.call_repos(await repos_gw_pay_in_cash(
             data_input=data_input,
             current_user=current_user

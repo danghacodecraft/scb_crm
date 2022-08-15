@@ -208,17 +208,18 @@ class CtrDashboard(BaseController):
         for booking, booking_business_form in withdraw_infos:
             form_data = orjson_loads(booking_business_form.form_data)
             customer_info = form_data['customer_info']['sender_info']
-            cif_number = customer_info['cif_number']
+            cif_number = customer_info['cif_number'] if 'cif_number' in customer_info else None
             withdraw__cif_numbers.append(cif_number)
 
         withdraw_cif_infos = self.call_repos(await repos_get_customers_by_cif_number(
             cif_numbers=withdraw__cif_numbers,
             session=self.oracle_session
         ))
-
         for booking, booking_business_form in withdraw_infos:
             form_data = orjson_loads(booking_business_form.form_data)
-            cif_number = form_data['customer_info']['sender_info']['cif_number']
+            customer_info = form_data['customer_info']['sender_info']
+            cif_number = customer_info['cif_number'] \
+                if 'cif_number' in customer_info else None
             for cif_info in withdraw_cif_infos:
                 if cif_number == cif_info.cif_number:
                     mapping_datas[booking.id].update(
@@ -229,7 +230,7 @@ class CtrDashboard(BaseController):
                     mapping_datas[booking.id]['business_type'].update(
                         numbers=[dict(
                             number=customer_info['cif_number'],
-                            approval_status=customer_info['cif_flag']
+                            approval_status=customer_info['cif_flag'] if 'cif_flag' in customer_info else None
                         )]
                     )
 
