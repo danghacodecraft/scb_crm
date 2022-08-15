@@ -5,22 +5,16 @@ from pydantic import Field, validator
 
 from app.api.base.schema import ResponseRequestSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
-from app.api.v1.schemas.utils import DropdownRequest, DropdownResponse
+from app.api.v1.others.fee.schema import (
+    FeeDetailInfoResponse, OneFeeInfoRequest
+)
+from app.api.v1.schemas.utils import (
+    DropdownRequest, DropdownResponse, OptionalDropdownResponse
+)
 from app.utils.functions import is_valid_mobile_number
 from app.utils.regex import (
     MAX_LENGTH_TRANSFER_CONTENT, REGEX_NUMBER_ONLY, REGEX_TRANSFER_CONTENT
 )
-
-
-class FeeInfoRequest(ResponseRequestSchema):
-    is_transfer_payer: Optional[bool] = Field(
-        ..., description="Bên thanh toán phí "
-                         "<br/>`true`: Bên chuyển "
-                         "<br/>`false`: Bên nhận "
-                         "<br/>`null`: Không thu phí cùng giao dịch"
-    )
-    fee_amount: Optional[int] = Field(..., description="Số tiền phí")
-    note: Optional[str] = Field(..., description="Ghi chú")
 
 
 # Common
@@ -35,7 +29,7 @@ class CasaTransferCommonRequest(ResponseRequestSchema):
     sender_mobile_number: Optional[str] = Field(None, description="Số điện thoại", regex=REGEX_NUMBER_ONLY)
     receiving_method: str = Field(None, description="Hình thức nhận")
     is_fee: bool = Field(..., description="Có thu phí không")
-    fee_info: Optional[FeeInfoRequest] = Field(..., description="Thông tin phí")
+    fee_info: Optional[OneFeeInfoRequest] = Field(..., description="Thông tin phí")
     direct_staff_code: Optional[str] = Field(..., description="Mã nhân viên kinh doanh")
     indirect_staff_code: Optional[str] = Field(..., description="Mã nhân viên quản lý gián tiếp")
     amount: int = Field(..., description="Số tiền")
@@ -175,22 +169,10 @@ class TransferResponse(ResponseRequestSchema):
     entry_number: Optional[str] = Field(..., description="Số bút toán")
 
 
-class FeeInfoResponse(ResponseRequestSchema):
-    is_transfer_payer: Optional[bool] = Field(..., description="`true`: Có thu phí cùng giao dịch, Bên thanh toán phí: Bên chuyển"
-                                              "`false`: Có thu phí cùng giao dịch, Bên thanh toán phí: Bên nhận"
-                                              "`null`: Không thu phí cùng giao dịch")
-    payer: Optional[str] = Field(..., description="Bên thanh toán phí")
-    fee_amount: Optional[int] = Field(..., description="Số tiền phí")
-    vat_tax: Optional[float] = Field(..., description="Thuế VAT")
-    total: Optional[float] = Field(..., description="Tổng số tiền phí")
-    actual_total: Optional[float] = Field(..., description="Số tiền thực chuyển")
-    note: Optional[str] = Field(..., description="Ghi chú")
-
-
 class IdentityInfoResponse(ResponseRequestSchema):
     number: Optional[str] = Field(..., description="Số GTDD")
     issued_date: Optional[str] = Field(..., description="Ngày cấp")
-    place_of_issue: Optional[DropdownResponse] = Field(..., description="Nơi cấp")
+    place_of_issue: OptionalDropdownResponse = Field(..., description="Nơi cấp")
 
 
 class CustomerResponse(ResponseRequestSchema):
@@ -213,7 +195,7 @@ class CasaTransferResponse(ResponseRequestSchema):
     transfer_type: TransferTypeResponse = Field(..., description="Loại chuyển")
     receiver: ReceiverResponse = Field(..., description="Thông tin người thụ hưởng")
     transfer: TransferResponse = Field(..., description="Thông tin giao dịch")
-    fee_info: FeeInfoResponse = Field(..., description="Thông tin phí")
+    fee_info: FeeDetailInfoResponse = Field(None, description="Thông tin phí")
     sender: CustomerResponse = Field(..., description="Thông tin khách hàng giao dịch")
     direct_staff: StaffInfoResponse = Field(..., description="Thông tin khách hàng giao dịch")
     indirect_staff: StaffInfoResponse = Field(..., description="Thông tin khách hàng giao dịch")

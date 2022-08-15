@@ -26,7 +26,7 @@ class CtrPaymentSender(BaseController):
             sender_issued_date: Optional[str],
             sender_mobile_number: Optional[str],
             sender_place_of_issue: Optional[DropdownRequest],
-            sender_note: Optional[str]
+            sender_note: Optional[str] = None
     ):
         if sender_cif_number:
             gw_customer_info = await CtrGWCustomer(self.current_user).ctr_gw_get_customer_info_detail(
