@@ -128,14 +128,54 @@ async def repos_payment_amount_block(
 
 
 async def repos_gw_payment_amount_block(
-    current_user,
-    request_data_gw,
-    booking_id,
-    session: Session
+        current_user,
+        request_data_gw,
+        booking_id,
+        session: Session
 ):
     for item in request_data_gw.get('account_amount_blocks'):
+        data_input = {
+            "account_info": {
+                "account_num": item['account_number']
+            },
+            "p_blk_detail": {
+                "AMOUNT": item['amount'],
+                "AMOUNT_BLOCK_TYPE": item['amount_block_type'],
+                "HOLD_CODE": item['hold_code'],
+                "EFFECTIVE_DATE": item['effective_date'],
+                "EXPIRY_DATE": item['expiry_date'] if item['expiry_date'] else "",
+                "REMARKS": item['remarks'],
+                "VERIFY_AVAILABLE_BALANCE": item['verify_available_balance'],
+                "CHARGE_DETAIL": {
+                    "TYPE_CHARGE": "",
+                    "ACCOUNT_CHARGE": ""
+                }
+            },
+            # TODO chưa được mô tả
+            "p_blk_charge": "",
+            # TODO chưa được mô tả
+            "p_blk_udf": [
+                {
+                    "UDF_NAME": "",
+                    "UDF_VALUE": "",
+                    "AMOUNT_BLOCK": {
+                        "UDF_NAME": "",
+                        "UDF_VALUE": ""
+                    }
+                }
+            ],
+            "staff_info_checker": {
+                # TODO hard core
+                "staff_name": "HOANT2"
+            },
+            "staff_info_maker": {
+                # TODO hard core
+                "staff_name": "KHANHLQ"
+            }
+        }
+
         is_success, gw_payment_amount_block = await service_gw.gw_payment_amount_block(
-            current_user=current_user.user_info, data_input=item
+            current_user=current_user.user_info, data_input=data_input
         )
         # lưu form data request GW
         saving_booking_business_form = {
@@ -181,7 +221,8 @@ async def repos_gw_payment_amount_block(
             return ReposReturn(
                 is_error=True,
                 msg=ERROR_CALL_SERVICE_GW,
-                loc='PAYMENT_AMOUNT_BLOCK'
+                loc='PAYMENT_AMOUNT_BLOCK',
+                detail=gw_payment_amount_block.get(GW_FUNC_AMOUNT_BLOCK_OUT).get('transaction_info').get('transaction_error_msg')
             )
 
         # amount_block = gw_payment_amount_block.get(GW_FUNC_AMOUNT_BLOCK_OUT).get('data_output')
