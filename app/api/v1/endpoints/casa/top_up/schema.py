@@ -35,6 +35,7 @@ class CasaTopUpCommonRequest(ResponseRequestSchema):
     sender_mobile_number: Optional[str] = Field(None, description="Số điện thoại", regex=REGEX_NUMBER_ONLY)
     receiving_method: str = Field(None, description=f"Hình thức nhận: {make_description_from_dict(RECEIVING_METHODS)}")
     fee_info: Optional[OneFeeInfoRequest] = Field(..., description="Thông tin phí")
+    fee_note: Optional[str] = Field(None, description="Ghi chú phí")
     statement: List[StatementInfoRequest] = Field(..., description="Thông tin bảng kê")
     direct_staff_code: Optional[str] = Field(..., description="Mã nhân viên kinh doanh")
     indirect_staff_code: Optional[str] = Field(..., description="Mã nhân viên quản lý gián tiếp")
