@@ -612,9 +612,6 @@ class CtrCasaTransfer(BaseController):
         )
         ################################################################################################################
 
-        print('4323423543')
-        print(casa_transfer_info)
-
         response_data = dict(
             transfer_type=transfer_type_response,
             receiver=casa_transfer_info,
@@ -625,9 +622,6 @@ class CtrCasaTransfer(BaseController):
             direct_staff=direct_staff,
             indirect_staff=indirect_staff,
         )
-
-        print('12321343')
-        print(response_data)
 
         history_datas = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_TRANSFER_CASA_ACCOUNT,
