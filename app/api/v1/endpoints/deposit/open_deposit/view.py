@@ -7,7 +7,7 @@ from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.casa.schema import SaveCasaSuccessResponse
 from app.api.v1.endpoints.deposit.open_deposit.controller import CtrDeposit
 from app.api.v1.endpoints.deposit.open_deposit.schema import (
-    DepositOpenTDAccountRequest, DepositPayInRequest
+    DepositOpenTDAccountRequest, DepositPayInRequest, DepositPayInResponse
 )
 
 router = APIRouter()
@@ -44,12 +44,31 @@ async def view_save_deposit_open_td_account(
     )
 )
 async def view_save_deposit_pay_in(
-        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),
+        booking_id: str = Header(..., description="Mã phiên giao dịch", alias="BOOKING-ID"),
         deposit_pay_in_request: DepositPayInRequest = Body(...),
         current_user=Depends(get_current_user_from_header())
 ):
     save_pay_in = await CtrDeposit(current_user=current_user).ctr_save_deposit_pay_in(
-        BOOKING_ID=BOOKING_ID,
+        booking_id=booking_id,
         deposit_pay_in_request=deposit_pay_in_request
     )
-    return ResponseData(**save_pay_in)
+    return ResponseData[SaveCasaSuccessResponse](**save_pay_in)
+
+
+@router.get(
+    path="/pay-in/",
+    name="[DEPOSIT] Nguồn tiền",
+    description="[DEPOSIT] Nguồn tiền",
+    responses=swagger_response(
+        response_model=ResponseData[DepositPayInResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_get_deposit_pay_in(
+        booking_id: str = Header(..., description="Mã phiên giao dịch", alias="BOOKING-ID"),
+        current_user=Depends(get_current_user_from_header())
+):
+    get_pay_in = await CtrDeposit(current_user=current_user).ctr_get_deposit_pay_in(
+        booking_id=booking_id
+    )
+    return ResponseData[DepositPayInResponse](**get_pay_in)
