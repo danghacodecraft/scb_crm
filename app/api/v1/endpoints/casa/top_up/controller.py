@@ -78,6 +78,7 @@ class CtrCasaTopUp(BaseController):
             session=self.oracle_session
         ))
         form_data = orjson_loads(get_casa_top_up_info.form_data)
+        # print(form_data[])
         return self.response(data=form_data)
 
     async def ctr_save_casa_top_up_scb_to_account(
@@ -534,12 +535,10 @@ class CtrCasaTopUp(BaseController):
         )
 
         # Thông tin phí
-        fee_info_request = data.fee_info
-        fee_info_response = None
-        if fee_info_request:
-            fee_info_response = await CtrAccountFee().calculate_fee(
-                one_fee_info_request=fee_info_request
-            )
+
+        fee_info_response = await CtrAccountFee().calculate_fee(
+            one_fee_info_request=data.fee_info, fee_note=data.fee_note
+        )
 
         statement_response = await CtrStatement().ctr_get_statement_info(statement_requests=data.statement)
 

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from app.api.base.controller import BaseController
 from app.api.v1.others.fee.repository import repos_get_fee_detail
 from app.api.v1.others.fee.schema import (
@@ -77,14 +79,12 @@ class CtrAccountFee(BaseController):
 
     async def calculate_fee(
             self,
-            one_fee_info_request: OneFeeInfoRequest
+            one_fee_info_request: OneFeeInfoRequest,
+            fee_note: Optional[str] = None
     ):
         """
         Tính phí dành cho MỘT loại phí
         """
-
-        if one_fee_info_request.payer not in PAYMENT_PAYERS:
-            return self.response_exception(msg=ERROR_PAYER_NOT_EXIST)
 
         fee_info_response = dict(
             is_fee=False,
@@ -93,9 +93,13 @@ class CtrAccountFee(BaseController):
             vat_tax=None,
             total=None,
             actual_total=None,
-            note=one_fee_info_request.note
+            note=fee_note
         )
+
         if one_fee_info_request:
+            if one_fee_info_request.payer not in PAYMENT_PAYERS:
+                return self.response_exception(msg=ERROR_PAYER_NOT_EXIST)
+
             amount = one_fee_info_request.amount
             vat = amount / 10
             total = amount + vat
@@ -108,7 +112,7 @@ class CtrAccountFee(BaseController):
                 vat=vat,
                 total=total,
                 actual_total=actual_total,
-                note=one_fee_info_request.note
+                note=fee_note
             )
 
         return fee_info_response
