@@ -11,6 +11,7 @@ BUSINESS_TYPE_CASA_TOP_UP = "CASA_TOP_UP"
 BUSINESS_TYPE_CASA_TRANSFER = "TRANSFER"
 BUSINESS_TYPE_SEC = "SEC"
 BUSINESS_TYPE_OPEN_SEC = "OPEN_SEC"
+BUSINESS_TYPE_REDEEM_OPEN_TD = "REDEEM_OPEN_TD"
 
 BUSINESS_TYPES = {
     BUSINESS_TYPE_INIT_CIF: "Mở CIF",
@@ -25,7 +26,7 @@ BUSINESS_TYPES = {
     BUSINESS_TYPE_CASA_TRANSFER: "Chuyển khoản tài khoản thanh toán",
     BUSINESS_TYPE_SEC: "Phát hành SEC",
     BUSINESS_TYPE_OPEN_SEC: "Phát hành SEC",
-    BUSINESS_TYPE_TD_ACCOUNT_OPEN_ACCOUNT: "Mở mới tài khoản tiết kiệm"
+    BUSINESS_TYPE_REDEEM_OPEN_TD: "Tất toán - Mở mới tài khoản tiết kiệm"
 }
 
 # Những business type không cần dùng cif
