@@ -1,5 +1,9 @@
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from app.api.base.repository import ReposReturn
 from app.settings.event import service_ekyc
+from app.third_parties.oracle.models.eKYC.model import EKYCCustomer
 from app.utils.error_messages import ERROR_CALL_SERVICE_EKYC
 
 
@@ -121,7 +125,21 @@ async def repos_create_post_check(payload_data: dict) -> ReposReturn:
             detail=str(response.get('post_control'))
         )
 
-    return ReposReturn(data=response)
+    return ReposReturn(data=(is_success, response))
+
+
+async def repos_check_customer(
+    customer_ekyc_id: str,
+    session: Session
+):
+    customer = session.execute(
+        select(
+            EKYCCustomer
+        ).filter(
+            EKYCCustomer.customer_id == customer_ekyc_id
+        )
+    ).scalar()
+    return ReposReturn(data=customer)
 
 
 async def repos_get_post_control(query_params) -> ReposReturn:
