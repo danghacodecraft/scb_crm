@@ -1,4 +1,7 @@
 from app.api.base.controller import BaseController
+from app.api.v1.endpoints.approval.repository import (
+    repos_get_booking_business_form_by_booking_id
+)
 from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
     repos_get_customer_by_cif_number
 )
@@ -22,10 +25,19 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_TD_ACCOUNT,
     PROFILE_HISTORY_STATUS_INIT
 )
-from app.utils.functions import generate_uuid, now, orjson_dumps
+from app.utils.functions import generate_uuid, now, orjson_dumps, orjson_loads
 
 
 class CtrDeposit(BaseController):
+    async def ctr_get_deposit_pay_in(self, booking_id: str):
+        booking_business_form = self.call_repos(await repos_get_booking_business_form_by_booking_id(
+            booking_id=booking_id,
+            business_form_id=BUSINESS_FORM_OPEN_TD_ACCOUNT_PAY,
+            session=self.oracle_session
+        ))
+
+        return self.response(data=orjson_loads(booking_business_form.form_data))
+
     async def ctr_save_deposit_open_td_account(
             self,
             BOOKING_ID,
