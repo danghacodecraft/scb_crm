@@ -33,6 +33,9 @@ from app.third_parties.oracle.models.cif.e_banking.model import (
 from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingBusinessForm, TransactionDaily, TransactionSender
 )
+from app.third_parties.oracle.models.cif.other_information.model import (
+    CustomerEmployee
+)
 from app.third_parties.oracle.models.cif.payment_account.model import (
     CasaAccount
 )
@@ -50,19 +53,21 @@ from app.utils.constant.approval import (
 from app.utils.constant.cif import (
     BUSINESS_FORM_DEBIT_CARD, BUSINESS_FORM_EB, BUSINESS_FORM_OPEN_CIF_PD,
     BUSINESS_FORM_SMS_CASA, CUSTOMER_COMPLETED_FLAG, CUSTOMER_TYPE_ORGANIZE,
-    IMAGE_TYPE_FACE, RESIDENT_ADDRESS_CODE
+    IMAGE_TYPE_FACE, RESIDENT_ADDRESS_CODE, STAFF_TYPE_BUSINESS_CODE
 )
 from app.utils.constant.debit_card import (
-    ATM_CARD_ACCOUNT_PROVIDER, CRM_CUST_TITLE_MR,
-    CRM_DELIVERY_ADDRESS_FLAG_FALSE, GW_CUST_TITLE_MR, GW_CUST_TITLE_MRS,
-    MAIN_CARD, MC_VS_CREDIT_CARD_ACCOUNT_PROVIDER
+    CRM_CUST_TITLE_MR, CRM_DELIVERY_ADDRESS_FLAG_FALSE, GW_CUST_TITLE_MR,
+    GW_CUST_TITLE_MRS, GW_DEFAULT_ATM_CARD_ACCOUNT_PROVIDER,
+    GW_DEFAULT_CARD_AUTO_RENEW, GW_DEFAULT_CARD_BILL_OPTION,
+    GW_DEFAULT_CARD_RELATION_TO_PRIMARY,
+    GW_DEFAULT_CARD_STATEMENT_DELIVERY_OPTION, GW_DEFAULT_CARD_TYPE, MAIN_CARD
 )
 from app.utils.constant.gw import (
     GW_AUTO, GW_CUSTOMER_TYPE_B, GW_CUSTOMER_TYPE_I, GW_DATE_FORMAT,
-    GW_DEFAULT_CUSTOMER_CATEGORY, GW_DEFAULT_KHTC_DOI_TUONG,
-    GW_DEFAULT_TYPE_ID, GW_DEFAULT_VALUE, GW_LANGUAGE, GW_LOCAL_CODE,
-    GW_NO_AGREEMENT_FLAG, GW_NO_MARKETING_FLAG, GW_SELECT, GW_UDF_NAME, GW_YES,
-    GW_YES_AGREEMENT_FLAG
+    GW_DEFAULT_CUSTOMER_CATEGORY, GW_DEFAULT_KHTC_DOI_TUONG, GW_DEFAULT_NO,
+    GW_DEFAULT_TYPE_ID, GW_DEFAULT_VALUE, GW_DEFAULT_YES, GW_LANGUAGE,
+    GW_LOCAL_CODE, GW_NO_AGREEMENT_FLAG, GW_NO_MARKETING_FLAG, GW_SELECT,
+    GW_UDF_NAME, GW_YES, GW_YES_AGREEMENT_FLAG
 )
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_GW, ERROR_NO_DATA, ERROR_OPEN_CIF
@@ -262,6 +267,7 @@ async def repos_get_customer_open_cif(
             CustomerIndividualInfo,
             CustomerAddress,
             CustomerProfessional,
+            CustomerEmployee,
             AddressWard,
             AddressDistrict,
             AddressProvince,
@@ -276,6 +282,7 @@ async def repos_get_customer_open_cif(
         .join(AddressProvince, CustomerAddress.address_province_id == AddressProvince.id)
         .join(AddressCountry, CustomerAddress.address_country_id == AddressCountry.id)
         .outerjoin(CustomerProfessional, Customer.customer_professional_id == CustomerProfessional.id)
+        .outerjoin(CustomerEmployee, Customer.id == CustomerEmployee.customer_id)
         .outerjoin(AverageIncomeAmount, CustomerProfessional.average_income_amount_id == AverageIncomeAmount.id)
         .filter(Customer.id == cif_id)
     ).all()
@@ -947,7 +954,7 @@ async def repos_push_sms_casa_to_gw(booking_id: str, session: Session, current_u
 
 
 async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user, cif_id: str, cif_number: str,
-                                 response_customers, maker_staff_name):
+                                 casa_account_number, response_customers, maker_staff_name):
     card_result = await repos_debit_card(
         cif_id=cif_id, session=session)
     if card_result.is_error:
@@ -963,23 +970,23 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
     debit_card_id = card_data['debit_card_id']
     customer_info = response_customers[0]
 
-    # @TODO: hard code card_type, card_auto_renew, Quan hệ với thẻ chính, Tên mẹ của khách hàng
+    # @TODO: card_auto_renew, Quan hệ với thẻ chính, Tên mẹ của khách hàng
     # @TODO: Câu hỏi bí mật, Nơi nhân hóa đơn, Nơi nhân sao kê
     card_info = {
         "card_indicator": MAIN_CARD,
-        "card_type": "MDP",
-        "card_auto_renew": "N",
+        "card_type": GW_DEFAULT_CARD_TYPE,
+        "card_auto_renew": GW_DEFAULT_CARD_AUTO_RENEW,
         "card_release_form": "N" if card_data["issue_debit_card"]["physical_issuance_type"]["code"] else "Q",
         "card_block_online_trans": "Y" if card_data["issue_debit_card"]["payment_online_flag"] else "N",
         "card_contact_less": "Y" if card_data["issue_debit_card"]["physical_card_type"][0]["code"] == 1 else "N",
-        "card_relation_to_primany": "W",
-        "card_mother_name": "NGUYEN VAN A",
-        "card_secure_question": "NGUYEN VAN A",
-        "card_bill_option": "H",
-        "card_statement_delivery_option": "B",
+        "card_relation_to_primany": GW_DEFAULT_CARD_RELATION_TO_PRIMARY,
+        "card_mother_name": customer_info.Customer.full_name_vn,
+        "card_secure_question": customer_info.Customer.full_name_vn,
+        "card_bill_option": GW_DEFAULT_CARD_BILL_OPTION,
+        "card_statement_delivery_option": GW_DEFAULT_CARD_STATEMENT_DELIVERY_OPTION,
 
         # additional field
-        "account_type": MC_VS_CREDIT_CARD_ACCOUNT_PROVIDER if card_data["issue_debit_card"]["branch_of_card"] else ATM_CARD_ACCOUNT_PROVIDER,
+        "account_type": GW_DEFAULT_ATM_CARD_ACCOUNT_PROVIDER,
         "title": GW_CUST_TITLE_MR if customer_info.CustomerIndividualInfo.title_id == CRM_CUST_TITLE_MR else GW_CUST_TITLE_MRS,
         "full_name_vn": f'{card_data["information_debit_card"]["name_on_card"]["last_name_on_card"]} '
                         f'{card_data["information_debit_card"]["name_on_card"]["middle_name_on_card"]} '
@@ -989,8 +996,8 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
         "middle_name": card_data["information_debit_card"]["name_on_card"]["middle_name_on_card"],
 
         # địa chỉ nhận thẻ
-        "delivByBrchInd": GW_YES_AGREEMENT_FLAG
-        if card_data["card_delivery_address"]["delivery_address_flag"] == CRM_DELIVERY_ADDRESS_FLAG_FALSE else GW_NO_AGREEMENT_FLAG,
+        "delivByBrchInd": GW_DEFAULT_YES
+        if card_data["card_delivery_address"]["delivery_address_flag"] == CRM_DELIVERY_ADDRESS_FLAG_FALSE else GW_DEFAULT_NO,
         "address_info_line": card_data["card_delivery_address"]["delivery_address"]["number_and_street"],
         "address_info_ward_name": card_data["card_delivery_address"]["delivery_address"]["ward"],
         "address_info_district_name": card_data["card_delivery_address"]["delivery_address"]["district"],
@@ -1000,12 +1007,25 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
         "delivBrchId": card_data["card_delivery_address"]["scb_branch"]["name"]
     }
 
+    # Thông tin nhân viên giới thiệu
+    direct_staff = ""
+    indirect_staff = ""
+    for row in response_customers:
+        if row.CustomerEmployee:
+            if row.CustomerEmployee.staff_type_id == STAFF_TYPE_BUSINESS_CODE:
+                direct_staff = row.CustomerEmployee.employee_id
+            else:
+                indirect_staff = row.CustomerEmployee.employee_id
+
     is_success, response_data = await service_gw.open_cards(
         current_user=current_user.user_info,
         cif_number=cif_number,
+        casa_account_number=casa_account_number,
         card_info=card_info,
         customer_info=response_customers[0],
-        maker_staff_name=maker_staff_name
+        maker_staff_name=maker_staff_name,
+        direct_staff=direct_staff,
+        indirect_staff=indirect_staff
     )
 
     await repos_save_bussiness_form_and_transaction_jobs(

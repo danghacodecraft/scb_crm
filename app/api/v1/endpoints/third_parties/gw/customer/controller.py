@@ -919,12 +919,17 @@ class CtrGWCustomer(BaseController):
                     cif_number = self.call_repos(await repos_get_cif_number_open_cif(
                         cif_id=cif_id, session=self.oracle_session))
 
+                if not casa_account_number:
+                    casa_account_number = self.call_repos(await repos_get_casa_account_number_open_cif(
+                        cif_id=cif_id, session=self.oracle_session))
+
                 result = await repos_push_debit_to_gw(
                     booking_id=BOOKING_ID,
                     session=self.oracle_session,
                     current_user=self.current_user,
                     cif_id=cif_id,
                     cif_number=cif_number,
+                    casa_account_number=casa_account_number,
                     response_customers=response_customers,
                     maker_staff_name=maker_staff_name
                 )
