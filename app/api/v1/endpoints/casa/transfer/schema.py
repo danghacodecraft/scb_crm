@@ -113,6 +113,7 @@ class CasaTransferThirdParty247ToAccountRequest(CasaTransferThirdPartyRequest):
     """
     Ngoài SCB 24/7 tài khoản
     """
+    receiver_address_full: Optional[str] = Field(None, description="Địa chỉ", max_length=100)
     receiver_account_number: str = Field(..., description="Số tài khoản", regex=REGEX_NUMBER_ONLY)
     receiver_full_name: str = Field(None, description="Họ tên người nhận (Không cần truyền)")
 
@@ -121,6 +122,7 @@ class CasaTransferThirdParty247ToCardRequest(CasaTransferThirdPartyRequest):
     """
     Ngoài SCB 24/7 số thẻ
     """
+    receiver_address_full: Optional[str] = Field(None, description="Địa chỉ", max_length=100)
     receiver_card_number: str = Field(..., description="Số thẻ")
     receiver_full_name: str = Field(None, description="Họ tên người nhận (Không cần truyền)")
 
