@@ -1,4 +1,5 @@
 import json
+from datetime import date
 from typing import Union
 
 from app.api.base.controller import BaseController
@@ -180,7 +181,7 @@ class CtrCasaTransfer(BaseController):
             branch_info=dropdown(receiver_branch_info),
             fullname_vn=data.receiver_full_name_vn,
             identity_number=data.receiver_identity_number,
-            issued_date=data.receiver_issued_date,
+            issued_date=date_to_string(data.receiver_issued_date),
             place_of_issue=dropdown(receiver_place_of_issue),
             mobile_phone=data.receiver_mobile_number,
             address_full=data.receiver_address_full
@@ -587,6 +588,9 @@ class CtrCasaTransfer(BaseController):
             sender_place_of_issue=data.sender_place_of_issue
         )
 
+        if isinstance(sender_response['identity_info']['issued_date'], date):
+            sender_response['identity_info']['issued_date'] = date_to_string(sender_response['identity_info']['issued_date'])
+
         sender_response['account_number'] = data.sender_account_number
 
         controller_gw_employee = CtrGWEmployee(current_user)
@@ -632,6 +636,7 @@ class CtrCasaTransfer(BaseController):
                 loc=history_response['loc'],
                 detail=history_response['detail']
             )
+
         # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CASA
         transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
             business_type_id=BUSINESS_TYPE_CASA_TRANSFER,
