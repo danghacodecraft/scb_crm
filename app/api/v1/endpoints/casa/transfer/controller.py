@@ -631,8 +631,6 @@ class CtrCasaTransfer(BaseController):
                 loc=history_response['loc'],
                 detail=history_response['detail']
             )
-        print('hgha')
-        print(response_data)
 
         # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CASA
         transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
