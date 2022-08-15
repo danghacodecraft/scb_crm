@@ -183,7 +183,7 @@ class CtrCasaTransfer(BaseController):
             identity_number=data.receiver_identity_number,
             issued_date=date_to_string(data.receiver_issued_date),
             place_of_issue=dropdown(receiver_place_of_issue),
-            mobile_phone=data.receiver_mobile_number,
+            mobile_phone=data.receiver_mobile_number if data.receiver_mobile_number in data else None,
             address_full=data.receiver_address_full
         )
 
@@ -329,7 +329,7 @@ class CtrCasaTransfer(BaseController):
             identity_number=data.receiver_identity_number,
             issued_date=date_to_string(data.receiver_issued_date),
             place_of_issue=dropdown(receiver_place_of_issue),
-            mobile_phone=data.receiver_mobile_number,
+            mobile_phone=data.receiver_mobile_number if data.receiver_mobile_number else None,
             address_full=data.receiver_address_full
         )
 
