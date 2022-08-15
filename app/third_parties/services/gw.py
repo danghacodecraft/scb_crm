@@ -2731,7 +2731,7 @@ class ServiceGW:
                     "city_name": card_info["address_info_city_name"] if card_info["address_info_city_name"] else "",
                     "country_name": GW_DEFAULT_VALUE
                 },
-                "delivBrchId": "SGN"  # card_info["delivBrchId"]
+                "delivBrchId": card_info["delivBrchId"]
             },
             "spouse_company_info": {
                 "spcName": GW_DEFAULT_VALUE,

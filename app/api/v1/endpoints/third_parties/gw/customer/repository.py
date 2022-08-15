@@ -60,7 +60,8 @@ from app.utils.constant.debit_card import (
     GW_CUST_TITLE_MRS, GW_DEFAULT_ATM_CARD_ACCOUNT_PROVIDER,
     GW_DEFAULT_CARD_AUTO_RENEW, GW_DEFAULT_CARD_BILL_OPTION,
     GW_DEFAULT_CARD_RELATION_TO_PRIMARY,
-    GW_DEFAULT_CARD_STATEMENT_DELIVERY_OPTION, GW_DEFAULT_CARD_TYPE, MAIN_CARD
+    GW_DEFAULT_CARD_STATEMENT_DELIVERY_OPTION, GW_DEFAULT_CARD_TYPE,
+    GW_DEFAULT_NORMAL, GW_DEFAULT_QUICK, MAIN_CARD
 )
 from app.utils.constant.gw import (
     GW_AUTO, GW_CUSTOMER_TYPE_B, GW_CUSTOMER_TYPE_I, GW_DATE_FORMAT,
@@ -976,9 +977,9 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
         "card_indicator": MAIN_CARD,
         "card_type": GW_DEFAULT_CARD_TYPE,
         "card_auto_renew": GW_DEFAULT_CARD_AUTO_RENEW,
-        "card_release_form": "N" if card_data["issue_debit_card"]["physical_issuance_type"]["code"] else "Q",
-        "card_block_online_trans": "Y" if card_data["issue_debit_card"]["payment_online_flag"] else "N",
-        "card_contact_less": "Y" if card_data["issue_debit_card"]["physical_card_type"][0]["code"] == 1 else "N",
+        "card_release_form": GW_DEFAULT_NORMAL if card_data["issue_debit_card"]["physical_issuance_type"]["code"] else GW_DEFAULT_QUICK,
+        "card_block_online_trans": GW_DEFAULT_YES if card_data["issue_debit_card"]["payment_online_flag"] else GW_DEFAULT_NO,
+        "card_contact_less": GW_DEFAULT_YES if card_data["issue_debit_card"]["physical_card_type"][0]["code"] == 1 else GW_DEFAULT_NO,
         "card_relation_to_primany": GW_DEFAULT_CARD_RELATION_TO_PRIMARY,
         "card_mother_name": customer_info.Customer.full_name_vn,
         "card_secure_question": customer_info.Customer.full_name_vn,
@@ -1004,7 +1005,7 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
         "address_info_city_name": card_data["card_delivery_address"]["delivery_address"]["province"],
 
         # thông tin chi nhánh nhận thẻ
-        "delivBrchId": card_data["card_delivery_address"]["scb_branch"]["name"]
+        "delivBrchId": card_data["card_delivery_address"]["scb_branch"]["id"]
     }
 
     # Thông tin nhân viên giới thiệu
