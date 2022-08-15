@@ -53,7 +53,7 @@ from app.utils.constant.idm import (
 )
 from app.utils.error_messages import (
     ERROR_BANK_NOT_IN_CITAD, ERROR_BANK_NOT_IN_NAPAS,
-    ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_MAPPING_MODEL, ERROR_NOT_NULL,
+    ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_MAPPING_MODEL,
     ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
 )
 from app.utils.functions import (
@@ -459,8 +459,6 @@ class CtrCasaTransfer(BaseController):
     ):
         data = request.data
         receiving_method = request.receiving_method
-        is_fee = data.is_fee
-        fee_info = data.fee_info
         direct_staff_code = data.direct_staff_code
         indirect_staff_code = data.indirect_staff_code
         current_user = self.current_user
@@ -484,10 +482,6 @@ class CtrCasaTransfer(BaseController):
             check_correct_booking_flag=False,
             loc=f'booking_id: {booking_id}'
         )
-
-        if is_fee and (not fee_info or fee_info.amount is None or fee_info.payer is None):
-            return self.response_exception(msg=ERROR_NOT_NULL, loc="fee_info")
-            # TODO: Case cho bên chuyển/ Bên nhận
 
         if direct_staff_code:
             gw_direct_staffs = await CtrSelectCategory(current_user).ctr_select_category(
@@ -578,12 +572,9 @@ class CtrCasaTransfer(BaseController):
         )
 
         # Thông tin phí
-        fee_info_request = data.fee_info
-        fee_info_response = None
-        if fee_info_request:
-            fee_info_response = await CtrAccountFee().calculate_fee(
-                one_fee_info_request=fee_info_request
-            )
+        fee_info_response = await CtrAccountFee().calculate_fee(
+            one_fee_info_request=data.fee_info, fee_note=data.fee_note
+        )
 
         # Thông tin khách hàng giao dịch
         sender_response = await CtrPaymentSender(self.current_user).get_payment_sender(
@@ -622,6 +613,7 @@ class CtrCasaTransfer(BaseController):
             receiver=casa_transfer_info,
             transfer=transfer_response,
             fee_info=fee_info_response,
+            fee_note=data.fee_note,
             sender=sender_response,
             direct_staff=direct_staff,
             indirect_staff=indirect_staff,
