@@ -63,10 +63,12 @@ async def repos_save_td_account(
 
 @auto_commit
 async def repos_update_td_account(
-    booking_id,
-    update_td_account,
-    session
+    booking_id: str,
+    update_td_account: dict,
+    saving_booking_business_form: dict,
+    session: Session
 ):
     session.bulk_update_mappings(TdAccount, update_td_account)
+    session.add(BookingBusinessForm(**saving_booking_business_form))
 
     return ReposReturn(data=booking_id)
