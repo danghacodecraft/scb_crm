@@ -57,8 +57,7 @@ from app.utils.error_messages import (
     ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
 )
 from app.utils.functions import (
-    date_to_string, dropdown, generate_uuid, now, orjson_dumps, orjson_loads,
-    string_to_date
+    date_to_string, dropdown, generate_uuid, now, orjson_dumps, orjson_loads
 )
 from app.utils.vietnamese_converter import (
     convert_to_unsigned_vietnamese, make_short_name, split_name
@@ -181,7 +180,7 @@ class CtrCasaTransfer(BaseController):
             branch_info=dropdown(receiver_branch_info),
             fullname_vn=data.receiver_full_name_vn,
             identity_number=data.receiver_identity_number,
-            issued_date=string_to_date(data.receiver_issued_date),
+            issued_date=data.receiver_issued_date,
             place_of_issue=dropdown(receiver_place_of_issue),
             mobile_phone=data.receiver_mobile_number,
             address_full=data.receiver_address_full
@@ -597,7 +596,6 @@ class CtrCasaTransfer(BaseController):
             sender_place_of_issue=data.sender_place_of_issue
         )
 
-        sender_response['identity_info']['issued_date'] = date_to_string(sender_response['identity_info']['issued_date'])
         sender_response['account_number'] = data.sender_account_number
 
         controller_gw_employee = CtrGWEmployee(current_user)
