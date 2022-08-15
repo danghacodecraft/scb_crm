@@ -1,4 +1,5 @@
 import json
+from datetime import date
 from typing import Union
 
 from app.api.base.controller import BaseController
@@ -586,6 +587,10 @@ class CtrCasaTransfer(BaseController):
             sender_mobile_number=data.sender_mobile_number,
             sender_place_of_issue=data.sender_place_of_issue
         )
+
+        if isinstance(sender_response['identity_info']['issued_date'], date):
+            sender_response['identity_info']['issued_date'] = date_to_string(sender_response['identity_info']['issued_date'])
+
         sender_response['account_number'] = data.sender_account_number
 
         controller_gw_employee = CtrGWEmployee(current_user)
@@ -607,6 +612,9 @@ class CtrCasaTransfer(BaseController):
         )
         ################################################################################################################
 
+        print('4323423543')
+        print(casa_transfer_info)
+
         response_data = dict(
             transfer_type=transfer_type_response,
             receiver=casa_transfer_info,
@@ -617,6 +625,9 @@ class CtrCasaTransfer(BaseController):
             direct_staff=direct_staff,
             indirect_staff=indirect_staff,
         )
+
+        print('12321343')
+        print(response_data)
 
         history_datas = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_TRANSFER_CASA_ACCOUNT,
