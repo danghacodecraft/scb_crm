@@ -93,7 +93,7 @@ class CtrAccountFee(BaseController):
             vat_tax=None,
             total=None,
             actual_total=None,
-            note=None
+            note=one_fee_info_request.note
         )
         if one_fee_info_request:
             amount = one_fee_info_request.amount
