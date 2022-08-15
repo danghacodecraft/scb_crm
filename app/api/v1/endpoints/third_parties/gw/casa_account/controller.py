@@ -1037,8 +1037,6 @@ class CtrGWCasaAccount(BaseController):
 
     async def ctr_tele_transfer(self, form_data, maker: str, pay_in_cash_flag: bool = True):
         current_user = self.current_user
-        print(form_data)
-        print('hgha')
         receiver = form_data['receiver']
         sender = form_data['sender']
         sender_identity_info = sender['identity_info']

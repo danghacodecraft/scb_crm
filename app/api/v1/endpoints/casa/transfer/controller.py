@@ -73,8 +73,7 @@ class CtrCasaTransfer(BaseController):
         ))
 
         form_data = orjson_loads(get_casa_transfer_info.form_data)
-        print('hehe')
-        print(form_data)
+
         return self.response(form_data)
 
     async def ctr_save_casa_transfer_scb_to_account(
@@ -629,9 +628,6 @@ class CtrCasaTransfer(BaseController):
             direct_staff=direct_staff,
             indirect_staff=indirect_staff,
         )
-
-        print(response_data)
-        print('dailbcon ga')
 
         history_datas = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_TRANSFER_CASA_ACCOUNT,
