@@ -10,15 +10,6 @@ from app.api.v1.schemas.utils import (
 )
 
 
-class CardTypeResponse(BaseSchema):
-    id: str = Field(..., description="id")
-    code: str = Field(..., description="code")
-    name: str = Field(..., description="Tên loại thẻ")
-    source_code: str = Field(..., description="Mã source")
-    promo_code: str = Field(..., description="Mã promo")
-    active_flag: bool = Field(..., description="cờ hoạt động")
-
-
 class NameOnCardResponse(BaseSchema):
     last_name_on_card: str = Field(..., description="Tên")
     middle_name_on_card: str = Field(None, description="tên lót")
@@ -42,7 +33,8 @@ class IssueDebitCardResponse(BaseSchema):
     branch_of_card: DropdownResponse = Field(None, description="Thương hiệu thẻ")
     issuance_fee: DropdownResponse = Field(None, description="Phí phat hành thẻ")
     annual_fee: DropdownResponse = Field(None, description="Phí thường niên")
-    debit_card_types: List[CardTypeResponse] = Field(None, description="Danh sách loại thẻ phát hành")
+    src_code: str = Field(..., description="Mã source")
+    pro_code: str = Field(..., description="Mã promo")
 
 
 class InformationDebitCardResponse(BaseSchema):
@@ -100,7 +92,8 @@ class IssueDebitRequest(BaseSchema):
     branch_of_card: DropdownRequest = Field(..., description="Thương hiệu thẻ")
     issuance_fee: DropdownRequest = Field(..., description="Phí phat hành thẻ")
     annual_fee: DropdownRequest = Field(..., description="Phí thường niên")
-    debit_card_type_id: str = Field(..., description="id loại thẻ phát hành")
+    src_code: str = Field(..., description="Mã source")
+    pro_code: str = Field(..., description="Mã promo")
 
 
 class CardDeliveryAddressRequest(BaseSchema):
@@ -134,14 +127,6 @@ class DebitCardRequest(BaseSchema):
     information_debit_card: InformationDebitCardRequest = Field(..., description="Thông tin thẻ ")
     card_delivery_address: CardDeliveryAddressRequest = Field(..., description="Địa chỉ nhân thẻ ")
     information_sub_debit_card: Optional[InformationSubDebitCardRequest] = Field(None, description="Thông tin thẻ phụ")
-
-
-class ListCardTypeResponse(BaseSchema):
-    id: str = Field(..., description="id")
-    code: str = Field(..., description="code")
-    name: str = Field(..., description="Tên loại thẻ")
-    source_code: str = Field(..., description="Mã source")
-    promo_code: str = Field(..., description="Mã promo")
 
 
 class SubCusResponse(BaseSchema):

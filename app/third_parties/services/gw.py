@@ -2544,7 +2544,8 @@ class ServiceGW:
                          customer_info,
                          maker_staff_name: str,
                          direct_staff: str,
-                         indirect_staff: str
+                         indirect_staff: str,
+                         casa_currency_number: str
                          ):
 
         # mapping các field đúng với Card core
@@ -2607,7 +2608,7 @@ class ServiceGW:
                 "prStat": resident_pr_stat,
                 "vsExpDate": GW_DEFAULT_VISA_EXPIRE_DATE,
                 "education": GW_DEFAULT_CUSTOMER_EDUCATION,
-                "customer_type": "02"
+                "customer_type": card_info["card_customer_type"]
             },
             "id_info": {
                 "id_name": identity_code,
@@ -2616,9 +2617,8 @@ class ServiceGW:
                 "id_issued_location": customer_info.CustomerIdentity.place_of_issue_id,
                 "id_issued_date": datetime_to_string(customer_info.CustomerIdentity.issued_date, _format="%Y-%m-%d"),
             },
-            # @TODO: tạm hard, chờ API select card
-            "srcCde": "DM412",
-            "promoCde": "P404",
+            "srcCde": card_info["srcCde"],
+            "promoCde": card_info["promoCde"],
             "branch_issued": {
                 "branhch_code": current_user.hrm_branch_code
             },
@@ -2760,14 +2760,13 @@ class ServiceGW:
                 "emerMobileNo": customer_info.Customer.mobile_number,
                 "emerRelt": GW_DEFAULT_emerRelt
             },
-            # @TODO: hard code casaCurCde
             "card_addon_data": {
                 "payMeth": GW_DEFAULT_ZERO,
                 "payCASA": GW_DEFAULT_ZERO,
                 "payAmt": GW_DEFAULT_ZERO,
                 "casaAcctNo": casa_account_number,
                 "casaAcctTyp": GW_DEFAULT_casaAcctTyp,
-                "casaCurCde": "704",
+                "casaCurCde": casa_currency_number,
                 "recomCrdNo": GW_DEFAULT_VALUE,
                 "recomName": GW_DEFAULT_VALUE,
                 "remark": GW_DEFAULT_VALUE,

@@ -43,7 +43,7 @@ from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
 )
 from app.third_parties.oracle.models.master_data.others import (
-    AverageIncomeAmount, TransactionJob
+    AverageIncomeAmount, Currency, TransactionJob
 )
 from app.utils.constant.approval import (
     BUSINESS_JOB_CODE_CASA_INFO, BUSINESS_JOB_CODE_CIF_INFO,
@@ -985,6 +985,9 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
         "card_secure_question": customer_info.Customer.full_name_vn,
         "card_bill_option": GW_DEFAULT_CARD_BILL_OPTION,
         "card_statement_delivery_option": GW_DEFAULT_CARD_STATEMENT_DELIVERY_OPTION,
+        "card_customer_type": card_data["issue_debit_card"]["customer_type"].id,
+        "srcCde": card_data["issue_debit_card"]["src_code"],
+        "promoCde": card_data["issue_debit_card"]["pro_code"],
 
         # additional field
         "account_type": GW_DEFAULT_ATM_CARD_ACCOUNT_PROVIDER,
@@ -1018,6 +1021,9 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
             else:
                 indirect_staff = row.CustomerEmployee.employee_id
 
+    # Loại tiền tệ của TKTT
+    casa_currency_number = await repos_get_casa_account_currency_number(session=session, cif_id=cif_id)
+
     is_success, response_data = await service_gw.open_cards(
         current_user=current_user.user_info,
         cif_number=cif_number,
@@ -1026,7 +1032,8 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
         customer_info=response_customers[0],
         maker_staff_name=maker_staff_name,
         direct_staff=direct_staff,
-        indirect_staff=indirect_staff
+        indirect_staff=indirect_staff,
+        casa_currency_number=casa_currency_number.data
     )
 
     await repos_save_bussiness_form_and_transaction_jobs(
@@ -1086,11 +1093,32 @@ async def repos_get_casa_account_number_open_cif(cif_id: str, session: Session):
     if not casa_account_number:
         return ReposReturn(
             is_error=True,
-            loc="open_cif -> push e-bank and sms casa to gw -> casa_account_number",
+            loc="open_cif -> repos_push_debit_to_gw -> casa_account_number",
             msg=ERROR_NO_DATA
         )
 
     return ReposReturn(data=casa_account_number)
+
+
+async def repos_get_casa_account_currency_number(session: Session, cif_id: str):
+
+    currency_info = session.execute(
+        select(
+            CasaAccount,
+            Currency.number
+        )
+        .outerjoin(Currency, CasaAccount.currency_id == Currency.id)
+        .filter(CasaAccount.customer_id == cif_id)
+    ).first()
+
+    if not currency_info:
+        return ReposReturn(
+            is_error=True,
+            loc="open_cif -> push e-bank and sms casa to gw -> repos_get_casa_account_currency_number",
+            msg=ERROR_NO_DATA
+        )
+
+    return ReposReturn(data=currency_info.number)
 
 
 @auto_commit

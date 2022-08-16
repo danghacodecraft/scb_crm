@@ -144,6 +144,7 @@ class Currency(Base):
     id = Column('currency_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "), comment='Mã tiền tệ')
     code = Column('currency_code', VARCHAR(50), nullable=False, comment='Mã tiền tệ code ( vd: VND..)')
     name = Column('currency_name', VARCHAR(255), nullable=False, comment='Tên tiền tệ')
+    number = Column('currency_num', VARCHAR(50), nullable=False, comment='Mã số ( vd: VND..)')
     active_flag = Column('currency_active_flag', NUMBER(1, 0, False), comment='Cờ kích hoạt tiền tệ')
     country_code = Column('country_code', VARCHAR(50), nullable=False, comment="Quốc gia")
     order_no = Column(NUMBER(3, 2, True), comment='Thứ tự sắp xếp')

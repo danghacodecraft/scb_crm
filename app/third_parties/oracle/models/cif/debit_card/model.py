@@ -75,6 +75,8 @@ class DebitCard(Base):
     parent_card = relationship('DebitCard', remote_side=[id])
     approval_status = Column('approval_status', NUMBER(1, 0, False), nullable=False, default=0,
                              comment='Trạng thái phê duyệt thẻ ghi nợ')
+    src_code = Column('card_src_code', VARCHAR(36), comment='Source Code loại thẻ')
+    pro_code = Column('card_pro_code', VARCHAR(36), comment='Promote Code loại thẻ')
 
 
 class DebitCardType(Base):
