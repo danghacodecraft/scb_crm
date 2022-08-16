@@ -125,6 +125,7 @@ class CasaTopUpThirdParty247ToCardRequest(CasaTopUpThirdPartyCommonRequest):
 
 
 class CasaTopUpRequest(ResponseRequestSchema):
+    customer_cif_number: str = CustomField().CIFNumberField
     receiving_method: str = Field(..., description=f"Hình thức nhận: {make_description_from_dict(RECEIVING_METHODS)}")
     data: Union[
         CasaTopUpSCBByIdentityRequest,
