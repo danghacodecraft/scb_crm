@@ -73,12 +73,12 @@ class CtrAccountFee(BaseController):
             total_fee += total
 
             fee_detail_request = fee_detail_request.dict()
-
             fee_detail_request.update(
                 fee=dropdown(fee_detail),
                 fee_category=dropdown(fee_detail.category),
                 vat=vat,
                 total=total,
+                note=fee_detail_request['content'],
                 ref_num="ABCDEF",    # TODO: Số bút toán
             )
 

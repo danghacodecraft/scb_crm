@@ -153,6 +153,7 @@ class TransferTypeResponse(ResponseRequestSchema):
 
 class ReceiverResponse(ResponseRequestSchema):
     account_number: Optional[str] = Field(None, description="Số tài khoản")
+    card_number: Optional[str] = Field(None, description="Số thẻ")
     fullname_vn: Optional[str] = Field(None, description="Chủ tài khoản")
     bank: DropdownCodeNameResponse = Field(None, description="Ngân hàng")
     bank_branch: Optional[str] = Field(None, description="Chi nhánh ngân hàng")
