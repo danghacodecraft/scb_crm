@@ -7,6 +7,7 @@ from sqlalchemy.sql.functions import count
 
 from app.api.base.repository import ReposReturn
 from app.api.v1.endpoints.user.schema import UserInfoResponse
+from app.third_parties.oracle.models.booking.model import BookingAuthentication
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
 )
@@ -296,3 +297,14 @@ async def repos_get_customer_from_booking_account_amount_block(booking_id: str, 
         .filter(Booking.id == booking_id)
     ).scalars().first()
     return ReposReturn(data=customer)
+
+
+async def repos_get_booking_authentications(booking_id: str, session: Session):
+    booking_authentications = session.execute(
+        select(
+            BookingAuthentication
+        )
+        .filter(BookingAuthentication.booking_id == booking_id)
+        .order_by(BookingAuthentication.image_type_id, BookingAuthentication.created_at.desc())
+    ).scalars().all()
+    return ReposReturn(data=booking_authentications)

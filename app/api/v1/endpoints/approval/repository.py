@@ -4,6 +4,7 @@ from sqlalchemy import and_, desc, select, update
 from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn, auto_commit
+from app.third_parties.oracle.models.booking.model import BookingAuthentication
 from app.third_parties.oracle.models.cif.basic_information.identity.model import (
     CustomerCompareImage, CustomerCompareImageTransaction, CustomerIdentity,
     CustomerIdentityImage, CustomerIdentityImageTransaction
@@ -96,6 +97,7 @@ async def repos_approve(
         saving_transaction_stage_phase: dict,
         saving_transaction_stage_role: dict,
         saving_transaction_sender: dict,
+        saving_booking_authentications: List,
         is_stage_init: bool,
         session: Session
 ):
@@ -125,7 +127,7 @@ async def repos_approve(
         transaction_root_id=saving_transaction_daily_root_id,
     ))
 
-    session.add_all([
+    insert_list = [
         TransactionStageStatus(**saving_transaction_stage_status),
         TransactionStageAction(**saving_transaction_stage_action),
         SlaTransaction(**saving_sla_transaction),
@@ -135,7 +137,13 @@ async def repos_approve(
         TransactionStagePhase(**saving_transaction_stage_phase),
         TransactionStageRole(**saving_transaction_stage_role),
         TransactionSender(**saving_transaction_sender)
-    ])
+    ]
+
+    if saving_booking_authentications:
+        for saving_booking_authentication in saving_booking_authentications:
+            insert_list.append(BookingAuthentication(**saving_booking_authentication))
+
+    session.add_all(insert_list)
 
     if business_type_id not in BUSINESS_TYPES:
         return ReposReturn(is_error=True, msg=f"business_type_id={business_type_id} not in {BUSINESS_TYPES}")
@@ -148,6 +156,8 @@ async def repos_approve(
         .filter(Booking.id == booking_id)
         .values(transaction_id=saving_transaction_daily['transaction_id'])
     )
+
+    session.flush()
 
     return ReposReturn(data={
         "cif_id": cif_id
