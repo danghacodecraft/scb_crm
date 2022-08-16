@@ -35,6 +35,7 @@ class IssueDebitCardResponse(BaseSchema):
     annual_fee: DropdownResponse = Field(None, description="Phí thường niên")
     src_code: str = Field(..., description="Mã source")
     pro_code: str = Field(..., description="Mã promo")
+    card_group: str = Field(..., description="Loại thẻ")
 
 
 class InformationDebitCardResponse(BaseSchema):
@@ -94,6 +95,7 @@ class IssueDebitRequest(BaseSchema):
     annual_fee: DropdownRequest = Field(..., description="Phí thường niên")
     src_code: str = Field(..., description="Mã source")
     pro_code: str = Field(..., description="Mã promo")
+    card_group: str = Field(..., description="Loại thẻ")
 
 
 class CardDeliveryAddressRequest(BaseSchema):

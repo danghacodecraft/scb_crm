@@ -77,6 +77,7 @@ class DebitCard(Base):
                              comment='Trạng thái phê duyệt thẻ ghi nợ')
     src_code = Column('card_src_code', VARCHAR(36), comment='Source Code loại thẻ')
     pro_code = Column('card_pro_code', VARCHAR(36), comment='Promote Code loại thẻ')
+    card_group = Column('card_group', VARCHAR(36), comment='Loại thẻ')
 
 
 class DebitCardType(Base):

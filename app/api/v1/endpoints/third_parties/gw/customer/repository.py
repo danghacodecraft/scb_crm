@@ -60,8 +60,8 @@ from app.utils.constant.debit_card import (
     GW_CUST_TITLE_MRS, GW_DEFAULT_ATM_CARD_ACCOUNT_PROVIDER,
     GW_DEFAULT_CARD_AUTO_RENEW, GW_DEFAULT_CARD_BILL_OPTION,
     GW_DEFAULT_CARD_RELATION_TO_PRIMARY,
-    GW_DEFAULT_CARD_STATEMENT_DELIVERY_OPTION, GW_DEFAULT_CARD_TYPE,
-    GW_DEFAULT_NORMAL, GW_DEFAULT_QUICK, MAIN_CARD
+    GW_DEFAULT_CARD_STATEMENT_DELIVERY_OPTION, GW_DEFAULT_NORMAL,
+    GW_DEFAULT_QUICK, MAIN_CARD
 )
 from app.utils.constant.gw import (
     GW_AUTO, GW_CUSTOMER_TYPE_B, GW_CUSTOMER_TYPE_I, GW_DATE_FORMAT,
@@ -975,7 +975,7 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
     # @TODO: Câu hỏi bí mật, Nơi nhân hóa đơn, Nơi nhân sao kê
     card_info = {
         "card_indicator": MAIN_CARD,
-        "card_type": GW_DEFAULT_CARD_TYPE,
+        "card_type": card_data["issue_debit_card"]["card_group"],
         "card_auto_renew": GW_DEFAULT_CARD_AUTO_RENEW,
         "card_release_form": GW_DEFAULT_NORMAL if card_data["issue_debit_card"]["physical_issuance_type"]["code"] else GW_DEFAULT_QUICK,
         "card_block_online_trans": GW_DEFAULT_YES if card_data["issue_debit_card"]["payment_online_flag"] else GW_DEFAULT_NO,

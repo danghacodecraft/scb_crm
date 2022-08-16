@@ -47,6 +47,7 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
             DebitCard.card_delivery_address_flag,
             DebitCard.src_code,
             DebitCard.pro_code,
+            DebitCard.card_group,
             DebitCardType.card_id,
             DebitCardType.card_type_id,
             CardType,
@@ -117,6 +118,7 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
                 "annual_fee": dropdown(item.CardIssuanceFee),  # TODO
                 "src_code": item.src_code,
                 "pro_code": item.pro_code,
+                "card_group": item.card_group,
             }
             information_debit_card = {
                 "name_on_card": {
