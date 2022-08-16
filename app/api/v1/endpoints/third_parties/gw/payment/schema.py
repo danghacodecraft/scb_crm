@@ -51,9 +51,18 @@ class AccountAmountUnblock(BaseSchema):
                                                         description="Chi tiết giải tỏa một phần (NULL nếu giải tỏa toàn phần)")
 
 
-class AccountAmountUnblockRequest(BaseSchema):
+class AccountUnlockRequest(BaseSchema):
     account_number: str = Field(...)
     account_amount_block: List[AccountAmountUnblock] = Field(...)
+
+
+class TransactionFeeInfoRequest(BaseSchema):
+    fee_info: List[MultipleFeeInfoRequest] = Field(..., description="Phương thức tính phí")
+
+
+class AccountAmountUnblockRequest(BaseSchema):
+    account_unlock: List[AccountUnlockRequest] = Field(..., description="Danh sách tài khoản")
+    transaction_fee_info: TransactionFeeInfoRequest = Field(..., description="Thông tin thanh toán phí giao dịch")
 
 
 class PBlkChargeRequest(BaseSchema):
