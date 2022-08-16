@@ -316,14 +316,13 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
         # Thông tin Phí
         ################################################################################################################
         fee_info_request = request.transaction_fee_info.fee_info
-        for fee_info in fee_info_request:
-            saving_fee_info = await self.calculate_fees(
-                fee_info_request=fee_info,
-                business_type_id=BUSINESS_TYPE_AMOUNT_UNBLOCK
-            )
-            request_data.append({
-                "fee_info": saving_fee_info
-            })
+        saving_fee_info = await self.calculate_fees(
+            fee_info_request=fee_info_request,
+            business_type_id=BUSINESS_TYPE_AMOUNT_UNBLOCK
+        )
+        request_data.append({
+            "fee_info": saving_fee_info
+        })
 
         saving_booking_account = []
         saving_booking_customer = []
