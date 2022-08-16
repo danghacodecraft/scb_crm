@@ -13,7 +13,8 @@ from app.api.v1.endpoints.third_parties.gw.payment.repository import (
     repos_payment_amount_block, repos_payment_amount_unblock
 )
 from app.api.v1.endpoints.third_parties.gw.payment.schema import (
-    AccountAmountBlockRequest, RedeemAccountRequest
+    AccountAmountBlockRequest, AccountAmountUnblockRequest,
+    RedeemAccountRequest
 )
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.fee.controller import CtrAccountFee
@@ -226,7 +227,7 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
     async def ctr_payment_amount_unblock(
             self,
             BOOKING_ID: str,
-            account_amount_unblocks: list
+            request: AccountAmountUnblockRequest
     ):
         # Kiểm tra booking
         await CtrBooking().ctr_get_booking_and_validate(
@@ -240,7 +241,7 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
         request_data = []
         account_ref = []
         account_numbers = []
-        for account_number in account_amount_unblocks:
+        for account_number in request.account_unlock:
             if account_number.account_number in account_numbers:
                 return self.response_exception(msg="Duplicate Account_number", detail=f"Account_number {account_number.account_number}")
 
@@ -310,6 +311,19 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
                         "staff_name": "KHANHLQ"
                     }
                 })
+
+        ################################################################################################################
+        # Thông tin Phí
+        ################################################################################################################
+        fee_info_request = request.transaction_fee_info.fee_info
+        for fee_info in fee_info_request:
+            saving_fee_info = await self.calculate_fees(
+                fee_info_request=fee_info,
+                business_type_id=BUSINESS_TYPE_AMOUNT_UNBLOCK
+            )
+            request_data.append({
+                "fee_info": saving_fee_info
+            })
 
         saving_booking_account = []
         saving_booking_customer = []
