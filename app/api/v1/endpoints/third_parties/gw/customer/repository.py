@@ -985,7 +985,7 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
         "card_secure_question": customer_info.Customer.full_name_vn,
         "card_bill_option": GW_DEFAULT_CARD_BILL_OPTION,
         "card_statement_delivery_option": GW_DEFAULT_CARD_STATEMENT_DELIVERY_OPTION,
-        "card_customer_type": card_data["issue_debit_card"]["customer_type"].id,
+        "card_customer_type": card_data["issue_debit_card"]["customer_type"]["id"],
         "srcCde": card_data["issue_debit_card"]["src_code"],
         "promoCde": card_data["issue_debit_card"]["pro_code"],
 
