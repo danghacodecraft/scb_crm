@@ -643,7 +643,6 @@ class CtrGWCasaAccount(BaseController):
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
             is_success, gw_response_data = await self.ctr_gw_pay_in_cash_247_by_acc_num(
-                booking_id=booking_id,
                 maker=maker,
                 form_data=form_data
             )
@@ -658,7 +657,6 @@ class CtrGWCasaAccount(BaseController):
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
             is_success, gw_response_data = await self.ctr_gw_pay_in_cash_247_by_card_num(
-                booking_id=booking_id,
                 maker=maker,
                 form_data=form_data
             )
@@ -1331,7 +1329,6 @@ class CtrGWCasaAccount(BaseController):
 
     async def ctr_gw_pay_in_cash_247_by_acc_num(
             self,
-            booking_id: str,
             maker: str,
             form_data: dict
     ):
@@ -1356,7 +1353,7 @@ class CtrGWCasaAccount(BaseController):
             },
             "trans_date": datetime_to_string(now()),
             "time_stamp": datetime_to_string(now()),
-            "trans_id": booking_id,
+            "trans_id": "01002123456_123456",  # TODO hard code ffc_booking_code
             "amount": form_data['fee_info']['actual_total'],
             "description": transfer['content'],
             "account_to_info": {
@@ -1386,7 +1383,6 @@ class CtrGWCasaAccount(BaseController):
     async def ctr_gw_pay_in_cash_247_by_card_num(
             self,
             maker: str,
-            booking_id: str,
             form_data: dict
     ):
         current_user = self.current_user
@@ -1396,7 +1392,7 @@ class CtrGWCasaAccount(BaseController):
         sender_identity_issued_date = sender_identity['issued_date']
         receiver = form_data['receiver']
         transfer = form_data['transfer']
-        ben = await CtrConfigBank(current_user).ctr_get_bank_branch(bank_id=receiver['bank']['id'])
+        # ben = await CtrConfigBank(current_user).ctr_get_bank_branch(bank_id=receiver['bank']['id'])
 
         data_input = {
             "customer_info": {
@@ -1411,13 +1407,14 @@ class CtrGWCasaAccount(BaseController):
             },
             "trans_date": datetime_to_string(now()),
             "time_stamp": datetime_to_string(now()),
-            "trans_id": booking_id,
+            "trans_id": "01002123456_123456",  # TODO hard code ffc_booking_code
             "amount": form_data['fee_info']['actual_total'],
             "description": transfer['content'],
             "card_to_info": {
                 "card_num": receiver['card_number']
             },
-            "ben_id": ben['data'][0]['id'],
+            # "ben_id": ben['data'][0]['id'],
+            "ben_id": '970436',  # TODO: hiện tại chỉ có mã ngân hàng này dùng được
             "account_from_info": {
                 "account_num": "101101001"
             },
