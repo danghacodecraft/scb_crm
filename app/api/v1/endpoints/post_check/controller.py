@@ -3,9 +3,12 @@ from typing import Optional
 from starlette import status
 
 from app.api.base.controller import BaseController
-from app.api.v1.endpoints.ekyc.repository import repos_create_ekyc_customer
+from app.api.v1.endpoints.ekyc.repository import (
+    repos_create_ekyc_customer, repos_get_ekyc_customer,
+    repos_update_ekyc_customer_kss
+)
 from app.api.v1.endpoints.post_check.repository import (
-    repos_check_customer, repos_create_post_check, repos_get_customer_detail,
+    repos_create_post_check, repos_get_customer_detail,
     repos_get_history_post_post_check, repos_get_list_branch,
     repos_get_list_kss, repos_get_list_zone, repos_get_post_control,
     repos_get_statistics, repos_get_statistics_month,
@@ -43,7 +46,8 @@ from app.utils.constant.ekyc import (
 )
 from app.utils.error_messages import ERROR_PERMISSION, MESSAGE_STATUS
 from app.utils.functions import (
-    date_string_to_other_date_string_format, gen_qr_code, now
+    date_string_to_other_date_string_format, gen_qr_code, now, orjson_dumps,
+    string_to_date, string_to_datetime
 )
 
 
@@ -373,7 +377,7 @@ class CtrKSS(BaseController):
         is_success_post_check, post_check_response = self.call_repos(await repos_create_post_check(payload_data=payload_data))
         if is_success_post_check:
             # check customer có tồn tại trong crm hay không
-            customer_ekyc = self.call_repos(await repos_check_customer(
+            customer_ekyc = self.call_repos(await repos_get_ekyc_customer(
                 customer_ekyc_id=post_check_request.customer_id,
                 session=self.oracle_session
             ))
@@ -394,7 +398,7 @@ class CtrKSS(BaseController):
                                 step=info.get('step'),
                                 step_status=info.get('step_status'),
                                 reason=info.get('reason'),
-                                update_at=info.get('update_at'),
+                                update_at=string_to_datetime(info.get('update_at')),
                                 start_date=info.get('start_date'),
                                 end_date=info.get('end_date'),
                                 created_at=now()
@@ -403,11 +407,11 @@ class CtrKSS(BaseController):
                     'customer_id': post_check_request.customer_id,
                     'document_id': customer_ekyc_detail.get('document_id'),
                     'document_type': customer_ekyc_detail.get('document_type'),
-                    'date_of_issue': customer_ekyc_detail.get('date_of_issue'),
+                    'date_of_issue': string_to_date(customer_ekyc_detail.get('date_of_issue')),
                     'place_of_issue': customer_ekyc_detail.get('place_of_issue'),
                     'qr_code_data': customer_ekyc_detail.get('qr_code_data'),
                     'full_name': customer_ekyc_detail.get('full_name'),
-                    'date_of_birth': customer_ekyc_detail.get('date_of_birth'),
+                    'date_of_birth': string_to_datetime(customer_ekyc_detail.get('date_of_birth')),
                     'gender': customer_ekyc_detail.get('gender'),
                     'place_of_residence': customer_ekyc_detail.get('place_of_residence'),
                     'place_of_origin': customer_ekyc_detail.get('place_of_origin'),
@@ -417,8 +421,8 @@ class CtrKSS(BaseController):
                     'address_3': customer_ekyc_detail.get('address_3'),
                     'address_4': customer_ekyc_detail.get('address_4'),
                     'phone_number': customer_ekyc_detail.get('phone_number'),
-                    'ocr_data': customer_ekyc_detail.get('ocr_data'),
-                    'extra_info': customer_ekyc_detail.get('extra_info'),
+                    'ocr_data': orjson_dumps(customer_ekyc_detail.get('ocr_data')),
+                    'extra_info': orjson_dumps(customer_ekyc_detail.get('extra_info')),
                     'receive_ads': customer_ekyc_detail.get('receive_ads'),
                     'longitude': customer_ekyc_detail.get('longitude'),
                     'latitude': customer_ekyc_detail.get('latitude'),
@@ -433,25 +437,33 @@ class CtrKSS(BaseController):
                     # TODO tạo customer khi không có trong crm không lấy ngày hiện tại
                     # 'created_date': customer_ekyc_detail.get('created_date'),
                     'faces_matching_percent': customer_ekyc_detail.get('faces_matching_percent'),
-                    'ocr_data_errors': customer_ekyc_detail.get('ocr_data_errors'),
-                    'permanent_address': customer_ekyc_detail.get('permanent_address'),
+                    'ocr_data_errors': orjson_dumps(customer_ekyc_detail.get('ocr_data_errors')),
+                    'permanent_address': orjson_dumps(customer_ekyc_detail.get('permanent_address')),
+                    'open_biometric': customer_ekyc_detail.get('open_biometric'),
+                    'date_of_expiry': string_to_date(customer_ekyc_detail.get('date_of_expiry')),
                     'transaction_id': customer_ekyc_detail.get('transaction_id'),
-                    'open_biometric': customer_ekyc_detail.get('organization_address'),
-                    'date_of_expiry': customer_ekyc_detail.get('date_of_expiry'),
+                    'transaction_data': orjson_dumps(customer_ekyc_detail),
+                    'created_at': now(),
                     # TODO đợi ekyc trả key
                     # 'user_eb': customer_ekyc_detail.get('user_eb'),
-                    'transaction_data': customer_ekyc_detail,
-                    'created_at': now(),
                     'updated_at': None,
                     'kss_status': KSS_STATUS[post_check_request.kss_status],
                     'user_kss': post_check_request.username,
-                    'date_kss': now()
+                    'date_kss': now(),
                 }
                 self.call_repos(await repos_create_ekyc_customer(
                     customer=saving_customer_ekyc,
                     steps=steps,
                     session=self.oracle_session
                 ))
+            else:
+                update_customer_ekyc_kss = {
+                    'customer_id': post_check_request.customer_id,
+                    'kss_status': KSS_STATUS[post_check_request.kss_status],
+                    'user_kss': post_check_request.username,
+                    'date_kss': now(),
+                }
+                self.call_repos(await repos_update_ekyc_customer_kss(update_customer_ekyc_kss, session=self.oracle_session))
 
         return self.response(data=post_check_request.customer_id)
 
