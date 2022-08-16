@@ -70,10 +70,22 @@ class SenderInfoResponse(BaseSchema):
     note: Optional[str] = Field(None, description="Ghi chú")
 
 
+class StatementResponse(BaseSchema):
+    denominations: str = Field(..., description="Mệnh giá")
+    amount: int = Field(..., description="Số tiền")
+    into_money: int = Field(..., description="Tổng tiền")
+
+
+class StatementInfoResponseResponse(BaseSchema):
+    total_number_of_bills: int = Field(..., description="Tổng số mệnh giá tiền")
+    statements: List[StatementResponse] = Field(..., description="Chi tiết bảng kê")
+
+
 # B. Thông tin khách hàng giao dịch
 class TransactionalCustomerResponse(BaseSchema):
-    management_info_response: ManagementInfoResponse = Field(..., description="I. Thông tin quản lý")
-    sender_info_response: SenderInfoResponse = Field(..., description="II. Thông tin khách hàng giao dịch")
+    statement_info_response: StatementInfoResponseResponse = Field(..., description="I. Bảng kê tiền giao dịch")
+    management_info_response: ManagementInfoResponse = Field(..., description="II. Thông tin quản lý")
+    sender_info_response: SenderInfoResponse = Field(..., description="III. Thông tin khách hàng giao dịch")
 
 
 class CasaAccountNumResponse(BaseSchema):
@@ -166,11 +178,17 @@ class SenderInfoRequest(BaseSchema):
     note: Optional[str] = Field(None, description="Ghi chú")
 
 
+class StatementInfoRequest(ResponseRequestSchema):
+    denominations: str = Field(..., description="Mệnh giá")
+    amount: int = Field(..., description="Số lượng")
+
+
 # B. THÔNG TIN KHÁCH HÀNG GIAO DỊCH
 class CustomerInfoRequest(BaseSchema):
-    management_info: ManagementInfoRequest = Field(..., description="I. Thông tin quản lý")
+    statement: List[StatementInfoRequest] = Field(..., description="I.Thông tin bảng kê")
+    management_info: ManagementInfoRequest = Field(..., description="II. Thông tin quản lý")
     sender_info: SenderInfoRequest = \
-        Field(..., description="II. Thông tin khách hàng giao dịch")
+        Field(..., description="III. Thông tin khách hàng giao dịch")
 
 
 # Giao dịch rút tiền

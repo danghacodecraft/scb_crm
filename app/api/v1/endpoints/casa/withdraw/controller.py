@@ -11,6 +11,8 @@ from app.api.v1.endpoints.third_parties.gw.employee.controller import (
 )
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.sender.controller import CtrPaymentSender
+from app.api.v1.others.statement.controller import CtrStatement
+from app.api.v1.others.statement.repository import repos_get_denominations
 from app.api.v1.validator import validate_history_data
 from app.utils.constant.business_type import BUSINESS_TYPE_WITHDRAW
 from app.utils.constant.cif import (
@@ -19,7 +21,7 @@ from app.utils.constant.cif import (
 )
 from app.utils.error_messages import (
     ERROR_AMOUNT_INVALID, ERROR_CASA_ACCOUNT_NOT_EXIST,
-    ERROR_CASA_BALANCE_UNAVAILABLE
+    ERROR_CASA_BALANCE_UNAVAILABLE, ERROR_DENOMINATIONS_NOT_EXIST
 )
 from app.utils.functions import orjson_dumps, orjson_loads
 
@@ -32,6 +34,7 @@ class CtrWithdraw(BaseController):
             request: WithdrawRequest
     ):
         current_user = self.current_user
+        statement = request.customer_info.statement
         # Check exist Booking
         await CtrBooking().ctr_get_booking_and_validate(
             business_type_code=BUSINESS_TYPE_WITHDRAW,
@@ -39,6 +42,30 @@ class CtrWithdraw(BaseController):
             check_correct_booking_flag=False,
             loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_WITHDRAW}"
         )
+
+        denominations__amounts = {}
+        statement_info = self.call_repos(await repos_get_denominations(currency_id="VND", session=self.oracle_session))
+
+        for item in statement_info:
+            denominations__amounts.update({
+                str(int(item.denominations)): 0
+            })
+        denominations_errors = []
+        for index, row in enumerate(statement):
+            denominations = row.denominations
+            if denominations not in denominations__amounts:
+                denominations_errors.append(dict(
+                    index=index,
+                    value=denominations
+                ))
+
+            denominations__amounts[denominations] = row.amount
+
+        if denominations_errors:
+            return self.response_exception(
+                msg=ERROR_DENOMINATIONS_NOT_EXIST,
+                loc=str(denominations_errors)
+            )
 
         casa_account_number = request.transaction_info.source_accounts.account_num
         if request.transaction_info.receiver_info.amount < CHECK_CONDITION_WITHDRAW:
@@ -73,6 +100,8 @@ class CtrWithdraw(BaseController):
             sender_place_of_issue=sender_info.place_of_issue,
             sender_note=sender_info.note
         )
+
+        statement_info = await CtrStatement().ctr_get_statement_info(statement_requests=request.customer_info.statement)
         data_input = {
             "transaction_info": {
                 "source_accounts": {
@@ -91,6 +120,7 @@ class CtrWithdraw(BaseController):
                 }
             },
             "customer_info": {
+                "statement_info": statement_info,
                 "management_info": {
                     "direct_staff_code": management.direct_staff_code,
                     "indirect_staff_code": management.indirect_staff_code,
@@ -316,11 +346,14 @@ class CtrWithdraw(BaseController):
         ################################################################################################################
         # Thông tin khách hàng giao dịch
         ################################################################################################################
+        statement_info = form_data['customer_info']['statement_info']
         sender_response = form_data['customer_info']['sender_info']
         if sender_response['cif_number']:
             sender_response.update(cif_flag=True)
         else:
             sender_response.update(cif_flag=False)
+
+        # statement_response = await CtrStatement().ctr_get_statement_info(statement_requests=statement)
 
         response_data = dict(
             casa_account=dict(
@@ -331,6 +364,7 @@ class CtrWithdraw(BaseController):
                 fee_info_response=fee_info_response
             ),
             transactional_customer_response=dict(
+                statement_info_response=statement_info,
                 management_info_response=dict(
                     direct_staff=direct_staff,
                     indirect_staff=indirect_staff
