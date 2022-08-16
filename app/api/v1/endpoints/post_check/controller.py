@@ -3,6 +3,10 @@ from typing import Optional
 from starlette import status
 
 from app.api.base.controller import BaseController
+from app.api.v1.endpoints.ekyc.repository import (
+    repos_create_ekyc_customer, repos_get_ekyc_customer,
+    repos_update_ekyc_customer_kss
+)
 from app.api.v1.endpoints.post_check.repository import (
     repos_create_post_check, repos_get_customer_detail,
     repos_get_history_post_post_check, repos_get_list_branch,
@@ -36,13 +40,14 @@ from app.utils.constant.ekyc import (
     EKYC_DATE_FORMAT, EKYC_DEFAULT_VALUE, EKYC_REGION_ZONE_MAPPING,
     ERROR_CODE_FAILED_EKYC, ERROR_CODE_PROCESSING_EKYC, GROUP_ROLE_CODE_AP,
     GROUP_ROLE_CODE_AP_EX, GROUP_ROLE_CODE_IN, GROUP_ROLE_CODE_IN_EX,
-    GROUP_ROLE_CODE_VIEW, GROUP_ROLE_CODE_VIEW_EX, MENU_CODE, MENU_CODE_VIEW,
-    MESSAGE_EMAIL_SUBJECT, MESSAGE_SMS_INVALID, STATUS_CLOSE, STATUS_FAILED,
-    STATUS_OPEN
+    GROUP_ROLE_CODE_VIEW, GROUP_ROLE_CODE_VIEW_EX, KSS_STATUS, MENU_CODE,
+    MENU_CODE_VIEW, MESSAGE_EMAIL_SUBJECT, MESSAGE_SMS_INVALID, STATUS_CLOSE,
+    STATUS_FAILED, STATUS_OPEN
 )
 from app.utils.error_messages import ERROR_PERMISSION, MESSAGE_STATUS
 from app.utils.functions import (
-    date_string_to_other_date_string_format, gen_qr_code
+    date_string_to_other_date_string_format, gen_qr_code, now, orjson_dumps,
+    string_to_date, string_to_datetime
 )
 
 
@@ -369,9 +374,98 @@ class CtrKSS(BaseController):
                     detail=ERROR_PERMISSION,
                     error_status_code=status.HTTP_403_FORBIDDEN
                 )
-        post_check_response = self.call_repos(await repos_create_post_check(payload_data=payload_data))
+        is_success_post_check, post_check_response = self.call_repos(await repos_create_post_check(payload_data=payload_data))
+        if is_success_post_check:
+            # check customer có tồn tại trong crm hay không
+            customer_ekyc = self.call_repos(await repos_get_ekyc_customer(
+                customer_ekyc_id=post_check_request.customer_id,
+                session=self.oracle_session
+            ))
+            # không tồn tại thì lấy dữ liệu bên ekyc và lưu vào crm
+            if not customer_ekyc:
+                # lấy thông tin bên ekyc
+                customer_ekyc_detail = self.call_repos(await repos_get_customer_detail(
+                    postcheck_uuid=post_check_request.customer_id
+                ))
+                steps = []
+                if customer_ekyc_detail.get('ekyc_step'):
+                    for ekyc_step in customer_ekyc_detail.get('ekyc_step'):
+                        transaction_id = ekyc_step.get('transaction_id')
+                        for info in ekyc_step.get('info_step'):
+                            steps.append(dict(
+                                customer_id=customer_ekyc_detail.get('document_id'),
+                                transaction_id=transaction_id,
+                                step=info.get('step'),
+                                step_status=info.get('step_status'),
+                                reason=info.get('reason'),
+                                update_at=string_to_datetime(info.get('update_at')),
+                                start_date=info.get('start_date'),
+                                end_date=info.get('end_date'),
+                                created_at=now()
+                            ))
+                saving_customer_ekyc = {
+                    'customer_id': post_check_request.customer_id,
+                    'document_id': customer_ekyc_detail.get('document_id'),
+                    'document_type': customer_ekyc_detail.get('document_type'),
+                    'date_of_issue': string_to_date(customer_ekyc_detail.get('date_of_issue')),
+                    'place_of_issue': customer_ekyc_detail.get('place_of_issue'),
+                    'qr_code_data': customer_ekyc_detail.get('qr_code_data'),
+                    'full_name': customer_ekyc_detail.get('full_name'),
+                    'date_of_birth': string_to_datetime(customer_ekyc_detail.get('date_of_birth')),
+                    'gender': customer_ekyc_detail.get('gender'),
+                    'place_of_residence': customer_ekyc_detail.get('place_of_residence'),
+                    'place_of_origin': customer_ekyc_detail.get('place_of_origin'),
+                    'nationality': customer_ekyc_detail.get('nationality'),
+                    'address_1': customer_ekyc_detail.get('address_1'),
+                    'address_2': customer_ekyc_detail.get('address_2'),
+                    'address_3': customer_ekyc_detail.get('address_3'),
+                    'address_4': customer_ekyc_detail.get('address_4'),
+                    'phone_number': customer_ekyc_detail.get('phone_number'),
+                    'ocr_data': orjson_dumps(customer_ekyc_detail.get('ocr_data')),
+                    'extra_info': orjson_dumps(customer_ekyc_detail.get('extra_info')),
+                    'receive_ads': customer_ekyc_detail.get('receive_ads'),
+                    'longitude': customer_ekyc_detail.get('longitude'),
+                    'latitude': customer_ekyc_detail.get('latitude'),
+                    'cif': customer_ekyc_detail.get('cif'),
+                    'account_number': customer_ekyc_detail.get('account_number'),
+                    'job_title': customer_ekyc_detail.get('job_title'),
+                    'organization': customer_ekyc_detail.get('organization'),
+                    'organization_phone_number': customer_ekyc_detail.get('organization_phone_number'),
+                    'position': customer_ekyc_detail.get('position'),
+                    'salary_range': customer_ekyc_detail.get('salary_range'),
+                    'tax_number': customer_ekyc_detail.get('tax_number'),
+                    # TODO tạo customer khi không có trong crm không lấy ngày hiện tại
+                    # 'created_date': customer_ekyc_detail.get('created_date'),
+                    'faces_matching_percent': customer_ekyc_detail.get('faces_matching_percent'),
+                    'ocr_data_errors': orjson_dumps(customer_ekyc_detail.get('ocr_data_errors')),
+                    'permanent_address': orjson_dumps(customer_ekyc_detail.get('permanent_address')),
+                    'open_biometric': customer_ekyc_detail.get('open_biometric'),
+                    'date_of_expiry': string_to_date(customer_ekyc_detail.get('date_of_expiry')),
+                    'transaction_id': customer_ekyc_detail.get('transaction_id'),
+                    'transaction_data': orjson_dumps(customer_ekyc_detail),
+                    'created_at': now(),
+                    # TODO đợi ekyc trả key
+                    # 'user_eb': customer_ekyc_detail.get('user_eb'),
+                    'updated_at': None,
+                    'kss_status': KSS_STATUS[post_check_request.kss_status],
+                    'user_kss': post_check_request.username,
+                    'date_kss': now(),
+                }
+                self.call_repos(await repos_create_ekyc_customer(
+                    customer=saving_customer_ekyc,
+                    steps=steps,
+                    session=self.oracle_session
+                ))
+            else:
+                update_customer_ekyc_kss = {
+                    'customer_id': post_check_request.customer_id,
+                    'kss_status': KSS_STATUS[post_check_request.kss_status],
+                    'user_kss': post_check_request.username,
+                    'date_kss': now(),
+                }
+                self.call_repos(await repos_update_ekyc_customer_kss(update_customer_ekyc_kss, session=self.oracle_session))
 
-        return self.response(data=post_check_response)
+        return self.response(data=post_check_request.customer_id)
 
     async def ctr_update_post_check(
             self,
@@ -421,15 +515,18 @@ class CtrKSS(BaseController):
             "customer_id": update_post_check['customer_id'],
             'error_msg': None
         }
+
         if history_status:
             if history_status[-1]['kss_status'] == "Không hợp lệ" and history_status[-1]['approve_status'] == "Đã Duyệt":
-                is_success_gw, account_number = self.call_repos(await repos_gw_change_status_account(  # noqa
-                    current_user=current_user.user_info,
-                    account_number=customer_detail.get('account_number')
-                ))
-                if not is_success_gw:
-                    response_data['error_msg'] = str(account_number)
-                if customer_detail['ekyc_level'] != "EKYC_3" or fcc_customer_detail['ekyc_level'] != "EKYC_3":
+                if fcc_customer_detail['retrieveCustomerRefDataMgmt_out']['data_output']['customer_info']['ekyc_level'] != "EKYC_3":
+                    is_success_gw, account_number = self.call_repos(await repos_gw_change_status_account(  # noqa
+                        current_user=current_user.user_info,
+                        account_number=customer_detail.get('account_number')
+                    ))
+
+                    if not is_success_gw:
+                        response_data['error_msg'] = str(account_number)
+
                     self.call_repos(await repos_gw_send_email(
                         product_code='CRM',
                         list_email_to=customer_detail.get('extra_info').get('email'),

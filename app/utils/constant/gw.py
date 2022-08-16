@@ -96,6 +96,7 @@ GW_ENDPOINT_URL_SEND_EMAIL = "/email/v1.0/rest/sendEmail"
 
 # ---------------------------------------------- CardWorks ---------------------------------------------- #
 GW_ENDPOINT_URL_OPEN_CARDS = "/cardworks/v1.0/rest/openCards"
+GW_ENDPOINT_URL_SELECT_CARD_INFO = "/cardworks/v1.0/rest/selectCardInfo"
 
 ########################################################################################################################
 #                                         GW FUNCTION NAME
@@ -287,6 +288,10 @@ GW_FUNC_OPEN_CARDS_IN = "openCards_in"
 GW_FUNC_OPEN_CARDS_OUT = "openCards_out"
 GW_FUNC_OPEN_CARDS = "openCards"
 
+# selectCardInfo
+GW_FUNC_SELECT_CARD_INFO_IN = "selectCardInfo_in"
+GW_FUNC_SELECT_CARD_INFO_OUT = "selectCardInfo_out"
+GW_FUNC_SELECT_CARD_INFO = "selectCardInfo"
 
 ########################################################################################################################
 #                                         END GW FUNCTION NAME

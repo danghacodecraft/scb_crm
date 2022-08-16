@@ -19,7 +19,7 @@ class MultipleFeeInfoRequest(BaseSchema):
     Schema dùng chung cho phí
     """
     method_type: str = Field(..., description=f"Phương thức tính phí: {make_description_from_dict(CASA_FEE_METHODS)}")
-    account_number: str = Field(..., description='STK')
+    account_number: Optional[str] = Field(None, description='STK')
     fee_details: List[FeeDetailInfoRequest] = Field(..., description="Danh sách phí")
 
 
@@ -27,17 +27,17 @@ class FeeDetailInfoResponse(BaseSchema):
     payer: Optional[str] = Field(None, description="Bên thanh toán phí")
     fee_category: Optional[DropdownResponse] = Field(None, description="Nhóm phí")
     fee: Optional[DropdownResponse] = Field(None, description="Mã loại phí")
-    amount: int = Field(..., description='Số tiền phí')
-    vat: int = Field(..., description='Thuế VAT')
-    total: int = Field(..., description='Tổng phí')
+    amount: int = Field(None, description='Số tiền phí')
+    vat: int = Field(None, description='Thuế VAT')
+    total: int = Field(None, description='Tổng phí')
     actual_total: Optional[float] = Field(None, description="Số tiền thực chuyển")
-    content: str = Field(None, description='Nội dung')
+    note: str = Field(None, description='Nội dung')
     ref_num: str = Field(None, description='Số bút toán')
 
 
 class FeeInfoResponse(BaseSchema):
     method_type: str = Field(..., description=f"Phương thức tính phí: {make_description_from_dict(CASA_FEE_METHODS)}")
-    account_number: str = Field(..., description='STK')
+    account_number: Optional[str] = Field(..., description='STK')
     account_owner: str = Field(..., description="Chủ tài khoản")
     fee_details: List[FeeDetailInfoResponse] = Field(..., description="Danh sách phí")
     total_fee: int = Field(..., description="Tổng phí")
@@ -46,4 +46,3 @@ class FeeInfoResponse(BaseSchema):
 class OneFeeInfoRequest(BaseSchema):
     payer: str = Field(..., description=f"{make_description_from_dict(PAYMENT_PAYERS)}")
     amount: int = Field(..., description="Số tiền phí")
-    note: Optional[str] = Field(..., description="Ghi chú")

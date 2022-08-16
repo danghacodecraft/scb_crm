@@ -1,4 +1,5 @@
 from datetime import date
+from typing import List
 
 from pydantic import Field
 
@@ -807,3 +808,42 @@ class OpenCardsRequest(BaseSchema):
     card_addon_data: OpenCardsCardAddonDataRequest
     checker_info: OpenCardsCheckerInfoRequest
     approver_info: OpenCardsApproverInfoRequest
+
+
+########################################################################################################################
+
+# selectCardInfo
+
+
+class SelectCardInfoRequest(BaseSchema):
+    card_branched: str = Field(...,
+                               description="""Thương hiệu Thẻ.
+- Mặc định: Tất cả - `ALL`.
+- Giá trị: `VS` - VISA, `MC` - MASTERCARD""",
+                               example="VS")
+
+
+class SelectCardInfoCardInfoItemResponse(BaseSchema):
+    card_branched: str = Field(..., description="Thương hiệu Thẻ")
+    card_group: str = Field(..., description="Nhóm Thẻ")
+    card_description: str = Field(..., description="Mô tả thông tin Thẻ")
+    card_src_code: str = Field(..., description="Source Code")
+    card_pro_code: str = Field(..., description="Promote Code")
+    card_fee_type: str = Field(..., description="Loại phí")
+    card_fee_desc: str = Field(..., description="Mô tả phí")
+    card_type: str = Field(..., description="""Loại thẻ:
+- 'B' - Thẻ chính
+- 'S' - Thẻ phụ
+- '*' - Thẻ chính và thẻ phụ
+    """)
+    card_type_desc: str = Field(..., description="Mô tả loại Thẻ")
+    card_fee_amount: str = Field(..., description="Số tiền phí")
+    card_fee_amount_vat: str = Field(..., description="Thuế VAT trên số tiền phí")
+
+
+class SelectCardInfoCardInfoListResponse(BaseSchema):
+    card_info_item: SelectCardInfoCardInfoItemResponse
+
+
+class SelectCardInfoResponse(BaseSchema):
+    card_info_list: List[SelectCardInfoCardInfoListResponse]

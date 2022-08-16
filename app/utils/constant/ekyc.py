@@ -52,7 +52,17 @@ ERROR_CODE_EKYC = {
     ERROR_CREATE_E_BANKING: "Tạo DV Ebank thất bại",
     ERROR_CHECK_ALM: "CHECK_ALM",
 }
+KSS_STATUS_PROCESSING = "1"
+KSS_STATUS_VALID = "2"
+KSS_STATUS_VERIFICATION = "3"
+KSS_STATUS_INVALID = "4"
 
+KSS_STATUS = {
+    KSS_STATUS_PROCESSING: "Chờ hậu kiểm",
+    KSS_STATUS_VALID: "Hợp lệ",
+    KSS_STATUS_VERIFICATION: "Cần xác minh",
+    KSS_STATUS_INVALID: "Không hợp lệ"
+}
 EKYC_REGION_ZONE_MAPPING = [
     {
         "region_code": "V01",

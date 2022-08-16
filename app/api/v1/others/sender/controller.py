@@ -5,10 +5,15 @@ from app.api.v1.endpoints.third_parties.gw.customer.controller import (
     CtrGWCustomer
 )
 from app.api.v1.schemas.utils import DropdownRequest
+from app.settings.config import (
+    DATE_INPUT_OUTPUT_FORMAT, DATETIME_INPUT_OUTPUT_FORMAT
+)
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.utils.constant.cif import DROPDOWN_NONE_DICT
 from app.utils.error_messages import ERROR_FIELD_REQUIRED
-from app.utils.functions import dropdown
+from app.utils.functions import (
+    date_string_to_other_date_string_format, dropdown
+)
 
 
 class CtrPaymentSender(BaseController):
@@ -20,7 +25,8 @@ class CtrPaymentSender(BaseController):
             sender_identity_number: Optional[str],
             sender_issued_date: Optional[str],
             sender_mobile_number: Optional[str],
-            sender_place_of_issue: Optional[DropdownRequest]
+            sender_place_of_issue: Optional[DropdownRequest],
+            sender_note: Optional[str] = None
     ):
         if sender_cif_number:
             gw_customer_info = await CtrGWCustomer(self.current_user).ctr_gw_get_customer_info_detail(
@@ -34,7 +40,11 @@ class CtrPaymentSender(BaseController):
                 address_full=gw_customer_info['t_address_info']['contact_address_full'],
                 identity_info=dict(
                     number=gw_customer_info_identity_info['id_num'],
-                    issued_date=sender_issued_date,
+                    issued_date=date_string_to_other_date_string_format(
+                        gw_customer_info_identity_info['id_issued_date'],
+                        from_format=DATETIME_INPUT_OUTPUT_FORMAT,
+                        to_format=DATE_INPUT_OUTPUT_FORMAT
+                    ),
                     place_of_issue=await self.dropdown_mapping_crm_model_or_dropdown_name(
                         model=PlaceOfIssue,
                         code=gw_customer_info_identity_info['id_issued_location'],
@@ -43,7 +53,9 @@ class CtrPaymentSender(BaseController):
                 ),
                 mobile_phone=gw_customer_info['mobile_phone'],
                 telephone=gw_customer_info['telephone'],
-                otherphone=gw_customer_info['otherphone']
+                otherphone=gw_customer_info['otherphone'],
+                note=sender_note
+
             )
         else:
             identity_place_of_issue = DROPDOWN_NONE_DICT
@@ -69,7 +81,8 @@ class CtrPaymentSender(BaseController):
                 ),
                 mobile_phone=sender_mobile_number,
                 telephone=None,
-                otherphone=None
+                otherphone=None,
+                note=sender_note
             )
             errors = []
             if not sender_full_name_vn:

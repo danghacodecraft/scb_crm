@@ -75,12 +75,15 @@ async def repos_count_total_item(region_id: Optional[str], branch_id: Optional[s
             )
         )
 
-    if from_date and to_date:
+    if from_date:
         transaction_list = transaction_list.filter(
-            and_(
-                Booking.created_at >= date_to_datetime(from_date),
-                Booking.created_at <= end_time_of_day(date_to_datetime(to_date))
-            ))
+            Booking.created_at >= date_to_datetime(from_date)
+        )
+
+    if to_date:
+        transaction_list = transaction_list.filter(
+            Booking.created_at <= end_time_of_day(date_to_datetime(to_date))
+        )
 
     total_item = session.execute(transaction_list).scalar()
     return ReposReturn(data=total_item)
@@ -148,12 +151,15 @@ async def repos_get_transaction_list(region_id: Optional[str], branch_id: Option
             )
         )
 
-    if from_date and to_date:
+    if from_date:
         sql = sql.filter(
-            and_(
-                Booking.created_at >= date_to_datetime(from_date),
-                Booking.created_at <= end_time_of_day(date_to_datetime(to_date))
-            ))
+            Booking.created_at >= date_to_datetime(from_date)
+        )
+
+    if to_date:
+        sql = sql.filter(
+            Booking.created_at <= end_time_of_day(date_to_datetime(to_date))
+        )
 
     sql = sql.limit(limit).offset(limit * (page - 1)).order_by(desc(Booking.created_at))
 

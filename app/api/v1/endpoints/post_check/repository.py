@@ -121,7 +121,7 @@ async def repos_create_post_check(payload_data: dict) -> ReposReturn:
             detail=str(response.get('post_control'))
         )
 
-    return ReposReturn(data=response)
+    return ReposReturn(data=(is_success, response))
 
 
 async def repos_get_post_control(query_params) -> ReposReturn:

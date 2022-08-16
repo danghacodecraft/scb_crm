@@ -443,7 +443,8 @@ async def repos_get_booking_business_form_by_booking_id(
             BookingBusinessForm.booking_id == booking_id,
             BookingBusinessForm.business_form_id == business_form_id
         ))
-    ).scalar()
+        .order_by(BookingBusinessForm.created_at.desc())
+    ).scalars().first()
 
     if not business_form:
         return ReposReturn(is_error=True, msg=f"BOOKING-ID NOT EXITS {booking_id}")

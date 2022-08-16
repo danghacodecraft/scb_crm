@@ -1,4 +1,9 @@
+from typing import Optional
+
 from app.api.base.controller import BaseController
+from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
+    CtrGWCasaAccount
+)
 from app.api.v1.others.fee.repository import repos_get_fee_detail
 from app.api.v1.others.fee.schema import (
     MultipleFeeInfoRequest, OneFeeInfoRequest
@@ -7,8 +12,8 @@ from app.utils.constant.casa import (
     CASA_FEE_METHOD_CASA, CASA_FEE_METHODS, PAYMENT_PAYERS
 )
 from app.utils.error_messages import (
-    ERROR_CASA_FEE_METHOD_NOT_EXIST, ERROR_FEE_ID_NOT_EXIST,
-    ERROR_PAYER_NOT_EXIST, ERROR_VALIDATE
+    ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_CASA_FEE_METHOD_NOT_EXIST,
+    ERROR_FEE_ID_NOT_EXIST, ERROR_PAYER_NOT_EXIST, ERROR_VALIDATE
 )
 from app.utils.functions import dropdown
 
@@ -20,7 +25,6 @@ class CtrAccountFee(BaseController):
     async def calculate_fees(
             self,
             fee_info_request: MultipleFeeInfoRequest,
-            account_owner: str,
             business_type_id: str
     ):
         """
@@ -33,11 +37,24 @@ class CtrAccountFee(BaseController):
         fee_details = []
         total_fee = 0
         response_account_number = None
+        account_owner = None
         request_account_number = fee_info_request.account_number
         if method_type == CASA_FEE_METHOD_CASA:
             if not request_account_number:
                 return self.response_exception(msg=ERROR_VALIDATE)
             else:
+                gw_casa_response = await CtrGWCasaAccount(
+                    current_user=self.current_user
+                ).ctr_gw_check_exist_casa_account_info(
+                    account_number=request_account_number
+                )
+                gw_casa_response_data = gw_casa_response['data']
+                if not gw_casa_response_data['is_existed']:
+                    return self.response_exception(
+                        msg=ERROR_CASA_ACCOUNT_NOT_EXIST,
+                        loc=f'fee_info -> account_number: {request_account_number}'
+                    )
+                account_owner = gw_casa_response_data['account_owner']
                 response_account_number = request_account_number
 
         for index, fee_detail_request in enumerate(fee_info_request.fee_details):
@@ -77,14 +94,12 @@ class CtrAccountFee(BaseController):
 
     async def calculate_fee(
             self,
-            one_fee_info_request: OneFeeInfoRequest
+            one_fee_info_request: OneFeeInfoRequest,
+            fee_note: Optional[str] = None
     ):
         """
         Tính phí dành cho MỘT loại phí
         """
-
-        if one_fee_info_request.payer not in PAYMENT_PAYERS:
-            return self.response_exception(msg=ERROR_PAYER_NOT_EXIST)
 
         fee_info_response = dict(
             is_fee=False,
@@ -93,9 +108,13 @@ class CtrAccountFee(BaseController):
             vat_tax=None,
             total=None,
             actual_total=None,
-            note=None
+            note=fee_note
         )
+
         if one_fee_info_request:
+            if one_fee_info_request.payer not in PAYMENT_PAYERS:
+                return self.response_exception(msg=ERROR_PAYER_NOT_EXIST)
+
             amount = one_fee_info_request.amount
             vat = amount / 10
             total = amount + vat
@@ -108,7 +127,7 @@ class CtrAccountFee(BaseController):
                 vat=vat,
                 total=total,
                 actual_total=actual_total,
-                note=one_fee_info_request.note
+                note=fee_note
             )
 
         return fee_info_response

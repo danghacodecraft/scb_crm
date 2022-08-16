@@ -13,9 +13,9 @@ from app.api.v1.endpoints.third_parties.gw.payment.example import (
     REDEEM_ACCOUNT_REQUEST_EXAMPLE
 )
 from app.api.v1.endpoints.third_parties.gw.payment.schema import (
-    AccountAmountBlockRequest, AccountAmountBlockResponse,
-    AccountAmountUnblockRequest, GWCasaTransferAccountResponse,
-    PaymentSuccessResponse, RedeemAccountRequest
+    AccountAmountBlockPDResponse, AccountAmountBlockRequest,
+    AccountAmountBlockResponse, AccountAmountUnblockRequest,
+    GWCasaTransferAccountResponse, PaymentSuccessResponse, RedeemAccountRequest
 )
 
 router = APIRouter()
@@ -68,7 +68,7 @@ async def view_get_amount_block(
     name="[GW] Amount Block",
     description="Phong tỏa tài khoản - Phê duyệt",
     responses=swagger_response(
-        response_model=ResponseData[AccountAmountBlockResponse],
+        response_model=ResponseData[AccountAmountBlockPDResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -80,7 +80,7 @@ async def view_gw_amount_block(
         BOOKING_ID=BOOKING_ID
     )
 
-    return ResponseData[AccountAmountBlockResponse](**gw_payment_amount_block)
+    return ResponseData[AccountAmountBlockPDResponse](**gw_payment_amount_block)
 
 
 @router.post(
