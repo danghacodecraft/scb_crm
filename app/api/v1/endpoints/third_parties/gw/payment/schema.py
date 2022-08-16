@@ -57,7 +57,7 @@ class AccountUnlockRequest(BaseSchema):
 
 
 class TransactionFeeInfoRequest(BaseSchema):
-    fee_info: List[MultipleFeeInfoRequest] = Field(..., description="Phương thức tính phí")
+    fee_info: MultipleFeeInfoRequest = Field(..., description="Phương thức tính phí")
 
 
 class AccountAmountUnblockRequest(BaseSchema):
