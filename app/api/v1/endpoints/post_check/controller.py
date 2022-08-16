@@ -465,7 +465,7 @@ class CtrKSS(BaseController):
                 }
                 self.call_repos(await repos_update_ekyc_customer_kss(update_customer_ekyc_kss, session=self.oracle_session))
 
-        return self.response(data=post_check_request.customer_id)
+        return self.response(data=post_check_response)
 
     async def ctr_update_post_check(
             self,
@@ -545,6 +545,13 @@ class CtrKSS(BaseController):
                         mobile=customer_detail['phone_number'],
                         current_user=current_user))
 
+        update_customer_ekyc_kss = {
+            'customer_id': postcheck_update_request.customer_id,
+            'approve_status': "Đã Duyệt" if postcheck_update_request.is_approve else "Từ Chối",
+            'user_approve': postcheck_update_request.username,
+            'date_approve': now(),
+        }
+        self.call_repos(await repos_update_ekyc_customer_kss(update_customer_ekyc_kss, session=self.oracle_session))
         return self.response(data=response_data)
 
     async def ctr_get_customer_detail(self, postcheck_uuid: str):
