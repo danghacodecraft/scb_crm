@@ -1,4 +1,3 @@
-from typing import List
 
 from fastapi import APIRouter, Body, Depends, Header
 from starlette import status
@@ -93,12 +92,12 @@ async def view_gw_amount_block(
     )
 )
 async def view_amount_unblock(
-        account_amount_unblocks: List[AccountAmountUnblockRequest] = Body(...),
+        request: AccountAmountUnblockRequest = Body(...),
         current_user=Depends(get_current_user_from_header()),
         BOOKING_ID: str = Header(..., description="Mã phiên giao dịch")
 ):
     payment_amount_unblock = await CtrGWPayment(current_user).ctr_payment_amount_unblock(
-        account_amount_unblocks=account_amount_unblocks,
+        request=request,
         BOOKING_ID=BOOKING_ID
     )
 

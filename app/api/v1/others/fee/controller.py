@@ -95,6 +95,7 @@ class CtrAccountFee(BaseController):
     async def calculate_fee(
             self,
             one_fee_info_request: OneFeeInfoRequest,
+            amount: int,
             fee_note: Optional[str] = None
     ):
         """
@@ -107,7 +108,7 @@ class CtrAccountFee(BaseController):
             fee_amount=None,
             vat_tax=None,
             total=None,
-            actual_total=None,
+            actual_total=amount,
             note=fee_note
         )
 
@@ -115,9 +116,9 @@ class CtrAccountFee(BaseController):
             if one_fee_info_request.payer not in PAYMENT_PAYERS:
                 return self.response_exception(msg=ERROR_PAYER_NOT_EXIST)
 
-            amount = one_fee_info_request.amount
-            vat = amount / 10
-            total = amount + vat
+            fee_amount = one_fee_info_request.amount
+            vat = int(fee_amount / 10)
+            total = fee_amount + vat
             actual_total = amount + total
 
             fee_info_response.update(

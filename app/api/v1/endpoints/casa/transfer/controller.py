@@ -54,6 +54,7 @@ from app.utils.constant.idm import (
 )
 from app.utils.error_messages import (
     ERROR_BANK_NOT_IN_CITAD, ERROR_BANK_NOT_IN_NAPAS,
+    ERROR_CASA_ACCOUNT_DOES_NOT_HAVE_ENOUGH_MONEY,
     ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_MAPPING_MODEL,
     ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
 )
@@ -574,8 +575,21 @@ class CtrCasaTransfer(BaseController):
 
         # Thông tin phí
         fee_info_response = await CtrAccountFee().calculate_fee(
-            one_fee_info_request=data.fee_info, fee_note=data.fee_note
+            one_fee_info_request=data.fee_info, fee_note=data.fee_note, amount=data.amount
         )
+
+        gw_sender_account_info = await CtrGWCasaAccount(current_user).ctr_gw_get_casa_account_info(
+            account_number=data.sender_account_number, return_raw_data_flag=True)
+
+        sender_balance_available = int(gw_sender_account_info[
+            'customer_info']['account_info']['account_balance_available_vnd'])
+
+        if fee_info_response['actual_total'] > sender_balance_available:
+            return self.response_exception(
+                loc='ctr_save_casa_transfer_info', msg=ERROR_CASA_ACCOUNT_DOES_NOT_HAVE_ENOUGH_MONEY,
+                detail=f'sender_account_number: {data.sender_account_number}: '
+                       f'(actual_total: {fee_info_response["actual_total"]}, '
+                       f'balance_available {sender_balance_available})')
 
         # Thông tin khách hàng giao dịch
         sender_response = await CtrPaymentSender(self.current_user).get_payment_sender(

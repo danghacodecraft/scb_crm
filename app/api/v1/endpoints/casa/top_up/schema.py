@@ -48,8 +48,9 @@ class CasaTopUpCommonRequest(ResponseRequestSchema):
 
     @validator("sender_mobile_number")
     def check_valid_mobile_number(cls, v):
-        if not is_valid_mobile_number(v):
-            raise TypeError('')
+        if v is not None:
+            if not is_valid_mobile_number(v):
+                raise TypeError('')
         return v
 
 
@@ -125,6 +126,7 @@ class CasaTopUpThirdParty247ToCardRequest(CasaTopUpThirdPartyCommonRequest):
 
 
 class CasaTopUpRequest(ResponseRequestSchema):
+    customer_cif_number: str = CustomField().CIFNumberField
     receiving_method: str = Field(..., description=f"Hình thức nhận: {make_description_from_dict(RECEIVING_METHODS)}")
     data: Union[
         CasaTopUpSCBByIdentityRequest,
