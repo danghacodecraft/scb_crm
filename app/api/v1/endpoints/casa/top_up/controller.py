@@ -273,13 +273,12 @@ class CtrCasaTopUp(BaseController):
             bank=dropdown(receiver_bank),
             bank_branch=data.receiver_bank_branch,
             fullname_vn=data.receiver_full_name_vn,
-            identity_info=dict(
-                number=data.receiver_identity_number,
-                issued_date=data.receiver_issued_date,
-                place_of_issue=dropdown(receiver_place_of_issue),
-            ),
+            identity_number=data.receiver_identity_number,
+            issued_date=data.receiver_issued_date,
+            place_of_issue=dropdown(receiver_place_of_issue),
+
             province=dropdown(receiver_province),
-            mobile_number=data.receiver_mobile_number,
+            mobile_phone=data.receiver_mobile_number,
             address_full=data.receiver_address_full
         )
         return dict(
