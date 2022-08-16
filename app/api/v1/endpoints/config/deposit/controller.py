@@ -5,23 +5,19 @@ from app.api.v1.endpoints.config.deposit.repository import (
 )
 from app.api.v1.endpoints.repository import repos_get_data_model_config
 from app.third_parties.oracle.models.cif.e_banking.model import TdInterestType
+from app.third_parties.oracle.models.master_data.deposit import TDRolloverType
 from app.utils.functions import dropdown_name
 
 
 class CtrConfigDeposit(BaseController):
     async def ctr_get_rollover_type(self):
-        rollover_type = [
-            {
-                "id": "I",
-                "code": "I",
-                "name": "Tái ký gốc + lãi"
-            },
-            {
-                "id": "P",
-                "code": "P",
-                "name": "Tái ký gốc"
-            }
-        ]
+        rollover_type = self.call_repos(
+            await repos_get_data_model_config(
+                session=self.oracle_session,
+                model=TDRolloverType
+            )
+        )
+
         return self.response(data=rollover_type)
 
     async def ctr_get_interest_type(self):
