@@ -536,7 +536,7 @@ class CtrCasaTopUp(BaseController):
         # Thông tin phí
 
         fee_info_response = await CtrAccountFee().calculate_fee(
-            one_fee_info_request=data.fee_info, fee_note=data.fee_note
+            one_fee_info_request=data.fee_info, fee_note=data.fee_note, amount=data.amount
         )
 
         statement_response = await CtrStatement().ctr_get_statement_info(statement_requests=data.statement)
