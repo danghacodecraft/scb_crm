@@ -179,6 +179,9 @@ async def repos_get_data_model_config(
     if hasattr(model, 'bank_id') and bank_id:
         list_data_engine = list_data_engine.filter(model.bank_id == bank_id)
 
+    if hasattr(model, "code"):
+        list_data_engine = list_data_engine.order_by(model.code)
+
     if hasattr(model, 'order_no'):
         list_data_engine = list_data_engine.order_by(model.order_no)
 
