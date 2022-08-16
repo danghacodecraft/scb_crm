@@ -276,9 +276,8 @@ class CtrCasaTopUp(BaseController):
             identity_number=data.receiver_identity_number,
             issued_date=data.receiver_issued_date,
             place_of_issue=dropdown(receiver_place_of_issue),
-
             province=dropdown(receiver_province),
-            mobile_phone=data.receiver_mobile_number,
+            mobile_number=data.receiver_mobile_number,
             address_full=data.receiver_address_full
         )
         return dict(
