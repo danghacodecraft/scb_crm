@@ -160,7 +160,7 @@ class ReceiverResponse(ResponseRequestSchema):
     identity_number: Optional[str] = Field(None, description="Số giấy tờ định danh")
     issued_date: Optional[date] = Field(None, description="Ngày cấp")
     place_of_issue: DropdownCodeNameResponse = Field(None, description="Nơi cấp")
-    mobile_phone: Optional[str] = Field(None, description="Số điện thoại")
+    mobile_number: Optional[str] = Field(None, description="Số điện thoại")
     address_full: Optional[str] = Field(None, description="Địa chỉ")
     currency: Optional[str] = Field(None, description="Loại tiền")
 
