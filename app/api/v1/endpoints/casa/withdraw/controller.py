@@ -353,8 +353,6 @@ class CtrWithdraw(BaseController):
         else:
             sender_response.update(cif_flag=False)
 
-        # statement_response = await CtrStatement().ctr_get_statement_info(statement_requests=statement)
-
         response_data = dict(
             casa_account=dict(
                 account_number=account_number
