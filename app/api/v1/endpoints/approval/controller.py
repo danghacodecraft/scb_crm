@@ -359,8 +359,14 @@ class CtrApproval(BaseController):
                 created_at=None,
                 identity_images=[],
             )
+            image_uuids = []
+            for booking_authentication in booking_authentications:
+                image_uuids.append(booking_authentication.file_uuid)
+            uuid__link_downloads = await self.get_link_download_multi_file(uuids=image_uuids)
+
             for booking_authentication in booking_authentications:
                 data = dict(
+                    compare_url=uuid__link_downloads[booking_authentication.file_uuid],
                     compare_uuid=booking_authentication.file_uuid,
                     created_at=booking_authentication.created_at
                 )
