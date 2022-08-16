@@ -643,6 +643,7 @@ class CtrGWCasaAccount(BaseController):
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
             is_success, gw_response_data = await self.ctr_gw_pay_in_cash_247_by_acc_num(
+                fcc_booking_code="01002123456_123456",  # TODO
                 maker=maker,
                 form_data=form_data
             )
@@ -657,6 +658,7 @@ class CtrGWCasaAccount(BaseController):
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
             is_success, gw_response_data = await self.ctr_gw_pay_in_cash_247_by_card_num(
+                fcc_booking_code="01002123456_123456",  # TODO
                 maker=maker,
                 form_data=form_data
             )
@@ -1330,6 +1332,7 @@ class CtrGWCasaAccount(BaseController):
     async def ctr_gw_pay_in_cash_247_by_acc_num(
             self,
             maker: str,
+            fcc_booking_code: str,
             form_data: dict
     ):
         current_user = self.current_user
@@ -1353,7 +1356,7 @@ class CtrGWCasaAccount(BaseController):
             },
             "trans_date": datetime_to_string(now()),
             "time_stamp": datetime_to_string(now()),
-            "trans_id": "01002123456_123456",  # TODO hard code ffc_booking_code
+            "trans_id": fcc_booking_code,  # TODO hard code ffc_booking_code
             "amount": form_data['fee_info']['actual_total'],
             "description": transfer['content'],
             "account_to_info": {
@@ -1383,6 +1386,7 @@ class CtrGWCasaAccount(BaseController):
     async def ctr_gw_pay_in_cash_247_by_card_num(
             self,
             maker: str,
+            fcc_booking_code: str,
             form_data: dict
     ):
         current_user = self.current_user
@@ -1407,7 +1411,7 @@ class CtrGWCasaAccount(BaseController):
             },
             "trans_date": datetime_to_string(now()),
             "time_stamp": datetime_to_string(now()),
-            "trans_id": "01002123456_123456",  # TODO hard code ffc_booking_code
+            "trans_id": fcc_booking_code,  # TODO hard code ffc_booking_code
             "amount": form_data['fee_info']['actual_total'],
             "description": transfer['content'],
             "card_to_info": {
