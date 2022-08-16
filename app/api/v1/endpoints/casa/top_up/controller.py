@@ -16,6 +16,9 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
 from app.api.v1.endpoints.third_parties.gw.category.controller import (
     CtrSelectCategory
 )
+from app.api.v1.endpoints.third_parties.gw.customer.controller import (
+    CtrGWCustomer
+)
 from app.api.v1.endpoints.third_parties.gw.employee.controller import (
     CtrGWEmployee
 )
@@ -52,8 +55,8 @@ from app.utils.constant.idm import (
 )
 from app.utils.error_messages import (
     ERROR_BANK_NOT_IN_CITAD, ERROR_BANK_NOT_IN_NAPAS, ERROR_BOOKING_INCORRECT,
-    ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_DENOMINATIONS_NOT_EXIST,
-    ERROR_INTERBANK_ACCOUNT_NUMBER_NOT_EXIST,
+    ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_CIF_NUMBER_EXIST,
+    ERROR_DENOMINATIONS_NOT_EXIST, ERROR_INTERBANK_ACCOUNT_NUMBER_NOT_EXIST,
     ERROR_INTERBANK_CARD_NUMBER_NOT_EXIST, ERROR_MAPPING_MODEL,
     ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
 )
@@ -406,6 +409,15 @@ class CtrCasaTopUp(BaseController):
             check_correct_booking_flag=False,
             loc=f'booking_id: {booking_id}'
         )
+
+        # Kiểm tra số CIF của KH
+        customer_cif_number = request.cif_number
+        is_existed = await CtrGWCustomer(current_user=self.current_user).ctr_gw_check_exist_customer_detail_info(
+            cif_number=customer_cif_number,
+            return_raw_data_flag=True
+        )
+        if not is_existed:
+            return self.response_exception(msg=ERROR_CIF_NUMBER_EXIST, loc=f"cif_number: {customer_cif_number}")
 
         denominations__amounts = {}
         statement_info = self.call_repos(await repos_get_denominations(currency_id="VND", session=self.oracle_session))
