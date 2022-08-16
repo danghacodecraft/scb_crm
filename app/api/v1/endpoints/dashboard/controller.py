@@ -338,7 +338,7 @@ class CtrDashboard(BaseController):
                             newest_booking_business_form = booking_business_form.created_at
                             mapping_datas[booking_id].update(
                                 customer_cif_number=form_data[customer_cif_number_key] if customer_cif_number_key in form_data else None,
-                                customer_cif_full_name_vn=form_data[customer_cif_full_name_vn_key] if customer_cif_full_name_vn_key in form_data else None,
+                                full_name_vn=form_data[customer_cif_full_name_vn_key] if customer_cif_full_name_vn_key in form_data else None,
                             )
 
                         numbers = []
