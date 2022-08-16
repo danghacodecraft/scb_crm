@@ -16,6 +16,9 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
 from app.api.v1.endpoints.third_parties.gw.category.controller import (
     CtrSelectCategory
 )
+from app.api.v1.endpoints.third_parties.gw.customer.controller import (
+    CtrGWCustomer
+)
 from app.api.v1.endpoints.third_parties.gw.employee.controller import (
     CtrGWEmployee
 )
@@ -46,14 +49,14 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_TOP_UP_CASA_ACCOUNT,
     PROFILE_HISTORY_STATUS_INIT
 )
-from app.utils.constant.gw import GW_REQUEST_DIRECT_INDIRECT
+from app.utils.constant.gw import GW_DEFAULT_VALUE, GW_REQUEST_DIRECT_INDIRECT
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_GDV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_GDV
 )
 from app.utils.error_messages import (
     ERROR_BANK_NOT_IN_CITAD, ERROR_BANK_NOT_IN_NAPAS, ERROR_BOOKING_INCORRECT,
-    ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_DENOMINATIONS_NOT_EXIST,
-    ERROR_INTERBANK_ACCOUNT_NUMBER_NOT_EXIST,
+    ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_CIF_NUMBER_EXIST,
+    ERROR_DENOMINATIONS_NOT_EXIST, ERROR_INTERBANK_ACCOUNT_NUMBER_NOT_EXIST,
     ERROR_INTERBANK_CARD_NUMBER_NOT_EXIST, ERROR_MAPPING_MODEL,
     ERROR_RECEIVING_METHOD_NOT_EXIST, USER_CODE_NOT_EXIST
 )
@@ -407,6 +410,16 @@ class CtrCasaTopUp(BaseController):
             loc=f'booking_id: {booking_id}'
         )
 
+        # Kiểm tra số CIF của KH
+        customer_cif_number = request.customer_cif_number
+        gw_customer = await CtrGWCustomer(current_user=self.current_user).ctr_gw_get_customer_info_detail(
+            cif_number=customer_cif_number,
+            return_raw_data_flag=True
+        )
+        customer_cif_full_name_vn = gw_customer['full_name']
+        if customer_cif_full_name_vn == GW_DEFAULT_VALUE:
+            return self.response_exception(msg=ERROR_CIF_NUMBER_EXIST, loc=f"cif_number: {customer_cif_number}")
+
         denominations__amounts = {}
         statement_info = self.call_repos(await repos_get_denominations(currency_id="VND", session=self.oracle_session))
 
@@ -534,9 +547,8 @@ class CtrCasaTopUp(BaseController):
         )
 
         # Thông tin phí
-
         fee_info_response = await CtrAccountFee().calculate_fee(
-            one_fee_info_request=data.fee_info, fee_note=data.fee_note
+            one_fee_info_request=data.fee_info, fee_note=data.fee_note, amount=data.amount
         )
 
         statement_response = await CtrStatement().ctr_get_statement_info(statement_requests=data.statement)
@@ -574,6 +586,8 @@ class CtrCasaTopUp(BaseController):
         )
 
         casa_top_up_info.update(
+            customer_cif_number=customer_cif_number,
+            customer_cif_full_name_vn=customer_cif_full_name_vn,
             receiving_method=data.receiving_method,
             transfer=transfer_response,
             fee_info=fee_info_response,

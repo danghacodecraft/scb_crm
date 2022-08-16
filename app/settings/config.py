@@ -1,5 +1,4 @@
 import logging
-import os
 import pathlib
 import sys
 import time
@@ -9,17 +8,12 @@ from sqlalchemy import event
 from sqlalchemy.engine import Engine
 
 from app.settings.logging_config import InterceptHandler
+from app.settings.service import SERVICE
 
 ROOT_APP = str(pathlib.Path(__file__).parent.absolute().parent)
 
-APPLICATION = {
-    "version": "1.0.0",
-    "project_name": os.getenv("PROJECT_NAME", "CRM"),
-    "secret_key": os.getenv("SECRET_KEY", ""),
-    "debug": bool(os.getenv("DEBUG", "") if os.getenv("DEBUG", "") in ["True", "true", "1"] else False),
-    "allowed_hosts": list(os.getenv("ALLOWED_HOSTS", ["*"])),
-    "ekyc_proxy": str(os.getenv("SERVICE_EKYC_PROXY", "")),
-}
+APPLICATION = SERVICE['application']
+WRITE_LOG = SERVICE['kafka']["write_log"]
 
 DATETIME_INPUT_OUTPUT_FORMAT = '%Y-%m-%d %H:%M:%S'
 
@@ -29,6 +23,7 @@ TIME_INPUT_OUTPUT_FORMAT = '%H:%M:%S'
 
 DATE_INPUT_OUTPUT_EKYC_FORMAT = '%d/%m/%Y'
 
+
 # logging configuration
 LOGGING_LEVEL = logging.DEBUG if APPLICATION["debug"] else logging.INFO
 LOGGERS = ("uvicorn.asgi", "uvicorn.access", "sqlalchemy.engine")  # noqa
@@ -36,6 +31,7 @@ logger.level("CUSTOM", no=15, color="<blue>", icon="@")
 logger.level("SERVICE", no=200)
 
 logging.getLogger().handlers = [InterceptHandler()]
+
 # logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
 for logger_name in LOGGERS:
     logging_logger = logging.getLogger(logger_name)
@@ -52,7 +48,7 @@ logger.configure(
     ]
 )
 
-if os.getenv("DEBUG", True):
+if APPLICATION["debug"]:
     @event.listens_for(Engine, "before_cursor_execute")
     def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
         conn.info.setdefault("query_start_time", []).append(time.time())
@@ -65,5 +61,3 @@ if os.getenv("DEBUG", True):
         total = time.time() - conn.info['query_start_time'].pop(-1)
         logger.success("Query Complete!")
         logger.info(f"Total Time: {total * 1000} ms\n")
-
-WRITE_LOG = os.getenv("KAFKA_WRITE_LOG")

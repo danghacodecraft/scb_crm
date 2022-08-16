@@ -34,6 +34,16 @@ class CardIssuanceType(Base):
     name = Column('card_issuance_type_name', VARCHAR(255), nullable=False, comment='Tên Hình thức phát hành thẻ')
 
 
+class CardCustomerType(Base):
+    __tablename__ = 'crm_card_cust_type'
+    __table_args__ = {'comment': 'Nhóm khách hàng dùng cho thẻ ghi nợ'}
+
+    id = Column('card_cust_type_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "),
+                comment='Mã Nhóm khách hàng (PK)')
+    code = Column('card_cust_type_code', VARCHAR(50), nullable=False, comment='Mã code Nhóm khách hàng')
+    name = Column('card_cust_type_name', VARCHAR(255), nullable=False, comment='Tên Nhóm khách hàng')
+
+
 class CardType(Base):
     __tablename__ = 'crm_card_type'
     __table_args__ = {'comment': 'Loại thẻ (tính vật lý: vật lý, phi vạt lý)'}

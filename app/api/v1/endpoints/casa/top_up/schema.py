@@ -48,8 +48,9 @@ class CasaTopUpCommonRequest(ResponseRequestSchema):
 
     @validator("sender_mobile_number")
     def check_valid_mobile_number(cls, v):
-        if not is_valid_mobile_number(v):
-            raise TypeError('')
+        if v is not None:
+            if not is_valid_mobile_number(v):
+                raise TypeError('')
         return v
 
 
@@ -125,6 +126,7 @@ class CasaTopUpThirdParty247ToCardRequest(CasaTopUpThirdPartyCommonRequest):
 
 
 class CasaTopUpRequest(ResponseRequestSchema):
+    customer_cif_number: str = CustomField().CIFNumberField
     receiving_method: str = Field(..., description=f"Hình thức nhận: {make_description_from_dict(RECEIVING_METHODS)}")
     data: Union[
         CasaTopUpSCBByIdentityRequest,
@@ -159,7 +161,7 @@ class ReceiverResponse(ResponseRequestSchema):
     identity_number: Optional[str] = Field(None, description="Số giấy tờ định danh")
     issued_date: Optional[date] = Field(None, description="Ngày cấp")
     place_of_issue: DropdownCodeNameResponse = Field(None, description="Nơi cấp")
-    mobile_phone: Optional[str] = Field(None, description="Số điện thoại")
+    mobile_number: Optional[str] = Field(None, description="Số điện thoại")
     address_full: Optional[str] = Field(None, description="Địa chỉ")
     currency: Optional[str] = Field(None, description="Loại tiền")
 

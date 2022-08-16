@@ -137,7 +137,7 @@ class CtrDashboard(BaseController):
             mapping_datas[booking.id].update(
                 full_name_vn=customer.full_name_vn,
                 cif_id=customer.id,
-                cif_number=customer.cif_number
+                customer_cif_number=customer.cif_number
             )
 
         # lấy thông tin các giao dịch aoumut_block
@@ -151,7 +151,7 @@ class CtrDashboard(BaseController):
             mapping_datas[booking.id].update(
                 full_name_vn=customer.full_name_vn,
                 cif_id=customer.id,
-                cif_number=customer.cif_number
+                customer_cif_number=customer.cif_number
             )
 
         # Lấy thông tin các giao dịch Mở TKTT\
@@ -175,7 +175,7 @@ class CtrDashboard(BaseController):
             mapping_datas[booking.parent_id].update(
                 full_name_vn=customer.full_name_vn,
                 cif_id=customer.id,
-                cif_number=customer.cif_number
+                customer_cif_number=customer.cif_number
             )
             mapping_datas[booking.parent_id]['business_type'].update(
                 numbers=account_numbers
@@ -191,7 +191,7 @@ class CtrDashboard(BaseController):
                 mapping_datas[booking.id].update(
                     full_name_vn=customer.full_name_vn,
                     cif_id=customer.id,
-                    cif_number=customer.cif_number
+                    customer_cif_number=customer.cif_number
                 )
                 mapping_datas[booking.id]['business_type'].update(
                     numbers=[dict(
@@ -225,7 +225,7 @@ class CtrDashboard(BaseController):
                     mapping_datas[booking.id].update(
                         full_name_vn=cif_info.full_name_vn,
                         cif_id=cif_info.id,
-                        cif_number=cif_number,
+                        customer_cif_number=cif_number,
                     )
                     mapping_datas[booking.id]['business_type'].update(
                         numbers=[dict(
@@ -266,6 +266,7 @@ class CtrDashboard(BaseController):
         sla_transaction_infos = self.call_repos(await repos_get_sla_transaction_infos(
             booking_ids=tuple(booking_ids), session=self.oracle_session
         ))
+        newest_booking_business_form = None
 
         for (
                 booking, sla_transaction, sender_sla_transaction, sla_transaction_parent, sender_sla_trans_parent,
@@ -326,10 +327,19 @@ class CtrDashboard(BaseController):
                         form_data = orjson_loads(booking_business_form.form_data)
                         sender_cif_number_key = 'sender_cif_number'
                         sender_full_name_key = 'sender_full_name_vn'
+                        customer_cif_number_key = 'customer_cif_number'
+                        customer_cif_full_name_vn_key = 'customer_cif_full_name_vn'
+
                         mapping_datas[booking_id].update(
-                            cif_number=form_data[sender_cif_number_key] if sender_cif_number_key in form_data else None,
-                            full_name_vn=form_data[sender_full_name_key] if sender_full_name_key in form_data else None
+                            sender_cif_number=form_data[sender_cif_number_key] if sender_cif_number_key in form_data else None,
+                            sender_full_name_vn=form_data[sender_full_name_key] if sender_full_name_key in form_data else None
                         )
+                        if not newest_booking_business_form or newest_booking_business_form < booking_business_form.created_at:
+                            newest_booking_business_form = booking_business_form.created_at
+                            mapping_datas[booking_id].update(
+                                customer_cif_number=form_data[customer_cif_number_key] if customer_cif_number_key in form_data else None,
+                                customer_cif_full_name_vn=form_data[customer_cif_full_name_vn_key] if customer_cif_full_name_vn_key in form_data else None,
+                            )
 
                         numbers = []
                         number_key_account_number = 'receiver_account_number'

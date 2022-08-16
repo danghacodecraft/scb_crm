@@ -13,6 +13,13 @@ configs = ss.execute(
 configs = {config.name: config.value for config in configs}
 
 SERVICE = {
+    "application": {
+        "version": "1.0.0",
+        "project_name": configs.get("PROJECT_NAME", "CRM"),
+        "secret_key": configs.get("SECRET_KEY", ""),
+        "debug": bool(configs.get("DEBUG", "") if configs.get("DEBUG", "") in ["True", "true", "1"] else False),
+        "allowed_hosts": list(configs.get("ALLOWED_HOSTS", ["*"]))
+    },
     "file": {
         "url": configs.get("SERVICE_FILE_URL"),
         "server-auth": configs.get("SERVICE_FILE_SERVICE_AUTH"),
@@ -70,6 +77,7 @@ SERVICE = {
         "sasl_plain_password": configs.get("KAFKA_SASL_PLAIN_PASSWORD"),
         "producer_topic": configs.get("KAFKA_PRODUCER_TOPIC"),
         "message_max_bytes": configs.get("KAFKA_MESSAGE_MAX_BYTES"),
+        "write_log": bool(configs.get("KAFKA_WRITE_LOG") if configs.get("KAFKA_WRITE_LOG") in ["True", "true", "1"] else False),
     },
     "redis": {
         "host": configs.get("REDIS_HOST"),
