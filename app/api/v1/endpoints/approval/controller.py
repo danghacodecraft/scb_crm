@@ -699,7 +699,8 @@ class CtrApproval(BaseController):
                         file_uuid=compare_face_image_uuid,
                         file_uuid_ekyc=None,    # TODO: Tạm thời không upload file qua ekyc
                         image_type_id=IMAGE_TYPE_FACE,
-                        booking_id=booking_id
+                        booking_id=booking_id,
+                        created_at=now()
                     ))
 
                 if compare_fingerprint_image_uuid:
@@ -708,7 +709,8 @@ class CtrApproval(BaseController):
                         file_uuid=compare_fingerprint_image_uuid,
                         file_uuid_ekyc=None,    # TODO: Tạm thời không upload file qua ekyc
                         image_type_id=IMAGE_TYPE_FINGERPRINT,
-                        booking_id=booking_id
+                        booking_id=booking_id,
+                        created_at=now()
                     ))
 
                 if not compare_signature_image_uuid:
@@ -719,7 +721,8 @@ class CtrApproval(BaseController):
                     file_uuid=compare_signature_image_uuid,
                     file_uuid_ekyc=None,    # TODO: Tạm thời không upload file qua ekyc
                     image_type_id=IMAGE_TYPE_SIGNATURE,
-                    booking_id=booking_id
+                    booking_id=booking_id,
+                    created_at=now()
                 ))
 
             # booking_business_form = await CtrBooking().ctr_get_booking_business_form(
