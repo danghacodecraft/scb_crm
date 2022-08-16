@@ -411,7 +411,7 @@ class CtrCasaTopUp(BaseController):
         )
 
         # Kiểm tra số CIF của KH
-        customer_cif_number = request.cif_number
+        customer_cif_number = request.customer_cif_number
         is_existed = await CtrGWCustomer(current_user=self.current_user).ctr_gw_check_exist_customer_detail_info(
             cif_number=customer_cif_number,
             return_raw_data_flag=True
@@ -546,7 +546,6 @@ class CtrCasaTopUp(BaseController):
         )
 
         # Thông tin phí
-
         fee_info_response = await CtrAccountFee().calculate_fee(
             one_fee_info_request=data.fee_info, fee_note=data.fee_note
         )
@@ -586,6 +585,7 @@ class CtrCasaTopUp(BaseController):
         )
 
         casa_top_up_info.update(
+            customer_cif_number=customer_cif_number,
             receiving_method=data.receiving_method,
             transfer=transfer_response,
             fee_info=fee_info_response,

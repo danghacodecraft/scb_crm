@@ -266,6 +266,7 @@ class CtrDashboard(BaseController):
         sla_transaction_infos = self.call_repos(await repos_get_sla_transaction_infos(
             booking_ids=tuple(booking_ids), session=self.oracle_session
         ))
+        newest = None
 
         for (
                 booking, sla_transaction, sender_sla_transaction, sla_transaction_parent, sender_sla_trans_parent,
@@ -326,10 +327,17 @@ class CtrDashboard(BaseController):
                         form_data = orjson_loads(booking_business_form.form_data)
                         sender_cif_number_key = 'sender_cif_number'
                         sender_full_name_key = 'sender_full_name_vn'
+                        customer_cif_number_key = 'customer_cif_number'
+
                         mapping_datas[booking_id].update(
-                            cif_number=form_data[sender_cif_number_key] if sender_cif_number_key in form_data else None,
-                            full_name_vn=form_data[sender_full_name_key] if sender_full_name_key in form_data else None
+                            sender_cif_number=form_data[sender_cif_number_key] if sender_cif_number_key in form_data else None,
+                            sender_full_name_vn=form_data[sender_full_name_key] if sender_full_name_key in form_data else None
                         )
+                        if not newest or newest < booking_business_form.created_at:
+                            newest = booking_business_form.created_at
+                            mapping_datas[booking_id].update(
+                                customer_cif_number=form_data[customer_cif_number_key] if customer_cif_number_key in form_data else None,
+                            )
 
                         numbers = []
                         number_key_account_number = 'receiver_account_number'
