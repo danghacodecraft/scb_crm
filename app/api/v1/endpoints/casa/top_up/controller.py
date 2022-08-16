@@ -49,7 +49,7 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_TOP_UP_CASA_ACCOUNT,
     PROFILE_HISTORY_STATUS_INIT
 )
-from app.utils.constant.gw import GW_REQUEST_DIRECT_INDIRECT
+from app.utils.constant.gw import GW_DEFAULT_VALUE, GW_REQUEST_DIRECT_INDIRECT
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_GDV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_GDV
 )
@@ -165,7 +165,7 @@ class CtrCasaTopUp(BaseController):
 
         receiver = dict(
             province=dropdown(province),
-            branch=dropdown(branch),
+            branch_info=dropdown(branch),
             issued_date=issued_date,
             place_of_issue=dropdown(place_of_issue),
             fullname_vn=data.receiver_full_name_vn,
@@ -412,11 +412,12 @@ class CtrCasaTopUp(BaseController):
 
         # Kiểm tra số CIF của KH
         customer_cif_number = request.customer_cif_number
-        is_existed = await CtrGWCustomer(current_user=self.current_user).ctr_gw_check_exist_customer_detail_info(
+        gw_customer = await CtrGWCustomer(current_user=self.current_user).ctr_gw_get_customer_info_detail(
             cif_number=customer_cif_number,
             return_raw_data_flag=True
         )
-        if not is_existed:
+        customer_cif_full_name_vn = gw_customer['full_name']
+        if customer_cif_full_name_vn == GW_DEFAULT_VALUE:
             return self.response_exception(msg=ERROR_CIF_NUMBER_EXIST, loc=f"cif_number: {customer_cif_number}")
 
         denominations__amounts = {}
@@ -586,6 +587,7 @@ class CtrCasaTopUp(BaseController):
 
         casa_top_up_info.update(
             customer_cif_number=customer_cif_number,
+            customer_cif_full_name_vn=customer_cif_full_name_vn,
             receiving_method=data.receiving_method,
             transfer=transfer_response,
             fee_info=fee_info_response,
