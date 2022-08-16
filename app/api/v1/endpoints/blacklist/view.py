@@ -40,12 +40,13 @@ async def create_blacklist(
 )
 async def view_blacklist(
         pagination_params: PaginationParams = Depends(),
-        identity_id: List[str] = Query(..., description='Giấy tờ định danh'),
+        identity_id: str = Query(..., description='Giấy tờ định danh'),
         # cif_num: List[str] = Query(None, description='số cif'),
         # casa_account: List[str] = Query(None, description='Số tài khoản ngân hàng tại SCB'),
 ) -> List[BlacklistResponse]:
+    list_identity = identity_id.split(',')
     return await CtrBlackList().ctr_view_blacklist(pagination_params,
-                                                   identity_id,
+                                                   list_identity,
                                                    # cif_num,
                                                    # casa_account
                                                    )

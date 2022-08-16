@@ -44,6 +44,8 @@ class CtrBlackList(BaseController):
                                  # casa_account_num:str
                                  ):
 
+        print(identity_id)
+
         blacklist = self.call_repos(await repo_view_blacklist(
                                 session=self.oracle_session,
                                 limit=pagination_params.limit,
@@ -51,4 +53,25 @@ class CtrBlackList(BaseController):
                                 identity_id=identity_id
                             )
                         )
-        return blacklist
+        data = [{
+            'full_name': item_blacklist.Blacklist.full_name,
+             'date_of_birth': item_blacklist.Blacklist.date_of_birth,
+            'identity_id': item_blacklist.Blacklist.identity_id,
+            'issued_date': item_blacklist.Blacklist.issued_date,
+            'place_of_issue_id': item_blacklist.Blacklist.place_of_issue_id,
+            'cif_num': item_blacklist.Blacklist.cif_num,
+            'casa_account_num': item_blacklist.Blacklist.casa_account_num,
+            'branch_id': item_blacklist.Blacklist.branch_id,
+            'date_open_account_number': item_blacklist.Blacklist.date_open_account_number,
+            'mobile_num': item_blacklist.Blacklist.mobile_num,
+            'place_of_residence': item_blacklist.Blacklist.place_of_residence,
+            'place_of_origin': item_blacklist.Blacklist.place_of_origin,
+            'reason': item_blacklist.Blacklist.reason,
+            'job_content': item_blacklist.Blacklist.job_content,
+            'blacklist_source': item_blacklist.Blacklist.blacklist_source,
+            'document_no': item_blacklist.Blacklist.document_no,
+            'blacklist_area': item_blacklist.Blacklist.blacklist_area,
+        } for item_blacklist in blacklist]
+
+
+        return data

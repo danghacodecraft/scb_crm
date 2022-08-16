@@ -30,5 +30,4 @@ async def repo_view_blacklist(session: Session,
     black_list = black_list.offset(limit * (page-1))
 
     black_list = session.execute(black_list).all()
-
     return ReposReturn(data=black_list)
