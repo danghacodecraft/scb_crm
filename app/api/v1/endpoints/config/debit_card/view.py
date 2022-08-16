@@ -29,6 +29,22 @@ async def view_card_issuance_type_info(
 
 
 @router.get(
+    path="/card-customer-type/",
+    name="Card Customer Type",
+    description="Lấy nhóm Khách Hàng thẻ ghi nợ",
+    responses=swagger_response(
+        response_model=ResponseData[List[DropdownResponse]],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_card_customer_type_info(
+        current_user=Depends(get_current_user_from_header()),
+):
+    card_customer_type_info = await CtrDebitCard(current_user).ctr_card_customer_type_info()
+    return ResponseData[List[DropdownResponse]](**card_customer_type_info)
+
+
+@router.get(
     path="/debit-card-types/",
     name="Debit Card Type",
     description="Lấy dữ liệu Loại thẻ",
