@@ -165,7 +165,7 @@ class CtrCasaTopUp(BaseController):
 
         receiver = dict(
             province=dropdown(province),
-            branch=dropdown(branch),
+            branch_info=dropdown(branch),
             issued_date=issued_date,
             place_of_issue=dropdown(place_of_issue),
             fullname_vn=data.receiver_full_name_vn,
