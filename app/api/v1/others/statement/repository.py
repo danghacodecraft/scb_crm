@@ -12,6 +12,8 @@ async def repos_get_denominations(currency_id: str, session: Session) -> ReposRe
         select(
             CurrencyDenomination
         ).filter(CurrencyDenomination.currency_id == currency_id)
+        .order_by(CurrencyDenomination.denominations.desc())
+
     ).scalars().all()
 
     return ReposReturn(data=denominations)
