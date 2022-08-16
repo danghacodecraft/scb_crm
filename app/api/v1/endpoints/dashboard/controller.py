@@ -137,7 +137,7 @@ class CtrDashboard(BaseController):
             mapping_datas[booking.id].update(
                 full_name_vn=customer.full_name_vn,
                 cif_id=customer.id,
-                cif_number=customer.cif_number
+                customer_cif_number=customer.cif_number
             )
 
         # lấy thông tin các giao dịch aoumut_block
@@ -151,7 +151,7 @@ class CtrDashboard(BaseController):
             mapping_datas[booking.id].update(
                 full_name_vn=customer.full_name_vn,
                 cif_id=customer.id,
-                cif_number=customer.cif_number
+                customer_cif_number=customer.cif_number
             )
 
         # Lấy thông tin các giao dịch Mở TKTT\
@@ -175,7 +175,7 @@ class CtrDashboard(BaseController):
             mapping_datas[booking.parent_id].update(
                 full_name_vn=customer.full_name_vn,
                 cif_id=customer.id,
-                cif_number=customer.cif_number
+                customer_cif_number=customer.cif_number
             )
             mapping_datas[booking.parent_id]['business_type'].update(
                 numbers=account_numbers
@@ -191,7 +191,7 @@ class CtrDashboard(BaseController):
                 mapping_datas[booking.id].update(
                     full_name_vn=customer.full_name_vn,
                     cif_id=customer.id,
-                    cif_number=customer.cif_number
+                    customer_cif_number=customer.cif_number
                 )
                 mapping_datas[booking.id]['business_type'].update(
                     numbers=[dict(
@@ -225,7 +225,7 @@ class CtrDashboard(BaseController):
                     mapping_datas[booking.id].update(
                         full_name_vn=cif_info.full_name_vn,
                         cif_id=cif_info.id,
-                        cif_number=cif_number,
+                        customer_cif_number=cif_number,
                     )
                     mapping_datas[booking.id]['business_type'].update(
                         numbers=[dict(
