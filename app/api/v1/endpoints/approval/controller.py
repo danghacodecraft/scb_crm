@@ -336,14 +336,53 @@ class CtrApproval(BaseController):
                 created_at=created_at,
                 identity_images=identity_fingerprint_images,
             )
-
-            authentication = dict(
-                face=face_authentication,
-                signature=signature_authentication,
-                fingerprint=fingerprint_authentication
+        else:
+            booking_authentications = await CtrBooking().ctr_get_booking_authentications(booking_id=booking_id)
+            is_completed_face = False
+            is_completed_fingerprint = False
+            is_completed_signature = False
+            face_authentication = dict(
+                compare_url=None,
+                compare_uuid=None,
+                created_at=None,
+                identity_images=[],
             )
+            signature_authentication = dict(
+                compare_url=None,
+                compare_uuid=None,
+                created_at=None,
+                identity_images=[],
+            )
+            fingerprint_authentication = dict(
+                compare_url=None,
+                compare_uuid=None,
+                created_at=None,
+                identity_images=[],
+            )
+            for booking_authentication in booking_authentications:
+                data = dict(
+                    compare_uuid=booking_authentication.file_uuid,
+                    created_at=booking_authentication.created_at
+                )
+                if booking_authentication.image_type_id == IMAGE_TYPE_FACE and not is_completed_face:
+                    face_authentication.update(data)
+                    is_completed_face = True
 
-            ############################################################################################################
+                if booking_authentication.image_type_id == IMAGE_TYPE_FINGERPRINT and not is_completed_fingerprint:
+                    fingerprint_authentication.update(data)
+                    is_completed_fingerprint = True
+
+                if booking_authentication.image_type_id == IMAGE_TYPE_SIGNATURE and not is_completed_signature:
+                    signature_authentication.update(data)
+                    is_completed_signature = True
+
+        authentication = dict(
+            face=face_authentication,
+            signature=signature_authentication,
+            fingerprint=fingerprint_authentication
+        )
+
+        ############################################################################################################
 
         ################################################################################################################
         # PHÊ DUYỆT
