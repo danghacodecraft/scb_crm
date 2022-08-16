@@ -5,8 +5,8 @@ from pydantic import Field
 from app.api.base.schema import BaseSchema
 
 
-class BlacklistResponse(BaseSchema):
-    id :int = Field(..., description="id")
+class BlacklistRequest(BaseSchema):
+    # id :int = Field(..., description="id")
     full_name: str = Field(..., description="Họ và tên", max_length=30)
     date_of_birth: date = Field(..., description="ngày sinh")
     identity_id: str = Field(..., description="giấy tờ định danh", max_length=50)
@@ -24,3 +24,6 @@ class BlacklistResponse(BaseSchema):
     blacklist_source: str = Field(..., description="nguồn", max_length=500)
     document_no: str = Field(..., description="Số văn bản đến", max_length=20)
     blacklist_area: str = Field(..., description="khu vực", max_length=500)
+
+class BlacklistResponse(BlacklistRequest):
+    id :int = Field(..., description="id")

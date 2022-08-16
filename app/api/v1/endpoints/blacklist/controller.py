@@ -2,7 +2,7 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.blacklist.schema import BlacklistResponse
 from app.api.v1.endpoints.blacklist.repository import repo_add_blacklist, repo_view_blacklist
 from app.api.v1.dependencies.paging import PaginationParams
-
+from typing import List
 class CtrBlackList(BaseController):
 
     async def ctr_create_blacklist(self, data_blacklist:BlacklistResponse):
@@ -28,7 +28,7 @@ class CtrBlackList(BaseController):
         }
 
         self.call_repos(await repo_add_blacklist(
-                                data_comment=data_insert,
+                                data_blacklist=data_insert,
                                 session=self.oracle_session
                                 )
                         )
@@ -39,21 +39,16 @@ class CtrBlackList(BaseController):
 
     async def ctr_view_blacklist(self,
                                  pagination_params:PaginationParams,
-                                 id :int,
-                                 identity_id:str,
-                                 cif_num:str,
-                                 casa_account_num:str):
-        data_filter = {}
-        data_filter.update(id=id) if id else None
-        data_filter.update(id=identity_id) if identity_id else None
-        data_filter.update(id=cif_num) if cif_num else None
-        data_filter.update(id=casa_account_num) if casa_account_num else None
+                                 identity_id:List[str],
+                                 # cif_num:str,
+                                 # casa_account_num:str
+                                 ):
 
         blacklist = self.call_repos(await repo_view_blacklist(
                                 session=self.oracle_session,
                                 limit=pagination_params.limit,
                                 page=pagination_params.page,
-                                data_filter=data_filter
+                                identity_id=identity_id
                             )
                         )
         return blacklist
