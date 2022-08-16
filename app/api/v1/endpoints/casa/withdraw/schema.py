@@ -79,6 +79,8 @@ class StatementResponse(BaseSchema):
 class StatementInfoResponseResponse(BaseSchema):
     total_number_of_bills: int = Field(..., description="Tổng số mệnh giá tiền")
     statements: List[StatementResponse] = Field(..., description="Chi tiết bảng kê")
+    total: int = Field(..., description="Tổng thành tiền")
+    odd_difference: int = Field(..., description="Chênh lệch lẻ")
 
 
 # B. Thông tin khách hàng giao dịch
