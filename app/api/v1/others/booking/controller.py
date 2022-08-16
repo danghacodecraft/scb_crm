@@ -61,6 +61,8 @@ class CtrBooking(BaseController):
                 error_status_code=status.HTTP_403_FORBIDDEN
             )
 
+        business_type_code = business_type_code.upper()
+
         if business_type_code not in BUSINESS_TYPES:
             return self.response_exception(msg=ERROR_BUSINESS_TYPE_NOT_EXIST)
 
