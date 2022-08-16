@@ -1,7 +1,7 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.repository import repos_get_data_model_config
 from app.third_parties.oracle.models.master_data.card import (
-    BrandOfCard, CardIssuanceFee, CardIssuanceType, CardType
+    BrandOfCard, CardCustomerType, CardIssuanceFee, CardIssuanceType, CardType
 )
 
 CARD_ANNUAL_FEES = [
@@ -27,6 +27,15 @@ class CtrDebitCard(BaseController):
             )
         )
         return self.response(card_issuance_type_info)
+
+    async def ctr_card_customer_type_info(self):
+        card_customer_type_info = self.call_repos(
+            await repos_get_data_model_config(
+                session=self.oracle_session,
+                model=CardCustomerType
+            )
+        )
+        return self.response(card_customer_type_info)
 
     async def ctr_card_type_info(self):
         card_type_info = self.call_repos(
