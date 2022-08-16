@@ -66,7 +66,7 @@ class CasaTransferSCBByIdentityRequest(CasaTransferCommonRequest):
     receiver_identity_number: str = Field(..., description="Số GTĐD", regex=REGEX_NUMBER_ONLY)
     receiver_issued_date: date = Field(..., description="Ngày cấp")
     receiver_place_of_issue: DropdownRequest = Field(..., description="Nơi cấp")
-    receiver_mobile_number: Optional[str] = Field(..., description="Số điện thoại")
+    receiver_mobile_number: Optional[str] = Field(None, description="Số điện thoại")
     receiver_address_full: Optional[str] = Field(..., description="Địa chỉ", max_length=500)
 
     @validator("receiver_mobile_number")
@@ -97,10 +97,10 @@ class CasaTransferThirdPartyByIdentityRequest(CasaTransferThirdPartyRequest):
     receiver_branch: DropdownRequest = Field(..., description="Chi nhánh")
     receiver_province: DropdownRequest = Field(..., description="Tỉnh/Thành phố")
     receiver_full_name_vn: str = Field(..., description="Chủ tài khoản")
-    receiver_identity_number: str = Field(..., description="Số GTĐD", regex=REGEX_NUMBER_ONLY)
+    receiver_identity_number: Optional[str] = Field(None, description="Số GTĐD", regex=REGEX_NUMBER_ONLY)
     receiver_issued_date: date = Field(..., description="Ngày cấp")
     receiver_place_of_issue: DropdownRequest = Field(..., description="Nơi cấp")
-    receiver_mobile_number: Optional[str] = Field(..., description="Số điện thoại")
+    receiver_mobile_number: Optional[str] = Field(None, description="Số điện thoại")
 
     @validator("receiver_mobile_number")
     def check_valid_mobile_number(cls, v):
