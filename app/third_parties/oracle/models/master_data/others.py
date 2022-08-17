@@ -47,6 +47,7 @@ class BusinessType(Base):
                 comment='ID loại nghiệp vụ')
     code = Column(VARCHAR(50), nullable=False, comment='Mã code loại nghiệp vụ')
     name = Column(VARCHAR(500), nullable=False, comment='Tên loại nghiệp vụ')
+    sequence = Column(NUMBER, nullable=False, comment="Số trình tự")
     description = Column(VARCHAR(1000), comment='Mô tả loại nghiệp vụ')
     active_flag = Column(NUMBER(1, 0, False), nullable=False, comment='Trạng thái hoạt động')
     order_no = Column(NUMBER(3, 0, False), comment='Sắp xếp')
