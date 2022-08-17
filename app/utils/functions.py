@@ -301,3 +301,10 @@ def calculate_percentage(unit, total):
     except ZeroDivisionError:
         return None
     return percentage
+
+
+def create_fcc_booking_code(
+        business_type_sequence: int, branch_code: str, created_at: datetime, booking_code: str):
+
+    date_code = datetime_to_string(created_at, _format='%Y%m%d')
+    return f"{business_type_sequence:02d}{branch_code}{date_code}{booking_code[-7:]}"
