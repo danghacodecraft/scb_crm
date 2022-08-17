@@ -694,42 +694,43 @@ class CtrApproval(BaseController):
         # Nghiệp vụ không cần cif
         if business_type_id in [BUSINESS_TYPE_CASA_TOP_UP, BUSINESS_TYPE_WITHDRAW]:
             no_cif_flag = True
-            authentication = request.authentication
-            if authentication:
-                compare_face_image_uuid = authentication.face.compare_face_image_uuid
-                compare_signature_image_uuid = authentication.signature.compare_face_image_uuid
-                compare_fingerprint_image_uuid = authentication.fingerprint.compare_face_image_uuid
-                if compare_face_image_uuid:
-                    saving_booking_authentications.append(dict(
-                        id=generate_uuid(),
-                        file_uuid=compare_face_image_uuid,
-                        file_uuid_ekyc=None,    # TODO: Tạm thời không upload file qua ekyc
-                        image_type_id=IMAGE_TYPE_FACE,
-                        booking_id=booking_id,
-                        created_at=now()
-                    ))
-
-                if compare_fingerprint_image_uuid:
-                    saving_booking_authentications.append(dict(
-                        id=generate_uuid(),
-                        file_uuid=compare_fingerprint_image_uuid,
-                        file_uuid_ekyc=None,    # TODO: Tạm thời không upload file qua ekyc
-                        image_type_id=IMAGE_TYPE_FINGERPRINT,
-                        booking_id=booking_id,
-                        created_at=now()
-                    ))
-
-                if not compare_signature_image_uuid:
-                    return self.response_exception(msg=ERROR_APPROVAL_UPLOAD_SIGNATURE)
-
-                saving_booking_authentications.append(dict(
-                    id=generate_uuid(),
-                    file_uuid=compare_signature_image_uuid,
-                    file_uuid_ekyc=None,    # TODO: Tạm thời không upload file qua ekyc
-                    image_type_id=IMAGE_TYPE_SIGNATURE,
-                    booking_id=booking_id,
-                    created_at=now()
-                ))
+            # authentication = request.authentication
+            # if authentication:
+            #     compare_face_image_uuid = authentication.face.compare_face_image_uuid
+            #     compare_signature_image_uuid = authentication.signature.compare_face_image_uuid
+            #     compare_fingerprint_image_uuid = authentication.fingerprint.compare_face_image_uuid
+            #     if compare_face_image_uuid:
+            #         saving_booking_authentications.append(dict(
+            #             id=generate_uuid(),
+            #             file_uuid=compare_face_image_uuid,
+            #             file_uuid_ekyc=None,    # TODO: Tạm thời không upload file qua ekyc
+            #             image_type_id=IMAGE_TYPE_FACE,
+            #             booking_id=booking_id,
+            #             created_at=now()
+            #         ))
+            #
+            #     if compare_fingerprint_image_uuid:
+            #         saving_booking_authentications.append(dict(
+            #             id=generate_uuid(),
+            #             file_uuid=compare_fingerprint_image_uuid,
+            #             file_uuid_ekyc=None,    # TODO: Tạm thời không upload file qua ekyc
+            #             image_type_id=IMAGE_TYPE_FINGERPRINT,
+            #             booking_id=booking_id,
+            #             created_at=now()
+            #         ))
+            #
+            #     if not compare_signature_image_uuid:
+            #         return self.response_exception(msg=ERROR_APPROVAL_UPLOAD_SIGNATURE)
+            #
+            #     saving_booking_authentications.append(dict(
+            #         id=generate_uuid(),
+            #         file_uuid=compare_signature_image_uuid,
+            #         file_uuid_ekyc=None,    # TODO: Tạm thời không upload file qua ekyc
+            #         image_type_id=IMAGE_TYPE_SIGNATURE,
+            #         booking_id=booking_id,
+            #         created_at=now()
+            #     ))
+            ####################################
 
             # booking_business_form = await CtrBooking().ctr_get_booking_business_form(
             #     booking_id=booking_id, session=self.oracle_session
