@@ -643,7 +643,7 @@ class CtrGWCasaAccount(BaseController):
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
             is_success, gw_response_data = await self.ctr_gw_pay_in_cash_247_by_acc_num(
-                fcc_booking_code="01002123456_123456",  # TODO
+                fcc_booking_code=booking_business_form.booking.fcc_booking_code,
                 maker=maker,
                 form_data=form_data
             )
@@ -658,7 +658,7 @@ class CtrGWCasaAccount(BaseController):
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
             is_success, gw_response_data = await self.ctr_gw_pay_in_cash_247_by_card_num(
-                fcc_booking_code="01002123456_123456",  # TODO
+                fcc_booking_code=booking_business_form.booking.fcc_booking_code,
                 maker=maker,
                 form_data=form_data
             )

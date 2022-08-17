@@ -129,6 +129,7 @@ class Booking(Base):
     updated_by = Column(DateTime, comment='Người chỉnh sửa')
     completed_flag = Column(NUMBER(1), comment='Cờ đánh dấu hoàn thành', default=0)
     locked_flag = Column(NUMBER(1), comment='Cờ đánh dấu phong tỏa', default=0)
+    fcc_booking_code = Column('fcc_booking_code', VARCHAR(20), comment='Mã fcc code')
 
     business_type = relationship('BusinessType')
     transaction = relationship('TransactionDaily')
