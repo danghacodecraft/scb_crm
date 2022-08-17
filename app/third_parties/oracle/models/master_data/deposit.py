@@ -38,16 +38,16 @@ class TDAccClassCategory(Base):
     td_acc_class = relationship('TDAccClass')
     cust_category = relationship('CustomerCategory')
 
-
-class TDAccClassRolloverType(Base):
-    __tablename__ = 'crm_td_acc_class_rollover_type'
-    __table_args__ = (
-        PrimaryKeyConstraint('td_acc_class_id', 'td_rollover_id'),
-        {'comment': ''},
-    )
-
-    td_acc_class_id = Column(ForeignKey('crm_td_acc_class.td_acc_class_id'), comment='ID Sản phẩm tiền gửi')
-    td_rollover_id = Column(ForeignKey('crm_td_rollover_type.td_rollover_id'), comment='ID Loại tái ký')
-
-    td_acc_class = relationship('TDAccClass')
-    td_rollover = relationship('TDRolloverType')
+#
+# class TDAccClassRolloverType(Base):
+#     __tablename__ = 'crm_td_acc_class_rollover_type'
+#     __table_args__ = (
+#         PrimaryKeyConstraint('td_acc_class_id', 'td_rollover_id'),
+#         {'comment': ''},
+#     )
+#
+#     td_acc_class_id = Column(ForeignKey('crm_td_acc_class.td_acc_class_id'), comment='ID Sản phẩm tiền gửi')
+#     td_rollover_id = Column(ForeignKey('crm_td_rollover_type.td_rollover_id'), comment='ID Loại tái ký')
+#
+#     td_acc_class = relationship('TDAccClass')
+#     td_rollover = relationship('TDRolloverType')
