@@ -18,9 +18,8 @@ from app.third_parties.oracle.models.master_data.address import (
     AddressDistrict, AddressProvince, AddressWard
 )
 from app.third_parties.oracle.models.master_data.card import (
-    BrandOfCard, CardIssuanceFee, CardIssuanceType, CardType
+    BrandOfCard, CardCustomerType, CardIssuanceFee, CardIssuanceType, CardType
 )
-from app.third_parties.oracle.models.master_data.customer import CustomerType
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.cif import BUSINESS_FORM_DEBIT_CARD
 from app.utils.error_messages import ERROR_CIF_ID_NOT_EXIST, ERROR_NO_DATA
@@ -46,11 +45,14 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
             DebitCard.middle_name_on_card,
             DebitCard.last_name_on_card,
             DebitCard.card_delivery_address_flag,
+            DebitCard.src_code,
+            DebitCard.pro_code,
+            DebitCard.card_group,
             DebitCardType.card_id,
             DebitCardType.card_type_id,
             CardType,
             CardIssuanceType,
-            CustomerType,
+            CardCustomerType,
             BrandOfCard,
             CardIssuanceFee,
             CardDeliveryAddress,
@@ -67,7 +69,7 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
         ).join(
             CardIssuanceType, CardIssuanceType.id == DebitCard.card_issuance_type_id
         ).join(
-            CustomerType, CustomerType.id == DebitCard.customer_type_id
+            CardCustomerType, CardCustomerType.id == DebitCard.customer_type_id
         ).join(
             BrandOfCard, BrandOfCard.id == DebitCard.brand_of_card_id
         ).join(
@@ -109,21 +111,14 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
                 "register_flag": item.card_registration_flag,
                 "physical_card_type": physical_card_type,
                 "physical_issuance_type": dropdown(item.CardIssuanceType),
-                "customer_type": dropdown(item.CustomerType),
+                "customer_type": dropdown(item.CardCustomerType),
                 "payment_online_flag": item.payment_online_flag,
                 "branch_of_card": dropdown(item.BrandOfCard),
                 "issuance_fee": dropdown(item.CardIssuanceFee),
                 "annual_fee": dropdown(item.CardIssuanceFee),  # TODO
-                "debit_card_types": [  # TODO
-                    {
-                        "id": "1",
-                        "code": "MDTC1",
-                        "name": "VISA",
-                        "source_code": "DM407",
-                        "promo_code": "P311",
-                        "active_flag": True
-                    }
-                ]
+                "src_code": item.src_code,
+                "pro_code": item.pro_code,
+                "card_group": item.card_group,
             }
             information_debit_card = {
                 "name_on_card": {
@@ -257,31 +252,6 @@ async def repos_add_debit_card(
         'updated_at': now(),
         'updated_by': 'system'
     })
-
-
-async def repos_get_list_debit_card(
-        cif_id: str,  # noqa #  TODO
-        branch_of_card_id: str,  # noqa
-        issuance_fee_id: str,  # noqa
-        annual_fee_id: str  # noqa
-) -> ReposReturn:
-    return ReposReturn(data=[
-        {
-            "id": "1",
-            "code": "MDTC1",
-            "name": "VISA",
-            "source_code": "DM407",
-            "promo_code": "P311",
-        },
-        {
-            "id": "2",
-            "code": "VSDB",
-            "name": "MASTER CARD",
-            "source_code": "DM407",
-            "promo_code": "P311",
-        }
-    ]
-    )
 
 
 async def get_data_debit_card_by_cif_num(session: Session, cif_id: str) -> ReposReturn:

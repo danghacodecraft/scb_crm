@@ -1,7 +1,7 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.debit_card.repository import (
     get_data_customer_id, get_data_debit_card_by_cif_num, repos_add_debit_card,
-    repos_debit_card, repos_get_list_debit_card
+    repos_debit_card
 )
 from app.api.v1.endpoints.cif.debit_card.schema import DebitCardRequest
 from app.api.v1.endpoints.cif.repository import (
@@ -12,9 +12,8 @@ from app.third_parties.oracle.models.master_data.address import (
     AddressDistrict, AddressProvince, AddressWard
 )
 from app.third_parties.oracle.models.master_data.card import (
-    BrandOfCard, CardIssuanceFee, CardIssuanceType, CardType
+    BrandOfCard, CardCustomerType, CardIssuanceFee, CardIssuanceType, CardType
 )
-from app.third_parties.oracle.models.master_data.customer import CustomerType
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_INIT_DEBIT_CARD, PROFILE_HISTORY_STATUS_INIT
@@ -118,7 +117,7 @@ class CtrDebitCard(BaseController):
 
         """Kiểm tra customer_type"""
         await self.get_model_object_by_id(
-            model=CustomerType,
+            model=CardCustomerType,
             model_id=debt_card_req.issue_debit_card.customer_type.id,
             loc="issue_debit_card -> customer_type -> id",
         )
@@ -330,6 +329,9 @@ class CtrDebitCard(BaseController):
                     "customer_type_id": debt_card_req.issue_debit_card.customer_type.id,
                     "brand_of_card_id": debt_card_req.issue_debit_card.branch_of_card.id,
                     "card_issuance_fee_id": debt_card_req.issue_debit_card.issuance_fee.id,
+                    "src_code": debt_card_req.issue_debit_card.src_code,
+                    "pro_code": debt_card_req.issue_debit_card.pro_code,
+                    "card_group": debt_card_req.issue_debit_card.card_group,
                     "card_delivery_address_id": sub_uuid,
                     "parent_card_id": id_primary_card,
                     "card_registration_flag": debt_card_req.issue_debit_card.register_flag,
@@ -385,6 +387,9 @@ class CtrDebitCard(BaseController):
             "customer_type_id": debt_card_req.issue_debit_card.customer_type.id,
             "brand_of_card_id": debt_card_req.issue_debit_card.branch_of_card.id,
             "card_issuance_fee_id": debt_card_req.issue_debit_card.issuance_fee.id,
+            "src_code": debt_card_req.issue_debit_card.src_code,
+            "pro_code": debt_card_req.issue_debit_card.pro_code,
+            "card_group": debt_card_req.issue_debit_card.card_group,
             "card_delivery_address_id": uuid,
             "parent_card_id": None,
             "card_registration_flag": debt_card_req.issue_debit_card.register_flag,
@@ -453,17 +458,3 @@ class CtrDebitCard(BaseController):
         ))
 
         return self.response(data=add_debit_card)
-
-    async def ctr_list_debit_card_type(self, cif_id: str,
-                                       branch_of_card_id: str,
-                                       issuance_fee_id: str,
-                                       annual_fee_id: str,
-                                       ):
-        info_debit_card_types = self.call_repos(
-            await repos_get_list_debit_card(
-                cif_id,
-                branch_of_card_id,
-                issuance_fee_id,
-                annual_fee_id
-            ))
-        return self.response(info_debit_card_types)

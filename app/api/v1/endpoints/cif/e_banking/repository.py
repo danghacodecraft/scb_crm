@@ -35,17 +35,14 @@ async def repos_save_e_banking(
         data_insert: json,
         log_data: json,
         cif_id: str,
-        created_by: str,
         history_datas: json
 ) -> ReposReturn:
 
     # 1. Customer đã có E-banking -> xóa dữ liệu cũ
-    exist_ebank_info = session.execute(select(EBankingInfo).filter(EBankingInfo.customer_id == cif_id)).first()
-    if exist_ebank_info:
-        session.execute(delete(EBankingInfoAuthentication).filter(
-            EBankingInfoAuthentication.e_banking_info_id == exist_ebank_info.EBankingInfo.id))
-
-        session.delete(exist_ebank_info.EBankingInfo)
+    await repos_check_and_remove_exist_ebank(
+        cif_id=cif_id,
+        session=session
+    )
 
     # 2. Tạo dữ liệu mới
     ebank_info = data_insert['ebank_info']
@@ -81,11 +78,7 @@ async def repos_save_e_banking(
     if not is_success:
         return ReposReturn(is_error=True, msg=booking_response['msg'])
 
-    return ReposReturn(data={
-        "cif_id": cif_id,
-        "created_at": now(),
-        "created_by": created_by
-    })
+    return ReposReturn(data=None)
 
 
 @auto_commit
@@ -94,7 +87,6 @@ async def repos_save_sms_casa(
         data_insert: dict,
         log_data: json,
         history_datas: json,
-        created_by: str,
         session: Session
 ):
     # mapping dữ liệu cho các bảng
@@ -119,7 +111,12 @@ async def repos_save_sms_casa(
             return ReposReturn(is_error=True, msg=ERROR_CASA_ACCOUNT_NOT_EXIST)
 
         # 00. Kiểm tra casa_id có đăng ký reg_balance trước chưa -> xóa dữ liệu cũ.
-        exist_registry_balance = session.execute(select(EBankingRegisterBalance).filter(EBankingRegisterBalance.account_id == account_number)).first()
+        exist_registry_balance = session.execute(
+            select(EBankingRegisterBalance).filter(
+                EBankingRegisterBalance.account_id == account_number,
+                EBankingRegisterBalance.approval_status == False  # noqa
+            )
+        ).first()
 
         if exist_registry_balance:
             # 002
@@ -212,15 +209,11 @@ async def repos_save_sms_casa(
 
     session.commit()
 
-    return ReposReturn(data={
-        "cif_id": cif_id,
-        "created_at": now(),
-        "created_by": created_by
-    })
+    return ReposReturn(data=None)
 
 
 @auto_commit
-async def repos_check_and_remove_exist_sms_casa(cif_id: str, session: Session):
+async def repos_check_and_remove_exist_sms_casa(session: Session, cif_id: str):
     # Kiểm tra các tài khoản casa theo số cif
     casa_account_numbers = session.execute(
         select(
@@ -233,7 +226,11 @@ async def repos_check_and_remove_exist_sms_casa(cif_id: str, session: Session):
     for account_number in casa_account_numbers:
         # 00. Kiểm tra casa_id có đăng ký reg_balance trước chưa -> xóa dữ liệu cũ.
         exist_registry_balance = session.execute(
-            select(EBankingRegisterBalance).filter(EBankingRegisterBalance.account_id == account_number)).first()
+            select(EBankingRegisterBalance).filter(
+                EBankingRegisterBalance.account_id == account_number,
+                EBankingRegisterBalance.approval_status == False  # noqa
+            )
+        ).first()
 
         if exist_registry_balance:
             # 002
@@ -255,6 +252,22 @@ async def repos_check_and_remove_exist_sms_casa(cif_id: str, session: Session):
     return ReposReturn(data=None)
 
 
+@auto_commit
+async def repos_check_and_remove_exist_ebank(session: Session, cif_id: str):
+    # Xóa ebank theo số cif
+    exist_ebank_info = session.execute(
+        select(EBankingInfo).filter(
+            EBankingInfo.customer_id == cif_id,
+            EBankingInfo.approval_status == False  # noqa
+        )
+    ).first()
+
+    if exist_ebank_info:
+        session.delete(exist_ebank_info.EBankingInfo)
+
+    return ReposReturn(data=None)
+
+
 async def repos_check_e_banking(cif_id: str, session: Session):
     e_banking_info = session.execute(select(EBankingInfo).filter(EBankingInfo.customer_id == cif_id)).first()
     return e_banking_info
@@ -270,7 +283,6 @@ async def repos_get_e_banking(cif_id: str, session: Session) -> ReposReturn:
             EBankingInfoAuthentication, EBankingInfoAuthentication.e_banking_info_id == EBankingInfo.id
         ).filter(
             EBankingInfo.customer_id == cif_id,
-            EBankingInfo.approval_status == False  # noqa
         )
     ).all()
 
@@ -322,7 +334,6 @@ async def repos_get_sms_data(cif_id: str, session: Session) -> ReposReturn:
         ).filter(
             EBankingRegisterBalance.account_id.in_(casa_ids),
             EBankingRegisterBalance.e_banking_register_account_type == EBANKING_ACCOUNT_TYPE_CHECKING,
-            EBankingRegisterBalance.approval_status == False  # noqa
         )
     ).all()
 
