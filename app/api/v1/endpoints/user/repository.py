@@ -103,7 +103,7 @@ async def repos_check_token(token: str) -> ReposReturn:
             is_error=True,
             msg=ERROR_INVALID_TOKEN,
             loc='token',
-            error_status_code=status.HTTP_407_PROXY_AUTHENTICATION_REQUIRED
+            error_status_code=status.HTTP_401_UNAUTHORIZED
         )
 
     username = auth_parts['username']
