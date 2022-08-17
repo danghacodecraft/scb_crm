@@ -137,8 +137,27 @@ class CtrApproval(BaseController):
 
         compare_face_uuid = None
         cif_id = None
-        authentication = None
+        # authentication = None
+        face_authentication = dict(
+            compare_url=None,
+            compare_uuid=None,
+            created_at=None,
+            identity_images=[],
+        )
+        signature_authentication = dict(
+            compare_url=None,
+            compare_uuid=None,
+            created_at=None,
+            identity_images=[],
+        )
+        fingerprint_authentication = dict(
+            compare_url=None,
+            compare_uuid=None,
+            created_at=None,
+            identity_images=[],
+        )
         business_type = await CtrBooking().ctr_get_business_type(booking_id=booking_id)
+
         if business_type.code == BUSINESS_TYPE_INIT_CIF:
             customer_info = await CtrBooking().ctr_get_customer_from_booking(
                 booking_id=booking_id
@@ -336,51 +355,34 @@ class CtrApproval(BaseController):
                 created_at=created_at,
                 identity_images=identity_fingerprint_images,
             )
-        else:
-            booking_authentications = await CtrBooking().ctr_get_booking_authentications(booking_id=booking_id)
-            is_completed_face = False
-            is_completed_fingerprint = False
-            is_completed_signature = False
-            face_authentication = dict(
-                compare_url=None,
-                compare_uuid=None,
-                created_at=None,
-                identity_images=[],
-            )
-            signature_authentication = dict(
-                compare_url=None,
-                compare_uuid=None,
-                created_at=None,
-                identity_images=[],
-            )
-            fingerprint_authentication = dict(
-                compare_url=None,
-                compare_uuid=None,
-                created_at=None,
-                identity_images=[],
-            )
-            image_uuids = []
-            for booking_authentication in booking_authentications:
-                image_uuids.append(booking_authentication.file_uuid)
-            uuid__link_downloads = await self.get_link_download_multi_file(uuids=image_uuids)
+        # else:
+        #     booking_authentications = await CtrBooking().ctr_get_booking_authentications(booking_id=booking_id)
+        #     is_completed_face = False
+        #     is_completed_fingerprint = False
+        #     is_completed_signature = False
 
-            for booking_authentication in booking_authentications:
-                data = dict(
-                    compare_url=uuid__link_downloads[booking_authentication.file_uuid],
-                    compare_uuid=booking_authentication.file_uuid,
-                    created_at=booking_authentication.created_at
-                )
-                if booking_authentication.image_type_id == IMAGE_TYPE_FACE and not is_completed_face:
-                    face_authentication.update(data)
-                    is_completed_face = True
-
-                if booking_authentication.image_type_id == IMAGE_TYPE_FINGERPRINT and not is_completed_fingerprint:
-                    fingerprint_authentication.update(data)
-                    is_completed_fingerprint = True
-
-                if booking_authentication.image_type_id == IMAGE_TYPE_SIGNATURE and not is_completed_signature:
-                    signature_authentication.update(data)
-                    is_completed_signature = True
+        #     image_uuids = []
+        #     for booking_authentication in booking_authentications:
+        #         image_uuids.append(booking_authentication.file_uuid)
+        #     uuid__link_downloads = await self.get_link_download_multi_file(uuids=image_uuids)
+        #
+        #     for booking_authentication in booking_authentications:
+        #         data = dict(
+        #             compare_url=uuid__link_downloads[booking_authentication.file_uuid],
+        #             compare_uuid=booking_authentication.file_uuid,
+        #             created_at=booking_authentication.created_at
+        #         )
+        #         if booking_authentication.image_type_id == IMAGE_TYPE_FACE and not is_completed_face:
+        #             face_authentication.update(data)
+        #             is_completed_face = True
+        #
+        #         if booking_authentication.image_type_id == IMAGE_TYPE_FINGERPRINT and not is_completed_fingerprint:
+        #             fingerprint_authentication.update(data)
+        #             is_completed_fingerprint = True
+        #
+        #         if booking_authentication.image_type_id == IMAGE_TYPE_SIGNATURE and not is_completed_signature:
+        #             signature_authentication.update(data)
+        #             is_completed_signature = True
 
         authentication = dict(
             face=face_authentication,
