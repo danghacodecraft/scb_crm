@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 from typing import List
 from app.api.base.repository import ReposReturn, auto_commit
@@ -30,4 +30,19 @@ async def repo_view_blacklist(session: Session,
     black_list = black_list.offset(limit * (page-1))
 
     black_list = session.execute(black_list).all()
+    return ReposReturn(data=black_list)
+
+
+async def repos_get_total_indentity_id(
+        session:Session,
+        identity_id : List[str]
+):
+    black_list = select(
+        func.count(Blacklist.id)
+    )
+    black_list = black_list.filter(
+        Blacklist.identity_id.in_(identity_id)
+    )
+
+    black_list = session.execute(black_list).scalar()
     return ReposReturn(data=black_list)

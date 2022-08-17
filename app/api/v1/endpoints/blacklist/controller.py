@@ -1,7 +1,6 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.blacklist.schema import BlacklistResponse
-from app.api.v1.endpoints.blacklist.repository import repo_add_blacklist, repo_view_blacklist
-from app.api.v1.dependencies.paging import PaginationParams
+from app.api.v1.endpoints.blacklist.repository import repo_add_blacklist, repo_view_blacklist , repos_get_total_indentity_id
 from typing import List
 class CtrBlackList(BaseController):
 
@@ -38,22 +37,41 @@ class CtrBlackList(BaseController):
 
 
     async def ctr_view_blacklist(self,
-                                 pagination_params:PaginationParams,
                                  identity_id:List[str],
                                  # cif_num:str,
                                  # casa_account_num:str
                                  ):
 
-        print(identity_id)
+        limit = self.pagination_params.limit
+        current_page = 1
+        if self.pagination_params.page:
+            current_page = self.pagination_params.page
+
 
         blacklist = self.call_repos(await repo_view_blacklist(
                                 session=self.oracle_session,
-                                limit=pagination_params.limit,
-                                page=pagination_params.page,
+                                limit=limit,
+                                page=current_page,
                                 identity_id=identity_id
                             )
                         )
+
+        total_item = self.call_repos(
+            await repos_get_total_indentity_id(
+                session=self.oracle_session,
+                identity_id=identity_id
+            )
+        )
+
+        total_page = 0
+        if total_item != 0:
+            total_page = total_item / limit
+
+        if total_item % limit != 0:
+            total_page += 1
+
         data = [{
+            'id' : item_blacklist.Blacklist.id,
             'full_name': item_blacklist.Blacklist.full_name,
              'date_of_birth': item_blacklist.Blacklist.date_of_birth,
             'identity_id': item_blacklist.Blacklist.identity_id,
@@ -74,4 +92,9 @@ class CtrBlackList(BaseController):
         } for item_blacklist in blacklist]
 
 
-        return data
+        return self.response_paging(
+            data=data,
+            current_page=current_page,
+            total_items=total_item,
+            total_page=total_page
+        )
