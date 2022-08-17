@@ -689,6 +689,7 @@ class CtrApproval(BaseController):
         fingerprint_authentications = []
         signature_authentications = []
         no_cif_flag = False
+        saving_booking_authentications = []
 
         # Nghiệp vụ không cần cif
         if business_type_id in [BUSINESS_TYPE_CASA_TOP_UP, BUSINESS_TYPE_WITHDRAW]:
@@ -698,7 +699,6 @@ class CtrApproval(BaseController):
                 compare_face_image_uuid = authentication.face.compare_face_image_uuid
                 compare_signature_image_uuid = authentication.signature.compare_face_image_uuid
                 compare_fingerprint_image_uuid = authentication.fingerprint.compare_face_image_uuid
-                saving_booking_authentications = []
                 if compare_face_image_uuid:
                     saving_booking_authentications.append(dict(
                         id=generate_uuid(),

@@ -1,5 +1,6 @@
-from sqlalchemy import VARCHAR, Column
+from sqlalchemy import VARCHAR, Column, ForeignKey, PrimaryKeyConstraint
 from sqlalchemy.dialects.oracle import NUMBER
+from sqlalchemy.orm import relationship
 
 from app.third_parties.oracle.base import Base
 
@@ -25,17 +26,28 @@ class TDAccClass(Base):
     active_flag = Column('active_flag', NUMBER(1, 0, False), comment='Trạng thái')
 
 
-# class TDAccClassCategory(Base):
-#     __tablename__ = 'crm_td_acc_class_cust_category'
-#     __table_args__ = {'comment': 'Loại tài khoản TD và tái ký'}
-#
-#     td_acc_class_id = Column(ForeignKey('crm_td_acc_class.td_acc_class_id'), comment='ID Sản phẩm tiền gửi')
-#     cust_category_id = Column(ForeignKey('crm_cust_category.cust_category_id'), comment='ID Đối tượng khách hàng ')
+class TDAccClassCategory(Base):
+    __tablename__ = 'crm_td_acc_class_cust_category'
+    __table_args__ = (
+        PrimaryKeyConstraint('td_acc_class_id', 'cust_category_id'),
+        {'comment': 'Loại tài khoản TD và tái ký'},
+    )
+    td_acc_class_id = Column(ForeignKey('crm_td_acc_class.td_acc_class_id'), comment='ID Sản phẩm tiền gửi')
+    cust_category_id = Column(ForeignKey('crm_cust_category.cust_category_id'), comment='ID Đối tượng khách hàng ')
 
-#
-# class TDAccClassRolloverType(Base):
-#     __tablename__ = 'crm_td_acc_class_rollover_type'
-#     __table_args__ = {'comment': ''}
-#
-#     td_acc_class_id = Column(ForeignKey('crm_td_acc_class.td_acc_class_id'), comment='ID Sản phẩm tiền gửi')
-#     td_rollover_id = Column(ForeignKey('crm_td_rollover_type.td_rollover_id'), comment='ID Loại tái ký')
+    td_acc_class = relationship('TDAccClass')
+    cust_category = relationship('CustomerCategory')
+
+
+class TDAccClassRolloverType(Base):
+    __tablename__ = 'crm_td_acc_class_rollover_type'
+    __table_args__ = (
+        PrimaryKeyConstraint('td_acc_class_id', 'td_rollover_id'),
+        {'comment': ''},
+    )
+
+    td_acc_class_id = Column(ForeignKey('crm_td_acc_class.td_acc_class_id'), comment='ID Sản phẩm tiền gửi')
+    td_rollover_id = Column(ForeignKey('crm_td_rollover_type.td_rollover_id'), comment='ID Loại tái ký')
+
+    td_acc_class = relationship('TDAccClass')
+    td_rollover = relationship('TDRolloverType')
