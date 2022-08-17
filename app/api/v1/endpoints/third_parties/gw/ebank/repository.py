@@ -76,7 +76,10 @@ async def repos_get_e_banking_from_db_by_cif_id(cif_id: str, session: Session):
             EBankingInfo.account_name,
             EBankingInfo.method_active_password_id
         )
-        .filter(EBankingInfo.customer_id == cif_id)
+        .filter(
+            EBankingInfo.customer_id == cif_id,
+            EBankingInfo.approval_status == 0
+        )
     ).first()
 
     # Không tìm thấy thông tin Ebanking có thể do khách hàng không đăng ký
@@ -124,7 +127,10 @@ async def repos_get_sms_casa_mobile_number_from_db_by_cif_id(cif_id, session: Se
             EBankingReceiverNotificationRelationship,
             EBankingReceiverNotificationRelationship.e_banking_register_balance_casa_id == EBankingRegisterBalance.id
         )
-        .filter(EBankingRegisterBalance.account_id == casa_id)
+        .filter(
+            EBankingRegisterBalance.account_id == casa_id,
+            EBankingRegisterBalance.approval_status == 0
+        )
     ).all()
 
     balance_id__relationship_mobile_numbers = {}
