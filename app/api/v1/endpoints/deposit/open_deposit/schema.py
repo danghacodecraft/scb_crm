@@ -5,9 +5,7 @@ from pydantic import Field
 
 from app.api.base.schema import BaseSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
-from app.api.v1.others.fee.schema import (
-    FeeInfoResponse, MultipleFeeInfoRequest
-)
+from app.api.v1.others.fee.schema import FeeInfoResponse
 
 
 class TdAccountRequest(BaseSchema):
@@ -70,15 +68,15 @@ class PayInAccount(BaseSchema):
 
 class AccountFormRequest(BaseSchema):
     pay_in_form: AccountForm = Field(...)
-    currency_exchange: CurrencyExchange = Field(..., description="Quy đổi ngoại tệ")
-    currency_transfer: CurrencyTransfer = Field(..., description="Ngoại tệ chuyển ra nước ngoài")
-    pay_in_account: PayInAccount = Field(..., description="Nộp tiền vào tài khoản")
+    # currency_exchange: CurrencyExchange = Field(..., description="Quy đổi ngoại tệ")
+    # currency_transfer: CurrencyTransfer = Field(..., description="Ngoại tệ chuyển ra nước ngoài")
+    # pay_in_account: PayInAccount = Field(..., description="Nộp tiền vào tài khoản")
 
 
 class DepositPayInRequest(BaseSchema):
     # TODO
     account_form: AccountFormRequest = Field(...)
-    fee_info: MultipleFeeInfoRequest = Field(..., description="Thông tin phí")
+    # fee_info: MultipleFeeInfoRequest = Field(..., description="Thông tin phí")
 
 
 class DepositPayInResponse(BaseSchema):

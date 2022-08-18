@@ -65,11 +65,11 @@ async def repos_save_td_account(
 async def repos_update_td_account(
     booking_id: str,
     update_td_account: List[dict],
-    saving_booking_business_form: dict,
+    # saving_booking_business_form: dict,
     session: Session
 ):
     session.bulk_update_mappings(TdAccount, update_td_account)
-    session.add(BookingBusinessForm(**saving_booking_business_form))
+    # session.add(BookingBusinessForm(**saving_booking_business_form))
 
     return ReposReturn(data=booking_id)
 
