@@ -1,12 +1,19 @@
+from typing import Optional
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from app.api.base.repository import ReposReturn
 from app.settings.event import service_gw
+from app.third_parties.oracle.models.cif.e_banking.model import EBankingInfo
 from app.utils.error_messages import ERROR_CALL_SERVICE_GW
 
 
 async def repos_gw_get_check_username_ib_mb_exist(
         transaction_name,
         transaction_value,
-        current_user
+        current_user,
+        session: Optional[Session]
 ):
     current_user = current_user.user_info
     is_success, check_username_ib_mb_exist = await service_gw.check_username_ib_mb_exist(
@@ -14,6 +21,18 @@ async def repos_gw_get_check_username_ib_mb_exist(
         transaction_name=transaction_name,
         transaction_value=transaction_value
     )
+
+    is_exit_in_crm_database = session.execute(select(
+        EBankingInfo
+    ).filter(
+        EBankingInfo.account_name == transaction_value
+    )).scalar()
+
+    if is_exit_in_crm_database:
+        check_username_ib_mb_exist['checkUsernameIBMBExist_out'][
+            'data_output']['ebank_ibmb_info']['ebank_ibmb_status'] = "UNAVAILABLE"
+        return ReposReturn(data=check_username_ib_mb_exist)
+
     if not is_success:
         return ReposReturn(
             is_error=True,

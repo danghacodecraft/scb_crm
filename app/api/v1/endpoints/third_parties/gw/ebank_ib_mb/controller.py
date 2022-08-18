@@ -15,7 +15,8 @@ class CtrGWEbankIbMb(BaseController):
         ebank_info = self.call_repos(await repos_gw_get_check_username_ib_mb_exist(
             current_user=current_user,
             transaction_name=transaction_name,
-            transaction_value=transaction_value))
+            transaction_value=transaction_value,
+            session=self.oracle_session))
 
         return self.response(data=ebank_info)
 
