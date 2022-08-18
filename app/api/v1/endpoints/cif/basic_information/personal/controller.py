@@ -21,7 +21,7 @@ from app.third_parties.oracle.models.master_data.others import (
 from app.utils.constant.cif import (
     CUSTOMER_CONTACT_TYPE_EMAIL, CUSTOMER_CONTACT_TYPE_MOBILE
 )
-from app.utils.error_messages import ERROR_PHONE_NUMBER
+from app.utils.error_messages import ERROR_FIELD_REQUIRED, ERROR_PHONE_NUMBER
 from app.utils.functions import is_valid_mobile_number, now
 from app.utils.vietnamese_converter import (
     convert_to_unsigned_vietnamese, make_short_name, split_name
@@ -84,8 +84,14 @@ class CtrPersonal(BaseController):
 
         # check len mobile number
         mobile_number = personal_request.mobile_number
-        if not is_valid_mobile_number(mobile_number=mobile_number):
+        if mobile_number is not None and not is_valid_mobile_number(mobile_number=mobile_number):
             return self.response_exception(loc='mobile_number', msg=ERROR_PHONE_NUMBER)
+
+        if not mobile_number and personal_request.contact_method.mobile_number_flag:
+            return self.response_exception(loc='mobile_number', msg=ERROR_FIELD_REQUIRED)
+
+        if not personal_request.email and personal_request.contact_method.email_flag:
+            return self.response_exception(loc='email', msg=ERROR_FIELD_REQUIRED)
 
         data_update_customer = {
             "full_name": full_name,
