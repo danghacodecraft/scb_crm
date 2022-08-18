@@ -87,5 +87,15 @@ SERVICE = {
     },
     "production": {
         "production_flag": bool(configs.get("PRODUCTION") if configs.get("PRODUCTION") in ["True", "true", "1"] else False)
+    },
+    "rabbitmq": {
+        "host_name": configs.get("RABBITMQ_HOST_NAME"),
+        "host_ip": configs.get("RABBITMQ_HOST_IP"),
+        "vhost": configs.get("RABBITMQ_VHOST"),
+        "port": configs.get("RABBITMQ_MQTT_PORT"),
+        "server_username": configs.get("RABBITMQ_SERVER_USERNAME"),
+        "server_password": configs.get("RABBITMQ_SERVER_PASSWORD"),
+        "client_username": configs.get("RABBITMQ_CLIENT_USERNAME"),
+        "client_password": configs.get("RABBITMQ_CLIENT_PASSWORD")
     }
 }
