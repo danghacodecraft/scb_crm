@@ -20,7 +20,7 @@ BUSINESS_TYPE_CODE_OPEN_CASA = "OPEN_CASA"
 BUSINESS_TYPE_CODE_CLOSE_CASA = "CLOSE_CASA"
 BUSINESS_TYPE_CODE_WITHDRAW = "WITHDRAW"
 BUSINESS_TYPE_CODE_TOP_UP_CASA = "CASA_TOP_UP"
-
+BUSINESS_TYPE_CODE_OPEN_TD_ACCOUNT = "OPEN_TD_ACCOUNT"
 BUSINESS_TYPE_CODE_REDEEM_OPEN_TD = "REDEEM_OPEN_TD"
 BUSINESS_TYPE_CODE_AMOUNT_BLOCK = "AMOUNT_BLOCK"
 BUSINESS_TYPE_CODE_AMOUNT_UNBLOCK = "AMOUNT_UNBLOCK"
@@ -330,12 +330,12 @@ PROFILE_HISTORY_DESCRIPTIONS = {
                    "Mốc thời gian tính từ lúc GDV điền thông tin tab đầu tiên "
                    f"[{PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_TD_ACCOUNT}]"
     },
-    # BUSINESS_TYPE_CODE_OPEN_TD_ACCOUNT: {
-    #     'description': PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_TD_ACCOUNT,
-    #     'content': "Giao dịch viên đang chuẩn bị hồ sơ. "
-    #                "Mốc thời gian tính từ lúc GDV điền thông tin tab đầu tiên "
-    #                f"[{PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_TD_ACCOUNT}]"
-    # },
+    BUSINESS_TYPE_CODE_OPEN_TD_ACCOUNT: {
+        'description': PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_TD_ACCOUNT,
+        'content': "Giao dịch viên đang chuẩn bị hồ sơ. "
+                   "Mốc thời gian tính từ lúc GDV điền thông tin tab đầu tiên "
+                   f"[{PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_TD_ACCOUNT}]"
+    },
     # PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_TD_ACCOUNT: "Mở tài khoản tiết kiệm",
     # PROFILE_HISTORY_DESCRIPTIONS_INIT_DEBIT_CARD: "Tạo thẻ ghi nợ",
     # PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING: "Tạo E-Banking"

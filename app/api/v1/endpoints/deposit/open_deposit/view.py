@@ -52,7 +52,7 @@ async def view_save_deposit_pay_in(
         booking_id=booking_id,
         deposit_pay_in_request=deposit_pay_in_request
     )
-    return ResponseData[SaveCasaSuccessResponse](**save_pay_in)
+    return ResponseData(**save_pay_in)
 
 
 @router.get(
