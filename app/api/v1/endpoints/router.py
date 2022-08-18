@@ -15,6 +15,7 @@ from app.api.v1.endpoints.news import view as view_scb_news
 from app.api.v1.endpoints.post_check import view as view_post_check
 from app.api.v1.endpoints.third_parties import router as router_third_party
 from app.api.v1.endpoints.user import router as routers_user
+from app.api.v1.endpoints.blacklist import view as view_blacklist
 
 router = APIRouter()
 
@@ -49,3 +50,5 @@ router.include_router(router=router_mobile.router, prefix="/mobile", tags=["[Mob
 router.include_router(router=router_deposit.router_module, prefix="/deposit", tags=["[Deposit]"])
 
 router.include_router(router=view_ekyc.router, prefix="/ekyc", tags=["[eKYC]"])
+
+router.include_router(router=view_blacklist.router, prefix="/blacklist", tags=["[Blacklist]"])
