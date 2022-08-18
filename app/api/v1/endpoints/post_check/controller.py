@@ -619,9 +619,9 @@ class CtrKSS(BaseController):
         if customer_detail['ekyc_step']:
             first_row = customer_detail['ekyc_step'][0]
             if STATUS_FAILED in first_row['step_status']:
-                if customer_detail.get('status') == "REJECTED":
+                if customer_detail.get('status') == "REJECTED" and customer_detail['error_code_ekyc'] in ERROR_CODE_FAILED_EKYC.keys():
                     customer_detail['error_code_ekyc'] = ERROR_CODE_FAILED_EKYC[first_row['step']]
-                if customer_detail.get('status') == "PROCESSING":
+                if customer_detail.get('status') == "PROCESSING" and customer_detail['error_code_ekyc'] in ERROR_CODE_PROCESSING_EKYC.keys():
                     customer_detail['error_code_ekyc'] = ERROR_CODE_PROCESSING_EKYC[first_row['step']]
 
         return self.response(data=customer_detail)
