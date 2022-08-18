@@ -84,9 +84,8 @@ class CtrPersonal(BaseController):
 
         # check len mobile number
         mobile_number = personal_request.mobile_number
-        if mobile_number is not None:
-            if not is_valid_mobile_number(mobile_number=mobile_number):
-                return self.response_exception(loc='mobile_number', msg=ERROR_PHONE_NUMBER)
+        if mobile_number is not None and not is_valid_mobile_number(mobile_number=mobile_number):
+            return self.response_exception(loc='mobile_number', msg=ERROR_PHONE_NUMBER)
 
         if not mobile_number and personal_request.contact_method.mobile_number_flag:
             return self.response_exception(loc='mobile_number', msg=ERROR_FIELD_REQUIRED)
