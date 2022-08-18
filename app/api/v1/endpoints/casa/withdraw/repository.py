@@ -1,4 +1,4 @@
-from sqlalchemy import desc, select, update
+from sqlalchemy import and_, desc, select, update
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -12,6 +12,7 @@ from app.third_parties.oracle.models.master_data.others import (
     SlaTransaction, TransactionJob, TransactionStage, TransactionStageLane,
     TransactionStagePhase, TransactionStageRole, TransactionStageStatus
 )
+from app.utils.constant.approval import BUSINESS_JOB_CODE_CASA_WITHDRAW
 from app.utils.error_messages import ERROR_BOOKING_ID_NOT_EXIST
 
 
@@ -60,7 +61,10 @@ async def repos_get_withdraw_info(booking_id: str, session: Session):
         select(
             BookingBusinessForm
         )
-        .filter(BookingBusinessForm.booking_id == booking_id)
+        .filter(and_(
+            BookingBusinessForm.booking_id == booking_id,
+            BookingBusinessForm.business_form_id == BUSINESS_JOB_CODE_CASA_WITHDRAW
+        ))
         .order_by(desc(BookingBusinessForm.created_at))
     ).scalars().first()
 
