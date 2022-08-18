@@ -61,13 +61,17 @@ class AccountAmountBlockDetailRequest(BaseSchema):
     )
 
 
-class AccountAmountBlockRequest(BaseSchema):
-    account_amount_blocks: List[AccountAmountBlockDetailRequest] = Field(..., description="Danh sách tài khoản")
+class FeePaymentInfoRequest(BaseSchema):
     fee_info: MultipleFeeInfoRequest = Field(..., description="I. Phương thức tính phí")
     statement: List[StatementInfoRequest] = Field(..., description="II.Thông tin bảng kê")
     management_info: ManagementInfoRequest = Field(..., description="III.1. Thông tin quản lý")
     sender_info: SenderInfoRequest = \
         Field(..., description="III.2. Thông tin khách hàng giao dịch")
+
+
+class AccountAmountBlockRequest(BaseSchema):
+    account_amount_blocks: List[AccountAmountBlockDetailRequest] = Field(..., description="Danh sách tài khoản")
+    fee_payment_info: FeePaymentInfoRequest = Field(..., description="Thông tin thanh toán phí")
 
 
 class AmountUnblockDetail(BaseSchema):
