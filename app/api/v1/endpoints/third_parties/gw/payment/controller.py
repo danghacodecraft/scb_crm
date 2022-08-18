@@ -54,7 +54,7 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
             request: AccountAmountBlockRequest
     ):
         current_user = self.current_user # noqa
-        statement = request.statement
+        statement = request.fee_payment_info.statement
 
         # Kiểm tra booking
         await CtrBooking().ctr_get_booking_and_validate(
@@ -66,8 +66,8 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
 
         denominations__amounts = {}
         statement_info = self.call_repos(await repos_get_denominations(currency_id="VND", session=self.oracle_session))
-        management = request.management_info
-        sender_info = request.sender_info
+        management = request.fee_payment_info.management_info
+        sender_info = request.fee_payment_info.sender_info
 
         for item in statement_info:
             denominations__amounts.update({
@@ -94,11 +94,12 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
         # Thông tin Tài khoản
         ################################################################################################################
         account_amount_blocks = request.account_amount_blocks
-        request_datas = []
+        act_amount_blocks = []
         account_numbers = []
+
         for item in account_amount_blocks:
             account_numbers.append(item.account_number)
-            request_datas.append({
+            act_amount_blocks.append({
                 "account_info": {
                     "account_num": item.account_number
                 },
@@ -163,20 +164,13 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
                 "customer_id": response_data.get('customer_id')
             })
         ################################################################################################################
-
-        ################################################################################################################
         # Thông tin Phí
         ################################################################################################################
-        fee_info_request = request.fee_info
+        fee_info_request = request.fee_payment_info.fee_info
         saving_fee_info = await self.calculate_fees(
             fee_info_request=fee_info_request,
             business_type_id=BUSINESS_TYPE_AMOUNT_BLOCK
         )
-        request_data = request.dict()
-        request_data.update(
-            fee_info=saving_fee_info
-        )
-
         ################################################################################################################
         # Bảng kê tiền giao dịch
         ################################################################################################################
@@ -198,11 +192,15 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
             "indirect_staff_code": management.indirect_staff_code,
         },
 
-        request_datas.append({
-            "statement": statement_info,
-            "management_info": management_info,
-            "sender_info": sender_response
-        })
+        request_data = {
+            "account_amount_blocks": act_amount_blocks,
+            "fee_payment_info": {
+                "fee_info": saving_fee_info,
+                "statement": statement_info,
+                "management_info": management_info,
+                "sender_info": sender_response
+            }
+        }
 
         history_datas = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_BLOCK,
