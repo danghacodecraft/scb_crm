@@ -56,10 +56,6 @@ class IdentityInfoResponse(ResponseRequestSchema):
 
 # II. Thông tin khách hàng giao dịch
 class SenderInfoResponse(BaseSchema):
-    cif_flag: bool = Field(
-        ...,
-        description="Cờ kiểm tra có CIF chưa, `true` = Có, `false` = Không"
-    )
     cif_number: Optional[str] = Field(None, description="Mã khách hàng giao dịch")
     fullname_vn: Optional[str] = Field(None, description="Người giao dịch")
     address_full: Optional[str] = Field(None, description="Địa chỉ")
@@ -131,6 +127,7 @@ class ReceiverInfoRequest(BaseSchema):
         ...,
         description='Cờ thông tin rút tiền , `true` = Rút tài khoản, `false` = Rút cheque'
     )
+    currency: str = Field(..., description="1. Loại tiền")
     amount: int = Field(..., description="2. Số tiền")
     seri_cheque: OptionalDropdownRequest = Field(None, description="3. Seri Cheque")
     date_of_issue: Optional[date] = Field(None, description="4. Ngày ký phát")
