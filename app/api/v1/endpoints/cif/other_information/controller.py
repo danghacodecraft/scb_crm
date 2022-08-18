@@ -52,7 +52,7 @@ class CtrOtherInfo(BaseController):
     async def ctr_update_other_info(self, cif_id: str, update_other_info_req: OtherInformationUpdateRequest):
         # check cif đang tạo
         cif_info = self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
-        if not (cif_info.mobile_number and cif_info.telephone_number):
+        if not (cif_info.mobile_number or cif_info.telephone_number):
             return self.response_exception(
                 msg=ERROR_MOBILE_NUMBER, loc=f" cif_info -> mobile_number : {cif_info.mobile_number}"
             )
