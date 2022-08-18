@@ -54,6 +54,7 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
             request: AccountAmountBlockRequest
     ):
         current_user = self.current_user # noqa
+        statement = request.statement
 
         # Kiểm tra booking
         await CtrBooking().ctr_get_booking_and_validate(
@@ -62,6 +63,32 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
             check_correct_booking_flag=False,
             loc=f'booking_id: {BOOKING_ID}'
         )
+
+        denominations__amounts = {}
+        statement_info = self.call_repos(await repos_get_denominations(currency_id="VND", session=self.oracle_session))
+        management = request.management_info
+        sender_info = request.sender_info
+
+        for item in statement_info:
+            denominations__amounts.update({
+                str(int(item.denominations)): 0
+            })
+        denominations_errors = []
+        for index, row in enumerate(statement):
+            denominations = row.denominations
+            if denominations not in denominations__amounts:
+                denominations_errors.append(dict(
+                    index=index,
+                    value=denominations
+                ))
+
+            denominations__amounts[denominations] = row.amount
+
+        if denominations_errors:
+            return self.response_exception(
+                msg=ERROR_DENOMINATIONS_NOT_EXIST,
+                loc=str(denominations_errors)
+            )
 
         ################################################################################################################
         # Thông tin Tài khoản
@@ -151,6 +178,31 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
         )
 
         ################################################################################################################
+        # Bảng kê tiền giao dịch
+        ################################################################################################################
+        statement_info = await CtrStatement().ctr_get_statement_info(statement_requests=statement)
+
+        # Thông tin khách hàng giao dịch
+        sender_response = await CtrPaymentSender(self.current_user).get_payment_sender(
+            sender_cif_number=sender_info.cif_number,
+            sender_full_name_vn=sender_info.fullname_vn,
+            sender_address_full=sender_info.address_full,
+            sender_identity_number=sender_info.identity,
+            sender_issued_date=sender_info.issued_date,
+            sender_mobile_number=sender_info.mobile_phone,
+            sender_place_of_issue=sender_info.place_of_issue,
+            sender_note=sender_info.note
+        )
+        management_info = {
+            "direct_staff_code": management.direct_staff_code,
+            "indirect_staff_code": management.indirect_staff_code,
+        },
+
+        request_datas.append({
+            "statement": statement_info,
+            "management_info": management_info,
+            "sender_info": sender_response
+        })
 
         history_datas = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_BLOCK,

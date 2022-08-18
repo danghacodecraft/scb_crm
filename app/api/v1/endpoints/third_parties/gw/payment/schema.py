@@ -13,51 +13,6 @@ from app.api.v1.others.fee.schema import (
 from app.api.v1.schemas.utils import DropdownRequest
 
 
-class AccountAmountBlockDetailRequest(BaseSchema):
-    account_number: str = Field(..., description="Số tài khoản")
-    amount: int = Field(..., description="Số dư bị phong tỏa")
-    amount_block_type: str = Field(
-        ...,
-        description="Loại phong tỏa"
-                    "(value='F':FLEXCUBE, value='S':Switch,"
-                    "value='P':PreAuth, value='E':Escrow,"
-                    "value='A':System,"
-                    "value='C':Account, value='B':Bulk Salary, value='I':P2P)"
-    )
-    hold_code: str = Field(..., description="Mã lý do bị phong tỏa")
-    effective_date: str = Field(..., description="Ngày hiệu lực phong tỏa. format`DD/MM/YYYY`")
-    expiry_date: str = Field(None, description="Ngày hết hiệu lực phong tỏa. format`DD/MM/YYYY`")
-    remarks: str = Field(..., description="Ghi chú")
-    verify_available_balance: str = Field(
-        ...,
-        description="Có hoặc không kiểm tra giá trị số dư trước khi phong tỏa. Giá trị Y/N"
-    )
-
-
-class AccountAmountBlockRequest(BaseSchema):
-    account_amount_blocks: List[AccountAmountBlockDetailRequest] = Field(..., description="Danh sách tài khoản")
-    fee_info: MultipleFeeInfoRequest = Field(..., description="Phương thức tính phí")
-
-
-class AmountUnblockDetail(BaseSchema):
-    amount: int = Field(..., description="Số dư")
-    hold_code: str = Field(..., description="Mã lý do")
-    expiry_date: str = Field(..., description='Ngày hết hiệu lực')
-    remarks: str = Field(..., description="Ghi chú")
-
-
-class AccountAmountUnblock(BaseSchema):
-    account_ref_no: str = Field(..., description="Số tham chiếu của lệnh phong tỏa tài khoản trước đó")
-    p_type_unblock: str = Field(..., description="Loại hình giải tỏa: C:Toàn phần/P: Một phần")
-    p_blk_detail: Optional[AmountUnblockDetail] = Field(None,
-                                                        description="Chi tiết giải tỏa một phần (NULL nếu giải tỏa toàn phần)")
-
-
-class AccountUnlockRequest(BaseSchema):
-    account_number: str = Field(...)
-    account_amount_block: List[AccountAmountUnblock] = Field(...)
-
-
 # II. Bảng kê
 class StatementInfoRequest(ResponseRequestSchema):
     denominations: str = Field(..., description="Mệnh giá")
@@ -83,6 +38,55 @@ class SenderInfoRequest(BaseSchema):
     telephone: Optional[str] = Field(None, description="SĐT")
     otherphone: Optional[str] = Field(None, description="SĐT")
     note: Optional[str] = Field(None, description="Ghi chú")
+
+
+class AccountAmountBlockDetailRequest(BaseSchema):
+    account_number: str = Field(..., description="Số tài khoản")
+    amount: int = Field(..., description="Số dư bị phong tỏa")
+    amount_block_type: str = Field(
+        ...,
+        description="Loại phong tỏa"
+                    "(value='F':FLEXCUBE, value='S':Switch,"
+                    "value='P':PreAuth, value='E':Escrow,"
+                    "value='A':System,"
+                    "value='C':Account, value='B':Bulk Salary, value='I':P2P)"
+    )
+    hold_code: str = Field(..., description="Mã lý do bị phong tỏa")
+    effective_date: str = Field(..., description="Ngày hiệu lực phong tỏa. format`DD/MM/YYYY`")
+    expiry_date: str = Field(None, description="Ngày hết hiệu lực phong tỏa. format`DD/MM/YYYY`")
+    remarks: str = Field(..., description="Ghi chú")
+    verify_available_balance: str = Field(
+        ...,
+        description="Có hoặc không kiểm tra giá trị số dư trước khi phong tỏa. Giá trị Y/N"
+    )
+
+
+class AccountAmountBlockRequest(BaseSchema):
+    account_amount_blocks: List[AccountAmountBlockDetailRequest] = Field(..., description="Danh sách tài khoản")
+    fee_info: MultipleFeeInfoRequest = Field(..., description="I. Phương thức tính phí")
+    statement: List[StatementInfoRequest] = Field(..., description="II.Thông tin bảng kê")
+    management_info: ManagementInfoRequest = Field(..., description="III.1. Thông tin quản lý")
+    sender_info: SenderInfoRequest = \
+        Field(..., description="III.2. Thông tin khách hàng giao dịch")
+
+
+class AmountUnblockDetail(BaseSchema):
+    amount: int = Field(..., description="Số dư")
+    hold_code: str = Field(..., description="Mã lý do")
+    expiry_date: str = Field(..., description='Ngày hết hiệu lực')
+    remarks: str = Field(..., description="Ghi chú")
+
+
+class AccountAmountUnblock(BaseSchema):
+    account_ref_no: str = Field(..., description="Số tham chiếu của lệnh phong tỏa tài khoản trước đó")
+    p_type_unblock: str = Field(..., description="Loại hình giải tỏa: C:Toàn phần/P: Một phần")
+    p_blk_detail: Optional[AmountUnblockDetail] = Field(None,
+                                                        description="Chi tiết giải tỏa một phần (NULL nếu giải tỏa toàn phần)")
+
+
+class AccountUnlockRequest(BaseSchema):
+    account_number: str = Field(...)
+    account_amount_block: List[AccountAmountUnblock] = Field(...)
 
 
 class TransactionFeeInfoRequest(BaseSchema):
@@ -165,6 +169,10 @@ class AccountAmountBlockResponse(PaymentSuccessResponse):
     booking_id: str = Field(..., description="Booking_id")
     account_amount_blocks: List[AccountAmountBlockDetailRequest] = Field(..., description="Danh sách tài khoản")
     fee_info: FeeInfoResponse = Field(..., description="Phương thức tính phí")
+    statement: List[StatementInfoRequest] = Field(..., description="II.Thông tin bảng kê")
+    management_info: ManagementInfoRequest = Field(..., description="III.1. Thông tin quản lý")
+    sender_info: SenderInfoRequest = \
+        Field(..., description="III.2. Thông tin khách hàng giao dịch")
 
 
 class AccountAmountBlockPDResponse(PaymentSuccessResponse):
