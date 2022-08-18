@@ -15,10 +15,9 @@ from app.api.v1.endpoints.third_parties.gw.deposit_account.repository import (
     repos_get_booking_account_by_booking
 )
 from app.api.v1.others.booking.controller import CtrBooking
-from app.api.v1.others.fee.controller import CtrAccountFee
 from app.api.v1.validator import validate_history_data
 from app.utils.constant.business_type import (
-    BUSINESS_TYPE_REDEEM_OPEN_TD, BUSINESS_TYPE_TD_ACCOUNT_OPEN_ACCOUNT
+    BUSINESS_TYPE_TD_ACCOUNT_OPEN_ACCOUNT
 )
 from app.utils.constant.cif import (
     BUSINESS_FORM_OPEN_TD_ACCOUNT_PAY,
@@ -57,12 +56,7 @@ class CtrDeposit(BaseController):
             cif_number=deposit_account_request.cif_number,
             session=self.oracle_session
         ))
-        customer = self.call_repos(
-            await repos_get_customer_by_cif_number(
-                cif_number=deposit_account_request.cif_number,
-                session=self.oracle_session
-            )
-        )
+
         td_account_ids = []
         td_accounts = []
         td_account_resigns = []
@@ -187,28 +181,28 @@ class CtrDeposit(BaseController):
 
         # Thông tin phí, schema dùng chung, không nên thay đổi chỗ này
         # Response khi gọi ra sẽ dùng để load ra response, nên dùng trong schema response dùng chung trong others.fee
-        fee_info = await CtrAccountFee(current_user=self.current_user).calculate_fees(
-            fee_info_request=deposit_pay_in_request.fee_info,
-            business_type_id=BUSINESS_TYPE_REDEEM_OPEN_TD
-        )
+        # fee_info = await CtrAccountFee(current_user=self.current_user).calculate_fees(
+        #     fee_info_request=deposit_pay_in_request.fee_info,
+        #     business_type_id=BUSINESS_TYPE_REDEEM_OPEN_TD
+        # )
+        #
+        # form_data = deposit_pay_in_request.dict()
+        # form_data.update(fee_info=fee_info)
 
-        form_data = deposit_pay_in_request.dict()
-        form_data.update(fee_info=fee_info)
-
-        saving_booking_business_form = dict(
-            booking_id=booking_id,
-            business_form_id=BUSINESS_FORM_OPEN_TD_ACCOUNT_PAY,
-            booking_business_form_id=generate_uuid(),
-            save_flag=True,
-            created_at=now(),
-            updated_at=now(),
-            form_data=orjson_dumps(form_data)
-        )
+        # saving_booking_business_form = dict(
+        #     booking_id=booking_id,
+        #     business_form_id=BUSINESS_FORM_OPEN_TD_ACCOUNT_PAY,
+        #     booking_business_form_id=generate_uuid(),
+        #     save_flag=True,
+        #     created_at=now(),
+        #     updated_at=now(),
+        #     form_data=orjson_dumps(deposit_pay_in_request.dict())
+        # )
 
         self.call_repos(await repos_update_td_account(
             booking_id=booking_id,
             update_td_account=update_td_account,
-            saving_booking_business_form=saving_booking_business_form,
+            # saving_booking_business_form=saving_booking_business_form,
             session=self.oracle_session
         ))
         return self.response(data=dict(
