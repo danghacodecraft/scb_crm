@@ -1,7 +1,9 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.tablet.web.repository import repos_create_tablet_otp
 from app.utils.constant.tablet import DEVICE_TYPE_WEB
-from app.utils.tablet_functions import get_broker_mqtt_info, get_topic_name
+from app.utils.tablet_functions import (
+    get_client_broker_config_info, get_topic_name
+)
 
 
 class CtrTabletWeb(BaseController):
@@ -13,8 +15,8 @@ class CtrTabletWeb(BaseController):
             )
         )
 
-        mqtt_info = get_broker_mqtt_info()
-        mqtt_info['topic_name'] = get_topic_name(
+        web_stomp_info = get_client_broker_config_info(device_type=DEVICE_TYPE_WEB)
+        web_stomp_info['topic_name'] = get_topic_name(
             device_type=DEVICE_TYPE_WEB,
             tablet_id=otp_info['tablet_id'],
             otp=otp_info['otp']
@@ -22,5 +24,5 @@ class CtrTabletWeb(BaseController):
 
         return self.response({
             'otp_info': otp_info,
-            'mqtt_info': mqtt_info
+            'web_stomp_info': web_stomp_info
         })

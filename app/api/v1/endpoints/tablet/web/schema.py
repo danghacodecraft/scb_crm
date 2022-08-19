@@ -22,4 +22,4 @@ class TabletMQTTResponse(BaseSchema):
 
 class TabletOTPAndMqttInfoResponse(BaseSchema):
     otp_info: TabletOTPResponse
-    mqtt_info: TabletMQTTResponse
+    web_stomp_info: TabletMQTTResponse
