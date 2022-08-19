@@ -207,6 +207,7 @@ async def repos_save_gw_output_data(
         is_completed: bool,
         business_type_id: str,
         gw_output_data: json,
+        form_data: json,
         session: Session
 ):
     session.add(BookingBusinessForm(
@@ -222,6 +223,15 @@ async def repos_save_gw_output_data(
         .filter(Booking.id == booking_id)
         .values(
             completed_flag=is_completed
+        )
+    )
+    session.flush()
+
+    session.execute(
+        update(BookingBusinessForm)
+        .filter(BookingBusinessForm.booking_id == booking_id)
+        .values(
+            form_data=form_data
         )
     )
     session.flush()
