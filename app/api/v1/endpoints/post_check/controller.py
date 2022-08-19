@@ -40,9 +40,9 @@ from app.utils.constant.ekyc import (
     EKYC_DATE_FORMAT, EKYC_DEFAULT_VALUE, EKYC_REGION_ZONE_MAPPING,
     ERROR_CODE_FAILED_EKYC, ERROR_CODE_PROCESSING_EKYC, GROUP_ROLE_CODE_AP,
     GROUP_ROLE_CODE_AP_EX, GROUP_ROLE_CODE_IN, GROUP_ROLE_CODE_IN_EX,
-    GROUP_ROLE_CODE_VIEW, GROUP_ROLE_CODE_VIEW_EX, KSS_STATUS, MENU_CODE,
-    MENU_CODE_VIEW, MESSAGE_EMAIL_SUBJECT, MESSAGE_SMS_INVALID, STATUS_CLOSE,
-    STATUS_FAILED, STATUS_OPEN
+    GROUP_ROLE_CODE_VIEW, GROUP_ROLE_CODE_VIEW_EX, MENU_CODE, MENU_CODE_VIEW,
+    MESSAGE_EMAIL_SUBJECT, MESSAGE_SMS_INVALID, STATUS_CLOSE, STATUS_FAILED,
+    STATUS_OPEN
 )
 from app.utils.error_messages import ERROR_PERMISSION, MESSAGE_STATUS
 from app.utils.functions import (
@@ -447,7 +447,7 @@ class CtrKSS(BaseController):
                     # TODO đợi ekyc trả key
                     # 'user_eb': customer_ekyc_detail.get('user_eb'),
                     'updated_at': None,
-                    'kss_status': KSS_STATUS[post_check_request.kss_status],
+                    'kss_status': post_check_request.kss_status,
                     'user_kss': post_check_request.username,
                     'date_kss': now(),
                 }
@@ -459,7 +459,7 @@ class CtrKSS(BaseController):
             else:
                 update_customer_ekyc_kss = {
                     'customer_id': post_check_request.customer_id,
-                    'kss_status': KSS_STATUS[post_check_request.kss_status],
+                    'kss_status': post_check_request.kss_status,
                     'user_kss': post_check_request.username,
                     'date_kss': now(),
                 }
@@ -547,7 +547,7 @@ class CtrKSS(BaseController):
 
         update_customer_ekyc_kss = {
             'customer_id': postcheck_update_request.customer_id,
-            'approve_status': "Đã Duyệt" if postcheck_update_request.is_approve else "Từ Chối",
+            'approve_status': postcheck_update_request.is_approve,
             'user_approve': postcheck_update_request.username,
             'date_approve': now(),
         }

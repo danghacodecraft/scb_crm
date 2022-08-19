@@ -1059,12 +1059,7 @@ class CtrGWCasaAccount(BaseController):
                     "BENEFICIARY_PHONE_NO": receiver['mobile_number'] if 'mobile_number' in receiver else GW_DEFAULT_VALUE,
                     "BENEFICIARY_ID_NO": receiver['identity_number']
                     if 'identity_number' in receiver.keys() else GW_DEFAULT_VALUE,
-                    # "ID_ISSUE_DATE": date_string_to_other_date_string_format(
-                    #     date_input=receiver['issued_date'],
-                    #     from_format=GW_DATE_FORMAT,
-                    #     to_format=GW_CORE_DATE_FORMAT
-                    # ),
-                    "ID_ISSUE_DATE": receiver['issued_date'] if 'identity_number' in receiver else GW_DEFAULT_VALUE,
+                    "ID_ISSUE_DATE": receiver['issued_date'],
                     "ID_ISSUER": receiver['place_of_issue']['name'] if 'identity_number' in receiver else GW_DEFAULT_VALUE,
                     "ADDRESS": receiver['address_full'] if 'identity_number' in receiver else GW_DEFAULT_VALUE
                 },
@@ -1072,12 +1067,8 @@ class CtrGWCasaAccount(BaseController):
                     "REMITTER_NAME": sender['fullname_vn'],
                     "REMITTER_PHONE_NO": sender['mobile_phone'],
                     "REMITTER_ID_NO": sender_identity_info['number'],
-                    "ID_ISSUE_DATE": date_string_to_other_date_string_format(
-                        date_input=sender_identity_info['issued_date'],
-                        from_format=GW_CORE_DATE_FORMAT,
-                        to_format=GW_DATE_FORMAT
-                    ),
-                    "ID_ISSUER": sender_identity_info['place_of_issue'],
+                    "ID_ISSUE_DATE": sender_identity_info['issued_date'],
+                    "ID_ISSUER": sender_identity_info['place_of_issue']['name'],
                     "ADDRESS": sender['address_full']
                 },
                 "ADDITIONAL_DETAILS": {
