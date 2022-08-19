@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.v1.endpoints.approval import router as routers_approval
+from app.api.v1.endpoints.blacklist import view as view_blacklist
 from app.api.v1.endpoints.booking import view as view_bookings
 from app.api.v1.endpoints.casa import router as routers_casa
 from app.api.v1.endpoints.cif import router as routers_cif
@@ -15,7 +16,6 @@ from app.api.v1.endpoints.news import view as view_scb_news
 from app.api.v1.endpoints.post_check import view as view_post_check
 from app.api.v1.endpoints.third_parties import router as router_third_party
 from app.api.v1.endpoints.user import router as routers_user
-from app.api.v1.endpoints.blacklist import view as view_blacklist
 
 router = APIRouter()
 
