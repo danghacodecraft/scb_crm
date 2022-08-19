@@ -21,7 +21,7 @@ from app.utils.constant.business_type import (
 )
 from app.utils.constant.cif import (
     BUSINESS_FORM_OPEN_TD_ACCOUNT_PAY,
-    PROFILE_HISTORY_DESCRIPTIONS_INIT_REDEEM_TD_ACCOUNT,
+    PROFILE_HISTORY_DESCRIPTIONS_INIT_REDEEM_ACCOUNT,
     PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_TD_ACCOUNT,
     PROFILE_HISTORY_STATUS_INIT
 )
@@ -220,7 +220,7 @@ class CtrDeposit(BaseController):
             loc=f'booking_id: {booking_id}'
         )
         history_datas = self.make_history_log_data(
-            description=PROFILE_HISTORY_DESCRIPTIONS_INIT_REDEEM_TD_ACCOUNT,
+            description=PROFILE_HISTORY_DESCRIPTIONS_INIT_REDEEM_ACCOUNT,
             history_status=PROFILE_HISTORY_STATUS_INIT,
             current_user=current_user.user_info
         )
