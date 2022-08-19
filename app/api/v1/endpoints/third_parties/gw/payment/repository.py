@@ -290,7 +290,7 @@ async def repos_gw_payment_amount_unblock(
         session
 ):
     response_data = []
-    for item in request_data_gw:
+    for item in request_data_gw.account_unlock:
         is_success, gw_payment_amount_unblock = await service_gw.gw_payment_amount_unblock(
             data_input=item,
             current_user=current_user.user_info
