@@ -164,6 +164,9 @@ class CtrApproval(BaseController):
             image_uuids.append(compare_image_transaction.compare_image_uuid)
         uuid__link_downloads = await self.get_link_download_multi_file(uuids=image_uuids)
 
+        face_identity_images = []
+        compare_image_uuids = []
+
         for compare_image_transaction in compare_image_transactions:
             data = dict(
                 compare_url=uuid__link_downloads[compare_image_transaction.compare_image_uuid],
@@ -173,6 +176,11 @@ class CtrApproval(BaseController):
             )
             if compare_image_transaction.image_type_id == IMAGE_TYPE_FACE and not is_completed_face:
                 face_authentication.update(data)
+                face_identity_images.append(dict(
+                    uuid=compare_image_transaction.image_uuid,
+                    similar_percent=compare_image_transaction.compare_percent
+                ))
+                compare_image_uuids.append(compare_image_transaction.image_uuid)
                 is_completed_face = True
 
             if compare_image_transaction.image_type_id == IMAGE_TYPE_FINGERPRINT and not is_completed_fingerprint:
@@ -182,6 +190,15 @@ class CtrApproval(BaseController):
             if compare_image_transaction.image_type_id == IMAGE_TYPE_SIGNATURE and not is_completed_signature:
                 signature_authentication.update(data)
                 is_completed_signature = True
+
+        uuid__link_downloads = await self.get_link_download_multi_file(uuids=compare_image_uuids)
+        for face_identity_image in face_identity_images:
+            face_identity_image.update(
+                url=uuid__link_downloads[face_identity_image['uuid']]
+            )
+        face_authentication.update(dict(
+            identity_images=face_identity_images
+        ))
 
         authentication = dict(
             face=face_authentication,
