@@ -1082,7 +1082,7 @@ async def repos_get_cif_number_open_cif(cif_id: str, session: Session):
     if not cif_number:
         return ReposReturn(
             is_error=True,
-            loc="open_cif -> push casa to gw -> cif_number",
+            loc="repos_get_cif_number_open_cif",
             msg=ERROR_NO_DATA
         )
 
