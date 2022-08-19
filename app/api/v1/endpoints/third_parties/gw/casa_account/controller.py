@@ -674,10 +674,15 @@ class CtrGWCasaAccount(BaseController):
         if not response_data:
             return self.response_exception(msg="GW return None", loc=f'response_data: {response_data}')
 
+        form_data['transfer'].update({
+            "entry_number": xref
+        })
+
         self.call_repos(await repos_save_gw_output_data(
             booking_id=booking_id,
             business_type_id=BUSINESS_TYPE_CASA_TOP_UP,
             gw_output_data=orjson_dumps(response_data),
+            form_data=orjson_dumps(form_data),
             is_completed=is_completed,
             session=self.oracle_session
         ))
