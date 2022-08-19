@@ -15,10 +15,13 @@ from app.api.v1.endpoints.file import view as views_file
 from app.api.v1.endpoints.mobile import view as router_mobile
 from app.api.v1.endpoints.news import view as view_scb_news
 from app.api.v1.endpoints.post_check import view as view_post_check
+from app.api.v1.endpoints.tablet import router as routers_tablet
 from app.api.v1.endpoints.third_parties import router as router_third_party
 from app.api.v1.endpoints.user import router as routers_user
 
 router = APIRouter()
+
+router.include_router(router=routers_tablet.router, prefix="/tablet")
 
 router.include_router(router=routers_user.router_module, prefix="/users", tags=["User"])
 
