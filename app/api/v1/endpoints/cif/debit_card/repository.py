@@ -18,7 +18,8 @@ from app.third_parties.oracle.models.master_data.address import (
     AddressDistrict, AddressProvince, AddressWard
 )
 from app.third_parties.oracle.models.master_data.card import (
-    BrandOfCard, CardCustomerType, CardIssuanceFee, CardIssuanceType, CardType
+    BrandOfCard, CardAnnualFee, CardCustomerType, CardIssuanceFee,
+    CardIssuanceType, CardType
 )
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.cif import BUSINESS_FORM_DEBIT_CARD
@@ -55,6 +56,7 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
             CardCustomerType,
             BrandOfCard,
             CardIssuanceFee,
+            CardAnnualFee,
             CardDeliveryAddress,
             AddressWard,
             AddressDistrict,
@@ -74,7 +76,11 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
             BrandOfCard, BrandOfCard.id == DebitCard.brand_of_card_id
         ).join(
             CardIssuanceFee, CardIssuanceFee.id == DebitCard.card_issuance_fee_id
-        ).join(
+        )
+        .join(
+            CardAnnualFee, CardAnnualFee.id == DebitCard.card_annual_fee_id
+        )
+        .join(
             CardDeliveryAddress, CardDeliveryAddress.id == DebitCard.card_delivery_address_id
         ).outerjoin(
             Branch, CardDeliveryAddress.branch_id == Branch.id
@@ -115,7 +121,7 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
                 "payment_online_flag": item.payment_online_flag,
                 "branch_of_card": dropdown(item.BrandOfCard),
                 "issuance_fee": dropdown(item.CardIssuanceFee),
-                "annual_fee": dropdown(item.CardIssuanceFee),  # TODO
+                "annual_fee": dropdown(item.CardAnnualFee),  # TODO
                 "src_code": item.src_code,
                 "pro_code": item.pro_code,
                 "card_group": item.card_group,
