@@ -99,7 +99,7 @@ async def repos_payment_amount_block(
         saving_transaction_job,
         saving_booking_business_form,
         saving_booking_account,
-        saving_booking_customer,
+        # saving_booking_customer,
         session
 ):
     session.add_all([
@@ -116,7 +116,7 @@ async def repos_payment_amount_block(
         TransactionJob(**saving_transaction_job)
     ])
     session.bulk_save_objects(BookingAccount(**account) for account in saving_booking_account)
-    session.bulk_save_objects(BookingCustomer(**customer) for customer in saving_booking_customer)
+    # session.bulk_save_objects(BookingCustomer(**customer) for customer in saving_booking_customer)
     # Update Booking
     session.execute(
         update(Booking)

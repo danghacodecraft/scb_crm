@@ -144,6 +144,7 @@ class BookingAccount(Base):
     customer_id = Column(VARCHAR(36), comment="Mã KH")
     account_id = Column('casa_account_id', VARCHAR(36))
     td_account_id = Column('td_account_id', VARCHAR(36), comment="ID Tài khoản tiết kiệm (TD)")
+    casa_account_num = Column(VARCHAR(20), comment="Số tài khoản thanh toán")
     created_at = Column(DateTime, nullable=False)
     updated_at = Column(DateTime)
 
