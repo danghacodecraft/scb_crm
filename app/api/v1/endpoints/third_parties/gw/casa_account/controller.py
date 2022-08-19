@@ -1346,7 +1346,7 @@ class CtrGWCasaAccount(BaseController):
             },
             "trans_date": datetime_to_string(now()),
             "time_stamp": datetime_to_string(now()),
-            "trans_id": fcc_booking_code,  # TODO hard code ffc_booking_code
+            "trans_id": fcc_booking_code,
             "amount": transfer['amount'],
             "description": transfer['content'],
             "account_to_info": {
@@ -1401,7 +1401,7 @@ class CtrGWCasaAccount(BaseController):
             },
             "trans_date": datetime_to_string(now()),
             "time_stamp": datetime_to_string(now()),
-            "trans_id": fcc_booking_code,  # TODO hard code ffc_booking_code
+            "trans_id": fcc_booking_code,
             "amount": transfer['amount'],
             "description": transfer['content'],
             "card_to_info": {
