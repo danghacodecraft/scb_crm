@@ -117,7 +117,7 @@ async def repos_check_token(token: str) -> ReposReturn:
             detail="Token is invalid"
         )
 
-    menu_list = await service_redis.get(username)['menu_list']
+    menu_list = (await service_redis.get(username))['menu_list']
 
     return ReposReturn(data=dict(
         user_info=auth_parts,
