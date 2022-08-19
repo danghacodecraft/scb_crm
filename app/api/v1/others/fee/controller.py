@@ -9,7 +9,7 @@ from app.api.v1.others.fee.schema import (
     MultipleFeeInfoRequest, OneFeeInfoRequest
 )
 from app.utils.constant.casa import (
-    CASA_FEE_METHOD_CASA, CASA_FEE_METHODS, PAYMENT_PAYERS
+    CASA_FEE_METHOD_CASA, CASA_FEE_METHODS, PAYER_TRANSFER, PAYMENT_PAYERS
 )
 from app.utils.error_messages import (
     ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_CASA_FEE_METHOD_NOT_EXIST,
@@ -119,7 +119,7 @@ class CtrAccountFee(BaseController):
             fee_amount = one_fee_info_request.amount
             vat = int(fee_amount / 10)
             total = fee_amount + vat
-            actual_total = amount + total
+            actual_total = amount + total if one_fee_info_request.payer == PAYER_TRANSFER else amount  # TODO
 
             fee_info_response.update(
                 is_fee=True,

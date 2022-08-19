@@ -6,7 +6,7 @@ from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
     repos_get_customer_by_cif_number
 )
 from app.api.v1.endpoints.deposit.open_deposit.repository import (
-    repos_save_td_account, repos_update_td_account
+    repos_save_redeem_account, repos_save_td_account, repos_update_td_account
 )
 from app.api.v1.endpoints.deposit.open_deposit.schema import (
     DepositPayInRequest
@@ -17,10 +17,11 @@ from app.api.v1.endpoints.third_parties.gw.deposit_account.repository import (
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.validator import validate_history_data
 from app.utils.constant.business_type import (
-    BUSINESS_TYPE_TD_ACCOUNT_OPEN_ACCOUNT
+    BUSINESS_TYPE_REDEEM_ACCOUNT, BUSINESS_TYPE_TD_ACCOUNT_OPEN_ACCOUNT
 )
 from app.utils.constant.cif import (
     BUSINESS_FORM_OPEN_TD_ACCOUNT_PAY,
+    PROFILE_HISTORY_DESCRIPTIONS_INIT_REDEEM_ACCOUNT,
     PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_TD_ACCOUNT,
     PROFILE_HISTORY_STATUS_INIT
 )
@@ -208,3 +209,57 @@ class CtrDeposit(BaseController):
         return self.response(data=dict(
             booking_id=booking_id
         ))
+
+    async def ctr_save_redeem_account_td(self, booking_id, request):
+        current_user = self.current_user
+        # Kiểm tra booking
+        await CtrBooking().ctr_get_booking_and_validate(
+            booking_id=booking_id,
+            business_type_code=BUSINESS_TYPE_REDEEM_ACCOUNT,
+            check_correct_booking_flag=False,
+            loc=f'booking_id: {booking_id}'
+        )
+        history_datas = self.make_history_log_data(
+            description=PROFILE_HISTORY_DESCRIPTIONS_INIT_REDEEM_ACCOUNT,
+            history_status=PROFILE_HISTORY_STATUS_INIT,
+            current_user=current_user.user_info
+        )
+
+        # Validate history data
+        is_success, history_response = validate_history_data(history_datas)
+        if not is_success:
+            return self.response_exception(
+                msg=history_response['msg'],
+                loc=history_response['loc'],
+                detail=history_response['detail']
+            )
+
+        # Tạo data TransactionDaily và các TransactionStage
+        transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
+            business_type_id=BUSINESS_TYPE_REDEEM_ACCOUNT,
+            booking_id=booking_id,
+            request_json=request.json(),
+            history_datas=orjson_dumps(history_datas),
+        )
+        (
+            saving_transaction_stage_status, saving_sla_transaction, saving_transaction_stage,
+            saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
+            saving_transaction_daily, saving_transaction_sender, saving_transaction_job, saving_booking_business_form
+        ) = transaction_datas
+
+        redeem_account_td = self.call_repos(await repos_save_redeem_account( # noqa
+            booking_id=booking_id,
+            saving_transaction_stage_status=saving_transaction_stage_status,
+            saving_sla_transaction=saving_sla_transaction,
+            saving_transaction_stage=saving_transaction_stage,
+            saving_transaction_stage_phase=saving_transaction_stage_phase,
+            saving_transaction_stage_lane=saving_transaction_stage_lane,
+            saving_transaction_stage_role=saving_transaction_stage_role,
+            saving_transaction_daily=saving_transaction_daily,
+            saving_transaction_sender=saving_transaction_sender,
+            saving_transaction_job=saving_transaction_job,
+            saving_booking_business_form=saving_booking_business_form,
+            session=self.oracle_session
+        ))
+
+        return self.response(data=booking_id)

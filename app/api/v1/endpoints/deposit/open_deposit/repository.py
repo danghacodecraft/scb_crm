@@ -78,3 +78,21 @@ async def repos_get_deposit_pay_in(
     booking_id: str
 ):
     return ReposReturn(data=booking_id)
+
+
+async def repos_save_redeem_account(
+    booking_id,
+    saving_transaction_stage_status: dict,
+    saving_sla_transaction: dict,
+    saving_transaction_stage: dict,
+    saving_transaction_stage_phase: dict,
+    saving_transaction_stage_lane: dict,
+    saving_transaction_stage_role: dict,
+    saving_transaction_daily: dict,
+    saving_transaction_sender: dict,
+    saving_transaction_job: dict,
+    saving_booking_business_form: dict,
+    session: Session
+):
+
+    return ReposReturn(data=booking_id)
