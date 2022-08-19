@@ -395,7 +395,7 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
             saving_transaction_sender=saving_transaction_sender,
             saving_transaction_job=saving_transaction_job,
             saving_booking_business_form=saving_booking_business_form,
-            # saving_booking_account=saving_booking_account,
+            saving_booking_account=saving_booking_account,
             # saving_booking_customer=saving_booking_customer,
             session=self.oracle_session
         ))
