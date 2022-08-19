@@ -1510,7 +1510,7 @@ class CtrGWCasaAccount(BaseController):
                     "p_instrument_number": p_instrument_number,
                     "p_instrument_status": "LIQD",
                     "account_info": {
-                        "account_num": sender['account_number'],
+                        "account_num": "123456787912",  # TODO
                         "account_currency": "VND"
                     },
                     "p_charges": [
