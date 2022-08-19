@@ -7,6 +7,9 @@ from app.api.v1.endpoints.cif.repository import (
 from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
     CtrGWCasaAccount
 )
+from app.api.v1.endpoints.third_parties.gw.customer.repository import (
+    repos_get_teller_info
+)
 from app.api.v1.endpoints.third_parties.gw.payment.repository import (
     repos_create_booking_payment, repos_gw_payment_amount_block,
     repos_gw_payment_amount_unblock, repos_gw_redeem_account,
@@ -265,10 +268,16 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
 
         request_data_gw = orjson_loads(booking_business_form.form_data)
 
+        teller = self.call_repos(await repos_get_teller_info(
+            booking_id=BOOKING_ID,
+            session=self.oracle_session
+        ))
+
         gw_payment_amount_block = self.call_repos(await repos_gw_payment_amount_block(
             current_user=current_user,
             booking_id=BOOKING_ID,
             request_data_gw=request_data_gw,
+            teller=teller,
             session=self.oracle_session
         ))
 

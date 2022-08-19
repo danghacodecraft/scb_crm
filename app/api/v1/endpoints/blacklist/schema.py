@@ -25,5 +25,6 @@ class BlacklistRequest(BaseSchema):
     document_no: str = Field(..., description="Số văn bản đến", max_length=20)
     blacklist_area: str = Field(..., description="khu vực", max_length=500)
 
+
 class BlacklistResponse(BlacklistRequest):
-    id :int = Field(..., description="id")
+    id: int = Field(..., description="id")

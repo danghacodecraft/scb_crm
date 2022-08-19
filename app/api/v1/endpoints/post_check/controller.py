@@ -613,7 +613,7 @@ class CtrKSS(BaseController):
                             customer_detail.update(dict(
                                 account_status=STATUS_CLOSE
                             ))
-        if customer_detail['status'] == "Thất bại":
+        if customer_detail['status'] == "FAILED":
             customer_detail['ekyc_level'] = None
 
         if customer_detail['ekyc_step']:

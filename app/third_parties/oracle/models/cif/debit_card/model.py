@@ -51,6 +51,8 @@ class DebitCard(Base):
                               comment='Mã thương hiệu thẻ (Visa, master)')
     card_issuance_fee_id = Column(ForeignKey('crm_card_issuance_fee.card_issuance_fee_id'),
                                   comment='Mã Phí phát hành thẻ')
+    card_annual_fee_id = Column(ForeignKey('crm_card_annual_fee.card_annual_fee_id'),
+                                comment='Mã Phí thường niên')
     card_delivery_address_id = Column(ForeignKey('crm_card_delivery_address.card_delivery_address_id'),
                                       comment='Mã địa chỉ giao nhận thẻv(PK)')
     parent_card_id = Column(ForeignKey('crm_debit_card.card_id'), comment='Mã thẻ cấp cha')

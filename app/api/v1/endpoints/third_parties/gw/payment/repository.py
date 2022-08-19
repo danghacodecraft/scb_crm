@@ -131,8 +131,10 @@ async def repos_gw_payment_amount_block(
         current_user,
         request_data_gw,
         booking_id,
+        teller,
         session: Session
 ):
+
     for item in request_data_gw.get('account_amount_blocks'):
         data_input = {
             "account_info": {
@@ -154,23 +156,14 @@ async def repos_gw_payment_amount_block(
             # TODO chưa được mô tả
             "p_blk_charge": "",
             # TODO chưa được mô tả
-            "p_blk_udf": [
-                {
-                    "UDF_NAME": "",
-                    "UDF_VALUE": "",
-                    "AMOUNT_BLOCK": {
-                        "UDF_NAME": "",
-                        "UDF_VALUE": ""
-                    }
-                }
-            ],
+            "p_blk_udf": "",
             "staff_info_checker": {
                 # TODO hard core
-                "staff_name": "HOANT2"
+                "staff_name": current_user.user_info.username
             },
             "staff_info_maker": {
                 # TODO hard core
-                "staff_name": "KHANHLQ"
+                "staff_name": teller
             }
         }
 
@@ -290,7 +283,7 @@ async def repos_gw_payment_amount_unblock(
         session
 ):
     response_data = []
-    for item in request_data_gw:
+    for item in request_data_gw.account_unlock:
         is_success, gw_payment_amount_unblock = await service_gw.gw_payment_amount_unblock(
             data_input=item,
             current_user=current_user.user_info
