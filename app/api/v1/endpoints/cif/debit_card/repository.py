@@ -121,7 +121,7 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
                 "payment_online_flag": item.payment_online_flag,
                 "branch_of_card": dropdown(item.BrandOfCard),
                 "issuance_fee": dropdown(item.CardIssuanceFee),
-                "annual_fee": dropdown(item.CardAnnualFee),  # TODO
+                "annual_fee": dropdown(item.CardAnnualFee),
                 "src_code": item.src_code,
                 "pro_code": item.pro_code,
                 "card_group": item.card_group,
