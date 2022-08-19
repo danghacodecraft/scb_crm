@@ -53,17 +53,18 @@ class CtrApproveSignature(BaseController):
                 compare_signature_uuid_ekyc=compare_signature_uuid_ekyc, current_user=current_user
             )
             for index, saving_customer_compare_image_transaction in enumerate(saving_customer_compare_image_transactions):
-                saving_booking_compare_images.append(dict(
-                    image_type_id=IMAGE_TYPE_SIGNATURE,
-                    image_uuid=compare_signature_uuid,
-                    image_ekyc_uuid=compare_signature_uuid_ekyc,
-                    is_image_original=True,
-                    compare_image_uuid=saving_customer_compare_image_transaction['compare_image_url'],
-                    compare_image_ekyc_uuid=saving_customer_compare_image_transaction['compare_image_id'],
-                    compare_percent=saving_customer_compare_image_transaction['similar_percent'],
-                    booking_id=booking_id,
-                    created_at=now(),
-                ))
+                for uuid_ekyc, face_image in signature_images.items():
+                    saving_booking_compare_images.append(dict(
+                        image_type_id=IMAGE_TYPE_SIGNATURE,
+                        image_uuid=face_image['uuid'],
+                        image_ekyc_uuid=uuid_ekyc,
+                        is_image_original=True,
+                        compare_image_uuid=saving_customer_compare_image_transaction['compare_image_url'],
+                        compare_image_ekyc_uuid=saving_customer_compare_image_transaction['compare_image_id'],
+                        compare_percent=saving_customer_compare_image_transaction['similar_percent'],
+                        booking_id=booking_id,
+                        created_at=now(),
+                    ))
         else:
             saving_booking_compare_images.append(dict(
                 image_type_id=IMAGE_TYPE_SIGNATURE,
@@ -110,17 +111,15 @@ class CtrApproveSignature(BaseController):
         """
         Upload signature cho trường hợp mở cif
         """
-        customer = await CtrBooking().ctr_get_customer_from_booking(booking_id=booking_id)
-        cif_id = customer.id
         # Lấy tất cả hình ảnh mới nhất ở bước GTDD
         signature_transactions = self.call_repos(await repos_get_approval_identity_images_by_image_type_id(
             image_type_id=IMAGE_TYPE_SIGNATURE,
             identity_type="SIGNATURE",
-            cif_id=cif_id,
+            booking_id=booking_id,
             session=self.oracle_session
         ))
 
-        first_customer_identity, first_customer_identity_image = signature_transactions[0]
+        first_customer_identity, first_customer_identity_image, _, _ = signature_transactions[0]
         customer_identity_id = first_customer_identity.id
 
         signature_images = {}
@@ -128,7 +127,7 @@ class CtrApproveSignature(BaseController):
         if amount != 2:
             amount = amount
 
-        for index, (customer_identity, customer_identity_image) in enumerate(signature_transactions, 1):
+        for index, (customer_identity, customer_identity_image, _, _) in enumerate(signature_transactions, 1):
             # uuid của service file
             # {
             #     uuid_ekyc: {
