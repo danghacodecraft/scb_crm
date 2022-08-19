@@ -1,5 +1,5 @@
 from sqlalchemy import VARCHAR, Column
-from sqlalchemy.dialects.oracle import NUMBER, DATE
+from sqlalchemy.dialects.oracle import DATE, NUMBER
 
 from app.third_parties.oracle.base import Base
 
@@ -16,7 +16,7 @@ class Blacklist(Base):
     casa_account_num = Column('casa_account_num', VARCHAR(20), nullable=True, comment='tài khoản ngân hàng tại SCB')
     branch_id = Column('branch_id', VARCHAR(5), nullable=True, comment='Mã chi nhánh')
     date_open_account_number = Column('date_open_account_number', DATE, nullable=True, comment='ngày mở tài khoản')
-    mobile_num = Column('mobile_num', VARCHAR(25), nullable=True,  comment='số điện thoại cá nhân')
+    mobile_num = Column('mobile_num', VARCHAR(25), nullable=True, comment='số điện thoại cá nhân')
     place_of_residence = Column('place_of_residence', VARCHAR(500), nullable=True, comment='Địa chỉ hộ khẩu')
     place_of_origin = Column('place_of_origin', VARCHAR(500), nullable=True, comment='nơi sinh')
     reason = Column('reason', VARCHAR(1000), nullable=True, comment='chuyên đề')
