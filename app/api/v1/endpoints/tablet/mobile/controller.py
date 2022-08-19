@@ -1,7 +1,7 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.tablet.mobile.repository import repos_pair_by_otp
 from app.api.v1.endpoints.tablet.mobile.schema import SyncWithWebByOTPRequest
-from app.settings.event import service_rabbitmq
+from app.settings.event import service_idm, service_rabbitmq, service_redis
 from app.utils.constant.tablet import (
     DEVICE_TYPE_MOBILE, DEVICE_TYPE_WEB, WEB_ACTION_PAIRED
 )
@@ -41,7 +41,16 @@ class CtrTabletMobile(BaseController):
             )
         )
 
+        teller_user_info = (await service_redis.get(tablet_info['teller_username']))['user_info']
+
         return self.response({
             'mqtt_info': mqtt_info,
             'token': topic_name,
+            # TODO: check it
+            'branch_name': teller_user_info['hrm_branch_name'],
+            'teller_info': {
+                # TODO: host name
+                'avatar_url': service_idm.replace_with_cdn(teller_user_info['avatar_url']),
+                'full_name': teller_user_info['name'],
+            }
         })
