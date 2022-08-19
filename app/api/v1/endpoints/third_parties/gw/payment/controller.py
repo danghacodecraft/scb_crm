@@ -1,9 +1,6 @@
 from app.api.v1.endpoints.approval.repository import (
     repos_get_booking_business_form_by_booking_id
 )
-from app.api.v1.endpoints.cif.repository import (
-    repos_get_account_id_by_account_number
-)
 from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
     CtrGWCasaAccount
 )
@@ -224,7 +221,6 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
                 booking_id=BOOKING_ID,
                 business_form_id=BUSINESS_FORM_AMOUNT_BLOCK,
                 session=self.oracle_session
-
             ))
 
         request_data_gw = orjson_loads(booking_business_form.form_data)
@@ -263,11 +259,13 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
 
         current_user = self.current_user
         request_data = []
-        account_ref = []
+        account_unlock_info = []
         account_numbers = []
+        saving_booking_account = []
         statement = request.transaction_fee_info.statement
         management = request.transaction_fee_info.management_info
         sender_info = request.transaction_fee_info.sender_info
+        cif_number = None
 
         denominations__amounts = {}
         statement_info = self.call_repos(await repos_get_denominations(currency_id="VND", session=self.oracle_session))
@@ -293,76 +291,26 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
                 loc=str(denominations_errors)
             )
 
-        for account_number in request.account_unlock:
-            if account_number.account_number in account_numbers:
-                return self.response_exception(msg="Duplicate Account_number", detail=f"Account_number {account_number.account_number}")
-
-            account_numbers.append(account_number.account_number)
-            p_blk_detail = {
-                "AMOUNT": "",
-                "HOLD_CODE": "",
-                "EXPIRY_DATE": "",
-                "REMARKS": "",
-                "CHARGE_DETAIL": {
-                    "TYPE_CHARGE": "",
-                    "ACCOUNT_CHARGE": ""
-                }
-            }
-            for account_amount in account_number.account_amount_block:
-                if account_amount.account_ref_no in account_ref:
-                    return self.response_exception(msg="Duplicate Account_ref", detail=f"Account_ref {account_amount.account_ref_no}")
-                account_ref.append(account_amount.account_ref_no)
-                if account_amount.p_type_unblock == "P":
-                    if not account_amount.p_blk_detail:
-                        return self.response_exception(msg="type_unblock is not data")
-
-                    p_blk_detail = {
-                        "AMOUNT": account_amount.p_blk_detail.amount,
-                        "HOLD_CODE": account_amount.p_blk_detail.hold_code,
-                        "EXPIRY_DATE": account_amount.p_blk_detail.expiry_date,
-                        "REMARKS": account_amount.p_blk_detail.remarks,
-                        "CHARGE_DETAIL": {
-                            "TYPE_CHARGE": "",
-                            "ACCOUNT_CHARGE": ""
-                        }
-                    }
-
-                request_data.append({
-                    "account_info": {
-                        "balance_lock_info": {
-                            "account_ref_no": account_amount.account_ref_no
-                        }
-                    },
-                    "p_type_unblock": account_amount.p_type_unblock,
-                    "p_blk_detail": p_blk_detail,
-                    # TODO hard core
-                    "p_blk_charge": [
-                        {
-                            "CHARGE_NAME": "",
-                            "CHARGE_AMOUNT": 0,
-                            "WAIVED": "N"
-                        }
-                    ],
-                    # TODO hard core
-                    "p_blk_udf": [
-                        {
-                            "UDF_NAME": "",
-                            "UDF_VALUE": "",
-                            "AMOUNT_UNBLOCK": {
-                                "UDF_NAME": "",
-                                "UDF_VALUE": ""
-                            }
-                        }
-                    ],
-                    "staff_info_checker": {
-                        # TODO hard core
-                        "staff_name": "HOANT2"
-                    },
-                    "staff_info_maker": {
-                        # TODO hard core
-                        "staff_name": "KHANHLQ"
-                    }
-                })
+        for item in request.account_unlock:
+            if item.account_number in account_numbers:
+                return self.response_exception(msg="Duplicate Account_number", detail=f"Account_number {item.account_number}")
+            account_unlock_info.append(item.dict())
+            account_info = await CtrGWCasaAccount(current_user=self.current_user).ctr_gw_get_casa_account_info(
+                account_number=item.account_number,
+                return_raw_data_flag=True
+            )
+            if not account_info:
+                return self.response_exception(
+                    msg=ERROR_ACCOUNT_NUM_EXIST,
+                    loc=str(denominations_errors)
+                )
+            cif_number = account_info['customer_info']['cif_info']['cif_num']
+            saving_booking_account.append({
+                "booking_id": BOOKING_ID,
+                "account_num": item.account_number,
+                "created_at": now()
+            })
+            account_numbers.append(item.account_number)
 
         ################################################################################################################
         # Thông tin Phí
@@ -394,35 +342,18 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
         )
 
         request_data.append({
-            "fee_info": saving_fee_info,
-            "statement": statement_info,
-            "management_info": {
-                "direct_staff_code": management.direct_staff_code,
-                "indirect_staff_code": management.indirect_staff_code,
+            "account_unlock": account_unlock_info,
+            "transaction_fee_info": {
+                "fee_info": saving_fee_info,
+                "statement": statement_info,
+                "management_info": {
+                    "direct_staff_code": management.direct_staff_code,
+                    "indirect_staff_code": management.indirect_staff_code,
+                },
+                "sender_info": sender_response
             },
-            "sender_info": sender_response
+            "customer_cif_number": cif_number
         })
-
-        saving_booking_account = []
-        saving_booking_customer = []
-
-        for account_number in account_numbers:
-            # TODO check account_number in db crm
-            response_data = self.call_repos(
-                await repos_get_account_id_by_account_number(
-                    account_number=account_number,
-                    session=self.oracle_session
-                ))
-            saving_booking_account.append({
-                "booking_id": BOOKING_ID,
-                "account_id": response_data.get('account_id'),
-                "created_at": now()
-            })
-
-            saving_booking_customer.append({
-                "booking_id": BOOKING_ID,
-                "customer_id": response_data.get('customer_id')
-            })
 
         history_data = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_UNBLOCK,
@@ -465,7 +396,7 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
             saving_transaction_job=saving_transaction_job,
             saving_booking_business_form=saving_booking_business_form,
             saving_booking_account=saving_booking_account,
-            saving_booking_customer=saving_booking_customer,
+            # saving_booking_customer=saving_booking_customer,
             session=self.oracle_session
         ))
 
