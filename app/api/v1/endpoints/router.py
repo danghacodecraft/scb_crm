@@ -1,6 +1,5 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints.approval import router as routers_approval
 from app.api.v1.endpoints.approval_v2 import router as routers_approval_v2
 from app.api.v1.endpoints.blacklist import view as view_blacklist
 from app.api.v1.endpoints.booking import view as view_bookings
@@ -40,9 +39,9 @@ router.include_router(router=routers_dashboard.router_module, prefix="/dashboard
 
 router.include_router(router=routers_casa.router_module, prefix="/casa", tags=["[Casa] Information"])
 
-router.include_router(router=routers_approval.router_module, prefix="/approval", tags=["[Approval] Information"])
+# router.include_router(router=routers_approval.router_module, prefix="/approval", tags=["[Approval] Information"])
 
-router.include_router(router=routers_approval_v2.router_module, prefix="/approval_v2", tags=["[Approval V2] Information"])
+router.include_router(router=routers_approval_v2.router_module, prefix="/approval", tags=["[Approval V2] Information"])
 
 router.include_router(router=view_scb_news.router, prefix="/news", tags=["[News]"])
 

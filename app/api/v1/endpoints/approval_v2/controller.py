@@ -70,6 +70,9 @@ from app.utils.functions import (
 
 
 class CtrApproval(BaseController):
+    """
+    Approval phiên bản 2 dùng mỗi booking, và booking compare image cho tất cả các giao dịch Phê duyệt
+    """
     async def ctr_approval_process(self, booking_id: str):
         transactions = self.call_repos((await repos_get_approval_process(
             booking_id=booking_id,
@@ -198,18 +201,22 @@ class CtrApproval(BaseController):
                 is_completed_signature = True
 
         uuid__link_downloads = await self.get_link_download_multi_file(uuids=compare_image_uuids)
-        for face_identity_image in face_identity_images:
+        for index, face_identity_image in enumerate(face_identity_images):
             face_identity_image.update(
                 url=uuid__link_downloads[face_identity_image['uuid']]
             )
+            if index > 1:
+                break
         face_authentication.update(dict(
             identity_images=face_identity_images
         ))
 
-        for signature_identity_image in signature_identity_images:
+        for index, signature_identity_image in enumerate(signature_identity_images):
             signature_identity_image.update(
                 url=uuid__link_downloads[signature_identity_image['uuid']]
             )
+            if index > 1:
+                break
         signature_authentication.update(dict(
             identity_images=signature_identity_images
         ))
