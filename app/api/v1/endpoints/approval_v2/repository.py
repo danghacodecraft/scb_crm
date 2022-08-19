@@ -255,7 +255,7 @@ async def repos_get_compare_image_transactions(
 
 
 async def repos_get_approval_identity_images_by_image_type_id(
-    cif_id: str,
+    booking_id: str,
     image_type_id: str,
     identity_type: str,
     session: Session
@@ -267,13 +267,17 @@ async def repos_get_approval_identity_images_by_image_type_id(
     customer_identities = session.execute(
         select(
             CustomerIdentity,
-            CustomerIdentityImage
+            CustomerIdentityImage,
+            Booking,
+            BookingCustomer
         )
+        .join(BookingCustomer, Booking.id == BookingCustomer.booking_id)
+        .join(CustomerIdentity, CustomerIdentity.customer_id == BookingCustomer.customer_id)
         .join(CustomerIdentityImage, and_(
             CustomerIdentity.id == CustomerIdentityImage.identity_id,
             CustomerIdentityImage.image_type_id == image_type_id
         ))
-        .filter(CustomerIdentity.customer_id == cif_id)
+        .filter(Booking.id == booking_id)
         .order_by(desc(CustomerIdentity.updater_at))
     ).all()
     if not customer_identities:
