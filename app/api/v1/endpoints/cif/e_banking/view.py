@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Body, Depends, Path
+from fastapi import APIRouter, Body, Depends, Path, Query
 from starlette import status
 
 from app.api.base.schema import ResponseData
@@ -26,9 +26,11 @@ async def view_save_e_banking_and_sms_casa(
         e_banking_info: EBankingRequest = Body(default=None, description="Dữ liệu để tạo E-banking"),
         ebank_sms_casa_info: EBankingSMSCasaRequest = Body(default=None, description="Dữ liệu để đăng ký SMS cho TKTT"),
         cif_id: str = Path(..., description='Id CIF ảo'),
+        open_casa_flag: bool = Query(default=False, description="`True` module mở mới tài khoản thanh toán.<br>"
+                                                                "`False` module mở CIF"),
         current_user=Depends(get_current_user_from_header())
 ):
-    e_banking_response = await CtrEBanking(current_user).ctr_save_e_banking_and_sms(cif_id, e_banking_info, ebank_sms_casa_info)
+    e_banking_response = await CtrEBanking(current_user).ctr_save_e_banking_and_sms(cif_id, e_banking_info, ebank_sms_casa_info, open_casa_flag)
     return ResponseData[SaveSuccessResponse](**e_banking_response)
 
 
@@ -43,7 +45,10 @@ async def view_save_e_banking_and_sms_casa(
 )
 async def view_retrieve_e_banking(
         cif_id: str = Path(..., description='Id CIF ảo'),
+        open_casa_flag: bool = Query(default=False, description="`True` module mở mới tài khoản thanh toán.<br>"
+                                                                "`False` module mở CIF"),
         current_user=Depends(get_current_user_from_header())
 ):
-    e_banking_data = await CtrEBanking(current_user).ctr_get_e_banking(cif_id)
+    e_banking_data = await CtrEBanking(current_user).ctr_get_e_banking(cif_id, open_casa_flag)
+
     return ResponseData[EBankingResponse](**e_banking_data)
