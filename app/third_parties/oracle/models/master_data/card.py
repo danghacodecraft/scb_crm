@@ -1,4 +1,5 @@
 from sqlalchemy import VARCHAR, Column, text
+from sqlalchemy.dialects.oracle import NUMBER
 
 from app.third_parties.oracle.base import Base
 
@@ -52,3 +53,14 @@ class CardType(Base):
                 comment='Mã Loại thẻ (PK)')
     code = Column('card_type_code', VARCHAR(50), nullable=False, comment='Mã code Loại thẻ')
     name = Column('card_type_name', VARCHAR(255), nullable=False, comment='Tên Loại thẻ')
+
+
+class CardAnnualFee(Base):
+    __tablename__ = 'crm_card_annual_fee'
+    __table_args__ = {'comment': 'Danh mục phí thường niên'}
+
+    id = Column('card_annual_fee_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "),
+                comment='Mã Loại phí (PK)')
+    code = Column('card_annual_fee_code', VARCHAR(50), nullable=False, comment='Mã code Loại phí')
+    name = Column('card_annual_fee_name', VARCHAR(255), nullable=False, comment='Tên Loại phí')
+    active_flag = Column(NUMBER(1, 0, False), nullable=False, comment='Trạng thái hoạt động (Có/không)')
