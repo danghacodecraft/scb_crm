@@ -1021,6 +1021,14 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
             else:
                 indirect_staff = row.CustomerEmployee.employee_id
 
+    if not direct_staff or not indirect_staff:
+        return ReposReturn(
+            is_error=True,
+            msg=ERROR_NO_DATA,
+            loc="open_cif -> repos_push_debit_to_gw",
+            detail="direct_staff and indirect_staff cannot null"
+        )
+
     # Loại tiền tệ của TKTT
     casa_currency_number = await repos_get_casa_account_currency_number(session=session, cif_id=cif_id)
 
@@ -1049,7 +1057,7 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
     if not is_success:
         return ReposReturn(
             is_error=True,
-            loc="open_cif -> debit_card",
+            loc="open_cif -> repos_push_debit_to_gw",
             msg=ERROR_CALL_SERVICE_GW,
             detail=str(response_data)
         )
@@ -1074,7 +1082,7 @@ async def repos_get_cif_number_open_cif(cif_id: str, session: Session):
     if not cif_number:
         return ReposReturn(
             is_error=True,
-            loc="open_cif -> push casa to gw -> cif_number",
+            loc="repos_get_cif_number_open_cif",
             msg=ERROR_NO_DATA
         )
 

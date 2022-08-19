@@ -39,7 +39,7 @@ async def view_save_amount_block(
         request=request
     )
 
-    return ResponseData[PaymentSuccessResponse](**payment_amount_block)
+    return ResponseData(**payment_amount_block)
 
 
 @router.get(
@@ -59,7 +59,7 @@ async def view_get_amount_block(
         BOOKING_ID=BOOKING_ID
     )
 
-    return ResponseData[AccountAmountBlockResponse](**payment_amount_block)
+    return ResponseData(**payment_amount_block)
 
 
 @router.post(

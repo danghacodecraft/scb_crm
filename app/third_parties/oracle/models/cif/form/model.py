@@ -129,6 +129,7 @@ class Booking(Base):
     updated_by = Column(DateTime, comment='Người chỉnh sửa')
     completed_flag = Column(NUMBER(1), comment='Cờ đánh dấu hoàn thành', default=0)
     locked_flag = Column(NUMBER(1), comment='Cờ đánh dấu phong tỏa', default=0)
+    fcc_booking_code = Column('fcc_booking_code', VARCHAR(20), comment='Mã fcc code')
 
     business_type = relationship('BusinessType')
     transaction = relationship('TransactionDaily')
@@ -143,6 +144,7 @@ class BookingAccount(Base):
     customer_id = Column(VARCHAR(36), comment="Mã KH")
     account_id = Column('casa_account_id', VARCHAR(36))
     td_account_id = Column('td_account_id', VARCHAR(36), comment="ID Tài khoản tiết kiệm (TD)")
+    casa_account_num = Column(VARCHAR(20), comment="Số tài khoản thanh toán")
     created_at = Column(DateTime, nullable=False)
     updated_at = Column(DateTime)
 

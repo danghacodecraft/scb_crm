@@ -8,8 +8,8 @@ from app.api.v1.endpoints.user.schema import AuthResponse
 from app.api.v1.others.booking.repository import generate_booking_code
 from app.settings.event import service_gw
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingAccount, BookingBusinessForm, BookingCustomer,
-    TransactionDaily, TransactionSender
+    Booking, BookingAccount, BookingBusinessForm, TransactionDaily,
+    TransactionSender
 )
 from app.third_parties.oracle.models.master_data.others import (
     SlaTransaction, TransactionJob, TransactionStage, TransactionStageLane,
@@ -99,7 +99,7 @@ async def repos_payment_amount_block(
         saving_transaction_job,
         saving_booking_business_form,
         saving_booking_account,
-        saving_booking_customer,
+        # saving_booking_customer,
         session
 ):
     session.add_all([
@@ -116,7 +116,7 @@ async def repos_payment_amount_block(
         TransactionJob(**saving_transaction_job)
     ])
     session.bulk_save_objects(BookingAccount(**account) for account in saving_booking_account)
-    session.bulk_save_objects(BookingCustomer(**customer) for customer in saving_booking_customer)
+    # session.bulk_save_objects(BookingCustomer(**customer) for customer in saving_booking_customer)
     # Update Booking
     session.execute(
         update(Booking)
@@ -131,8 +131,10 @@ async def repos_gw_payment_amount_block(
         current_user,
         request_data_gw,
         booking_id,
+        teller,
         session: Session
 ):
+
     for item in request_data_gw.get('account_amount_blocks'):
         data_input = {
             "account_info": {
@@ -154,23 +156,14 @@ async def repos_gw_payment_amount_block(
             # TODO chưa được mô tả
             "p_blk_charge": "",
             # TODO chưa được mô tả
-            "p_blk_udf": [
-                {
-                    "UDF_NAME": "",
-                    "UDF_VALUE": "",
-                    "AMOUNT_BLOCK": {
-                        "UDF_NAME": "",
-                        "UDF_VALUE": ""
-                    }
-                }
-            ],
+            "p_blk_udf": "",
             "staff_info_checker": {
                 # TODO hard core
-                "staff_name": "HOANT2"
+                "staff_name": current_user.user_info.username
             },
             "staff_info_maker": {
                 # TODO hard core
-                "staff_name": "KHANHLQ"
+                "staff_name": teller
             }
         }
 
@@ -254,7 +247,7 @@ async def repos_payment_amount_unblock(
         saving_transaction_sender: dict,
         saving_transaction_job: dict,
         saving_booking_business_form: dict,
-        saving_booking_customer,
+        # saving_booking_customer,
         saving_booking_account,
         session
 ):
@@ -272,7 +265,7 @@ async def repos_payment_amount_unblock(
         BookingBusinessForm(**saving_booking_business_form)
     ])
     session.bulk_save_objects(BookingAccount(**account) for account in saving_booking_account)
-    session.bulk_save_objects(BookingCustomer(**customer) for customer in saving_booking_customer)
+    # session.bulk_save_objects(BookingCustomer(**customer) for customer in saving_booking_customer)
     # Update Booking
     session.execute(
         update(Booking)
@@ -290,7 +283,7 @@ async def repos_gw_payment_amount_unblock(
         session
 ):
     response_data = []
-    for item in request_data_gw:
+    for item in request_data_gw.account_unlock:
         is_success, gw_payment_amount_unblock = await service_gw.gw_payment_amount_unblock(
             data_input=item,
             current_user=current_user.user_info

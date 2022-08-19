@@ -52,6 +52,12 @@ class SMSCasaRelationshipItemResponse(BaseSchema):
 
 
 class SMSCasaItemResponse(BaseSchema):
+    is_disable_flag: Optional[bool] = Field(
+        default=False,
+        description='Cờ xác định được tu chỉnh thông tin SMS của TKTT này hay không. `áp dụng cho Mở mới TKTT`'
+                    '<br>`True` không được tu chỉnh'
+                    '<br>`False` được tu chỉnh'
+    )
     casa_id: str = Field(..., description="`id` của TKTT")
     main_phone_number_info: Optional[SMSCasaCustomerInfoResponse] = Field(..., description="Thông tin SĐT, chủ tài khoản đăng ký sms")
     receiver_noti_relationship_items: List[SMSCasaRelationshipItemResponse] = Field(..., description="Thông tin SĐT và MQH đăng ký sms")
@@ -63,9 +69,28 @@ class SMSCasaInfoResponse(BaseSchema):
     registry_balance_items: List[SMSCasaItemResponse] = Field(..., description="")
 
 
+class CasaAccountForSMSResponse(BaseSchema):
+    casa_account_id: Optional[str] = Field(..., description="`ID` TKTT")
+    casa_account_number: Optional[str] = Field(defualt=None, description="Số tài khoản")
+    customer_name: str = Field(..., description="Tên tài khoản")
+    acc_type_name: str = Field(..., description="Tên sản phẩm")
+
+
+class EBankingCasaAccountListForSMSResponse(BaseSchema):
+    old_casa_accounts: List[CasaAccountForSMSResponse] = Field(..., description="Danh sách TKTT có sẵn")
+    new_casa_accounts: List[CasaAccountForSMSResponse] = Field(..., description="Danh sách TKTT tạo mới")
+
+
 class EBankingResponse(BaseSchema):
+    is_disable_ebank_flag: Optional[bool] = Field(
+        default=False,
+        description='Cờ xác định khách hàng có được tu chỉnh EB hay không. `áp dụng cho Mở mới TKTT`'
+                    '<br>`True` không được tu chỉnh'
+                    '<br>`False` được tu chỉnh'
+    )
     e_banking: Optional[AccountInformationResponse] = Field(..., description='Thông tin E-Banking')
     sms_casa: Optional[SMSCasaInfoResponse] = Field(..., description="Thông tin đăng ký sms cho TKTT")
+    sms_casa_select_info: Optional[EBankingCasaAccountListForSMSResponse] = Field(..., description="Lựa chọn TKTT để đăng ký SMS")
 
 
 ########################################################################################################################

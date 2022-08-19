@@ -137,8 +137,27 @@ class CtrApproval(BaseController):
 
         compare_face_uuid = None
         cif_id = None
-        authentication = None
+        # authentication = None
+        face_authentication = dict(
+            compare_url=None,
+            compare_uuid=None,
+            created_at=None,
+            identity_images=[],
+        )
+        signature_authentication = dict(
+            compare_url=None,
+            compare_uuid=None,
+            created_at=None,
+            identity_images=[],
+        )
+        fingerprint_authentication = dict(
+            compare_url=None,
+            compare_uuid=None,
+            created_at=None,
+            identity_images=[],
+        )
         business_type = await CtrBooking().ctr_get_business_type(booking_id=booking_id)
+
         if business_type.code == BUSINESS_TYPE_INIT_CIF:
             customer_info = await CtrBooking().ctr_get_customer_from_booking(
                 booking_id=booking_id
@@ -336,51 +355,34 @@ class CtrApproval(BaseController):
                 created_at=created_at,
                 identity_images=identity_fingerprint_images,
             )
-        else:
-            booking_authentications = await CtrBooking().ctr_get_booking_authentications(booking_id=booking_id)
-            is_completed_face = False
-            is_completed_fingerprint = False
-            is_completed_signature = False
-            face_authentication = dict(
-                compare_url=None,
-                compare_uuid=None,
-                created_at=None,
-                identity_images=[],
-            )
-            signature_authentication = dict(
-                compare_url=None,
-                compare_uuid=None,
-                created_at=None,
-                identity_images=[],
-            )
-            fingerprint_authentication = dict(
-                compare_url=None,
-                compare_uuid=None,
-                created_at=None,
-                identity_images=[],
-            )
-            image_uuids = []
-            for booking_authentication in booking_authentications:
-                image_uuids.append(booking_authentication.file_uuid)
-            uuid__link_downloads = await self.get_link_download_multi_file(uuids=image_uuids)
+        # else:
+        #     booking_authentications = await CtrBooking().ctr_get_booking_authentications(booking_id=booking_id)
+        #     is_completed_face = False
+        #     is_completed_fingerprint = False
+        #     is_completed_signature = False
 
-            for booking_authentication in booking_authentications:
-                data = dict(
-                    compare_url=uuid__link_downloads[booking_authentication.file_uuid],
-                    compare_uuid=booking_authentication.file_uuid,
-                    created_at=booking_authentication.created_at
-                )
-                if booking_authentication.image_type_id == IMAGE_TYPE_FACE and not is_completed_face:
-                    face_authentication.update(data)
-                    is_completed_face = True
-
-                if booking_authentication.image_type_id == IMAGE_TYPE_FINGERPRINT and not is_completed_fingerprint:
-                    fingerprint_authentication.update(data)
-                    is_completed_fingerprint = True
-
-                if booking_authentication.image_type_id == IMAGE_TYPE_SIGNATURE and not is_completed_signature:
-                    signature_authentication.update(data)
-                    is_completed_signature = True
+        #     image_uuids = []
+        #     for booking_authentication in booking_authentications:
+        #         image_uuids.append(booking_authentication.file_uuid)
+        #     uuid__link_downloads = await self.get_link_download_multi_file(uuids=image_uuids)
+        #
+        #     for booking_authentication in booking_authentications:
+        #         data = dict(
+        #             compare_url=uuid__link_downloads[booking_authentication.file_uuid],
+        #             compare_uuid=booking_authentication.file_uuid,
+        #             created_at=booking_authentication.created_at
+        #         )
+        #         if booking_authentication.image_type_id == IMAGE_TYPE_FACE and not is_completed_face:
+        #             face_authentication.update(data)
+        #             is_completed_face = True
+        #
+        #         if booking_authentication.image_type_id == IMAGE_TYPE_FINGERPRINT and not is_completed_fingerprint:
+        #             fingerprint_authentication.update(data)
+        #             is_completed_fingerprint = True
+        #
+        #         if booking_authentication.image_type_id == IMAGE_TYPE_SIGNATURE and not is_completed_signature:
+        #             signature_authentication.update(data)
+        #             is_completed_signature = True
 
         authentication = dict(
             face=face_authentication,
@@ -694,42 +696,43 @@ class CtrApproval(BaseController):
         # Nghiệp vụ không cần cif
         if business_type_id in [BUSINESS_TYPE_CASA_TOP_UP, BUSINESS_TYPE_WITHDRAW]:
             no_cif_flag = True
-            authentication = request.authentication
-            if authentication:
-                compare_face_image_uuid = authentication.face.compare_face_image_uuid
-                compare_signature_image_uuid = authentication.signature.compare_face_image_uuid
-                compare_fingerprint_image_uuid = authentication.fingerprint.compare_face_image_uuid
-                if compare_face_image_uuid:
-                    saving_booking_authentications.append(dict(
-                        id=generate_uuid(),
-                        file_uuid=compare_face_image_uuid,
-                        file_uuid_ekyc=None,    # TODO: Tạm thời không upload file qua ekyc
-                        image_type_id=IMAGE_TYPE_FACE,
-                        booking_id=booking_id,
-                        created_at=now()
-                    ))
-
-                if compare_fingerprint_image_uuid:
-                    saving_booking_authentications.append(dict(
-                        id=generate_uuid(),
-                        file_uuid=compare_fingerprint_image_uuid,
-                        file_uuid_ekyc=None,    # TODO: Tạm thời không upload file qua ekyc
-                        image_type_id=IMAGE_TYPE_FINGERPRINT,
-                        booking_id=booking_id,
-                        created_at=now()
-                    ))
-
-                if not compare_signature_image_uuid:
-                    return self.response_exception(msg=ERROR_APPROVAL_UPLOAD_SIGNATURE)
-
-                saving_booking_authentications.append(dict(
-                    id=generate_uuid(),
-                    file_uuid=compare_signature_image_uuid,
-                    file_uuid_ekyc=None,    # TODO: Tạm thời không upload file qua ekyc
-                    image_type_id=IMAGE_TYPE_SIGNATURE,
-                    booking_id=booking_id,
-                    created_at=now()
-                ))
+            # authentication = request.authentication
+            # if authentication:
+            #     compare_face_image_uuid = authentication.face.compare_face_image_uuid
+            #     compare_signature_image_uuid = authentication.signature.compare_face_image_uuid
+            #     compare_fingerprint_image_uuid = authentication.fingerprint.compare_face_image_uuid
+            #     if compare_face_image_uuid:
+            #         saving_booking_authentications.append(dict(
+            #             id=generate_uuid(),
+            #             file_uuid=compare_face_image_uuid,
+            #             file_uuid_ekyc=None,    # TODO: Tạm thời không upload file qua ekyc
+            #             image_type_id=IMAGE_TYPE_FACE,
+            #             booking_id=booking_id,
+            #             created_at=now()
+            #         ))
+            #
+            #     if compare_fingerprint_image_uuid:
+            #         saving_booking_authentications.append(dict(
+            #             id=generate_uuid(),
+            #             file_uuid=compare_fingerprint_image_uuid,
+            #             file_uuid_ekyc=None,    # TODO: Tạm thời không upload file qua ekyc
+            #             image_type_id=IMAGE_TYPE_FINGERPRINT,
+            #             booking_id=booking_id,
+            #             created_at=now()
+            #         ))
+            #
+            #     if not compare_signature_image_uuid:
+            #         return self.response_exception(msg=ERROR_APPROVAL_UPLOAD_SIGNATURE)
+            #
+            #     saving_booking_authentications.append(dict(
+            #         id=generate_uuid(),
+            #         file_uuid=compare_signature_image_uuid,
+            #         file_uuid_ekyc=None,    # TODO: Tạm thời không upload file qua ekyc
+            #         image_type_id=IMAGE_TYPE_SIGNATURE,
+            #         booking_id=booking_id,
+            #         created_at=now()
+            #     ))
+            ####################################
 
             # booking_business_form = await CtrBooking().ctr_get_booking_business_form(
             #     booking_id=booking_id, session=self.oracle_session

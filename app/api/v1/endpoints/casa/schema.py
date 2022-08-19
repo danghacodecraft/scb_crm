@@ -4,9 +4,7 @@ from typing import List, Optional
 from pydantic import Field
 
 from app.api.base.schema import BaseSchema, ResponseRequestSchema
-from app.api.v1.schemas.utils import (
-    OptionalDropdownRequest, OptionalDropdownResponse
-)
+from app.api.v1.schemas.utils import DropdownRequest, OptionalDropdownResponse
 
 
 class BookingAccountResponse(BaseSchema):
@@ -29,7 +27,7 @@ class SenderInfoRequest(BaseSchema):
     full_name_vn: Optional[str] = Field(None, description="Người giao dịch")
     identity_number: Optional[str] = Field(None, description="Thông tin giấy tờ định danh")
     issued_date: Optional[date] = Field(None, description="Ngày cấp")
-    place_of_issue: OptionalDropdownRequest = Field(None, description="Nơi cấp")
+    place_of_issue: Optional[DropdownRequest] = Field(None, description="Nơi cấp")
     address_full: Optional[str] = Field(None, description="Địa chỉ")
     mobile_number: Optional[str] = Field(None, description="SĐT")
 
@@ -43,7 +41,7 @@ class SenderIdentityInfoResponse(BaseSchema):
 # II. Thông tin khách hàng giao dịch
 class SenderInfoResponse(BaseSchema):
     cif_number: Optional[str] = Field(..., description="Mã khách hàng giao dịch")
-    full_name_vn: Optional[str] = Field(..., description="Người giao dịch")
+    fullname_vn: Optional[str] = Field(..., description="Người giao dịch")
     identity_info: SenderIdentityInfoResponse = Field(..., description="Giấy tờ định danh")
     address_full: Optional[str] = Field(..., description="Địa chỉ")
     mobile_phone: Optional[str] = Field(..., description="Điện thoại")

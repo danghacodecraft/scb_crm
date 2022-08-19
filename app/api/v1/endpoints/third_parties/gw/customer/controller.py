@@ -1,3 +1,5 @@
+from starlette import status
+
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_check_mobile_num, repos_get_casa_account_number_open_cif,
@@ -13,6 +15,7 @@ from app.api.v1.endpoints.third_parties.gw.customer.schema import (
     CheckMobileNumRequest
 )
 from app.api.v1.others.booking.controller import CtrBooking
+from app.api.v1.others.permission.controller import PermissionController
 from app.settings.event import service_file
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
@@ -24,6 +27,7 @@ from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import (
     Branch, Career, MaritalStatus, ResidentStatus
 )
+from app.utils.constant.approval import CIF_STAGE_APPROVE_KSV
 from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE
 from app.utils.constant.gw import (
@@ -32,9 +36,13 @@ from app.utils.constant.gw import (
     GW_REQUEST_PARAMETER_DEBIT_CARD, GW_REQUEST_PARAMETER_DEFAULT,
     GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP
 )
+from app.utils.constant.idm import (
+    IDM_GROUP_ROLE_CODE_KSV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_KSV
+)
 from app.utils.error_messages import (
-    ERROR_CALL_SERVICE_GW, ERROR_OPEN_CIF, ERROR_PHONE_NUMBER,
-    ERROR_PHONE_NUMBER_NOT_EXITS, ERROR_VALIDATE_ONE_FIELD_REQUIRED
+    ERROR_CALL_SERVICE_GW, ERROR_OPEN_CIF, ERROR_PERMISSION,
+    ERROR_PHONE_NUMBER, ERROR_PHONE_NUMBER_NOT_EXITS,
+    ERROR_VALIDATE_ONE_FIELD_REQUIRED
 )
 from app.utils.functions import (
     date_string_to_other_date_string_format, is_valid_mobile_number,
@@ -759,6 +767,20 @@ class CtrGWCustomer(BaseController):
             cif_id=cif_id,
             loc=f"header -> booking-id, booking_id: {BOOKING_ID}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
         )
+
+        is_role_supervisor = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
+            auth_response=self.current_user,
+            menu_code=IDM_MENU_CODE_TTKH,
+            group_role_code=IDM_GROUP_ROLE_CODE_KSV,
+            permission_code=IDM_PERMISSION_CODE_KSV,
+            stage_code=CIF_STAGE_APPROVE_KSV
+        ))
+        if not is_role_supervisor:
+            self.response_exception(
+                loc=f"user: {self.current_user.user_info.code} - {self.current_user.user_info.username}",
+                msg=ERROR_PERMISSION,
+                error_status_code=status.HTTP_403_FORBIDDEN
+            )
 
         # Init response_info
         response_info = {

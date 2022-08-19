@@ -65,23 +65,21 @@ async def repos_update_other_info(
     )
 
     new_customer_employees = []
-    if update_other_info_req.sale_staff:
-        new_customer_employees.append(
-            {
-                "staff_type_id": STAFF_TYPE_BUSINESS_CODE,
-                "employee_id": update_other_info_req.sale_staff.id,
-                "customer_id": cif_id
-            }
-        )
+    new_customer_employees.append(
+        {
+            "staff_type_id": STAFF_TYPE_BUSINESS_CODE,
+            "employee_id": update_other_info_req.sale_staff.id,
+            "customer_id": cif_id
+        }
+    )
 
-    if update_other_info_req.indirect_sale_staff:
-        new_customer_employees.append(
-            {
-                "staff_type_id": STAFF_TYPE_REFER_INDIRECT_CODE,
-                "employee_id": update_other_info_req.indirect_sale_staff.id,
-                "customer_id": cif_id
-            }
-        )
+    new_customer_employees.append(
+        {
+            "staff_type_id": STAFF_TYPE_REFER_INDIRECT_CODE,
+            "employee_id": update_other_info_req.indirect_sale_staff.id,
+            "customer_id": cif_id
+        }
+    )
 
     # xóa dữ liệu cũ
     session.execute(

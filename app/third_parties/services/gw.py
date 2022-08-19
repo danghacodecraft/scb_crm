@@ -222,7 +222,7 @@ class ServiceGW:
             data=None,
             errors=return_errors
         )
-
+        response = None
         try:
             if not is_form_data:
                 async with self.session.post(url=api_url, json=request_data) as response:
@@ -316,7 +316,7 @@ class ServiceGW:
             )
 
             return_data.update(
-                status=response.status,
+                status=response.status if not response else status.HTTP_400_BAD_REQUEST,
                 errors=return_error.get('detail')
             )
 

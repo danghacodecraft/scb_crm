@@ -1,6 +1,8 @@
 from fastapi import APIRouter
 
+# from app.api.v1.endpoints.approval_v2 import router as routers_approval_v2
 from app.api.v1.endpoints.approval import router as routers_approval
+from app.api.v1.endpoints.blacklist import view as view_blacklist
 from app.api.v1.endpoints.booking import view as view_bookings
 from app.api.v1.endpoints.casa import router as routers_casa
 from app.api.v1.endpoints.cif import router as routers_cif
@@ -43,6 +45,8 @@ router.include_router(router=routers_casa.router_module, prefix="/casa", tags=["
 
 router.include_router(router=routers_approval.router_module, prefix="/approval", tags=["[Approval] Information"])
 
+# router.include_router(router=routers_approval_v2.router_module, prefix="/approval", tags=["[Approval V2] Information"])
+
 router.include_router(router=view_scb_news.router, prefix="/news", tags=["[News]"])
 
 router.include_router(router=router_third_party.router_module, prefix="/third-party")
@@ -52,3 +56,5 @@ router.include_router(router=router_mobile.router, prefix="/mobile", tags=["[Mob
 router.include_router(router=router_deposit.router_module, prefix="/deposit", tags=["[Deposit]"])
 
 router.include_router(router=view_ekyc.router, prefix="/ekyc", tags=["[eKYC]"])
+
+router.include_router(router=view_blacklist.router, prefix="/blacklist", tags=["[Blacklist]"])

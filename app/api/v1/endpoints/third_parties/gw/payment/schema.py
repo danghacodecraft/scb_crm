@@ -1,14 +1,43 @@
+from datetime import date
 from typing import List, Optional
 
 from pydantic import Field
 
-from app.api.base.schema import BaseSchema
+from app.api.base.schema import BaseSchema, ResponseRequestSchema
 ########################################################################################################################
 # Request
 ########################################################################################################################
 from app.api.v1.others.fee.schema import (
     FeeInfoResponse, MultipleFeeInfoRequest
 )
+from app.api.v1.schemas.utils import DropdownRequest
+
+
+# II. Bảng kê
+class StatementInfoRequest(ResponseRequestSchema):
+    denominations: str = Field(..., description="Mệnh giá")
+    amount: int = Field(..., description="Số lượng")
+
+
+# III.1 Thông tin quản lý
+class ManagementInfoRequest(BaseSchema):
+    direct_staff_code: Optional[str] = Field(..., description="Mã nhân viên kinh doanh")
+    indirect_staff_code: Optional[str] = Field(..., description="Mã nhân viên quản lý gián tiếp")
+
+
+# III.2 Thông tin khách hàng giao dịch
+class SenderInfoRequest(BaseSchema):
+    cif_flag: bool = Field(..., description="Cờ có CIF chưa, `true` = Có CIF, `false` = Chưa có CIF")
+    cif_number: Optional[str] = Field(None, description="Số CIF")
+    fullname_vn: Optional[str] = Field(None, description="Người giao dịch")
+    identity: Optional[str] = Field(None, description="Thông tin giấy tờ định danh")
+    issued_date: Optional[date] = Field(None, description="Ngày cấp")
+    place_of_issue: Optional[DropdownRequest] = Field(None, description="Nơi cấp")
+    address_full: Optional[str] = Field(None, description="Địa chỉ")
+    mobile_phone: Optional[str] = Field(None, description="SĐT")
+    telephone: Optional[str] = Field(None, description="SĐT")
+    otherphone: Optional[str] = Field(None, description="SĐT")
+    note: Optional[str] = Field(None, description="Ghi chú")
 
 
 class AccountAmountBlockDetailRequest(BaseSchema):
@@ -32,9 +61,17 @@ class AccountAmountBlockDetailRequest(BaseSchema):
     )
 
 
+class FeePaymentInfoRequest(BaseSchema):
+    fee_info: MultipleFeeInfoRequest = Field(..., description="I. Phương thức tính phí")
+    statement: List[StatementInfoRequest] = Field(..., description="II.Thông tin bảng kê")
+    management_info: ManagementInfoRequest = Field(..., description="III.1. Thông tin quản lý")
+    sender_info: SenderInfoRequest = \
+        Field(..., description="III.2. Thông tin khách hàng giao dịch")
+
+
 class AccountAmountBlockRequest(BaseSchema):
     account_amount_blocks: List[AccountAmountBlockDetailRequest] = Field(..., description="Danh sách tài khoản")
-    fee_info: MultipleFeeInfoRequest = Field(..., description="Phương thức tính phí")
+    fee_payment_info: FeePaymentInfoRequest = Field(..., description="Thông tin thanh toán phí")
 
 
 class AmountUnblockDetail(BaseSchema):
@@ -57,7 +94,11 @@ class AccountUnlockRequest(BaseSchema):
 
 
 class TransactionFeeInfoRequest(BaseSchema):
-    fee_info: MultipleFeeInfoRequest = Field(..., description="Phương thức tính phí")
+    fee_info: MultipleFeeInfoRequest = Field(..., description="I. Phương thức tính phí")
+    statement: List[StatementInfoRequest] = Field(..., description="II.Thông tin bảng kê")
+    management_info: ManagementInfoRequest = Field(..., description="III.1. Thông tin quản lý")
+    sender_info: SenderInfoRequest = \
+        Field(..., description="III.2. Thông tin khách hàng giao dịch")
 
 
 class AccountAmountUnblockRequest(BaseSchema):
@@ -132,6 +173,10 @@ class AccountAmountBlockResponse(PaymentSuccessResponse):
     booking_id: str = Field(..., description="Booking_id")
     account_amount_blocks: List[AccountAmountBlockDetailRequest] = Field(..., description="Danh sách tài khoản")
     fee_info: FeeInfoResponse = Field(..., description="Phương thức tính phí")
+    statement: List[StatementInfoRequest] = Field(..., description="II.Thông tin bảng kê")
+    management_info: ManagementInfoRequest = Field(..., description="III.1. Thông tin quản lý")
+    sender_info: SenderInfoRequest = \
+        Field(..., description="III.2. Thông tin khách hàng giao dịch")
 
 
 class AccountAmountBlockPDResponse(PaymentSuccessResponse):

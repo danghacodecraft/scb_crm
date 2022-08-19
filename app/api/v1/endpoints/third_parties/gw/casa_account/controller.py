@@ -643,7 +643,7 @@ class CtrGWCasaAccount(BaseController):
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
             is_success, gw_response_data = await self.ctr_gw_pay_in_cash_247_by_acc_num(
-                fcc_booking_code="01002123456_123456",  # TODO
+                fcc_booking_code=booking_business_form.booking.fcc_booking_code,
                 maker=maker,
                 form_data=form_data
             )
@@ -658,7 +658,7 @@ class CtrGWCasaAccount(BaseController):
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
             is_success, gw_response_data = await self.ctr_gw_pay_in_cash_247_by_card_num(
-                fcc_booking_code="01002123456_123456",  # TODO
+                fcc_booking_code=booking_business_form.booking.fcc_booking_code,
                 maker=maker,
                 form_data=form_data
             )
@@ -674,10 +674,15 @@ class CtrGWCasaAccount(BaseController):
         if not response_data:
             return self.response_exception(msg="GW return None", loc=f'response_data: {response_data}')
 
+        form_data['transfer'].update({
+            "entry_number": xref
+        })
+
         self.call_repos(await repos_save_gw_output_data(
             booking_id=booking_id,
             business_type_id=BUSINESS_TYPE_CASA_TOP_UP,
             gw_output_data=orjson_dumps(response_data),
+            form_data=orjson_dumps(form_data),
             is_completed=is_completed,
             session=self.oracle_session
         ))
@@ -767,7 +772,7 @@ class CtrGWCasaAccount(BaseController):
             "account_info": {
                 "account_num": request_data_gw['transaction_info']['source_accounts']['account_num'],
                 "account_currency": 'VND',
-                "account_withdrawals_amount": request_data_gw['transaction_info']['receiver_info']['amount']
+                "account_withdrawals_amount": int(request_data_gw['transaction_info']['fee_info']['actual_total'])
             },
             "staff_info_checker": {
                 "staff_name": current_user_info.username
@@ -927,7 +932,6 @@ class CtrGWCasaAccount(BaseController):
         current_user = self.current_user
         sender = form_data['sender']
         receiver = form_data['receiver']
-        fee_info = form_data['fee_info']
         identity_info = sender['identity_info']
         current_user_info = current_user.user_info
 
@@ -942,7 +946,7 @@ class CtrGWCasaAccount(BaseController):
             "account_info": {
                 "account_num": receiver['account_number'],
                 "account_currency": "VND",  # TODO: hiện tại chuyển tiền chỉ dùng tiền tệ VN
-                "account_opening_amount": fee_info['actual_total']
+                "account_opening_amount": form_data['transfer']['amount']
             },
             "p_blk_denomination": "",
             "p_blk_charge": [
@@ -1051,7 +1055,7 @@ class CtrGWCasaAccount(BaseController):
             "p_details": {
                 "TT_DETAILS": {
                     "TT_CURRENCY": "VND",
-                    "TT_AMOUNT": form_data['fee_info']['actual_total'],
+                    "TT_AMOUNT": transfer['amount'],
                     "TRANSACTION_CURRENCY": "VND"
                 },
                 "BENEFICIARY_DETAILS": {
@@ -1059,12 +1063,7 @@ class CtrGWCasaAccount(BaseController):
                     "BENEFICIARY_PHONE_NO": receiver['mobile_number'] if 'mobile_number' in receiver else GW_DEFAULT_VALUE,
                     "BENEFICIARY_ID_NO": receiver['identity_number']
                     if 'identity_number' in receiver.keys() else GW_DEFAULT_VALUE,
-                    # "ID_ISSUE_DATE": date_string_to_other_date_string_format(
-                    #     date_input=receiver['issued_date'],
-                    #     from_format=GW_DATE_FORMAT,
-                    #     to_format=GW_CORE_DATE_FORMAT
-                    # ),
-                    "ID_ISSUE_DATE": receiver['issued_date'] if 'identity_number' in receiver else GW_DEFAULT_VALUE,
+                    "ID_ISSUE_DATE": receiver['issued_date'],
                     "ID_ISSUER": receiver['place_of_issue']['name'] if 'identity_number' in receiver else GW_DEFAULT_VALUE,
                     "ADDRESS": receiver['address_full'] if 'identity_number' in receiver else GW_DEFAULT_VALUE
                 },
@@ -1072,12 +1071,8 @@ class CtrGWCasaAccount(BaseController):
                     "REMITTER_NAME": sender['fullname_vn'],
                     "REMITTER_PHONE_NO": sender['mobile_phone'],
                     "REMITTER_ID_NO": sender_identity_info['number'],
-                    "ID_ISSUE_DATE": date_string_to_other_date_string_format(
-                        date_input=sender_identity_info['issued_date'],
-                        from_format=GW_CORE_DATE_FORMAT,
-                        to_format=GW_DATE_FORMAT
-                    ),
-                    "ID_ISSUER": sender_identity_info['place_of_issue'],
+                    "ID_ISSUE_DATE": sender_identity_info['issued_date'],
+                    "ID_ISSUER": sender_identity_info['place_of_issue']['name'],
                     "ADDRESS": sender['address_full']
                 },
                 "ADDITIONAL_DETAILS": {
@@ -1202,7 +1197,7 @@ class CtrGWCasaAccount(BaseController):
                     },
                     "TRANSACTION_LEG": {
                         "ACCOUNT": "101101001",
-                        "AMOUNT": fee_info['actual_total']
+                        "AMOUNT": transfer['amount']
                     },
                     "RATE": {
                         "EXCHANGE_RATE": 0,
@@ -1273,7 +1268,7 @@ class CtrGWCasaAccount(BaseController):
                     },
                     "TRANSACTION_LEG": {
                         "ACCOUNT": "101101001",
-                        "AMOUNT": fee_info['actual_total']
+                        "AMOUNT": transfer['amount']
                     },
                     "RATE": {
                         "EXCHANGE_RATE": 0,
@@ -1356,8 +1351,8 @@ class CtrGWCasaAccount(BaseController):
             },
             "trans_date": datetime_to_string(now()),
             "time_stamp": datetime_to_string(now()),
-            "trans_id": fcc_booking_code,  # TODO hard code ffc_booking_code
-            "amount": form_data['fee_info']['actual_total'],
+            "trans_id": fcc_booking_code,
+            "amount": transfer['amount'],
             "description": transfer['content'],
             "account_to_info": {
                 "account_num": receiver['account_number']
@@ -1411,8 +1406,8 @@ class CtrGWCasaAccount(BaseController):
             },
             "trans_date": datetime_to_string(now()),
             "time_stamp": datetime_to_string(now()),
-            "trans_id": fcc_booking_code,  # TODO hard code ffc_booking_code
-            "amount": form_data['fee_info']['actual_total'],
+            "trans_id": fcc_booking_code,
+            "amount": transfer['amount'],
             "description": transfer['content'],
             "card_to_info": {
                 "card_num": receiver['card_number']
@@ -1465,7 +1460,7 @@ class CtrGWCasaAccount(BaseController):
                     "p_blk_detail": {
                         "FROM_ACCOUNT_DETAILS": {
                             "FROM_ACCOUNT_NUMBER": sender['account_number'],
-                            "FROM_ACCOUNT_AMOUNT": fee_info['actual_total']
+                            "FROM_ACCOUNT_AMOUNT": transfer['amount']
                         },
                         "TO_ACCOUNT_DETAILS": {
                             "TO_ACCOUNT_NUMBER": receiver['account_number']
@@ -1519,7 +1514,7 @@ class CtrGWCasaAccount(BaseController):
                     "p_instrument_number": p_instrument_number,
                     "p_instrument_status": "LIQD",
                     "account_info": {
-                        "account_num": sender['account_number'],
+                        "account_num": "123456787912",  # TODO
                         "account_currency": "VND"
                     },
                     "p_charges": [
@@ -1580,7 +1575,7 @@ class CtrGWCasaAccount(BaseController):
                         },
                         "TRANSACTION_LEG": {
                             "ACCOUNT": sender['account_number'],
-                            "AMOUNT": fee_info['actual_total']
+                            "AMOUNT": transfer['amount']
                         },
                         "RATE": {
                             "EXCHANGE_RATE": 0,
@@ -1662,7 +1657,7 @@ class CtrGWCasaAccount(BaseController):
                         },
                         "TRANSACTION_LEG": {
                             "ACCOUNT": sender['account_number'],
-                            "AMOUNT": fee_info['actual_total']
+                            "AMOUNT": transfer['amount']
                         },
                         "RATE": {
                             "EXCHANGE_RATE": 0,
@@ -1720,7 +1715,7 @@ class CtrGWCasaAccount(BaseController):
                     "trans_date": datetime_to_string(now()),
                     "time_stamp": datetime_to_string(now()),
                     "trans_id": "20220629160002159368",
-                    "amount": fee_info['actual_total'],
+                    "amount": transfer['amount'],
                     "description": transfer["content"],
                     "account_to_info": {
                         "account_num": receiver["account_number"]
@@ -1754,7 +1749,7 @@ class CtrGWCasaAccount(BaseController):
                     "trans_date": datetime_to_string(now()),
                     "time_stamp": datetime_to_string(now()),
                     "trans_id": "20220629160002159368",
-                    "amount": fee_info['actual_total'],
+                    "amount": transfer['amount'],
                     "description": transfer["content"],
                     "account_from_info": {
                         "account_num": sender["account_number"]

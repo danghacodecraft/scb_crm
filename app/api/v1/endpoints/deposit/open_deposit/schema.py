@@ -5,9 +5,7 @@ from pydantic import Field
 
 from app.api.base.schema import BaseSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
-from app.api.v1.others.fee.schema import (
-    FeeInfoResponse, MultipleFeeInfoRequest
-)
+from app.api.v1.others.fee.schema import FeeInfoResponse
 
 
 class TdAccountRequest(BaseSchema):
@@ -70,15 +68,56 @@ class PayInAccount(BaseSchema):
 
 class AccountFormRequest(BaseSchema):
     pay_in_form: AccountForm = Field(...)
-    currency_exchange: CurrencyExchange = Field(..., description="Quy đổi ngoại tệ")
-    currency_transfer: CurrencyTransfer = Field(..., description="Ngoại tệ chuyển ra nước ngoài")
-    pay_in_account: PayInAccount = Field(..., description="Nộp tiền vào tài khoản")
+    # currency_exchange: CurrencyExchange = Field(..., description="Quy đổi ngoại tệ")
+    # currency_transfer: CurrencyTransfer = Field(..., description="Ngoại tệ chuyển ra nước ngoài")
+    # pay_in_account: PayInAccount = Field(..., description="Nộp tiền vào tài khoản")
 
 
 class DepositPayInRequest(BaseSchema):
     # TODO
     account_form: AccountFormRequest = Field(...)
-    fee_info: MultipleFeeInfoRequest = Field(..., description="Thông tin phí")
+    # fee_info: MultipleFeeInfoRequest = Field(..., description="Thông tin phí")
+
+# --------------------------------------------- REDEEM-ACCOUNT --------------------------------------------------------#
+
+
+class AccountInfo(BaseSchema):
+    account_number: str = Field(..., description="Số tài khoản")
+
+
+class RedemptionDetails(BaseSchema):
+    redemption_mode: str = Field(...)
+    redemption_amount: int = Field(...)
+    waive_penalty: str = Field(...)
+    waive_interest: str = Field(...)
+
+
+class PayoutDetails(BaseSchema):
+    payout_component: str = Field(...)
+    payout_mode: str = Field(...)
+    payout_amount: int = Field(...)
+    offset_account: str = Field(...)
+
+
+class PayoutDetailRequest(BaseSchema):
+    redemption_details: RedemptionDetails = Field(...)
+    payout_details: Optional[List[PayoutDetails]] = Field(None)
+
+
+class RedeemAccountRequest(BaseSchema):
+    account_info: AccountInfo = Field(..., description="Thông tin tài khoản")
+    p_payout_detail: PayoutDetailRequest = Field(
+        ...,
+        description="""REDEMPTION_MODE: Loại tất toán (N: Tất toán toàn phần, Y: Tất toán một phần),
+            \nREDEMPTION_AMOUNT: Số tiền tất toán (0 đối với Mode N),
+            \nWAIVE_PENALTY: N (Mặc định là N),
+            \nWAIVE_INTEREST: N (Mặc định là N)
+            \nPAYOUT_COMPONENT: Loại tiền trả về (P là trả gốc, I là trả lãi, null đối với mode N, bắt buộc là 2 dòng I và P đối với mode Y),
+            \nPAYOUT_MODE: (Loại trả tiền, S là trả về tài khoản, C là trả về tiền mặt, dốid với mode Y chỉ có thể dùng S),
+            \nPAYOUT_AMOUNT:Số tiền gốc trả về đối với payout là P, Số tiền lãi trả về đối với payout là I),
+            \nOFFSET_ACCOUNT: Số tài khoản trả tiền.
+        """
+    )
 
 
 class DepositPayInResponse(BaseSchema):
