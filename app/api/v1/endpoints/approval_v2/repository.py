@@ -4,7 +4,9 @@ from sqlalchemy import and_, desc, select, update
 from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn, auto_commit
-from app.third_parties.oracle.models.booking.model import BookingAuthentication
+from app.third_parties.oracle.models.booking.model import (
+    BookingAuthentication, BookingCompareImage
+)
 from app.third_parties.oracle.models.cif.basic_information.identity.model import (
     CustomerCompareImage, CustomerCompareImageTransaction, CustomerIdentity,
     CustomerIdentityImage, CustomerIdentityImageTransaction
@@ -473,3 +475,17 @@ async def repos_get_booking_authentication(
         .filter(BookingAuthentication.booking_id == booking_id)
     ).scalar()
     return ReposReturn(data=booking_authentication)
+
+
+async def repos_get_booking_compare_images(
+        booking_id: str,
+        session: Session
+):
+    booking_compare_image = session.execute(
+        select(
+            BookingCompareImage
+        )
+        .filter(BookingCompareImage.booking_id == booking_id)
+        .order_by(BookingCompareImage.created_at.desc())
+    ).scalars().all()
+    return ReposReturn(data=booking_compare_image)

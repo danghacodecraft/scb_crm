@@ -6,8 +6,8 @@ from starlette import status
 from app.api.base.schema import PagingResponse, ResponseData
 from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
-from app.api.v1.endpoints.approval.controller import CtrApproval
-from app.api.v1.endpoints.approval.schema import (
+from app.api.v1.endpoints.approval_v2.controller import CtrApproval
+from app.api.v1.endpoints.approval_v2.schema import (
     ApprovalBusinessJob, ApprovalRequest, CifApprovalProcessResponse,
     CifApprovalResponse, CifApprovalSuccessResponse
 )
