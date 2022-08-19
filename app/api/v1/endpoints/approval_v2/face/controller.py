@@ -50,14 +50,14 @@ class CtrApproveFace(BaseController):
                 booking_id=booking_id, amount=request.amount, compare_face_uuid=compare_face_uuid,
                 compare_face_uuid_ekyc=compare_face_uuid_ekyc, current_user=current_user
             )
+            # Lấy tất cả hình ảnh mới nhất ở bước GTDD
+            face_transactions = self.call_repos(await repos_get_approval_identity_images_by_image_type_id(
+                image_type_id=IMAGE_TYPE_FACE,
+                identity_type="FACE",
+                booking_id=booking_id,
+                session=self.oracle_session
+            ))
             for index, saving_customer_compare_image_transaction in enumerate(saving_customer_compare_image_transactions):
-                # Lấy tất cả hình ảnh mới nhất ở bước GTDD
-                face_transactions = self.call_repos(await repos_get_approval_identity_images_by_image_type_id(
-                    image_type_id=IMAGE_TYPE_FACE,
-                    identity_type="FACE",
-                    booking_id=booking_id,
-                    session=self.oracle_session
-                ))
                 for customer_identity, customer_identity_image, _, _ in face_transactions:
                     saving_booking_compare_images.append(dict(
                         image_type_id=IMAGE_TYPE_FACE,
