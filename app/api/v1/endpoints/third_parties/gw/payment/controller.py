@@ -116,7 +116,7 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
             act_amount_blocks.append(item.dict())
             saving_booking_account.append({
                 "booking_id": BOOKING_ID,
-                "account_num": item.account_number,
+                "casa_account_num": item.account_number,
                 "created_at": now()
             })
 
@@ -307,7 +307,7 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
             cif_number = account_info['customer_info']['cif_info']['cif_num']
             saving_booking_account.append({
                 "booking_id": BOOKING_ID,
-                "account_num": item.account_number,
+                "casa_account_num": item.account_number,
                 "created_at": now()
             })
             account_numbers.append(item.account_number)
