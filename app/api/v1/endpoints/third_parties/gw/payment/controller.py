@@ -35,7 +35,9 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_UNBLOCK, PROFILE_HISTORY_STATUS_INIT
 )
 from app.utils.constant.gw import GW_RESPONSE_STATUS_SUCCESS
-from app.utils.error_messages import ERROR_DENOMINATIONS_NOT_EXIST
+from app.utils.error_messages import (
+    ERROR_ACCOUNT_NUM_EXIST, ERROR_DENOMINATIONS_NOT_EXIST
+)
 from app.utils.functions import now, orjson_dumps, orjson_loads
 
 
@@ -99,73 +101,31 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
         account_amount_blocks = request.account_amount_blocks
         act_amount_blocks = []
         account_numbers = []
-
+        saving_booking_customer = []  # noqa
+        saving_booking_account = []
+        cif_number = None
         for item in account_amount_blocks:
             account_numbers.append(item.account_number)
-            act_amount_blocks.append({
-                "account_info": {
-                    "account_num": item.account_number
-                },
-                "p_blk_detail": {
-                    "AMOUNT": item.amount,
-                    "AMOUNT_BLOCK_TYPE": item.amount_block_type,
-                    "HOLD_CODE": item.hold_code,
-                    "EFFECTIVE_DATE": item.effective_date,
-                    "EXPIRY_DATE": item.expiry_date if item.expiry_date else "",
-                    "REMARKS": item.remarks,
-                    "VERIFY_AVAILABLE_BALANCE": item.verify_available_balance,
-                    "CHARGE_DETAIL": {
-                        "TYPE_CHARGE": "",
-                        "ACCOUNT_CHARGE": ""
-                    }
-                },
-                # TODO chưa được mô tả
-                "p_blk_charge": "",
-                # TODO chưa được mô tả
-                "p_blk_udf": [
-                    {
-                        "UDF_NAME": "",
-                        "UDF_VALUE": "",
-                        "AMOUNT_BLOCK": {
-                            "UDF_NAME": "",
-                            "UDF_VALUE": ""
-                        }
-                    }
-                ],
-                "staff_info_checker": {
-                    # TODO hard core
-                    "staff_name": "HOANT2"
-                },
-                "staff_info_maker": {
-                    # TODO hard core
-                    "staff_name": "KHANHLQ"
-                }
+            account_info = await CtrGWCasaAccount(current_user=self.current_user).ctr_gw_get_casa_account_info(
+                account_number=item.account_number,
+                return_raw_data_flag=True
+            )
+            if not account_info:
+                return self.response_exception(
+                    msg=ERROR_ACCOUNT_NUM_EXIST,
+                    loc=str(denominations_errors)
+                )
+            cif_number = account_info['customer_info']['cif_info']['cif_num']
+            act_amount_blocks.append(item.dict())
+            saving_booking_account.append({
+                "booking_id": BOOKING_ID,
+                "account_num": item.account_number,
+                "created_at": now()
             })
 
         if len(set(account_numbers)) != len(account_amount_blocks):
             return self.response_exception(msg="account_number duplicate")
 
-        saving_booking_account = []
-        saving_booking_customer = [] # noqa
-
-        for account_number in account_numbers:
-            # TODO check account_number in db crm
-            response_data = self.call_repos(
-                await repos_get_account_id_by_account_number(
-                    account_number=account_number,
-                    session=self.oracle_session
-                ))
-
-            saving_booking_account.append({
-                "booking_id": BOOKING_ID,
-                "account_id": response_data.get('account_id'),
-                "created_at": now()
-            })
-
-            saving_booking_customer.append({
-                "booking_id": BOOKING_ID,
-                "customer_id": response_data.get('customer_id')
-            })
         ################################################################################################################
         # Thông tin Phí
         ################################################################################################################
@@ -202,7 +162,8 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
                 "statement": statement_info,
                 "management_info": management_info,
                 "sender_info": sender_response
-            }
+            },
+            "customer_cif_number": cif_number
         }
 
         history_datas = self.make_history_log_data(
@@ -246,7 +207,7 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
             saving_transaction_job=saving_transaction_job,
             saving_booking_business_form=saving_booking_business_form,
             saving_booking_account=saving_booking_account,
-            saving_booking_customer=saving_booking_customer,
+            # saving_booking_customer=saving_booking_customer,
             session=self.oracle_session
         ))
         response_data = {
