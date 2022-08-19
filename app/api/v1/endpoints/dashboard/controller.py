@@ -147,12 +147,18 @@ class CtrDashboard(BaseController):
                 session=self.oracle_session
             )
         )
-        for booking, _, casa_account, customer in amount_blocks:
-            mapping_datas[booking.id].update(
-                full_name_vn=customer.full_name_vn,
-                cif_id=customer.id,
-                customer_cif_number=customer.cif_number
-            )
+        for booking, booking_business_form in amount_blocks:
+            form_data = orjson_loads(booking_business_form.form_data)
+
+            if 'fee_payment_info' in form_data:  # TODO hard code do business_form cũ
+                mapping_datas[booking.id].update(
+                    full_name_vn=form_data['fee_payment_info']['sender_info']['cif_number']
+                    if 'sender_info' in form_data['fee_payment_info']
+                    and 'cif_number' in form_data['fee_payment_info']['sender_info'] else None,
+                    customer_cif_number=form_data['fee_payment_info']['sender_info']['fullname_vn']
+                    if 'sender_info' in form_data['fee_payment_info']
+                    and 'fullname_vn' in form_data['fee_payment_info']['sender_info'] else None
+                )
 
         # Lấy thông tin các giao dịch Mở TKTT\
         open_casa_infos = self.call_repos(
