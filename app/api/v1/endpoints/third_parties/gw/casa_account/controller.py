@@ -30,7 +30,9 @@ from app.api.v1.endpoints.third_parties.gw.customer.controller import (
     CtrGWCustomer
 )
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
-    repos_get_progress, repos_push_casa_to_gw
+    repos_account_number_list_by_casa_account_ids, repos_get_progress,
+    repos_push_casa_to_gw_open_casa,
+    repos_push_internet_banking_to_gw_open_casa
 )
 from app.api.v1.endpoints.third_parties.gw.payment.repository import (
     repos_gw_interbank_transfer, repos_gw_pay_in_cash,
@@ -72,7 +74,8 @@ from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_KSV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_KSV
 )
 from app.utils.error_messages import (
-    ERROR_CALL_SERVICE_GW, ERROR_NO_INSTRUMENT_NUMBER, ERROR_PERMISSION
+    ERROR_CALL_SERVICE_GW, ERROR_NO_INSTRUMENT_NUMBER, ERROR_OPEN_CIF,
+    ERROR_PERMISSION
 )
 from app.utils.functions import (
     date_string_to_other_date_string_format, date_to_string,
@@ -436,8 +439,8 @@ class CtrGWCasaAccount(BaseController):
         )
 
         maker_staff_name = booking.created_by
+        account_number_list = []
 
-        # Kiểm tra Booking Account, Account lấy ra là những account chưa được phê duyệt
         casa_accounts = await CtrBooking().ctr_get_casa_account_from_booking(
             booking_id=booking_id, session=self.oracle_session
         )
@@ -469,45 +472,80 @@ class CtrGWCasaAccount(BaseController):
         print(is_complete_casa, is_complete_eb, is_complete_debit)
         # Push casa (mot cif - nhieu casa) (tra loi ngay)
         if not is_complete_casa:
-            casa_account_number_result = await repos_push_casa_to_gw(
+            account_number_list_result = await repos_push_casa_to_gw_open_casa(
                 booking_id=booking_id,
                 session=self.oracle_session,
                 current_user=self.current_user,
-                cif_id="",
                 cif_number=cif_number,
                 maker_staff_name=maker_staff_name,
                 casa_account_ids=casa_account_ids
             )
 
-            if casa_account_number_result.is_error:
-                if casa_account_number_result.msg == ERROR_CALL_SERVICE_GW:
+            if account_number_list_result.is_error:
+                if account_number_list_result.msg == ERROR_CALL_SERVICE_GW:
                     self.response_exception(
-                        loc=casa_account_number_result.loc,
-                        msg=casa_account_number_result.msg,
-                        detail=casa_account_number_result.detail,
+                        loc=account_number_list_result.loc,
+                        msg=account_number_list_result.msg,
+                        detail=account_number_list_result.detail,
                         data=response_info,
                     )
                 else:
-                    self.call_repos(result_call_repos=casa_account_number_result)
+                    self.call_repos(result_call_repos=account_number_list_result)
 
-            casa_account_number = casa_account_number_result.data  # noqa
-            is_complete_casa = True  # noqa
-            response_info["account_num"]["status"] = True
-            response_info["account_num"]["data"] = casa_account_number
+            account_number_list = account_number_list_result.data
+            is_complete_casa = True
 
         # RULE: Hoàn tất mở CASA mới được mở EB, Debit
         # Push EB (mot cif - mot eb)
-            # chay vao core kiem tra cif co EB chua, neu chua moi chay vao DB
+        error_list = []
+        if is_complete_casa:
 
-        # Push SMS (nhieu tk - nhieu sms)
-            # lay data tu DB,
-            # push len GW
+            response_customers = self.call_repos(await repos_get_customer_by_cif_number(
+                cif_number=cif_number, session=self.oracle_session))
+
+            if not account_number_list:
+                account_number_list = self.call_repos(await repos_account_number_list_by_casa_account_ids(
+                    casa_account_ids=casa_account_ids, session=self.oracle_session))
+
+            # Push EB
+            if not is_complete_eb:
+                result = await repos_push_internet_banking_to_gw_open_casa(
+                    booking_id=booking_id,
+                    session=self.oracle_session,
+                    response_customers=response_customers,
+                    current_user=self.current_user,
+                    cif_number=cif_number,
+                    maker_staff_name=maker_staff_name,
+                    account_number_list=account_number_list
+                )
+                if result.is_error:
+                    error_list.append({
+                        "e_banking": {
+                            "loc": result.loc,
+                            "msg": result.msg,
+                            "detail": result.detail
+                        }
+                    })
+                else:
+                    is_complete_eb = True
 
         # Push Debit Card (nhieu tk - nhieu the)
             # lay data tu DB
             # push len GW
 
-        # Kiem tra error list de tra loi
+        response_info["account_num"]["status"] = True
+        if is_complete_eb:
+            response_info["ebank_num"]["status"] = True
+        if is_complete_debit:
+            response_info["debit_num"]["status"] = True
+
+        if error_list:
+            return self.response_exception(
+                data=response_info,
+                loc="ctr_gw_open_cif -> Push EB, Debit",
+                msg=ERROR_OPEN_CIF,
+                detail=orjson_dumps(error_list)
+            )
 
         return self.response(data=response_info)
 

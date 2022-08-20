@@ -3,6 +3,9 @@ from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn
 from app.settings.event import service_gw
+from app.third_parties.oracle.models.cif.basic_information.model import (
+    Customer
+)
 from app.third_parties.oracle.models.cif.e_banking.model import (
     EBankingInfo, EBankingInfoAuthentication,
     EBankingReceiverNotificationRelationship, EBankingRegisterBalance
@@ -78,6 +81,45 @@ async def repos_get_e_banking_from_db_by_cif_id(cif_id: str, session: Session):
         )
         .filter(
             EBankingInfo.customer_id == cif_id,
+            EBankingInfo.approval_status == 0
+        )
+    ).first()
+
+    # Không tìm thấy thông tin Ebanking có thể do khách hàng không đăng ký
+    if not e_banking_row:
+        return ReposReturn(data=None)
+
+    e_banking = {
+        "id": e_banking_row.id,
+        "customer_id": e_banking_row.customer_id,
+        "account_name": e_banking_row.account_name,
+        "method_active_password_id": e_banking_row.method_active_password_id
+    }
+
+    e_banking_authen = session.execute(
+        select(
+            EBankingInfoAuthentication.method_authentication_id,
+        )
+        .filter(EBankingInfoAuthentication.e_banking_info_id == e_banking["id"])
+    ).scalars().all()
+
+    e_banking["authentication_info_list"] = []
+    if e_banking_authen:
+        e_banking["authentication_info_list"] = e_banking_authen
+
+    return ReposReturn(data=e_banking)
+
+
+async def repos_get_e_banking_from_db_by_cif_number(cif_number: str, session: Session):
+    e_banking_row = session.execute(
+        select(
+            EBankingInfo.id,
+            EBankingInfo.customer_id,
+            EBankingInfo.account_name,
+            EBankingInfo.method_active_password_id
+        ).join(
+            Customer, Customer.cif_number == cif_number
+        ).filter(
             EBankingInfo.approval_status == 0
         )
     ).first()

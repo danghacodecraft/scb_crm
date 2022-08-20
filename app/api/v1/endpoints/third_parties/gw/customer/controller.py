@@ -954,9 +954,7 @@ class CtrGWCustomer(BaseController):
                 detail=orjson_dumps(error_list)
             )
 
-        return self.response(
-            data=response_info
-        )
+        return self.response(data=response_info)
 
     async def ctr_check_mobile_num(self, request: CheckMobileNumRequest):
 
