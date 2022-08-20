@@ -22,6 +22,12 @@ router = APIRouter()
 async def view_get_otp(
         current_user=Depends(get_current_user_from_header()),
 ):
+    """
+    Click đồng bộ tablet hiện màn hình mã OTP
+
+    :param current_user: truyền bearer token đã trả về khi đăng nhập
+    :return: mã OTP, thời gian hết hạn và web stomp config để FE Web consume message
+    """
     otp_and_mqtt_info = await CtrTabletWeb(
         current_user=current_user
     ).ctr_get_otp_and_mqtt_info()
