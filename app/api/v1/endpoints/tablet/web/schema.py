@@ -37,16 +37,16 @@ class TabletOTPAndMqttInfoResponse(BaseSchema):
 # model dùng khi validate extra_data API switch to other screen in tablet
 ########################################################################################################################
 class TabletActionProcessDataExtraData(BaseSchema):
-    transaction_name: str
+    transaction_name: str = Field(..., description='Tên giao dịch')
 
 
 class TabletActionSignDocumentExtraData(BaseSchema):
-    name: str
-    file_url: HttpUrl
+    name: str = Field(..., description='Tên biểu mẫu')
+    file_url: HttpUrl = Field(..., description='Đường dẫn tới file pdf của biểu mẫu sau khi đổ dữ liệu')
 
 
 class TabletActionSignExtraData(BaseSchema):
-    documents: List[TabletActionSignDocumentExtraData]
+    documents: List[TabletActionSignDocumentExtraData] = Field(..., description='Danh sách các biểu mẫu cần ký')
 ########################################################################################################################
 
 
