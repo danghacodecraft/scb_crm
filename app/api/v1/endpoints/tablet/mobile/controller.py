@@ -5,7 +5,9 @@ from app.api.v1.endpoints.tablet.mobile.schema import (
 )
 from app.settings.event import service_idm, service_rabbitmq, service_redis
 from app.utils.constant.tablet import (
-    DEVICE_TYPE_MOBILE, DEVICE_TYPE_WEB, WEB_ACTION_PAIRED
+    DEVICE_TYPE_MOBILE, DEVICE_TYPE_WEB, LIST_BANNER_LANGUAGE_CODE_ENGLISH,
+    LIST_BANNER_LANGUAGE_CODE_VIETNAMESE, LIST_BANNER_LANGUAGE_NAME_ENGLISH,
+    LIST_BANNER_LANGUAGE_NAME_VIETNAMESE, WEB_ACTION_PAIRED
 )
 from app.utils.tablet_functions import (
     get_client_broker_config_info, get_topic_name
@@ -50,6 +52,16 @@ class CtrTabletMobile(BaseController):
             'token': topic_name,
             # TODO: check it
             'branch_name': teller_user_info['hrm_branch_name'],
+            'languages': [
+                {
+                    'language_code': LIST_BANNER_LANGUAGE_CODE_VIETNAMESE,
+                    'language_name': LIST_BANNER_LANGUAGE_NAME_VIETNAMESE
+                },
+                {
+                    'language_code': LIST_BANNER_LANGUAGE_CODE_ENGLISH,
+                    'language_name': LIST_BANNER_LANGUAGE_NAME_ENGLISH
+                },
+            ],
             'teller_info': {
                 # TODO: host name
                 'avatar_url': service_idm.replace_with_cdn(teller_user_info['avatar_url']),

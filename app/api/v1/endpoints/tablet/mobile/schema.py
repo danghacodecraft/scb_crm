@@ -19,6 +19,11 @@ class SyncWithWebByOTPRequest(BaseSchema):
     device_info: SyncWithWebByOTPDeviceInfoRequest
 
 
+class LanguageInfoResponse(BaseSchema):
+    language_code: str = Field(..., description='Mã ngôn ngữ (truyền lên khi lấy danh sách banner quảng cáo)')
+    language_name: str = Field(..., description='Tên ngôn ngữ')
+
+
 class TellerInfoResponse(BaseSchema):
     avatar_url: str = Field(..., description='Đường dẫn avatar của giao dịch viên')
     full_name: str = Field(..., description='Tên của giao dịch viên')
@@ -29,7 +34,8 @@ class SyncWithWebByOTPResponse(BaseSchema):
     mqtt_info: TabletMQTTResponse
     token: str = Field(..., description='Bearer token dùng để gọi các API sau khi đồng bộ thành công với web')
     branch_name: str = Field(..., description='Tên chi nhánh trên top bar')
-    teller_info: TellerInfoResponse
+    languages: List[LanguageInfoResponse] = Field(..., description='Danh sách ngôn ngữ trên top bar')
+    teller_info: TellerInfoResponse = Field(..., description='Thông tin giao dịch viên (topbar và màn hình nhập số giấy tờ định danh)')
 
 
 class ListBannerLanguageCodeQueryParam(str, Enum):
