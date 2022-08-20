@@ -5,11 +5,10 @@ from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_check_mobile_num, repos_get_casa_account_number_open_cif,
     repos_get_cif_number_open_cif, repos_get_customer_avatar_url_from_cif,
     repos_get_customer_ids_from_cif_numbers, repos_get_customer_open_cif,
-    repos_get_progress_open_cif, repos_gw_get_authorized,
-    repos_gw_get_co_owner, repos_gw_get_customer_info_detail,
-    repos_gw_get_customer_info_list, repos_push_casa_to_gw,
-    repos_push_cif_to_gw, repos_push_debit_to_gw,
-    repos_push_internet_banking_to_gw, repos_push_sms_casa_to_gw
+    repos_get_progress, repos_gw_get_authorized, repos_gw_get_co_owner,
+    repos_gw_get_customer_info_detail, repos_gw_get_customer_info_list,
+    repos_push_casa_to_gw, repos_push_cif_to_gw, repos_push_debit_to_gw,
+    repos_push_internet_banking_to_gw
 )
 from app.api.v1.endpoints.third_parties.gw.customer.schema import (
     CheckMobileNumRequest
@@ -815,8 +814,8 @@ class CtrGWCustomer(BaseController):
         response_customers = self.call_repos(await repos_get_customer_open_cif(
             cif_id=cif_id, session=self.oracle_session))
 
-        is_complete_cif, is_complete_casa, is_complete_eb, is_complete_sms, is_complete_debit = self.call_repos(
-            await repos_get_progress_open_cif(booking_id=BOOKING_ID, session=self.oracle_session))
+        is_complete_cif, is_complete_casa, is_complete_eb, is_complete_debit = self.call_repos(
+            await repos_get_progress(booking_id=BOOKING_ID, session=self.oracle_session))
 
         # Push CIF (trả lỗi ngay)
         if not is_complete_cif:
@@ -892,7 +891,9 @@ class CtrGWCustomer(BaseController):
                     response_customers=response_customers,
                     current_user=self.current_user,
                     cif_id=cif_id,
-                    cif_number=cif_number
+                    cif_number=cif_number,
+                    casa_account_number=casa_account_number,
+                    maker_staff_name=maker_staff_name
                 )
                 if result.is_error:
                     error_list.append({
@@ -904,28 +905,6 @@ class CtrGWCustomer(BaseController):
                     })
                 else:
                     is_complete_eb = True
-
-            # Push Registry SMS CASA
-            if not is_complete_sms:
-                result = await repos_push_sms_casa_to_gw(
-                    booking_id=BOOKING_ID,
-                    session=self.oracle_session,
-                    current_user=self.current_user,
-                    cif_id=cif_id,
-                    cif_number=cif_number,
-                    casa_account_number=casa_account_number,
-                    maker_staff_name=maker_staff_name
-                )
-                if result.is_error:
-                    error_list.append({
-                        "sms_casa": {
-                            "loc": result.loc,
-                            "msg": result.msg,
-                            "detail": result.detail
-                        }
-                    })
-                else:
-                    is_complete_sms = True
 
             # Push Debit
             if not is_complete_debit:
@@ -962,7 +941,7 @@ class CtrGWCustomer(BaseController):
         response_info["cif_num"]["data"] = cif_number
         response_info["account_num"]["status"] = True
         response_info["account_num"]["data"] = casa_account_number
-        if is_complete_eb and is_complete_sms:
+        if is_complete_eb:
             response_info["ebank_num"]["status"] = True
         if is_complete_debit:
             response_info["debit_num"]["status"] = True
@@ -970,7 +949,7 @@ class CtrGWCustomer(BaseController):
         if error_list:
             return self.response_exception(
                 data=response_info,
-                loc="ctr_gw_open_cif -> Push EB, SMS, Debit",
+                loc="ctr_gw_open_cif -> Push EB, Debit",
                 msg=ERROR_OPEN_CIF,
                 detail=orjson_dumps(error_list)
             )

@@ -29,8 +29,7 @@ from app.third_parties.oracle.models.cif.payment_account.model import (
 )
 from app.third_parties.oracle.models.master_data.account import AccountType
 from app.utils.constant.cif import (
-    BUSINESS_FORM_EB, BUSINESS_FORM_SMS_CASA, CIF_ID_TEST,
-    EBANKING_ACCOUNT_TYPE_CHECKING
+    BUSINESS_FORM_EB, CIF_ID_TEST, EBANKING_ACCOUNT_TYPE_CHECKING
 )
 from app.utils.constant.gw import (
     GW_FUNC_RETRIEVE_IB_INFO_BY_CIF_OUT,
@@ -113,8 +112,6 @@ async def repos_check_casa_account_have_casa_account_number(cif_id, casa_id, ses
 async def repos_save_sms_casa(
         cif_id: str,
         data_insert: dict,
-        log_data: json,
-        history_datas: json,
         session: Session
 ):
     # mapping dữ liệu cho các bảng
@@ -223,17 +220,6 @@ async def repos_save_sms_casa(
     session.bulk_save_objects([
         EBankingRegisterBalanceOption(**reg_balance_option_item) for reg_balance_option_item in reg_balance_option_item_list
     ])
-
-    is_success, booking_response = await write_transaction_log_and_update_booking(
-        log_data=log_data,
-        history_datas=history_datas,
-        session=session,
-        customer_id=cif_id,
-        business_form_id=BUSINESS_FORM_SMS_CASA
-    )
-
-    if not is_success:
-        return ReposReturn(is_error=True, msg=booking_response['msg'])
 
     session.commit()
 

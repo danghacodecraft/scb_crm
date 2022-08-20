@@ -22,9 +22,7 @@ from app.third_parties.oracle.models.master_data.customer import (
     CustomerRelationshipType
 )
 from app.utils.constant.cif import (
-    PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING,
-    PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING_SMS_CASA,
-    PROFILE_HISTORY_STATUS_INIT
+    PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING, PROFILE_HISTORY_STATUS_INIT
 )
 from app.utils.error_messages import ERROR_NOT_NULL
 from app.utils.functions import orjson_dumps
@@ -155,26 +153,11 @@ class CtrEBanking(BaseController):
                     "notify_code_list": registry_balance_item.notify_code_list
                 } for registry_balance_item in ebank_sms_casa_info.registry_balance_items]
             }
-            history_datas = self.make_history_log_data(
-                description=PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING_SMS_CASA,
-                history_status=PROFILE_HISTORY_STATUS_INIT,
-                current_user=current_user_info
-            )
-            # Validate history data
-            is_success, history_response = validate_history_data(history_datas)
-            if not is_success:
-                return self.response_exception(
-                    msg=history_response['msg'],
-                    loc=history_response['loc'],
-                    detail=history_response['detail']
-                )
 
             self.call_repos(
                 await repos_save_sms_casa(
                     cif_id=cif_id,
                     data_insert=data_insert,
-                    log_data=ebank_sms_casa_info.json(),
-                    history_datas=orjson_dumps(history_datas),
                     session=self.oracle_session,
                 ))
         # TH không đăng ký sms, xóa các thông tin cũ

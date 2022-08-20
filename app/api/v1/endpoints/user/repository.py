@@ -107,15 +107,15 @@ async def repos_check_token(token: str) -> ReposReturn:
         )
 
     username = auth_parts['username']
-
-    is_success, check_token = await service_idm.check_token(username=username, bearer_token=auth_parts['token'])
-
-    if not is_success:
-        return ReposReturn(
-            is_error=True,
-            msg=ERROR_CALL_SERVICE_IDM,
-            detail="Token is invalid"
-        )
+    #
+    # is_success, check_token = await service_idm.check_token(username=username, bearer_token=auth_parts['token'])
+    #
+    # if not is_success:
+    #     return ReposReturn(
+    #         is_error=True,
+    #         msg=ERROR_CALL_SERVICE_IDM,
+    #         detail="Token is invalid"
+    #     )
 
     menu_list = (await service_redis.get(username))['menu_list']
 
