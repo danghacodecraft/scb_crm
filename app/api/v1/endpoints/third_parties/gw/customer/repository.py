@@ -980,14 +980,20 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
                                  casa_account_number, response_customers, maker_staff_name):
     card_result = await repos_debit_card(
         cif_id=cif_id, session=session)
+
     if card_result.is_error:
-        return ReposReturn(
-            is_error=True,
-            msg=card_result.msg,
-            loc=card_result.loc,
-            detail=card_result.detail,
-            error_status_code=card_result.error_status_code
-        )
+        # Không có dữ liệu có thể do người dùng không đăng ký
+        if card_result.msg == ERROR_NO_DATA:
+            return ReposReturn(data=None)
+
+        else:
+            return ReposReturn(
+                is_error=True,
+                msg=card_result.msg,
+                loc=card_result.loc,
+                detail=card_result.detail,
+                error_status_code=card_result.error_status_code
+            )
 
     card_data = card_result.data
     debit_card_id = card_data['debit_card_id']
