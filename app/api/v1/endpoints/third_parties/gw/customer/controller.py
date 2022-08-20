@@ -865,7 +865,7 @@ class CtrGWCustomer(BaseController):
                         data=response_info,
                     )
                 else:
-                    self.call_repos(casa_account_number_result)
+                    self.call_repos(result_call_repos=casa_account_number_result)
 
             casa_account_number = casa_account_number_result.data
             is_complete_casa = True

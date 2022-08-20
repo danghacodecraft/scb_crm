@@ -700,6 +700,7 @@ async def repos_push_casa_to_gw(booking_id: str, session: Session, current_user:
                                 cif_id: str, cif_number: str, maker_staff_name, casa_account_ids: List[str] = None):
 
     is_success = False
+    account_number = None
 
     # MỞ CASA: không có cif_id
     if not cif_id:
@@ -728,7 +729,16 @@ async def repos_push_casa_to_gw(booking_id: str, session: Session, current_user:
                 maker_staff_name=maker_staff_name
             )
 
+            # Chỉ Lưu transaction job bị fail
             if not is_success:
+                await repos_save_transaction_jobs(
+                    session=session,
+                    booking_id=booking_id,
+                    is_success=is_success,
+                    response_data=gw_open_casa_account_info,
+                    business_job_ids=[BUSINESS_JOB_CODE_CASA_INFO]
+                )
+
                 return ReposReturn(
                     is_error=True,
                     loc="open_casa",
@@ -772,6 +782,15 @@ async def repos_push_casa_to_gw(booking_id: str, session: Session, current_user:
         )
 
         if not is_success:
+            await repos_save_transaction_jobs(
+                session=session,
+                booking_id=booking_id,
+                is_success=is_success,
+                response_data=gw_open_casa_account_info,
+                business_job_ids=[BUSINESS_JOB_CODE_CASA_INFO]
+            )
+
+        if not is_success:
             return ReposReturn(
                 is_error=True,
                 loc="open_casa",
@@ -786,27 +805,16 @@ async def repos_push_casa_to_gw(booking_id: str, session: Session, current_user:
             casa_account=casa_account, account_number=account_number, session=session
         )
 
-    # error_code = ""
-    # error_desc = ""
-    # if not is_success:
-    #     error_code = ERROR_CALL_SERVICE_GW
-    #     error_desc = orjson_dumps(gw_open_casa_account_info) if gw_open_casa_account_info else ""
-    #
-    # session.add(TransactionJob(
-    #     transaction_id=generate_uuid(),
-    #     booking_id=booking_id,
-    #     business_job_id=BUSINESS_JOB_CODE_CASA_INFO,
-    #     complete_flag=is_success,
-    #     error_code=error_code,
-    #     error_desc=error_desc,
-    #     created_at=now()
-    # ))
-    #
-    # session.commit()
+    # Lưu lại transacton thành công
+    await repos_save_transaction_jobs(
+        session=session,
+        booking_id=booking_id,
+        is_success=True,
+        response_data=None,
+        business_job_ids=[BUSINESS_JOB_CODE_CASA_INFO]
+    )
 
-    return ReposReturn(data=None)
-
-    # return ReposReturn(data=account_number)
+    return ReposReturn(data=account_number)
 
 
 async def repos_push_internet_banking_to_gw(booking_id: str,
@@ -1160,7 +1168,7 @@ async def repos_save_transaction_jobs(
     session: Session,
     booking_id: str,
     is_success: bool,
-    response_data: list,
+    response_data,
     business_job_ids: List[str]
 ):
     for business_job_id in business_job_ids:
