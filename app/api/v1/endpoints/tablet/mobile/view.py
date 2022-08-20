@@ -96,9 +96,9 @@ async def view_take_photo(
         is_identify_customer_step: bool = Form(..., description="Giá trị của field này nhận từ data trong message"),
         scheme_and_credentials: HTTPAuthorizationCredentials = Security(bearer_token),
 ):
-    file_info = await CtrTabletMobile().take_photo(
+    status_info = await CtrTabletMobile().take_photo(
         tablet_token=scheme_and_credentials.credentials,
         is_identify_customer_step=is_identify_customer_step,
         file_upload=file
     )
-    return ResponseData[TabletStatusResponse](**file_info)
+    return ResponseData[TabletStatusResponse](**status_info)
