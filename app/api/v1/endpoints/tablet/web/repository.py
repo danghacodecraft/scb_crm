@@ -75,7 +75,8 @@ async def repos_retrieve_tablet(teller_username: str, session: Session):
     ).scalar()
     return ReposReturn(data={
         'tablet_id': tablet.id if tablet else None,
-        'otp': tablet.otp if tablet else None
+        'otp': tablet.otp if tablet else None,
+        'is_paired': tablet.is_paired if tablet else None
     })
 
 

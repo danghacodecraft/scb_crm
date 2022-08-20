@@ -7,6 +7,16 @@ DEVICE_TYPE_MOBILE = 'MOBILE'
 
 RABBITMQ_EXCHANGE_AMQ_TOPIC = 'amq.topic'
 
-WEB_ACTION_PAIRED = 'PAIRED'
+WEB_ACTION_PAIRED = 'PAIRED'  # server gửi ở API Sync With Web By OTP (nhập mã OTP thành công ở mobile)
+WEB_ACTION_RECEIVED_PHOTO = 'RECEIVED_PHOTO'
 
-MOBILE_ACTION_UNPAIRED = 'UNPAIRED'
+
+MOBILE_ACTION_UNPAIRED = 'UNPAIRED'  # server gửi ở API Unpair (khi logout hoặc quá 15 phút)
+MOBILE_ACTION_ENTER_IDENTITY_NUMBER = 'ENTER_IDENTITY_NUMBER'  # cho FE gửi
+MOBILE_ACTION_ENTER_IDENTITY_NUMBER_FAIL = 'ENTER_IDENTITY_NUMBER_FAIL'  # server gửi ở API Enter Identity Number (khi không tìm thấy)
+MOBILE_ACTION_TAKE_DOCUMENT_PHOTO = 'TAKE_DOCUMENT_PHOTO'  # cho FE gửi ở thao tác liên quan hoặc cho server gửi khi tìm ra khách hàng ở bước nhập thông tin
+MOBILE_ACTION_TAKE_FACE_PHOTO = 'TAKE_FACE_PHOTO'  # cho FE gửi ở thao tác liên quan hoặc cho server gửi khi tìm ra khách hàng ở bước nhập thông tin
+MOBILE_ACTION_PROCESS_TRANSACTION = 'PROCESS_TRANSACTION'  # cho FE gửi
+MOBILE_ACTION_NEW_TRANSACTION = 'NEW_TRANSACTION'  # cho FE gửi
+MOBILE_ACTION_SIGN = 'SIGN'  # cho FE gửi
+MOBILE_ACTION_TRANSACT_SUCCESS = 'TRANSACT_SUCCESS'  # cho FE gửi

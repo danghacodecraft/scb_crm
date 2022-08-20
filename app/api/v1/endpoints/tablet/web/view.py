@@ -9,7 +9,10 @@ from app.api.v1.dependencies.authenticate import (
     bearer_token, get_current_user_from_header
 )
 from app.api.v1.endpoints.tablet.web.controller import CtrTabletWeb
-from app.api.v1.endpoints.tablet.web.schema import TabletOTPAndMqttInfoResponse
+from app.api.v1.endpoints.tablet.web.schema import (
+    TabletOTPAndMqttInfoResponse, TabletSwitchScreenRequest,
+    TabletSwitchScreenResponse
+)
 
 router = APIRouter()
 
@@ -38,26 +41,60 @@ async def view_get_otp(
     return ResponseData[TabletOTPAndMqttInfoResponse](**otp_and_mqtt_info)
 
 
-# @router.put(
-#     path="/screen/",
-#     name="Switch to other screen in tablet",
-#     description="Chuyển tablet sang màn hình khác",
-#     responses=swagger_response(
-#         response_model=ResponseData[CreateUpdateEKYCCustomerResponse],
-#         success_status_code=status.HTTP_200_OK
-#     )
-# )
-# async def view_create_ekyc_customer(
-#         request: CreateEKYCCustomerRequest,
-#         server_auth: str = Header(..., alias="Server-Auth")
-# ):
-#     # bắt đầu giao dịch nào thì chuyển sang màn hình giao dịch
-#     # chuyển sang màn hình chụp ảnh giấy tờ khi mở cif
-#     # chuyển sang màn hình chụp ảnh khuôn mặt khi mở cif
-#     create_ekyc_customer_info = await CtrEKYC().ctr_create_ekyc_customer(request=request, server_auth=server_auth)
-#     return ResponseData[CreateUpdateEKYCCustomerResponse](**create_ekyc_customer_info)
-#
-#
+@router.put(
+    path="/screen/",
+    name="Switch to others screen in tablet",
+    description="""Chuyển tablet sang màn hình khác
+- Khi bắt đầu giao dịch với khách hàng, giao dịch viên chọn giao dịch tương ứng mong muốn khách hàng:
+action=`PROCESS_TRANSACTION` và extra_data=`{"transaction_name": "chuyển tiền"}`.
+Tablet chuyển đến screen giao dịch đang xử lý.
+
+- Trong quá trình giao dịch, giao dịch viên muốn chụp ảnh giấy tờ:
+action=`TAKE_DOCUMENT_PHOTO` và extra_data=`{}`.
+Tablet chuyển đến screen chụp ảnh giấy tờ.
+
+- Trong quá trình giao dịch, giao dịch viên muốn chụp ảnh khuôn mặt:
+action=`TAKE_FACE_PHOTO` và extra_data=`{}`.
+Tablet chuyển đến screen chụp ảnh khuôn mặt.
+
+- Trong quá trình giao dịch, giao dịch viên muốn khách hàng ký vào các biểu mẫu:
+action=`SIGN` và extra_data=`{"documents": [{"name": "BM nộp tiền", "file_url": "http://example.com/1.pdf"}, {"name": "BM 18B", "file_url": "http://example.com/2.pdf"}]}`.
+Tablet chuyển đến screen ký tên các biểu mẫu.
+
+- Khi phiên giao dịch thành công:
+action=`TRANSACT_SUCCESS` và extra_data=`{}`.
+Tablet chuyển đến screen giao dịch thành công.
+
+- Khi khách hàng hiện tại muốn thực hiện giao dịch mới, giao dịch viên click giao dịch mới trong dropdown tablet trên top bar:
+action=`NEW_TRANSACTION` và extra_data=`{}`.
+Tablet chuyển sang màn hình chờ trước giao dịch mới
+
+- Khi xong phiên của khách hàng, giao dịch viên click kết thúc phiên giao dịch trong dropdown tablet trên top bar:
+action=`ENTER_IDENTITY_NUMBER` và extra_data=`{}`.
+Tablet chuyển sang màn hình nhập số giấy tờ định danh khách hàng mới.""",
+    responses=swagger_response(
+        response_model=ResponseData[TabletSwitchScreenResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_switch_tablet_screen(
+        request: TabletSwitchScreenRequest,
+        current_user=Depends(get_current_user_from_header()),
+):
+    """
+    Nếu đã kết nối với tablet thì sẽ gửi message tương ứng với action.
+    Nếu chưa kết nối với tablet sẽ trả lỗi
+
+    :param request: action và extra_data như description bên trên
+    :param current_user: bearer token của giao dịch viên
+    :return: status=True khi gửi message thành công
+    """
+    status_info = await CtrTabletWeb(
+        current_user=current_user
+    ).ctr_switch_tablet_screen(request=request)
+    return ResponseData[TabletSwitchScreenResponse](**status_info)
+
+
 @router.delete(
     path="/otp/",
     name="Unpair tablet if exists",
