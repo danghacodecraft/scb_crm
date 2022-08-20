@@ -9,7 +9,8 @@ from app.api.v1.dependencies.authenticate import bearer_token
 from app.api.v1.endpoints.tablet.mobile.controller import CtrTabletMobile
 from app.api.v1.endpoints.tablet.mobile.schema import (
     ListBannerCategoryResponse, ListBannerLanguageCodeQueryParam,
-    SyncWithWebByOTPRequest, SyncWithWebByOTPResponse
+    SubmitCustomerIdentityNumberRequest, SyncWithWebByOTPRequest,
+    SyncWithWebByOTPResponse
 )
 from app.api.v1.endpoints.tablet.web.schema import TabletStatusResponse
 
@@ -62,27 +63,28 @@ async def view_list_banner(
     return ResponseData[List[ListBannerCategoryResponse]](**banner_categories)
 
 
-# @router.post(
-#     path="/customer/identity_number/",
-#     name="Customer identity number",
-#     description="Gửi định danh khách hàng",
-#     responses=swagger_response(
-#         response_model=ResponseData[CreateUpdateEKYCCustomerResponse],
-#         success_status_code=status.HTTP_201_CREATED
-#     ),
-#     status_code=status.HTTP_201_CREATED
-# )
-# async def view_update_ekyc_customer(
-#         request: UpdateEKYCCustomerRequest,
-#         server_auth: str = Header(..., alias="Server-Auth")
-# ):
-#     # tìm trong DB
-#     # nếu có thì send message cho web để hiển thị khach hàng tương ứng, send message mobile để qua màn hình chụp ảnh giấy tờ (gửi kèm cờ để biết ở bước login)
-#     # nếu không có thì send message cho web để hiển thị danh sách trống, send message mobile để hiển thị màn hình quảng cáo
-#     update_ekyc_customer_info = await CtrEKYC().ctr_update_ekyc_customer(request=request, server_auth=server_auth)
-#     return ResponseData[CreateUpdateEKYCCustomerResponse](**update_ekyc_customer_info)
-#
-#
+@router.post(
+    path="/customer/identity_number/",
+    name="Customer identity number",
+    description="Gửi số giấy tờ định danh khách hàng",
+    responses=swagger_response(
+        response_model=ResponseData[TabletStatusResponse]
+    )
+)
+async def view_submit_customer_identity_number(
+        request: SubmitCustomerIdentityNumberRequest,
+        scheme_and_credentials: HTTPAuthorizationCredentials = Security(bearer_token),
+):
+    # tìm trong DB
+    # nếu có thì send message cho web để hiển thị khach hàng tương ứng, send message mobile để qua màn hình chụp ảnh giấy tờ (gửi kèm cờ để biết ở bước login)
+    # nếu không có thì send message cho web để hiển thị danh sách trống, send message mobile để hiển thị màn hình quảng cáo
+    status_info = await CtrTabletMobile().submit_customer_identity_number(
+        tablet_token=scheme_and_credentials.credentials,
+        request=request,
+    )
+    return ResponseData[TabletStatusResponse](**status_info)
+
+
 @router.post(
     path="/customer/photo/",
     name="Photo",

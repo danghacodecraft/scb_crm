@@ -46,3 +46,7 @@ class ListBannerLanguageCodeQueryParam(str, Enum):
 class ListBannerCategoryResponse(BaseSchema):
     category_name: str = Field(..., description='Tên loại')
     image_urls: List[HttpUrl] = Field(..., description='Danh sách link ảnh')
+
+
+class SubmitCustomerIdentityNumberRequest(BaseSchema):
+    customer_identity_number: str = Field(..., description='Mã số giấy tờ định danh của khách hàng')

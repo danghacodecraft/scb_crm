@@ -8,7 +8,8 @@ from app.api.v1.endpoints.tablet.mobile.repository import (
     repos_pair_by_otp, repos_retrieve_table_by_tablet_token
 )
 from app.api.v1.endpoints.tablet.mobile.schema import (
-    ListBannerLanguageCodeQueryParam, SyncWithWebByOTPRequest
+    ListBannerLanguageCodeQueryParam, SubmitCustomerIdentityNumberRequest,
+    SyncWithWebByOTPRequest
 )
 from app.settings.event import service_idm, service_rabbitmq, service_redis
 from app.utils.constant.tablet import (
@@ -117,6 +118,16 @@ class CtrTabletMobile(BaseController):
             'teller_username': result_tablet['teller_username'],
             'otp': result_tablet['otp']
         }
+
+    async def submit_customer_identity_number(self, tablet_token: str, request: SubmitCustomerIdentityNumberRequest):
+        # tablet_info = await self._check_tablet_token(tablet_token=tablet_token)
+        await self._check_tablet_token(tablet_token=tablet_token)
+
+        # TODO check request.customer_identity_number
+
+        return self.response(data={
+            'status': True
+        })
 
     async def take_photo(self, tablet_token: str, is_identify_customer_step: bool, file_upload: UploadFile):
         # tablet_info = await self._check_tablet_token(tablet_token=tablet_token)
