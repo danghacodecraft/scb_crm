@@ -152,10 +152,10 @@ class CtrDashboard(BaseController):
 
             if 'fee_payment_info' in form_data:  # TODO hard code do business_form cũ
                 mapping_datas[booking.id].update(
-                    full_name_vn=form_data['fee_payment_info']['sender_info']['cif_number']
+                    customer_cif_number=form_data['fee_payment_info']['sender_info']['cif_number']
                     if 'sender_info' in form_data['fee_payment_info']
                     and 'cif_number' in form_data['fee_payment_info']['sender_info'] else None,
-                    customer_cif_number=form_data['fee_payment_info']['sender_info']['fullname_vn']
+                    full_name_vn=form_data['fee_payment_info']['sender_info']['fullname_vn']
                     if 'sender_info' in form_data['fee_payment_info']
                     and 'fullname_vn' in form_data['fee_payment_info']['sender_info'] else None
                 )
