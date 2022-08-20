@@ -1,6 +1,8 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.tablet.mobile.repository import repos_pair_by_otp
-from app.api.v1.endpoints.tablet.mobile.schema import SyncWithWebByOTPRequest
+from app.api.v1.endpoints.tablet.mobile.schema import (
+    ListBannerLanguageCodeQueryParam, SyncWithWebByOTPRequest
+)
 from app.settings.event import service_idm, service_rabbitmq, service_redis
 from app.utils.constant.tablet import (
     DEVICE_TYPE_MOBILE, DEVICE_TYPE_WEB, WEB_ACTION_PAIRED
@@ -54,3 +56,14 @@ class CtrTabletMobile(BaseController):
                 'full_name': teller_user_info['name'],
             }
         })
+
+    async def list_banner(self, language_code: ListBannerLanguageCodeQueryParam):
+        # TODO: upload ảnh đến DMS và lấy link ở đây
+        return self.response([
+            {
+                "category_name": "Thẻ",
+                "image_urls": [
+                    "https://fileshare.scb.com.vn/thumbnail/cba735e7d4b640539abb/2560/5c1ad7f20dc496797189ec7a6838b2158da10ada.jpg"
+                ]
+            }
+        ])

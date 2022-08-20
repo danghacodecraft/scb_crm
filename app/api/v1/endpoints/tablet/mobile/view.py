@@ -1,9 +1,12 @@
-from fastapi import APIRouter
+from typing import List
+
+from fastapi import APIRouter, Query
 
 from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
 from app.api.v1.endpoints.tablet.mobile.controller import CtrTabletMobile
 from app.api.v1.endpoints.tablet.mobile.schema import (
+    ListBannerCategoryResponse, ListBannerLanguageCodeQueryParam,
     SyncWithWebByOTPRequest, SyncWithWebByOTPResponse
 )
 
@@ -37,26 +40,25 @@ async def view_sync_with_web_by_otp(
     return ResponseData[SyncWithWebByOTPResponse](**token_and_mqtt_info)
 
 
-# @router.get(
-#     path="/banners/",
-#     name="List banner",
-#     description="Lấy danh sách banner quảng cáo",
-#     responses=swagger_response(
-#         response_model=ResponseData[CreateUpdateEKYCCustomerResponse],
-#         success_status_code=status.HTTP_201_CREATED
-#     ),
-#     status_code=status.HTTP_201_CREATED
-# )
-# async def view_update_ekyc_customer(
-#         request: UpdateEKYCCustomerRequest,
-#         server_auth: str = Header(..., alias="Server-Auth")
-# ):
-#     # cho truyền lên ngôn ngữ
-#     # trả về danh sách banner quảng cáo
-#     update_ekyc_customer_info = await CtrEKYC().ctr_update_ekyc_customer(request=request, server_auth=server_auth)
-#     return ResponseData[CreateUpdateEKYCCustomerResponse](**update_ekyc_customer_info)
-#
-#
+@router.get(
+    path="/banners/",
+    name="List banner",
+    description="Lấy danh sách banner quảng cáo",
+    responses=swagger_response(
+        response_model=ResponseData[List[ListBannerCategoryResponse]]
+    )
+)
+async def view_list_banner(
+        language_code: ListBannerLanguageCodeQueryParam = Query(..., description='Ngôn ngữ người dùng lựa chọn'),
+):
+    """
+    :param language_code: vi hoặc en tương ứng với ngôn ngữ mà người dùng lựa chọn
+    :return: danh sách banner quảng cáo đi theo category thẻ, tiết kiệm, vay, .... Các ảnh này lưu ở fileshare (DMS SCB)
+    """
+    banner_categories = await CtrTabletMobile().list_banner(language_code=language_code)
+    return ResponseData[List[ListBannerCategoryResponse]](**banner_categories)
+
+
 # @router.post(
 #     path="/customer/identity_number/",
 #     name="Customer identity number",
