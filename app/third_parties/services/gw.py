@@ -656,7 +656,6 @@ class ServiceGW:
                 },
                 "staff_info_checker": {
                     "staff_name": current_user.username
-                    # "staff_name": current_user.username
                 },
                 "staff_info_maker": {
                     "staff_name": maker_staff_name

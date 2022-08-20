@@ -12,17 +12,14 @@ from app.api.v1.endpoints.casa.transfer.repository import (
 )
 from app.api.v1.endpoints.config.bank.controller import CtrConfigBank
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
-    repos_check_casa_account_approved, repos_gw_change_status_account,
-    repos_gw_get_casa_account_by_cif_number, repos_gw_get_casa_account_info,
-    repos_gw_get_close_casa_account,
+    repos_gw_change_status_account, repos_gw_get_casa_account_by_cif_number,
+    repos_gw_get_casa_account_info, repos_gw_get_close_casa_account,
     repos_gw_get_column_chart_casa_account_info,
     repos_gw_get_pie_chart_casa_account_info,
     repos_gw_get_retrieve_ben_name_by_account_number,
     repos_gw_get_retrieve_ben_name_by_card_number,
     repos_gw_get_statements_casa_account_info, repos_gw_get_tele_transfer,
-    repos_gw_open_casa_account, repos_gw_withdraw,
-    repos_open_casa_get_casa_account_infos,
-    repos_update_casa_account_to_approved
+    repos_gw_withdraw
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWOpenCasaAccountRequest, GWReportColumnChartHistoryAccountInfoRequest,
@@ -31,6 +28,9 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
 )
 from app.api.v1.endpoints.third_parties.gw.customer.controller import (
     CtrGWCustomer
+)
+from app.api.v1.endpoints.third_parties.gw.customer.repository import (
+    repos_get_progress, repos_push_casa_to_gw
 )
 from app.api.v1.endpoints.third_parties.gw.payment.repository import (
     repos_gw_interbank_transfer, repos_gw_pay_in_cash,
@@ -423,85 +423,156 @@ class CtrGWCasaAccount(BaseController):
                 error_status_code=status.HTTP_403_FORBIDDEN
             )
 
-        cif_number = request.cif_number
         # Kiểm tra số CIF có tồn tại trong CRM không
+        cif_number = request.cif_number
         self.call_repos(await repos_get_customer_by_cif_number(
             cif_number=cif_number,
             session=self.oracle_session
         ))
 
+        booking = await CtrBooking().ctr_get_booking(
+            booking_id=booking_id,
+            business_type_code=BUSINESS_TYPE_OPEN_CASA
+        )
+
+        maker_staff_name = booking.created_by
+
         # Kiểm tra Booking Account, Account lấy ra là những account chưa được phê duyệt
         casa_accounts = await CtrBooking().ctr_get_casa_account_from_booking(
             booking_id=booking_id, session=self.oracle_session
         )
-
         casa_account_ids = []
-        booking = await CtrBooking().ctr_get_booking(booking_id=booking_id, business_type_code=BUSINESS_TYPE_OPEN_CASA)
-        maker_staff_name = booking.created_by
-
         for casa_account in casa_accounts:
             if casa_account.approve_status == CASA_ACCOUNT_STATUS_UNAPPROVED:
                 casa_account_ids.append(casa_account.id)
 
-        # RULE: tài khoản đã được phê duyệt thì không cho phép phê duyệt
-        self.call_repos(await repos_check_casa_account_approved(
-            casa_account_ids=casa_account_ids,
-            session=self.oracle_session
-        ))
+        # Init response_info
+        response_info = {
+            "booking_id": booking_id,
+            "cif_num": cif_number,
+            "account_num": {
+                "status": False,
+                "data": None
+            },
+            "ebank_num": {
+                "status": False,
+                "data": None
+            },
+            "debit_num": {
+                "status": False,
+                "data": None
+            }
+        }
+        # Lấy completed flag
+        _, is_complete_casa, is_complete_eb, is_complete_sms, is_complete_debit = self.call_repos(
+            await repos_get_progress(booking_id=booking_id, session=self.oracle_session))
 
-        casa_account_infos = self.call_repos(await repos_open_casa_get_casa_account_infos(
-            casa_account_ids=casa_account_ids,
-            session=self.oracle_session
-        ))
+        # Push casa (mot cif - nhieu casa) (tra loi ngay)
+        if not is_complete_casa:
 
-        casa_account_successes = {}
-        gw_errors = []
-        for casa_account_info in casa_account_infos:
-            self_selected_account_flag = casa_account_info.self_selected_account_flag
-
-            casa_account_id = casa_account_info.id
-
-            is_success, gw_open_casa_account_info = await repos_gw_open_casa_account(
-                cif_number=cif_number,
-                self_selected_account_flag=self_selected_account_flag,
-                casa_account_info=casa_account_info,
-                current_user=self.current_user,
-                booking_parent_id=booking_id,
+            casa_account_number_result = await repos_push_casa_to_gw(
+                booking_id=booking_id,
                 session=self.oracle_session,
-                maker_staff_name=maker_staff_name
+                current_user=self.current_user,
+                cif_id="",
+                cif_number=cif_number,
+                maker_staff_name=maker_staff_name,
+                casa_account_ids=casa_account_ids
             )
-            if not is_success:
-                gw_errors.append(dict(
-                    id=casa_account_id,
-                    msg=ERROR_CALL_SERVICE_GW,
-                    detail=str(gw_open_casa_account_info['openCASA_out'])
-                ))
-            else:
-                casa_account_successes.update({casa_account_id:
-                                               gw_open_casa_account_info['openCASA_out']['data_output']['account_info']['account_num']})
 
-        update_casa_accounts = []
-        for casa_account_id, casa_account_number in casa_account_successes.items():
-            update_casa_accounts.append(dict(
-                id=casa_account_id,
-                casa_account_number=casa_account_number,
-                approve_status=1,
-                checker_id=current_user_info.code,
-                checker_at=now()
-            ))
+            if casa_account_number_result.is_error:
+                if casa_account_number_result.msg == ERROR_CALL_SERVICE_GW:
+                    self.response_exception(
+                        loc=casa_account_number_result.loc,
+                        msg=casa_account_number_result.msg,
+                        detail=casa_account_number_result.detail,
+                        data=response_info,
+                    )
+                else:
+                    self.call_repos(casa_account_number_result)
 
-        self.call_repos(await repos_update_casa_account_to_approved(
-            update_casa_accounts=update_casa_accounts,
-            session=self.oracle_session
-        ))
+            casa_account_number = casa_account_number_result.data  # noqa
+            is_complete_casa = True  # noqa
 
-        return self.response(data=dict(
-            successes=[dict(
-                id=casa_account_id,
-                number=casa_account_number
-            ) for casa_account_id, casa_account_number in casa_account_successes.items()],
-            errors=gw_errors
-        ))
+        # RULE: Hoàn tất mở CASA mới được mở EB, SMS, Debit
+        # Push EB (mot cif - mot eb)
+            # chay vao core kiem tra cif co EB chua, neu chua moi chay vao DB
+
+        # Push SMS (nhieu tk - nhieu sms)
+            # lay data tu DB,
+            # push len GW
+
+        # Push Debit Card (nhieu tk - nhieu the)
+            # lay data tu DB
+            # push len GW
+
+        # Kiem tra error list de tra loi
+
+        return self.response(data=response_info)
+        # casa_account_ids = []
+        # for casa_account in casa_accounts:
+        #     if casa_account.approve_status == CASA_ACCOUNT_STATUS_UNAPPROVED:
+        #         casa_account_ids.append(casa_account.id)
+        #
+        # # RULE: tài khoản đã được phê duyệt thì không cho phép phê duyệt
+        # self.call_repos(await repos_check_casa_account_approved(
+        #     casa_account_ids=casa_account_ids,
+        #     session=self.oracle_session
+        # ))
+        #
+        # casa_account_infos = self.call_repos(await repos_open_casa_get_casa_account_infos(
+        #     casa_account_ids=casa_account_ids,
+        #     session=self.oracle_session
+        # ))
+        #
+        # casa_account_successes = {}
+        # gw_errors = []
+        # for casa_account_info in casa_account_infos:
+        #     self_selected_account_flag = casa_account_info.self_selected_account_flag
+        #
+        #     casa_account_id = casa_account_info.id
+        #
+        #     is_success, gw_open_casa_account_info = await repos_gw_open_casa_account(
+        #         cif_number=cif_number,
+        #         self_selected_account_flag=self_selected_account_flag,
+        #         casa_account_info=casa_account_info,
+        #         current_user=self.current_user,
+        #         booking_parent_id=booking_id,
+        #         session=self.oracle_session,
+        #         maker_staff_name=maker_staff_name
+        #     )
+        #     if not is_success:
+        #         gw_errors.append(dict(
+        #             id=casa_account_id,
+        #             msg=ERROR_CALL_SERVICE_GW,
+        #             detail=str(gw_open_casa_account_info['openCASA_out'])
+        #         ))
+        #     else:
+        #         casa_account_successes.update({casa_account_id:
+        #                                        gw_open_casa_account_info['openCASA_out']['data_output']['account_info']['account_num']})
+        #
+        # update_casa_accounts = []
+        # for casa_account_id, casa_account_number in casa_account_successes.items():
+        #     update_casa_accounts.append(dict(
+        #         id=casa_account_id,
+        #         casa_account_number=casa_account_number,
+        #         approve_status=1,
+        #         checker_id=current_user_info.code,
+        #         checker_at=now()
+        #     ))
+        #
+        # self.call_repos(await repos_update_casa_account_to_approved(
+        #     update_casa_accounts=update_casa_accounts,
+        #     session=self.oracle_session
+        # ))
+        #
+        # return self.response(data=dict(
+        #     successes=[dict(
+        #         id=casa_account_id,
+        #         number=casa_account_number
+        #     ) for casa_account_id, casa_account_number in casa_account_successes.items()],
+        #     errors=gw_errors
+        # ))
 
     async def ctr_gw_get_close_casa_account(self, booking_id):
         booking_business_form = self.call_repos(await repos_get_booking_business_form_by_booking_id(
