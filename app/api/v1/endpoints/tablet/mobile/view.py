@@ -21,9 +21,18 @@ router = APIRouter()
 async def view_sync_with_web_by_otp(
         request: SyncWithWebByOTPRequest
 ):
-    # nếu đã kết nối nhưng out app, thì vào chỉ cần nhập lại OTP cũ
-    # đăng nhập thì công thì server gửi đến topic web để web hiện phiên giao dịch
-    # trả về mqtt cho mobile kết nối, trả về token tương ứng với phiên này để mobile dùng gọi các API
+    """
+    Dùng ở màn hình nhập OTP sau khi mở app. Sau khi nhập OTP là 6 số, click đăng nhập
+    Mỗi lần mở app thì nhập lại OTP, app không cần lưu lại config
+
+    :param request: mã OTP và device info (tạm thời chỉ là địa chỉ MAC)
+    :return:
+        + Nếu status code khác 200 thì app tự xử lý hiện thông báo Mã OTP không chính xác
+        + Nếu status code là 200 thì sẽ trả về
+            . config mqtt để app consume message
+            . token tương ứng với phiên này để mobile dùng gọi các API khác
+            . thông tin trên top bar và thông tin giao dịch viên để hiện ở màn hình liên quan
+    """
     token_and_mqtt_info = await CtrTabletMobile().sync_with_web_by_otp(request=request)
     return ResponseData[SyncWithWebByOTPResponse](**token_and_mqtt_info)
 
