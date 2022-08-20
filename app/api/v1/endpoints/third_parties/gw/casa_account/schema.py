@@ -8,6 +8,9 @@ from app.api.v1.endpoints.cif.base_field import CustomField
 from app.api.v1.endpoints.third_parties.gw.casa_account.example import (
     CASA_ACCOUNT_NUMBER
 )
+from app.api.v1.endpoints.third_parties.gw.customer.schema import (
+    GWOpenCIFStatusIdNumberResponse
+)
 from app.api.v1.endpoints.third_parties.gw.schema import (
     GWBranchDropdownResponse, GWCIFInfoResponse
 )
@@ -223,8 +226,11 @@ class GWOpenCasaErrorResponse(BaseGWSchema):
 
 
 class GWOpenCasaAccountResponse(BaseGWSchema):
-    successes: List[GWOpenCasaSucessResponse] = Field(..., description="Những tài khoản thanh toán tạo thành công")
-    errors: List[GWOpenCasaErrorResponse] = Field(..., description="Những tài khoản thanh toán tạo `KHÔNG` thành công")
+    booking_id: str = Field(..., description="BOOKING")
+    cif_num: str = Field(..., description="cif_number Customer")
+    account_num: GWOpenCIFStatusIdNumberResponse = Field(..., description="Thông tin Số TKTT")
+    ebank_num: GWOpenCIFStatusIdNumberResponse = Field(..., description="Thông tin Ebanking")
+    debit_num: GWOpenCIFStatusIdNumberResponse = Field(..., description="Thông tin thẻ ghi nợ")
 
 
 class GWAccountInfoCloseCasaRequest(BaseGWSchema):

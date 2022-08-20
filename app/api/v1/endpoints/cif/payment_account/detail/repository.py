@@ -1,4 +1,5 @@
 import json
+from typing import List
 
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session, aliased
@@ -53,6 +54,43 @@ async def repos_get_detail_payment_account(cif_id: str, session: Session) -> Rep
     ).first()
 
     return ReposReturn(data=detail)
+
+
+async def repos_get_detail_payment_accounts_by_account_ids(casa_account_ids: List[str], session: Session) -> ReposReturn:
+    account_structure_type_level_2 = aliased(AccountStructureType, name='account_structure_type_level_2')
+    account_structure_type_level_1 = aliased(AccountStructureType, name='account_structure_type_level_1')
+    casa_accounts = session.execute(
+        select(
+            CasaAccount,
+            Currency,
+            AccountClass,
+            AccountType,
+            AccountStructureType,
+            account_structure_type_level_2,
+            account_structure_type_level_1,
+            AddressCountry
+        )
+        .join(Currency, CasaAccount.currency_id == Currency.id)
+        .outerjoin(AddressCountry, Currency.country_code == AddressCountry.id)
+        .join(AccountClass, CasaAccount.acc_class_id == AccountClass.id)
+        .join(AccountType, CasaAccount.acc_type_id == AccountType.id)
+        .outerjoin(AccountStructureType, CasaAccount.acc_structure_type_id == AccountStructureType.id)
+        .outerjoin(
+            account_structure_type_level_2,
+            AccountStructureType.parent_id == account_structure_type_level_2.id
+        )
+        .outerjoin(
+            account_structure_type_level_1,
+            account_structure_type_level_2.parent_id == account_structure_type_level_1.id
+        )
+        .filter(
+            CasaAccount.id.in_(casa_account_ids),
+            # Bypass account đã approve
+            CasaAccount.casa_account_number.is_(None)
+        )
+    ).all()
+
+    return ReposReturn(data=casa_accounts)
 
 
 @auto_commit

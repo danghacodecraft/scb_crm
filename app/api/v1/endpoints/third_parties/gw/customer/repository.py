@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session, aliased
 from app.api.base.repository import ReposReturn, auto_commit
 from app.api.v1.endpoints.cif.debit_card.repository import repos_debit_card
 from app.api.v1.endpoints.cif.payment_account.detail.repository import (
-    repos_get_detail_payment_account
+    repos_get_detail_payment_account,
+    repos_get_detail_payment_accounts_by_account_ids
 )
 from app.api.v1.endpoints.third_parties.gw.ebank.repository import (
     repos_get_e_banking_from_db_by_cif_id,
@@ -696,68 +697,116 @@ async def repos_push_cif_to_gw(booking_id: str, session: Session, response_custo
 
 
 async def repos_push_casa_to_gw(booking_id: str, session: Session, current_user: any,
-                                cif_id: str, cif_number: str, maker_staff_name):
-    detail_payment_account_info_result = await repos_get_detail_payment_account(
-        cif_id=cif_id,
-        session=session
-    )
-    if detail_payment_account_info_result.is_error:
-        return ReposReturn(
-            is_error=True,
-            msg=detail_payment_account_info_result.msg,
-            loc=detail_payment_account_info_result.loc,
-            detail=detail_payment_account_info_result.detail,
-            error_status_code=detail_payment_account_info_result.error_status_code
+                                cif_id: str, cif_number: str, maker_staff_name, casa_account_ids: List[str] = None):
+
+    is_success = False
+
+    # MỞ CASA: không có cif_id
+    if not cif_id:
+        payment_account_list_result = await repos_get_detail_payment_accounts_by_account_ids(
+            casa_account_ids=casa_account_ids,
+            session=session
+        )
+        if payment_account_list_result.is_error:
+            return ReposReturn(
+                is_error=True,
+                msg=payment_account_list_result.msg,
+                loc=payment_account_list_result.loc,
+                detail=payment_account_list_result.detail,
+                error_status_code=payment_account_list_result.error_status_code
+            )
+
+        for payment_account in payment_account_list_result.data:
+
+            casa_account = payment_account[0]
+
+            is_success, gw_open_casa_account_info, _ = await service_gw.get_open_casa_account(
+                cif_number=cif_number,
+                self_selected_account_flag=casa_account.self_selected_account_flag,
+                casa_account_info=casa_account,
+                current_user=current_user.user_info,
+                maker_staff_name=maker_staff_name
+            )
+
+            if not is_success:
+                return ReposReturn(
+                    is_error=True,
+                    loc="open_casa",
+                    msg=ERROR_CALL_SERVICE_GW,
+                    detail=str(gw_open_casa_account_info)
+                )
+
+            account_number = gw_open_casa_account_info['openCASA_out']['data_output']['account_info']['account_num']
+
+            # cập nhật lại casa_number
+            await repos_update_casa_account(
+                casa_account=casa_account, account_number=account_number, session=session
+            )
+
+    # MỞ CIF: có cif_id
+    else:
+        detail_payment_account_info_result = await repos_get_detail_payment_account(
+            cif_id=cif_id,
+            session=session
+        )
+        if detail_payment_account_info_result.is_error:
+            return ReposReturn(
+                is_error=True,
+                msg=detail_payment_account_info_result.msg,
+                loc=detail_payment_account_info_result.loc,
+                detail=detail_payment_account_info_result.detail,
+                error_status_code=detail_payment_account_info_result.error_status_code
+            )
+
+        (
+            casa_account, currency, account_class, account_type, account_structure_type,
+            account_structure_type_level_2, account_structure_type_level_1, address_country
+        ) = detail_payment_account_info_result.data
+
+        is_success, gw_open_casa_account_info, _ = await service_gw.get_open_casa_account(
+            cif_number=cif_number,
+            self_selected_account_flag=casa_account.self_selected_account_flag,
+            casa_account_info=casa_account,
+            current_user=current_user.user_info,
+            maker_staff_name=maker_staff_name
         )
 
-    (
-        casa_account, currency, account_class, account_type, account_structure_type,
-        account_structure_type_level_2, account_structure_type_level_1, address_country
-    ) = detail_payment_account_info_result.data
+        if not is_success:
+            return ReposReturn(
+                is_error=True,
+                loc="open_casa",
+                msg=ERROR_CALL_SERVICE_GW,
+                detail=str(gw_open_casa_account_info)
+            )
 
-    is_success, gw_open_casa_account_info, _ = await service_gw.get_open_casa_account(
-        cif_number=cif_number,
-        self_selected_account_flag=casa_account.self_selected_account_flag,
-        casa_account_info=casa_account,
-        current_user=current_user.user_info,
-        maker_staff_name=maker_staff_name
-    )
+        account_number = gw_open_casa_account_info['openCASA_out']['data_output']['account_info']['account_num']
 
-    error_code = ""
-    error_desc = ""
-    if not is_success:
-        error_code = ERROR_CALL_SERVICE_GW
-        error_desc = orjson_dumps(gw_open_casa_account_info) if gw_open_casa_account_info else ""
-
-    session.add(TransactionJob(
-        transaction_id=generate_uuid(),
-        booking_id=booking_id,
-        business_job_id=BUSINESS_JOB_CODE_CASA_INFO,
-        complete_flag=is_success,
-        error_code=error_code,
-        error_desc=error_desc,
-        created_at=now()
-    ))
-
-    session.commit()
-
-    if not is_success:
-        return ReposReturn(
-            is_error=True,
-            loc="open_casa",
-            msg=ERROR_CALL_SERVICE_GW,
-            detail=str(gw_open_casa_account_info)
+        # cập nhật lại casa_number
+        await repos_update_casa_account(
+            casa_account=casa_account, account_number=account_number, session=session
         )
-    account_number = gw_open_casa_account_info['openCASA_out']['data_output']['account_info']['account_num']
 
-    # cập nhật lại casa_number
-    await repos_update_casa_account(
-        casa_account=casa_account, account_number=account_number, session=session
-    )
+    # error_code = ""
+    # error_desc = ""
+    # if not is_success:
+    #     error_code = ERROR_CALL_SERVICE_GW
+    #     error_desc = orjson_dumps(gw_open_casa_account_info) if gw_open_casa_account_info else ""
+    #
+    # session.add(TransactionJob(
+    #     transaction_id=generate_uuid(),
+    #     booking_id=booking_id,
+    #     business_job_id=BUSINESS_JOB_CODE_CASA_INFO,
+    #     complete_flag=is_success,
+    #     error_code=error_code,
+    #     error_desc=error_desc,
+    #     created_at=now()
+    # ))
+    #
+    # session.commit()
 
-    session.commit()
+    return ReposReturn(data=None)
 
-    return ReposReturn(data=account_number)
+    # return ReposReturn(data=account_number)
 
 
 async def repos_push_internet_banking_to_gw(booking_id: str,
