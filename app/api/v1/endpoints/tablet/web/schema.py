@@ -65,5 +65,5 @@ class TabletSwitchScreenRequest(BaseSchema):
     extra_data: Union[Dict, TabletActionProcessDataExtraData, TabletActionSignExtraData] = Field(..., description='Thông tin thêm cho hành động tương ứng bên tablet')
 
 
-class TabletSwitchScreenResponse(BaseSchema):
+class TabletStatusResponse(BaseSchema):
     status: bool = Field(..., description='Kết quả')

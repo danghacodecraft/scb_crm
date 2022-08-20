@@ -1,14 +1,17 @@
 from typing import List
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, File, Form, Query, Security, UploadFile
+from fastapi.security import HTTPAuthorizationCredentials
 
 from app.api.base.schema import ResponseData
 from app.api.base.swagger import swagger_response
+from app.api.v1.dependencies.authenticate import bearer_token
 from app.api.v1.endpoints.tablet.mobile.controller import CtrTabletMobile
 from app.api.v1.endpoints.tablet.mobile.schema import (
     ListBannerCategoryResponse, ListBannerLanguageCodeQueryParam,
     SyncWithWebByOTPRequest, SyncWithWebByOTPResponse
 )
+from app.api.v1.endpoints.tablet.web.schema import TabletStatusResponse
 
 router = APIRouter()
 
@@ -80,20 +83,22 @@ async def view_list_banner(
 #     return ResponseData[CreateUpdateEKYCCustomerResponse](**update_ekyc_customer_info)
 #
 #
-# @router.post(
-#     path="/customer/photo/",
-#     name="Photo",
-#     description="Gửi ảnh chụp giấy tờ định danh, ảnh khuôn mặt, ảnh chữ ký",
-#     responses=swagger_response(
-#         response_model=ResponseData[CreateUpdateEKYCCustomerResponse],
-#         success_status_code=status.HTTP_201_CREATED
-#     ),
-#     status_code=status.HTTP_201_CREATED
-# )
-# async def view_update_ekyc_customer(
-#         request: UpdateEKYCCustomerRequest,
-#         server_auth: str = Header(..., alias="Server-Auth")
-# ):
-#     # gửi kèm cờ có phải login hay không trả về ở mqtt
-#     update_ekyc_customer_info = await CtrEKYC().ctr_update_ekyc_customer(request=request, server_auth=server_auth)
-#     return ResponseData[CreateUpdateEKYCCustomerResponse](**update_ekyc_customer_info)
+@router.post(
+    path="/customer/photo/",
+    name="Photo",
+    description="Gửi ảnh chụp giấy tờ định danh, ảnh khuôn mặt, ảnh chữ ký",
+    responses=swagger_response(
+        response_model=ResponseData[TabletStatusResponse]
+    )
+)
+async def view_take_photo(
+        file: UploadFile = File(..., description='File cần upload'),
+        is_identify_customer_step: bool = Form(..., description="Giá trị của field này nhận từ data trong message"),
+        scheme_and_credentials: HTTPAuthorizationCredentials = Security(bearer_token),
+):
+    file_info = await CtrTabletMobile().take_photo(
+        tablet_token=scheme_and_credentials.credentials,
+        is_identify_customer_step=is_identify_customer_step,
+        file_upload=file
+    )
+    return ResponseData[TabletStatusResponse](**file_info)

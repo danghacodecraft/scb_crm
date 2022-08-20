@@ -1,5 +1,12 @@
+from fastapi import UploadFile
+from starlette import status
+
 from app.api.base.controller import BaseController
-from app.api.v1.endpoints.tablet.mobile.repository import repos_pair_by_otp
+from app.api.v1.endpoints.file.repository import repos_upload_file
+from app.api.v1.endpoints.file.validator import file_validator
+from app.api.v1.endpoints.tablet.mobile.repository import (
+    repos_pair_by_otp, repos_retrieve_table_by_tablet_token
+)
 from app.api.v1.endpoints.tablet.mobile.schema import (
     ListBannerLanguageCodeQueryParam, SyncWithWebByOTPRequest
 )
@@ -9,6 +16,8 @@ from app.utils.constant.tablet import (
     LIST_BANNER_LANGUAGE_CODE_VIETNAMESE, LIST_BANNER_LANGUAGE_NAME_ENGLISH,
     LIST_BANNER_LANGUAGE_NAME_VIETNAMESE, WEB_ACTION_PAIRED
 )
+from app.utils.error_messages import ERROR_TABLET_INVALID_TOKEN
+from app.utils.functions import now
 from app.utils.tablet_functions import (
     get_client_broker_config_info, get_topic_name
 )
@@ -79,3 +88,63 @@ class CtrTabletMobile(BaseController):
                 ]
             }
         ])
+
+    async def _check_tablet_token(self, tablet_token):
+        try:
+            device_type, tablet_id_and_otp = tablet_token.split('.')
+            tablet_id = tablet_id_and_otp[:-6]
+            otp = tablet_id_and_otp[-6:]
+        except Exception:
+            return self.response_exception(
+                msg=ERROR_TABLET_INVALID_TOKEN, error_status_code=status.HTTP_401_UNAUTHORIZED
+            )
+
+        if device_type != DEVICE_TYPE_MOBILE:
+            return self.response_exception(
+                msg=ERROR_TABLET_INVALID_TOKEN, error_status_code=status.HTTP_401_UNAUTHORIZED
+            )
+
+        result_tablet = self.call_repos(
+            await repos_retrieve_table_by_tablet_token(
+                tablet_id=tablet_id,
+                otp=otp,
+                session=self.oracle_session
+            )
+        )
+
+        return {
+            'tablet_id': result_tablet['tablet_id'],
+            'teller_username': result_tablet['teller_username'],
+            'otp': result_tablet['otp']
+        }
+
+    async def take_photo(self, tablet_token: str, is_identify_customer_step: bool, file_upload: UploadFile):
+        # tablet_info = await self._check_tablet_token(tablet_token=tablet_token)
+        await self._check_tablet_token(tablet_token=tablet_token)
+
+        data_file_upload = await file_upload.read()
+
+        self.call_validator(await file_validator(data_file_upload))
+
+        is_success, info_file = self.call_repos(await repos_upload_file(
+            file=data_file_upload,
+            name=file_upload.filename,
+            ekyc_flag=True,
+            save_to_db_flag=False,
+            booking_id=None,
+            current_user=None
+        ))
+        if not is_success:
+            return self.response_exception(msg="ERROR_INSERT_DOCUMENT_FILE", detail=str(info_file))
+
+        info_file['created_at'] = now()
+
+        # TODO: is_identify_customer_step
+        # if is_identify_customer_step:
+        #     ...
+        # else:
+        #     ...
+
+        return self.response(data={
+            'status': True
+        })

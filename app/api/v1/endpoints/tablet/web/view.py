@@ -10,8 +10,8 @@ from app.api.v1.dependencies.authenticate import (
 )
 from app.api.v1.endpoints.tablet.web.controller import CtrTabletWeb
 from app.api.v1.endpoints.tablet.web.schema import (
-    TabletOTPAndMqttInfoResponse, TabletSwitchScreenRequest,
-    TabletSwitchScreenResponse
+    TabletOTPAndMqttInfoResponse, TabletStatusResponse,
+    TabletSwitchScreenRequest
 )
 
 router = APIRouter()
@@ -73,7 +73,7 @@ Tablet chuyển sang màn hình chờ trước giao dịch mới
 action=`ENTER_IDENTITY_NUMBER` và extra_data=`{}`.
 Tablet chuyển sang màn hình nhập số giấy tờ định danh khách hàng mới.""",
     responses=swagger_response(
-        response_model=ResponseData[TabletSwitchScreenResponse],
+        response_model=ResponseData[TabletStatusResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -92,7 +92,7 @@ async def view_switch_tablet_screen(
     status_info = await CtrTabletWeb(
         current_user=current_user
     ).ctr_switch_tablet_screen(request=request)
-    return ResponseData[TabletSwitchScreenResponse](**status_info)
+    return ResponseData[TabletStatusResponse](**status_info)
 
 
 @router.delete(
