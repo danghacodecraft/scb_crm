@@ -95,7 +95,9 @@ async def view_submit_customer_identity_number(
 )
 async def view_take_photo(
         file: UploadFile = File(..., description='File cần upload'),
-        is_identify_customer_step: bool = Form(..., description="Giá trị của field này nhận từ data trong message"),
+        is_identify_customer_step: bool = Form(
+            False, description="Giá trị của field này nhận từ data trong message. Nếu không có nhận thì không gửi lên"
+        ),
         scheme_and_credentials: HTTPAuthorizationCredentials = Security(bearer_token),
 ):
     status_info = await CtrTabletMobile().take_photo(
