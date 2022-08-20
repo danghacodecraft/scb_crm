@@ -63,3 +63,30 @@ async def repos_create_tablet_otp(teller_username: str, session: Session):
         'expired_after_in_seconds': OTP_EXPIRED_AFTER_IN_SECONDS,
         'expired_at': expired_at,
     })
+
+
+async def repos_retrieve_tablet(teller_username: str, session: Session):
+    tablet = session.execute(
+        select(
+            Tablet
+        ).filter(
+            Tablet.teller_username == teller_username
+        )
+    ).scalar()
+    return ReposReturn(data={
+        'tablet_id': tablet.id if tablet else None,
+        'otp': tablet.otp if tablet else None
+    })
+
+
+async def repos_delete_tablet_if_exists(teller_username: str, session: Session):
+    session.execute(
+        delete(
+            Tablet
+        ).filter(
+            Tablet.teller_username == teller_username
+        )
+    )
+    session.commit()
+
+    return ReposReturn(data=True)
