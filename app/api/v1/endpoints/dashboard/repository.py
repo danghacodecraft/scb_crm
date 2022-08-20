@@ -29,9 +29,7 @@ from app.third_parties.oracle.models.master_data.others import (
     Branch, SlaTransaction, TransactionStage, TransactionStageRole,
     TransactionStageStatus
 )
-from app.utils.constant.cif import (
-    BUSINESS_FORM_AMOUNT_BLOCK, BUSINESS_FORM_WITHDRAW, CONTACT_ADDRESS_CODE
-)
+from app.utils.constant.cif import BUSINESS_FORM_WITHDRAW, CONTACT_ADDRESS_CODE
 from app.utils.functions import date_to_datetime, end_time_of_day
 from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese
 
@@ -510,8 +508,7 @@ async def repos_get_amount_block_from_booking(
             Booking,
             BookingBusinessForm,
         )
-        .join(BookingBusinessForm, Booking.id == BookingBusinessForm.booking_id,
-              BookingBusinessForm.business_form_id == BUSINESS_FORM_AMOUNT_BLOCK)
+        .join(BookingBusinessForm, Booking.id == BookingBusinessForm.booking_id)
         .filter(Booking.id.in_(booking_ids))
         .order_by(BookingBusinessForm.created_at)
     ).all()
