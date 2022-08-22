@@ -58,6 +58,8 @@ GW_ENDPOINT_URL_INTERBANK_TRANSFER = "/payment/v1.0/rest/interbankTransfer"
 GW_ENDPOINT_URL_INTERBANK_TRANSFER_247_BY_ACCOUNT_NUMBER = "/payment/v1.0/rest/interbankTransfer247ByAccNum"
 GW_ENDPOINT_URL_INTERBANK_TRANSFER_247_BY_CARD_NUMBER = "/payment/v1.0/rest/interbankTransfer247ByCardNum"
 GW_ENDPOINT_URL_WITHDRAW = "/payment/v1.0/rest/cashWithdrawals"
+GW_OPEN_CIF_CHILD_AGE = 15
+GW_OPEN_CO_OWNER_CIF_INFO = "0717824"
 # ---------------------------------------------- USER ---------------------------------------------- #
 GW_ENDPOINT_URL_SELECT_USER_INFO = "/users/v1.0/rest/selectUserInfoByUserID"
 
