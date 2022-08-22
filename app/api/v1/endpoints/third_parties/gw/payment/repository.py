@@ -377,7 +377,7 @@ async def repos_gw_payment_amount_unblock(
             return ReposReturn(
                 is_error=True,
                 msg=ERROR_CALL_SERVICE_GW,
-                loc='PAYMENT_AMOUNT_BLOCK',
+                loc='PAYMENT_AMOUNT_UNBLOCK',
                 detail=gw_payment_amount_unblock.get('amountUnBlock_out').get('transaction_info').get('transaction_error_msg')
             )
     return ReposReturn(data=booking_id)
