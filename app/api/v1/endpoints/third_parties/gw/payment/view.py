@@ -109,7 +109,7 @@ async def view_amount_unblock(
     name="[GW] Amount Unblock",
     description="Giải tỏa tài khoản - Phê duyệt",
     responses=swagger_response(
-        response_model=ResponseData[AccountAmountBlockResponse],
+        response_model=ResponseData[PaymentSuccessResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -121,7 +121,7 @@ async def view_amount_unblock_pd(
         BOOKING_ID=BOOKING_ID
     )
 
-    return ResponseData[AccountAmountBlockResponse](**payment_amount_unblock_pd)
+    return ResponseData[PaymentSuccessResponse](**payment_amount_unblock_pd)
 
 
 # @router.post(

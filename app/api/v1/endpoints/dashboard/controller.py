@@ -29,6 +29,7 @@ from app.utils.constant.casa import (
     CASA_TRANSFER_NUMBER_TYPE_IDENTITY_NUMBER
 )
 from app.utils.constant.cif import (
+    BUSINESS_FORM_AMOUNT_BLOCK, BUSINESS_FORM_AMOUNT_UNBLOCK,
     CIF_STAGE_ROLE_CODE_AUDIT, CIF_STAGE_ROLE_CODE_SUPERVISOR,
     CIF_STAGE_ROLE_CODE_TELLER, CIF_STAGE_ROLE_CODES
 )
@@ -141,23 +142,42 @@ class CtrDashboard(BaseController):
             )
 
         # lấy thông tin các giao dịch aoumut_block
-        amount_blocks = self.call_repos(
+        amount_blocks, business_form_amount_blocks = self.call_repos(
             await repos_get_amount_block_from_booking(
                 booking_ids=business_type_amount_block,
                 session=self.oracle_session
             )
         )
-        for booking, booking_business_form in amount_blocks:
-            form_data = orjson_loads(booking_business_form.form_data)
+        for booking_id, _, casa_account, customer in amount_blocks:
+            mapping_datas[booking_id].update(
+                full_name_vn=customer.full_name_vn,
+                cif_id=customer.id,
+                customer_cif_number=customer.cif_number
+            )
 
-            if 'fee_payment_info' in form_data:  # TODO hard code do business_form cũ
-                mapping_datas[booking.id].update(
+        for booking_id, booking_business_form in business_form_amount_blocks:
+            form_data = orjson_loads(booking_business_form.form_data)
+            if booking_business_form.business_form_id == BUSINESS_FORM_AMOUNT_BLOCK and \
+                    'fee_payment_info' in form_data:  # TODO hard code do business_form cũ
+                mapping_datas[booking_id].update(
                     customer_cif_number=form_data['fee_payment_info']['sender_info']['cif_number']
                     if 'sender_info' in form_data['fee_payment_info']
                     and 'cif_number' in form_data['fee_payment_info']['sender_info'] else None,
                     full_name_vn=form_data['fee_payment_info']['sender_info']['fullname_vn']
                     if 'sender_info' in form_data['fee_payment_info']
                     and 'fullname_vn' in form_data['fee_payment_info']['sender_info'] else None
+                )
+
+            if booking_business_form.business_form_id == BUSINESS_FORM_AMOUNT_UNBLOCK \
+                    and isinstance(form_data, list) and 'transaction_fee_info' in form_data[0]:  # TODO
+                form_data = form_data[0]
+                mapping_datas[booking_id].update(
+                    customer_cif_number=form_data['transaction_fee_info']['sender_info']['cif_number']
+                    if 'sender_info' in form_data['transaction_fee_info']
+                    and 'cif_number' in form_data['transaction_fee_info']['sender_info'] else None,
+                    full_name_vn=form_data['transaction_fee_info']['sender_info']['fullname_vn']
+                    if 'sender_info' in form_data['transaction_fee_info']
+                    and 'fullname_vn' in form_data['transaction_fee_info']['sender_info'] else None
                 )
 
         # Lấy thông tin các giao dịch Mở TKTT\

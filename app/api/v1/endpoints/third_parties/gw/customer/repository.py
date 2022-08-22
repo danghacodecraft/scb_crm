@@ -1,3 +1,4 @@
+import datetime
 from typing import List
 
 from sqlalchemy import desc, select, update
@@ -14,6 +15,7 @@ from app.api.v1.endpoints.third_parties.gw.ebank.repository import (
 )
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.settings.event import service_gw
+from app.settings.service import SERVICE
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
     CustomerAddress, CustomerProfessional
 )
@@ -61,14 +63,15 @@ from app.utils.constant.debit_card import (
     GW_DEFAULT_CARD_AUTO_RENEW, GW_DEFAULT_CARD_BILL_OPTION,
     GW_DEFAULT_CARD_RELATION_TO_PRIMARY,
     GW_DEFAULT_CARD_STATEMENT_DELIVERY_OPTION, GW_DEFAULT_NORMAL,
-    GW_DEFAULT_QUICK, MAIN_CARD
+    GW_DEFAULT_QUICK, MAIN_CARD, SUB_CARD
 )
 from app.utils.constant.gw import (
     GW_AUTO, GW_CUSTOMER_TYPE_B, GW_CUSTOMER_TYPE_I, GW_DATE_FORMAT,
     GW_DEFAULT_CUSTOMER_CATEGORY, GW_DEFAULT_KHTC_DOI_TUONG, GW_DEFAULT_NO,
     GW_DEFAULT_TYPE_ID, GW_DEFAULT_VALUE, GW_DEFAULT_YES, GW_LANGUAGE,
-    GW_LOCAL_CODE, GW_NO_AGREEMENT_FLAG, GW_NO_MARKETING_FLAG, GW_SELECT,
-    GW_UDF_NAME, GW_YES, GW_YES_AGREEMENT_FLAG
+    GW_LOCAL_CODE, GW_NO_AGREEMENT_FLAG, GW_NO_MARKETING_FLAG,
+    GW_OPEN_CIF_CHILD_AGE, GW_OPEN_CO_OWNER_CIF_INFO, GW_SELECT, GW_UDF_NAME,
+    GW_YES, GW_YES_AGREEMENT_FLAG
 )
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_GW, ERROR_NO_DATA, ERROR_OPEN_CIF
@@ -521,7 +524,10 @@ async def repos_push_cif_to_gw(booking_id: str, session: Session, response_custo
         "country_name": GW_DEFAULT_VALUE,
         "cor_same_addr": GW_DEFAULT_VALUE
     }
-    # địa chỉ liên lạc doanh nghiệp
+    birthday = date_to_string(cust_individual.date_of_birth,
+                              _format=GW_DATE_FORMAT) if cust_individual.date_of_birth else GW_DEFAULT_VALUE
+    is_children = True if (now().year - datetime.datetime.strptime(birthday, "%Y-%m-%d").year) < GW_OPEN_CIF_CHILD_AGE else False
+    # địa chỉ liên lạc doanh nghiệp hoặc người giám hộ
     address_contact_info_c = {
         "contact_address_line": GW_DEFAULT_VALUE,
         "contact_address_ward_name": GW_DEFAULT_VALUE,
@@ -577,13 +583,12 @@ async def repos_push_cif_to_gw(booking_id: str, session: Session, response_custo
         "mobile_phone": customer.mobile_number if customer.mobile_number else GW_DEFAULT_VALUE,
         "email": customer.email if customer.email else GW_DEFAULT_VALUE,
         "place_of_birth": cust_individual.country_of_birth_id if cust_individual.country_of_birth_id else GW_DEFAULT_VALUE,
-        "birthday": date_to_string(cust_individual.date_of_birth,
-                                   _format=GW_DATE_FORMAT) if cust_individual.date_of_birth else GW_DEFAULT_VALUE,
+        "birthday": birthday,
         "tax": customer.tax_number if customer.tax_number else GW_DEFAULT_VALUE,
         # TODO hard core tình trạng cư trú (resident_status)
         "resident_status": "N",
         "legal_guardian": GW_DEFAULT_VALUE,
-        "co_owner": GW_DEFAULT_VALUE,
+        "co_owner": GW_DEFAULT_VALUE if not is_children and not SERVICE['production']['production_flag'] else GW_OPEN_CO_OWNER_CIF_INFO,
         "nationality": customer.nationality_id if customer.nationality_id else GW_DEFAULT_VALUE,
         "birth_country": GW_DEFAULT_VALUE,
         # TODO hard core language
@@ -950,47 +955,52 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
     card_data = card_result.data
     debit_card_id = card_data['debit_card_id']
     customer_info = response_customers[0]
+    is_main_card_already_exists = True if int(
+        card_data.get("issue_debit_card", {}).get('approval_status')) == 1 else False
+    if not is_main_card_already_exists:
+        # @TODO: card_auto_renew, Quan hệ với thẻ chính, Tên mẹ của khách hàng
+        # @TODO: Câu hỏi bí mật, Nơi nhân hóa đơn, Nơi nhân sao kê
+        card_info = {
+            "card_indicator": MAIN_CARD,
+            "card_type": card_data["issue_debit_card"]["card_group"],
+            "card_auto_renew": GW_DEFAULT_CARD_AUTO_RENEW,
+            "card_release_form": GW_DEFAULT_NORMAL if card_data["issue_debit_card"]["physical_issuance_type"][
+                "code"] else GW_DEFAULT_QUICK,
+            "card_block_online_trans": GW_DEFAULT_YES if card_data["issue_debit_card"][
+                "payment_online_flag"] else GW_DEFAULT_NO,
+            "card_contact_less": GW_DEFAULT_YES if card_data["issue_debit_card"]["physical_card_type"][0]["code"] == 1 else GW_DEFAULT_NO,
+            "card_relation_to_primany": GW_DEFAULT_CARD_RELATION_TO_PRIMARY,
+            "card_mother_name": customer_info.Customer.full_name_vn,
+            "card_secure_question": customer_info.Customer.full_name_vn,
+            "card_bill_option": GW_DEFAULT_CARD_BILL_OPTION,
+            "card_statement_delivery_option": GW_DEFAULT_CARD_STATEMENT_DELIVERY_OPTION,
+            "card_customer_type": card_data["issue_debit_card"]["customer_type"]["id"],
+            "srcCde": card_data["issue_debit_card"]["src_code"],
+            "promoCde": card_data["issue_debit_card"]["pro_code"],
 
-    # @TODO: card_auto_renew, Quan hệ với thẻ chính, Tên mẹ của khách hàng
-    # @TODO: Câu hỏi bí mật, Nơi nhân hóa đơn, Nơi nhân sao kê
-    card_info = {
-        "card_indicator": MAIN_CARD,
-        "card_type": card_data["issue_debit_card"]["card_group"],
-        "card_auto_renew": GW_DEFAULT_CARD_AUTO_RENEW,
-        "card_release_form": GW_DEFAULT_NORMAL if card_data["issue_debit_card"]["physical_issuance_type"]["code"] else GW_DEFAULT_QUICK,
-        "card_block_online_trans": GW_DEFAULT_YES if card_data["issue_debit_card"]["payment_online_flag"] else GW_DEFAULT_NO,
-        "card_contact_less": GW_DEFAULT_YES if card_data["issue_debit_card"]["physical_card_type"][0]["code"] == 1 else GW_DEFAULT_NO,
-        "card_relation_to_primany": GW_DEFAULT_CARD_RELATION_TO_PRIMARY,
-        "card_mother_name": customer_info.Customer.full_name_vn,
-        "card_secure_question": customer_info.Customer.full_name_vn,
-        "card_bill_option": GW_DEFAULT_CARD_BILL_OPTION,
-        "card_statement_delivery_option": GW_DEFAULT_CARD_STATEMENT_DELIVERY_OPTION,
-        "card_customer_type": card_data["issue_debit_card"]["customer_type"]["id"],
-        "srcCde": card_data["issue_debit_card"]["src_code"],
-        "promoCde": card_data["issue_debit_card"]["pro_code"],
+            # additional field
+            "account_type": GW_DEFAULT_ATM_CARD_ACCOUNT_PROVIDER,
+            "title": GW_CUST_TITLE_MR if customer_info.CustomerIndividualInfo.title_id == CRM_CUST_TITLE_MR else GW_CUST_TITLE_MRS,
+            "full_name_vn": f'{card_data["information_debit_card"]["name_on_card"]["last_name_on_card"]} '
+                            f'{card_data["information_debit_card"]["name_on_card"]["middle_name_on_card"]} '
+                            f'{card_data["information_debit_card"]["name_on_card"]["first_name_on_card"]}',
+            "last_name": card_data["information_debit_card"]["name_on_card"]["last_name_on_card"],
+            "first_name": card_data["information_debit_card"]["name_on_card"]["first_name_on_card"],
+            "middle_name": card_data["information_debit_card"]["name_on_card"]["middle_name_on_card"],
 
-        # additional field
-        "account_type": GW_DEFAULT_ATM_CARD_ACCOUNT_PROVIDER,
-        "title": GW_CUST_TITLE_MR if customer_info.CustomerIndividualInfo.title_id == CRM_CUST_TITLE_MR else GW_CUST_TITLE_MRS,
-        "full_name_vn": f'{card_data["information_debit_card"]["name_on_card"]["last_name_on_card"]} '
-                        f'{card_data["information_debit_card"]["name_on_card"]["middle_name_on_card"]} '
-                        f'{card_data["information_debit_card"]["name_on_card"]["first_name_on_card"]}',
-        "last_name": card_data["information_debit_card"]["name_on_card"]["last_name_on_card"],
-        "first_name": card_data["information_debit_card"]["name_on_card"]["first_name_on_card"],
-        "middle_name": card_data["information_debit_card"]["name_on_card"]["middle_name_on_card"],
+            # địa chỉ nhận thẻ
+            "delivByBrchInd": GW_DEFAULT_YES
+            if card_data["card_delivery_address"]["delivery_address_flag"] == CRM_DELIVERY_ADDRESS_FLAG_FALSE else GW_DEFAULT_NO,
+            "address_info_line": card_data["card_delivery_address"]["delivery_address"]["number_and_street"],
+            "address_info_ward_name": card_data["card_delivery_address"]["delivery_address"]["ward"]['name'],
+            "address_info_district_name": card_data["card_delivery_address"]["delivery_address"]["district"]['name'],
+            "address_info_city_name": card_data["card_delivery_address"]["delivery_address"]["province"]['name'],
 
-        # địa chỉ nhận thẻ
-        "delivByBrchInd": GW_DEFAULT_YES
-        if card_data["card_delivery_address"]["delivery_address_flag"] == CRM_DELIVERY_ADDRESS_FLAG_FALSE else GW_DEFAULT_NO,
-        "address_info_line": card_data["card_delivery_address"]["delivery_address"]["number_and_street"],
-        "address_info_ward_name": card_data["card_delivery_address"]["delivery_address"]["ward"],
-        "address_info_district_name": card_data["card_delivery_address"]["delivery_address"]["district"],
-        "address_info_city_name": card_data["card_delivery_address"]["delivery_address"]["province"],
-
-        # thông tin chi nhánh nhận thẻ
-        "delivBrchId": card_data["card_delivery_address"]["scb_branch"]["id"]
-    }
-
+            # thông tin chi nhánh nhận thẻ
+            "delivBrchId": card_data.get("card_delivery_address", {}).get("scb_branch").get("id")
+            if isinstance(card_data.get("card_delivery_address", {}).get("scb_branch"), dict) else
+            card_data.get("card_delivery_address", {}).get("scb_branch")
+        }
     # Thông tin nhân viên giới thiệu
     direct_staff = ""
     indirect_staff = ""
@@ -1012,17 +1022,18 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
     # Loại tiền tệ của TKTT
     casa_currency_number = await repos_get_casa_account_currency_number(session=session, cif_id=cif_id)
 
-    is_success, response_data = await service_gw.open_cards(
-        current_user=current_user.user_info,
-        cif_number=cif_number,
-        casa_account_number=casa_account_number,
-        card_info=card_info,
-        customer_info=response_customers[0],
-        maker_staff_name=maker_staff_name,
-        direct_staff=direct_staff,
-        indirect_staff=indirect_staff,
-        casa_currency_number=casa_currency_number.data
-    )
+    if not is_main_card_already_exists:
+        is_success, response_data = await service_gw.open_cards(
+            current_user=current_user.user_info,
+            cif_number=cif_number,
+            casa_account_number=casa_account_number,
+            card_info=card_info,
+            customer_info=response_customers[0],
+            maker_staff_name=maker_staff_name,
+            direct_staff=direct_staff,
+            indirect_staff=indirect_staff,
+            casa_currency_number=casa_currency_number.data
+        )
 
     await repos_save_transaction_jobs(
         session=session,
@@ -1032,18 +1043,91 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
         business_job_ids=[BUSINESS_JOB_CODE_DEBIT_CARD]
     )
 
-    if not is_success:
-        return ReposReturn(
-            is_error=True,
-            loc="open_cif -> repos_push_debit_to_gw",
-            msg=ERROR_CALL_SERVICE_GW,
-            detail=str(response_data)
-        )
+        if not is_success:
+            return ReposReturn(
+                is_error=True,
+                loc="open_cif -> repos_push_debit_to_gw",
+                msg=ERROR_CALL_SERVICE_GW,
+                detail=str(response_data)
+            )
 
-    # cập nhật lại approval_status cho card
-    await repos_update_approval_status_for_debit_card(
-        debit_card_id=debit_card_id, session=session
-    )
+        # cập nhật lại approval_status cho card
+        await repos_update_approval_status_for_debit_card(
+            debit_card_id=debit_card_id, session=session
+        )
+    # sub card
+    for sub_card in card_data['information_sub_debit_card']['sub_debit_cards']:
+        sub_card_info = {
+            "card_indicator": SUB_CARD.lower(),
+            "card_type": sub_card["card_group"],
+            "card_auto_renew": GW_DEFAULT_CARD_AUTO_RENEW,
+            "card_release_form": GW_DEFAULT_NORMAL if sub_card["physical_issuance_type"][
+                "code"] else GW_DEFAULT_QUICK,
+            "card_block_online_trans": GW_DEFAULT_YES if sub_card[
+                "payment_online_flag"] else GW_DEFAULT_NO,
+            "card_contact_less": GW_DEFAULT_YES if sub_card["physical_card_type"][0]["code"] == 1 else GW_DEFAULT_NO,
+            "card_relation_to_primany": GW_DEFAULT_CARD_RELATION_TO_PRIMARY,
+            "card_mother_name": customer_info.Customer.full_name_vn,
+            "card_secure_question": customer_info.Customer.full_name_vn,
+            "card_bill_option": GW_DEFAULT_CARD_BILL_OPTION,
+            "card_statement_delivery_option": GW_DEFAULT_CARD_STATEMENT_DELIVERY_OPTION,
+            "card_customer_type": sub_card["customer_type"]["id"],
+            "srcCde": sub_card["src_code"].strip(),
+            "promoCde": sub_card["pro_code"].strip(),
+
+            # additional field
+            "account_type": GW_DEFAULT_ATM_CARD_ACCOUNT_PROVIDER,
+            "title": GW_CUST_TITLE_MR if customer_info.CustomerIndividualInfo.title_id == CRM_CUST_TITLE_MR else GW_CUST_TITLE_MRS,
+            "full_name_vn": f'{sub_card["name_on_card"]["last_name_on_card"]} '
+                            f'{sub_card["name_on_card"]["middle_name_on_card"]} '
+                            f'{sub_card["name_on_card"]["first_name_on_card"]}',
+            "last_name": sub_card["name_on_card"]["last_name_on_card"],
+            "first_name": sub_card["name_on_card"]["first_name_on_card"],
+            "middle_name": sub_card["name_on_card"]["middle_name_on_card"],
+
+            # địa chỉ nhận thẻ
+            "delivByBrchInd": GW_DEFAULT_YES
+            if sub_card["card_delivery_address"]["delivery_address_flag"] == CRM_DELIVERY_ADDRESS_FLAG_FALSE else GW_DEFAULT_NO,
+            "address_info_line": sub_card["card_delivery_address"]["delivery_address"]["number_and_street"],
+            "address_info_ward_name": sub_card["card_delivery_address"]["delivery_address"]["ward"]['name'],
+            "address_info_district_name": sub_card["card_delivery_address"]["delivery_address"]["district"]['name'],
+            "address_info_city_name": sub_card["card_delivery_address"]["delivery_address"]["province"]['name'],
+
+            # thông tin chi nhánh nhận thẻ
+            "delivBrchId": sub_card.get("card_delivery_address", {}).get("scb_branch").get("id")
+            if isinstance(sub_card.get("card_delivery_address", {}).get("scb_branch"), dict) else
+            sub_card.get("card_delivery_address", {}).get("scb_branch")
+        }
+
+        is_sub_card_already_exists = True if int(sub_card.get('approval_status')) == 1 else False
+
+        if not is_sub_card_already_exists:
+            is_open_sub_card_success, response_open_sub_card_data = await service_gw.open_cards(
+                current_user=current_user.user_info,
+                cif_number=cif_number,
+                casa_account_number=casa_account_number,
+                card_info=sub_card_info,
+                customer_info=response_customers[0],
+                maker_staff_name=maker_staff_name,
+                direct_staff=direct_staff,
+                indirect_staff=indirect_staff,
+                casa_currency_number=casa_currency_number.data
+            )
+
+            if is_open_sub_card_success:
+                await repos_save_bussiness_form_and_transaction_jobs(
+                    session=session,
+                    booking_id=booking_id,
+                    is_success=is_open_sub_card_success,
+                    response_data=response_open_sub_card_data,
+                    form_data=sub_card_info,
+                    business_form_id=BUSINESS_FORM_DEBIT_CARD,
+                    business_job_ids=[BUSINESS_JOB_CODE_DEBIT_CARD]
+                )
+                # cập nhật lại approval_status cho sub card
+                await repos_update_approval_status_for_debit_card(
+                    debit_card_id=sub_card['id'], session=session
+                )
 
     return ReposReturn(data=None)
 
@@ -1087,7 +1171,6 @@ async def repos_get_casa_account_number_open_cif(cif_id: str, session: Session):
 
 
 async def repos_get_casa_account_currency_number(session: Session, cif_id: str):
-
     currency_info = session.execute(
         select(
             CasaAccount,
