@@ -28,8 +28,13 @@ from app.utils.functions import dropdown, now
 
 
 async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
-    parent_id = session.execute(select(DebitCard.id).filter(DebitCard.customer_id == cif_id)).scalar()
-    if not parent_id:
+    parent_ids = session.execute(select(DebitCard.parent_card_id).filter(
+        and_(
+            DebitCard.customer_id == cif_id,
+            DebitCard.parent_card_id.isnot(None)
+        ))).all()
+    list_parent_ids = [parent_id[0] for parent_id in parent_ids]
+    if len(list_parent_ids) > 1:
         return ReposReturn(is_error=True, msg=ERROR_NO_DATA,
                            loc="cif_id")
     list_debit_card_info_engine = session.execute(
@@ -51,6 +56,7 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
             DebitCard.card_group,
             DebitCardType.card_id,
             DebitCardType.card_type_id,
+            DebitCard.approval_status,
             CardType,
             CardIssuanceType,
             CardCustomerType,
@@ -97,7 +103,7 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
                 DebitCard.active_flag == 1,
                 or_(
                     DebitCard.customer_id == cif_id,
-                    DebitCard.parent_card_id == parent_id
+                    DebitCard.parent_card_id.in_(list_parent_ids)
                 )
             )
         )).all()
@@ -112,7 +118,7 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
     sub_debit_card = {}
     for item in list_debit_card_info_engine:
         if item.parent_card_id is None:
-            physical_card_type.append(dropdown(item.CardType))
+            physical_card_type.append(dropdown(item.CardType)),
             issue_debit_card = {
                 "register_flag": item.card_registration_flag,
                 "physical_card_type": physical_card_type,
@@ -125,6 +131,7 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
                 "src_code": item.src_code,
                 "pro_code": item.pro_code,
                 "card_group": item.card_group,
+                "approval_status": item.approval_status
             }
             information_debit_card = {
                 "name_on_card": {
@@ -158,11 +165,19 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
             sub_debit_card_data = {
                 "id": item.DebitCard.id,
                 "cif_number": item.Customer.cif_number,
+                "approval_status": item.DebitCard.approval_status,
                 "name_on_card": {
                     "last_name_on_card": item.DebitCard.last_name_on_card,
                     "middle_name_on_card": item.DebitCard.middle_name_on_card,
                     "first_name_on_card": item.DebitCard.first_name_on_card,
                 },
+
+                "card_group": item.card_group,
+                "src_code": item.src_code,
+                "pro_code": item.pro_code,
+                "physical_issuance_type": dropdown(item.CardIssuanceType),
+                "customer_type": dropdown(item.CardCustomerType),
+
                 "physical_card_type": [dropdown(item.CardType)],
                 "card_issuance_type": dropdown(item.CardIssuanceType),
                 "payment_online_flag": item.DebitCard.payment_online_flag,
