@@ -1026,6 +1026,7 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
         if row.CustomerEmployee:
             if row.CustomerEmployee.staff_type_id == STAFF_TYPE_BUSINESS_CODE:
                 direct_staff = row.CustomerEmployee.employee_id
+            else:
                 indirect_staff = row.CustomerEmployee.employee_id
 
     if not direct_staff or not indirect_staff:
