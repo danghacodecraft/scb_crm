@@ -24,6 +24,8 @@ class BlacklistRequest(BaseSchema):
     blacklist_source: str = Field(..., description="nguồn", max_length=500)
     document_no: str = Field(..., description="Số văn bản đến", max_length=20)
     blacklist_area: str = Field(..., description="khu vực", max_length=500)
+    created_at: date = Field(..., description="Ngày tạo")
+    updated_at: date = Field(..., description="Ngày cập nhập")
 
 
 class BlacklistResponse(BlacklistRequest):
