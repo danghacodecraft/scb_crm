@@ -258,7 +258,7 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
         )
 
         current_user = self.current_user
-        request_data = []
+        request_data = {}
         account_unlock_info = []
         account_numbers = []
         saving_booking_account = []
@@ -341,7 +341,7 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
             sender_note=sender_info.note
         )
 
-        request_data.append({
+        request_data.update({
             "account_unlock": account_unlock_info,
             "transaction_fee_info": {
                 "fee_info": saving_fee_info,
