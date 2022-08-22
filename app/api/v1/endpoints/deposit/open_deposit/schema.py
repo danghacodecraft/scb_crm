@@ -38,9 +38,9 @@ class DepositOpenTDAccountRequest(BaseSchema):
 class AccountForm(BaseSchema):
     pay_in: str = Field(..., description="Hình thức hạch toán")
     account_number: Optional[str] = Field(..., description="Số tài khoản")
-    full_name: Optional[str] = Field(..., description="Chủ tài khoản")
-    currency: Optional[str] = Field(..., description="Loại tiền")
-    amount: Optional[str] = Field(..., description="Số dư khả dụng")
+    # full_name: Optional[str] = Field(..., description="Chủ tài khoản")
+    # currency: Optional[str] = Field(..., description="Loại tiền")
+    # amount: Optional[str] = Field(..., description="Số dư khả dụng")
 
 
 class CurrencyExchange(BaseSchema):
