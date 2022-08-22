@@ -10,7 +10,7 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_get_casa_account_by_cif_number
 )
 from app.api.v1.endpoints.third_parties.gw.ebank.repository import (
-    repos_gw_get_retrieve_internet_banking_by_cif_number
+    repos_check_and_remove_exist_ebank
 )
 from app.api.v1.endpoints.third_parties.gw.ebank_sms.repository import (
     repos_gw_get_select_mobile_number_sms_by_account_casa
@@ -32,7 +32,6 @@ from app.utils.constant.cif import (
     BUSINESS_FORM_EB, CIF_ID_TEST, EBANKING_ACCOUNT_TYPE_CHECKING
 )
 from app.utils.constant.gw import (
-    GW_FUNC_RETRIEVE_IB_INFO_BY_CIF_OUT,
     GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA_OUT
 )
 from app.utils.error_messages import (
@@ -266,22 +265,6 @@ async def repos_check_and_remove_exist_sms_casa(session: Session, cif_id: str):
     return ReposReturn(data=None)
 
 
-@auto_commit
-async def repos_check_and_remove_exist_ebank(session: Session, cif_id: str):
-    # Xóa ebank theo số cif
-    exist_ebank_info = session.execute(
-        select(EBankingInfo).filter(
-            EBankingInfo.customer_id == cif_id,
-            EBankingInfo.approval_status == False  # noqa
-        )
-    ).first()
-
-    if exist_ebank_info:
-        session.delete(exist_ebank_info.EBankingInfo)
-
-    return ReposReturn(data=None)
-
-
 async def repos_get_casa_accounts_for_sms(cif_id: str, session: Session, current_user):
 
     casa_account_items = session.execute(
@@ -358,41 +341,6 @@ async def repos_get_e_banking(cif_id: str, session: Session) -> ReposReturn:
     }
 
     return ReposReturn(data=data)
-
-
-async def repos_get_e_banking_open_casa(cif_id: str, current_user, cif_number, session: Session):
-    # Kiểm tra bên core có tài khoản Ebanking chưa
-    ebank_info = await repos_gw_get_retrieve_internet_banking_by_cif_number(
-        cif_num=cif_number, current_user=current_user)
-
-    ebank_ibmb_info = ebank_info.data.get(GW_FUNC_RETRIEVE_IB_INFO_BY_CIF_OUT).get('data_output').get('ebank_ibmb_info')
-
-    # Nếu có thông tin, trả dữ liệu theo core
-    if ebank_ibmb_info:
-
-        authentication_code_list = []
-        for item in ebank_ibmb_info[0]["ebank_ibmb_authentication_info_list"]:
-            # mapping authentication_code
-            authentication_code = ""
-            if item["ebank_ibmb_authentication_info_item"]["authentication_code"] == "XACTHUC_SOFTTOKEN":
-                authentication_code = "SOFT_TOKEN"
-            elif item["ebank_ibmb_authentication_info_item"]["authentication_code"] == "XACTHUC_SMS":
-                authentication_code = "SMS"
-
-            authentication_code_list.append(authentication_code)
-
-        ebank_data = {
-            "username": ebank_ibmb_info[0]["ebank_ibmb_username"],
-            "receive_password_code": ebank_ibmb_info[0]["ebank_ibmb_receive_password_info"]["receive_password_code"],
-            "authentication_code_list": authentication_code_list
-        }
-        return ReposReturn(data=(True, ebank_data))
-
-    # Nếu không có thông tin thì kiểm tra DB CRM
-    else:
-        ebank_data_result = await repos_get_e_banking(cif_id, session)
-
-        return ReposReturn(data=(False, ebank_data_result.data))
 
 
 async def repos_get_reg_balance_data(casa_ids, session: Session):

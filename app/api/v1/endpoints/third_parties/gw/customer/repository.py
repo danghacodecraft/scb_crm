@@ -6,14 +6,11 @@ from sqlalchemy.orm import Session, aliased
 from app.api.base.repository import ReposReturn, auto_commit
 from app.api.v1.endpoints.cif.debit_card.repository import repos_debit_card
 from app.api.v1.endpoints.cif.payment_account.detail.repository import (
-    repos_get_detail_payment_account,
-    repos_get_detail_payment_accounts_by_account_ids
+    repos_get_detail_payment_account
 )
 from app.api.v1.endpoints.third_parties.gw.ebank.repository import (
     repos_get_e_banking_from_db_by_cif_id,
-    repos_get_e_banking_from_db_by_cif_number,
-    repos_get_sms_casa_mobile_number_from_db_by_cif_id,
-    repos_gw_get_retrieve_internet_banking_by_cif_number
+    repos_get_sms_casa_mobile_number_from_db_by_cif_id
 )
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.settings.event import service_gw
@@ -31,7 +28,8 @@ from app.third_parties.oracle.models.cif.basic_information.personal.model import
 )
 from app.third_parties.oracle.models.cif.debit_card.model import DebitCard
 from app.third_parties.oracle.models.cif.e_banking.model import (
-    EBankingInfo, EBankingRegisterBalance
+    EBankingInfo, EBankingReceiverNotificationRelationship,
+    EBankingRegisterBalance
 )
 from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingBusinessForm, TransactionDaily, TransactionSender
@@ -68,10 +66,9 @@ from app.utils.constant.debit_card import (
 from app.utils.constant.gw import (
     GW_AUTO, GW_CUSTOMER_TYPE_B, GW_CUSTOMER_TYPE_I, GW_DATE_FORMAT,
     GW_DEFAULT_CUSTOMER_CATEGORY, GW_DEFAULT_KHTC_DOI_TUONG, GW_DEFAULT_NO,
-    GW_DEFAULT_TYPE_ID, GW_DEFAULT_VALUE, GW_DEFAULT_YES,
-    GW_FUNC_RETRIEVE_IB_INFO_BY_CIF_OUT, GW_LANGUAGE, GW_LOCAL_CODE,
-    GW_NO_AGREEMENT_FLAG, GW_NO_MARKETING_FLAG, GW_SELECT, GW_UDF_NAME, GW_YES,
-    GW_YES_AGREEMENT_FLAG
+    GW_DEFAULT_TYPE_ID, GW_DEFAULT_VALUE, GW_DEFAULT_YES, GW_LANGUAGE,
+    GW_LOCAL_CODE, GW_NO_AGREEMENT_FLAG, GW_NO_MARKETING_FLAG, GW_SELECT,
+    GW_UDF_NAME, GW_YES, GW_YES_AGREEMENT_FLAG
 )
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_GW, ERROR_NO_DATA, ERROR_OPEN_CIF
@@ -79,6 +76,7 @@ from app.utils.error_messages import (
 from app.utils.functions import (
     date_to_string, generate_uuid, now, orjson_dumps
 )
+from app.utils.mapping import mapping_authentication_code_crm_to_core
 from app.utils.vietnamese_converter import split_name
 
 
@@ -289,43 +287,6 @@ async def repos_get_customer_open_cif(
     return ReposReturn(data=customer)
 
 
-async def repos_get_customer_by_cif_number(
-        cif_number: str,
-        session: Session
-):
-    customer = session.execute(
-        select(
-            Customer,
-            CustomerIdentity,
-            CustomerIndividualInfo,
-            CustomerAddress,
-            CustomerProfessional,
-            CustomerEmployee,
-            AddressWard,
-            AddressDistrict,
-            AddressProvince,
-            AddressCountry,
-            AverageIncomeAmount
-        )
-        .join(CustomerIdentity, Customer.id == CustomerIdentity.customer_id)
-        .join(CustomerIndividualInfo, Customer.id == CustomerIndividualInfo.customer_id)
-        .join(CustomerAddress, Customer.id == CustomerAddress.customer_id)
-        .join(AddressWard, CustomerAddress.address_ward_id == AddressWard.id)
-        .join(AddressDistrict, CustomerAddress.address_district_id == AddressDistrict.id)
-        .join(AddressProvince, CustomerAddress.address_province_id == AddressProvince.id)
-        .join(AddressCountry, CustomerAddress.address_country_id == AddressCountry.id)
-        .outerjoin(CustomerProfessional, Customer.customer_professional_id == CustomerProfessional.id)
-        .outerjoin(CustomerEmployee, Customer.id == CustomerEmployee.customer_id)
-        .outerjoin(AverageIncomeAmount, CustomerProfessional.average_income_amount_id == AverageIncomeAmount.id)
-        .filter(Customer.cif_number == cif_number)
-    ).all()
-
-    if not customer:
-        return ReposReturn(is_error=True, msg=ERROR_NO_DATA, loc="CUSTOMER_OPEN_CIF")
-
-    return ReposReturn(data=customer)
-
-
 async def repos_get_teller_info(booking_id: str, session: Session):
     transaction_daily = aliased(TransactionDaily, name="TransactionDailyRoot")
 
@@ -489,7 +450,7 @@ async def repos_update_approval_status_for_debit_card(
     return ReposReturn(data=None)
 
 
-async def repos_get_progress(booking_id: str, session: Session):
+async def repos_get_progress_open_cif(booking_id: str, session: Session):
     transaction_jobs = session.execute(
         select(
             TransactionJob
@@ -795,77 +756,6 @@ async def repos_push_casa_to_gw(booking_id: str,
     return ReposReturn(data=account_number)
 
 
-async def repos_push_casa_to_gw_open_casa(booking_id: str,
-                                          session: Session,
-                                          current_user: any,
-                                          cif_number: str,
-                                          maker_staff_name,
-                                          casa_account_ids: List[str] = None):
-    account_number_list = []
-
-    payment_account_list_result = await repos_get_detail_payment_accounts_by_account_ids(
-        casa_account_ids=casa_account_ids,
-        session=session
-    )
-    if payment_account_list_result.is_error:
-        return ReposReturn(
-            is_error=True,
-            msg=payment_account_list_result.msg,
-            loc=payment_account_list_result.loc,
-            detail=payment_account_list_result.detail,
-            error_status_code=payment_account_list_result.error_status_code
-        )
-
-    for payment_account in payment_account_list_result.data:
-
-        casa_account = payment_account[0]
-
-        is_success, gw_open_casa_account_info, _ = await service_gw.get_open_casa_account(
-            cif_number=cif_number,
-            self_selected_account_flag=casa_account.self_selected_account_flag,
-            casa_account_info=casa_account,
-            current_user=current_user.user_info,
-            maker_staff_name=maker_staff_name
-        )
-
-        # Chỉ Lưu transaction job bị fail
-        if not is_success:
-            await repos_save_transaction_jobs(
-                session=session,
-                booking_id=booking_id,
-                is_success=is_success,
-                response_data=gw_open_casa_account_info,
-                business_job_ids=[BUSINESS_JOB_CODE_CASA_INFO]
-            )
-
-            return ReposReturn(
-                is_error=True,
-                loc="open_casa",
-                msg=ERROR_CALL_SERVICE_GW,
-                detail=str(gw_open_casa_account_info)
-            )
-
-        account_number = gw_open_casa_account_info['openCASA_out']['data_output']['account_info']['account_num']
-
-        # cập nhật lại casa_number
-        await repos_update_casa_account(
-            casa_account=casa_account, account_number=account_number, session=session
-        )
-
-        account_number_list.append(account_number)
-
-    # Lưu lại transacton thành công
-    await repos_save_transaction_jobs(
-        session=session,
-        booking_id=booking_id,
-        is_success=True,
-        response_data=None,
-        business_job_ids=[BUSINESS_JOB_CODE_CASA_INFO]
-    )
-
-    return ReposReturn(data=account_number_list)
-
-
 async def repos_push_internet_banking_to_gw(booking_id: str,
                                             session: Session,
                                             response_customers: dict,
@@ -878,11 +768,8 @@ async def repos_push_internet_banking_to_gw(booking_id: str,
     customer = first_row.Customer
     cust_individual = first_row.CustomerIndividualInfo
 
-    # Lấy thông tin EB từ DB
-    e_banking_result = await repos_get_e_banking_from_db_by_cif_id(
-        cif_id=cif_id, session=session)
-
-    e_banking = e_banking_result.data
+    e_banking = (await repos_get_e_banking_from_db_by_cif_id(
+        cif_id=cif_id, session=session)).data
 
     # Lấy thông tin SMS casa từ DB
     balance_id__relationship_mobile_numbers_result = await repos_get_sms_casa_mobile_number_from_db_by_cif_id(
@@ -901,6 +788,14 @@ async def repos_push_internet_banking_to_gw(booking_id: str,
 
     # Không tìm thấy thông tin từ DB có thể do khách hàng không đăng ký, hoặc đã đăng ký thành công từ lần trước
     if not e_banking and not balance_id__relationship_mobile_numbers:
+        # Lưu transaction job
+        await repos_save_transaction_jobs(
+            session=session,
+            booking_id=booking_id,
+            is_success=True,
+            response_data=None,
+            business_job_ids=[BUSINESS_JOB_CODE_E_BANKING]
+        )
         return ReposReturn(data=None)
 
     # Push GW EBANK
@@ -912,7 +807,7 @@ async def repos_push_internet_banking_to_gw(booking_id: str,
         authentication_info = []
         for authentication_code in e_banking["authentication_info_list"]:
             authentication_info.append({
-                "authentication_code": authentication_code
+                "authentication_code": mapping_authentication_code_crm_to_core(authentication_code)
             })
 
         e_banking_info = {
@@ -1026,187 +921,6 @@ async def repos_push_internet_banking_to_gw(booking_id: str,
     return ReposReturn(data=None)
 
 
-async def repos_push_internet_banking_to_gw_open_casa(booking_id: str,
-                                                      session: Session,
-                                                      response_customers: dict,
-                                                      current_user: any,
-                                                      cif_number: str,
-                                                      account_number_list: str,
-                                                      maker_staff_name: str):
-
-    first_row = response_customers[0]
-    customer = first_row.Customer
-    cust_individual = first_row.CustomerIndividualInfo
-
-    e_banking_result = await repos_get_e_banking_from_db_by_cif_number(
-        cif_number=cif_number, session=session
-    )
-
-    e_banking = e_banking_result.data
-
-    # Lấy thông tin SMS casa từ DB
-    account_number__reg_balacne_info = {}
-    for account_number in account_number_list:
-        balance_id__relationship_mobile_numbers_result = await repos_get_sms_casa_mobile_number_from_db_by_cif_id(
-            cif_id=account_number, session=session)
-
-        if balance_id__relationship_mobile_numbers_result.is_error:
-            return ReposReturn(
-                is_error=True,
-                msg=balance_id__relationship_mobile_numbers_result.msg,
-                loc=balance_id__relationship_mobile_numbers_result.loc,
-                detail=balance_id__relationship_mobile_numbers_result.detail,
-                error_status_code=balance_id__relationship_mobile_numbers_result.error_status_code
-            )
-
-        balance_id__relationship_mobile_numbers = balance_id__relationship_mobile_numbers_result.data
-        account_number__reg_balacne_info[account_number] = balance_id__relationship_mobile_numbers
-
-    # Không tìm thấy thông tin từ DB có thể do khách hàng không đăng ký, hoặc đã đăng ký thành công từ lần trước
-    if not e_banking and not account_number__reg_balacne_info:
-        return ReposReturn(data=None)
-
-    # Push GW EBANK
-    error_messages = []
-    is_success_eb = False
-    is_success_sms = False
-
-    if e_banking:
-        # Kiểm tra GW có thông tin EB chưa, nếu có thông tin rồi không được đăng ký -> trả lỗi.
-        # Kiểm tra bên core có tài khoản Ebanking chưa
-        ebank_info = await repos_gw_get_retrieve_internet_banking_by_cif_number(
-            cif_num=cif_number, current_user=current_user)
-
-        ebank_ibmb_info = ebank_info.data.get(GW_FUNC_RETRIEVE_IB_INFO_BY_CIF_OUT).get('data_output').get(
-            'ebank_ibmb_info')
-
-        # Nếu có thông tin, trả dữ liệu theo core
-        if ebank_ibmb_info:
-            error_messages.append({
-                "msg": None,
-                "loc": "repos_push_internet_banking_to_gw_open_casa",
-                "detail": "Ebank existed on this cif_number",
-            })
-        # Đăng ký mới
-        else:
-            authentication_info = []
-            for authentication_code in e_banking["authentication_info_list"]:
-                authentication_info.append({
-                    "authentication_code": authentication_code
-                })
-
-            e_banking_info = {
-                "ebank_ibmb_info": {
-                    "ebank_ibmb_username": e_banking["account_name"],
-                    "ebank_ibmb_mobilephone": customer.mobile_number
-                },
-                "cif_info": {
-                    "cif_num": cif_number
-                },
-                "address_info": {
-                    "line": first_row.CustomerAddress.address,
-                    "ward_name": first_row.AddressWard.name,
-                    "district_name": first_row.AddressDistrict.name,
-                    "city_name": first_row.AddressProvince.name,
-                    "city_code": first_row.AddressCountry.id
-                },
-                "customer_info": {
-                    "full_name": customer.full_name_vn,
-                    "first_name": split_name(customer.full_name_vn)[2] if split_name(customer.full_name_vn)[2] else " ",
-                    "middle_name": split_name(customer.full_name_vn)[1] if split_name(customer.full_name_vn)[1] else " ",
-                    "last_name": split_name(customer.full_name_vn)[0],
-                    "birthday": date_to_string(cust_individual.date_of_birth,
-                                               _format=GW_DATE_FORMAT) if cust_individual.date_of_birth else GW_DEFAULT_VALUE,
-                    "email": customer.email if customer.email else GW_DEFAULT_VALUE
-                },
-                "authentication_info": authentication_info,
-                "service_package_info": {
-                    "service_package_code": GW_DEFAULT_VALUE
-                },
-                "staff_referer": {
-                    "staff_code": GW_DEFAULT_VALUE
-                }
-            }
-
-            is_success_eb, eb_response_data = await service_gw.get_open_ib(
-                current_user=current_user.user_info,
-                data_input=e_banking_info
-            )
-
-            if is_success_eb:
-                await repos_update_approval_status_for_ebank(
-                    ebank_id=e_banking['id'], session=session
-                )
-            else:
-                error_messages.append(eb_response_data)
-
-    # Push GW SMS
-    if account_number__reg_balacne_info:
-        for casa_account_number, balance_id__relationship_mobile_numbers in account_number__reg_balacne_info.items():
-            ebank_sms_info_list = []
-            reg_balance_id = None
-            for balance_id, mobile_numbers in balance_id__relationship_mobile_numbers.items():
-                ebank_sms_info_list = [{
-                    "ebank_sms_info_item": {
-                        "ebank_sms_indentify_num": mobile_number,
-                        "cif_info": {
-                            "cif_num": cif_number
-                        },
-                        "branch_info": {
-                            "branch_code": current_user.user_info.hrm_branch_code
-                        }
-                    }
-                } for mobile_number in mobile_numbers]
-
-                reg_balance_id = balance_id
-
-            # @TODO: hard code account_type là "TT" biến động số dư
-            account_info = {
-                "account_num": casa_account_number,
-                "account_type": "TT"
-            }
-            staff_info_checker = {
-                "staff_name": current_user.user_info.username
-            }
-            staff_info_maker = {
-                "staff_name": maker_staff_name
-            }
-
-            is_success_sms, sms_response_data = await service_gw.register_sms_service_by_account_casa(
-                current_user=current_user.user_info,
-                account_info=account_info,
-                ebank_sms_info_list=ebank_sms_info_list,
-                staff_info_checker=staff_info_checker,
-                staff_info_maker=staff_info_maker
-            )
-
-            if is_success_sms:
-                await repos_update_approval_status_for_reg_balance(
-                    reg_balance_id=reg_balance_id, session=session
-                )
-            else:
-                error_messages.append(sms_response_data)
-
-    # Lưu transaction job
-    await repos_save_transaction_jobs(
-        session=session,
-        booking_id=booking_id,
-        is_success=False if error_messages else True,
-        response_data=error_messages,
-        business_job_ids=[BUSINESS_JOB_CODE_E_BANKING]
-    )
-
-    if error_messages:
-        return ReposReturn(
-            is_error=True,
-            loc="open_cif -> repos_push_internet_banking_to_gw",
-            msg=ERROR_CALL_SERVICE_GW,
-            detail=str(error_messages)
-        )
-
-    return ReposReturn(data=None)
-
-
 async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user, cif_id: str, cif_number: str,
                                  casa_account_number, response_customers, maker_staff_name):
     card_result = await repos_debit_card(
@@ -1215,6 +929,13 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
     if card_result.is_error:
         # Không có dữ liệu có thể do người dùng không đăng ký
         if card_result.msg == ERROR_NO_DATA:
+            await repos_save_transaction_jobs(
+                session=session,
+                booking_id=booking_id,
+                is_success=True,
+                response_data=None,
+                business_job_ids=[BUSINESS_JOB_CODE_DEBIT_CARD]
+            )
             return ReposReturn(data=None)
 
         else:
@@ -1365,31 +1086,6 @@ async def repos_get_casa_account_number_open_cif(cif_id: str, session: Session):
     return ReposReturn(data=casa_account_number)
 
 
-async def repos_account_number_list_by_casa_account_ids(
-        casa_account_ids: List[str], session: Session
-):
-    account_number_list = []
-    for casa_account_id in casa_account_ids:
-        casa_account_number = session.execute(
-            select(
-                CasaAccount.casa_account_number
-            ).filter(
-                CasaAccount.id == casa_account_id
-            )
-        ).scalars().first()
-
-        if not casa_account_number:
-            return ReposReturn(
-                is_error=True,
-                loc="open_casa -> repos_account_number_list_by_casa_account_ids ->casa_account_number",
-                msg=ERROR_NO_DATA
-            )
-
-        account_number_list.append(casa_account_number)
-
-    return ReposReturn(data=account_number_list)
-
-
 async def repos_get_casa_account_currency_number(session: Session, cif_id: str):
 
     currency_info = session.execute(
@@ -1409,6 +1105,45 @@ async def repos_get_casa_account_currency_number(session: Session, cif_id: str):
         )
 
     return ReposReturn(data=currency_info.number)
+
+
+@auto_commit
+async def repos_get_sms_casa_mobile_number_from_db_by_account_number(account_number, session: Session):
+    casa_id = session.execute(
+        select(
+            CasaAccount.id,
+        )
+        .filter(CasaAccount.casa_account_number == account_number)
+    ).scalars().first()
+
+    if not casa_id:
+        return ReposReturn(is_error=True, msg=ERROR_NO_DATA, loc="repos_get_sms_casa_mobile_number_from_db_by_account_number -> casa_id")
+
+    balance_and_relationship_info = session.execute(
+        select(
+            EBankingRegisterBalance.id.label('reg_balance_id'),
+            EBankingReceiverNotificationRelationship.mobile_number
+        ).outerjoin(
+            EBankingReceiverNotificationRelationship,
+            EBankingReceiverNotificationRelationship.e_banking_register_balance_casa_id == EBankingRegisterBalance.id
+        )
+        .filter(
+            EBankingRegisterBalance.account_id == casa_id,
+            EBankingRegisterBalance.approval_status == 0
+        )
+    ).all()
+
+    balance_id__relationship_mobile_numbers = {}
+    for item in balance_and_relationship_info:
+        if item['reg_balance_id'] not in balance_id__relationship_mobile_numbers:
+            balance_id__relationship_mobile_numbers[item['reg_balance_id']] = []
+
+        balance_id__relationship_mobile_numbers[item['reg_balance_id']].append(item.mobile_number)
+
+    if not balance_id__relationship_mobile_numbers:
+        return ReposReturn(data=None)
+
+    return ReposReturn(data=balance_id__relationship_mobile_numbers)
 
 
 @auto_commit

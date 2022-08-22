@@ -12,14 +12,17 @@ from app.api.v1.endpoints.casa.transfer.repository import (
 )
 from app.api.v1.endpoints.config.bank.controller import CtrConfigBank
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
-    repos_gw_change_status_account, repos_gw_get_casa_account_by_cif_number,
-    repos_gw_get_casa_account_info, repos_gw_get_close_casa_account,
+    repos_account_number_list_by_casa_account_ids,
+    repos_get_progress_open_casa, repos_gw_change_status_account,
+    repos_gw_get_casa_account_by_cif_number, repos_gw_get_casa_account_info,
+    repos_gw_get_close_casa_account,
     repos_gw_get_column_chart_casa_account_info,
     repos_gw_get_pie_chart_casa_account_info,
     repos_gw_get_retrieve_ben_name_by_account_number,
     repos_gw_get_retrieve_ben_name_by_card_number,
     repos_gw_get_statements_casa_account_info, repos_gw_get_tele_transfer,
-    repos_gw_withdraw
+    repos_gw_withdraw, repos_push_casa_to_gw_open_casa,
+    repos_push_internet_banking_to_gw_open_casa
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWOpenCasaAccountRequest, GWReportColumnChartHistoryAccountInfoRequest,
@@ -30,9 +33,7 @@ from app.api.v1.endpoints.third_parties.gw.customer.controller import (
     CtrGWCustomer
 )
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
-    repos_account_number_list_by_casa_account_ids, repos_get_progress,
-    repos_push_casa_to_gw_open_casa,
-    repos_push_internet_banking_to_gw_open_casa
+    repos_get_customer_open_cif
 )
 from app.api.v1.endpoints.third_parties.gw.payment.repository import (
     repos_gw_interbank_transfer, repos_gw_pay_in_cash,
@@ -426,12 +427,15 @@ class CtrGWCasaAccount(BaseController):
                 error_status_code=status.HTTP_403_FORBIDDEN
             )
 
-        # Kiểm tra số CIF có tồn tại trong CRM không
+        # Kiểm tra số CIF có tồn tại trong CRM không, lấy cif_id
         cif_number = request.cif_number
-        self.call_repos(await repos_get_customer_by_cif_number(
+        customers_row = self.call_repos(await repos_get_customer_by_cif_number(
             cif_number=cif_number,
             session=self.oracle_session
         ))
+        cif_id = None
+        if customers_row:
+            cif_id = customers_row.id
 
         booking = await CtrBooking().ctr_get_booking(
             booking_id=booking_id,
@@ -467,10 +471,10 @@ class CtrGWCasaAccount(BaseController):
             }
         }
         # Lấy completed flag
-        _, is_complete_casa, is_complete_eb, is_complete_debit = self.call_repos(
-            await repos_get_progress(booking_id=booking_id, session=self.oracle_session))
-        print(is_complete_casa, is_complete_eb, is_complete_debit)
-        # Push casa (mot cif - nhieu casa) (tra loi ngay)
+        is_complete_casa, is_complete_eb, is_complete_debit = self.call_repos(
+            await repos_get_progress_open_casa(booking_id=booking_id, session=self.oracle_session))
+
+        # Push casa
         if not is_complete_casa:
             account_number_list_result = await repos_push_casa_to_gw_open_casa(
                 booking_id=booking_id,
@@ -496,12 +500,11 @@ class CtrGWCasaAccount(BaseController):
             is_complete_casa = True
 
         # RULE: Hoàn tất mở CASA mới được mở EB, Debit
-        # Push EB (mot cif - mot eb)
         error_list = []
         if is_complete_casa:
 
-            response_customers = self.call_repos(await repos_get_customer_by_cif_number(
-                cif_number=cif_number, session=self.oracle_session))
+            response_customers = self.call_repos(await repos_get_customer_open_cif(
+                cif_id=cif_id, session=self.oracle_session))
 
             if not account_number_list:
                 account_number_list = self.call_repos(await repos_account_number_list_by_casa_account_ids(
@@ -514,6 +517,7 @@ class CtrGWCasaAccount(BaseController):
                     session=self.oracle_session,
                     response_customers=response_customers,
                     current_user=self.current_user,
+                    cif_id=cif_id,
                     cif_number=cif_number,
                     maker_staff_name=maker_staff_name,
                     account_number_list=account_number_list
@@ -529,9 +533,7 @@ class CtrGWCasaAccount(BaseController):
                 else:
                     is_complete_eb = True
 
-        # Push Debit Card (nhieu tk - nhieu the)
-            # lay data tu DB
-            # push len GW
+        # Push Debit Card
 
         response_info["account_num"]["status"] = True
         if is_complete_eb:

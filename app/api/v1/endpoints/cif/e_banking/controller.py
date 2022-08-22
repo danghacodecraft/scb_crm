@@ -4,8 +4,7 @@ from app.api.v1.endpoints.cif.e_banking.repository import (
     repos_check_and_remove_exist_sms_casa,
     repos_check_casa_account_have_casa_account_number,
     repos_get_detail_reset_password, repos_get_detail_reset_password_teller,
-    repos_get_e_banking, repos_get_e_banking_open_casa,
-    repos_get_payment_accounts, repos_get_sms_data,
+    repos_get_e_banking, repos_get_payment_accounts, repos_get_sms_data,
     repos_get_sms_data_open_casa, repos_save_e_banking, repos_save_sms_casa
 )
 from app.api.v1.endpoints.cif.e_banking.schema import (
@@ -16,6 +15,9 @@ from app.api.v1.endpoints.cif.repository import (
 )
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_get_cif_number_open_cif
+)
+from app.api.v1.endpoints.third_parties.gw.ebank.repository import (
+    repos_pull_e_banking_from_gw_cif_number_and_return_is_exist_ebank
 )
 from app.api.v1.validator import validate_history_data
 from app.third_parties.oracle.models.master_data.customer import (
@@ -53,12 +55,13 @@ class CtrEBanking(BaseController):
         if open_casa_flag:
             cif_number = self.call_repos(await repos_get_cif_number_open_cif(
                 cif_id=cif_id, session=self.oracle_session))
-            is_exist_ebank, _ = self.call_repos(await repos_get_e_banking_open_casa(
+
+            is_exist_ebank = (await repos_pull_e_banking_from_gw_cif_number_and_return_is_exist_ebank(
                 cif_id=cif_id,
                 cif_number=cif_number,
-                current_user=self.current_user,
+                current_user=current_user,
                 session=self.oracle_session
-            ))
+            )).data
 
         if not is_exist_ebank:
             if e_banking_info:
@@ -138,9 +141,9 @@ class CtrEBanking(BaseController):
                 ))
                 if have_casa_account_number:
                     return self.response_exception(
-                        msg=None,
+                        msg="ERROR_REG_SMS_CASA_OPEN_CASA",
                         loc="ctr_save_e_banking_and_sms -> ebank_sms_casa_info",
-                        detail=f"{casa_id} already have cif_num, cannot reg sms"
+                        detail=f"{casa_id} already have casa_num, cannot reg sms"
                     )
 
             # Dữ liệu để tạo sms_casa trong DB
@@ -181,21 +184,22 @@ class CtrEBanking(BaseController):
     ####################################################################################################################
     async def ctr_get_e_banking(self, cif_id: str, open_casa_flag=False):
 
+        current_user = self.current_user
         is_exist_ebank = False
         old_casa_account_for_selects, new_casa_account_for_selects = [], []
         if open_casa_flag:
-
+            # Kiểm tra EN từ core
             cif_number = self.call_repos(await repos_get_cif_number_open_cif(
                 cif_id=cif_id, session=self.oracle_session))
 
-            is_exist_ebank, e_banking_result = self.call_repos(await repos_get_e_banking_open_casa(
+            is_exist_ebank = (await repos_pull_e_banking_from_gw_cif_number_and_return_is_exist_ebank(
                 cif_id=cif_id,
                 cif_number=cif_number,
-                current_user=self.current_user,
+                current_user=current_user,
                 session=self.oracle_session
-            ))
+            )).data
 
-            sms_casa_result, old_casa_account_for_selects, new_casa_account_for_selects = self.call_repos(await repos_get_sms_data_open_casa(
+            sms_casa, old_casa_account_for_selects, new_casa_account_for_selects = self.call_repos(await repos_get_sms_data_open_casa(
                 cif_id=cif_id,
                 cif_number=cif_number,
                 current_user=self.current_user,
@@ -203,20 +207,20 @@ class CtrEBanking(BaseController):
             ))
 
         else:
-            e_banking_result = self.call_repos(await repos_get_e_banking(
+            sms_casa = self.call_repos(await repos_get_sms_data(
                 cif_id=cif_id,
                 session=self.oracle_session
             ))
 
-            sms_casa_result = self.call_repos(await repos_get_sms_data(
-                cif_id=cif_id,
-                session=self.oracle_session
-            ))
+        e_banking = self.call_repos(await repos_get_e_banking(
+            cif_id=cif_id,
+            session=self.oracle_session
+        ))
 
         response = {
             "is_disable_ebank_flag": is_exist_ebank,
-            "e_banking": e_banking_result if e_banking_result else None,
-            "sms_casa": sms_casa_result if sms_casa_result else None,
+            "e_banking": e_banking if e_banking else None,
+            "sms_casa": sms_casa if sms_casa else None,
             "sms_casa_select_info": {
                 "old_casa_accounts": old_casa_account_for_selects,
                 "new_casa_accounts": new_casa_account_for_selects,
