@@ -505,14 +505,28 @@ async def repos_get_amount_block_from_booking(
 ):
     response_data = session.execute(
         select(
-            Booking,
-            BookingBusinessForm,
+            Booking.id,
+            BookingAccount,
+            CasaAccount,
+            Customer
+        )
+        .join(BookingAccount, Booking.id == BookingAccount.booking_id)
+        .join(CasaAccount, BookingAccount.account_id == CasaAccount.id)
+        .join(Customer, CasaAccount.customer_id == Customer.id)
+        .filter(Booking.id.in_(booking_ids))
+    ).all()
+
+    booking_business_form = session.execute(
+        select(
+            Booking.id,
+            BookingBusinessForm
         )
         .join(BookingBusinessForm, Booking.id == BookingBusinessForm.booking_id)
         .filter(Booking.id.in_(booking_ids))
         .order_by(BookingBusinessForm.created_at)
     ).all()
-    return ReposReturn(data=response_data)
+
+    return ReposReturn(data=(response_data, booking_business_form))
 
 
 async def repos_get_td_account_from_booking(
