@@ -2,7 +2,9 @@ from fastapi import UploadFile
 from starlette import status
 
 from app.api.base.controller import BaseController
-from app.api.v1.endpoints.file.repository import repos_upload_file
+from app.api.v1.endpoints.file.repository import (
+    repos_download_file, repos_upload_file
+)
 from app.api.v1.endpoints.file.validator import file_validator
 from app.api.v1.endpoints.tablet.mobile.repository import (
     repos_pair_by_otp, repos_retrieve_table_by_tablet_token
@@ -12,7 +14,7 @@ from app.api.v1.endpoints.tablet.mobile.schema import (
     SyncWithWebByOTPRequest
 )
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
-    repos_gw_get_customer_info_list
+    repos_get_customer_avatar_url_from_cif, repos_gw_get_customer_info_list
 )
 from app.api.v1.endpoints.user.schema import AuthResponse
 from app.settings.event import INIT_SERVICE, service_rabbitmq, service_redis
@@ -174,6 +176,13 @@ class CtrTabletMobile(BaseController):
 
         if len(customer_list) == 1:
             found_customer_info = customer_list[0]['customer_info_item']['customer_info']
+            avatar_uuid = self.call_repos(
+                await repos_get_customer_avatar_url_from_cif(
+                    cif_number=found_customer_info['cif_info']['cif_num'],
+                    session=self.oracle_session
+                )
+            )
+            avatar_url = self.call_repos(await repos_download_file(avatar_uuid))
 
             # gửi cho web message thông báo tìm thấy khách hàng
             service_rabbitmq.publish(
@@ -184,7 +193,7 @@ class CtrTabletMobile(BaseController):
                         "customer_info": {
                             "cif_num": found_customer_info['cif_info']['cif_num'],
                             "full_name": found_customer_info['full_name'],
-                            "avatar_url": None  # TODO: avatar khách hàng giao dịch
+                            "avatar_url": f"{INIT_SERVICE['crm_app_url']}{avatar_url['file_url']}" if avatar_url else None
                         }
                     }
                 },
