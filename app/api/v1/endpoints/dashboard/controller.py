@@ -169,7 +169,7 @@ class CtrDashboard(BaseController):
                 )
 
             if booking_business_form.business_form_id == BUSINESS_FORM_AMOUNT_UNBLOCK \
-                    and form_data and 'transaction_fee_info' in form_data[0]:  # TODO
+                    and isinstance(form_data, list) and 'transaction_fee_info' in form_data[0]:  # TODO
                 form_data = form_data[0]
                 mapping_datas[booking_id].update(
                     customer_cif_number=form_data['transaction_fee_info']['sender_info']['cif_number']
