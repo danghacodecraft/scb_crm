@@ -134,7 +134,6 @@ async def repos_gw_payment_amount_block(
         teller,
         session: Session
 ):
-
     for item in request_data_gw.get('account_amount_blocks'):
         data_input = {
             "account_info": {
@@ -158,15 +157,12 @@ async def repos_gw_payment_amount_block(
             # TODO chưa được mô tả
             "p_blk_udf": "",
             "staff_info_checker": {
-                # TODO hard core
                 "staff_name": current_user.user_info.username
             },
             "staff_info_maker": {
-                # TODO hard core
-                "staff_name": teller
+                "staff_name": teller.user_name
             }
         }
-
         is_success, gw_payment_amount_block = await service_gw.gw_payment_amount_block(
             current_user=current_user.user_info, data_input=data_input
         )
