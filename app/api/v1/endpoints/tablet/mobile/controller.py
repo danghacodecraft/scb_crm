@@ -11,9 +11,7 @@ from app.api.v1.endpoints.tablet.mobile.schema import (
     ListBannerLanguageCodeQueryParam, SubmitCustomerIdentityNumberRequest,
     SyncWithWebByOTPRequest
 )
-from app.settings.event import (
-    INIT_SERVICE, service_idm, service_rabbitmq, service_redis
-)
+from app.settings.event import INIT_SERVICE, service_rabbitmq, service_redis
 from app.utils.constant.tablet import (
     DEVICE_TYPE_MOBILE, DEVICE_TYPE_WEB, LIST_BANNER_LANGUAGE_CODE_ENGLISH,
     LIST_BANNER_LANGUAGE_CODE_VIETNAMESE, LIST_BANNER_LANGUAGE_NAME_ENGLISH,
@@ -62,7 +60,6 @@ class CtrTabletMobile(BaseController):
         return self.response({
             'mqtt_info': mqtt_info,
             'token': topic_name,
-            # TODO: check it
             'branch_name': teller_user_info['hrm_branch_name'],
             'languages': [
                 {
@@ -75,8 +72,7 @@ class CtrTabletMobile(BaseController):
                 },
             ],
             'teller_info': {
-                # TODO: host name
-                'avatar_url': service_idm.replace_with_cdn(teller_user_info['avatar_url']),
+                'avatar_url': f"{INIT_SERVICE['crm_app_url']}{teller_user_info['avatar_url']}",
                 'full_name': teller_user_info['name'],
             }
         })
