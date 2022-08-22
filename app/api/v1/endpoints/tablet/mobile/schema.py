@@ -49,4 +49,4 @@ class ListBannerCategoryResponse(BaseSchema):
 
 
 class SubmitCustomerIdentityNumberRequest(BaseSchema):
-    customer_identity_number: str = Field(..., description='Mã số giấy tờ định danh của khách hàng')
+    customer_identity_number: str = Field(..., min_length=5, description='Mã số giấy tờ định danh của khách hàng')
