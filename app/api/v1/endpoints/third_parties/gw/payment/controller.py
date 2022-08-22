@@ -418,17 +418,22 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
 
             ))
         request_data = orjson_loads(booking_business_form.form_data)
-
+        teller = self.call_repos(
+            await repos_get_teller_info(
+                booking_id=BOOKING_ID,
+                session=self.oracle_session
+            )
+        )
         gw_payment_amount_unblock = self.call_repos(await repos_gw_payment_amount_unblock(
             current_user=current_user,
             booking_id=BOOKING_ID,
+            teller=teller,
             request_data_gw=request_data,
             session=self.oracle_session
         ))
 
         response_data = {
-            "booking_id": BOOKING_ID,
-            "account_list": gw_payment_amount_unblock
+            "booking_id": gw_payment_amount_unblock,
         }
         return self.response(data=response_data)
 
