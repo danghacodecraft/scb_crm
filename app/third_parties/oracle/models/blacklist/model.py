@@ -24,3 +24,5 @@ class Blacklist(Base):
     blacklist_source = Column('blacklist_source', VARCHAR(500), nullable=True, comment='nguồn')
     document_no = Column('document_no', VARCHAR(20), nullable=True, comment='Số công văn đến')
     blacklist_area = Column('blacklist_area', VARCHAR(500), nullable=True, comment='khu vực')
+    created_at = Column('created_at', DATE, nullable=True, comment='ngày tạo')
+    updated_at = Column('updated_at', DATE, nullable=True, comment='ngày cập nhập')
