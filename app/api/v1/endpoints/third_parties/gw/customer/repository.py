@@ -1133,14 +1133,6 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
                 casa_currency_number=casa_currency_number.data
             )
 
-            if not is_open_sub_card_success:
-                return ReposReturn(
-                    is_error=True,
-                    loc="open_cif -> repos_push_sub_debit_card_to_gw",
-                    msg=ERROR_CALL_SERVICE_GW,
-                    detail=str(response_open_sub_card_data)
-                )
-
             if is_open_sub_card_success:
                 await repos_save_bussiness_form_and_transaction_jobs(
                     session=session,
