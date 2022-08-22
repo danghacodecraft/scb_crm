@@ -11,11 +11,18 @@ from app.api.v1.endpoints.tablet.mobile.schema import (
     ListBannerLanguageCodeQueryParam, SubmitCustomerIdentityNumberRequest,
     SyncWithWebByOTPRequest
 )
+from app.api.v1.endpoints.third_parties.gw.customer.repository import (
+    repos_gw_get_customer_info_list
+)
+from app.api.v1.endpoints.user.schema import AuthResponse
 from app.settings.event import INIT_SERVICE, service_rabbitmq, service_redis
 from app.utils.constant.tablet import (
     DEVICE_TYPE_MOBILE, DEVICE_TYPE_WEB, LIST_BANNER_LANGUAGE_CODE_ENGLISH,
     LIST_BANNER_LANGUAGE_CODE_VIETNAMESE, LIST_BANNER_LANGUAGE_NAME_ENGLISH,
-    LIST_BANNER_LANGUAGE_NAME_VIETNAMESE, WEB_ACTION_PAIRED
+    LIST_BANNER_LANGUAGE_NAME_VIETNAMESE,
+    MOBILE_ACTION_ENTER_IDENTITY_NUMBER_FAIL,
+    MOBILE_ACTION_TAKE_DOCUMENT_PHOTO, WEB_ACTION_FOUND_CUSTOMER,
+    WEB_ACTION_NOT_FOUND_CUSTOMER, WEB_ACTION_PAIRED
 )
 from app.utils.error_messages import ERROR_TABLET_INVALID_TOKEN
 from app.utils.functions import now
@@ -151,10 +158,90 @@ class CtrTabletMobile(BaseController):
         }
 
     async def submit_customer_identity_number(self, tablet_token: str, request: SubmitCustomerIdentityNumberRequest):
-        # tablet_info = await self._check_tablet_token(tablet_token=tablet_token)
-        await self._check_tablet_token(tablet_token=tablet_token)
+        tablet_info = await self._check_tablet_token(tablet_token=tablet_token)
 
-        # TODO check request.customer_identity_number
+        teller_info = await service_redis.get(tablet_info['teller_username'])
+        teller_user = AuthResponse(**teller_info)
+
+        customer_info_list = self.call_repos(await repos_gw_get_customer_info_list(
+            cif_number='',
+            identity_number=request.customer_identity_number,
+            mobile_number='',
+            full_name='',
+            current_user=teller_user
+        ))
+        customer_list = customer_info_list["selectCustomerRefDataMgmtCIFNum_out"]["data_output"]["customer_list"]
+
+        if len(customer_list) == 1:
+            found_customer_info = customer_list[0]['customer_info_item']['customer_info']
+
+            # gửi cho web message thông báo tìm thấy khách hàng
+            service_rabbitmq.publish(
+                message={
+                    "action": WEB_ACTION_FOUND_CUSTOMER,
+                    "data": {
+                        "customer_identity_number": request.customer_identity_number,
+                        "customer_info": {
+                            "cif_num": found_customer_info['cif_info']['cif_num'],
+                            "full_name": found_customer_info['full_name'],
+                            "avatar_url": None  # TODO: avatar khách hàng giao dịch
+                        }
+                    }
+                },
+                routing_key=get_topic_name(
+                    device_type=DEVICE_TYPE_WEB,
+                    tablet_id=tablet_info['tablet_id'],
+                    otp=tablet_info['otp']
+                )
+            )
+
+            # gửi cho mobile message thông báo chụp ảnh giấy tờ (kèm cờ để truy vấn giao dịch sau này)
+            service_rabbitmq.publish(
+                message={
+                    "action": MOBILE_ACTION_TAKE_DOCUMENT_PHOTO,
+                    "data": {
+                        "is_identify_customer_step": True
+                    }
+                },
+                routing_key=get_topic_name(
+                    device_type=DEVICE_TYPE_MOBILE,
+                    tablet_id=tablet_info['tablet_id'],
+                    otp=tablet_info['otp']
+                )
+            )
+        else:
+            # gửi cho web message thông báo không tìm thấy khách hàng
+            service_rabbitmq.publish(
+                message={
+                    "action": WEB_ACTION_NOT_FOUND_CUSTOMER,
+                    "data": {
+                        "customer_identity_number": request.customer_identity_number,
+                        "customer_info": {
+                            "cif_num": None,
+                            "full_name": None,
+                            "avatar_url": None
+                        }
+                    }
+                },
+                routing_key=get_topic_name(
+                    device_type=DEVICE_TYPE_WEB,
+                    tablet_id=tablet_info['tablet_id'],
+                    otp=tablet_info['otp']
+                )
+            )
+
+            # gửi cho mobile message thông báo số giấy tờ định danh sai
+            service_rabbitmq.publish(
+                message={
+                    "action": MOBILE_ACTION_ENTER_IDENTITY_NUMBER_FAIL,
+                    "data": {}
+                },
+                routing_key=get_topic_name(
+                    device_type=DEVICE_TYPE_MOBILE,
+                    tablet_id=tablet_info['tablet_id'],
+                    otp=tablet_info['otp']
+                )
+            )
 
         return self.response(data={
             'status': True
