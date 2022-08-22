@@ -90,7 +90,7 @@ class AccountAmountUnblock(BaseSchema):
 
 class AccountUnlockRequest(BaseSchema):
     account_number: str = Field(...)
-    account_amount_block: List[AccountAmountUnblock] = Field(...)
+    account_amount_block: AccountAmountUnblock = Field(...)
 
 
 class TransactionFeeInfoRequest(BaseSchema):
