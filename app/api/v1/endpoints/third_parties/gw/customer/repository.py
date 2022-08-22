@@ -534,7 +534,6 @@ async def repos_push_cif_to_gw(booking_id: str, session: Session, response_custo
     }
     birthday = date_to_string(cust_individual.date_of_birth,
                               _format=GW_DATE_FORMAT) if cust_individual.date_of_birth else GW_DEFAULT_VALUE
-    birthday = "2014-12-02"
     is_children = True if (now().year - datetime.datetime.strptime(birthday, "%Y-%m-%d").year) < GW_OPEN_CIF_CHILD_AGE else False
     # địa chỉ liên lạc doanh nghiệp hoặc người giám hộ
     address_contact_info_c = {
