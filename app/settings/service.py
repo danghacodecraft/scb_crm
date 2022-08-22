@@ -102,5 +102,6 @@ SERVICE = {
     },
     "fileshare": {
         "tablet_banner_share_link": configs.get("FILESHARE_TABLET_BANNER_SHARE_LINK")
-    }
+    },
+    "crm_app_url": configs.get("CRM_APP_URL")
 }
