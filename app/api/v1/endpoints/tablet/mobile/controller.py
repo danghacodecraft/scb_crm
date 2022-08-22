@@ -11,7 +11,9 @@ from app.api.v1.endpoints.tablet.mobile.schema import (
     ListBannerLanguageCodeQueryParam, SubmitCustomerIdentityNumberRequest,
     SyncWithWebByOTPRequest
 )
-from app.settings.event import service_idm, service_rabbitmq, service_redis
+from app.settings.event import (
+    INIT_SERVICE, service_idm, service_rabbitmq, service_redis
+)
 from app.utils.constant.tablet import (
     DEVICE_TYPE_MOBILE, DEVICE_TYPE_WEB, LIST_BANNER_LANGUAGE_CODE_ENGLISH,
     LIST_BANNER_LANGUAGE_CODE_VIETNAMESE, LIST_BANNER_LANGUAGE_NAME_ENGLISH,
@@ -80,12 +82,45 @@ class CtrTabletMobile(BaseController):
         })
 
     async def list_banner(self, language_code: ListBannerLanguageCodeQueryParam):
-        # TODO: upload ảnh đến DMS và lấy link ở đây
+        """
+        tablet_banner_share_link = https://fileshare.scb.com.vn/d/a398af9d54d044169375/
+        thumbnail = https://fileshare.scb.com.vn/thumbnail/a398af9d54d044169375/1920/TiengAnh/BaoHiem/KienTaoThinhVuong%404x-80.jpg
+        """
+        language_relative_path = 'TiengViet' if language_code == ListBannerLanguageCodeQueryParam.vi else 'TiengAnh'
+        tablet_banner_share_link = INIT_SERVICE['fileshare']['tablet_banner_share_link']
+        tablet_banner_thumbnail_link = f"{tablet_banner_share_link.replace('/d/', '/thumbnail/')}1920/{language_relative_path}/"
+
+        # TODO: get all files in folder instead of hard file name
         return self.response([
             {
-                "category_name": "Thẻ",
+                "category_name": "Thẻ" if language_code == ListBannerLanguageCodeQueryParam.vi else 'Card',
                 "image_urls": [
-                    "https://fileshare.scb.com.vn/thumbnail/cba735e7d4b640539abb/2560/5c1ad7f20dc496797189ec7a6838b2158da10ada.jpg"
+                    f'{tablet_banner_thumbnail_link}The/BeYOU@4x-80.jpg',
+                    f'{tablet_banner_thumbnail_link}The/PhatHanhNgay-QuaTraoTay@4x-80.jpg'
+                ]
+            },
+            {
+                "category_name": "Tiết kiệm" if language_code == ListBannerLanguageCodeQueryParam.vi else 'Saving',
+                "image_urls": [
+                    f'{tablet_banner_thumbnail_link}TietKiem/TKOL@4x-80.jpg'
+                ]
+            },
+            {
+                "category_name": "Vay" if language_code == ListBannerLanguageCodeQueryParam.vi else 'Loan',
+                "image_urls": [
+                    f'{tablet_banner_thumbnail_link}Vay/Home%20in%20hand%404x-80.jpg'
+                ]
+            },
+            {
+                "category_name": "Bảo hiểm" if language_code == ListBannerLanguageCodeQueryParam.vi else 'Insurance',
+                "image_urls": [
+                    f'{tablet_banner_thumbnail_link}BaoHiem/KienTaoThinhVuong@4x-80.jpg'
+                ]
+            },
+            {
+                "category_name": "TK thanh toán" if language_code == ListBannerLanguageCodeQueryParam.vi else 'Payment account',
+                "image_urls": [
+                    f'{tablet_banner_thumbnail_link}TaiKhoanThanhToan/S-Digital@4x-80.jpg'
                 ]
             }
         ])

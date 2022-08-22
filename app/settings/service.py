@@ -99,5 +99,8 @@ SERVICE = {
         "server_password": configs.get("RABBITMQ_SERVER_PASSWORD"),
         "client_username": configs.get("RABBITMQ_CLIENT_USERNAME"),
         "client_password": configs.get("RABBITMQ_CLIENT_PASSWORD")
+    },
+    "fileshare": {
+        "tablet_banner_share_link": configs.get("FILESHARE_TABLET_BANNER_SHARE_LINK")
     }
 }
