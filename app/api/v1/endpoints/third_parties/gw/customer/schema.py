@@ -169,7 +169,10 @@ class GWAuthorizedListResponse(BaseGWSchema):
 
 
 class GWOpenCIFStatusIdNumberResponse(BaseSchema):
-    status: bool = Field(..., description="Trạng thái hoàn thành. <br>`True`: hoàn thành. <br>`False`: chưa")
+    status: bool = Field(default=None, description="Trạng thái hoàn thành. "
+                                                   "<br>`True`: hoàn thành. "
+                                                   "<br>`False`: chưa"
+                                                   "<br>`null`: Bỏ qua")
     data: str = Field(default=None, description="Id trả về từ GW")
 
 

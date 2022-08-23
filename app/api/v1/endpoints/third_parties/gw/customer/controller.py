@@ -40,7 +40,7 @@ from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_KSV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_KSV
 )
 from app.utils.error_messages import (
-    ERROR_CALL_SERVICE_GW, ERROR_OPEN_CIF, ERROR_PERMISSION,
+    ERROR_CALL_SERVICE_GW, ERROR_NO_DATA, ERROR_OPEN_CIF, ERROR_PERMISSION,
     ERROR_PHONE_NUMBER, ERROR_PHONE_NUMBER_NOT_EXITS,
     ERROR_VALIDATE_ONE_FIELD_REQUIRED
 )
@@ -897,13 +897,16 @@ class CtrGWCustomer(BaseController):
                     maker_staff_name=maker_staff_name
                 )
                 if result.is_error:
-                    error_list.append({
-                        "e_banking": {
-                            "loc": result.loc,
-                            "msg": result.msg,
-                            "detail": result.detail
-                        }
-                    })
+                    if result.msg == ERROR_NO_DATA:
+                        response_info["debit_num"]["status"] = None
+                    else:
+                        error_list.append({
+                            "e_banking": {
+                                "loc": result.loc,
+                                "msg": result.msg,
+                                "detail": result.detail
+                            }
+                        })
                 else:
                     is_complete_eb = True
 
@@ -920,13 +923,16 @@ class CtrGWCustomer(BaseController):
                     maker_staff_name=maker_staff_name
                 )
                 if result.is_error:
-                    error_list.append({
-                        "debit_card": {
-                            "loc": result.loc,
-                            "msg": result.msg,
-                            "detail": result.detail
-                        }
-                    })
+                    if result.msg == ERROR_NO_DATA:
+                        response_info["debit_num"]["status"] = None
+                    else:
+                        error_list.append({
+                            "debit_card": {
+                                "loc": result.loc,
+                                "msg": result.msg,
+                                "detail": result.detail
+                            }
+                        })
                 else:
                     is_complete_debit = True
 
