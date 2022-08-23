@@ -7,7 +7,8 @@ from app.api.v1.endpoints.file.repository import (
 )
 from app.api.v1.endpoints.file.validator import file_validator
 from app.api.v1.endpoints.tablet.mobile.repository import (
-    repos_pair_by_otp, repos_retrieve_table_by_tablet_token
+    repos_init_booking_authentication, repos_pair_by_otp,
+    repos_retrieve_table_by_tablet_token
 )
 from app.api.v1.endpoints.tablet.mobile.schema import (
     ListBannerLanguageCodeQueryParam, SubmitCustomerIdentityNumberRequest,
@@ -165,6 +166,7 @@ class CtrTabletMobile(BaseController):
         teller_info = await service_redis.get(tablet_info['teller_username'])
         teller_user = AuthResponse(**teller_info)
 
+        cif_number = None
         customer_info_list = self.call_repos(await repos_gw_get_customer_info_list(
             cif_number='',
             identity_number=request.customer_identity_number,
@@ -176,9 +178,12 @@ class CtrTabletMobile(BaseController):
 
         if len(customer_list) == 1:
             found_customer_info = customer_list[0]['customer_info_item']['customer_info']
+
+            cif_number = found_customer_info['cif_info']['cif_num']
+
             avatar_uuid = self.call_repos(
                 await repos_get_customer_avatar_url_from_cif(
-                    cif_number=found_customer_info['cif_info']['cif_num'],
+                    cif_number=cif_number,
                     session=self.oracle_session
                 )
             )
@@ -191,7 +196,7 @@ class CtrTabletMobile(BaseController):
                     "data": {
                         "customer_identity_number": request.customer_identity_number,
                         "customer_info": {
-                            "cif_num": found_customer_info['cif_info']['cif_num'],
+                            "cif_num": cif_number,
                             "full_name": found_customer_info['full_name'],
                             "avatar_url": f"{INIT_SERVICE['crm_app_url']}{avatar_url['file_url']}" if avatar_url else None
                         }
@@ -251,6 +256,16 @@ class CtrTabletMobile(BaseController):
                     otp=tablet_info['otp']
                 )
             )
+
+        self.call_repos(
+            await repos_init_booking_authentication(
+                tablet_id=tablet_info['tablet_id'],
+                teller_username=tablet_info['teller_username'],
+                identity_number=request.customer_identity_number,
+                cif_number=cif_number,
+                session=self.oracle_session
+            )
+        )
 
         return self.response(data={
             'status': True
