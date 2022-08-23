@@ -296,7 +296,6 @@ class CtrTabletMobile(BaseController):
         # if is_identify_customer_step:
         #     ...
         # else:
-        #     ...
 
         return self.response(data={
             'status': True
