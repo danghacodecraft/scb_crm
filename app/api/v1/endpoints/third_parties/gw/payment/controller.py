@@ -213,6 +213,17 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
 
         return self.response(data=response_data)
 
+    async def ctr_get_payment_amount_unblock(
+        self,
+        BOOKING_ID: str
+    ):
+        booking_business_form = await CtrBooking().ctr_get_booking_business_form(booking_id=BOOKING_ID, session=self.oracle_session)
+        form_data = orjson_loads(booking_business_form.form_data)
+        form_data.update(
+            booking_id=BOOKING_ID
+        )
+        return self.response(data=form_data)
+
     async def ctr_gw_payment_amount_block(self, BOOKING_ID: str):
         current_user = self.current_user
 
