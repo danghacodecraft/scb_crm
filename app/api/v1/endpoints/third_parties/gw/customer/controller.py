@@ -950,7 +950,7 @@ class CtrGWCustomer(BaseController):
         if error_list:
             return self.response_exception(
                 data=response_info,
-                loc="ctr_gw_open_cif -> Push EB, Debit",
+                loc="ctr_gw_open_cif",
                 msg=ERROR_OPEN_CIF,
                 detail=orjson_dumps(error_list)
             )
