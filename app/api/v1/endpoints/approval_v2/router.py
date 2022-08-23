@@ -7,11 +7,8 @@ from app.api.v1.endpoints.approval_v2.signature import \
 
 router_module = APIRouter()
 
-# router của Thông tin KSS
-router_module.include_router(router=views_approval_info.router_special)
-
 # router của thông tin phê duyệt
-router_module.include_router(router=views_approval_info.router_special)
+router_module.include_router(router=views_approval_info.router)
 
 # router của [Thông tin xác thực] -> Khuôn mặt
 router_module.include_router(router=views_face_info.router)

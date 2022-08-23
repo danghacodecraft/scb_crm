@@ -15,10 +15,9 @@ from app.utils.constant.business_type import BUSINESS_TYPES
 from app.utils.functions import make_description_from_dict
 
 router = APIRouter()
-router_special = APIRouter()
 
 
-@router_special.get(
+@router.get(
     path="/job/",
     description="Tổng số nghiệp vụ hoàn thành",
     name="Tổng số nghiệp vụ hoàn thành",
@@ -44,7 +43,7 @@ async def view_get_business_jobs(
     return ResponseData[List[ApprovalBusinessJob]](**business_jobs)
 
 
-@router_special.get(
+@router.get(
     path="/process/",
     name="Quá trình xử lý hồ sơ",
     description="Lấy dữ liệu tab `VI. PHÊ DUYỆT - QUÁ TRÌNH XỬ LÝ HỒ SƠ` ",
@@ -61,7 +60,7 @@ async def view_approval_process(
     return ResponseData[List[CifApprovalProcessResponse]](**approval_process)
 
 
-@router_special.post(
+@router.post(
     path="/",
     description="Phê duyệt - Phê duyệt biểu mẫu",
     name="Phê duyệt",
