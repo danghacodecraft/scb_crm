@@ -30,6 +30,7 @@ class ProductFeeBusiness(Base):
 
     business_type_id = Column(VARCHAR(36), comment='Mã phí')
     product_fee_id = Column(VARCHAR(50), comment='Mã phí')
+    product_screen = Column(VARCHAR(5), comment='Màn hình thực hiện')
     category_id = Column('product_category_id', ForeignKey('crm_product_fee_category.category_id'), comment='Mã loại phí')
 
     __table_args__ = (

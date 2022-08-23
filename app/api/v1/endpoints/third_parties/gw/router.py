@@ -20,6 +20,7 @@ from app.api.v1.endpoints.third_parties.gw.ebank_sms import \
 from app.api.v1.endpoints.third_parties.gw.email import view as views_email
 from app.api.v1.endpoints.third_parties.gw.employee import \
     view as views_employee
+from app.api.v1.endpoints.third_parties.gw.fee import view as view_fee
 from app.api.v1.endpoints.third_parties.gw.history import view as views_history
 from app.api.v1.endpoints.third_parties.gw.organization import \
     view as views_organization
@@ -69,3 +70,6 @@ router_module.include_router(router=views_email.router, prefix="/email",
 
 router_module.include_router(router=views_card_works.router, prefix="/email",
                              tags=["[Third-Party][GW][CardWorks]"])
+
+router_module.include_router(router=view_fee.router, prefix="/fee-info",
+                             tags=["[Third-Party][GW][FeeInfo]"])

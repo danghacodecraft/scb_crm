@@ -72,7 +72,7 @@ async def view_get_deposit_pay_in(
     get_pay_in = await CtrDeposit(current_user=current_user).ctr_get_deposit_pay_in(
         booking_id=booking_id
     )
-    return ResponseData[DepositPayInResponse](**get_pay_in)
+    return ResponseData(**get_pay_in)
 
 
 @router.post(

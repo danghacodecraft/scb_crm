@@ -45,4 +45,3 @@ class FeeInfoResponse(BaseSchema):
 
 class OneFeeInfoRequest(BaseSchema):
     payer: str = Field(..., description=f"{make_description_from_dict(PAYMENT_PAYERS)}")
-    amount: int = Field(..., description="Số tiền phí")
