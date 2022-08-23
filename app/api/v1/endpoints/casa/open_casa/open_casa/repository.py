@@ -161,3 +161,21 @@ async def repos_get_casa_open_casa_info(booking_parent_id: str, session: Session
         .distinct()
     ).all()
     return ReposReturn(data=get_casa_open_casa_info)
+
+
+async def repos_get_casa_open_casa_info_from_booking(booking_id: str, session: Session):
+    get_casa_open_casa_info = session.execute(
+        select(
+            Booking,
+            BookingAccount,
+            BookingBusinessForm
+        )
+        .join(BookingAccount, Booking.id == BookingAccount.booking_id)
+        .join(BookingBusinessForm, and_(
+            BookingAccount.booking_id == BookingBusinessForm.booking_id,
+            BookingBusinessForm.is_success is not True
+        ))
+        .filter(Booking.parent_id == booking_id)
+        .order_by(BookingBusinessForm.created_at)
+    ).all()
+    return ReposReturn(data=get_casa_open_casa_info)
