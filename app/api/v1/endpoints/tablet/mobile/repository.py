@@ -1,4 +1,4 @@
-from sqlalchemy import select, update
+from sqlalchemy import desc, select, update
 from sqlalchemy.orm import Session
 from starlette import status
 
@@ -71,6 +71,43 @@ async def repos_init_booking_authentication(tablet_id: str, teller_username: str
             identity_number=identity_number,
             created_at=now(),
             cif_number=cif_number
+        )
+    )
+    session.commit()
+
+    return ReposReturn(data=True)
+
+
+async def repos_retrieve_current_booking_authentication_by_tablet_id(tablet_id: str, session: Session) -> ReposReturn:
+    booking_authentication = session.execute(
+        select(
+            BookingAuthentication
+        ).filter(
+            BookingAuthentication.tablet_id == tablet_id
+        ).order_by(desc(BookingAuthentication.created_at))
+    ).scalars().first()
+    if not booking_authentication:
+        return ReposReturn(is_error=True, msg='INVALID_TABLET_ID', detail='Can not found booking authentication',
+                           loc='token', error_status_code=status.HTTP_401_UNAUTHORIZED)
+
+    return ReposReturn(data=booking_authentication)
+
+
+async def repos_update_current_booking_authentication_by_tablet_id(
+        need_to_update_booking_authentication: BookingAuthentication,
+        session: Session
+) -> ReposReturn:
+    session.execute(
+        update(
+            BookingAuthentication
+        ).filter(
+            BookingAuthentication.id == need_to_update_booking_authentication.id
+        ).values(
+            identity_front_document_file_uuid=need_to_update_booking_authentication.identity_front_document_file_uuid,
+            identity_front_document_file_uuid_ekyc=need_to_update_booking_authentication.identity_front_document_file_uuid_ekyc,
+            face_file_uuid=need_to_update_booking_authentication.face_file_uuid,
+            face_file_uuid_ekyc=need_to_update_booking_authentication.face_file_uuid_ekyc,
+            booking_id=need_to_update_booking_authentication.booking_id
         )
     )
     session.commit()
