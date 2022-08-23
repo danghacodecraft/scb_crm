@@ -4,7 +4,10 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.casa_account.controller import (
     CtrGWCasaAccount
 )
-from app.api.v1.others.fee.repository import repos_get_fee_detail
+from app.api.v1.endpoints.third_parties.gw.fee.controller import CtrGWFeeInfo
+from app.api.v1.others.fee.repository import (
+    repos_get_fee_detail, repos_get_product_fee_business
+)
 from app.api.v1.others.fee.schema import (
     MultipleFeeInfoRequest, OneFeeInfoRequest
 )
@@ -96,7 +99,9 @@ class CtrAccountFee(BaseController):
             self,
             one_fee_info_request: OneFeeInfoRequest,
             amount: int,
-            fee_note: Optional[str] = None
+            business_type_id: str,
+            fee_id: str,
+            fee_note: Optional[str] = None,
     ):
         """
         Tính phí dành cho MỘT loại phí
@@ -106,7 +111,7 @@ class CtrAccountFee(BaseController):
             is_fee=False,
             payer=None,
             fee_amount=None,
-            vat_tax=None,
+            vat=None,
             total=None,
             actual_total=amount,
             note=fee_note
@@ -116,15 +121,29 @@ class CtrAccountFee(BaseController):
             if one_fee_info_request.payer not in PAYMENT_PAYERS:
                 return self.response_exception(msg=ERROR_PAYER_NOT_EXIST)
 
-            fee_amount = one_fee_info_request.amount
-            vat = int(fee_amount / 10)
+            fee_info = self.call_repos(
+                await repos_get_product_fee_business(
+                    session=self.oracle_session, business_type_id=business_type_id, fee_id=fee_id
+                ))
+
+            fee_product_screen = fee_info.product_screen
+            gw_fee_info = await CtrGWFeeInfo(current_user=self.current_user).ctr_gw_select_fee_from_product_name(
+                product_name=fee_product_screen,
+                account_num='123456787912',  # TODO
+                trans_amount=amount
+            )
+            data_fee_info = gw_fee_info['data']
+
+            fee_amount = int(data_fee_info['charge_1'])
+            vat = int(data_fee_info['charge_2'])
+
             total = fee_amount + vat
             actual_total = amount + total if one_fee_info_request.payer == PAYER_TRANSFER else amount  # TODO
 
             fee_info_response.update(
                 is_fee=True,
                 payer=PAYMENT_PAYERS[one_fee_info_request.payer],
-                amount=one_fee_info_request.amount,
+                amount=fee_amount,
                 vat=vat,
                 total=total,
                 actual_total=actual_total,

@@ -82,6 +82,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_SELECT_CARD_INFO, GW_ENDPOINT_URL_SELECT_CATEGORY,
     GW_ENDPOINT_URL_SELECT_DATA_FOR_CHART_DASHBOARD,
     GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE,
+    GW_ENDPOINT_URL_SELECT_FEE_BY_PRODUCT_NAME,
     GW_ENDPOINT_URL_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA,
     GW_ENDPOINT_URL_SELECT_SERIAL_NUMBER,
     GW_ENDPOINT_URL_SELECT_SERVICE_PACK_IB,
@@ -147,7 +148,8 @@ from app.utils.constant.gw import (
     GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_USERNAME_OUT,
     GW_FUNC_SELECT_EMPLOYEE_LIST_FROM_ORG_ID,
     GW_FUNC_SELECT_EMPLOYEE_LIST_FROM_ORG_ID_IN,
-    GW_FUNC_SELECT_EMPLOYEE_LIST_FROM_ORG_ID_OUT,
+    GW_FUNC_SELECT_EMPLOYEE_LIST_FROM_ORG_ID_OUT, GW_FUNC_SELECT_FEE_INFO,
+    GW_FUNC_SELECT_FEE_INFO_IN, GW_FUNC_SELECT_FEE_INFO_OUT,
     GW_FUNC_SELECT_KPIS_INFO_FROM_CODE, GW_FUNC_SELECT_KPIS_INFO_FROM_CODE_IN,
     GW_FUNC_SELECT_KPIS_INFO_FROM_CODE_OUT,
     GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA,
@@ -2727,7 +2729,8 @@ class ServiceGW:
                     "ward_name": card_info["address_info_ward_name"] if card_info["address_info_ward_name"] else "",
                     "contact_address_line": GW_DEFAULT_VALUE,
                     "city_code": GW_DEFAULT_VALUE,
-                    "district_name": card_info["address_info_district_name"] if card_info["address_info_district_name"] else "",
+                    "district_name": card_info["address_info_district_name"] if card_info[
+                        "address_info_district_name"] else "",
                     "city_name": card_info["address_info_city_name"] if card_info["address_info_city_name"] else "",
                     "country_name": GW_DEFAULT_VALUE
                 },
@@ -2817,6 +2820,43 @@ class ServiceGW:
             api_url=api_url,
             output_key=GW_FUNC_SELECT_CARD_INFO_OUT,
             service_name=GW_FUNC_SELECT_CARD_INFO
+        )
+        return response_data
+
+    ###################################################################################################################
+    #  Fee Info
+    ###################################################################################################################
+    async def select_fee_by_product_name(
+            self, current_user: UserInfoResponse,
+            product_name: str,
+            trans_amount: int,
+            account_num: str,
+    ):
+
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_SELECT_FEE_INFO_IN,
+            data_input={
+                "trans_branch": {
+                    "branch_code": current_user.hrm_branch_code
+                },
+                "product_name": product_name,
+                "ccy": "VND",  # TODO
+                "trans_amount": trans_amount,
+                "account_info": {
+                    "account_num": account_num
+                },
+                "open_acc_branch": {
+                    "branch_code": "020"  # TODO
+                }
+            }
+        )
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_FEE_BY_PRODUCT_NAME}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_SELECT_FEE_INFO_OUT,
+            service_name=GW_FUNC_SELECT_FEE_INFO
         )
         return response_data
 
