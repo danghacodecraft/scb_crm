@@ -3,9 +3,6 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
-from app.api.v1.endpoints.repository import (
-    write_transaction_log_and_update_booking
-)
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_get_casa_account_by_cif_number
 )
@@ -28,9 +25,7 @@ from app.third_parties.oracle.models.cif.payment_account.model import (
     CasaAccount
 )
 from app.third_parties.oracle.models.master_data.account import AccountType
-from app.utils.constant.cif import (
-    BUSINESS_FORM_EB, CIF_ID_TEST, EBANKING_ACCOUNT_TYPE_CHECKING
-)
+from app.utils.constant.cif import CIF_ID_TEST, EBANKING_ACCOUNT_TYPE_CHECKING
 from app.utils.constant.gw import (
     GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA_OUT
 )
@@ -44,9 +39,7 @@ from app.utils.functions import generate_uuid, now
 async def repos_save_e_banking(
         session: Session,
         data_insert: json,
-        log_data: json,
         cif_id: str,
-        history_datas: json
 ) -> ReposReturn:
 
     # 1. Customer đã có E-banking -> xóa dữ liệu cũ
@@ -78,16 +71,6 @@ async def repos_save_e_banking(
         EBankingInfoAuthentication(**ebank_info_authen) for ebank_info_authen in ebank_info_authen_list
     ])
     session.flush()
-
-    is_success, booking_response = await write_transaction_log_and_update_booking(
-        log_data=log_data,
-        history_datas=history_datas,
-        session=session,
-        customer_id=cif_id,
-        business_form_id=BUSINESS_FORM_EB
-    )
-    if not is_success:
-        return ReposReturn(is_error=True, msg=booking_response['msg'])
 
     return ReposReturn(data=None)
 
@@ -410,7 +393,6 @@ async def repos_get_reg_balance_data(casa_ids, session: Session):
             if reg_balance_row.account_id == casa_id and casa_id not in checked_casa_ids:
                 checked_casa_ids.append(casa_id)
                 reg_balance_item = {
-                    "is_disable_flag": False,
                     "casa_id": casa_id,
                     "main_phone_number_info": {
                         "main_phone_number": reg_balance_row.mobile_number,
