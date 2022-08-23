@@ -11,7 +11,7 @@ router_module = APIRouter()
 router_module.include_router(router=views_approval_info.router_special)
 
 # router của thông tin phê duyệt
-router_module.include_router(router=views_approval_info.router, prefix="/{cif_id}")
+router_module.include_router(router=views_approval_info.router_special)
 
 # router của [Thông tin xác thực] -> Khuôn mặt
 router_module.include_router(router=views_face_info.router)

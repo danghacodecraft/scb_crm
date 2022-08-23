@@ -27,7 +27,7 @@ class CifApprovalProcessResponse(BaseSchema):
     logs: List[ProcessInfoResponse] = Field(..., description="Danh sách log trong 1 ngày ")
 
 
-class CifApproveRequest(BaseSchema):
+class ApprovalRequest(BaseSchema):
     reject_flag: bool = Field(..., description="Cờ từ chối phê duyệt")
     content: str = Field(..., description="Nội dung phê duyệt")
     action_id: Optional[str] = Field(..., description=f"Mã Hành Động: {make_description_from_dict(CIF_ACTIONS)}")
@@ -94,12 +94,6 @@ class AuthenticationInfosRequest(BaseSchema):
     face: OptionalAuthenticationRequest = Field(..., description="[Thông tin xác thực] Khuôn mặt")
     signature: AuthenticationRequest = Field(..., description="[Thông tin xác thực] Chữ ký")
     fingerprint: OptionalAuthenticationRequest = Field(..., description="[Thông tin xác thực] Vân tay")
-
-
-class ApprovalRequest(BaseSchema):
-    cif_id: Optional[str] = Field(..., description='Id CIF ảo')
-    approval: CifApproveRequest = Field(..., description="Thông tin các TAB phê duyệt")
-    authentication: Optional[AuthenticationInfosRequest] = Field(None, description="Thông tin xác thực")
 
 
 ########################################################################################################################
