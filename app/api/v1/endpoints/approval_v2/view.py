@@ -84,7 +84,7 @@ async def view_approve(
     return ResponseData[Optional[CifApprovalResponse]](**approve_info)
 
 
-@router_special.get(
+@router.get(
     path="/",
     description="Thông tin chi tiết - Phê duyệt biểu mẫu",
     name="Phê duyệt",
@@ -106,7 +106,7 @@ async def view_get_approve(
     return ResponseData[CifApprovalSuccessResponse](**approve_info)
 
 
-@router_special.get(
+@router.get(
     path="/audit/",
     description="Thông tin KSS CIF",
     name="Kiểm soát sau CIF",
