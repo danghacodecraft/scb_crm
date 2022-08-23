@@ -793,15 +793,7 @@ async def repos_push_internet_banking_to_gw(booking_id: str,
 
     # Không tìm thấy thông tin từ DB có thể do khách hàng không đăng ký, hoặc đã đăng ký thành công từ lần trước
     if not e_banking and not balance_id__relationship_mobile_numbers:
-        # Lưu transaction job
-        await repos_save_transaction_jobs(
-            session=session,
-            booking_id=booking_id,
-            is_success=True,
-            response_data=None,
-            business_job_ids=[BUSINESS_JOB_CODE_E_BANKING]
-        )
-        return ReposReturn(data=None)
+        return ReposReturn(is_error=True, msg=ERROR_NO_DATA)
 
     # Push GW EBANK
     error_messages = []
@@ -934,14 +926,7 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
     if card_result.is_error:
         # Không có dữ liệu có thể do người dùng không đăng ký
         if card_result.msg == ERROR_NO_DATA:
-            await repos_save_transaction_jobs(
-                session=session,
-                booking_id=booking_id,
-                is_success=True,
-                response_data=None,
-                business_job_ids=[BUSINESS_JOB_CODE_DEBIT_CARD]
-            )
-            return ReposReturn(data=None)
+            return ReposReturn(is_error=True, msg=ERROR_NO_DATA)
 
         else:
             return ReposReturn(
