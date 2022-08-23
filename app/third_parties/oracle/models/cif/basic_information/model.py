@@ -63,7 +63,7 @@ class Customer(Base):
     grade_name = Column(VARCHAR(100), comment='Xếp hạng tín dụng Khách hàng')
     non_resident_flag = Column(NUMBER(1, 0, False), comment='Đánh dấu cif vãng lai')
     extra_number = Column(VARCHAR(10), comment='Số điện thoại phụ')
-    extra_number_relationship_type_id = Column(
+    cust_relationship_type_id = Column(
         ForeignKey('crm_cust_relationship_type.cust_relationship_type_id'),
         comment='Mối quan hệ với số điện thoại thông tin khác')
 
