@@ -9,6 +9,7 @@ from app.api.v1.endpoints.cif.debit_card.repository import repos_debit_card
 from app.api.v1.endpoints.cif.payment_account.detail.repository import (
     repos_get_detail_payment_account
 )
+from app.api.v1.endpoints.cif.repository import repos_get_customer
 from app.api.v1.endpoints.third_parties.gw.ebank.repository import (
     repos_get_e_banking_from_db_by_cif_id,
     repos_get_sms_casa_mobile_number_from_db_by_cif_id
@@ -794,6 +795,13 @@ async def repos_push_internet_banking_to_gw(booking_id: str,
     # Không tìm thấy thông tin từ DB có thể do khách hàng không đăng ký, hoặc đã đăng ký thành công từ lần trước
     if not e_banking and not balance_id__relationship_mobile_numbers:
         return ReposReturn(is_error=True, msg=ERROR_NO_DATA)
+
+    # Validate không có SĐT nhưng vẫn muốn tạo EB, raise lỗi
+    customer = (await repos_get_customer(
+        cif_id=cif_id, session=session
+    )).data
+    if not customer.mobile_number:
+        return ReposReturn(is_error=True, msg=ERROR_OPEN_CIF, detail="customer mobile_number cannot null")
 
     # Push GW EBANK
     error_messages = []

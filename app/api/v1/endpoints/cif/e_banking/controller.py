@@ -10,7 +10,7 @@ from app.api.v1.endpoints.cif.e_banking.schema import (
     EBankingRequest, EBankingSMSCasaRequest
 )
 from app.api.v1.endpoints.cif.repository import (
-    repos_get_booking, repos_get_initializing_customer
+    repos_get_booking, repos_get_customer, repos_get_initializing_customer
 )
 from app.api.v1.endpoints.repository import (
     write_transaction_log_and_update_booking
@@ -29,7 +29,7 @@ from app.utils.constant.cif import (
     BUSINESS_FORM_EB, PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING,
     PROFILE_HISTORY_STATUS_INIT
 )
-from app.utils.error_messages import ERROR_NOT_NULL
+from app.utils.error_messages import ERROR_E_BANKING
 from app.utils.functions import orjson_dumps
 
 
@@ -50,6 +50,17 @@ class CtrEBanking(BaseController):
         booking = self.call_repos(await repos_get_booking(
             cif_id=cif_id, session=self.oracle_session
         ))
+
+        # Validate không có SĐT không cho tạo EB
+        customer = self.call_repos(await repos_get_customer(
+            cif_id=cif_id, session=self.oracle_session
+        ))
+        if not customer.mobile_number:
+            return self.response_exception(
+                msg=ERROR_E_BANKING,
+                loc='ctr_save_e_banking_and_sms -> mobile_number',
+                detail='customer mobile_number cannot null',
+            )
 
         if e_banking_info:
             ebank_ibmb_username = e_banking_info.username
@@ -85,7 +96,7 @@ class CtrEBanking(BaseController):
             # Validate nếu truyền thiếu một số thông tin cần thiết:
             if not ebank_sms_casa_info.registry_balance_items:
                 return self.response_exception(
-                    msg=ERROR_NOT_NULL,
+                    msg=ERROR_E_BANKING,
                     loc='ctr_save_e_banking_and_sms -> ebank_sms_casa_info',
                     detail='registry_balance_items cannot empty',
                 )
