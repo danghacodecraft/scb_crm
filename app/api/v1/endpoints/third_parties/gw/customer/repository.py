@@ -67,11 +67,11 @@ from app.utils.constant.debit_card import (
 )
 from app.utils.constant.gw import (
     GW_AUTO, GW_CUSTOMER_TYPE_B, GW_CUSTOMER_TYPE_I, GW_DATE_FORMAT,
-    GW_DEFAULT_CUSTOMER_CATEGORY, GW_DEFAULT_KHTC_DOI_TUONG, GW_DEFAULT_NO,
-    GW_DEFAULT_TYPE_ID, GW_DEFAULT_VALUE, GW_DEFAULT_YES, GW_LANGUAGE,
-    GW_LOCAL_CODE, GW_NO_AGREEMENT_FLAG, GW_NO_MARKETING_FLAG,
-    GW_OPEN_CIF_CHILD_AGE, GW_OPEN_CO_OWNER_CIF_INFO, GW_SELECT, GW_UDF_NAME,
-    GW_YES, GW_YES_AGREEMENT_FLAG
+    GW_DEFAULT_KHTC_DOI_TUONG, GW_DEFAULT_NO, GW_DEFAULT_TYPE_ID,
+    GW_DEFAULT_VALUE, GW_DEFAULT_YES, GW_LANGUAGE, GW_LOCAL_CODE,
+    GW_NO_AGREEMENT_FLAG, GW_NO_MARKETING_FLAG, GW_OPEN_CIF_CHILD_AGE,
+    GW_OPEN_CO_OWNER_CIF_INFO, GW_SELECT, GW_UDF_NAME, GW_YES,
+    GW_YES_AGREEMENT_FLAG
 )
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_GW, ERROR_NO_DATA, ERROR_OPEN_CIF
@@ -574,7 +574,7 @@ async def repos_push_cif_to_gw(booking_id: str, session: Session, response_custo
 
     customer_info = {
         # TODO hard core customer category
-        "customer_category": GW_DEFAULT_CUSTOMER_CATEGORY,
+        "customer_category": customer.customer_category_id,
         "customer_type": GW_CUSTOMER_TYPE_B if customer.customer_type_id == CUSTOMER_TYPE_ORGANIZE else GW_CUSTOMER_TYPE_I,
         "cus_ekyc": customer.kyc_level_id,
         "full_name": customer.full_name_vn,
@@ -992,9 +992,12 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
             "delivByBrchInd": GW_DEFAULT_YES
             if card_data["card_delivery_address"]["delivery_address_flag"] == CRM_DELIVERY_ADDRESS_FLAG_FALSE else GW_DEFAULT_NO,
             "address_info_line": card_data["card_delivery_address"]["delivery_address"]["number_and_street"],
-            "address_info_ward_name": card_data["card_delivery_address"]["delivery_address"]["ward"]['name'],
-            "address_info_district_name": card_data["card_delivery_address"]["delivery_address"]["district"]['name'],
-            "address_info_city_name": card_data["card_delivery_address"]["delivery_address"]["province"]['name'],
+            "address_info_ward_name": card_data["card_delivery_address"]["delivery_address"]["ward"]['name']
+            if card_data["card_delivery_address"]["delivery_address"]["ward"] else None,
+            "address_info_district_name": card_data["card_delivery_address"]["delivery_address"]["district"]['name']
+            if card_data["card_delivery_address"]["delivery_address"]["district"] else None,
+            "address_info_city_name": card_data["card_delivery_address"]["delivery_address"]["province"]['name']
+            if card_data["card_delivery_address"]["delivery_address"]["province"] else None,
 
             # thông tin chi nhánh nhận thẻ
             "delivBrchId": card_data.get("card_delivery_address", {}).get("scb_branch").get("id")
@@ -1089,9 +1092,10 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
             "delivByBrchInd": GW_DEFAULT_YES
             if sub_card["card_delivery_address"]["delivery_address_flag"] == CRM_DELIVERY_ADDRESS_FLAG_FALSE else GW_DEFAULT_NO,
             "address_info_line": sub_card["card_delivery_address"]["delivery_address"]["number_and_street"],
-            "address_info_ward_name": sub_card["card_delivery_address"]["delivery_address"]["ward"]['name'],
-            "address_info_district_name": sub_card["card_delivery_address"]["delivery_address"]["district"]['name'],
-            "address_info_city_name": sub_card["card_delivery_address"]["delivery_address"]["province"]['name'],
+            "address_info_ward_name": sub_card["card_delivery_address"]["delivery_address"]["ward"]['name']
+            if sub_card["card_delivery_address"]["delivery_address"]["ward"] else None,
+            "address_info_district_name": sub_card["card_delivery_address"]["delivery_address"]["district"],
+            "address_info_city_name": sub_card["card_delivery_address"]["delivery_address"]["province"],
 
             # thông tin chi nhánh nhận thẻ
             "delivBrchId": sub_card.get("card_delivery_address", {}).get("scb_branch").get("id")
