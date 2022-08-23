@@ -8,7 +8,9 @@ from app.api.v1.endpoints.file.repository import (
 from app.api.v1.endpoints.file.validator import file_validator
 from app.api.v1.endpoints.tablet.mobile.repository import (
     repos_init_booking_authentication, repos_pair_by_otp,
-    repos_retrieve_table_by_tablet_token
+    repos_retrieve_current_booking_authentication_by_tablet_id,
+    repos_retrieve_table_by_tablet_token,
+    repos_update_current_booking_authentication_by_tablet_id
 )
 from app.api.v1.endpoints.tablet.mobile.schema import (
     ListBannerLanguageCodeQueryParam, SubmitCustomerIdentityNumberRequest,
@@ -24,8 +26,9 @@ from app.utils.constant.tablet import (
     LIST_BANNER_LANGUAGE_CODE_VIETNAMESE, LIST_BANNER_LANGUAGE_NAME_ENGLISH,
     LIST_BANNER_LANGUAGE_NAME_VIETNAMESE,
     MOBILE_ACTION_ENTER_IDENTITY_NUMBER_FAIL,
-    MOBILE_ACTION_TAKE_DOCUMENT_PHOTO, WEB_ACTION_FOUND_CUSTOMER,
-    WEB_ACTION_NOT_FOUND_CUSTOMER, WEB_ACTION_PAIRED
+    MOBILE_ACTION_TAKE_DOCUMENT_PHOTO, MOBILE_ACTION_TAKE_FACE_PHOTO,
+    WEB_ACTION_FOUND_CUSTOMER, WEB_ACTION_NOT_FOUND_CUSTOMER,
+    WEB_ACTION_PAIRED, WEB_ACTION_RECEIVED_PHOTO
 )
 from app.utils.error_messages import ERROR_TABLET_INVALID_TOKEN
 from app.utils.functions import now
@@ -272,8 +275,24 @@ class CtrTabletMobile(BaseController):
         })
 
     async def take_photo(self, tablet_token: str, is_identify_customer_step: bool, file_upload: UploadFile):
-        # tablet_info = await self._check_tablet_token(tablet_token=tablet_token)
-        await self._check_tablet_token(tablet_token=tablet_token)
+        tablet_info = await self._check_tablet_token(tablet_token=tablet_token)
+
+        booking_authentication = self.call_repos(
+            await repos_retrieve_current_booking_authentication_by_tablet_id(
+                tablet_id=tablet_info['tablet_id'],
+                session=self.oracle_session
+            )
+        )
+
+        if not is_identify_customer_step and (
+                not booking_authentication.identity_front_document_file_uuid or not booking_authentication.face_file_uuid):
+            return self.response_exception(
+                msg="INVALID_IS_IDENTIFY_CUSTOMER_STEP", detail="Customer has not taken an authentic photo"
+            )
+        elif is_identify_customer_step and booking_authentication.identity_front_document_file_uuid and booking_authentication.face_file_uuid:
+            return self.response_exception(
+                msg="INVALID_IS_IDENTIFY_CUSTOMER_STEP", detail="Customer has taken authentic photos before"
+            )
 
         data_file_upload = await file_upload.read()
 
@@ -292,10 +311,48 @@ class CtrTabletMobile(BaseController):
 
         info_file['created_at'] = now()
 
-        # TODO: is_identify_customer_step
-        # if is_identify_customer_step:
-        #     ...
-        # else:
+        if is_identify_customer_step:
+            if not booking_authentication.identity_front_document_file_uuid:
+                booking_authentication.identity_front_document_file_uuid = info_file['uuid']
+                booking_authentication.identity_front_document_file_uuid_ekyc = info_file['uuid_ekyc']
+
+                # gửi cho mobile message thông báo chụp ảnh khuôn mặt (kèm cờ để truy vấn giao dịch sau này)
+                service_rabbitmq.publish(
+                    message={
+                        "action": MOBILE_ACTION_TAKE_FACE_PHOTO,
+                        "data": {
+                            "is_identify_customer_step": True
+                        }
+                    },
+                    routing_key=get_topic_name(
+                        device_type=DEVICE_TYPE_MOBILE,
+                        tablet_id=tablet_info['tablet_id'],
+                        otp=tablet_info['otp']
+                    )
+                )
+            elif not booking_authentication.face_file_uuid:
+                booking_authentication.face_file_uuid = info_file['uuid']
+                booking_authentication.face_file_uuid_ekyc = info_file['uuid_ekyc']
+
+            self.call_repos(
+                await repos_update_current_booking_authentication_by_tablet_id(
+                    need_to_update_booking_authentication=booking_authentication,
+                    session=self.oracle_session
+                )
+            )
+        else:
+            # gửi cho web message thông báo đã chụp ảnh thành công
+            service_rabbitmq.publish(
+                message={
+                    "action": WEB_ACTION_RECEIVED_PHOTO,
+                    "data": info_file
+                },
+                routing_key=get_topic_name(
+                    device_type=DEVICE_TYPE_WEB,
+                    tablet_id=tablet_info['tablet_id'],
+                    otp=tablet_info['otp']
+                )
+            )
 
         return self.response(data={
             'status': True
