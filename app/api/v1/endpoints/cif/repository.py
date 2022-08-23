@@ -57,6 +57,20 @@ async def repos_get_initializing_customer(cif_id: str, session: Session) -> Repo
     return ReposReturn(data=customer)
 
 
+async def repos_get_customer(cif_id: str, session: Session) -> ReposReturn:
+    customer = session.execute(
+        select(
+            Customer
+        ).filter(
+            Customer.id == cif_id
+        )
+    ).scalar()
+    if not customer:
+        return ReposReturn(is_error=True, msg=ERROR_CIF_ID_NOT_EXIST, loc='cif_id')
+
+    return ReposReturn(data=customer)
+
+
 async def repos_get_cif_info(cif_id: str, session: Session) -> ReposReturn:
     customer_info = session.execute(
         select(
