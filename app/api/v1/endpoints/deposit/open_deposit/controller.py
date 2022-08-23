@@ -14,7 +14,13 @@ from app.api.v1.endpoints.deposit.open_deposit.schema import (
 from app.api.v1.endpoints.third_parties.gw.deposit_account.repository import (
     repos_get_booking_account_by_booking
 )
+from app.api.v1.endpoints.third_parties.gw.employee.controller import (
+    CtrGWEmployee
+)
 from app.api.v1.others.booking.controller import CtrBooking
+from app.api.v1.others.sender.controller import CtrPaymentSender
+from app.api.v1.others.statement.controller import CtrStatement
+from app.api.v1.others.statement.repository import repos_get_denominations
 from app.api.v1.validator import validate_history_data
 from app.utils.constant.business_type import (
     BUSINESS_TYPE_REDEEM_ACCOUNT, BUSINESS_TYPE_TD_ACCOUNT_OPEN_ACCOUNT
@@ -25,6 +31,7 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_TD_ACCOUNT,
     PROFILE_HISTORY_STATUS_INIT
 )
+from app.utils.error_messages import ERROR_DENOMINATIONS_NOT_EXIST
 from app.utils.functions import generate_uuid, now, orjson_dumps, orjson_loads
 
 
@@ -172,6 +179,8 @@ class CtrDeposit(BaseController):
             session=self.oracle_session
         ))
         update_td_account = []
+        statement = deposit_pay_in_request.statement
+        sender_info = deposit_pay_in_request.sender_info
 
         for item in booking_accounts:
             update_td_account.append({
@@ -179,6 +188,82 @@ class CtrDeposit(BaseController):
                 "pay_in_casa_account": deposit_pay_in_request.account_form.pay_in_form.account_number,
                 "pay_in_type": deposit_pay_in_request.account_form.pay_in_form.pay_in,
             })
+
+        denominations__amounts = {}
+        statement_info = self.call_repos(await repos_get_denominations(currency_id="VND", session=self.oracle_session))
+
+        for item in statement_info:
+            denominations__amounts.update({
+                str(int(item.denominations)): 0
+            })
+        denominations_errors = []
+        for index, row in enumerate(statement):
+            denominations = row.denominations
+            if denominations not in denominations__amounts:
+                denominations_errors.append(dict(
+                    index=index,
+                    value=denominations
+                ))
+
+            denominations__amounts[denominations] = row.amount
+
+        if denominations_errors:
+            return self.response_exception(
+                msg=ERROR_DENOMINATIONS_NOT_EXIST,
+                loc=str(denominations_errors)
+            )
+
+        # Thông tin khách hàng giao dịch
+        sender_response = await CtrPaymentSender(self.current_user).get_payment_sender(
+            sender_cif_number=sender_info.cif_number,
+            sender_full_name_vn=sender_info.fullname_vn,
+            sender_address_full=sender_info.address_full,
+            sender_identity_number=sender_info.identity,
+            sender_issued_date=sender_info.issued_date,
+            sender_mobile_number=sender_info.mobile_phone,
+            sender_place_of_issue=sender_info.place_of_issue,
+            sender_note=sender_info.note
+        )
+        statement_info = await CtrStatement().ctr_get_statement_info(
+            statement_requests=deposit_pay_in_request.statement
+        )
+        ################################################################################################################
+        # Thông tin quản lý
+        ################################################################################################################
+        controller_gw_employee = CtrGWEmployee(current_user)
+        gw_direct_staff = await controller_gw_employee.ctr_gw_get_employee_info_from_code(
+            employee_code=deposit_pay_in_request.management_info.direct_staff_code,
+            return_raw_data_flag=True
+        )
+        direct_staff = dict(
+            code=gw_direct_staff['staff_code'],
+            name=gw_direct_staff['staff_name']
+        )
+        gw_indirect_staff = await controller_gw_employee.ctr_gw_get_employee_info_from_code(
+            employee_code=deposit_pay_in_request.management_info.indirect_staff_code,
+            return_raw_data_flag=True
+        )
+        indirect_staff = dict(
+            code=gw_indirect_staff['staff_code'],
+            name=gw_indirect_staff['staff_name']
+        )
+        management_info_response = dict(
+            direct_staff=direct_staff,
+            indirect_staff=indirect_staff
+        )
+        account_form_response = dict(
+            pay_in_form=dict(
+                pay_in=deposit_pay_in_request.account_form.pay_in_form.pay_in,
+                account_number=deposit_pay_in_request.account_form.pay_in_form.account_number
+            )
+        )
+
+        request_data = {
+            "account_form": account_form_response,
+            "statement_info": statement_info,
+            "management_info": management_info_response,
+            "sender_info": sender_response
+        }
 
         # Thông tin phí, schema dùng chung, không nên thay đổi chỗ này
         # Response khi gọi ra sẽ dùng để load ra response, nên dùng trong schema response dùng chung trong others.fee
@@ -190,20 +275,20 @@ class CtrDeposit(BaseController):
         # form_data = deposit_pay_in_request.dict()
         # form_data.update(fee_info=fee_info)
 
-        # saving_booking_business_form = dict(
-        #     booking_id=booking_id,
-        #     business_form_id=BUSINESS_FORM_OPEN_TD_ACCOUNT_PAY,
-        #     booking_business_form_id=generate_uuid(),
-        #     save_flag=True,
-        #     created_at=now(),
-        #     updated_at=now(),
-        #     form_data=orjson_dumps(deposit_pay_in_request.dict())
-        # )
+        saving_booking_business_form = dict(
+            booking_id=booking_id,
+            business_form_id=BUSINESS_FORM_OPEN_TD_ACCOUNT_PAY,
+            booking_business_form_id=generate_uuid(),
+            save_flag=True,
+            created_at=now(),
+            updated_at=now(),
+            form_data=orjson_dumps(request_data)
+        )
 
         self.call_repos(await repos_update_td_account(
             booking_id=booking_id,
             update_td_account=update_td_account,
-            # saving_booking_business_form=saving_booking_business_form,
+            saving_booking_business_form=saving_booking_business_form,
             session=self.oracle_session
         ))
         return self.response(data=dict(
