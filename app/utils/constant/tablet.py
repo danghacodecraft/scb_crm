@@ -10,7 +10,7 @@ RABBITMQ_EXCHANGE_AMQ_TOPIC = 'amq.topic'
 WEB_ACTION_PAIRED = 'PAIRED'  # server gửi ở API Sync With Web By OTP (nhập mã OTP thành công ở mobile)
 WEB_ACTION_FOUND_CUSTOMER = 'FOUND_CUSTOMER'  # server gửi ở API  Enter Identity Number (tìm thấy khách hàng)
 WEB_ACTION_NOT_FOUND_CUSTOMER = 'NOT_FOUND_CUSTOMER'  # server gửi ở API  Enter Identity Number (không tìm thấy khách hàng)
-WEB_ACTION_RECEIVED_PHOTO = 'RECEIVED_PHOTO'
+WEB_ACTION_RECEIVED_PHOTO = 'RECEIVED_PHOTO'  # server gửi ở API chụp ảnh (không phải chụp để xác thực)
 
 
 MOBILE_ACTION_UNPAIRED = 'UNPAIRED'  # server gửi ở API Unpair (khi logout hoặc quá 15 phút)

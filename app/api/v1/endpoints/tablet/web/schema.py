@@ -36,8 +36,9 @@ class TabletOTPAndMqttInfoResponse(BaseSchema):
 ########################################################################################################################
 # model dùng khi validate extra_data API switch to other screen in tablet
 ########################################################################################################################
-class TabletActionProcessDataExtraData(BaseSchema):
+class TabletActionProcessingTransactionExtraData(BaseSchema):
     transaction_name: str = Field(..., description='Tên giao dịch')
+    booking_id: str = Field(..., description='Mã phiên giao dịch để cập nhật booking authentication')
 
 
 class TabletActionSignDocumentExtraData(BaseSchema):
@@ -62,7 +63,7 @@ class TabletAction(str, Enum):
 
 class TabletSwitchScreenRequest(BaseSchema):
     action: TabletAction = Field(..., description='Hành động tương ứng bên tablet')
-    extra_data: Union[Dict, TabletActionProcessDataExtraData, TabletActionSignExtraData] = Field(..., description='Thông tin thêm cho hành động tương ứng bên tablet')
+    extra_data: Union[Dict, TabletActionProcessingTransactionExtraData, TabletActionSignExtraData] = Field(..., description='Thông tin thêm cho hành động tương ứng bên tablet')
 
 
 class TabletStatusResponse(BaseSchema):
