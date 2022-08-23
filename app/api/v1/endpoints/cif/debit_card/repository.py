@@ -109,7 +109,7 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
         )).all()
 
     if not list_debit_card_info_engine:
-        return ReposReturn(is_error=True, msg=ERROR_CIF_ID_NOT_EXIST, loc="cif_id")
+        return ReposReturn(is_error=True, msg=ERROR_NO_DATA, loc="list_debit_card_info_engine")
     debit_card_id = list_debit_card_info_engine[0].debit_card_id
     issue_debit_card = None
     information_debit_card = None
