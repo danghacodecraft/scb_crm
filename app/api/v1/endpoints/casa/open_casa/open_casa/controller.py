@@ -1,7 +1,7 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
     repos_get_acc_structure_types, repos_get_casa_open_casa_info,
-    repos_get_customer_by_cif_number, repos_save_casa_casa_account
+    repos_save_casa_casa_account
 )
 from app.api.v1.endpoints.casa.open_casa.open_casa.schema import (
     CasaOpenCasaRequest
@@ -85,6 +85,7 @@ class CtrCasaOpenCasa(BaseController):
         saving_casa_accounts = []
         saving_bookings = []
         saving_booking_accounts = []
+        saving_booking_child_business_forms = []
         is_errors = []
 
         ################################################################################################################
@@ -97,13 +98,6 @@ class CtrCasaOpenCasa(BaseController):
             check_correct_booking_flag=False,
             loc=f'booking_id: {booking_parent_id}'
         )
-
-        # Kiểm tra số CIF có tồn tại trong CRM không
-        customer = self.call_repos(await repos_get_customer_by_cif_number(
-            cif_number=cif_number,
-            session=self.oracle_session
-        ))
-        cif_id = customer.id
 
         currency_ids = []
         acc_type_ids = []
@@ -167,7 +161,6 @@ class CtrCasaOpenCasa(BaseController):
 
             saving_casa_accounts.append(dict(
                 id=casa_account_id,
-                customer_id=cif_id,
                 casa_account_number=casa_account_number,
                 currency_id=currency_id,
                 acc_type_id=acc_type_id,
@@ -203,10 +196,22 @@ class CtrCasaOpenCasa(BaseController):
 
             saving_booking_accounts.append(dict(
                 booking_id=booking_id,
-                customer_id=cif_id,
-                account_id=casa_account_id,
+                account_number=request.casa_account_number,
                 created_at=now(),
                 updated_at=now()
+            ))
+
+            saving_booking_child_business_forms.append(dict(
+                booking_business_form_id=generate_uuid(),
+                booking_id=booking_id,
+                form_data=orjson_dumps(dict(
+                    cif_number=cif_number,
+                    account_info=request.dict()
+                )),
+                business_form_id=BUSINESS_TYPE_OPEN_CASA,
+                created_at=now(),
+                save_flag=True,
+                log_data=None
             ))
 
         if is_errors:
@@ -271,7 +276,7 @@ class CtrCasaOpenCasa(BaseController):
         # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CASA
         transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
             business_type_id=BUSINESS_TYPE_OPEN_CASA,
-            booking_id=booking_id,
+            booking_id=booking_parent_id,
             request_json=request_json,
             history_datas=history_datas
         )
@@ -297,15 +302,13 @@ class CtrCasaOpenCasa(BaseController):
             saving_transaction_sender=saving_transaction_sender,
             saving_transaction_job=saving_transaction_job,
             saving_booking_business_form=saving_booking_business_form,
+            saving_booking_child_business_forms=saving_booking_child_business_forms,
             session=self.oracle_session
         ))
 
         return self.response(data=dict(
             booking_parent_id=booking_parent_id,
-            booking_accounts=[dict(
-                account_id=booking_account['account_id'],
-                booking_id=booking_account['booking_id'],
-            ) for index, booking_account in enumerate(saving_booking_accounts)]
+            booking_ids=[saving_booking_account['booking_id'] for saving_booking_account in saving_booking_accounts]
         ))
 
     async def ctr_check_exist_casa_account(self, account_number):
