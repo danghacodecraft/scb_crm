@@ -100,6 +100,9 @@ GW_ENDPOINT_URL_SEND_EMAIL = "/email/v1.0/rest/sendEmail"
 GW_ENDPOINT_URL_OPEN_CARDS = "/cardworks/v1.0/rest/openCards"
 GW_ENDPOINT_URL_SELECT_CARD_INFO = "/cardworks/v1.0/rest/selectCardInfo"
 
+# -----------------------------------------------FeeInfo--------------------------------------------------- #
+GW_ENDPOINT_URL_SELECT_FEE_BY_PRODUCT_NAME = "/fee/v1.0/rest/selectFeeByProductName"
+
 ########################################################################################################################
 #                                         GW FUNCTION NAME
 ########################################################################################################################
@@ -295,6 +298,11 @@ GW_FUNC_SELECT_CARD_INFO_IN = "selectCardInfo_in"
 GW_FUNC_SELECT_CARD_INFO_OUT = "selectCardInfo_out"
 GW_FUNC_SELECT_CARD_INFO = "selectCardInfo"
 
+# selectFeeInfoByProductName
+GW_FUNC_SELECT_FEE_INFO_IN = 'selectFeeByProductName_in'
+GW_FUNC_SELECT_FEE_INFO_OUT = 'selectFeeByProductName_out'
+GW_FUNC_SELECT_FEE_INFO = 'selectFeeByProductName'
+
 ########################################################################################################################
 #                                         END GW FUNCTION NAME
 ########################################################################################################################
@@ -448,3 +456,13 @@ GW_DASHBOARD_INPUT_PARAMS = {
     GW_DASHBOARD_COUNT_MORTGAGE_LOAN: 'Số lượng vay cầm cố',
     GW_DASHBOARD_TOTAL_TRN_REF_NO: 'Tổng số bút toán'
 }
+
+GW_FEE_TOP_UP_0202 = '0201'  # Nộp tiền mặt trong SCB - Nhận bằng TKTT
+GW_FEE_TOP_UP_0301 = '0301'  # Nộp tiền mặt trong SCB - Nhận bằng GTĐD
+GW_FEE_TOP_UP_0302 = '0302'  # Nộp tiền mặt ngoài SCB - Nhận bằng TKTT / GTĐD
+GW_FEE_TOP_UP_0310 = '0310'  # Nộp tiền mặt chuyển tiền nhanh 24/7 - Nhận bằng TKTT / Nhận bằng số thẻ
+
+GW_FEE_TRANSFER_0303 = '0303'  # Chuyển khoản trong SCB - Nhận bằng TKTT
+GW_FEE_TRANSFER_0304 = '0304'  # Chuyển khoản trong SCB - Nhận bằng GTĐD
+GW_FEE_TRANSFER_0305 = '0305'  # Chuyển khoản ngoài SCB - Nhận bằng TKTT / GTĐD
+GW_FEE_TRANSFER_0310 = '0310'  # Chuyển khoản nhanh 24/7 - Nhận bằng TKTT / Nhận bằng số thẻ

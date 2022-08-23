@@ -49,7 +49,10 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_TOP_UP_CASA_ACCOUNT,
     PROFILE_HISTORY_STATUS_INIT
 )
-from app.utils.constant.gw import GW_DEFAULT_VALUE, GW_REQUEST_DIRECT_INDIRECT
+from app.utils.constant.gw import (
+    GW_DEFAULT_VALUE, GW_FEE_TOP_UP_0202, GW_FEE_TOP_UP_0301,
+    GW_FEE_TOP_UP_0302, GW_FEE_TOP_UP_0310, GW_REQUEST_DIRECT_INDIRECT
+)
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_GDV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_GDV
 )
@@ -488,30 +491,35 @@ class CtrCasaTopUp(BaseController):
         ################################################################################################################
 
         casa_top_up_info = None
+        fee_id = None
         if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
             casa_top_up_info = await self.ctr_save_casa_top_up_scb_to_account(
                 current_user=current_user,
                 receiving_method=receiving_method,
                 data=data
             )
+            fee_id = GW_FEE_TOP_UP_0202
 
         if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
             casa_top_up_info = await self.ctr_save_casa_top_up_scb_by_identity(
                 receiving_method=receiving_method,
                 data=data
             )
+            fee_id = GW_FEE_TOP_UP_0301
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
             casa_top_up_info = await self.ctr_save_casa_top_up_third_party_to_account(
                 receiving_method=receiving_method,
                 data=data
             )
+            fee_id = GW_FEE_TOP_UP_0302
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
             casa_top_up_info = await self.ctr_save_casa_top_up_third_party_by_identity(
                 receiving_method=receiving_method,
                 data=data
             )
+            fee_id = GW_FEE_TOP_UP_0302
             # (
             #     saving_customer, saving_customer_identity, saving_customer_address
             # ) = await CtrCustomer(current_user).ctr_create_non_resident_customer(request=request)
@@ -521,12 +529,14 @@ class CtrCasaTopUp(BaseController):
                 receiving_method=receiving_method,
                 data=data
             )
+            fee_id = GW_FEE_TOP_UP_0310
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
             casa_top_up_info = await self.ctr_save_casa_top_up_third_party_247_to_card(
                 receiving_method=receiving_method,
                 data=data
             )
+            fee_id = GW_FEE_TOP_UP_0310
 
         if not casa_top_up_info:
             return self.response_exception(msg="No Casa Top Up")
@@ -545,8 +555,9 @@ class CtrCasaTopUp(BaseController):
         )
 
         # Thông tin phí
-        fee_info_response = await CtrAccountFee().calculate_fee(
-            one_fee_info_request=data.fee_info, fee_note=data.fee_note, amount=data.amount
+        fee_info_response = await CtrAccountFee(current_user).calculate_fee(
+            one_fee_info_request=data.fee_info, fee_note=data.fee_note, amount=data.amount,
+            business_type_id=BUSINESS_TYPE_CASA_TOP_UP, fee_id=fee_id
         )
 
         statement_response = await CtrStatement().ctr_get_statement_info(statement_requests=data.statement)
