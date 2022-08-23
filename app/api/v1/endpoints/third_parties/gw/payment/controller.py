@@ -213,6 +213,17 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
 
         return self.response(data=response_data)
 
+    async def ctr_get_payment_amount_unblock(
+        self,
+        BOOKING_ID: str
+    ):
+        booking_business_form = await CtrBooking().ctr_get_booking_business_form(booking_id=BOOKING_ID, session=self.oracle_session)
+        form_data = orjson_loads(booking_business_form.form_data)
+        form_data.update(
+            booking_id=BOOKING_ID
+        )
+        return self.response(data=form_data)
+
     async def ctr_gw_payment_amount_block(self, BOOKING_ID: str):
         current_user = self.current_user
 
@@ -258,7 +269,7 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
         )
 
         current_user = self.current_user
-        request_data = []
+        request_data = {}
         account_unlock_info = []
         account_numbers = []
         saving_booking_account = []
@@ -341,7 +352,7 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
             sender_note=sender_info.note
         )
 
-        request_data.append({
+        request_data.update({
             "account_unlock": account_unlock_info,
             "transaction_fee_info": {
                 "fee_info": saving_fee_info,
@@ -418,17 +429,22 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
 
             ))
         request_data = orjson_loads(booking_business_form.form_data)
-
+        teller = self.call_repos(
+            await repos_get_teller_info(
+                booking_id=BOOKING_ID,
+                session=self.oracle_session
+            )
+        )
         gw_payment_amount_unblock = self.call_repos(await repos_gw_payment_amount_unblock(
             current_user=current_user,
             booking_id=BOOKING_ID,
+            teller=teller,
             request_data_gw=request_data,
             session=self.oracle_session
         ))
 
         response_data = {
-            "booking_id": BOOKING_ID,
-            "account_list": gw_payment_amount_unblock
+            "booking_id": gw_payment_amount_unblock,
         }
         return self.response(data=response_data)
 

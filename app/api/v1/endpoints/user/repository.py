@@ -125,6 +125,20 @@ async def repos_check_token(token: str) -> ReposReturn:
     ))
 
 
+async def repos_get_username_from_token(token: str) -> ReposReturn:
+    try:
+        auth_parts = orjson.loads(zlib.decompress(base64.b64decode(token)))
+    except (TypeError, UnicodeDecodeError, binascii.Error, IndexError, zlib.error):
+        return ReposReturn(
+            is_error=True,
+            msg=ERROR_INVALID_TOKEN,
+            loc='token',
+            error_status_code=status.HTTP_401_UNAUTHORIZED
+        )
+
+    return ReposReturn(data=auth_parts['username'])
+
+
 async def repos_get_user_info(user_id: str) -> ReposReturn:
     if user_id == USER_ID:
         return ReposReturn(data=USER_INFO)

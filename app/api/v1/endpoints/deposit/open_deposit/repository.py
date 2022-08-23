@@ -80,6 +80,7 @@ async def repos_get_deposit_pay_in(
     return ReposReturn(data=booking_id)
 
 
+@auto_commit
 async def repos_save_redeem_account(
     booking_id,
     saving_transaction_stage_status: dict,
@@ -94,5 +95,22 @@ async def repos_save_redeem_account(
     saving_booking_business_form: dict,
     session: Session
 ):
-
+    session.add_all([
+        TransactionStageStatus(**saving_transaction_stage_status),
+        SlaTransaction(**saving_sla_transaction),
+        TransactionStage(**saving_transaction_stage),
+        TransactionStageLane(**saving_transaction_stage_lane),
+        TransactionStagePhase(**saving_transaction_stage_phase),
+        TransactionStageRole(**saving_transaction_stage_role),
+        TransactionDaily(**saving_transaction_daily),
+        TransactionSender(**saving_transaction_sender),
+        TransactionJob(**saving_transaction_job),
+        BookingBusinessForm(**saving_booking_business_form),
+    ])
+    # Update Booking
+    session.execute(
+        update(Booking)
+        .filter(Booking.id == booking_id)
+        .values(transaction_id=saving_transaction_daily['transaction_id'])
+    )
     return ReposReturn(data=booking_id)

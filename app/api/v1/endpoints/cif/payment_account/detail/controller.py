@@ -10,7 +10,7 @@ from app.api.v1.endpoints.cif.payment_account.detail.schema import (
     SavePaymentAccountRequest
 )
 from app.api.v1.endpoints.cif.repository import (
-    repos_get_booking, repos_get_initializing_customer
+    repos_get_booking, repos_get_customer, repos_get_initializing_customer
 )
 from app.api.v1.endpoints.config.account.repository import (
     repos_get_account_classes
@@ -39,8 +39,8 @@ from app.utils.functions import dropdown, is_valid_number, now, orjson_dumps
 class CtrPaymentAccount(BaseController):
 
     async def detail(self, cif_id: str):
-        # check cif đang tạo
-        self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
+        # check cif tồn tại
+        self.call_repos(await repos_get_customer(cif_id=cif_id, session=self.oracle_session))
 
         detail_payment_account_info = self.call_repos(
             await repos_get_detail_payment_account(

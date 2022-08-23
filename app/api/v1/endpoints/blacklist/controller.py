@@ -4,11 +4,11 @@ from app.api.base.controller import BaseController
 from app.api.v1.endpoints.blacklist.repository import (
     repo_add_blacklist, repo_view_blacklist, repos_get_total_indentity_id
 )
-from app.api.v1.endpoints.blacklist.schema import BlacklistResponse
+from app.api.v1.endpoints.blacklist.schema import BlacklistRequest
 
 
 class CtrBlackList(BaseController):
-    async def ctr_create_blacklist(self, data_blacklist: BlacklistResponse):
+    async def ctr_create_blacklist(self, data_blacklist: BlacklistRequest):
         data_insert = {
             'full_name': data_blacklist.full_name,
             'date_of_birth': data_blacklist.date_of_birth,
@@ -27,6 +27,8 @@ class CtrBlackList(BaseController):
             'blacklist_source': data_blacklist.blacklist_source,
             'document_no': data_blacklist.document_no,
             'blacklist_area': data_blacklist.blacklist_area,
+            'created_at': data_blacklist.created_at,
+            'updated_at': data_blacklist.updated_at,
         }
 
         self.call_repos(await repo_add_blacklist(
@@ -88,6 +90,8 @@ class CtrBlackList(BaseController):
             'blacklist_source': item_blacklist.Blacklist.blacklist_source,
             'document_no': item_blacklist.Blacklist.document_no,
             'blacklist_area': item_blacklist.Blacklist.blacklist_area,
+            'created_at': item_blacklist.Blacklist.created_at,
+            'updated_at': item_blacklist.Blacklist.updated_at,
         } for item_blacklist in blacklist]
 
         return self.response_paging(

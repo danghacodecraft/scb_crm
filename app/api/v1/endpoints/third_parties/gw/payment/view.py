@@ -14,7 +14,8 @@ from app.api.v1.endpoints.third_parties.gw.payment.example import (
 from app.api.v1.endpoints.third_parties.gw.payment.schema import (
     AccountAmountBlockPDResponse, AccountAmountBlockRequest,
     AccountAmountBlockResponse, AccountAmountUnblockRequest,
-    GWCasaTransferAccountResponse, PaymentSuccessResponse, RedeemAccountRequest
+    AccountAmountUnBlockResponse, GWCasaTransferAccountResponse,
+    PaymentSuccessResponse, RedeemAccountRequest
 )
 
 router = APIRouter()
@@ -104,12 +105,32 @@ async def view_amount_unblock(
     return ResponseData[PaymentSuccessResponse](**payment_amount_unblock)
 
 
+@router.get(
+    path="/amount-unblock/",
+    name="Amount UnBlock",
+    description="Giải tỏa tài khoản",
+    responses=swagger_response(
+        response_model=ResponseData[AccountAmountUnBlockResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_get_amount_unblock(
+        current_user=Depends(get_current_user_from_header()),
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch")
+):
+    payment_amount_unblock = await CtrGWPayment(current_user).ctr_get_payment_amount_unblock(
+        BOOKING_ID=BOOKING_ID
+    )
+
+    return ResponseData(**payment_amount_unblock)
+
+
 @router.post(
     path="/amount-unblock-pd/",
     name="[GW] Amount Unblock",
     description="Giải tỏa tài khoản - Phê duyệt",
     responses=swagger_response(
-        response_model=ResponseData[AccountAmountBlockResponse],
+        response_model=ResponseData[PaymentSuccessResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -121,7 +142,7 @@ async def view_amount_unblock_pd(
         BOOKING_ID=BOOKING_ID
     )
 
-    return ResponseData[AccountAmountBlockResponse](**payment_amount_unblock_pd)
+    return ResponseData[PaymentSuccessResponse](**payment_amount_unblock_pd)
 
 
 # @router.post(
