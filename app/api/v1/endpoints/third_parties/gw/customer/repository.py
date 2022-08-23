@@ -1010,9 +1010,12 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
             "delivByBrchInd": GW_DEFAULT_YES
             if card_data["card_delivery_address"]["delivery_address_flag"] == CRM_DELIVERY_ADDRESS_FLAG_FALSE else GW_DEFAULT_NO,
             "address_info_line": card_data["card_delivery_address"]["delivery_address"]["number_and_street"],
-            "address_info_ward_name": card_data["card_delivery_address"]["delivery_address"]["ward"]['name'],
-            "address_info_district_name": card_data["card_delivery_address"]["delivery_address"]["district"]['name'],
-            "address_info_city_name": card_data["card_delivery_address"]["delivery_address"]["province"]['name'],
+            "address_info_ward_name": card_data["card_delivery_address"]["delivery_address"]["ward"]['name']
+            if card_data["card_delivery_address"]["delivery_address"]["ward"] else None,
+            "address_info_district_name": card_data["card_delivery_address"]["delivery_address"]["district"]['name']
+            if card_data["card_delivery_address"]["delivery_address"]["district"] else None,
+            "address_info_city_name": card_data["card_delivery_address"]["delivery_address"]["province"]['name']
+            if card_data["card_delivery_address"]["delivery_address"]["province"] else None,
 
             # thông tin chi nhánh nhận thẻ
             "delivBrchId": card_data.get("card_delivery_address", {}).get("scb_branch").get("id")
@@ -1109,7 +1112,8 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
             "delivByBrchInd": GW_DEFAULT_YES
             if sub_card["card_delivery_address"]["delivery_address_flag"] == CRM_DELIVERY_ADDRESS_FLAG_FALSE else GW_DEFAULT_NO,
             "address_info_line": sub_card["card_delivery_address"]["delivery_address"]["number_and_street"],
-            "address_info_ward_name": sub_card["card_delivery_address"]["delivery_address"]["ward"]['name'],
+            "address_info_ward_name": sub_card["card_delivery_address"]["delivery_address"]["ward"]['name']
+            if sub_card["card_delivery_address"]["delivery_address"]["ward"] else None,
             "address_info_district_name": sub_card["card_delivery_address"]["delivery_address"]["district"],
             "address_info_city_name": sub_card["card_delivery_address"]["delivery_address"]["province"],
 
