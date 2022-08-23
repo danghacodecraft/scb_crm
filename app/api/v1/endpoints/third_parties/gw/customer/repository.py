@@ -1038,13 +1038,13 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
             casa_currency_number=casa_currency_number.data
         )
 
-    await repos_save_transaction_jobs(
-        session=session,
-        booking_id=booking_id,
-        is_success=is_success,
-        response_data=response_data,
-        business_job_ids=[BUSINESS_JOB_CODE_DEBIT_CARD]
-    )
+        await repos_save_transaction_jobs(
+            session=session,
+            booking_id=booking_id,
+            is_success=is_success,
+            response_data=response_data,
+            business_job_ids=[BUSINESS_JOB_CODE_DEBIT_CARD]
+        )
 
         if not is_success:
             return ReposReturn(
@@ -1119,13 +1119,11 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
             )
 
             if is_open_sub_card_success:
-                await repos_save_bussiness_form_and_transaction_jobs(
+                await repos_save_transaction_jobs(
                     session=session,
                     booking_id=booking_id,
                     is_success=is_open_sub_card_success,
                     response_data=response_open_sub_card_data,
-                    form_data=sub_card_info,
-                    business_form_id=BUSINESS_FORM_DEBIT_CARD,
                     business_job_ids=[BUSINESS_JOB_CODE_DEBIT_CARD]
                 )
                 # cập nhật lại approval_status cho sub card
