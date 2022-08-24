@@ -53,7 +53,6 @@ class CtrCasaOpenCasa(BaseController):
         # Lấy thông tin Lưu tài khoản cập nhật mới nhất
         for booking, booking_account, booking_business_form in get_casa_open_casa_infos:
             form_data = orjson_loads(booking_business_form.form_data)
-            print(form_data)
             form_data['account_info']['approval_status'] = booking_business_form.is_success
             if not mark_created_at:
                 mark_created_at = booking_business_form.created_at
