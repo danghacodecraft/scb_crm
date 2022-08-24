@@ -75,7 +75,6 @@ async def view_approve(
         current_user=Depends(get_current_user_from_header())
 ):
     approve_info = await CtrApproval(current_user).ctr_approve(
-        cif_id=request.cif_id,
         booking_id=BOOKING_ID,
         request=request
     )

@@ -1,7 +1,6 @@
 from fastapi import APIRouter
 
 from app.api.v1.endpoints.approval_v2 import router as routers_approval_v2
-# from app.api.v1.endpoints.approval import router as routers_approval
 from app.api.v1.endpoints.blacklist import view as view_blacklist
 from app.api.v1.endpoints.booking import view as view_bookings
 from app.api.v1.endpoints.casa import router as routers_casa

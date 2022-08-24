@@ -1,23 +1,19 @@
 from starlette import status
 
 from app.api.base.controller import BaseController
-from app.api.v1.endpoints.approval.common_repository import (
+from app.api.v1.endpoints.approval_v2.common_repository import (
     repos_get_next_stage, repos_get_previous_stage,
     repos_get_previous_transaction_daily, repos_get_stage_codes_in_business,
     repos_get_stage_information, repos_get_stage_teller,
     repos_open_cif_get_previous_stage
 )
-from app.api.v1.endpoints.approval.repository import (
-    repos_approval_get_face_authentication, repos_approve,
-    repos_get_approval_identity_faces, repos_get_approval_identity_images,
-    repos_get_approval_process, repos_get_business_job_codes,
-    repos_get_business_jobs, repos_get_business_jobs_by_open_casa,
-    repos_get_compare_image_transactions, repos_get_list_audit
-)
-from app.api.v1.endpoints.approval.schema import ApprovalRequest
 from app.api.v1.endpoints.approval_v2.repository import (
-    repos_get_booking_compare_images
+    repos_approve, repos_get_approval_process,
+    repos_get_booking_compare_images, repos_get_business_job_codes,
+    repos_get_business_jobs, repos_get_business_jobs_by_open_casa,
+    repos_get_list_audit
 )
+from app.api.v1.endpoints.approval_v2.schema import ApprovalRequest
 from app.api.v1.endpoints.cif.basic_information.identity.identity_document.repository import (
     repos_get_sla_transaction_parent_from_stage_transaction_id
 )
@@ -27,9 +23,6 @@ from app.api.v1.endpoints.third_parties.gw.employee.repository import (
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
 from app.settings.event import INIT_SERVICE
-from app.third_parties.oracle.models.cif.basic_information.model import (
-    Customer
-)
 from app.third_parties.oracle.models.master_data.identity import (
     CustomerIdentityType
 )
@@ -41,8 +34,7 @@ from app.utils.constant.approval import (
     INIT_STAGES, STAGE_BEGINS
 )
 from app.utils.constant.business_type import (
-    BUSINESS_TYPE_CASA_TOP_UP, BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_WITHDRAW,
-    BUSINESS_TYPES
+    BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPES
 )
 from app.utils.constant.cif import (
     DROPDOWN_NONE_DICT, IMAGE_TYPE_FACE, IMAGE_TYPE_FINGERPRINT,
@@ -54,15 +46,12 @@ from app.utils.constant.idm import (
     IDM_PERMISSION_CODE_GDV, IDM_PERMISSION_CODE_KSS, IDM_PERMISSION_CODE_KSV
 )
 from app.utils.error_messages import (
-    ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
-    ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT,
-    ERROR_APPROVAL_INCORRECT_UPLOAD_SIGNATURE,
     ERROR_APPROVAL_NO_DATA_IN_IDENTITY_STEP,
     ERROR_APPROVAL_NO_SIGNATURE_IN_IDENTITY_STEP,
     ERROR_APPROVAL_UPLOAD_SIGNATURE, ERROR_BUSINESS_TYPE_NOT_EXIST,
-    ERROR_CIF_ID_NOT_EXIST, ERROR_CONTENT_NOT_NULL, ERROR_FIELD_REQUIRED,
-    ERROR_PERMISSION, ERROR_STAGE_COMPLETED, ERROR_USER_NOT_THE_SAME_BRANCH,
-    ERROR_VALIDATE, ERROR_WRONG_STAGE_ACTION, MESSAGE_STATUS
+    ERROR_CIF_ID_NOT_EXIST, ERROR_CONTENT_NOT_NULL, ERROR_PERMISSION,
+    ERROR_STAGE_COMPLETED, ERROR_USER_NOT_THE_SAME_BRANCH,
+    ERROR_WRONG_STAGE_ACTION, MESSAGE_STATUS
 )
 from app.utils.functions import (
     dropdown, generate_uuid, now, orjson_dumps, orjson_loads
@@ -533,7 +522,6 @@ class CtrApproval(BaseController):
 
     async def ctr_approve(
             self,
-            cif_id: str,
             booking_id: str,
             request: ApprovalRequest
     ):
@@ -541,147 +529,14 @@ class CtrApproval(BaseController):
         current_user = self.current_user.user_info
         business_type = await CtrBooking().ctr_get_business_type(booking_id=booking_id)
         business_type_id = business_type.code
-        face_authentications = []
-        fingerprint_authentications = []
-        signature_authentications = []
-        no_cif_flag = False
         saving_booking_authentications = []
-
-        # Nghiệp vụ không cần cif
-        if business_type_id in [BUSINESS_TYPE_CASA_TOP_UP, BUSINESS_TYPE_WITHDRAW]:
-            no_cif_flag = True
-            # authentication = request.authentication
-            # if authentication:
-            #     compare_face_image_uuid = authentication.face.compare_face_image_uuid
-            #     compare_signature_image_uuid = authentication.signature.compare_face_image_uuid
-            #     compare_fingerprint_image_uuid = authentication.fingerprint.compare_face_image_uuid
-            #     if compare_face_image_uuid:
-            #         saving_booking_authentications.append(dict(
-            #             id=generate_uuid(),
-            #             file_uuid=compare_face_image_uuid,
-            #             file_uuid_ekyc=None,    # TODO: Tạm thời không upload file qua ekyc
-            #             image_type_id=IMAGE_TYPE_FACE,
-            #             booking_id=booking_id,
-            #             created_at=now()
-            #         ))
-            #
-            #     if compare_fingerprint_image_uuid:
-            #         saving_booking_authentications.append(dict(
-            #             id=generate_uuid(),
-            #             file_uuid=compare_fingerprint_image_uuid,
-            #             file_uuid_ekyc=None,    # TODO: Tạm thời không upload file qua ekyc
-            #             image_type_id=IMAGE_TYPE_FINGERPRINT,
-            #             booking_id=booking_id,
-            #             created_at=now()
-            #         ))
-            #
-            #     if not compare_signature_image_uuid:
-            #         return self.response_exception(msg=ERROR_APPROVAL_UPLOAD_SIGNATURE)
-            #
-            #     saving_booking_authentications.append(dict(
-            #         id=generate_uuid(),
-            #         file_uuid=compare_signature_image_uuid,
-            #         file_uuid_ekyc=None,    # TODO: Tạm thời không upload file qua ekyc
-            #         image_type_id=IMAGE_TYPE_SIGNATURE,
-            #         booking_id=booking_id,
-            #         created_at=now()
-            #     ))
-            ####################################
-
-            # booking_business_form = await CtrBooking().ctr_get_booking_business_form(
-            #     booking_id=booking_id, session=self.oracle_session
-            # )
-            # form_data = orjson_loads(booking_business_form.form_data)
-            # if business_type_id == BUSINESS_TYPE_CASA_TOP_UP:
-            # TH1: Method không có cif
-            # if form_data['receiving_method'] in RECEIVING_METHOD_IDENTITY_CASES:
-            #     return self.response_exception(
-            #         msg=f"{form_data['receiving_method']}",
-            #         detail="Đang nâng cấp"  # TODO
-            #     )
-            # TH2: Method BẮT BUỘC có cif
-            # receiving_method = form_data['receiving_method']
-            # if receiving_method not in RECEIVING_METHOD_IDENTITY_CASES and not cif_id:
-            #     return self.response_exception(
-            #         msg=ERROR_FIELD_REQUIRED,
-            #         loc=f'cif_id: {cif_id}, business_type_id:{business_type_id}, receiving_method: {receiving_method}'
-            #     )
-
-        # Nghiệp vụ khác
-        else:
-            if not cif_id:
-                return self.response_exception(
-                    msg=ERROR_FIELD_REQUIRED,
-                    loc=f'cif_id, business_type_id:{business_type_id}'
-                )
-            # check cif tồn tại
-            await self.get_model_object_by_id(model_id=cif_id, model=Customer, loc="cif_id")
-
-            ############################################################################################################
-            # THÔNG TIN XÁC THỰC
-            ############################################################################################################
-
-            # Lấy tất cả hình ảnh ở bước GTDD
-            transactions = self.call_repos(await repos_get_approval_identity_images(
-                cif_id=cif_id,
-                session=self.oracle_session
-            ))
-            await self.check_data_in_identity_step_and_get_faces_fingerprints_signatures(transactions)
-
-            ############################################################################################################
-            # Thông tin xác thực
-            authentications = self.call_repos(await repos_approval_get_face_authentication(
-                cif_id=cif_id,
-                session=self.oracle_session
-            ))
-
-            for _, identity_image, identity_image_transaction, _, compare_image_transaction in authentications:
-                if identity_image.image_type_id == IMAGE_TYPE_FACE:
-                    face_authentications.append({
-                        identity_image_transaction.image_url: compare_image_transaction.compare_image_url
-                    })
-                if identity_image.image_type_id == IMAGE_TYPE_FINGERPRINT:
-                    fingerprint_authentications.append({
-                        identity_image_transaction.image_url: compare_image_transaction.compare_image_url
-                    })
-                if identity_image.image_type_id == IMAGE_TYPE_SIGNATURE:
-                    signature_authentications.append({
-                        identity_image_transaction.image_url: compare_image_transaction.compare_image_url
-                    })
-
-            # # Kiểm tra xem khuôn mặt đã upload chưa
-            # if not face_authentications:
-            #     return self.response_exception(
-            #         msg=ERROR_APPROVAL_UPLOAD_FACE,
-            #         detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_FACE]
-            #     )
-
-            # # Kiểm tra xem VÂN TAY đã upload chưa
-            # if not fingerprint_authentications:
-            #     return self.response_exception(
-            #         msg=ERROR_APPROVAL_UPLOAD_FINGERPRINT,
-            #         detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_FINGERPRINT]
-            #     )
-
-            # Kiểm tra xem chữ ký đã upload chưa
-            if not signature_authentications:
-                return self.response_exception(
-                    msg=ERROR_APPROVAL_UPLOAD_SIGNATURE,
-                    detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_SIGNATURE]
-                )
-            ############################################################################################################
-
-        ################################################################################################################
-        # THÔNG TIN BIỂU MẪU
-        ################################################################################################################
-        # TODO: Kiểm tra số biểu mẫu gửi xuống có bằng với số biểu mẫu liên quan hay không
 
         ################################################################################################################
         # PHÊ DUYỆT
         ################################################################################################################
-        content = request.approval.content
-        reject_flag = request.approval.reject_flag
-        action_id = request.approval.action_id
+        content = request.content
+        reject_flag = request.reject_flag
+        action_id = request.action_id
 
         _, _, previous_transaction_stage = self.call_repos(
             await repos_get_previous_stage(
@@ -717,27 +572,6 @@ class CtrApproval(BaseController):
         ################################################################################################################
         # CURRENT STAGE
         if is_stage_init:
-            # Cập nhật trạng thái đã duyệt hình ảnh này
-            face_transactions = self.call_repos(await repos_get_approval_identity_faces(
-                cif_id=cif_id,
-                session=self.oracle_session
-            ))
-            identity_image_ids = []
-            for identity, identity_image in face_transactions:
-                identity_image_ids.append(identity_image.id)
-
-            # Lấy hình ảnh so sánh, số nhiều nhưng cùng chung uuid
-            compare_image_transactions = self.call_repos(await repos_get_compare_image_transactions(
-                identity_image_ids=identity_image_ids,
-                session=self.oracle_session
-            ))
-            if not compare_image_transactions:
-                return self.response_exception(msg="No Compare Image")
-
-            for compare_image, compare_image_transaction in compare_image_transactions:
-                compare_image_transaction.approved_at = now()
-                compare_image_transaction.approved_id = current_user.code
-
             current_stage_code = CIF_STAGE_INIT
         else:
             # Nếu là bước GDV
@@ -748,75 +582,17 @@ class CtrApproval(BaseController):
                 ))
                 is_give_back = True
 
-                if not request.authentication:
+                # Kiểm tra xem chữ ký đã upload chưa
+                signature_authentications = self.call_repos(await repos_get_booking_compare_images(
+                    booking_id=booking_id,
+                    session=self.oracle_session
+                ))
+                if not signature_authentications:
                     return self.response_exception(
-                        msg=ERROR_VALIDATE,
-                        detail="Field required",
-                        loc="authentication"
+                        msg=ERROR_APPROVAL_UPLOAD_SIGNATURE,
+                        detail=MESSAGE_STATUS[ERROR_APPROVAL_UPLOAD_SIGNATURE]
                     )
 
-                if not no_cif_flag:
-                    ####################################################################################################
-                    # [Thông tin xác thực] Khuôn mặt
-                    face_compare_image_uuid = request.authentication.face.compare_face_image_uuid
-                    if face_authentications and face_compare_image_uuid:
-                        # if not request.authentication.face:
-                        #     return self.response_exception(
-                        #         msg=ERROR_VALIDATE,
-                        #         detail="Field required",
-                        #         loc="authentication -> face"
-                        #     )
-                        new_face_compare_image_transaction_uuid = list(face_authentications[0].values())[0]
-
-                        # Kiểm tra xem khuôn mặt gửi lên có đúng không
-                        # Hình ảnh kiểm tra sẽ là hình ảnh của lần Upload mới nhất
-                        if new_face_compare_image_transaction_uuid != face_compare_image_uuid:
-                            return self.response_exception(
-                                msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FACE,
-                                detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FACE],
-                                loc="authentication -> face -> compare_face_image_uuid"
-                            )
-                    ####################################################################################################
-
-                    ####################################################################################################
-                    # [Thông tin xác thực] Vân tay
-                    fingerprint_compare_image_uuid = request.authentication.fingerprint.compare_face_image_uuid
-                    if fingerprint_authentications and request.authentication.fingerprint.compare_face_image_uuid:
-                        # if not request.authentication.fingerprint:
-                        #     return self.response_exception(
-                        #         msg=ERROR_VALIDATE,
-                        #         detail="Field required",
-                        #         loc="authentication -> fingerprint"
-                        #     )
-                        new_fingerprint_compare_image_transaction_uuid = list(fingerprint_authentications[0].values())[0]
-                        # Kiểm tra xem vân tay gửi lên có đúng không
-                        # Hình ảnh kiểm tra sẽ là hình ảnh của lần Upload mới nhất
-                        if new_fingerprint_compare_image_transaction_uuid != fingerprint_compare_image_uuid:
-                            return self.response_exception(
-                                msg=ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT,
-                                detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_FINGERPRINT],
-                                loc="authentication -> fingerprint -> compare_face_image_uuid"
-                            )
-                    ####################################################################################################
-
-                    ####################################################################################################
-                    # [Thông tin xác thực] Chữ ký
-                    if not request.authentication.signature:
-                        return self.response_exception(
-                            msg=ERROR_VALIDATE,
-                            detail="Field required",
-                            loc="authentication -> signature"
-                        )
-                    new_signature_compare_image_transaction_uuid = list(signature_authentications[0].values())[0]
-                    # Kiểm tra xem chữ ký gửi lên có đúng không
-                    # Hình ảnh kiểm tra sẽ là hình ảnh của lần Upload mới nhất
-                    if new_signature_compare_image_transaction_uuid != request.authentication.signature.compare_face_image_uuid:
-                        return self.response_exception(
-                            msg=ERROR_APPROVAL_INCORRECT_UPLOAD_SIGNATURE,
-                            detail=MESSAGE_STATUS[ERROR_APPROVAL_INCORRECT_UPLOAD_SIGNATURE],
-                            loc="authentication -> signature -> compare_face_image_uuid"
-                        )
-                    ####################################################################################################
             else:
                 current_stage = self.call_repos(await repos_get_next_stage(
                     business_type_id=business_type_id,
@@ -829,7 +605,6 @@ class CtrApproval(BaseController):
         if current_stage_code in COMPLETED_STAGES:
             return self.response(
                 data=dict(
-                    cif_id=cif_id,
                     previous_stage=previous_stage_code,
                     current_stage=current_stage_code,
                     next_stage=None
@@ -1140,8 +915,7 @@ class CtrApproval(BaseController):
         #         title_name=current_user.hrm_title_name
         #     )
 
-        approval_process = self.call_repos((await repos_approve(
-            cif_id=cif_id,
+        self.call_repos((await repos_approve(
             business_type_id=business_type_id,
             booking_id=booking_id,
             saving_transaction_stage_status=saving_transaction_stage_status,
@@ -1158,13 +932,11 @@ class CtrApproval(BaseController):
             session=self.oracle_session
         )))
 
-        approval_process.update(
+        return self.response(dict(
             previous_stage=previous_stage_code,
             current_stage=current_stage_code,
             next_stage=next_stage_code,
-        )
-
-        return self.response(approval_process)
+        ))
 
     async def get_description(
         self,
