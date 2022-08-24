@@ -392,7 +392,7 @@ class ServiceGW:
         return await self.call_api(
             request_data=request_data,
             api_url=api_url,
-            output_key='retrieveCurrentAccountCASA_in',
+            output_key='retrieveCurrentAccountCASA_out',
             service_name='retrieveCurrentAccountCASA'
         )
 
