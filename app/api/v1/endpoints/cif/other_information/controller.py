@@ -63,8 +63,8 @@ class CtrOtherInfo(BaseController):
             await repos_update_other_info(
                 cif_id=cif_id,
                 update_other_info_req=update_other_info_req,
-                extra_phone_number=update_other_info_req.extra_phone_number,
-                customer_relationship=customer_relationship_id,
+                extra_number=update_other_info_req.extra_phone_number,
+                cust_relationship_type_id=customer_relationship_id,
                 current_user=self.current_user.user_info,
                 session=self.oracle_session
             )
