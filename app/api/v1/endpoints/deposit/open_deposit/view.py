@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import APIRouter, Body, Depends, Header
 from starlette import status
 
@@ -86,7 +88,7 @@ async def view_get_deposit_pay_in(
 )
 async def save_redeem_account_td(
         booking_id: str = Header(..., description="Mã phiên giao dịch", alias="BOOKING-ID"),
-        request: RedeemAccountRequest = Body(...),
+        request: List[RedeemAccountRequest] = Body(...),
         current_user=Depends(get_current_user_from_header())
 ):
     redeem_account_td = await CtrDeposit(current_user=current_user).ctr_save_redeem_account_td(

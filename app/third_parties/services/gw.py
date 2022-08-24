@@ -7,6 +7,7 @@ import aiohttp
 from loguru import logger
 from starlette import status
 
+from app.api.base.repository import ReposReturn
 from app.api.v1.endpoints.third_parties.gw.email.schema import (
     open_ebank_failure_response, open_ebank_success_response
 )
@@ -112,7 +113,8 @@ from app.utils.constant.gw import (
     GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM,
     GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM_IN,
     GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM_OUT, GW_FUNC_PAY_IN_CARD_IN,
-    GW_FUNC_PAY_IN_CARD_OUT, GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA,
+    GW_FUNC_PAY_IN_CARD_OUT, GW_FUNC_REDEEM_ACCOUNT, GW_FUNC_REDEEM_ACCOUNT_IN,
+    GW_FUNC_REDEEM_ACCOUNT_OUT, GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA,
     GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA_IN,
     GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA_OUT,
     GW_FUNC_REGISTER_SMS_SERVICE_BY_MOBILE_NUMBER,
@@ -187,7 +189,7 @@ from app.utils.constant.gw import (
     GW_SELF_UNSELECTED_ACCOUNT_FLAG
 )
 from app.utils.email_templates.email_template import EMAIL_TEMPLATES
-from app.utils.error_messages import ERROR_CALL_SERVICE_GW
+from app.utils.error_messages import ERROR_CALL_SERVICE_GW, ERROR_OPEN_CIF
 from app.utils.functions import date_to_string, datetime_to_string, now
 from app.utils.mapping import (
     mapping_identity_code_crm_to_core, mapping_marital_status_crm_to_core,
@@ -1919,36 +1921,21 @@ class ServiceGW:
 
         return response_data
 
-    async def gw_payment_redeem_account(self, request_data):
-        api_url = f"{self.url}{GW_ENDPOINT_URL_REDEEM_ACCOUNT}"
+    async def gw_payment_redeem_account(self, current_user, data_input):
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_REDEEM_ACCOUNT_IN, data_input=data_input
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
+        print('request_data', request_data)
+        api_url = f"{self.url}{GW_ENDPOINT_URL_REDEEM_ACCOUNT}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_REDEEM_ACCOUNT_OUT,
+            service_name=GW_FUNC_REDEEM_ACCOUNT
         )
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW][Payment] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
+        print(response_data)
+        return response_data
 
     async def gw_pay_in_cash(self, current_user: UserInfoResponse, data_input):
 
@@ -2508,6 +2495,15 @@ class ServiceGW:
         marital_status = mapping_marital_status_crm_to_core(customer_info.CustomerIndividualInfo.marital_status_id)
         identity_code = mapping_identity_code_crm_to_core(customer_info.CustomerIdentity.identity_type_id)
         resident_pr_stat = mapping_resident_pr_stat_crm_to_core(customer_info.CustomerIndividualInfo.resident_status_id)
+
+        # Ràng buộc nhập số điện thoại để mở thẻ
+        if not customer_info.Customer.mobile_number:
+            return ReposReturn(
+                is_error=True,
+                msg=ERROR_OPEN_CIF,
+                loc="open_cif -> repos_push_debit_to_gw_open_cards_mobile_number",
+                detail="Customer mobile_number cannot null"
+            )
 
         data_input = {
             "sequenceNo": datetime_to_string(now(), _format="%Y%m%d%H%M%S%f")[:-4],
