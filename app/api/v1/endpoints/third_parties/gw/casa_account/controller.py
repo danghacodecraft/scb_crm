@@ -1169,7 +1169,7 @@ class CtrGWCasaAccount(BaseController):
         current_user = self.current_user
         data_input = {
             "account_info": {
-                "account_num": "123456787912",
+                "account_num": "1250700001270002",
                 "account_currency": "VND"
             },
             "branch_info": {
@@ -1571,7 +1571,7 @@ class CtrGWCasaAccount(BaseController):
                     "p_instrument_number": p_instrument_number,
                     "p_instrument_status": "LIQD",
                     "account_info": {
-                        "account_num": "123456787912",  # TODO
+                        "account_num": "1250700001270002",  # TODO
                         "account_currency": "VND"
                     },
                     "p_charges": [
