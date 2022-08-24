@@ -1073,7 +1073,6 @@ class CtrApproval(BaseController):
         return face_transactions, fingerprint_transactions, signature_transactions
 
     async def ctr_get_business_jobs(self, booking_id: str, cif_id: str, business_type_code: str):
-        # TODO: Kiểm tra booking_id, cif_id, business_type_code
         # Casa Account không cần cif_id
         if business_type_code not in BUSINESS_TYPES:
             self.response_exception(msg=ERROR_BUSINESS_TYPE_NOT_EXIST, loc=f'business_type_code: {business_type_code}')

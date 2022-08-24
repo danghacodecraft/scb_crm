@@ -496,11 +496,9 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
                 "p_denomination": "",
                 "p_mis": "",
                 "p_udf": "",
-                # TODO hard core
                 "staff_info_checker": {
                     "staff_name": current_user.user_info.username
                 },
-                # TODO hard core
                 "staff_info_maker": {
                     "staff_name": teller.user_name
                 }

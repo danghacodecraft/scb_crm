@@ -82,7 +82,7 @@ from app.utils.functions import (
 )
 from app.utils.mapping import (
     mapping_authentication_code_crm_to_core,
-    mapping_resident_pr_stat_crm_to_core
+    mapping_resident_status_crm_to_core
 )
 from app.utils.vietnamese_converter import split_name
 
@@ -588,7 +588,7 @@ async def repos_push_cif_to_gw(booking_id: str, session: Session, response_custo
         "place_of_birth": cust_individual.country_of_birth_id if cust_individual.country_of_birth_id else GW_DEFAULT_VALUE,
         "birthday": birthday,
         "tax": customer.tax_number if customer.tax_number else GW_DEFAULT_VALUE,
-        "resident_status": mapping_resident_pr_stat_crm_to_core(cust_individual.resident_status_id),
+        "resident_status": mapping_resident_status_crm_to_core(cust_individual.resident_status_id),
         "legal_guardian": GW_DEFAULT_VALUE,
         "co_owner": GW_DEFAULT_VALUE if not is_children and not SERVICE['production']['production_flag'] else GW_OPEN_CO_OWNER_CIF_INFO,
         "nationality": customer.nationality_id if customer.nationality_id else GW_DEFAULT_VALUE,

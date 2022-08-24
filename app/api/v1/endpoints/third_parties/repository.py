@@ -154,7 +154,6 @@ async def repos_get_customer_identity(cif_id: str, session: Session):
 
 
 async def repos_check_not_exist_cif_number(cif_number: str, session: Session) -> ReposReturn:
-    # TODO: call to core
     cif_number = session.execute(
         select(
             Customer.cif_number

@@ -39,7 +39,7 @@ async def view_other_info(
     ),
 )
 async def view_update_other_info(
-        update_other_info_req: OtherInformationUpdateRequest,  # TODO: Thêm example
+        update_other_info_req: OtherInformationUpdateRequest,
         cif_id: str = Path(..., description='Id CIF ảo'),
         current_user=Depends(get_current_user_from_header())
 ):
