@@ -12,4 +12,3 @@ class DocumentListResponse(BaseSchema):
     file_name: str = Field(..., description="Tên file")
     create_at: datetime = Field(..., description="Thời gian khởi tạo")
     file_type: DropdownResponse = Field(..., description="Kiểu file dữ liệu")
-    # file_size: float = Field(..., description="Size")  # todo
