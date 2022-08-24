@@ -115,7 +115,8 @@ from app.utils.constant.gw import (
     GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM,
     GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM_IN,
     GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM_OUT, GW_FUNC_PAY_IN_CARD_IN,
-    GW_FUNC_PAY_IN_CARD_OUT, GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA,
+    GW_FUNC_PAY_IN_CARD_OUT, GW_FUNC_REDEEM_ACCOUNT, GW_FUNC_REDEEM_ACCOUNT_IN,
+    GW_FUNC_REDEEM_ACCOUNT_OUT, GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA,
     GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA_IN,
     GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA_OUT,
     GW_FUNC_REGISTER_SMS_SERVICE_BY_MOBILE_NUMBER,
@@ -1964,36 +1965,21 @@ class ServiceGW:
 
         return response_data
 
-    async def gw_payment_redeem_account(self, request_data):
-        api_url = f"{self.url}{GW_ENDPOINT_URL_REDEEM_ACCOUNT}"
+    async def gw_payment_redeem_account(self, current_user, data_input):
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_REDEEM_ACCOUNT_IN, data_input=data_input
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
+        print('request_data', request_data)
+        api_url = f"{self.url}{GW_ENDPOINT_URL_REDEEM_ACCOUNT}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_REDEEM_ACCOUNT_OUT,
+            service_name=GW_FUNC_REDEEM_ACCOUNT
         )
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW][Payment] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
+        print(response_data)
+        return response_data
 
     async def gw_pay_in_cash(self, current_user: UserInfoResponse, data_input):
 
