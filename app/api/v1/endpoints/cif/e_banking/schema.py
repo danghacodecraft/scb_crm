@@ -52,12 +52,6 @@ class SMSCasaRelationshipItemResponse(BaseSchema):
 
 
 class SMSCasaItemResponse(BaseSchema):
-    is_disable_flag: Optional[bool] = Field(
-        default=False,
-        description='Cờ xác định được tu chỉnh thông tin SMS của TKTT này hay không. `áp dụng cho Mở mới TKTT`'
-                    '<br>`True` không được tu chỉnh'
-                    '<br>`False` được tu chỉnh'
-    )
     casa_id: str = Field(..., description="`id` của TKTT")
     main_phone_number_info: Optional[SMSCasaCustomerInfoResponse] = Field(..., description="Thông tin SĐT, chủ tài khoản đăng ký sms")
     receiver_noti_relationship_items: List[SMSCasaRelationshipItemResponse] = Field(..., description="Thông tin SĐT và MQH đăng ký sms")
@@ -82,15 +76,8 @@ class EBankingCasaAccountListForSMSResponse(BaseSchema):
 
 
 class EBankingResponse(BaseSchema):
-    is_disable_ebank_flag: Optional[bool] = Field(
-        default=False,
-        description='Cờ xác định khách hàng có được tu chỉnh EB hay không. `áp dụng cho Mở mới TKTT`'
-                    '<br>`True` không được tu chỉnh'
-                    '<br>`False` được tu chỉnh'
-    )
     e_banking: Optional[AccountInformationResponse] = Field(..., description='Thông tin E-Banking')
     sms_casa: Optional[SMSCasaInfoResponse] = Field(..., description="Thông tin đăng ký sms cho TKTT")
-    sms_casa_select_info: Optional[EBankingCasaAccountListForSMSResponse] = Field(..., description="Lựa chọn TKTT để đăng ký SMS")
 
 
 ########################################################################################################################
