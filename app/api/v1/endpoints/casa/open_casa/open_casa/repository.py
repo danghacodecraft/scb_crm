@@ -176,6 +176,6 @@ async def repos_get_casa_open_casa_info_from_booking(booking_id: str, session: S
             BookingBusinessForm.is_success is not True
         ))
         .filter(Booking.parent_id == booking_id)
-        .order_by(BookingBusinessForm.created_at)
+        .order_by(BookingBusinessForm.created_at.desc())
     ).all()
     return ReposReturn(data=get_casa_open_casa_info)
