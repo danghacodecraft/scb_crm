@@ -53,6 +53,7 @@ class CtrCasaOpenCasa(BaseController):
         # Lấy thông tin Lưu tài khoản cập nhật mới nhất
         for booking, booking_account, booking_business_form in get_casa_open_casa_infos:
             form_data = orjson_loads(booking_business_form.form_data)
+            print(form_data)
             form_data['account_info']['approval_status'] = booking_business_form.is_success
             if not mark_created_at:
                 mark_created_at = booking_business_form.created_at
@@ -231,11 +232,20 @@ class CtrCasaOpenCasa(BaseController):
             # Check Acc Struct type
             account_structure_type_level_2_id = request.account_structure_type_level_2.id
             dropdown_account_structure_type_level_2 = None
+            dropdown_account_structure_type_level_1 = None
             if account_structure_type_level_2_id:
-                dropdown_account_structure_type_level_2 = await self.get_model_object_by_id(
+                dropdown_account_structure_type_level_2 = self.call_repos(await repos_get_acc_structure_types(
+                    acc_structure_type_ids=[account_structure_type_level_2_id],
+                    level=2,
+                    session=self.oracle_session
+                ))
+                if not dropdown_account_structure_type_level_2:
+                    return self.response_exception(msg=ERROR_VALIDATE, loc=f"{index} -> account_structure_type_level_2_id")
+
+                dropdown_account_structure_type_level_1 = await self.get_model_object_by_id(
                     model_id=account_structure_type_level_2_id,
                     model=AccountStructureType,
-                    loc="account_structure_type_level_2"
+                    loc=f"{index} -> account_structure_type_level_1_id"
                 )
 
             saving_booking_child_business_forms.append(dict(
@@ -249,11 +259,11 @@ class CtrCasaOpenCasa(BaseController):
                         account_type=dropdown(dropdown_account_type),
                         account_class=dropdown(dropdown_account_class),
                         account_structure_type_level_2=optional_dropdown(
-                            dropdown_account_structure_type_level_2
+                            dropdown_account_structure_type_level_2[0]
                         ) if dropdown_account_structure_type_level_2 else DROPDOWN_NONE_DICT,
                         account_structure_type_level_1=optional_dropdown(
-                            dropdown_account_structure_type_level_2.parent[0]
-                        ) if dropdown_account_structure_type_level_2 else DROPDOWN_NONE_DICT,
+                            dropdown_account_structure_type_level_1
+                        ) if dropdown_account_structure_type_level_1 else DROPDOWN_NONE_DICT,
                         account_structure_type_level_3=DROPDOWN_NONE_DICT,
                         casa_account_number=request.casa_account_number,
                         approve_status=None,
@@ -266,6 +276,7 @@ class CtrCasaOpenCasa(BaseController):
                 save_flag=True,
                 log_data=None
             ))
+            print(saving_booking_child_business_forms)
 
         if is_errors:
             return self.response_exception(msg=ERROR_VALIDATE, detail=str(is_errors))
