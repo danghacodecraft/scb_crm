@@ -118,7 +118,6 @@ class CtrPersonal(BaseController):
             "marital_status_id": marital_status_id,
         }
 
-        # TODO : chưa có data contact_type nên đang để test
         list_contact_type_data = [
             {
                 "customer_contact_type_id": CUSTOMER_CONTACT_TYPE_EMAIL,

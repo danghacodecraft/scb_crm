@@ -52,7 +52,7 @@ async def view_detail(
 )
 async def view_save(
         cif_id: str = Path(..., description='Id CIF ảo'),
-        customer_relationship_save_request: List[SaveCustomerRelationshipRequest] = Body(...),  # TODO: Thêm example
+        customer_relationship_save_request: List[SaveCustomerRelationshipRequest] = Body(...),
         current_user=Depends(get_current_user_from_header())
 ):
     ctr_customer_relationship = CtrCustomerRelationship(current_user)
