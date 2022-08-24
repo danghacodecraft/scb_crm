@@ -1835,10 +1835,15 @@ class CtrGWCasaAccount(BaseController):
             request_data=request_data
         ))
 
+        form_data.update({
+            'entry_number': response_data['p_xref']
+        })
+
         self.call_repos(await repos_save_gw_output_data(
             booking_id=BOOKING_ID,
             business_type_id=BUSINESS_TYPE_CASA_TRANSFER,
             is_completed=is_completed,
+            form_data=form_data,
             gw_output_data=orjson_dumps(gw_casa_transfer),
             session=self.oracle_session
         ))
