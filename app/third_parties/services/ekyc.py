@@ -543,6 +543,13 @@ class ServiceEKYC:
             return False, {"message": str(ex)}
 
     async def compare_finger_ekyc(self, json_body: dict):
+        """
+        {
+            "uuid": uuid_ekyc['uuid'],
+            "id_fingers": ids_finger,
+            "limit": len(ids_finger)
+        }
+        """
         api_url = f"{self.url}/api/v1/finger-service/verify/"
 
         headers = self.create_header()
