@@ -1564,7 +1564,7 @@ class CtrGWCasaAccount(BaseController):
 
             request_data = {
                 "data_input": {
-                    "p_liquidation_type": "C",  # TODO
+                    "p_liquidation_type": "C",  # TODO C: nhận tiền mặt, A: nhận bằng tài khoản tại SCB
                     "p_liquidation_details": "",
                     "branch_info": {
                         "branch_code": current_user.user_info.hrm_branch_code
