@@ -948,6 +948,15 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
     card_data = card_result.data
     debit_card_id = card_data['debit_card_id']
     customer_info = response_customers[0]
+    # Ràng buộc nhập số điện thoại để mở thẻ
+    if not response_customers[0].Customer.mobile_number:
+        return ReposReturn(
+            is_error=True,
+            msg=ERROR_NO_DATA,
+            loc="open_cif -> repos_push_debit_to_gw_mobile_number",
+            detail="Customer mobile_number cannot null"
+        )
+
     is_main_card_already_exists = True if int(
         card_data.get("issue_debit_card", {}).get('approval_status')) == 1 else False
     if not is_main_card_already_exists:
