@@ -61,7 +61,7 @@ async def repos_get_template_data(template_id: str, booking_id: str, session: Se
         if booking_business_form.business_form_id not in data_return:
             data_return[booking_business_form.business_form_id] = booking_business_form.form_data
 
-    data_return['booking'] = {"created_at": booking.created_at, "updated_at": booking.updated_at,
-                              'created_by': booking.created_by, 'updated_by': booking.updated_by}
+    # data_return['booking'] = {"created_at": booking.created_at, "updated_at": booking.updated_at,
+    #                           'created_by': booking.created_by, 'updated_by': booking.updated_by}
 
     return ReposReturn(data=data_return)

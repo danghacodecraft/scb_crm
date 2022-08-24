@@ -275,7 +275,6 @@ class CtrCasaOpenCasa(BaseController):
                 save_flag=True,
                 log_data=None
             ))
-            print(saving_booking_child_business_forms)
 
         if is_errors:
             return self.response_exception(msg=ERROR_VALIDATE, detail=str(is_errors))

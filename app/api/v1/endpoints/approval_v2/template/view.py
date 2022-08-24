@@ -4,6 +4,9 @@ from app.api.base.schema import ResponseData
 from app.api.v1.endpoints.approval_v2.template.controller import (
     CtrTemplateDetail
 )
+from app.api.v1.endpoints.approval_v2.template.schema import (
+    TMSCasaTopUpResponse
+)
 
 router = APIRouter()
 
@@ -22,4 +25,4 @@ async def view_form(
         template_id=template_id,
         booking_id=booking_id
     )
-    return ResponseData(**template_detail_info)
+    return ResponseData[TMSCasaTopUpResponse](**template_detail_info)

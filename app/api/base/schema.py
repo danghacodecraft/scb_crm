@@ -57,6 +57,24 @@ class ResponseRequestSchema(BaseSchema):
         return string
 
 
+class TMSResponseSchema(BaseSchema):
+    """
+    RequestSchema parse blank string to null
+    """
+
+    @validator('*', pre=True)
+    def check_blank_str(string):
+        if string is None:
+            return ""
+        return string
+
+    @validator('*')
+    def parse_to_string(cls, string):
+        if string and (isinstance(string, int) or isinstance(string, float)):
+            return str(string)
+        return string
+
+
 class BaseGenericSchema(BaseSchema, GenericModel):
     pass
 

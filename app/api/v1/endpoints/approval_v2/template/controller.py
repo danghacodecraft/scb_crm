@@ -1,14 +1,13 @@
 import json
 
-from sqlalchemy.sql.functions import current_user
-
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval_v2.template.repository import (
     repos_get_template_data
 )
-from app.api.v1.endpoints.approval_v2.template.TKTT.controller import (
-    CtrTemplateTKTT
-)
+
+# from app.api.v1.endpoints.approval_v2.template.TKTT.controller import (
+#     CtrTemplateTKTT
+# )
 
 
 class CtrTemplateDetail(BaseController):
@@ -27,7 +26,7 @@ class CtrTemplateDetail(BaseController):
                 object_data = value
             else:
                 object_data.update(value)
-        template_detail_info = await CtrTemplateTKTT(current_user).ctr_get_template_nop_tien(
-            object_data=object_data
-        )
-        return self.response(data=template_detail_info)
+        # template_detail_info = await CtrTemplateTKTT(current_user).ctr_get_template_nop_tien(
+        #     object_data=object_data
+        # )
+        return self.response(data=object_data)
