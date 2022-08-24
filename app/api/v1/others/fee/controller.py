@@ -129,7 +129,7 @@ class CtrAccountFee(BaseController):
             fee_product_screen = fee_info.product_screen
             gw_fee_info = await CtrGWFeeInfo(current_user=self.current_user).ctr_gw_select_fee_from_product_name(
                 product_name=fee_product_screen,
-                account_num='1250700001270002',  # TODO
+                account_num='123456787912',  # TODO
                 trans_amount=amount
             )
             data_fee_info = gw_fee_info['data']
