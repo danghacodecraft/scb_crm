@@ -898,7 +898,7 @@ class CtrGWCustomer(BaseController):
                 )
                 if result.is_error:
                     if result.msg == ERROR_NO_DATA:
-                        response_info["debit_num"]["status"] = None
+                        response_info["ebank_num"]["status"] = None
                     else:
                         error_list.append({
                             "e_banking": {

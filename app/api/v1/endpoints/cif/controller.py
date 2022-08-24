@@ -1,9 +1,10 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.repository import repos_get_approval_process
 from app.api.v1.endpoints.cif.repository import (
-    repos_customer_information, repos_get_cif_id_by_cif_number,
-    repos_get_cif_info, repos_get_customer_working_infos,
-    repos_profile_history, repos_validate_cif_number
+    repos_clone_cif, repos_customer_information,
+    repos_get_cif_id_by_cif_number, repos_get_cif_info,
+    repos_get_customer_working_infos, repos_profile_history,
+    repos_validate_cif_number
 )
 from app.api.v1.endpoints.cif.schema import CustomerByCIFNumberRequest
 from app.api.v1.endpoints.repository import (
@@ -491,3 +492,16 @@ class CtrCustomer(BaseController):
                 )
 
         return self.response(data=response_data)
+
+    async def ctr_clone_cif(self, cif_id: str):
+        new_cif_id, booking_customer_id = self.call_repos(
+            await repos_clone_cif(
+                cif_id=cif_id,
+                session=self.oracle_session
+            )
+        )
+
+        return self.response(data={
+            "new_cif_id": new_cif_id,
+            "booking_customer_id": booking_customer_id
+        })
