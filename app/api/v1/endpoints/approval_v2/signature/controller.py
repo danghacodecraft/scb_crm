@@ -68,11 +68,11 @@ class CtrApproveSignature(BaseController):
         else:
             saving_booking_compare_images.append(dict(
                 image_type_id=IMAGE_TYPE_SIGNATURE,
-                image_uuid=compare_signature_uuid,
-                image_ekyc_uuid=compare_signature_uuid_ekyc,
+                image_uuid=None,
+                image_ekyc_uuid=None,
                 is_image_original=False,
-                compare_image_uuid=None,
-                compare_image_ekyc_uuid=None,
+                compare_image_uuid=compare_signature_uuid,
+                compare_image_ekyc_uuid=compare_signature_uuid_ekyc,
                 compare_percent=None,
                 booking_id=booking_id,
                 created_at=now(),
