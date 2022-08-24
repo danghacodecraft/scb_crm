@@ -22,6 +22,9 @@ from app.third_parties.oracle.models.cif.e_banking.model import TdAccount
 from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingAccount, BookingBusinessForm, BookingCustomer
 )
+from app.third_parties.oracle.models.cif.other_information.model import (
+    CustomerEmployee
+)
 from app.third_parties.oracle.models.cif.payment_account.model import (
     CasaAccount
 )
@@ -36,6 +39,9 @@ from app.third_parties.oracle.models.master_data.others import (
     ResidentStatus
 )
 from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
+from app.utils.constant.cif import (
+    STAFF_TYPE_BUSINESS_CODE, STAFF_TYPE_REFER_INDIRECT_CODE
+)
 from app.utils.error_messages import (
     ERROR_BOOKING_CODE_NOT_EXIST, ERROR_CIF_ID_NOT_EXIST,
     ERROR_CIF_NUMBER_EXIST, ERROR_CIF_NUMBER_INVALID,
@@ -375,6 +381,7 @@ async def repos_clone_cif(cif_id: str, session: Session) -> ReposReturn:
             msg=ERROR_CIF_ID_NOT_EXIST,
             loc='cif_id'
         )
+
     customer, customer_identity, customer_individual, customer_address = customer_info
 
     mobile_num = ""
@@ -508,5 +515,44 @@ async def repos_clone_cif(cif_id: str, session: Session) -> ReposReturn:
     })
     session.add(booking_customer)
     session.flush()
+
+    customer_employees = session.execute(
+        select(
+            CustomerEmployee
+        )
+        .filter(
+            CustomerEmployee.customer_id == cif_id,
+        )
+    ).scalars().all()
+
+    direct_staff = ""
+    indirect_staff = ""
+    for customer_employee in customer_employees:
+        if customer_employee.staff_type_id == STAFF_TYPE_BUSINESS_CODE:
+            direct_staff = customer_employee.employee_id
+        else:
+            indirect_staff = customer_employee.employee_id
+
+    if not direct_staff or not indirect_staff:
+        session.rollback()
+        return ReposReturn(is_error=True, detail="Missing direct_staff, indirect_staff")
+
+    direct_staff_customer_employee = CustomerEmployee(**{
+        "staff_type_id": STAFF_TYPE_BUSINESS_CODE,
+        "employee_id": direct_staff,
+        "customer_id": new_customer.id,
+        "created_at": now(),
+        "updated_at": now()
+    })
+    session.add(direct_staff_customer_employee)
+
+    indirect_staff_customer_employee = CustomerEmployee(**{
+        "staff_type_id": STAFF_TYPE_REFER_INDIRECT_CODE,
+        "employee_id": indirect_staff,
+        "customer_id": new_customer.id,
+        "created_at": now(),
+        "updated_at": now()
+    })
+    session.add(indirect_staff_customer_employee)
 
     return ReposReturn(data=(new_customer.id, booking.id))

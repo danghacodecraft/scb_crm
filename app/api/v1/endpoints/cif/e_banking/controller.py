@@ -152,8 +152,8 @@ class CtrEBanking(BaseController):
 
         is_success, booking_response = await write_transaction_log_and_update_booking(
             log_data=orjson_dumps({
-                "e_bank": e_banking_info.dict(),
-                "sms_casa": ebank_sms_casa_info.dict()
+                "e_bank": e_banking_info.dict() if e_banking_info else "",
+                "sms_casa": ebank_sms_casa_info.dict() if ebank_sms_casa_info else ""
             }),
             history_datas=orjson_dumps(history_datas),
             session=self.oracle_session,
