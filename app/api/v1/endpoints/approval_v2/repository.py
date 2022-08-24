@@ -26,7 +26,7 @@ from app.third_parties.oracle.models.master_data.others import (
 from app.utils.constant.business_type import (
     BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPES
 )
-from app.utils.constant.cif import IMAGE_TYPE_FACE
+from app.utils.constant.cif import IMAGE_TYPE_FACE, IMAGE_TYPE_SIGNATURE
 from app.utils.error_messages import (
     ERROR_BOOKING_ID_NOT_EXIST, ERROR_BOOKING_TRANSACTION_NOT_EXIST
 )
@@ -490,6 +490,23 @@ async def repos_get_booking_compare_images(
             BookingCompareImage
         )
         .filter(BookingCompareImage.booking_id == booking_id)
+        .order_by(BookingCompareImage.created_at.desc())
+    ).scalars().all()
+    return ReposReturn(data=booking_compare_image)
+
+
+async def repos_get_booking_signature_compare_images(
+        booking_id: str,
+        session: Session
+):
+    booking_compare_image = session.execute(
+        select(
+            BookingCompareImage
+        )
+        .filter(and_(
+            BookingCompareImage.booking_id == booking_id,
+            BookingCompareImage.image_type_id == IMAGE_TYPE_SIGNATURE
+        ))
         .order_by(BookingCompareImage.created_at.desc())
     ).scalars().all()
     return ReposReturn(data=booking_compare_image)
