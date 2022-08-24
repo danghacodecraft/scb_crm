@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlalchemy import and_, delete, select, update
+from sqlalchemy import and_, select, update
 from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -23,7 +23,6 @@ from app.third_parties.oracle.models.master_data.others import (
     TransactionStageLane, TransactionStagePhase, TransactionStageRole,
     TransactionStageStatus
 )
-from app.utils.constant.casa import CASA_ACCOUNT_STATUS_APPROVED
 from app.utils.constant.cif import ACTIVE_FLAG_ACTIVED
 from app.utils.error_messages import (
     ERROR_CIF_NUMBER_NOT_EXIST, ERROR_IDS_NOT_EXIST
@@ -47,40 +46,16 @@ async def repos_save_casa_casa_account(
         saving_transaction_sender: dict,
         saving_transaction_job: dict,
         saving_booking_business_form: dict,
+        saving_booking_child_business_forms: List[dict],
         session: Session
 ):
-    # Lấy Những Account có thể xóa được
-    deletable_datas = session.execute(
-        select(
-            CasaAccount,
-            Booking,
-            BookingAccount
-        )
-        .join(BookingAccount, Booking.id == BookingAccount.booking_id)
-        .join(CasaAccount, and_(
-            BookingAccount.account_id == CasaAccount.id,
-            CasaAccount.approve_status != CASA_ACCOUNT_STATUS_APPROVED
-        ))
-        .filter(Booking.parent_id == booking_parent_id)
-    ).all()
-
-    deletable_casa_account_ids = []
-    deletable_booking_ids = []
-    for casa_account, booking, _ in deletable_datas:
-        deletable_casa_account_ids.append(casa_account.id)
-        deletable_booking_ids.append(booking.id)
-
-    deletable_casa_account_ids = tuple(deletable_casa_account_ids)
-    deletable_booking_ids = tuple(deletable_booking_ids)
-    # Xóa dữ liệu cũ, những tài khoản phê duyệt rồi thì giữ lại
-    session.execute(delete(BookingAccount).filter(BookingAccount.booking_id.in_(deletable_booking_ids)))
-    session.execute(delete(Booking).filter(Booking.id.in_(deletable_booking_ids)))
-    session.execute(delete(CasaAccount).filter(CasaAccount.id.in_(deletable_casa_account_ids)))
-
     # Cập nhật lại bằng dữ liệu mới
-    session.bulk_save_objects([CasaAccount(**saving_casa_account) for saving_casa_account in saving_casa_accounts])
     session.bulk_save_objects([Booking(**saving_booking) for saving_booking in saving_bookings])
     session.bulk_save_objects([BookingAccount(**saving_booking_account) for saving_booking_account in saving_booking_accounts])
+    session.bulk_save_objects([BookingBusinessForm(
+        **saving_booking_child_business_form
+    ) for saving_booking_child_business_form in saving_booking_child_business_forms
+    ])
 
     # Lưu log vào DB
     session.add_all([
@@ -184,5 +159,23 @@ async def repos_get_casa_open_casa_info(booking_parent_id: str, session: Session
         .outerjoin(AddressCountry, Currency.country_code == AddressCountry.id)
         .filter(booking_parent.id == booking_parent_id)
         .distinct()
+    ).all()
+    return ReposReturn(data=get_casa_open_casa_info)
+
+
+async def repos_get_casa_open_casa_info_from_booking(booking_id: str, session: Session):
+    get_casa_open_casa_info = session.execute(
+        select(
+            Booking,
+            BookingAccount,
+            BookingBusinessForm
+        )
+        .join(BookingAccount, Booking.id == BookingAccount.booking_id)
+        .join(BookingBusinessForm, and_(
+            BookingAccount.booking_id == BookingBusinessForm.booking_id,
+            BookingBusinessForm.is_success is not True
+        ))
+        .filter(Booking.parent_id == booking_id)
+        .order_by(BookingBusinessForm.created_at.desc())
     ).all()
     return ReposReturn(data=get_casa_open_casa_info)

@@ -1,10 +1,18 @@
 from datetime import timedelta
 
-from sqlalchemy import delete, select
+from sqlalchemy import and_, delete, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
+from app.third_parties.oracle.models.booking.model import BookingAuthentication
+from app.third_parties.oracle.models.cif.basic_information.identity.model import (
+    CustomerIdentity, CustomerIdentityImage
+)
+from app.third_parties.oracle.models.cif.basic_information.model import (
+    Customer
+)
 from app.third_parties.oracle.models.tablet.model import Tablet
+from app.utils.constant.cif import IMAGE_TYPE_FACE
 from app.utils.constant.tablet import (
     MAX_RETRY_GENERATE_NEW_OTP, OTP_EXPIRED_AFTER_IN_SECONDS
 )
@@ -91,3 +99,38 @@ async def repos_delete_tablet_if_exists(teller_username: str, session: Session):
     session.commit()
 
     return ReposReturn(data=True)
+
+
+async def repos_get_customer_avatar_url_and_full_name_if_exist_by_booking_authentication_id(
+        booking_authentication_id: str, session: Session
+):
+    customer_id_and_full_name = session.execute(
+        select(
+            Customer.id,
+            Customer.full_name_vn
+        ).join(
+            BookingAuthentication, and_(BookingAuthentication.cif_number == Customer.cif_number, BookingAuthentication.id == booking_authentication_id)
+        )
+    ).first()
+    if not customer_id_and_full_name:
+        return ReposReturn(data={
+            "avatar_uuid": None,
+            "full_name": None
+        })
+
+    avatar_url = session.execute(
+        select(
+            CustomerIdentityImage.image_url
+        )
+        .join(CustomerIdentity, CustomerIdentityImage.identity_id == CustomerIdentity.id)
+        .join(Customer, CustomerIdentity.customer_id == Customer.id, )
+        .filter(
+            Customer.id == customer_id_and_full_name[0],
+            CustomerIdentityImage.image_type_id == IMAGE_TYPE_FACE
+        )
+    ).scalar()
+
+    return ReposReturn(data={
+        "avatar_uuid": avatar_url,
+        "full_name": customer_id_and_full_name[1]
+    })

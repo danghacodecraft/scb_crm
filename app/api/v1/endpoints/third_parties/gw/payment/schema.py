@@ -90,7 +90,7 @@ class AccountAmountUnblock(BaseSchema):
 
 class AccountUnlockRequest(BaseSchema):
     account_number: str = Field(...)
-    account_amount_block: AccountAmountUnblock = Field(...)
+    account_amount_block: List[AccountAmountUnblock] = Field(...)
 
 
 class TransactionFeeInfoRequest(BaseSchema):
@@ -177,6 +177,37 @@ class AccountAmountBlockResponse(PaymentSuccessResponse):
     management_info: ManagementInfoRequest = Field(..., description="III.1. Thông tin quản lý")
     sender_info: SenderInfoRequest = \
         Field(..., description="III.2. Thông tin khách hàng giao dịch")
+
+
+class AccountUnlockResponse(BaseSchema):
+    account_number: str = Field(...)
+    account_amount_block: List[AccountAmountUnblock] = Field(...)
+
+
+class StatementResponse(BaseSchema):
+    denominations: str = Field(..., description="Mệnh giá")
+    amount: int = Field(..., description="Số tiền")
+    into_money: int = Field(..., description="Tổng tiền")
+
+
+class StatementInfoResponse(BaseSchema):
+    total_number_of_bills: int = Field(..., description="Tổng số mệnh giá tiền")
+    statements: List[StatementResponse] = Field(..., description="Chi tiết bảng kê")
+    total: int = Field(..., description="Tổng thành tiền")
+    odd_difference: int = Field(..., description="Chênh lệch lẻ")
+
+
+class TransactionFeeInfoResponse(BaseSchema):
+    fee_info: FeeInfoResponse = Field(..., description="Phương thức tính phí")
+    statement: List[StatementInfoRequest] = Field(..., description="II.Thông tin bảng kê")
+    management_info: ManagementInfoRequest = Field(..., description="III.1. Thông tin quản lý")
+    sender_info: SenderInfoRequest = \
+        Field(..., description="III.2. Thông tin khách hàng giao dịch")
+
+
+class AccountAmountUnBlockResponse(PaymentSuccessResponse):
+    account_unlock: List[AccountUnlockResponse] = Field(..., description="Danh sách tài khoản")
+    transaction_fee_info: TransactionFeeInfoResponse = Field(..., description="Thông tin thanh toán phí giao dịch")
 
 
 class AccountAmountBlockPDResponse(PaymentSuccessResponse):

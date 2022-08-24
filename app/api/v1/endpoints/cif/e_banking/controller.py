@@ -1,17 +1,19 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.e_banking.repository import (
     repos_balance_saving_account_data, repos_check_and_remove_exist_ebank,
-    repos_check_and_remove_exist_sms_casa,
-    repos_check_casa_account_have_casa_account_number,
-    repos_get_detail_reset_password, repos_get_detail_reset_password_teller,
-    repos_get_e_banking, repos_get_payment_accounts, repos_get_sms_data,
+    repos_check_and_remove_exist_sms_casa, repos_get_detail_reset_password,
+    repos_get_detail_reset_password_teller, repos_get_e_banking,
+    repos_get_payment_accounts, repos_get_sms_data,
     repos_get_sms_data_open_casa, repos_save_e_banking, repos_save_sms_casa
 )
 from app.api.v1.endpoints.cif.e_banking.schema import (
     EBankingRequest, EBankingSMSCasaRequest
 )
 from app.api.v1.endpoints.cif.repository import (
-    repos_get_booking, repos_get_initializing_customer
+    repos_get_booking, repos_get_customer, repos_get_initializing_customer
+)
+from app.api.v1.endpoints.repository import (
+    write_transaction_log_and_update_booking
 )
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_get_cif_number_open_cif
@@ -24,9 +26,10 @@ from app.third_parties.oracle.models.master_data.customer import (
     CustomerRelationshipType
 )
 from app.utils.constant.cif import (
-    PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING, PROFILE_HISTORY_STATUS_INIT
+    BUSINESS_FORM_EB, PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING,
+    PROFILE_HISTORY_STATUS_INIT
 )
-from app.utils.error_messages import ERROR_NOT_NULL
+from app.utils.error_messages import ERROR_E_BANKING
 from app.utils.functions import orjson_dumps
 
 
@@ -41,80 +44,59 @@ class CtrEBanking(BaseController):
         current_user = self.current_user
         current_user_info = current_user.user_info
 
-        # check cif đang tạo (Module Mở CIF)
-        if not open_casa_flag:
-            self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
+        self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
 
         # Lấy Booking Code
         booking = self.call_repos(await repos_get_booking(
             cif_id=cif_id, session=self.oracle_session
         ))
 
-        # MODULE OPEN CASA: Kiểm tra Ebanking có tồn tại trên core chưa
-        is_exist_ebank = False
-        if open_casa_flag:
-            cif_number = self.call_repos(await repos_get_cif_number_open_cif(
-                cif_id=cif_id, session=self.oracle_session))
+        # Validate không có SĐT không cho tạo EB
+        customer = self.call_repos(await repos_get_customer(
+            cif_id=cif_id, session=self.oracle_session
+        ))
+        if not customer.mobile_number:
+            return self.response_exception(
+                msg=ERROR_E_BANKING,
+                loc='ctr_save_e_banking_and_sms -> mobile_number',
+                detail='customer mobile_number cannot null',
+            )
 
-            is_exist_ebank = (await repos_pull_e_banking_from_gw_cif_number_and_return_is_exist_ebank(
-                cif_id=cif_id,
-                cif_number=cif_number,
-                current_user=current_user,
-                session=self.oracle_session
-            )).data
+        if e_banking_info:
+            ebank_ibmb_username = e_banking_info.username
+            ebank_ibmb_receive_password_code = e_banking_info.receive_password_code
+            authentication_code_list = e_banking_info.authentication_code_list
 
-        if not is_exist_ebank:
-            if e_banking_info:
-                ebank_ibmb_username = e_banking_info.username
-                ebank_ibmb_receive_password_code = e_banking_info.receive_password_code
-                authentication_code_list = e_banking_info.authentication_code_list
+            # dữ liệu để tạo ebanking trong DB
+            data_insert = {
+                "ebank_info": {
+                    "customer_id": cif_id,
+                    "account_name": ebank_ibmb_username,
+                    "method_active_password_id": ebank_ibmb_receive_password_code,
+                },
+                "ebank_info_authen_list": [{
+                    "method_authentication_id": authentication_code
+                } for authentication_code in authentication_code_list]
+            }
 
-                # dữ liệu để tạo ebanking trong DB
-                data_insert = {
-                    "ebank_info": {
-                        "customer_id": cif_id,
-                        "account_name": ebank_ibmb_username,
-                        "method_active_password_id": ebank_ibmb_receive_password_code,
-                    },
-                    "ebank_info_authen_list": [{
-                        "method_authentication_id": authentication_code
-                    } for authentication_code in authentication_code_list]
-                }
-
-                history_datas = self.make_history_log_data(
-                    description=PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING,
-                    history_status=PROFILE_HISTORY_STATUS_INIT,
-                    current_user=current_user_info
-                )
-                # Validate history data
-                is_success, history_response = validate_history_data(history_datas)
-                if not is_success:
-                    return self.response_exception(
-                        msg=history_response['msg'],
-                        loc=history_response['loc'],
-                        detail=history_response['detail']
-                    )
-
-                self.call_repos(
-                    await repos_save_e_banking(
-                        cif_id=cif_id,
-                        data_insert=data_insert,
-                        log_data=e_banking_info.json(),
-                        history_datas=orjson_dumps(history_datas),
-                        session=self.oracle_session
-                    ))
-            # TH không đăng ký ebanking, xóa các thông tin cũ
-            else:
-                self.call_repos(await repos_check_and_remove_exist_ebank(
+            self.call_repos(
+                await repos_save_e_banking(
                     cif_id=cif_id,
+                    data_insert=data_insert,
                     session=self.oracle_session
                 ))
+        # TH không đăng ký ebanking, xóa các thông tin cũ
+        else:
+            self.call_repos(await repos_check_and_remove_exist_ebank(
+                cif_id=cif_id,
+                session=self.oracle_session
+            ))
 
         if ebank_sms_casa_info:
             # Validate nếu truyền thiếu một số thông tin cần thiết:
             if not ebank_sms_casa_info.registry_balance_items:
                 return self.response_exception(
-                    msg=ERROR_NOT_NULL,
+                    msg=ERROR_E_BANKING,
                     loc='ctr_save_e_banking_and_sms -> ebank_sms_casa_info',
                     detail='registry_balance_items cannot empty',
                 )
@@ -129,22 +111,6 @@ class CtrEBanking(BaseController):
                 model_ids=list(relationship_ids),
                 loc="receiver_noti_relationship_items -> relationship_type_id"
             )
-
-            # TODO: không cho tu chỉnh
-            # Validate các số casa, nếu như casa đã có number từ core, không cho đăng ký
-            for registry_balance_item in ebank_sms_casa_info.registry_balance_items:
-                casa_id = registry_balance_item.casa_id
-                have_casa_account_number = self.call_repos(await repos_check_casa_account_have_casa_account_number(
-                    cif_id=cif_id,
-                    casa_id=casa_id,
-                    session=self.oracle_session
-                ))
-                if have_casa_account_number:
-                    return self.response_exception(
-                        msg="ERROR_REG_SMS_CASA_OPEN_CASA",
-                        loc="ctr_save_e_banking_and_sms -> ebank_sms_casa_info",
-                        detail=f"{casa_id} already have casa_num, cannot reg sms"
-                    )
 
             # Dữ liệu để tạo sms_casa trong DB
             data_insert = {
@@ -169,6 +135,33 @@ class CtrEBanking(BaseController):
                 cif_id=cif_id,
                 session=self.oracle_session
             ))
+
+        history_datas = self.make_history_log_data(
+            description=PROFILE_HISTORY_DESCRIPTIONS_INIT_E_BANKING,
+            history_status=PROFILE_HISTORY_STATUS_INIT,
+            current_user=current_user_info
+        )
+        # Validate history data
+        is_success, history_response = validate_history_data(history_datas)
+        if not is_success:
+            return self.response_exception(
+                msg=history_response['msg'],
+                loc=history_response['loc'],
+                detail=history_response['detail']
+            )
+
+        is_success, booking_response = await write_transaction_log_and_update_booking(
+            log_data=orjson_dumps({
+                "e_bank": e_banking_info.dict(),
+                "sms_casa": ebank_sms_casa_info.dict()
+            }),
+            history_datas=orjson_dumps(history_datas),
+            session=self.oracle_session,
+            customer_id=cif_id,
+            business_form_id=BUSINESS_FORM_EB
+        )
+        if not is_success:
+            return self.response_exception(msg=booking_response['msg'])
 
         return self.response(data={
             "cif_id": cif_id,

@@ -9,6 +9,7 @@ from app.api.v1.endpoints.cif.debit_card.repository import repos_debit_card
 from app.api.v1.endpoints.cif.payment_account.detail.repository import (
     repos_get_detail_payment_account
 )
+from app.api.v1.endpoints.cif.repository import repos_get_customer
 from app.api.v1.endpoints.third_parties.gw.ebank.repository import (
     repos_get_e_banking_from_db_by_cif_id,
     repos_get_sms_casa_mobile_number_from_db_by_cif_id
@@ -79,7 +80,10 @@ from app.utils.error_messages import (
 from app.utils.functions import (
     date_to_string, generate_uuid, now, orjson_dumps
 )
-from app.utils.mapping import mapping_authentication_code_crm_to_core
+from app.utils.mapping import (
+    mapping_authentication_code_crm_to_core,
+    mapping_resident_pr_stat_crm_to_core
+)
 from app.utils.vietnamese_converter import split_name
 
 
@@ -573,7 +577,6 @@ async def repos_push_cif_to_gw(booking_id: str, session: Session, response_custo
     issued_date_new = issued_date.replace(year=2018)
 
     customer_info = {
-        # TODO hard core customer category
         "customer_category": customer.customer_category_id,
         "customer_type": GW_CUSTOMER_TYPE_B if customer.customer_type_id == CUSTOMER_TYPE_ORGANIZE else GW_CUSTOMER_TYPE_I,
         "cus_ekyc": customer.kyc_level_id,
@@ -585,8 +588,7 @@ async def repos_push_cif_to_gw(booking_id: str, session: Session, response_custo
         "place_of_birth": cust_individual.country_of_birth_id if cust_individual.country_of_birth_id else GW_DEFAULT_VALUE,
         "birthday": birthday,
         "tax": customer.tax_number if customer.tax_number else GW_DEFAULT_VALUE,
-        # TODO hard core tình trạng cư trú (resident_status)
-        "resident_status": "N",
+        "resident_status": mapping_resident_pr_stat_crm_to_core(cust_individual.resident_status_id),
         "legal_guardian": GW_DEFAULT_VALUE,
         "co_owner": GW_DEFAULT_VALUE if not is_children and not SERVICE['production']['production_flag'] else GW_OPEN_CO_OWNER_CIF_INFO,
         "nationality": customer.nationality_id if customer.nationality_id else GW_DEFAULT_VALUE,
@@ -793,15 +795,14 @@ async def repos_push_internet_banking_to_gw(booking_id: str,
 
     # Không tìm thấy thông tin từ DB có thể do khách hàng không đăng ký, hoặc đã đăng ký thành công từ lần trước
     if not e_banking and not balance_id__relationship_mobile_numbers:
-        # Lưu transaction job
-        await repos_save_transaction_jobs(
-            session=session,
-            booking_id=booking_id,
-            is_success=True,
-            response_data=None,
-            business_job_ids=[BUSINESS_JOB_CODE_E_BANKING]
-        )
-        return ReposReturn(data=None)
+        return ReposReturn(is_error=True, msg=ERROR_NO_DATA)
+
+    # Validate không có SĐT nhưng vẫn muốn tạo EB, raise lỗi
+    customer = (await repos_get_customer(
+        cif_id=cif_id, session=session
+    )).data
+    if not customer.mobile_number:
+        return ReposReturn(is_error=True, msg=ERROR_OPEN_CIF, detail="customer mobile_number cannot null")
 
     # Push GW EBANK
     error_messages = []
@@ -928,21 +929,13 @@ async def repos_push_internet_banking_to_gw(booking_id: str,
 
 async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user, cif_id: str, cif_number: str,
                                  casa_account_number, response_customers, maker_staff_name):
-    card_result = await repos_debit_card(
-        cif_id=cif_id, session=session)
+
+    card_result = await repos_debit_card(cif_id=cif_id, session=session)
 
     if card_result.is_error:
         # Không có dữ liệu có thể do người dùng không đăng ký
         if card_result.msg == ERROR_NO_DATA:
-            await repos_save_transaction_jobs(
-                session=session,
-                booking_id=booking_id,
-                is_success=True,
-                response_data=None,
-                business_job_ids=[BUSINESS_JOB_CODE_DEBIT_CARD]
-            )
-            return ReposReturn(data=None)
-
+            return ReposReturn(is_error=True, msg=ERROR_NO_DATA)
         else:
             return ReposReturn(
                 is_error=True,
@@ -955,6 +948,15 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
     card_data = card_result.data
     debit_card_id = card_data['debit_card_id']
     customer_info = response_customers[0]
+    # Ràng buộc nhập số điện thoại để mở thẻ
+    if not response_customers[0].Customer.mobile_number:
+        return ReposReturn(
+            is_error=True,
+            msg=ERROR_OPEN_CIF,
+            loc="open_cif -> repos_push_debit_to_gw_mobile_number",
+            detail="Customer mobile_number cannot null"
+        )
+
     is_main_card_already_exists = True if int(
         card_data.get("issue_debit_card", {}).get('approval_status')) == 1 else False
     if not is_main_card_already_exists:
@@ -1017,7 +1019,7 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
     if not direct_staff or not indirect_staff:
         return ReposReturn(
             is_error=True,
-            msg=ERROR_NO_DATA,
+            msg=ERROR_OPEN_CIF,
             loc="open_cif -> repos_push_debit_to_gw",
             detail="direct_staff and indirect_staff cannot null"
         )

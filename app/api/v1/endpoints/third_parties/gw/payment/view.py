@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Body, Depends, Header
 from starlette import status
 
@@ -8,13 +7,11 @@ from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.third_parties.gw.payment.controller import (
     CtrGWPayment
 )
-from app.api.v1.endpoints.third_parties.gw.payment.example import (
-    REDEEM_ACCOUNT_REQUEST_EXAMPLE
-)
 from app.api.v1.endpoints.third_parties.gw.payment.schema import (
     AccountAmountBlockPDResponse, AccountAmountBlockRequest,
     AccountAmountBlockResponse, AccountAmountUnblockRequest,
-    GWCasaTransferAccountResponse, PaymentSuccessResponse, RedeemAccountRequest
+    AccountAmountUnBlockResponse, GWCasaTransferAccountResponse,
+    PaymentSuccessResponse
 )
 
 router = APIRouter()
@@ -104,6 +101,26 @@ async def view_amount_unblock(
     return ResponseData[PaymentSuccessResponse](**payment_amount_unblock)
 
 
+@router.get(
+    path="/amount-unblock/",
+    name="Amount UnBlock",
+    description="Giải tỏa tài khoản",
+    responses=swagger_response(
+        response_model=ResponseData[AccountAmountUnBlockResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_get_amount_unblock(
+        current_user=Depends(get_current_user_from_header()),
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch")
+):
+    payment_amount_unblock = await CtrGWPayment(current_user).ctr_get_payment_amount_unblock(
+        BOOKING_ID=BOOKING_ID
+    )
+
+    return ResponseData(**payment_amount_unblock)
+
+
 @router.post(
     path="/amount-unblock-pd/",
     name="[GW] Amount Unblock",
@@ -142,7 +159,7 @@ async def view_amount_unblock_pd(
 
 
 @router.post(
-    path="/redeem-account/",
+    path="/redeem-account-pd/",
     name="[GW] Redeem Account",
     description="Tất toán sổ tiết kiệm",
     responses=swagger_response(
@@ -152,11 +169,11 @@ async def view_amount_unblock_pd(
 
 )
 async def gw_redeem_account(
-        redeem_account: RedeemAccountRequest = Body(..., example=REDEEM_ACCOUNT_REQUEST_EXAMPLE),
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),
         current_user=Depends(get_current_user_from_header())
 ):
-    redeem_account_response = await CtrGWPayment(current_user).ctr_gw_redeem_account(redeem_account=redeem_account)
-    return ResponseData[PaymentSuccessResponse](**redeem_account_response)
+    redeem_account_response = await CtrGWPayment(current_user).ctr_gw_redeem_account(booking_id=BOOKING_ID)
+    return ResponseData(**redeem_account_response)
 
 
 @router.post(

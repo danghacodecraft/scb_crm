@@ -21,8 +21,7 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_get_retrieve_ben_name_by_account_number,
     repos_gw_get_retrieve_ben_name_by_card_number,
     repos_gw_get_statements_casa_account_info, repos_gw_get_tele_transfer,
-    repos_gw_withdraw, repos_push_casa_to_gw_open_casa,
-    repos_push_internet_banking_to_gw_open_casa
+    repos_gw_withdraw, repos_push_casa_to_gw_open_casa
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWOpenCasaAccountRequest, GWReportColumnChartHistoryAccountInfoRequest,
@@ -75,8 +74,7 @@ from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_KSV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_KSV
 )
 from app.utils.error_messages import (
-    ERROR_CALL_SERVICE_GW, ERROR_NO_INSTRUMENT_NUMBER, ERROR_OPEN_CIF,
-    ERROR_PERMISSION
+    ERROR_CALL_SERVICE_GW, ERROR_NO_INSTRUMENT_NUMBER, ERROR_PERMISSION
 )
 from app.utils.functions import (
     date_string_to_other_date_string_format, date_to_string,
@@ -462,11 +460,11 @@ class CtrGWCasaAccount(BaseController):
                 "data": None
             },
             "ebank_num": {
-                "status": False,
+                "status": None,
                 "data": None
             },
             "debit_num": {
-                "status": False,
+                "status": None,
                 "data": None
             }
         }
@@ -503,49 +501,50 @@ class CtrGWCasaAccount(BaseController):
         error_list = []
         if is_complete_casa:
 
-            response_customers = self.call_repos(await repos_get_customer_open_cif(
+            self.call_repos(await repos_get_customer_open_cif(
                 cif_id=cif_id, session=self.oracle_session))
 
             if not account_number_list:
                 account_number_list = self.call_repos(await repos_account_number_list_by_casa_account_ids(
                     casa_account_ids=casa_account_ids, session=self.oracle_session))
 
-            # Push EB
-            if not is_complete_eb:
-                result = await repos_push_internet_banking_to_gw_open_casa(
-                    booking_id=booking_id,
-                    session=self.oracle_session,
-                    response_customers=response_customers,
-                    current_user=self.current_user,
-                    cif_id=cif_id,
-                    cif_number=cif_number,
-                    maker_staff_name=maker_staff_name,
-                    account_number_list=account_number_list
-                )
-                if result.is_error:
-                    error_list.append({
-                        "e_banking": {
-                            "loc": result.loc,
-                            "msg": result.msg,
-                            "detail": result.detail
-                        }
-                    })
-                else:
-                    is_complete_eb = True
-
-        # Push Debit Card
-
+        #     # Push EB
+        #     if not is_complete_eb:
+        #         result = await repos_push_internet_banking_to_gw_open_casa(
+        #             booking_id=booking_id,
+        #             session=self.oracle_session,
+        #             response_customers=response_customers,
+        #             current_user=self.current_user,
+        #             cif_id=cif_id,
+        #             cif_number=cif_number,
+        #             maker_staff_name=maker_staff_name,
+        #             account_number_list=account_number_list
+        #         )
+        #         if result.is_error:
+        #             error_list.append({
+        #                 "e_banking": {
+        #                     "loc": result.loc,
+        #                     "msg": result.msg,
+        #                     "detail": result.detail
+        #                 }
+        #             })
+        #         else:
+        #             is_complete_eb = True
+        #
+        # # Push Debit Card
+        #
         response_info["account_num"]["status"] = True
-        if is_complete_eb:
-            response_info["ebank_num"]["status"] = True
-        if is_complete_debit:
-            response_info["debit_num"]["status"] = True
+        response_info["account_num"]["data"] = account_number_list
+        # if is_complete_eb:
+        #     response_info["ebank_num"]["status"] = True
+        # if is_complete_debit:
+        #     response_info["debit_num"]["status"] = True
 
         if error_list:
             return self.response_exception(
                 data=response_info,
                 loc="ctr_gw_open_cif -> Push EB, Debit",
-                msg=ERROR_OPEN_CIF,
+                msg='ERROR_OPEN_CASA',
                 detail=orjson_dumps(error_list)
             )
 

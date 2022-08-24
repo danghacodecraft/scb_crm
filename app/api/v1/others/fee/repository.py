@@ -20,3 +20,16 @@ async def repos_get_fee_detail(fee_id: str, business_type_id: str, session: Sess
         .filter(ProductFee.id == fee_id)
     ).scalar()
     return ReposReturn(data=fee_detail)
+
+
+async def repos_get_product_fee_business(fee_id: str, business_type_id: str, session: Session):
+    fee_detail = session.execute(
+        select(
+            ProductFeeBusiness
+        )
+        .filter(ProductFeeBusiness.business_type_id == business_type_id,
+                ProductFeeBusiness.product_fee_id == fee_id,
+                )
+    ).scalar()
+
+    return ReposReturn(data=fee_detail)

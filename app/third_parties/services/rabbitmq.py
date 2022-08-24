@@ -1,8 +1,7 @@
-import json
-
 import pika
 
 from app.utils.constant.tablet import RABBITMQ_EXCHANGE_AMQ_TOPIC
+from app.utils.functions import orjson_dumps
 
 
 class ServiceRabbitmq:
@@ -37,7 +36,7 @@ class ServiceRabbitmq:
             self.create_connection()
 
         if isinstance(message, dict):
-            message = json.dumps(message)
+            message = orjson_dumps(message)
 
         self.channel.basic_publish(
             exchange=RABBITMQ_EXCHANGE_AMQ_TOPIC,

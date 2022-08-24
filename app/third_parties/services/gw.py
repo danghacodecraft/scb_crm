@@ -7,6 +7,7 @@ import aiohttp
 from loguru import logger
 from starlette import status
 
+from app.api.base.repository import ReposReturn
 from app.api.v1.endpoints.third_parties.gw.email.schema import (
     open_ebank_failure_response, open_ebank_success_response
 )
@@ -16,19 +17,16 @@ from app.utils.constant.debit_card import (
     GW_DEFAULT_CUSTOMER_RESIDENT_STATUS, GW_DEFAULT_CUSTOMER_RESIDENT_TYPE,
     GW_DEFAULT_EMAIL, GW_DEFAULT_EMPLOYEE_DURATION, GW_DEFAULT_EMPLOYEE_SINCE,
     GW_DEFAULT_RESIDENT_SINCE, GW_DEFAULT_VISA_EXPIRE_DATE, GW_DEFAULT_ZERO,
-    IDENTITY_DOCUMENT_TYPE_NEW_IC, IDENTITY_DOCUMENT_TYPE_PASSPORT,
-    IDENTITY_DOCUMENT_TYPE_PASSPORT_CODE, MARITAL_STATUS_DISVORSED,
-    MARITAL_STATUS_MARRIED, MARITAL_STATUS_OTHERS, MARITAL_STATUS_SINGLE,
-    RESIDENT, GW_DEFAULT_apprvDeviation, GW_DEFAULT_casaAcctTyp,
-    GW_DEFAULT_decsnStat, GW_DEFAULT_delivOpt, GW_DEFAULT_emerRelt,
-    GW_DEFAULT_smsInfo, GW_DEFAULT_spcEmpWorkNat
+    GW_DEFAULT_apprvDeviation, GW_DEFAULT_casaAcctTyp, GW_DEFAULT_decsnStat,
+    GW_DEFAULT_delivOpt, GW_DEFAULT_emerRelt, GW_DEFAULT_smsInfo,
+    GW_DEFAULT_spcEmpWorkNat
 )
 from app.utils.constant.gw import (
     GW_AUTHORIZED_REF_DATA_MGM_ACC_NUM, GW_CO_OWNER_REF_DATA_MGM_ACC_NUM,
     GW_CURRENT_ACCOUNT_CASA, GW_CURRENT_ACCOUNT_FROM_CIF,
     GW_CUSTOMER_REF_DATA_MGMT_CIF_NUM, GW_DEFAULT_NO, GW_DEFAULT_VALUE,
-    GW_DEFAULT_YES, GW_DEPOSIT_ACCOUNT_FROM_CIF, GW_DEPOSIT_ACCOUNT_TD,
-    GW_EMPLOYEE_FROM_CODE, GW_EMPLOYEE_FROM_NAME, GW_EMPLOYEES,
+    GW_DEPOSIT_ACCOUNT_FROM_CIF, GW_DEPOSIT_ACCOUNT_TD, GW_EMPLOYEE_FROM_CODE,
+    GW_EMPLOYEE_FROM_NAME, GW_EMPLOYEES,
     GW_ENDPOINT_URL_CHECK_EXITS_ACCOUNT_CASA,
     GW_ENDPOINT_URL_CHECK_USERNAME_IB_MB_EXIST,
     GW_ENDPOINT_URL_DEPOSIT_OPEN_ACCOUNT_TD,
@@ -82,6 +80,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_SELECT_CARD_INFO, GW_ENDPOINT_URL_SELECT_CATEGORY,
     GW_ENDPOINT_URL_SELECT_DATA_FOR_CHART_DASHBOARD,
     GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE,
+    GW_ENDPOINT_URL_SELECT_FEE_BY_PRODUCT_NAME,
     GW_ENDPOINT_URL_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA,
     GW_ENDPOINT_URL_SELECT_SERIAL_NUMBER,
     GW_ENDPOINT_URL_SELECT_SERVICE_PACK_IB,
@@ -114,7 +113,8 @@ from app.utils.constant.gw import (
     GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM,
     GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM_IN,
     GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM_OUT, GW_FUNC_PAY_IN_CARD_IN,
-    GW_FUNC_PAY_IN_CARD_OUT, GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA,
+    GW_FUNC_PAY_IN_CARD_OUT, GW_FUNC_REDEEM_ACCOUNT, GW_FUNC_REDEEM_ACCOUNT_IN,
+    GW_FUNC_REDEEM_ACCOUNT_OUT, GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA,
     GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA_IN,
     GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA_OUT,
     GW_FUNC_REGISTER_SMS_SERVICE_BY_MOBILE_NUMBER,
@@ -147,7 +147,8 @@ from app.utils.constant.gw import (
     GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_USERNAME_OUT,
     GW_FUNC_SELECT_EMPLOYEE_LIST_FROM_ORG_ID,
     GW_FUNC_SELECT_EMPLOYEE_LIST_FROM_ORG_ID_IN,
-    GW_FUNC_SELECT_EMPLOYEE_LIST_FROM_ORG_ID_OUT,
+    GW_FUNC_SELECT_EMPLOYEE_LIST_FROM_ORG_ID_OUT, GW_FUNC_SELECT_FEE_INFO,
+    GW_FUNC_SELECT_FEE_INFO_IN, GW_FUNC_SELECT_FEE_INFO_OUT,
     GW_FUNC_SELECT_KPIS_INFO_FROM_CODE, GW_FUNC_SELECT_KPIS_INFO_FROM_CODE_IN,
     GW_FUNC_SELECT_KPIS_INFO_FROM_CODE_OUT,
     GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA,
@@ -188,8 +189,12 @@ from app.utils.constant.gw import (
     GW_SELF_UNSELECTED_ACCOUNT_FLAG
 )
 from app.utils.email_templates.email_template import EMAIL_TEMPLATES
-from app.utils.error_messages import ERROR_CALL_SERVICE_GW
+from app.utils.error_messages import ERROR_CALL_SERVICE_GW, ERROR_OPEN_CIF
 from app.utils.functions import date_to_string, datetime_to_string, now
+from app.utils.mapping import (
+    mapping_identity_code_crm_to_core, mapping_marital_status_crm_to_core,
+    mapping_resident_pr_stat_crm_to_core
+)
 
 
 class ServiceGW:
@@ -386,34 +391,12 @@ class ServiceGW:
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_CURRENT_ACCOUNT_CASA}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        return await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='retrieveCurrentAccountCASA_out',
+            service_name='retrieveCurrentAccountCASA'
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
 
     async def get_report_history_casa_account(
             self,
@@ -1271,34 +1254,10 @@ class ServiceGW:
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_CUS_REF_DATA_MGMT}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        return await self.call_api(
+            api_url=api_url, request_data=request_data, output_key='retrieveCustomerRefDataMgmt_out',
+            service_name='retrieveCustomerRefDataMgmt',
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
 
     async def get_co_owner(self, current_user: UserInfoResponse, account_number):
         data_input = {
@@ -1962,36 +1921,21 @@ class ServiceGW:
 
         return response_data
 
-    async def gw_payment_redeem_account(self, request_data):
-        api_url = f"{self.url}{GW_ENDPOINT_URL_REDEEM_ACCOUNT}"
+    async def gw_payment_redeem_account(self, current_user, data_input):
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_REDEEM_ACCOUNT_IN, data_input=data_input
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
+        print('request_data', request_data)
+        api_url = f"{self.url}{GW_ENDPOINT_URL_REDEEM_ACCOUNT}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_REDEEM_ACCOUNT_OUT,
+            service_name=GW_FUNC_REDEEM_ACCOUNT
         )
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW][Payment] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
+        print(response_data)
+        return response_data
 
     async def gw_pay_in_cash(self, current_user: UserInfoResponse, data_input):
 
@@ -2548,23 +2492,18 @@ class ServiceGW:
                          casa_currency_number: str
                          ):
 
-        # mapping các field đúng với Card core
-        # tình trạng hôn nhân
-        marital_status = customer_info.CustomerIndividualInfo.marital_status_id
-        if marital_status not in [MARITAL_STATUS_SINGLE, MARITAL_STATUS_MARRIED, MARITAL_STATUS_DISVORSED]:
-            marital_status = MARITAL_STATUS_OTHERS
+        marital_status = mapping_marital_status_crm_to_core(customer_info.CustomerIndividualInfo.marital_status_id)
+        identity_code = mapping_identity_code_crm_to_core(customer_info.CustomerIdentity.identity_type_id)
+        resident_pr_stat = mapping_resident_pr_stat_crm_to_core(customer_info.CustomerIndividualInfo.resident_status_id)
 
-        # thẻ định danh
-        if customer_info.CustomerIdentity.identity_type_id == IDENTITY_DOCUMENT_TYPE_PASSPORT_CODE:
-            identity_code = IDENTITY_DOCUMENT_TYPE_PASSPORT
-        else:
-            identity_code = IDENTITY_DOCUMENT_TYPE_NEW_IC
-
-        # đinh cư hay chưa
-        if customer_info.CustomerIndividualInfo.resident_status_id == RESIDENT:
-            resident_pr_stat = GW_DEFAULT_YES
-        else:
-            resident_pr_stat = GW_DEFAULT_NO
+        # Ràng buộc nhập số điện thoại để mở thẻ
+        if not customer_info.Customer.mobile_number:
+            return ReposReturn(
+                is_error=True,
+                msg=ERROR_OPEN_CIF,
+                loc="open_cif -> repos_push_debit_to_gw_open_cards_mobile_number",
+                detail="Customer mobile_number cannot null"
+            )
 
         data_input = {
             "sequenceNo": datetime_to_string(now(), _format="%Y%m%d%H%M%S%f")[:-4],
@@ -2727,7 +2666,8 @@ class ServiceGW:
                     "ward_name": card_info["address_info_ward_name"] if card_info["address_info_ward_name"] else "",
                     "contact_address_line": GW_DEFAULT_VALUE,
                     "city_code": GW_DEFAULT_VALUE,
-                    "district_name": card_info["address_info_district_name"] if card_info["address_info_district_name"] else "",
+                    "district_name": card_info["address_info_district_name"] if card_info[
+                        "address_info_district_name"] else "",
                     "city_name": card_info["address_info_city_name"] if card_info["address_info_city_name"] else "",
                     "country_name": GW_DEFAULT_VALUE
                 },
@@ -2817,6 +2757,43 @@ class ServiceGW:
             api_url=api_url,
             output_key=GW_FUNC_SELECT_CARD_INFO_OUT,
             service_name=GW_FUNC_SELECT_CARD_INFO
+        )
+        return response_data
+
+    ###################################################################################################################
+    #  Fee Info
+    ###################################################################################################################
+    async def select_fee_by_product_name(
+            self, current_user: UserInfoResponse,
+            product_name: str,
+            trans_amount: int,
+            account_num: str,
+    ):
+
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_SELECT_FEE_INFO_IN,
+            data_input={
+                "trans_branch": {
+                    "branch_code": current_user.hrm_branch_code
+                },
+                "product_name": product_name,
+                "ccy": "VND",  # TODO
+                "trans_amount": trans_amount,
+                "account_info": {
+                    "account_num": account_num
+                },
+                "open_acc_branch": {
+                    "branch_code": "020"  # TODO
+                }
+            }
+        )
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_FEE_BY_PRODUCT_NAME}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_SELECT_FEE_INFO_OUT,
+            service_name=GW_FUNC_SELECT_FEE_INFO
         )
         return response_data
 

@@ -1,3 +1,4 @@
+import sentry_sdk
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, status
@@ -5,6 +6,8 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.openapi import utils
 from fastapi.responses import ORJSONResponse
+# from sentry_sdk.integrations.fastapi import FastApiIntegration
+# from sentry_sdk.integrations.starlette import StarletteIntegration
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 from fastapi.responses import HTMLResponse
@@ -15,12 +18,25 @@ load_dotenv('.env')  # noqa
 from app.api.base.except_custom import ExceptionHandle
 from app.api.v1.endpoints import router as v1_router
 from app.api.v1.endpoints.booking import view as v2_router
-from app.settings.config import APPLICATION
+from app.settings.config import APPLICATION, SENTRY
 from app.settings.event import (
     create_start_app_handler, create_stop_app_handler
 )
 from app.settings.middleware import middleware_setting
 from app.utils.error_messages import VALIDATE_ERROR
+
+# sentry_sdk.init(
+#     dsn=f"http://{SENTRY['client_key']}@{SENTRY['host']}:{SENTRY['port']}/{SENTRY['project_id']}",
+#     integrations=[
+#         StarletteIntegration(),
+#         FastApiIntegration(),
+#     ],
+#
+#     # Set traces_sample_rate to 1.0 to capture 100%
+#     # of transactions for performance monitoring.
+#     # We recommend adjusting this value in production,
+#     traces_sample_rate=1.0,
+# )
 
 app = FastAPI(
     title=APPLICATION["project_name"],

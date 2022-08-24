@@ -8,13 +8,12 @@ from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_get_teller_info
 )
 from app.api.v1.endpoints.third_parties.gw.payment.repository import (
-    repos_create_booking_payment, repos_gw_payment_amount_block,
-    repos_gw_payment_amount_unblock, repos_gw_redeem_account,
-    repos_payment_amount_block, repos_payment_amount_unblock
+    repos_gw_payment_amount_block, repos_gw_payment_amount_unblock,
+    repos_gw_redeem_account, repos_payment_amount_block,
+    repos_payment_amount_unblock
 )
 from app.api.v1.endpoints.third_parties.gw.payment.schema import (
-    AccountAmountBlockRequest, AccountAmountUnblockRequest,
-    RedeemAccountRequest
+    AccountAmountBlockRequest, AccountAmountUnblockRequest
 )
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.fee.controller import CtrAccountFee
@@ -23,15 +22,13 @@ from app.api.v1.others.statement.controller import CtrStatement
 from app.api.v1.others.statement.repository import repos_get_denominations
 from app.api.v1.validator import validate_history_data
 from app.utils.constant.business_type import (
-    BUSINESS_TYPE_AMOUNT_BLOCK, BUSINESS_TYPE_AMOUNT_UNBLOCK,
-    BUSINESS_TYPE_REDEEM_ACCOUNT
+    BUSINESS_TYPE_AMOUNT_BLOCK, BUSINESS_TYPE_AMOUNT_UNBLOCK
 )
 from app.utils.constant.cif import (
     BUSINESS_FORM_AMOUNT_BLOCK, BUSINESS_FORM_AMOUNT_UNBLOCK,
-    PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_BLOCK,
+    BUSINESS_FORM_REDEEM_ACCOUNT, PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_BLOCK,
     PROFILE_HISTORY_DESCRIPTIONS_AMOUNT_UNBLOCK, PROFILE_HISTORY_STATUS_INIT
 )
-from app.utils.constant.gw import GW_RESPONSE_STATUS_SUCCESS
 from app.utils.error_messages import (
     ERROR_ACCOUNT_NUM_EXIST, ERROR_DENOMINATIONS_NOT_EXIST
 )
@@ -212,6 +209,17 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
         }
 
         return self.response(data=response_data)
+
+    async def ctr_get_payment_amount_unblock(
+        self,
+        BOOKING_ID: str
+    ):
+        booking_business_form = await CtrBooking().ctr_get_booking_business_form(booking_id=BOOKING_ID, session=self.oracle_session)
+        form_data = orjson_loads(booking_business_form.form_data)
+        form_data.update(
+            booking_id=BOOKING_ID
+        )
+        return self.response(data=form_data)
 
     async def ctr_gw_payment_amount_block(self, BOOKING_ID: str):
         current_user = self.current_user
@@ -437,67 +445,73 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
         }
         return self.response(data=response_data)
 
-    async def ctr_gw_redeem_account(self, redeem_account: RedeemAccountRequest):
+    async def ctr_gw_redeem_account(self, booking_id):
         current_user = self.current_user
-        payout_details = [{
-            "payout_component": item.payout_component,
-            "payout_mode": item.payout_mode,
-            "payout_amount": item.payout_amount,
-            "offset_account": item.offset_account
-        } for item in redeem_account.p_payout_detail.payout_details]
-        data_input = {
-            "account_info": {
-                "account_num": redeem_account.account_info.account_number,
-            },
-            "p_payout_detail": {
-                "redemption_details": {
-                    "redemption_mode": redeem_account.p_payout_detail.redemption_details.redemption_mode,
-                    "redemption_amount": redeem_account.p_payout_detail.redemption_details.redemption_amount,
-                    "waive_penalty": redeem_account.p_payout_detail.redemption_details.waive_penalty,
-                    "waive_interest": redeem_account.p_payout_detail.redemption_details.waive_interest
-                },
-                "payout_details": payout_details
-            },
-            # TODO hard core
-            "p_denominated_deposit": "",
-            "p_addl_payout_detail": "",
-            "p_charges": "",
-            "p_denomination": "",
-            "p_mis": "",
-            "p_udf": [
-                {
-                    "UDF_NAME": "",
-                    "UDF_VALUE": ""
+        booking_business_form = self.call_repos(
+            await repos_get_booking_business_form_by_booking_id(
+                booking_id=booking_id,
+                business_form_id=BUSINESS_FORM_REDEEM_ACCOUNT,
+                session=self.oracle_session
+
+            ))
+        request_data = orjson_loads(booking_business_form.form_data)
+
+        teller = self.call_repos(await repos_get_teller_info(booking_id=booking_id, session=self.oracle_session))
+
+        for item in request_data:
+            redeem_account = orjson_loads(item)
+            if redeem_account['p_payout_detail']['redemption_details']['redemption_mode'] == "P":
+                redemption_detail = {
+                    'redemption_mode': redeem_account['p_payout_detail']['redemption_details']['redemption_mode'],
+                    'redemption_amount': redeem_account['p_payout_detail']['redemption_details']['redemption_amount'],
+                    'waive_penalty': redeem_account['p_payout_detail']['redemption_details']['waive_penalty'],
+                    'waive_interest': redeem_account['p_payout_detail']['redemption_details']['waive_interest']
                 }
-            ],
-            # TODO hard core
-            "staff_info_checker": {
-                "staff_name": "HOANT2"
-            },
-            # TODO hard core
-            "staff_info_maker": {
-                "staff_name": "KHANHLQ"
+            else:
+                redemption_detail = {
+                    'redemption_mode': 'N',
+                    'redemption_amount': 0,
+                    'waive_penalty': 'N',
+                    'waive_interest': 'N',
+                }
+            payout_details = [{
+                "payout_component": item['payout_component'],
+                "payout_mode": item['payout_mode'],
+                "payout_amount": item['payout_amount'],
+                "offset_account": item['offset_account']
+            } for item in redeem_account['p_payout_detail']['payout_details']]
+
+            data_input = {
+                "account_info": {
+                    "account_num": redeem_account['account_info']['account_number'],
+                },
+                "p_payout_detail": {
+                    "redemption_details": redemption_detail,
+                    "payout_details": payout_details
+                },
+                # TODO hard core
+                "p_denominated_deposit": "",
+                "p_addl_payout_detail": "",
+                "p_charges": "",
+                "p_denomination": "",
+                "p_mis": "",
+                "p_udf": "",
+                # TODO hard core
+                "staff_info_checker": {
+                    "staff_name": current_user.user_info.username
+                },
+                # TODO hard core
+                "staff_info_maker": {
+                    "staff_name": teller.user_name
+                }
             }
-        }
-        request_data, gw_payment_redeem_account = self.call_repos(
-            await repos_gw_redeem_account(
+            self.call_repos(await repos_gw_redeem_account(
                 current_user=current_user,
-                data_input=data_input,
-            )
-        )
+                booking_id=booking_id,
+                request_data_gw=data_input,
+                session=self.oracle_session
+            ))
 
-        booking_id, booking_code = self.call_repos(await repos_create_booking_payment(
-            business_type_code=BUSINESS_TYPE_REDEEM_ACCOUNT,
-            current_user=current_user.user_info,
-            form_data=request_data,
-            log_data=gw_payment_redeem_account,
-            session=self.oracle_session
-        ))
-
-        redeem_account = gw_payment_redeem_account.get('redeemAccount_out', {})
-        # check trường hợp lỗi
-        if redeem_account.get('transaction_info').get('transaction_error_code') != GW_RESPONSE_STATUS_SUCCESS:
-            return self.response_exception(msg=redeem_account.get('transaction_info').get('transaction_error_msg'))
         response_data = {
             "booking_id": booking_id,
         }

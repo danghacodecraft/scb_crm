@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, Query
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from starlette import status
 
@@ -46,8 +46,10 @@ security = HTTPBasic()
         success_status_code=status.HTTP_200_OK,
     )
 )
-async def view_retrieve_banner():
-    list_banner_info = await CtrUser(is_init_oracle_session=False).ctr_get_banner_info()
+async def view_retrieve_banner(
+        is_tablet: bool = Query(False, description='Tablet thì gửi lên True để lấy link ảnh là link ip')
+):
+    list_banner_info = await CtrUser(is_init_oracle_session=False).ctr_get_banner_info(is_tablet=is_tablet)
     return ResponseData[Optional[List[UserBannerResponse]]](**list_banner_info)
 
 

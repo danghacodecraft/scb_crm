@@ -14,7 +14,8 @@ class BookingAccountResponse(BaseSchema):
 
 class SaveCasaSuccessResponse(BaseSchema):
     booking_parent_id: str = Field(..., description="Mã Booking Cha")
-    booking_accounts: List[BookingAccountResponse] = Field(..., description="Danh sách các TKTT")
+    booking_ids: List[str] = Field(..., description="Danh sách các Booking con")
+    # booking_accounts: List[BookingAccountResponse] = Field(..., description="Danh sách các TKTT")
 
 
 class StatementInfoRequest(ResponseRequestSchema):
