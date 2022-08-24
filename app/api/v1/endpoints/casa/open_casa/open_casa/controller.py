@@ -1,7 +1,7 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
-    repos_get_acc_structure_types, repos_get_casa_open_casa_info,
-    repos_get_customer_by_cif_number, repos_save_casa_casa_account
+    repos_get_acc_structure_types, repos_get_casa_open_casa_info_from_booking,
+    repos_save_casa_casa_account
 )
 from app.api.v1.endpoints.casa.open_casa.open_casa.schema import (
     CasaOpenCasaRequest
@@ -17,12 +17,15 @@ from app.api.v1.endpoints.third_parties.gw.customer.repository import (
 )
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.validator import validate_history_data
-from app.third_parties.oracle.models.master_data.account import AccountType
+from app.third_parties.oracle.models.master_data.account import (
+    AccountClass, AccountStructureType, AccountType
+)
 from app.third_parties.oracle.models.master_data.others import Currency
 from app.utils.constant.business_type import BUSINESS_TYPE_OPEN_CASA
 from app.utils.constant.casa import CASA_ACCOUNT_STATUS_UNAPPROVED
 from app.utils.constant.cif import (
-    ACC_STRUCTURE_TYPE_LEVEL_2, PROFILE_HISTORY_DESCRIPTIONS_OPEN_CASA_ACCOUNT,
+    ACC_STRUCTURE_TYPE_LEVEL_2, DROPDOWN_NONE_DICT,
+    PROFILE_HISTORY_DESCRIPTIONS_OPEN_CASA_ACCOUNT,
     PROFILE_HISTORY_STATUS_INIT, STAFF_TYPE_BUSINESS_CODE
 )
 from app.utils.error_messages import (
@@ -30,7 +33,7 @@ from app.utils.error_messages import (
     ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_FIELD_REQUIRED, ERROR_VALIDATE
 )
 from app.utils.functions import (
-    dropdown, generate_uuid, now, optional_dropdown, orjson_dumps
+    dropdown, generate_uuid, now, optional_dropdown, orjson_dumps, orjson_loads
 )
 
 
@@ -39,38 +42,35 @@ class CtrCasaOpenCasa(BaseController):
             self,
             booking_parent_id: str
     ):
-        get_casa_open_casa_infos = self.call_repos(await repos_get_casa_open_casa_info(
-            booking_parent_id=booking_parent_id,
+        get_casa_open_casa_infos = self.call_repos(await repos_get_casa_open_casa_info_from_booking(
+            booking_id=booking_parent_id,
             session=self.oracle_session
         ))
 
         casa_accounts = []
 
-        for _, booking, booking_account, casa_account, acc_structure_type_level_1, currency, country_code, country_name in get_casa_open_casa_infos:
-            casa_accounts.append(dict(
-                id=casa_account.id,
-                self_selected_account_flag=casa_account.self_selected_account_flag,
-                currency=dropdown(currency),
-                country=dict(
-                    id=country_code,
-                    code=country_code,
-                    name=country_name
-                ),
-                account_type=dropdown(casa_account.account_type),
-                account_class=dropdown(casa_account.account_class),
-                account_structure_type_level_1=optional_dropdown(acc_structure_type_level_1),
-                account_structure_type_level_2=optional_dropdown(casa_account.account_structure_type),
-                account_structure_type_level_3=optional_dropdown(None),
-                casa_account_number=casa_account.casa_account_number,
-                approve_status=casa_account.approve_status,
-                account_salary_organization_account=casa_account.acc_salary_org_acc,
-                account_salary_organization_name=casa_account.acc_salary_org_name
-            ))
+        mark_created_at = None
+        # Lấy thông tin Lưu tài khoản cập nhật mới nhất
+        for booking, booking_account, booking_business_form in get_casa_open_casa_infos:
+            form_data = orjson_loads(booking_business_form.form_data)
+            form_data['account_info']['approval_status'] = booking_business_form.is_success
+            if not mark_created_at:
+                mark_created_at = booking_business_form.created_at
+                casa_accounts.append(form_data)
+            if mark_created_at == booking_business_form.created_at:
+                casa_accounts.append(form_data)
+
+        booking = await CtrBooking(current_user=self.current_user).ctr_get_booking(
+            booking_id=booking_parent_id,
+            business_type_code=BUSINESS_TYPE_OPEN_CASA
+        )
 
         return self.response(data=dict(
-            transaction_code=booking_parent_id,
+            booking_parent_id=booking_parent_id,
+            transaction_code=booking.code,
             total_item=len(casa_accounts),
-            casa_accounts=casa_accounts
+            casa_accounts=casa_accounts,
+            read_only=booking.completed_flag
         ))
 
     async def ctr_save_casa_open_casa_info(
@@ -85,6 +85,7 @@ class CtrCasaOpenCasa(BaseController):
         saving_casa_accounts = []
         saving_bookings = []
         saving_booking_accounts = []
+        saving_booking_child_business_forms = []
         is_errors = []
 
         ################################################################################################################
@@ -95,20 +96,20 @@ class CtrCasaOpenCasa(BaseController):
             booking_id=booking_parent_id,
             business_type_code=BUSINESS_TYPE_OPEN_CASA,
             check_correct_booking_flag=False,
-            loc=f'booking_id: {booking_parent_id}'
+            loc=f'booking_id: {booking_parent_id}',
+            check_completed_booking=True
         )
-
-        # Kiểm tra số CIF có tồn tại trong CRM không
-        customer = self.call_repos(await repos_get_customer_by_cif_number(
-            cif_number=cif_number,
-            session=self.oracle_session
-        ))
-        cif_id = customer.id
 
         currency_ids = []
         acc_type_ids = []
         acc_class_ids = []
         account_structure_type_level_2_ids = []
+
+        gw_customer_detail = self.call_repos(await repos_gw_get_customer_info_detail(
+            cif_number=cif_number,
+            current_user=current_user
+        ))
+
         for index, request in enumerate(casa_accounts):
             self_selected_account_flag = request.self_selected_account_flag
             account_salary_organization_account = request.account_salary_organization_account
@@ -152,7 +153,7 @@ class CtrCasaOpenCasa(BaseController):
                             msg=ERROR_CASA_ACCOUNT_NOT_EXIST,
                             loc=f'{index} -> account_salary_organization_account'
                         )
-                    acc_salary_org_name = account_organization_info['full_name']
+                    acc_salary_org_name = "account_organization_info['full_name']"
 
             currency_id = request.currency.id
             currency_ids.append(currency_id)
@@ -167,7 +168,6 @@ class CtrCasaOpenCasa(BaseController):
 
             saving_casa_accounts.append(dict(
                 id=casa_account_id,
-                customer_id=cif_id,
                 casa_account_number=casa_account_number,
                 currency_id=currency_id,
                 acc_type_id=acc_type_id,
@@ -203,31 +203,72 @@ class CtrCasaOpenCasa(BaseController):
 
             saving_booking_accounts.append(dict(
                 booking_id=booking_id,
-                customer_id=cif_id,
-                account_id=casa_account_id,
+                account_number=request.casa_account_number,
                 created_at=now(),
                 updated_at=now()
             ))
 
+            # Check Currency
+            dropdown_currency = await self.get_model_object_by_id(
+                model_id=currency_id,
+                model=Currency,
+                loc="currency_id"
+            )
+            # Check Account Type
+            dropdown_account_type = await self.get_model_object_by_id(
+                model_id=acc_type_id,
+                model=AccountType,
+                loc="acc_type_id"
+            )
+
+            # Check Account Class
+            dropdown_account_class = await self.get_model_object_by_id(
+                model_id=acc_class_id,
+                model=AccountClass,
+                loc="acc_class_id"
+            )
+
+            # Check Acc Struct type
+            account_structure_type_level_2_id = request.account_structure_type_level_2.id
+            dropdown_account_structure_type_level_2 = None
+            if account_structure_type_level_2_id:
+                dropdown_account_structure_type_level_2 = await self.get_model_object_by_id(
+                    model_id=account_structure_type_level_2_id,
+                    model=AccountStructureType,
+                    loc="account_structure_type_level_2"
+                )
+
+            saving_booking_child_business_forms.append(dict(
+                booking_business_form_id=generate_uuid(),
+                booking_id=booking_id,
+                form_data=orjson_dumps(dict(
+                    cif_number=cif_number,
+                    account_info=dict(
+                        self_selected_account_flag=request.self_selected_account_flag,
+                        currency=dropdown(dropdown_currency),
+                        account_type=dropdown(dropdown_account_type),
+                        account_class=dropdown(dropdown_account_class),
+                        account_structure_type_level_2=optional_dropdown(
+                            dropdown_account_structure_type_level_2
+                        ) if dropdown_account_structure_type_level_2 else DROPDOWN_NONE_DICT,
+                        account_structure_type_level_1=optional_dropdown(
+                            dropdown_account_structure_type_level_2.parent[0]
+                        ) if dropdown_account_structure_type_level_2 else DROPDOWN_NONE_DICT,
+                        account_structure_type_level_3=DROPDOWN_NONE_DICT,
+                        casa_account_number=request.casa_account_number,
+                        approve_status=None,
+                        account_salary_organization_account=request.account_salary_organization_account,
+                        account_salary_organization_name=acc_salary_org_name
+                    )
+                )),
+                business_form_id=BUSINESS_TYPE_OPEN_CASA,
+                created_at=now(),
+                save_flag=True,
+                log_data=None
+            ))
+
         if is_errors:
             return self.response_exception(msg=ERROR_VALIDATE, detail=str(is_errors))
-
-        # Check Currency
-        await self.get_model_objects_by_ids(
-            model_ids=currency_ids,
-            model=Currency
-        )
-
-        # Check Account Type
-        await self.get_model_objects_by_ids(
-            model_ids=acc_type_ids,
-            model=AccountType
-        )
-
-        gw_customer_detail = self.call_repos(await repos_gw_get_customer_info_detail(
-            cif_number=cif_number,
-            current_user=current_user
-        ))
 
         # Check Account Class
         account_class_ids = self.call_repos(await repos_get_account_classes(
@@ -271,7 +312,7 @@ class CtrCasaOpenCasa(BaseController):
         # Tạo data TransactionDaily và các TransactionStage khác cho bước mở CASA
         transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
             business_type_id=BUSINESS_TYPE_OPEN_CASA,
-            booking_id=booking_id,
+            booking_id=booking_parent_id,
             request_json=request_json,
             history_datas=history_datas
         )
@@ -297,15 +338,13 @@ class CtrCasaOpenCasa(BaseController):
             saving_transaction_sender=saving_transaction_sender,
             saving_transaction_job=saving_transaction_job,
             saving_booking_business_form=saving_booking_business_form,
+            saving_booking_child_business_forms=saving_booking_child_business_forms,
             session=self.oracle_session
         ))
 
         return self.response(data=dict(
             booking_parent_id=booking_parent_id,
-            booking_accounts=[dict(
-                account_id=booking_account['account_id'],
-                booking_id=booking_account['booking_id'],
-            ) for index, booking_account in enumerate(saving_booking_accounts)]
+            booking_ids=[saving_booking_account['booking_id'] for saving_booking_account in saving_booking_accounts]
         ))
 
     async def ctr_check_exist_casa_account(self, account_number):
