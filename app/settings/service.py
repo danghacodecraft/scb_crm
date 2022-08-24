@@ -103,5 +103,11 @@ SERVICE = {
     "fileshare": {
         "tablet_banner_share_link": configs.get("FILESHARE_TABLET_BANNER_SHARE_LINK")
     },
+    'sentry': {
+        "host": configs.get("SENTRY_HOST"),
+        "port": configs.get("SENTRY_PORT"),
+        "client_key": configs.get("SENTRY_CLIENT_KEY"),
+        "project_id": configs.get("SENTRY_PROJECT_ID")
+    },
     "crm_app_url": configs.get("CRM_APP_URL")
 }
