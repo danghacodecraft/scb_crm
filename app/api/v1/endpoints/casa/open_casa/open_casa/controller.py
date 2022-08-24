@@ -49,10 +49,16 @@ class CtrCasaOpenCasa(BaseController):
 
         casa_accounts = []
 
+        mark_created_at = None
+        # Lấy thông tin Lưu tài khoản cập nhật mới nhất
         for booking, booking_account, booking_business_form in get_casa_open_casa_infos:
             form_data = orjson_loads(booking_business_form.form_data)
             form_data['account_info']['approval_status'] = booking_business_form.is_success
-            casa_accounts.append(form_data)
+            if not mark_created_at:
+                mark_created_at = booking_business_form.created_at
+                casa_accounts.append(form_data)
+            if mark_created_at == booking_business_form.created_at:
+                casa_accounts.append(form_data)
 
         booking = await CtrBooking(current_user=self.current_user).ctr_get_booking(
             booking_id=booking_parent_id,
@@ -63,7 +69,8 @@ class CtrCasaOpenCasa(BaseController):
             booking_parent_id=booking_parent_id,
             transaction_code=booking.code,
             total_item=len(casa_accounts),
-            casa_accounts=casa_accounts
+            casa_accounts=casa_accounts,
+            read_only=booking.completed_flag
         ))
 
     async def ctr_save_casa_open_casa_info(
@@ -89,7 +96,8 @@ class CtrCasaOpenCasa(BaseController):
             booking_id=booking_parent_id,
             business_type_code=BUSINESS_TYPE_OPEN_CASA,
             check_correct_booking_flag=False,
-            loc=f'booking_id: {booking_parent_id}'
+            loc=f'booking_id: {booking_parent_id}',
+            check_completed_booking=True
         )
 
         currency_ids = []
@@ -145,7 +153,7 @@ class CtrCasaOpenCasa(BaseController):
                             msg=ERROR_CASA_ACCOUNT_NOT_EXIST,
                             loc=f'{index} -> account_salary_organization_account'
                         )
-                    acc_salary_org_name = account_organization_info['full_name']
+                    acc_salary_org_name = "account_organization_info['full_name']"
 
             currency_id = request.currency.id
             currency_ids.append(currency_id)
@@ -244,7 +252,7 @@ class CtrCasaOpenCasa(BaseController):
                             dropdown_account_structure_type_level_2
                         ) if dropdown_account_structure_type_level_2 else DROPDOWN_NONE_DICT,
                         account_structure_type_level_1=optional_dropdown(
-                            dropdown_account_structure_type_level_2.parent
+                            dropdown_account_structure_type_level_2.parent[0]
                         ) if dropdown_account_structure_type_level_2 else DROPDOWN_NONE_DICT,
                         account_structure_type_level_3=DROPDOWN_NONE_DICT,
                         casa_account_number=request.casa_account_number,

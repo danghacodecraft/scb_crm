@@ -40,5 +40,6 @@ class CasaAccountResponse(BaseSchema):
 class CasaOpenCasaResponse(BaseSchema):
     booking_parent_id: str = Field(..., description="Mã giao dịch")
     transaction_code: str = Field(..., description="Mã giao dịch")
+    read_only: bool = Field(..., description="có read only không")
     total_item: int = Field(..., description="Tổng số TKTT")
     casa_accounts: List[CasaAccountResponse] = Field(..., description="Danh sách TKTT")
