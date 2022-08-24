@@ -87,7 +87,6 @@ async def repos_get_approval_process(booking_id: str, session: Session) -> Repos
 
 @auto_commit
 async def repos_approve(
-        cif_id: str,
         business_type_id: str,
         booking_id: str,
         saving_transaction_stage_status: dict,
@@ -161,9 +160,7 @@ async def repos_approve(
 
     session.flush()
 
-    return ReposReturn(data={
-        "cif_id": cif_id
-    })
+    return ReposReturn(data=None)
 
 
 async def repos_approval_get_face_authentication(
