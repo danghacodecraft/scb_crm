@@ -1,7 +1,7 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
-    repos_get_acc_structure_types, repos_get_casa_open_casa_info_from_booking,
-    repos_save_casa_casa_account
+    repos_get_acc_structure_type_by_parent, repos_get_acc_structure_types,
+    repos_get_casa_open_casa_info_from_booking, repos_save_casa_casa_account
 )
 from app.api.v1.endpoints.casa.open_casa.open_casa.schema import (
     CasaOpenCasaRequest
@@ -18,7 +18,7 @@ from app.api.v1.endpoints.third_parties.gw.customer.repository import (
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.validator import validate_history_data
 from app.third_parties.oracle.models.master_data.account import (
-    AccountClass, AccountStructureType, AccountType
+    AccountClass, AccountType
 )
 from app.third_parties.oracle.models.master_data.others import Currency
 from app.utils.constant.business_type import BUSINESS_TYPE_OPEN_CASA
@@ -241,11 +241,10 @@ class CtrCasaOpenCasa(BaseController):
                 if not dropdown_account_structure_type_level_2:
                     return self.response_exception(msg=ERROR_VALIDATE, loc=f"{index} -> account_structure_type_level_2_id")
 
-                dropdown_account_structure_type_level_1 = await self.get_model_object_by_id(
-                    model_id=account_structure_type_level_2_id,
-                    model=AccountStructureType,
-                    loc=f"{index} -> account_structure_type_level_1_id"
-                )
+                dropdown_account_structure_type_level_1 = self.call_repos(await repos_get_acc_structure_type_by_parent(
+                    acc_structure_type_id=account_structure_type_level_2_id,
+                    session=self.oracle_session
+                ))
 
             saving_booking_child_business_forms.append(dict(
                 booking_business_form_id=generate_uuid(),
@@ -275,7 +274,6 @@ class CtrCasaOpenCasa(BaseController):
                 save_flag=True,
                 log_data=None
             ))
-            print(saving_booking_child_business_forms)
 
         if is_errors:
             return self.response_exception(msg=ERROR_VALIDATE, detail=str(is_errors))
@@ -332,6 +330,8 @@ class CtrCasaOpenCasa(BaseController):
             saving_transaction_stage_phase, saving_transaction_stage_lane, saving_transaction_stage_role,
             saving_transaction_daily, saving_transaction_sender, saving_transaction_job, saving_booking_business_form
         ) = transaction_datas
+
+        print(saving_booking_child_business_forms)
 
         self.call_repos(await repos_save_casa_casa_account(
             saving_casa_accounts=saving_casa_accounts,
