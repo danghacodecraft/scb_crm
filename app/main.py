@@ -6,8 +6,8 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.openapi import utils
 from fastapi.responses import ORJSONResponse
-from sentry_sdk.integrations.fastapi import FastApiIntegration
-from sentry_sdk.integrations.starlette import StarletteIntegration
+# from sentry_sdk.integrations.fastapi import FastApiIntegration
+# from sentry_sdk.integrations.starlette import StarletteIntegration
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 from fastapi.responses import HTMLResponse
@@ -25,19 +25,18 @@ from app.settings.event import (
 from app.settings.middleware import middleware_setting
 from app.utils.error_messages import VALIDATE_ERROR
 
-
-sentry_sdk.init(
-    dsn=f"http://{SENTRY['client_key']}@{SENTRY['host']}:{SENTRY['port']}/{SENTRY['project_id']}",
-    integrations=[
-        StarletteIntegration(),
-        FastApiIntegration(),
-    ],
-
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for performance monitoring.
-    # We recommend adjusting this value in production,
-    traces_sample_rate=1.0,
-)
+# sentry_sdk.init(
+#     dsn=f"http://{SENTRY['client_key']}@{SENTRY['host']}:{SENTRY['port']}/{SENTRY['project_id']}",
+#     integrations=[
+#         StarletteIntegration(),
+#         FastApiIntegration(),
+#     ],
+#
+#     # Set traces_sample_rate to 1.0 to capture 100%
+#     # of transactions for performance monitoring.
+#     # We recommend adjusting this value in production,
+#     traces_sample_rate=1.0,
+# )
 
 app = FastAPI(
     title=APPLICATION["project_name"],
