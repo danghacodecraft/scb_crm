@@ -7,6 +7,7 @@ import aiohttp
 from loguru import logger
 from starlette import status
 
+from app.api.base.repository import ReposReturn
 from app.api.v1.endpoints.third_parties.gw.email.schema import (
     open_ebank_failure_response, open_ebank_success_response
 )
@@ -187,7 +188,7 @@ from app.utils.constant.gw import (
     GW_SELF_UNSELECTED_ACCOUNT_FLAG
 )
 from app.utils.email_templates.email_template import EMAIL_TEMPLATES
-from app.utils.error_messages import ERROR_CALL_SERVICE_GW
+from app.utils.error_messages import ERROR_CALL_SERVICE_GW, ERROR_OPEN_CIF
 from app.utils.functions import date_to_string, datetime_to_string, now
 from app.utils.mapping import (
     mapping_identity_code_crm_to_core, mapping_marital_status_crm_to_core,
@@ -2508,6 +2509,15 @@ class ServiceGW:
         marital_status = mapping_marital_status_crm_to_core(customer_info.CustomerIndividualInfo.marital_status_id)
         identity_code = mapping_identity_code_crm_to_core(customer_info.CustomerIdentity.identity_type_id)
         resident_pr_stat = mapping_resident_pr_stat_crm_to_core(customer_info.CustomerIndividualInfo.resident_status_id)
+
+        # Ràng buộc nhập số điện thoại để mở thẻ
+        if not customer_info.Customer.mobile_number:
+            return ReposReturn(
+                is_error=True,
+                msg=ERROR_OPEN_CIF,
+                loc="open_cif -> repos_push_debit_to_gw_open_cards_mobile_number",
+                detail="Customer mobile_number cannot null"
+            )
 
         data_input = {
             "sequenceNo": datetime_to_string(now(), _format="%Y%m%d%H%M%S%f")[:-4],
