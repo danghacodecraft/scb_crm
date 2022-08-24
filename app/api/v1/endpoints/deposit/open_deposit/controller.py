@@ -26,7 +26,7 @@ from app.utils.constant.business_type import (
     BUSINESS_TYPE_REDEEM_ACCOUNT, BUSINESS_TYPE_TD_ACCOUNT_OPEN_ACCOUNT
 )
 from app.utils.constant.cif import (
-    BUSINESS_FORM_OPEN_TD_ACCOUNT_PAY,
+    BUSINESS_FORM_OPEN_TD_ACCOUNT_PAY, BUSINESS_FORM_REDEEM_ACCOUNT,
     PROFILE_HISTORY_DESCRIPTIONS_INIT_REDEEM_ACCOUNT,
     PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_TD_ACCOUNT,
     PROFILE_HISTORY_STATUS_INIT
@@ -294,6 +294,17 @@ class CtrDeposit(BaseController):
         return self.response(data=dict(
             booking_id=booking_id
         ))
+
+    async def ctr_get_redeem_account_td(self, booking_id):
+        booking_business_form = self.call_repos(await repos_get_booking_business_form_by_booking_id(
+            booking_id=booking_id,
+            business_form_id=BUSINESS_FORM_REDEEM_ACCOUNT,
+            session=self.oracle_session
+        ))
+        response_data = []
+        for item in orjson_loads(booking_business_form.form_data):
+            response_data.append(orjson_loads(item))
+        return self.response(data=response_data)
 
     async def ctr_save_redeem_account_td(self, booking_id, request):
         current_user = self.current_user
