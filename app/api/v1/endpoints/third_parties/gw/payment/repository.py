@@ -16,7 +16,8 @@ from app.third_parties.oracle.models.master_data.others import (
     TransactionStagePhase, TransactionStageRole, TransactionStageStatus
 )
 from app.utils.constant.approval import (
-    BUSINESS_JOB_CODE_AMOUNT_BLOCK, BUSINESS_JOB_CODE_AMOUNT_UNBLOCK
+    BUSINESS_JOB_CODE_AMOUNT_BLOCK, BUSINESS_JOB_CODE_AMOUNT_UNBLOCK,
+    BUSINESS_JOB_CODE_REDEEM_ACCOUNT
 )
 from app.utils.constant.casa import (
     RECEIVING_METHOD_SCB_BY_IDENTITY, RECEIVING_METHOD_SCB_TO_ACCOUNT,
@@ -383,17 +384,67 @@ async def repos_gw_payment_amount_unblock(
     return ReposReturn(data=booking_id)
 
 
-async def repos_gw_redeem_account(current_user, data_input):
-    request_data = service_gw.gw_create_request_body(
+async def repos_gw_redeem_account(
+    current_user,
+    booking_id,
+    request_data_gw,
+    session
+):
+    is_success, gw_redeem_account = await service_gw.gw_payment_redeem_account(
         current_user=current_user.user_info,
-        function_name="redeemAccount_in",
-        data_input=data_input
+        data_input=request_data_gw
     )
-    is_success, gw_payment_redeem_account = await service_gw.gw_payment_redeem_account(
-        request_data=request_data
-    )
+    # lưu form data request GW
+    saving_booking_business_form = {
+        "booking_business_form_id": generate_uuid(),
+        "booking_id": booking_id,
+        "form_data": orjson_dumps(request_data_gw),
+        "business_form_id": BUSINESS_FORM_AMOUNT_UNBLOCK_PD,
+        "save_flag": True,
+        "is_success": True,
+        "created_at": now(),
+        "out_data": orjson_dumps(gw_redeem_account)
+    }
+    if not is_success:
+        saving_booking_business_form.update({
+            "is_success": False
+        })
 
-    return ReposReturn(data=(request_data, gw_payment_redeem_account))
+    session.add(BookingBusinessForm(**saving_booking_business_form))
+
+    if is_success:
+        session.add(TransactionJob(**dict(
+            transaction_id=generate_uuid(),
+            booking_id=booking_id,
+            business_job_id=BUSINESS_JOB_CODE_REDEEM_ACCOUNT,
+            complete_flag=is_success,
+            error_code=None,
+            error_desc=None,
+            created_at=now()
+        )))
+    else:
+        session.add(TransactionJob(**dict(
+            transaction_id=generate_uuid(),
+            booking_id=booking_id,
+            business_job_id=BUSINESS_JOB_CODE_REDEEM_ACCOUNT,
+            complete_flag=is_success,
+            error_code=gw_redeem_account.get('redeemAccount_out').get('transaction_info').get(
+                'transaction_error_code'),
+            error_desc=gw_redeem_account.get('redeemAccount_out').get('transaction_info').get(
+                'transaction_error_msg'),
+            created_at=now()
+        )))
+
+    session.commit()
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            msg=ERROR_CALL_SERVICE_GW,
+            loc='PAYMENT_REDEEM_ACCOUNT',
+            detail=gw_redeem_account.get('redeemAccount_out').get('transaction_info').get(
+                'transaction_error_msg')
+        )
+    return ReposReturn(data=booking_id)
 
 
 async def repos_gw_pay_in_cash(

@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import APIRouter, Body, Depends, Header
 from starlette import status
 
@@ -8,7 +10,7 @@ from app.api.v1.endpoints.casa.schema import SaveCasaSuccessResponse
 from app.api.v1.endpoints.deposit.open_deposit.controller import CtrDeposit
 from app.api.v1.endpoints.deposit.open_deposit.schema import (
     DepositOpenTDAccountRequest, DepositPayInRequest, DepositPayInResponse,
-    RedeemAccountRequest
+    RedeemAccountRequest, RedeemAccountResponse
 )
 
 router = APIRouter()
@@ -86,7 +88,7 @@ async def view_get_deposit_pay_in(
 )
 async def save_redeem_account_td(
         booking_id: str = Header(..., description="Mã phiên giao dịch", alias="BOOKING-ID"),
-        request: RedeemAccountRequest = Body(...),
+        request: List[RedeemAccountRequest] = Body(...),
         current_user=Depends(get_current_user_from_header())
 ):
     redeem_account_td = await CtrDeposit(current_user=current_user).ctr_save_redeem_account_td(
@@ -94,3 +96,22 @@ async def save_redeem_account_td(
         request=request
     )
     return ResponseData(**redeem_account_td)
+
+
+@router.get(
+    path="/redeem-account/",
+    name="[DEPOSIT] Tất toán tài khoản tiết kiệm",
+    description="[DEPOSIT] Tất toán tài khoản tiết kiệm",
+    responses=swagger_response(
+        response_model=ResponseData[List[RedeemAccountResponse]],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_redeem_account_td(
+        booking_id: str = Header(..., description="Mã phiên giao dịch", alias="BOOKING-ID"),
+        current_user=Depends(get_current_user_from_header())
+):
+    response_data = await CtrDeposit(current_user=current_user).ctr_get_redeem_account_td(
+        booking_id=booking_id,
+    )
+    return ResponseData[List[RedeemAccountResponse]](**response_data)

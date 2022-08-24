@@ -151,6 +151,34 @@ class RedeemAccountRequest(BaseSchema):
     )
 
 
+class AccountInfoResponse(BaseSchema):
+    account_number: str = Field(...)
+
+
+class RedemptionDetailsResponse(BaseSchema):
+    redemption_mode: str = Field(...)
+    redemption_amount: int = Field(...)
+    waive_penalty: str = Field(...)
+    waive_interest: str = Field(...)
+
+
+class PayoutDetailResponse(BaseSchema):
+    payout_component: str = Field(...)
+    payout_mode: str = Field(...)
+    payout_amount: int = Field(...)
+    offset_account: str = Field(...)
+
+
+class PPayoutDetailResponse(BaseSchema):
+    redemption_details: RedemptionDetailsResponse = Field(...)
+    payout_details: List[PayoutDetailResponse] = Field(...)
+
+
+class RedeemAccountResponse(BaseSchema):
+    account_info: AccountInfoResponse = Field(...)
+    p_payout_detail: PPayoutDetailResponse = Field(...)
+
+
 class DepositPayInResponse(BaseSchema):
     account_form: AccountFormRequest = Field(...)
     fee_info: FeeInfoResponse = Field(..., description="Thông tin phí")
