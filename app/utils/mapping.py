@@ -2,9 +2,16 @@ from app.utils.constant.debit_card import (
     IDENTITY_DOCUMENT_TYPE_NEW_IC, IDENTITY_DOCUMENT_TYPE_PASSPORT,
     IDENTITY_DOCUMENT_TYPE_PASSPORT_CODE, MARITAL_STATUS_DISVORSED,
     MARITAL_STATUS_MARRIED, MARITAL_STATUS_OTHERS, MARITAL_STATUS_SINGLE,
-    RESIDENT
+    NON_RESIDENT, RESIDENT
 )
 from app.utils.constant.gw import GW_DEFAULT_NO, GW_DEFAULT_YES
+
+
+def mapping_resident_status_crm_to_core(crm_data: str) -> str:
+    if crm_data == RESIDENT:
+        return RESIDENT
+    else:
+        return NON_RESIDENT
 
 
 ########################################################################################################################
