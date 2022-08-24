@@ -93,11 +93,11 @@ class CtrTabletMobile(BaseController):
     async def list_banner(self, language_code: ListBannerLanguageCodeQueryParam):
         """
         tablet_banner_share_link = https://fileshare.scb.com.vn/d/a398af9d54d044169375/
-        thumbnail = https://fileshare.scb.com.vn/thumbnail/a398af9d54d044169375/1920/TiengAnh/BaoHiem/KienTaoThinhVuong%404x-80.jpg
+        thumbnail = https://fileshare.scb.com.vn/thumbnail/a398af9d54d044169375/1024/TiengAnh/BaoHiem/KienTaoThinhVuong%404x-80.jpg
         """
         language_relative_path = 'TiengViet' if language_code == ListBannerLanguageCodeQueryParam.vi else 'TiengAnh'
         tablet_banner_share_link = INIT_SERVICE['fileshare']['tablet_banner_share_link']
-        tablet_banner_thumbnail_link = f"{tablet_banner_share_link.replace('/d/', '/thumbnail/')}1920/{language_relative_path}/"
+        tablet_banner_thumbnail_link = f"{tablet_banner_share_link.replace('/d/', '/thumbnail/')}1024/{language_relative_path}/"
 
         # TODO: get all files in folder instead of hard file name
         return self.response([
