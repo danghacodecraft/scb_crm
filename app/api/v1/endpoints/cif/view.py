@@ -10,7 +10,7 @@ from app.api.v1.endpoints.cif.controller import CtrCustomer
 from app.api.v1.endpoints.cif.schema import (
     CareerInformationContactInformationResponse, CheckExistCIFRequest,
     CheckExistCIFSuccessResponse, CifCustomerInformationResponse,
-    CifInformationResponse, CifProfileHistoryResponse,
+    CifInformationResponse, CifProfileHistoryResponse, CloneCifResponse,
     CustomerByCIFNumberRequest, CustomerByCIFNumberResponse
 )
 
@@ -123,3 +123,20 @@ async def view_retrieve_customer_information_by_cif_number(
         request=request
     )
     return ResponseData[CustomerByCIFNumberResponse](**customer_information)
+
+
+@router.post(
+    path="/{cif_id}/clone/",
+    name="Clone CIF",
+    description="Clone CIF",
+    responses=swagger_response(
+        response_model=ResponseData[CloneCifResponse],
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_clone_cif(
+        cif_id: str = Path(..., description='Id CIF ảo'),
+        current_user=Depends(get_current_user_from_header())
+):
+    response = await CtrCustomer().ctr_clone_cif(cif_id)
+    return ResponseData[CloneCifResponse](**response)

@@ -1,10 +1,11 @@
+import random
 import re
 from typing import List
 
 from sqlalchemy import desc, or_, select
 from sqlalchemy.orm import Session
 
-from app.api.base.repository import ReposReturn
+from app.api.base.repository import ReposReturn, auto_commit
 from app.third_parties.oracle.models.cif.basic_information.contact.model import (
     CustomerAddress, CustomerProfessional
 )
@@ -34,12 +35,13 @@ from app.third_parties.oracle.models.master_data.others import (
     AverageIncomeAmount, Career, KYCLevel, MaritalStatus, Position,
     ResidentStatus
 )
+from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.error_messages import (
     ERROR_BOOKING_CODE_NOT_EXIST, ERROR_CIF_ID_NOT_EXIST,
     ERROR_CIF_NUMBER_EXIST, ERROR_CIF_NUMBER_INVALID,
     ERROR_CIF_NUMBER_NOT_EXIST, MESSAGE_STATUS
 )
-from app.utils.functions import dropdown
+from app.utils.functions import dropdown, now
 
 
 async def repos_get_initializing_customer(cif_id: str, session: Session) -> ReposReturn:
@@ -349,3 +351,162 @@ async def repos_get_account_id_by_account_number(account_number: str, session: S
 
     if not response_data:
         return ReposReturn(is_error=True, msg="account_number is not exist", detail=f"account_number: {account_number}")
+
+
+@auto_commit
+async def repos_clone_cif(cif_id: str, session: Session) -> ReposReturn:
+    customer_info = session.execute(
+        select(
+            Customer,
+            CustomerIdentity,
+            CustomerIndividualInfo,
+            CustomerAddress
+        )
+        .join(CustomerIdentity, CustomerIdentity.customer_id == Customer.id)
+        .join(CustomerIndividualInfo, CustomerIndividualInfo.customer_id == Customer.id)
+        .filter(
+            Customer.id == cif_id,
+            Customer.active_flag == 1
+        )
+    ).first()
+    if not customer_info:
+        return ReposReturn(
+            is_error=True,
+            msg=ERROR_CIF_ID_NOT_EXIST,
+            loc='cif_id'
+        )
+    customer, customer_identity, customer_individual, customer_address = customer_info
+
+    mobile_num = ""
+    for _ in range(6):
+        num = str(random.randint(0, 9))
+        mobile_num += num
+
+    new_customer = Customer(**{
+        'tax_number': customer.tax_number,
+        'full_name': "NGUYEN VAN CHI",
+        'self_selected_cif_flag': customer.self_selected_cif_flag,
+        'channel_id': customer.channel_id,
+        'customer_relationship_flag': customer.customer_relationship_flag,
+        'full_name_vn': "NGUYỄN VĂN CHÍ",
+        'legal_agreement_flag': customer.legal_agreement_flag,
+        'avatar_url': customer.avatar_url,
+        'customer_type_id': customer.customer_type_id,
+        'first_name': "CHI",
+        'advertising_marketing_flag': customer.advertising_marketing_flag,
+        'complete_flag': 0,
+        'cif_number': None,
+        'customer_category_id': customer.customer_category_id,
+        'middle_name': "VAN",
+        'active_flag': customer.active_flag,
+        'grade_name': customer.grade_name,
+        'telephone_number': customer.telephone_number,
+        'customer_economic_profession_id': customer.customer_economic_profession_id,
+        'last_name': "NGUYEN",
+        'open_cif_at': customer.open_cif_at,
+        'mobile_number': "0969" + mobile_num,
+        'customer_classification_id': customer.customer_classification_id,
+        'short_name': "chinv",
+        'open_branch_id': customer.open_branch_id,
+        'extra_number': customer.extra_number,
+        'fax_number': customer.fax_number,
+        'customer_professional_id': customer.customer_professional_id,
+        'email': customer.email,
+        'kyc_level_id': customer.kyc_level_id,
+        'cust_relationship_type_id': customer.cust_relationship_type_id,
+        'customer_status_id': customer.customer_status_id,
+        'nationality_id': customer.nationality_id
+    })
+
+    session.add(new_customer)
+    session.flush()
+
+    identity_num = ""
+    for _ in range(len(customer_identity.identity_num)):
+        num = str(random.randint(0, 9))
+        identity_num += num
+
+    new_customer_identity = CustomerIdentity(**{
+        "identity_type_id": customer_identity.identity_type_id,
+        "customer_id": new_customer.id,
+        "identity_num": identity_num,
+        "issued_date": customer_identity.issued_date,
+        "expired_date": customer_identity.expired_date,
+        "place_of_issue_id": customer_identity.place_of_issue_id,
+        "passport_type_id": customer_identity.passport_type_id,
+        "passport_code_id": customer_identity.passport_code_id,
+        "primary_flag": customer_identity.primary_flag,
+        "mrz_content": customer_identity.mrz_content,
+        "qrcode_content": customer_identity.qrcode_content,
+        "maker_at": customer_identity.maker_at,
+        "maker_id": customer_identity.maker_id,
+        "updater_at": customer_identity.updater_at,
+        "updater_id": customer_identity.updater_id,
+        "identity_number_in_passport": customer_identity.identity_number_in_passport,
+        "signer": customer_identity.signer,
+        "ocr_result": customer_identity.ocr_result,
+    })
+
+    session.add(new_customer_identity)
+
+    new_customer_individual = CustomerIndividualInfo(**{
+        "customer_id": new_customer.id,
+        "gender_id": customer_individual.gender_id,
+        "title_id": customer_individual.title_id,
+        "place_of_birth_id": customer_individual.place_of_birth_id,
+        "country_of_birth_id": customer_individual.country_of_birth_id,
+        "resident_status_id": customer_individual.resident_status_id,
+        "religion_id": customer_individual.religion_id,
+        "nation_id": customer_individual.nation_id,
+        "marital_status_id": customer_individual.marital_status_id,
+        "date_of_birth": customer_individual.date_of_birth,
+        "under_15_year_old_flag": customer_individual.under_15_year_old_flag,
+        "guardian_flag": customer_individual.guardian_flag,
+        "identifying_characteristics": customer_individual.identifying_characteristics,
+        "father_full_name": customer_individual.father_full_name,
+        "mother_full_name": customer_individual.mother_full_name,
+    })
+
+    session.add(new_customer_individual)
+
+    new_customer_address = CustomerAddress(**{
+        "customer_id": new_customer.id,
+        "address_type_id": customer_address.address_type_id,
+        "address_country_id": customer_address.address_country_id,
+        "address_province_id": customer_address.address_province_id,
+        "address_district_id": customer_address.address_district_id,
+        "address_ward_id": customer_address.address_ward_id,
+        "address": customer_address.address,
+        "zip_code": customer_address.zip_code,
+        "latitude": customer_address.latitude,
+        "longitude": customer_address.longitude,
+        "address_primary_flag": customer_address.address_primary_flag,
+        "address_domestic_flag": customer_address.address_domestic_flag,
+        "address_2": customer_address.address_2,
+        "address_same_permanent_flag": customer_address.address_same_permanent_flag,
+    })
+
+    session.add(new_customer_address)
+
+    # BOOKING
+    booking = Booking(**{
+        "transaction_id": "6EFE4FD4D5024A8C8E927F47C751FEEF",
+        "code": "143_CRM_CIF_20220817_0000064",
+        "business_type_id": BUSINESS_TYPE_INIT_CIF,
+        "branch_id": "001",
+        "created_at": now(),
+        "updated_at": now(),
+        "created_by": "QUOCNV"
+    })
+
+    session.add(booking)
+    session.flush()
+
+    booking_customer = BookingCustomer(**{
+        "customer_id": new_customer.id,
+        "booking_id": booking.id
+    })
+    session.add(booking_customer)
+    session.flush()
+
+    return ReposReturn(data=(new_customer.id, booking.id))

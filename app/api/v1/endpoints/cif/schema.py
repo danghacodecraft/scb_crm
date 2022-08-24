@@ -224,3 +224,8 @@ class CustomerByCIFNumberRequest(BaseSchema):
 
 class GWCustomerDetailRequest(BaseSchema):
     parameter: str = Field(GW_REQUEST_PARAMETER_DEFAULT, description=make_description_from_dict(GW_REQUEST_PARAMETER))
+
+
+class CloneCifResponse(BaseSchema):
+    new_cif_id: str
+    booking_customer_id: str

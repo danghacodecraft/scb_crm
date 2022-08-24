@@ -16,19 +16,16 @@ from app.utils.constant.debit_card import (
     GW_DEFAULT_CUSTOMER_RESIDENT_STATUS, GW_DEFAULT_CUSTOMER_RESIDENT_TYPE,
     GW_DEFAULT_EMAIL, GW_DEFAULT_EMPLOYEE_DURATION, GW_DEFAULT_EMPLOYEE_SINCE,
     GW_DEFAULT_RESIDENT_SINCE, GW_DEFAULT_VISA_EXPIRE_DATE, GW_DEFAULT_ZERO,
-    IDENTITY_DOCUMENT_TYPE_NEW_IC, IDENTITY_DOCUMENT_TYPE_PASSPORT,
-    IDENTITY_DOCUMENT_TYPE_PASSPORT_CODE, MARITAL_STATUS_DISVORSED,
-    MARITAL_STATUS_MARRIED, MARITAL_STATUS_OTHERS, MARITAL_STATUS_SINGLE,
-    RESIDENT, GW_DEFAULT_apprvDeviation, GW_DEFAULT_casaAcctTyp,
-    GW_DEFAULT_decsnStat, GW_DEFAULT_delivOpt, GW_DEFAULT_emerRelt,
-    GW_DEFAULT_smsInfo, GW_DEFAULT_spcEmpWorkNat
+    GW_DEFAULT_apprvDeviation, GW_DEFAULT_casaAcctTyp, GW_DEFAULT_decsnStat,
+    GW_DEFAULT_delivOpt, GW_DEFAULT_emerRelt, GW_DEFAULT_smsInfo,
+    GW_DEFAULT_spcEmpWorkNat
 )
 from app.utils.constant.gw import (
     GW_AUTHORIZED_REF_DATA_MGM_ACC_NUM, GW_CO_OWNER_REF_DATA_MGM_ACC_NUM,
     GW_CURRENT_ACCOUNT_CASA, GW_CURRENT_ACCOUNT_FROM_CIF,
     GW_CUSTOMER_REF_DATA_MGMT_CIF_NUM, GW_DEFAULT_NO, GW_DEFAULT_VALUE,
-    GW_DEFAULT_YES, GW_DEPOSIT_ACCOUNT_FROM_CIF, GW_DEPOSIT_ACCOUNT_TD,
-    GW_EMPLOYEE_FROM_CODE, GW_EMPLOYEE_FROM_NAME, GW_EMPLOYEES,
+    GW_DEPOSIT_ACCOUNT_FROM_CIF, GW_DEPOSIT_ACCOUNT_TD, GW_EMPLOYEE_FROM_CODE,
+    GW_EMPLOYEE_FROM_NAME, GW_EMPLOYEES,
     GW_ENDPOINT_URL_CHECK_EXITS_ACCOUNT_CASA,
     GW_ENDPOINT_URL_CHECK_USERNAME_IB_MB_EXIST,
     GW_ENDPOINT_URL_DEPOSIT_OPEN_ACCOUNT_TD,
@@ -192,6 +189,10 @@ from app.utils.constant.gw import (
 from app.utils.email_templates.email_template import EMAIL_TEMPLATES
 from app.utils.error_messages import ERROR_CALL_SERVICE_GW
 from app.utils.functions import date_to_string, datetime_to_string, now
+from app.utils.mapping import (
+    mapping_identity_code_crm_to_core, mapping_marital_status_crm_to_core,
+    mapping_resident_pr_stat_crm_to_core
+)
 
 
 class ServiceGW:
@@ -2504,23 +2505,9 @@ class ServiceGW:
                          casa_currency_number: str
                          ):
 
-        # mapping các field đúng với Card core
-        # tình trạng hôn nhân
-        marital_status = customer_info.CustomerIndividualInfo.marital_status_id
-        if marital_status not in [MARITAL_STATUS_SINGLE, MARITAL_STATUS_MARRIED, MARITAL_STATUS_DISVORSED]:
-            marital_status = MARITAL_STATUS_OTHERS
-
-        # thẻ định danh
-        if customer_info.CustomerIdentity.identity_type_id == IDENTITY_DOCUMENT_TYPE_PASSPORT_CODE:
-            identity_code = IDENTITY_DOCUMENT_TYPE_PASSPORT
-        else:
-            identity_code = IDENTITY_DOCUMENT_TYPE_NEW_IC
-
-        # đinh cư hay chưa
-        if customer_info.CustomerIndividualInfo.resident_status_id == RESIDENT:
-            resident_pr_stat = GW_DEFAULT_YES
-        else:
-            resident_pr_stat = GW_DEFAULT_NO
+        marital_status = mapping_marital_status_crm_to_core(customer_info.CustomerIndividualInfo.marital_status_id)
+        identity_code = mapping_identity_code_crm_to_core(customer_info.CustomerIdentity.identity_type_id)
+        resident_pr_stat = mapping_resident_pr_stat_crm_to_core(customer_info.CustomerIndividualInfo.resident_status_id)
 
         data_input = {
             "sequenceNo": datetime_to_string(now(), _format="%Y%m%d%H%M%S%f")[:-4],
