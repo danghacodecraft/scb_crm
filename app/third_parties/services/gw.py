@@ -191,7 +191,7 @@ from app.utils.constant.gw import (
     GW_SELF_UNSELECTED_ACCOUNT_FLAG
 )
 from app.utils.email_templates.email_template import EMAIL_TEMPLATES
-from app.utils.error_messages import ERROR_CALL_SERVICE_GW, ERROR_NO_DATA
+from app.utils.error_messages import ERROR_CALL_SERVICE_GW, ERROR_OPEN_CIF
 from app.utils.functions import date_to_string, datetime_to_string, now
 
 
@@ -2527,7 +2527,7 @@ class ServiceGW:
         if not customer_info.Customer.mobile_number:
             return ReposReturn(
                 is_error=True,
-                msg=ERROR_NO_DATA,
+                msg=ERROR_OPEN_CIF,
                 loc="open_cif -> repos_push_debit_to_gw_open_cards_mobile_number",
                 detail="Customer mobile_number cannot null"
             )

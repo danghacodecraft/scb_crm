@@ -952,7 +952,7 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
     if not response_customers[0].Customer.mobile_number:
         return ReposReturn(
             is_error=True,
-            msg=ERROR_NO_DATA,
+            msg=ERROR_OPEN_CIF,
             loc="open_cif -> repos_push_debit_to_gw_mobile_number",
             detail="Customer mobile_number cannot null"
         )
