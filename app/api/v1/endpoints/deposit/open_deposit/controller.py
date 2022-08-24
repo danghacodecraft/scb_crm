@@ -304,6 +304,9 @@ class CtrDeposit(BaseController):
             check_correct_booking_flag=False,
             loc=f'booking_id: {booking_id}'
         )
+        requests = []
+        for item in request:
+            requests.append(item.json())
         history_datas = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_INIT_REDEEM_ACCOUNT,
             history_status=PROFILE_HISTORY_STATUS_INIT,
@@ -323,7 +326,7 @@ class CtrDeposit(BaseController):
         transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
             business_type_id=BUSINESS_TYPE_REDEEM_ACCOUNT,
             booking_id=booking_id,
-            request_json=request.json(),
+            request_json=orjson_dumps(requests),
             history_datas=orjson_dumps(history_datas),
         )
         (
