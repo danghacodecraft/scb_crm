@@ -57,7 +57,7 @@ class CtrCasaOpenCasa(BaseController):
             if not mark_created_at:
                 mark_created_at = booking_business_form.created_at
                 casa_accounts.append(form_data)
-            if mark_created_at == booking_business_form.created_at:
+            elif mark_created_at == booking_business_form.created_at:
                 casa_accounts.append(form_data)
 
         booking = await CtrBooking(current_user=self.current_user).ctr_get_booking(
