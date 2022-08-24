@@ -67,6 +67,8 @@ from app.utils.constant.cif import (
 from app.utils.constant.gw import (
     GW_ACCOUNT_CHARGE_ON_ORDERING, GW_ACCOUNT_CHARGE_ON_RECEIVER,
     GW_CORE_DATE_FORMAT, GW_DATE_FORMAT, GW_DATETIME_FORMAT, GW_DEFAULT_VALUE,
+    GW_FUNC_INTERBANK_TRANSFER_OUT, GW_FUNC_PAY_IN_CARD_247_BY_ACC_NUM_IN,
+    GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM_OUT, GW_FUNC_PAY_IN_CARD_OUT,
     GW_FUNC_TELE_TRANSFER_OUT, GW_FUNC_TT_LIQUIDATION_OUT, GW_GL_BRANCH_CODE,
     GW_TRANSACTION_TYPE_SEND, GW_TRANSACTION_TYPE_WITHDRAW
 )
@@ -624,6 +626,8 @@ class CtrGWCasaAccount(BaseController):
 
         is_completed = False
 
+        function_out = None
+
         if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
             is_success, response_data = await self.ctr_gw_pay_in_cash(
                 form_data=form_data,
@@ -637,6 +641,7 @@ class CtrGWCasaAccount(BaseController):
                 )
             is_completed = True
             xref = response_data['payInCash_out']['data_output']['xref']['p_xref']
+            function_out = GW_FUNC_PAY_IN_CARD_OUT
 
         if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
 
@@ -672,6 +677,7 @@ class CtrGWCasaAccount(BaseController):
             p_contract_ref = tt_liquidation_response_data[GW_FUNC_TT_LIQUIDATION_OUT]['data_output']['p_contract_ref']
             response_data = tt_liquidation_response_data
             is_completed = True
+            function_out = GW_FUNC_TT_LIQUIDATION_OUT
 
         if receiving_method in [RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT, RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY]:
             is_success, gw_response_data = await self.ctr_gw_interbank_transfer(
@@ -687,6 +693,7 @@ class CtrGWCasaAccount(BaseController):
                 )
             response_data = gw_response_data
             is_completed = True
+            function_out = GW_FUNC_INTERBANK_TRANSFER_OUT
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
             is_success, gw_response_data = await self.ctr_gw_pay_in_cash_247_by_acc_num(
@@ -702,6 +709,7 @@ class CtrGWCasaAccount(BaseController):
                 )
             response_data = gw_response_data
             is_completed = True
+            function_out = GW_FUNC_PAY_IN_CARD_247_BY_ACC_NUM_IN
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
             is_success, gw_response_data = await self.ctr_gw_pay_in_cash_247_by_card_num(
@@ -717,6 +725,7 @@ class CtrGWCasaAccount(BaseController):
                 )
             response_data = gw_response_data
             is_completed = True
+            function_out = GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM_OUT
 
         if not response_data:
             return self.response_exception(msg="GW return None", loc=f'response_data: {response_data}')
@@ -737,7 +746,8 @@ class CtrGWCasaAccount(BaseController):
         return self.response(data=dict(
             booking_id=booking_id,
             xref=xref,
-            p_contract_ref=p_contract_ref
+            p_contract_ref=p_contract_ref,
+            server_ref_num=response_data[function_out]['transaction_info']['server_ref_num']
         ))
 
     async def ctr_gw_get_tele_transfer(self, maker: str, request_data, place_of_issue):

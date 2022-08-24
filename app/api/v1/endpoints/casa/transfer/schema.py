@@ -201,6 +201,8 @@ class CasaTransferResponse(ResponseRequestSchema):
     sender: CustomerResponse = Field(..., description="Thông tin khách hàng giao dịch")
     direct_staff: StaffInfoResponse = Field(..., description="Thông tin khách hàng giao dịch")
     indirect_staff: StaffInfoResponse = Field(..., description="Thông tin khách hàng giao dịch")
+    booking_code: str = Field(..., description="Mã booking")
+    is_readonly: bool = Field(..., description="Cờ chỉ đọc")
 
 
 class CasaTransferSourceAccountItemResponse(ResponseRequestSchema):
