@@ -25,7 +25,7 @@ router = APIRouter()
     )
 )
 async def view_create_personal(
-        personal_request: PersonalRequest,  # TODO: Thêm example
+        personal_request: PersonalRequest,
         cif_id: str = Path(..., description='Id CIF ảo'),
         current_user=Depends(get_current_user_from_header())
 ):

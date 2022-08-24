@@ -92,7 +92,7 @@ async def get_optional_model_object_by_code_or_name(
         statement = select(model).filter(model.id == model_id)
 
     if model_name:
-        statement = select(model).filter(func.lower(model.name) == func.lower(model_name))  # TODO: check it
+        statement = select(model).filter(func.lower(model.name) == func.lower(model_name))
 
     if model_code:
         statement = select(model).filter(model.code == model_code)

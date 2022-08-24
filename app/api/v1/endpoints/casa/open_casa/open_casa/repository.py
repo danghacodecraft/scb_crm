@@ -179,3 +179,20 @@ async def repos_get_casa_open_casa_info_from_booking(booking_id: str, session: S
         .order_by(BookingBusinessForm.created_at.desc())
     ).all()
     return ReposReturn(data=get_casa_open_casa_info)
+
+
+async def repos_get_acc_structure_type_by_parent(acc_structure_type_id: str, session: Session):
+    """
+    Tìm kiến trúc cấp trước đó của tài khoản
+    VD: input Cấp 2 -> truyền vào cấp 1
+    """
+    acc_structure_type_parent = aliased(AccountStructureType, name='AccountStructureTypeParent')
+    acc_structure_type = session.execute(
+        select(
+            acc_structure_type_parent,
+            AccountStructureType
+        )
+        .join(acc_structure_type_parent, AccountStructureType.parent_id == acc_structure_type_parent.id)
+        .filter(AccountStructureType.id == acc_structure_type_id)
+    ).scalar()
+    return ReposReturn(data=acc_structure_type)

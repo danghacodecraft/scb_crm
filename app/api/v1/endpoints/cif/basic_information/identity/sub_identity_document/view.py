@@ -27,7 +27,7 @@ router = APIRouter()
     )
 )
 async def view_save(
-        sub_identity_request: List[SubIdentityDocumentRequest],  # TODO: Thêm example
+        sub_identity_request: List[SubIdentityDocumentRequest],
         cif_id: str = Path(..., description='Id CIF ảo'),
         current_user=Depends(get_current_user_from_header())
 ):
