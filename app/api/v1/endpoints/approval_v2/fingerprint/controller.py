@@ -56,10 +56,10 @@ class CtrApproveFingerprint(BaseController):
                 compare_fingerprint_uuid_ekyc=compare_fingerprint_uuid_ekyc, current_user=current_user
             )
             for index, saving_customer_compare_image_transaction in enumerate(saving_customer_compare_image_transactions):
-                for uuid_ekyc, face_image in fingerprint_images.items():
+                for uuid_ekyc, fingerprint_image in fingerprint_images.items():
                     saving_booking_compare_images.append(dict(
                         image_type_id=IMAGE_TYPE_FINGERPRINT,
-                        image_uuid=face_image['uuid'],
+                        image_uuid=fingerprint_image['uuid'],
                         image_ekyc_uuid=uuid_ekyc,
                         is_image_original=True,
                         compare_image_uuid=saving_customer_compare_image_transaction['compare_image_url'],
