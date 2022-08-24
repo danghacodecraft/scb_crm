@@ -392,8 +392,8 @@ class ServiceGW:
         return await self.call_api(
             request_data=request_data,
             api_url=api_url,
-            output_key='openCASA_out',
-            service_name='OPEN_CASA'
+            output_key='retrieveCurrentAccountCASA_in',
+            service_name='retrieveCurrentAccountCASA'
         )
 
     async def get_report_history_casa_account(
