@@ -496,7 +496,7 @@ async def repos_clone_cif(cif_id: str, session: Session) -> ReposReturn:
         "branch_id": "001",
         "created_at": now(),
         "updated_at": now(),
-        "created_by": "QUOCNV"
+        "created_by": "DIEPTTN1"
     })
 
     session.add(booking)
