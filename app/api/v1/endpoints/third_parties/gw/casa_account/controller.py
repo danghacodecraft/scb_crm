@@ -1835,7 +1835,7 @@ class CtrGWCasaAccount(BaseController):
             request_data=request_data
         ))
 
-        form_data.update({
+        form_data['transfer'].update({
             'entry_number': response_data['p_xref']
         })
 
