@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Body, Depends, Header
 from starlette import status
 
@@ -8,14 +7,11 @@ from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.third_parties.gw.payment.controller import (
     CtrGWPayment
 )
-from app.api.v1.endpoints.third_parties.gw.payment.example import (
-    REDEEM_ACCOUNT_REQUEST_EXAMPLE
-)
 from app.api.v1.endpoints.third_parties.gw.payment.schema import (
     AccountAmountBlockPDResponse, AccountAmountBlockRequest,
     AccountAmountBlockResponse, AccountAmountUnblockRequest,
     AccountAmountUnBlockResponse, GWCasaTransferAccountResponse,
-    PaymentSuccessResponse, RedeemAccountRequest
+    PaymentSuccessResponse
 )
 
 router = APIRouter()
@@ -163,7 +159,7 @@ async def view_amount_unblock_pd(
 
 
 @router.post(
-    path="/redeem-account/",
+    path="/redeem-account-pd/",
     name="[GW] Redeem Account",
     description="Tất toán sổ tiết kiệm",
     responses=swagger_response(
@@ -173,11 +169,11 @@ async def view_amount_unblock_pd(
 
 )
 async def gw_redeem_account(
-        redeem_account: RedeemAccountRequest = Body(..., example=REDEEM_ACCOUNT_REQUEST_EXAMPLE),
+        BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),
         current_user=Depends(get_current_user_from_header())
 ):
-    redeem_account_response = await CtrGWPayment(current_user).ctr_gw_redeem_account(redeem_account=redeem_account)
-    return ResponseData[PaymentSuccessResponse](**redeem_account_response)
+    redeem_account_response = await CtrGWPayment(current_user).ctr_gw_redeem_account(booking_id=BOOKING_ID)
+    return ResponseData(**redeem_account_response)
 
 
 @router.post(
