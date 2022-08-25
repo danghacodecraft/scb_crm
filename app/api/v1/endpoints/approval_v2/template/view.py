@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Header, Path
 
-from app.api.base.schema import ResponseData
 from app.api.v1.endpoints.approval_v2.template.controller import (
     CtrTemplateDetail
 )
@@ -22,4 +21,5 @@ async def view_form(
         template_id=template_id,
         booking_id=booking_id
     )
-    return ResponseData(**template_detail_info)
+
+    return template_detail_info

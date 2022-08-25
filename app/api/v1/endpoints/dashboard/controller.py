@@ -13,6 +13,9 @@ from app.api.v1.endpoints.dashboard.repository import (
 from app.api.v1.endpoints.third_parties.gw.category.controller import (
     CtrSelectCategory
 )
+from app.api.v1.endpoints.third_parties.gw.customer.controller import (
+    CtrGWCustomer
+)
 from app.api.v1.endpoints.third_parties.gw.statistics.controller import (
     CtrGWStatistic
 )
@@ -181,7 +184,7 @@ class CtrDashboard(BaseController):
                 )
 
         # Lấy thông tin các giao dịch Mở TKTT\
-        open_casa_infos = self.call_repos(
+        open_casa_infos, booking_business_form_open_casa_infos = self.call_repos(
             await repos_get_open_casa_info_from_booking(booking_ids=business_type_open_casas,
                                                         session=self.oracle_session))
         exist_booking = {}
@@ -206,6 +209,17 @@ class CtrDashboard(BaseController):
             mapping_datas[booking.parent_id]['business_type'].update(
                 numbers=account_numbers
             )
+
+        for booking_id, booking_business_form in booking_business_form_open_casa_infos:
+            form_data = orjson_loads(booking_business_form.form_data)
+            if 'cif_number' in form_data:
+                gw_customer_detail = await CtrGWCustomer(current_user=self.current_user).ctr_gw_get_customer_info_detail(
+                    return_raw_data_flag=True, cif_number=form_data['cif_number'])
+                full_name_vn = gw_customer_detail['full_name']
+                mapping_datas[booking_id].update({
+                    "full_name_vn": full_name_vn,
+                    "customer_cif_number": form_data['cif_number']
+                })
 
         # Lấy thông tin các giao dịch Mở CIF
         open_cif_infos = self.call_repos(
