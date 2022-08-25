@@ -51,7 +51,7 @@ async def view_login(credentials: HTTPBasicCredentials = Depends(security)) -> R
 
 @router.post(
     path="/token/",
-    name="Login",
+    name="Refresh Token",
     description="**Refresh Token**",
     responses=swagger_response(
         response_model=ResponseData[RefreshTokenResponse],
