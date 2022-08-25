@@ -171,16 +171,14 @@ class CtrDashboard(BaseController):
                     and 'fullname_vn' in form_data['fee_payment_info']['sender_info'] else None
                 )
 
-            if booking_business_form.business_form_id == BUSINESS_FORM_AMOUNT_UNBLOCK \
-                    and isinstance(form_data, list) and 'transaction_fee_info' in form_data[0]:  # TODO
-                form_data = form_data[0]
+            if booking_business_form.business_form_id == BUSINESS_FORM_AMOUNT_UNBLOCK:
+                customer_cif_number = form_data['customer_cif_number']
+                gw_customer_detail = await CtrGWCustomer(current_user=self.current_user).ctr_gw_get_customer_info_detail(
+                    return_raw_data_flag=True, cif_number=customer_cif_number)
+                full_name_vn = gw_customer_detail['full_name']  # TODO
                 mapping_datas[booking_id].update(
-                    customer_cif_number=form_data['transaction_fee_info']['sender_info']['cif_number']
-                    if 'sender_info' in form_data['transaction_fee_info']
-                    and 'cif_number' in form_data['transaction_fee_info']['sender_info'] else None,
-                    full_name_vn=form_data['transaction_fee_info']['sender_info']['fullname_vn']
-                    if 'sender_info' in form_data['transaction_fee_info']
-                    and 'fullname_vn' in form_data['transaction_fee_info']['sender_info'] else None
+                    customer_cif_number=customer_cif_number,
+                    full_name_vn=full_name_vn
                 )
 
         # Lấy thông tin các giao dịch Mở TKTT\
