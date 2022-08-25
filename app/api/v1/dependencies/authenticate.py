@@ -18,7 +18,7 @@ bearer_token = HTTPBearer()
 basic_auth = HTTPBasic()
 
 
-def get_current_user_from_header(is_require_login: bool = True, refresh_token: bool = True) -> Callable:
+def get_current_user_from_header(is_require_login: bool = True, refresh_token: bool = False) -> Callable:
     if refresh_token:
         return _get_authorization_header_refresh
     return _get_authorization_header if is_require_login else _get_authorization_header_optional
