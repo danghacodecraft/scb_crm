@@ -3,7 +3,7 @@ from typing import List, Optional, Union
 
 from pydantic import Field, validator
 
-from app.api.base.schema import CreatedUpdatedBaseModel, TMSResponseSchema
+from app.api.base.schema import TMSCreatedUpdatedBaseModel, TMSResponseSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
 from app.api.v1.others.fee.schema import OneFeeInfoRequest
 from app.api.v1.schemas.utils import (
@@ -223,15 +223,14 @@ class FeeDetailInfoResponse(TMSResponseSchema):
     payer: Optional[str] = Field('', description="Bên thanh toán phí")
     fee_category: Optional[DropdownResponse] = Field('', description="Nhóm phí")
     fee: Optional[DropdownResponse] = Field('', description="Mã loại phí")
-    amount: int = Field('', description='Số tiền phí')
-    vat: int = Field('', description='Thuế VAT')
-    total: int = Field('', description='Tổng phí')
-    actual_total: Optional[float] = Field('', description="Số tiền thực chuyển")
-    note: str = Field('', description='Nội dung')
-    ref_num: str = Field('', description='Số bút toán')
+    vat: Optional[str] = Field('', description='Thuế VAT')
+    total: Optional[str] = Field('', description='Tổng phí')
+    actual_total: Optional[str] = Field('', description="Số tiền thực chuyển")
+    note: Optional[str] = Field('', description='Nội dung')
+    ref_num: Optional[str] = Field('', description='Số bút toán')
 
 
-class TMSCasaTopUpResponse(CreatedUpdatedBaseModel):
+class TMSCasaTopUpResponse(TMSCreatedUpdatedBaseModel):
     transfer_type: TransferTypeResponse = Field(..., description="Loại chuyển")
     receiver: ReceiverResponse = Field(..., description="Thông tin người thụ hưởng")
     transfer: TransferResponse = Field(..., description="Thông tin giao dịch")

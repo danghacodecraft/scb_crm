@@ -63,8 +63,12 @@ async def repos_get_template_data(template_id: str, booking_id: str, session: Se
 
     data_return['booking'] = {
         "business_type_id": booking.business_type_id,
-        "created_at": booking.created_at,
-        "updated_at": booking.updated_at,
+        "created_at_datetime": booking.created_at,
+        "updated_at_datetime": booking.updated_at,
+        "created_at_date": booking.created_at,
+        "updated_at_date": booking.updated_at,
+        # "created_at_time": booking.created_at,
+        # "updated_at_time": booking.updated_at,
         'created_by': booking.created_by,
         'updated_by': booking.updated_by if booking.updated_by else booking.created_by,
     }
