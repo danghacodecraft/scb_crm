@@ -583,8 +583,9 @@ async def repos_gw_save_casa_transfer_info(
 
     response_data = {
         "booking_id": booking_id,
-        "p_contract_ref": casa_transfer['data_output']['p_contract_ref']
-        if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY else None
+        "p_contract_ref": casa_transfer['data_output']['p_contract_ref'],
+        "server_ref_num": casa_transfer['transaction_info']['server_ref_num'],
+        "p_xref": casa_transfer.get('data_output').get('p_xref')
     }
 
     return ReposReturn(data=(response_data, gw_casa_transfer, is_success))
