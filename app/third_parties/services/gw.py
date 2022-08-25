@@ -1926,7 +1926,6 @@ class ServiceGW:
         request_data = self.gw_create_request_body(
             current_user=current_user, function_name=GW_FUNC_REDEEM_ACCOUNT_IN, data_input=data_input
         )
-        print('request_data', request_data)
         api_url = f"{self.url}{GW_ENDPOINT_URL_REDEEM_ACCOUNT}"
         response_data = await self.call_api(
             request_data=request_data,
@@ -1934,7 +1933,6 @@ class ServiceGW:
             output_key=GW_FUNC_REDEEM_ACCOUNT_OUT,
             service_name=GW_FUNC_REDEEM_ACCOUNT
         )
-        print(response_data)
         return response_data
 
     async def gw_pay_in_cash(self, current_user: UserInfoResponse, data_input):
