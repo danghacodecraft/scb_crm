@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Header, Path
+from fastapi import APIRouter, Depends, Header, Path
 
+from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.approval_v2.template.controller import (
     CtrTemplateDetail
 )
@@ -15,7 +16,7 @@ router = APIRouter()
 async def view_form(
         booking_id: str = Header(..., description="Mã phiên giao dịch"),
         template_id: str = Path(..., description='id template version 1'),
-        # current_user=Depends(get_current_user_from_header())
+        current_user=Depends(get_current_user_from_header())
 ):
     template_detail_info = await CtrTemplateDetail().ctr_get_template_detail(
         template_id=template_id,

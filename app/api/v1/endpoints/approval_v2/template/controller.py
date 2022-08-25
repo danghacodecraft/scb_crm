@@ -2,17 +2,28 @@ import json
 
 from app.api.base.controller import BaseController
 from app.api.base.schema import ResponseData
+from app.api.v1.endpoints.approval_v2.template.amount_block_TMS.schema import (
+    TMSAccountAmountBlockResponse
+)
+from app.api.v1.endpoints.approval_v2.template.amount_unblock_template.schema import (
+    TMSAccountAmountUnblockRequest
+)
 from app.api.v1.endpoints.approval_v2.template.repository import (
     repos_get_template_data
 )
 from app.api.v1.endpoints.approval_v2.template.schema import (
     TMSCasaTopUpResponse
 )
+from app.api.v1.endpoints.approval_v2.template.transfer_TMS.schema import (
+    TMSCasaTransferResponse
+)
 from app.api.v1.endpoints.approval_v2.template.withdraw.schema import (
     TMSWithdrawResponse
 )
 from app.utils.constant.business_type import (
-    BUSINESS_TYPE_CASA_TOP_UP, BUSINESS_TYPE_WITHDRAW
+    BUSINESS_TYPE_AMOUNT_BLOCK, BUSINESS_TYPE_AMOUNT_UNBLOCK,
+    BUSINESS_TYPE_CASA_TOP_UP, BUSINESS_TYPE_CASA_TRANSFER,
+    BUSINESS_TYPE_WITHDRAW
 )
 
 
@@ -25,6 +36,7 @@ class CtrTemplateDetail(BaseController):
                 session=self.oracle_session)
         )
         object_data = None
+
         for _, value in business_form_id__data.items():
             if isinstance(value, bytes):
                 value = json.loads(value.decode('utf-8'))
@@ -38,4 +50,14 @@ class CtrTemplateDetail(BaseController):
 
         elif object_data['business_type_id'] == BUSINESS_TYPE_WITHDRAW:
             object_data = ResponseData[TMSWithdrawResponse](**self.response(data=object_data))
+
+        elif object_data['business_type_id'] == BUSINESS_TYPE_AMOUNT_UNBLOCK:
+            object_data = ResponseData[TMSAccountAmountUnblockRequest](**self.response(data=object_data))
+
+        elif object_data['business_type_id'] == BUSINESS_TYPE_AMOUNT_BLOCK:
+            object_data = ResponseData[TMSAccountAmountBlockResponse](**self.response(data=object_data))
+
+        elif object_data['business_type_id'] == BUSINESS_TYPE_CASA_TRANSFER:
+            object_data = ResponseData[TMSCasaTransferResponse](**self.response(data=object_data))
+
         return object_data
