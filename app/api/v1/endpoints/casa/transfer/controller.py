@@ -77,6 +77,10 @@ class CtrCasaTransfer(BaseController):
         ))
 
         form_data = orjson_loads(get_casa_transfer_info.form_data)
+        form_data.update({
+            "booking_code": get_casa_transfer_info.booking.code,
+            "is_readonly": get_casa_transfer_info.booking.completed_flag
+        })
 
         return self.response(form_data)
 

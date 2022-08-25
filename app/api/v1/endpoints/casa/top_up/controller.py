@@ -84,6 +84,10 @@ class CtrCasaTopUp(BaseController):
             session=self.oracle_session
         ))
         form_data = orjson_loads(get_casa_top_up_info.form_data)
+        form_data.update({
+            "booking_code": booking.code,
+            "is_readonly": booking.completed_flag
+        })
         return self.response(data=form_data)
 
     async def ctr_save_casa_top_up_scb_to_account(
