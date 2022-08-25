@@ -8,14 +8,17 @@ from app.api.v1.endpoints.user.schema import AuthResponse
 from app.api.v1.others.booking.repository import generate_booking_code
 from app.settings.event import service_gw
 from app.third_parties.oracle.models.cif.form.model import (
-    Booking, BookingAccount, BookingBusinessForm, BookingCustomer,
-    TransactionDaily, TransactionSender
+    Booking, BookingAccount, BookingBusinessForm, TransactionDaily,
+    TransactionSender
 )
 from app.third_parties.oracle.models.master_data.others import (
     SlaTransaction, TransactionJob, TransactionStage, TransactionStageLane,
     TransactionStagePhase, TransactionStageRole, TransactionStageStatus
 )
-from app.utils.constant.approval import BUSINESS_JOB_CODE_AMOUNT_BLOCK
+from app.utils.constant.approval import (
+    BUSINESS_JOB_CODE_AMOUNT_BLOCK, BUSINESS_JOB_CODE_AMOUNT_UNBLOCK,
+    BUSINESS_JOB_CODE_REDEEM_ACCOUNT
+)
 from app.utils.constant.casa import (
     RECEIVING_METHOD_SCB_BY_IDENTITY, RECEIVING_METHOD_SCB_TO_ACCOUNT,
     RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT,
@@ -99,7 +102,7 @@ async def repos_payment_amount_block(
         saving_transaction_job,
         saving_booking_business_form,
         saving_booking_account,
-        saving_booking_customer,
+        # saving_booking_customer,
         session
 ):
     session.add_all([
@@ -116,7 +119,7 @@ async def repos_payment_amount_block(
         TransactionJob(**saving_transaction_job)
     ])
     session.bulk_save_objects(BookingAccount(**account) for account in saving_booking_account)
-    session.bulk_save_objects(BookingCustomer(**customer) for customer in saving_booking_customer)
+    # session.bulk_save_objects(BookingCustomer(**customer) for customer in saving_booking_customer)
     # Update Booking
     session.execute(
         update(Booking)
@@ -131,6 +134,7 @@ async def repos_gw_payment_amount_block(
         current_user,
         request_data_gw,
         booking_id,
+        teller,
         session: Session
 ):
     for item in request_data_gw.get('account_amount_blocks'):
@@ -154,26 +158,14 @@ async def repos_gw_payment_amount_block(
             # TODO chưa được mô tả
             "p_blk_charge": "",
             # TODO chưa được mô tả
-            "p_blk_udf": [
-                {
-                    "UDF_NAME": "",
-                    "UDF_VALUE": "",
-                    "AMOUNT_BLOCK": {
-                        "UDF_NAME": "",
-                        "UDF_VALUE": ""
-                    }
-                }
-            ],
+            "p_blk_udf": "",
             "staff_info_checker": {
-                # TODO hard core
-                "staff_name": "HOANT2"
+                "staff_name": current_user.user_info.username
             },
             "staff_info_maker": {
-                # TODO hard core
-                "staff_name": "KHANHLQ"
+                "staff_name": teller.user_name
             }
         }
-
         is_success, gw_payment_amount_block = await service_gw.gw_payment_amount_block(
             current_user=current_user.user_info, data_input=data_input
         )
@@ -254,7 +246,7 @@ async def repos_payment_amount_unblock(
         saving_transaction_sender: dict,
         saving_transaction_job: dict,
         saving_booking_business_form: dict,
-        saving_booking_customer,
+        # saving_booking_customer,
         saving_booking_account,
         session
 ):
@@ -272,7 +264,7 @@ async def repos_payment_amount_unblock(
         BookingBusinessForm(**saving_booking_business_form)
     ])
     session.bulk_save_objects(BookingAccount(**account) for account in saving_booking_account)
-    session.bulk_save_objects(BookingCustomer(**customer) for customer in saving_booking_customer)
+    # session.bulk_save_objects(BookingCustomer(**customer) for customer in saving_booking_customer)
     # Update Booking
     session.execute(
         update(Booking)
@@ -285,53 +277,174 @@ async def repos_payment_amount_unblock(
 @auto_commit
 async def repos_gw_payment_amount_unblock(
         current_user,
-        request_data_gw: list,
+        request_data_gw,
+        teller,
         booking_id,
         session
 ):
-    response_data = []
-    for item in request_data_gw:
+    p_blk_detail = {
+        "AMOUNT": "",
+        "HOLD_CODE": "",
+        "EXPIRY_DATE": "",
+        "REMARKS": "",
+        "CHARGE_DETAIL": {
+            "TYPE_CHARGE": "",
+            "ACCOUNT_CHARGE": ""
+        }
+    }
+    for item in request_data_gw.get('account_unlock'):
+        if item['account_amount_block']['p_type_unblock'] == "P":
+            p_blk_detail = {
+                "AMOUNT": item['account_amount_block']['p_blk_detail']['amount'],
+                "HOLD_CODE": item['account_amount_block']['p_blk_detail']['hold_code'],
+                "EXPIRY_DATE": item['account_amount_block']['p_blk_detail']['expiry_date'],
+                "REMARKS": item['account_amount_block']['p_blk_detail']['remarks'],
+                "CHARGE_DETAIL": {
+                    "TYPE_CHARGE": "",
+                    "ACCOUNT_CHARGE": ""
+                }
+            }
+
+        request_data = {
+            "account_info": {
+                "balance_lock_info": {
+                    "account_ref_no": item['account_amount_block']['account_ref_no']
+                }
+            },
+            "p_type_unblock": item['account_amount_block']['p_type_unblock'],
+            "p_blk_detail": p_blk_detail,
+            # TODO hard core
+            "p_blk_charge": "",
+            # TODO hard core
+            "p_blk_udf": "",
+            "staff_info_checker": {
+                # TODO hard core
+                "staff_name": current_user.user_info.username
+            },
+            "staff_info_maker": {
+                # TODO hard core
+                "staff_name": teller.user_name
+            }
+        }
         is_success, gw_payment_amount_unblock = await service_gw.gw_payment_amount_unblock(
-            data_input=item,
+            data_input=request_data,
             current_user=current_user.user_info
         )
 
         # lưu form data request GW
-        session.add(
-            BookingBusinessForm(**dict(
-                booking_business_form_id=generate_uuid(),
-                booking_id=booking_id,
-                form_data=orjson_dumps(item),
-                business_form_id=BUSINESS_FORM_AMOUNT_UNBLOCK_PD,
-                save_flag=True,
-                created_at=now(),
-                log_data=orjson_dumps(gw_payment_amount_unblock)
-            ))
-        )
-        amount_unblock = gw_payment_amount_unblock.get('amountUnBlock_out').get('transaction_info')
+        saving_booking_business_form = {
+            "booking_business_form_id": generate_uuid(),
+            "booking_id": booking_id,
+            "form_data": orjson_dumps(item),
+            "business_form_id": BUSINESS_FORM_AMOUNT_UNBLOCK_PD,
+            "save_flag": True,
+            "is_success": True,
+            "created_at": now(),
+            "out_data": orjson_dumps(gw_payment_amount_unblock)
+        }
+        if not is_success:
+            saving_booking_business_form.update({
+                "is_success": False
+            })
 
-        response_data.append({
-            "account_ref": item.get('account_info').get('balance_lock_info').get('account_ref_no'),
-            "transaction": {
-                "code": amount_unblock.get('transaction_error_code'),
-                "msg": amount_unblock.get('transaction_error_msg')
-            }
+        session.add(BookingBusinessForm(**saving_booking_business_form))
+
+        if is_success:
+            session.add(TransactionJob(**dict(
+                transaction_id=generate_uuid(),
+                booking_id=booking_id,
+                business_job_id=BUSINESS_JOB_CODE_AMOUNT_BLOCK,
+                complete_flag=is_success,
+                error_code=gw_payment_amount_unblock.get('amountUnBlock_out').get('transaction_info').get(
+                    'transaction_error_code'),
+                error_desc=gw_payment_amount_unblock.get('amountUnBlock_out').get('transaction_info').get(
+                    'transaction_error_msg'),
+                created_at=now()
+            )))
+        else:
+            session.add(TransactionJob(**dict(
+                transaction_id=generate_uuid(),
+                booking_id=booking_id,
+                business_job_id=BUSINESS_JOB_CODE_AMOUNT_UNBLOCK,
+                complete_flag=is_success,
+                error_code=None,
+                error_desc=None,
+                created_at=now()
+            )))
+
+        session.commit()
+
+        if not is_success:
+            return ReposReturn(
+                is_error=True,
+                msg=ERROR_CALL_SERVICE_GW,
+                loc='PAYMENT_AMOUNT_UNBLOCK',
+                detail=gw_payment_amount_unblock.get('amountUnBlock_out').get('transaction_info').get('transaction_error_msg')
+            )
+    return ReposReturn(data=booking_id)
+
+
+async def repos_gw_redeem_account(
+    current_user,
+    booking_id,
+    request_data_gw,
+    session
+):
+    is_success, gw_redeem_account = await service_gw.gw_payment_redeem_account(
+        current_user=current_user.user_info,
+        data_input=request_data_gw
+    )
+    # lưu form data request GW
+    saving_booking_business_form = {
+        "booking_business_form_id": generate_uuid(),
+        "booking_id": booking_id,
+        "form_data": orjson_dumps(request_data_gw),
+        "business_form_id": BUSINESS_FORM_AMOUNT_UNBLOCK_PD,
+        "save_flag": True,
+        "is_success": True,
+        "created_at": now(),
+        "out_data": orjson_dumps(gw_redeem_account)
+    }
+    if not is_success:
+        saving_booking_business_form.update({
+            "is_success": False
         })
 
-    return ReposReturn(data=response_data)
+    session.add(BookingBusinessForm(**saving_booking_business_form))
 
+    if is_success:
+        session.add(TransactionJob(**dict(
+            transaction_id=generate_uuid(),
+            booking_id=booking_id,
+            business_job_id=BUSINESS_JOB_CODE_REDEEM_ACCOUNT,
+            complete_flag=is_success,
+            error_code=None,
+            error_desc=None,
+            created_at=now()
+        )))
+    else:
+        session.add(TransactionJob(**dict(
+            transaction_id=generate_uuid(),
+            booking_id=booking_id,
+            business_job_id=BUSINESS_JOB_CODE_REDEEM_ACCOUNT,
+            complete_flag=is_success,
+            error_code=gw_redeem_account.get('redeemAccount_out').get('transaction_info').get(
+                'transaction_error_code'),
+            error_desc=gw_redeem_account.get('redeemAccount_out').get('transaction_info').get(
+                'transaction_error_msg'),
+            created_at=now()
+        )))
 
-async def repos_gw_redeem_account(current_user, data_input):
-    request_data = service_gw.gw_create_request_body(
-        current_user=current_user.user_info,
-        function_name="redeemAccount_in",
-        data_input=data_input
-    )
-    is_success, gw_payment_redeem_account = await service_gw.gw_payment_redeem_account(
-        request_data=request_data
-    )
-
-    return ReposReturn(data=(request_data, gw_payment_redeem_account))
+    session.commit()
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            msg=ERROR_CALL_SERVICE_GW,
+            loc='PAYMENT_REDEEM_ACCOUNT',
+            detail=gw_redeem_account.get('redeemAccount_out').get('transaction_info').get(
+                'transaction_error_msg')
+        )
+    return ReposReturn(data=booking_id)
 
 
 async def repos_gw_pay_in_cash(

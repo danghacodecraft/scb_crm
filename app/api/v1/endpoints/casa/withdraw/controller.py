@@ -11,6 +11,8 @@ from app.api.v1.endpoints.third_parties.gw.employee.controller import (
 )
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.sender.controller import CtrPaymentSender
+from app.api.v1.others.statement.controller import CtrStatement
+from app.api.v1.others.statement.repository import repos_get_denominations
 from app.api.v1.validator import validate_history_data
 from app.utils.constant.business_type import BUSINESS_TYPE_WITHDRAW
 from app.utils.constant.cif import (
@@ -19,7 +21,7 @@ from app.utils.constant.cif import (
 )
 from app.utils.error_messages import (
     ERROR_AMOUNT_INVALID, ERROR_CASA_ACCOUNT_NOT_EXIST,
-    ERROR_CASA_BALANCE_UNAVAILABLE
+    ERROR_CASA_BALANCE_UNAVAILABLE, ERROR_DENOMINATIONS_NOT_EXIST
 )
 from app.utils.functions import orjson_dumps, orjson_loads
 
@@ -32,6 +34,7 @@ class CtrWithdraw(BaseController):
             request: WithdrawRequest
     ):
         current_user = self.current_user
+        statement = request.customer_info.statement
         # Check exist Booking
         await CtrBooking().ctr_get_booking_and_validate(
             business_type_code=BUSINESS_TYPE_WITHDRAW,
@@ -39,6 +42,30 @@ class CtrWithdraw(BaseController):
             check_correct_booking_flag=False,
             loc=f"header -> booking-id, booking_id: {booking_id}, business_type_code: {BUSINESS_TYPE_WITHDRAW}"
         )
+
+        denominations__amounts = {}
+        statement_info = self.call_repos(await repos_get_denominations(currency_id="VND", session=self.oracle_session))
+
+        for item in statement_info:
+            denominations__amounts.update({
+                str(int(item.denominations)): 0
+            })
+        denominations_errors = []
+        for index, row in enumerate(statement):
+            denominations = row.denominations
+            if denominations not in denominations__amounts:
+                denominations_errors.append(dict(
+                    index=index,
+                    value=denominations
+                ))
+
+            denominations__amounts[denominations] = row.amount
+
+        if denominations_errors:
+            return self.response_exception(
+                msg=ERROR_DENOMINATIONS_NOT_EXIST,
+                loc=str(denominations_errors)
+            )
 
         casa_account_number = request.transaction_info.source_accounts.account_num
         if request.transaction_info.receiver_info.amount < CHECK_CONDITION_WITHDRAW:
@@ -58,8 +85,6 @@ class CtrWithdraw(BaseController):
             )
         receiver = request.transaction_info.receiver_info
         account = request.transaction_info.source_accounts
-        fee = request.transaction_info.fee_info
-        management = request.customer_info.management_info
         sender_info = request.customer_info.sender_info
 
         # Thông tin khách hàng giao dịch
@@ -73,6 +98,75 @@ class CtrWithdraw(BaseController):
             sender_place_of_issue=sender_info.place_of_issue,
             sender_note=sender_info.note
         )
+
+        statement_info = await CtrStatement().ctr_get_statement_info(statement_requests=request.customer_info.statement)
+        amount = request.transaction_info.receiver_info.amount
+        ################################################################################################################
+        # Thông tin phí
+        ################################################################################################################
+        fee_info_response = {}
+        is_transfer_payer = request.transaction_info.fee_info.is_transfer_payer
+        if is_transfer_payer:
+            payer_flag = request.transaction_info.fee_info.payer_flag
+            fee_info = request.transaction_info.fee_info
+            fee_amount = fee_info.amount
+            note = request.transaction_info.fee_info.note
+            if payer_flag:
+                vat_tax = fee_amount / CHECK_CONDITION_VAT
+                total = fee_amount + vat_tax
+                actual_total = total + amount
+                fee_info_response.update(dict(
+                    fee_amount=fee_info.amount,
+                    vat_tax=vat_tax,
+                    total=total,
+                    actual_total=actual_total,
+                    is_transfer_payer=is_transfer_payer,
+                    payer_flag=payer_flag,
+                    note=note
+                ))
+            else:
+                vat_tax = fee_amount / 10
+                total = fee_amount + vat_tax
+                is_transfer_payer = False
+                fee_info_response.update(dict(
+                    fee_amount=fee_info.amount,
+                    vat_tax=vat_tax,
+                    total=total,
+                    actual_total=amount,
+                    is_transfer_payer=is_transfer_payer,
+                    payer_flag=payer_flag,
+                    note=note
+                ))
+        else:
+            fee_info_response.update(dict(
+                is_transfer_payer=is_transfer_payer
+            ))
+
+        ################################################################################################################
+        # Thông tin quản lý
+        ################################################################################################################
+        controller_gw_employee = CtrGWEmployee(current_user)
+        gw_direct_staff = await controller_gw_employee.ctr_gw_get_employee_info_from_code(
+            employee_code=request.customer_info.management_info.direct_staff_code,
+            return_raw_data_flag=True
+        )
+        direct_staff = dict(
+            code=gw_direct_staff['staff_code'],
+            name=gw_direct_staff['staff_name']
+        )
+        gw_indirect_staff = await controller_gw_employee.ctr_gw_get_employee_info_from_code(
+            employee_code=request.customer_info.management_info.indirect_staff_code,
+            return_raw_data_flag=True
+        )
+        indirect_staff = dict(
+            code=gw_indirect_staff['staff_code'],
+            name=gw_indirect_staff['staff_name']
+        )
+        management_info_response = dict(
+            direct_staff=direct_staff,
+            indirect_staff=indirect_staff
+        )
+
         data_input = {
             "transaction_info": {
                 "source_accounts": {
@@ -80,21 +174,15 @@ class CtrWithdraw(BaseController):
                 },
                 "receiver_info": {
                     "withdraw_account_flag": receiver.withdraw_account_flag,
+                    "currency": receiver.currency,
                     "amount": receiver.amount,
                     "content": receiver.content,
                 },
-                "fee_info": {
-                    "is_transfer_payer": fee.is_transfer_payer,
-                    "payer_flag": fee.payer_flag,
-                    "amount": fee.amount,
-                    "note": fee.note
-                }
+                "fee_info": fee_info_response
             },
             "customer_info": {
-                "management_info": {
-                    "direct_staff_code": management.direct_staff_code,
-                    "indirect_staff_code": management.indirect_staff_code,
-                },
+                "statement_info": statement_info,
+                "management_info": management_info_response,
                 "sender_info": sender_response
             }
         }
@@ -221,7 +309,6 @@ class CtrWithdraw(BaseController):
             check_correct_booking_flag=False,
             loc=f'booking_id: {booking_id}'
         )
-        current_user = self.current_user
 
         get_pay_in_cash_info = self.call_repos(await repos_get_withdraw_info(
             booking_id=booking_id,
@@ -230,97 +317,12 @@ class CtrWithdraw(BaseController):
 
         form_data = orjson_loads(get_pay_in_cash_info.form_data)
         ################################################################################################################
-        # Thông tin người thụ hưởng
-        ################################################################################################################
         account_number = form_data['transaction_info']['source_accounts']['account_num']
-        gw_casa_account_info = await CtrGWCasaAccount(current_user=current_user).ctr_gw_get_casa_account_info(
-            account_number=account_number,
-            return_raw_data_flag=True
-        )
-        gw_casa_account_info_customer_info = gw_casa_account_info['customer_info']
-        account_info = gw_casa_account_info_customer_info['account_info']
-        receiver_info = form_data['transaction_info']['receiver_info']
-
-        receiver_response = dict(
-            withdraw_account_flag=receiver_info['withdraw_account_flag'],
-            currency=account_info['account_currency'],
-            amount=receiver_info['amount'],
-            content=receiver_info['content']
-        )
-
-        ################################################################################################################
-        amount = receiver_response['amount']
-
-        ################################################################################################################
-        # Thông tin phí
-        ################################################################################################################
-        fee_info_response = {}
-        is_transfer_payer = form_data['transaction_info']['fee_info']["is_transfer_payer"]
-        if is_transfer_payer:
-            payer_flag = form_data['transaction_info']['fee_info']["payer_flag"]
-            fee_info = form_data['transaction_info']['fee_info']
-            fee_amount = fee_info['amount']
-            note = form_data['transaction_info']['fee_info']['note']
-            if payer_flag:
-                vat_tax = fee_amount / CHECK_CONDITION_VAT
-                total = fee_amount + vat_tax
-                actual_total = total + amount
-                fee_info_response.update(dict(
-                    fee_amount=fee_info['amount'],
-                    vat_tax=vat_tax,
-                    total=total,
-                    actual_total=actual_total,
-                    is_transfer_payer=is_transfer_payer,
-                    payer_flag=payer_flag,
-                    note=note
-                ))
-            else:
-                vat_tax = fee_amount / 10
-                total = fee_amount + vat_tax
-                is_transfer_payer = False
-                fee_info_response.update(dict(
-                    fee_amount=fee_info['amount'],
-                    vat_tax=vat_tax,
-                    total=total,
-                    actual_total=amount,
-                    is_transfer_payer=is_transfer_payer,
-                    payer_flag=payer_flag,
-                    note=note
-                ))
-        else:
-            fee_info_response.update(dict(
-                is_transfer_payer=is_transfer_payer
-            ))
-
-        ################################################################################################################
-        # Thông tin quản lý
-        ################################################################################################################
-        controller_gw_employee = CtrGWEmployee(current_user)
-        gw_direct_staff = await controller_gw_employee.ctr_gw_get_employee_info_from_code(
-            employee_code=form_data['customer_info']['management_info']['direct_staff_code'],
-            return_raw_data_flag=True
-        )
-        direct_staff = dict(
-            code=gw_direct_staff['staff_code'],
-            name=gw_direct_staff['staff_name']
-        )
-        gw_indirect_staff = await controller_gw_employee.ctr_gw_get_employee_info_from_code(
-            employee_code=form_data['customer_info']['management_info']['indirect_staff_code'],
-            return_raw_data_flag=True
-        )
-        indirect_staff = dict(
-            code=gw_indirect_staff['staff_code'],
-            name=gw_indirect_staff['staff_name']
-        )
-
-        ################################################################################################################
-        # Thông tin khách hàng giao dịch
-        ################################################################################################################
-        sender_response = form_data['customer_info']['sender_info']
-        if sender_response['cif_number']:
-            sender_response.update(cif_flag=True)
-        else:
-            sender_response.update(cif_flag=False)
+        receiver_response = form_data['transaction_info']['receiver_info']
+        fee_info_response = form_data['transaction_info']['fee_info']
+        statement_info = form_data['customer_info']['statement_info']
+        management_info = form_data['customer_info']['management_info']
+        sender_info = form_data['customer_info']['sender_info']
 
         response_data = dict(
             casa_account=dict(
@@ -331,11 +333,9 @@ class CtrWithdraw(BaseController):
                 fee_info_response=fee_info_response
             ),
             transactional_customer_response=dict(
-                management_info_response=dict(
-                    direct_staff=direct_staff,
-                    indirect_staff=indirect_staff
-                ),
-                sender_info_response=sender_response
+                statement_info_response=statement_info,
+                management_info_response=management_info,
+                sender_info_response=sender_info
             )
         )
 

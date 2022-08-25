@@ -13,6 +13,8 @@ from app.settings.service import SERVICE
 ROOT_APP = str(pathlib.Path(__file__).parent.absolute().parent)
 
 APPLICATION = SERVICE['application']
+SENTRY = SERVICE['sentry']
+
 WRITE_LOG = SERVICE['kafka']["write_log"]
 
 DATETIME_INPUT_OUTPUT_FORMAT = '%Y-%m-%d %H:%M:%S'

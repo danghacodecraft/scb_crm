@@ -70,7 +70,7 @@ async def repos_login(username: str, password: str) -> ReposReturn:
         zlib.compress(orjson.dumps(data_idm['user_info']))
     ).decode('utf-8')
 
-    await service_redis.getset(data_idm["user_info"]['username'], data_idm['menu_list'])
+    await service_redis.getset(data_idm["user_info"]['username'], data_idm)
 
     lst_data = []
     list(map(lambda x: lst_data.extend(x['group_role_list']), data_idm['menu_list']))
@@ -103,7 +103,7 @@ async def repos_check_token(token: str) -> ReposReturn:
             is_error=True,
             msg=ERROR_INVALID_TOKEN,
             loc='token',
-            error_status_code=status.HTTP_407_PROXY_AUTHENTICATION_REQUIRED
+            error_status_code=status.HTTP_401_UNAUTHORIZED
         )
 
     username = auth_parts['username']
@@ -117,12 +117,26 @@ async def repos_check_token(token: str) -> ReposReturn:
             detail="Token is invalid"
         )
 
-    menu_list = await service_redis.get(username)
+    menu_list = (await service_redis.get(username))['menu_list']
 
     return ReposReturn(data=dict(
         user_info=auth_parts,
         menu_list=menu_list
     ))
+
+
+async def repos_get_username_from_token(token: str) -> ReposReturn:
+    try:
+        auth_parts = orjson.loads(zlib.decompress(base64.b64decode(token)))
+    except (TypeError, UnicodeDecodeError, binascii.Error, IndexError, zlib.error):
+        return ReposReturn(
+            is_error=True,
+            msg=ERROR_INVALID_TOKEN,
+            loc='token',
+            error_status_code=status.HTTP_401_UNAUTHORIZED
+        )
+
+    return ReposReturn(data=auth_parts['username'])
 
 
 async def repos_get_user_info(user_id: str) -> ReposReturn:

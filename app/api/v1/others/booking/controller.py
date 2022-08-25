@@ -7,7 +7,8 @@ from starlette import status
 from app.api.base.controller import BaseController
 from app.api.v1.others.booking.repository import (
     repos_check_exist_booking, repos_create_booking, repos_get_booking,
-    repos_get_business_type, repos_get_customer_from_booking_account,
+    repos_get_booking_authentications, repos_get_business_type,
+    repos_get_customer_from_booking_account,
     repos_get_customer_from_booking_account_amount_block,
     repos_get_customer_from_booking_customer, repos_get_initializing_booking,
     repos_is_correct_booking, repos_is_used_booking
@@ -249,3 +250,10 @@ class CtrBooking(BaseController):
             return self.response_exception(msg=ERROR_BOOKING_IS_COMPLETED)
 
         return booking_business_form[0]
+
+    async def ctr_get_booking_authentications(self, booking_id: str):
+        booking_authentications = self.call_repos(await repos_get_booking_authentications(
+            booking_id=booking_id,
+            session=self.oracle_session
+        ))
+        return booking_authentications

@@ -3,8 +3,6 @@ from sqlalchemy.dialects.oracle import NUMBER
 from sqlalchemy.orm import relationship
 
 from app.third_parties.oracle.base import Base
-from app.third_parties.oracle.models.master_data.customer import \
-    CustomerCategory  # noqa
 from app.third_parties.oracle.models.master_data.others import Currency  # noqa
 
 
@@ -24,12 +22,14 @@ class AccountStructureType(Base):
 
     id = Column('acc_structure_type_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "),
                 comment='Mã loại kết cấu tài khoản')
-    parent_id = Column('acc_structure_type_parent_id', VARCHAR(36), comment='Mã cấp cha loại kết cấu tài khoản')
+    parent_id = Column('acc_structure_type_parent_id', ForeignKey('crm_acc_structure_type.acc_structure_type_id'), comment='Mã cấp cha loại kết cấu tài khoản')
     code = Column('acc_structure_type_code', VARCHAR(50), comment='Mã code loại kết cấu tài khoản')
     name = Column('acc_structure_type_name', VARCHAR(255), comment='Tên loại kết cấu tài khoản')
     value = Column('acc_structure_type_value', VARCHAR(16), comment='Giá trị loại kết cấu tài khoản')
     level = Column('acc_structure_type_level', NUMBER(8, 2, True), comment='Mức độ loại kết cấu tài khoản')
     active_flag = Column('acc_structure_type_active_flag', NUMBER(1, 2, True), comment='Cờ loại kết cấu tài khoản')
+
+    parent = relationship('AccountStructureType')
 
 
 class AccountClassCustomerCategory(Base):

@@ -93,7 +93,6 @@ class CifCustomerInformationResponse(BaseSchema):
     date_of_birth: date = Field(..., description="Ngày sinh")
     nationality: DropdownResponse = Field(..., description="Quốc tịch")
     marital_status: OptionalDropdownResponse = Field(..., description="Tình trạng hôn nhân")
-    # TODO: thông tin về loại khách hàng khi tạo CIF chưa có
     customer_type: OptionalDropdownResponse = Field(None, description="Loại khách hàng")
     customer_category: OptionalDropdownResponse = Field(None, description="Nhóm khách hàng")
     # TODO: hạng tín dụng chưa có field trong customer
@@ -224,3 +223,8 @@ class CustomerByCIFNumberRequest(BaseSchema):
 
 class GWCustomerDetailRequest(BaseSchema):
     parameter: str = Field(GW_REQUEST_PARAMETER_DEFAULT, description=make_description_from_dict(GW_REQUEST_PARAMETER))
+
+
+class CloneCifResponse(BaseSchema):
+    new_cif_id: str
+    booking_customer_id: str

@@ -7,14 +7,24 @@ import aiohttp
 from loguru import logger
 from starlette import status
 
+from app.api.base.repository import ReposReturn
 from app.api.v1.endpoints.third_parties.gw.email.schema import (
     open_ebank_failure_response, open_ebank_success_response
 )
 from app.api.v1.endpoints.user.schema import UserInfoResponse
+from app.utils.constant.debit_card import (
+    GW_DEFAULT_CUSTOMER_EDUCATION, GW_DEFAULT_CUSTOMER_NATIONALITY,
+    GW_DEFAULT_CUSTOMER_RESIDENT_STATUS, GW_DEFAULT_CUSTOMER_RESIDENT_TYPE,
+    GW_DEFAULT_EMAIL, GW_DEFAULT_EMPLOYEE_DURATION, GW_DEFAULT_EMPLOYEE_SINCE,
+    GW_DEFAULT_RESIDENT_SINCE, GW_DEFAULT_VISA_EXPIRE_DATE, GW_DEFAULT_ZERO,
+    GW_DEFAULT_apprvDeviation, GW_DEFAULT_casaAcctTyp, GW_DEFAULT_decsnStat,
+    GW_DEFAULT_delivOpt, GW_DEFAULT_emerRelt, GW_DEFAULT_smsInfo,
+    GW_DEFAULT_spcEmpWorkNat
+)
 from app.utils.constant.gw import (
     GW_AUTHORIZED_REF_DATA_MGM_ACC_NUM, GW_CO_OWNER_REF_DATA_MGM_ACC_NUM,
     GW_CURRENT_ACCOUNT_CASA, GW_CURRENT_ACCOUNT_FROM_CIF,
-    GW_CUSTOMER_REF_DATA_MGMT_CIF_NUM, GW_DEFAULT_VALUE,
+    GW_CUSTOMER_REF_DATA_MGMT_CIF_NUM, GW_DEFAULT_NO, GW_DEFAULT_VALUE,
     GW_DEPOSIT_ACCOUNT_FROM_CIF, GW_DEPOSIT_ACCOUNT_TD, GW_EMPLOYEE_FROM_CODE,
     GW_EMPLOYEE_FROM_NAME, GW_EMPLOYEES,
     GW_ENDPOINT_URL_CHECK_EXITS_ACCOUNT_CASA,
@@ -70,6 +80,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_SELECT_CARD_INFO, GW_ENDPOINT_URL_SELECT_CATEGORY,
     GW_ENDPOINT_URL_SELECT_DATA_FOR_CHART_DASHBOARD,
     GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE,
+    GW_ENDPOINT_URL_SELECT_FEE_BY_PRODUCT_NAME,
     GW_ENDPOINT_URL_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA,
     GW_ENDPOINT_URL_SELECT_SERIAL_NUMBER,
     GW_ENDPOINT_URL_SELECT_SERVICE_PACK_IB,
@@ -102,7 +113,8 @@ from app.utils.constant.gw import (
     GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM,
     GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM_IN,
     GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM_OUT, GW_FUNC_PAY_IN_CARD_IN,
-    GW_FUNC_PAY_IN_CARD_OUT, GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA,
+    GW_FUNC_PAY_IN_CARD_OUT, GW_FUNC_REDEEM_ACCOUNT, GW_FUNC_REDEEM_ACCOUNT_IN,
+    GW_FUNC_REDEEM_ACCOUNT_OUT, GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA,
     GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA_IN,
     GW_FUNC_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA_OUT,
     GW_FUNC_REGISTER_SMS_SERVICE_BY_MOBILE_NUMBER,
@@ -135,7 +147,8 @@ from app.utils.constant.gw import (
     GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_USERNAME_OUT,
     GW_FUNC_SELECT_EMPLOYEE_LIST_FROM_ORG_ID,
     GW_FUNC_SELECT_EMPLOYEE_LIST_FROM_ORG_ID_IN,
-    GW_FUNC_SELECT_EMPLOYEE_LIST_FROM_ORG_ID_OUT,
+    GW_FUNC_SELECT_EMPLOYEE_LIST_FROM_ORG_ID_OUT, GW_FUNC_SELECT_FEE_INFO,
+    GW_FUNC_SELECT_FEE_INFO_IN, GW_FUNC_SELECT_FEE_INFO_OUT,
     GW_FUNC_SELECT_KPIS_INFO_FROM_CODE, GW_FUNC_SELECT_KPIS_INFO_FROM_CODE_IN,
     GW_FUNC_SELECT_KPIS_INFO_FROM_CODE_OUT,
     GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA,
@@ -171,14 +184,17 @@ from app.utils.constant.gw import (
     GW_FUNC_TELE_TRANSFER_IN, GW_FUNC_TELE_TRANSFER_OUT,
     GW_FUNC_TT_LIQUIDATION, GW_FUNC_TT_LIQUIDATION_IN,
     GW_FUNC_TT_LIQUIDATION_OUT, GW_FUNCTION_OPEN_CASA, GW_HISTORY_ACCOUNT_NUM,
-    GW_HISTORY_CHANGE_FIELD_ACCOUNT, GW_NO_AGREEMENT_FLAG,
-    GW_RESPONSE_STATUS_SUCCESS, GW_RETRIEVE_CASA_ACCOUNT_DETAIL,
-    GW_SELF_SELECTED_ACCOUNT_FLAG, GW_SELF_UNSELECTED_ACCOUNT_FLAG,
-    GW_YES_AGREEMENT_FLAG
+    GW_HISTORY_CHANGE_FIELD_ACCOUNT, GW_RESPONSE_STATUS_SUCCESS,
+    GW_RETRIEVE_CASA_ACCOUNT_DETAIL, GW_SELF_SELECTED_ACCOUNT_FLAG,
+    GW_SELF_UNSELECTED_ACCOUNT_FLAG
 )
 from app.utils.email_templates.email_template import EMAIL_TEMPLATES
-from app.utils.error_messages import ERROR_CALL_SERVICE_GW
+from app.utils.error_messages import ERROR_CALL_SERVICE_GW, ERROR_OPEN_CIF
 from app.utils.functions import date_to_string, datetime_to_string, now
+from app.utils.mapping import (
+    mapping_identity_code_crm_to_core, mapping_marital_status_crm_to_core,
+    mapping_resident_pr_stat_crm_to_core
+)
 
 
 class ServiceGW:
@@ -211,7 +227,7 @@ class ServiceGW:
             data=None,
             errors=return_errors
         )
-
+        response = None
         try:
             if not is_form_data:
                 async with self.session.post(url=api_url, json=request_data) as response:
@@ -305,7 +321,7 @@ class ServiceGW:
             )
 
             return_data.update(
-                status=response.status,
+                status=response.status if not response else status.HTTP_400_BAD_REQUEST,
                 errors=return_error.get('detail')
             )
 
@@ -375,34 +391,12 @@ class ServiceGW:
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_CURRENT_ACCOUNT_CASA}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        return await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='retrieveCurrentAccountCASA_out',
+            service_name='retrieveCurrentAccountCASA'
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
 
     async def get_report_history_casa_account(
             self,
@@ -645,7 +639,6 @@ class ServiceGW:
                 },
                 "staff_info_checker": {
                     "staff_name": current_user.username
-                    # "staff_name": current_user.username
                 },
                 "staff_info_maker": {
                     "staff_name": maker_staff_name
@@ -1261,34 +1254,10 @@ class ServiceGW:
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_CUS_REF_DATA_MGMT}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        return await self.call_api(
+            api_url=api_url, request_data=request_data, output_key='retrieveCustomerRefDataMgmt_out',
+            service_name='retrieveCustomerRefDataMgmt',
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
 
     async def get_co_owner(self, current_user: UserInfoResponse, account_number):
         data_input = {
@@ -1952,36 +1921,21 @@ class ServiceGW:
 
         return response_data
 
-    async def gw_payment_redeem_account(self, request_data):
-        api_url = f"{self.url}{GW_ENDPOINT_URL_REDEEM_ACCOUNT}"
+    async def gw_payment_redeem_account(self, current_user, data_input):
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_REDEEM_ACCOUNT_IN, data_input=data_input
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
+        print('request_data', request_data)
+        api_url = f"{self.url}{GW_ENDPOINT_URL_REDEEM_ACCOUNT}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_REDEEM_ACCOUNT_OUT,
+            service_name=GW_FUNC_REDEEM_ACCOUNT
         )
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW][Payment] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data
-                else:
-                    return_data = await response.json()
-                    return True, return_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data
+        print(response_data)
+        return response_data
 
     async def gw_pay_in_cash(self, current_user: UserInfoResponse, data_input):
 
@@ -2528,11 +2482,28 @@ class ServiceGW:
     # CardWorks
     ###################################################################################################################
     async def open_cards(self, current_user: UserInfoResponse,
-                         cif_number: str = None,
-                         card_info=None,
-                         customer_info=None,
-                         maker_staff_name: str = None
+                         cif_number: str,
+                         casa_account_number: str,
+                         card_info,
+                         customer_info,
+                         maker_staff_name: str,
+                         direct_staff: str,
+                         indirect_staff: str,
+                         casa_currency_number: str
                          ):
+
+        marital_status = mapping_marital_status_crm_to_core(customer_info.CustomerIndividualInfo.marital_status_id)
+        identity_code = mapping_identity_code_crm_to_core(customer_info.CustomerIdentity.identity_type_id)
+        resident_pr_stat = mapping_resident_pr_stat_crm_to_core(customer_info.CustomerIndividualInfo.resident_status_id)
+
+        # Ràng buộc nhập số điện thoại để mở thẻ
+        if not customer_info.Customer.mobile_number:
+            return ReposReturn(
+                is_error=True,
+                msg=ERROR_OPEN_CIF,
+                loc="open_cif -> repos_push_debit_to_gw_open_cards_mobile_number",
+                detail="Customer mobile_number cannot null"
+            )
 
         data_input = {
             "sequenceNo": datetime_to_string(now(), _format="%Y%m%d%H%M%S%f")[:-4],
@@ -2542,7 +2513,7 @@ class ServiceGW:
                 "cif_num": cif_number
             },
             "account_info": {
-                "account_type": "2"
+                "account_type": card_info["account_type"]
             },
             "card_info": {
                 "card_indicator": card_info["card_indicator"],
@@ -2559,8 +2530,8 @@ class ServiceGW:
             },
             "prinCrdNo": GW_DEFAULT_VALUE,
             "customer_info": {
-                "birthday": datetime_to_string(customer_info.CustomerIndividualInfo.date_of_birth, _format="%Y%m%d"),
-                "title": customer_info.CustomerIndividualInfo.title_id,
+                "birthday": datetime_to_string(customer_info.CustomerIndividualInfo.date_of_birth, _format="%Y-%m-%d"),
+                "title": card_info["title"],
                 "full_name_vn": customer_info.Customer.full_name_vn,
                 "last_name": customer_info.Customer.last_name,
                 "first_name": customer_info.Customer.first_name,
@@ -2568,32 +2539,33 @@ class ServiceGW:
                 "current_official": GW_DEFAULT_VALUE,
                 "embPhoto": GW_DEFAULT_VALUE,
                 "gender": customer_info.CustomerIndividualInfo.gender_id,
-                "nationality": customer_info.CustomerIndividualInfo.nation_id,
-                "martial_status": customer_info.CustomerIndividualInfo.marital_status_id,
-                "resident_status": customer_info.CustomerIndividualInfo.resident_status_id,
-                "mthToStay": GW_DEFAULT_VALUE,
-                "prStat": GW_DEFAULT_VALUE,
-                "vsExpDate": GW_DEFAULT_VALUE,
-                "education": GW_DEFAULT_VALUE,
-                "customer_type": GW_DEFAULT_VALUE
+                # @TODO: hard nationality, resident_status, customer_type
+                "nationality": GW_DEFAULT_CUSTOMER_NATIONALITY,
+                "martial_status": marital_status,
+                "resident_status": GW_DEFAULT_CUSTOMER_RESIDENT_STATUS,
+                "mthToStay": GW_DEFAULT_ZERO,
+                "prStat": resident_pr_stat,
+                "vsExpDate": GW_DEFAULT_VISA_EXPIRE_DATE,
+                "education": GW_DEFAULT_CUSTOMER_EDUCATION,
+                "customer_type": card_info["card_customer_type"]
             },
             "id_info": {
-                "id_name": customer_info.CustomerIdentity.identity_type_id,
+                "id_name": identity_code,
                 "id_num": customer_info.CustomerIdentity.identity_num,
                 "id_num_by_cif": GW_DEFAULT_VALUE,
                 "id_issued_location": customer_info.CustomerIdentity.place_of_issue_id,
-                "id_issued_date": datetime_to_string(customer_info.CustomerIdentity.issued_date, _format="%Y%m%d"),
+                "id_issued_date": datetime_to_string(customer_info.CustomerIdentity.issued_date, _format="%Y-%m-%d"),
             },
-            "srcCde": "DM412",
-            "promoCde": "P404",
+            "srcCde": card_info["srcCde"],
+            "promoCde": card_info["promoCde"],
             "branch_issued": {
                 "branhch_code": current_user.hrm_branch_code
             },
             "direct_staff": {
-                "staff_code": "19461"
+                "staff_code": direct_staff
             },
             "indirect_staff": {
-                "staff_code": "12345"
+                "staff_code": indirect_staff
             },
             "imgId": GW_DEFAULT_VALUE,
             "contract_info": {
@@ -2603,33 +2575,34 @@ class ServiceGW:
                 "address_info": {
                     "line": customer_info.CustomerAddress.address,
                     "ward_name": customer_info.AddressWard.name,
-                    "contact_address_line": customer_info.AddressDistrict.name,
-                    "city_code": customer_info.AddressProvince.name,
+                    "contact_address_line": GW_DEFAULT_VALUE,
+                    "city_code": customer_info.AddressProvince.id,
+                    "district_name": customer_info.AddressDistrict.name,
+                    "city_name": customer_info.CustomerAddress.address,
+                    "country_name": customer_info.AddressCountry.id,
+                    "telephone1": customer_info.Customer.telephone_number
+                },
+                # @TODO: resident_type tạm hard Local
+                "customer_info": {
+                    "resident_type": GW_DEFAULT_CUSTOMER_RESIDENT_TYPE,
+                    "resident_since": GW_DEFAULT_RESIDENT_SINCE
+                }
+            },
+            # @TODO: hard code địa chỉ nhận sao kê là địa chỉ KH luôn
+            "correspondence_info": {
+                "address_info": {
+                    "line": customer_info.CustomerAddress.address,
+                    "ward_name": customer_info.AddressWard.name,
+                    "contact_address_line": GW_DEFAULT_VALUE,
+                    "city_code": customer_info.AddressProvince.id,
                     "district_name": customer_info.AddressDistrict.name,
                     "city_name": customer_info.CustomerAddress.address,
                     "country_name": customer_info.AddressCountry.id,
                     "telephone1": customer_info.Customer.telephone_number,
+                    "mobile_phone": customer_info.Customer.mobile_number
                 },
-                "customer_info": {
-                    "resident_type": "O",
-                    "resident_since": "000000"
-                }
-            },
-            # @TODO: hard code đồng sở hữu
-            "correspondence_info": {
-                "address_info": {
-                    "line": "927 TRAN HUNG DAO",
-                    "ward_name": "PHUONG 1",
-                    "contact_address_line": GW_DEFAULT_VALUE,
-                    "city_code": "70",
-                    "district_name": "QUAN 5",
-                    "city_name": "TP HCM",
-                    "country_name": "VN",
-                    "telephone1": "02815698630",
-                    "mobile_phone": "0909555800"
-                },
-                "smsInd": GW_YES_AGREEMENT_FLAG,
-                "email": "quanlt@scb.com.vn"
+                "smsInd": GW_DEFAULT_NO,
+                "email": GW_DEFAULT_EMAIL
             },
             "office_info": {
                 "customer_info": {
@@ -2637,7 +2610,7 @@ class ServiceGW:
                     "employee_nature": GW_DEFAULT_VALUE,
                     "cor_capital": GW_DEFAULT_VALUE,
                     "biz_position": GW_DEFAULT_VALUE,
-                    "employee_since": "000000",
+                    "employee_since": GW_DEFAULT_EMPLOYEE_SINCE,
                     "office_name": GW_DEFAULT_VALUE
                 },
                 "address_info": {
@@ -2658,8 +2631,8 @@ class ServiceGW:
             "previous_employer_info": {
                 "customer_info": {
                     "office_name": GW_DEFAULT_VALUE,
-                    "employee_since": "000000",
-                    "employee_duration": "0"
+                    "employee_since": GW_DEFAULT_EMPLOYEE_SINCE,
+                    "employee_duration": GW_DEFAULT_EMPLOYEE_DURATION
                 },
                 "address_info": {
                     "line": GW_DEFAULT_VALUE,
@@ -2674,10 +2647,10 @@ class ServiceGW:
                 }
             },
             "personal_details": {
-                "ownHouseLand": GW_NO_AGREEMENT_FLAG,
-                "ownCar": GW_NO_AGREEMENT_FLAG,
-                "noOfDepen": "0",
-                "avgSpendMth": "0",
+                "ownHouseLand": GW_DEFAULT_NO,
+                "ownCar": GW_DEFAULT_NO,
+                "noOfDepen": GW_DEFAULT_ZERO,
+                "avgSpendMth": GW_DEFAULT_ZERO,
                 "bankPrd": GW_DEFAULT_VALUE,
                 "bankOthrPrd": GW_DEFAULT_VALUE,
                 "othrCCBankName": GW_DEFAULT_VALUE,
@@ -2685,16 +2658,17 @@ class ServiceGW:
                 "othrLoanBankName": GW_DEFAULT_VALUE,
                 "othrLoanInstallMth": GW_DEFAULT_VALUE,
                 "delivByBrchInd": card_info["delivByBrchInd"],
-                "delivOpt": "O"
+                "delivOpt": GW_DEFAULT_delivOpt
             },
             "delivery_info": {
                 "address_info": {
-                    "line": card_info["address_info_line"],
-                    "ward_name": card_info["address_info_ward_name"],
+                    "line": card_info["address_info_line"] if card_info["address_info_line"] else "",
+                    "ward_name": card_info["address_info_ward_name"] if card_info["address_info_ward_name"] else "",
                     "contact_address_line": GW_DEFAULT_VALUE,
                     "city_code": GW_DEFAULT_VALUE,
-                    "district_name": card_info["address_info_district_name"],
-                    "city_name": card_info["address_info_city_name"],
+                    "district_name": card_info["address_info_district_name"] if card_info[
+                        "address_info_district_name"] else "",
+                    "city_name": card_info["address_info_city_name"] if card_info["address_info_city_name"] else "",
                     "country_name": GW_DEFAULT_VALUE
                 },
                 "delivBrchId": card_info["delivBrchId"]
@@ -2716,33 +2690,33 @@ class ServiceGW:
                     "phone_ext1": GW_DEFAULT_VALUE
                 },
                 "spcEmpPosi": GW_DEFAULT_VALUE,
-                "spcEmpSince": "000000",
-                "spcEmpWorkNat": "S"
+                "spcEmpSince": GW_DEFAULT_EMPLOYEE_SINCE,
+                "spcEmpWorkNat": GW_DEFAULT_spcEmpWorkNat
             },
             "emergency_info": {
-                "emerContcPrsn": "NGUYEN VAN A",
-                "emerGender": "M",
-                "emerPhoneNo": "0908555999",
-                "emerMobileNo": "0909555866",
-                "emerRelt": "O"
+                "emerContcPrsn": customer_info.Customer.full_name_vn,
+                "emerGender": customer_info.CustomerIndividualInfo.gender_id,
+                "emerPhoneNo": customer_info.Customer.telephone_number,
+                "emerMobileNo": customer_info.Customer.mobile_number,
+                "emerRelt": GW_DEFAULT_emerRelt
             },
             "card_addon_data": {
-                "payMeth": "0",
-                "payCASA": "0",
-                "payAmt": "0",
-                "casaAcctNo": "1370106438990001",
-                "casaAcctTyp": "20",
-                "casaCurCde": "704",
+                "payMeth": GW_DEFAULT_ZERO,
+                "payCASA": GW_DEFAULT_ZERO,
+                "payAmt": GW_DEFAULT_ZERO,
+                "casaAcctNo": casa_account_number,
+                "casaAcctTyp": GW_DEFAULT_casaAcctTyp,
+                "casaCurCde": casa_currency_number,
                 "recomCrdNo": GW_DEFAULT_VALUE,
                 "recomName": GW_DEFAULT_VALUE,
                 "remark": GW_DEFAULT_VALUE,
-                "apprvDeviation": "NOTE",
+                "apprvDeviation": GW_DEFAULT_apprvDeviation,
                 "addData1": GW_DEFAULT_VALUE,
                 "addData2": GW_DEFAULT_VALUE,
-                "smsInfo": "0",
+                "smsInfo": GW_DEFAULT_smsInfo,
                 "narrative": "CRM WS",
                 "attachment": GW_DEFAULT_VALUE,
-                "decsnStat": "AM"
+                "decsnStat": GW_DEFAULT_decsnStat
             },
             "checker_info": {
                 "staff_code": current_user.username
@@ -2758,13 +2732,13 @@ class ServiceGW:
             data_input=data_input
         )
 
-        api_url = f"{self.url}{GW_ENDPOINT_URL_OPEN_CARDS}"
         response_data = await self.call_api(
             request_data=request_data,
-            api_url=api_url,
+            api_url=f"{self.url}{GW_ENDPOINT_URL_OPEN_CARDS}",
             output_key=GW_FUNC_OPEN_CARDS_OUT,
             service_name=GW_FUNC_OPEN_CARDS
         )
+
         return response_data
 
     async def select_card_info(self, current_user: UserInfoResponse,
@@ -2783,6 +2757,43 @@ class ServiceGW:
             api_url=api_url,
             output_key=GW_FUNC_SELECT_CARD_INFO_OUT,
             service_name=GW_FUNC_SELECT_CARD_INFO
+        )
+        return response_data
+
+    ###################################################################################################################
+    #  Fee Info
+    ###################################################################################################################
+    async def select_fee_by_product_name(
+            self, current_user: UserInfoResponse,
+            product_name: str,
+            trans_amount: int,
+            account_num: str,
+    ):
+
+        request_data = self.gw_create_request_body(
+            current_user=current_user, function_name=GW_FUNC_SELECT_FEE_INFO_IN,
+            data_input={
+                "trans_branch": {
+                    "branch_code": current_user.hrm_branch_code
+                },
+                "product_name": product_name,
+                "ccy": "VND",  # TODO
+                "trans_amount": trans_amount,
+                "account_info": {
+                    "account_num": account_num
+                },
+                "open_acc_branch": {
+                    "branch_code": "020"  # TODO
+                }
+            }
+        )
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_FEE_BY_PRODUCT_NAME}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_SELECT_FEE_INFO_OUT,
+            service_name=GW_FUNC_SELECT_FEE_INFO
         )
         return response_data
 

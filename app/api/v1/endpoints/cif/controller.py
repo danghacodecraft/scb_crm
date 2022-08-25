@@ -1,9 +1,10 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.approval.repository import repos_get_approval_process
 from app.api.v1.endpoints.cif.repository import (
-    repos_customer_information, repos_get_cif_id_by_cif_number,
-    repos_get_cif_info, repos_get_customer_working_infos,
-    repos_profile_history, repos_validate_cif_number
+    repos_clone_cif, repos_customer_information,
+    repos_get_cif_id_by_cif_number, repos_get_cif_info,
+    repos_get_customer_working_infos, repos_profile_history,
+    repos_validate_cif_number
 )
 from app.api.v1.endpoints.cif.schema import CustomerByCIFNumberRequest
 from app.api.v1.endpoints.repository import (
@@ -140,69 +141,6 @@ class CtrCustomer(BaseController):
                     )
                 ))
                 list_distinct_user_code.append(transaction_sender.user_id)
-
-        # list_employee = []
-        # for employee in employees:
-        #     employee = orjson_loads(employee)
-        #     list_employee.extend(employee)
-        #
-        # list_distinct_user_id = []
-        # for employee in list_employee:
-        #     user_id = employee['user_id']
-        #     if user_id in list_distinct_user_id:
-        #         continue
-        #
-        #     list_distinct_user_id.append(user_id)
-        #     user_fullname = employee['user_name']
-        #     user_name = employee['user_username']
-        #     user_email = employee['user_email']
-        #     user_avatar = employee['user_avatar']
-        #     position_id = employee['position_id']
-        #     position_code = employee['position_code']
-        #     position_name = employee['position_name']
-        #     department_id = employee['department_id']
-        #     department_code = employee['department_code']
-        #     department_name = employee['department_name']
-        #     branch_id = employee['branch_id']
-        #     branch_code = employee['branch_code']
-        #     branch_name = employee['branch_name']
-        #     title_id = employee['title_id']
-        #     title_code = employee['title_code']
-        #     title_name = employee['title_name']
-        #
-        #     hrm_user_data = self.call_repos(await repo_contact(
-        #         code=employee['user_id'],
-        #         session=self.oracle_session_task
-        #     ))
-        #
-        #     list_distinct_employee.append(dict(
-        #         id=user_id,
-        #         full_name_vn=user_fullname,
-        #         avatar_url=hrm_user_data[-1],  # TODO: Tạm thời lấy từ HRM - User Contact
-        #         user_name=user_name,
-        #         email=user_email,
-        #         avatar=user_avatar,
-        #         position=dict(
-        #             id=position_id,
-        #             code=position_code,
-        #             name=position_name
-        #         ),
-        #         department=dict(
-        #             id=department_id,
-        #             code=department_code,
-        #             name=department_name
-        #         ),
-        #         branch=dict(
-        #             id=branch_id,
-        #             code=branch_code,
-        #             name=branch_name
-        #         ),
-        #         title=dict(
-        #             id=title_id,
-        #             code=title_code,
-        #             name=title_name
-        #         )
-        #     ))
 
         # gọi đến service file để lấy link download
         uuid__link_downloads = await self.get_link_download_multi_file(uuids=[first_row.Customer.avatar_url])
@@ -491,3 +429,16 @@ class CtrCustomer(BaseController):
                 )
 
         return self.response(data=response_data)
+
+    async def ctr_clone_cif(self, cif_id: str):
+        new_cif_id, booking_customer_id = self.call_repos(
+            await repos_clone_cif(
+                cif_id=cif_id,
+                session=self.oracle_session
+            )
+        )
+
+        return self.response(data={
+            "new_cif_id": new_cif_id,
+            "booking_customer_id": booking_customer_id
+        })

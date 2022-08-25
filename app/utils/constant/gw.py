@@ -50,7 +50,7 @@ GW_ENDPOINT_URL_PAYMENT_AMOUNT_UNBLOCK = "/payment/v1.0/rest/amountUnBlock"
 GW_ENDPOINT_URL_PAY_IN_CASH = "/payment/v1.0/rest/payInCash"
 GW_ENDPOINT_URL_PAY_IN_CASH_247_BY_ACCOUNT_NUMBER = "/payment/v1.0/rest/payInCash247byAccNum"
 GW_ENDPOINT_URL_PAY_IN_CASH_247_BY_CARD_NUMBER = "/payment/v1.0/rest/payInCash247byCardNum"
-GW_ENDPOINT_URL_REDEEM_ACCOUNT = "/payment/v1.0/rest/redeemAccount"
+GW_ENDPOINT_URL_REDEEM_ACCOUNT = "/depositaccount/v1.0/rest/redeemAccount"
 GW_ENDPOINT_URL_INTERNAL_TRANSFER = "/payment/v1.0/rest/internalTransfer"
 GW_ENDPOINT_URL_TT_LIQUIDATION = "/payment/v1.0/rest/ttLiquidation"
 GW_ENDPOINT_URL_TELE_TRANSFER = "/payment/v1.0/rest/teleTransfer"
@@ -58,6 +58,8 @@ GW_ENDPOINT_URL_INTERBANK_TRANSFER = "/payment/v1.0/rest/interbankTransfer"
 GW_ENDPOINT_URL_INTERBANK_TRANSFER_247_BY_ACCOUNT_NUMBER = "/payment/v1.0/rest/interbankTransfer247ByAccNum"
 GW_ENDPOINT_URL_INTERBANK_TRANSFER_247_BY_CARD_NUMBER = "/payment/v1.0/rest/interbankTransfer247ByCardNum"
 GW_ENDPOINT_URL_WITHDRAW = "/payment/v1.0/rest/cashWithdrawals"
+GW_OPEN_CIF_CHILD_AGE = 15
+GW_OPEN_CO_OWNER_CIF_INFO = "0717824"
 # ---------------------------------------------- USER ---------------------------------------------- #
 GW_ENDPOINT_URL_SELECT_USER_INFO = "/users/v1.0/rest/selectUserInfoByUserID"
 
@@ -97,6 +99,9 @@ GW_ENDPOINT_URL_SEND_EMAIL = "/email/v1.0/rest/sendEmail"
 # ---------------------------------------------- CardWorks ---------------------------------------------- #
 GW_ENDPOINT_URL_OPEN_CARDS = "/cardworks/v1.0/rest/openCards"
 GW_ENDPOINT_URL_SELECT_CARD_INFO = "/cardworks/v1.0/rest/selectCardInfo"
+
+# -----------------------------------------------FeeInfo--------------------------------------------------- #
+GW_ENDPOINT_URL_SELECT_FEE_BY_PRODUCT_NAME = "/fee/v1.0/rest/selectFeeByProductName"
 
 ########################################################################################################################
 #                                         GW FUNCTION NAME
@@ -155,6 +160,10 @@ GW_FUNC_AMOUNT_UNBLOCK_IN = "amountUnBlock_in"
 GW_FUNC_AMOUNT_UNBLOCK_OUT = "amountUnBlock_out"
 GW_FUNC_AMOUNT_UNBLOCK = "amountUnBlock"
 
+
+GW_FUNC_REDEEM_ACCOUNT_IN = "redeemAccount_in"
+GW_FUNC_REDEEM_ACCOUNT_OUT = "redeemAccount_out"
+GW_FUNC_REDEEM_ACCOUNT = "redeemAccount"
 
 GW_FUNC_PAY_IN_CARD_IN = "payInCash_in"
 GW_FUNC_PAY_IN_CARD_OUT = "payInCash_out"
@@ -293,6 +302,11 @@ GW_FUNC_SELECT_CARD_INFO_IN = "selectCardInfo_in"
 GW_FUNC_SELECT_CARD_INFO_OUT = "selectCardInfo_out"
 GW_FUNC_SELECT_CARD_INFO = "selectCardInfo"
 
+# selectFeeInfoByProductName
+GW_FUNC_SELECT_FEE_INFO_IN = 'selectFeeByProductName_in'
+GW_FUNC_SELECT_FEE_INFO_OUT = 'selectFeeByProductName_out'
+GW_FUNC_SELECT_FEE_INFO = 'selectFeeByProductName'
+
 ########################################################################################################################
 #                                         END GW FUNCTION NAME
 ########################################################################################################################
@@ -355,6 +369,9 @@ GW_CMND_TYPE_ID = "C"
 
 GW_AUTO = "N"
 GW_SELECT = "Y"
+
+GW_DEFAULT_YES = "Y"
+GW_DEFAULT_NO = "N"
 
 GW_HISTORY_ACCOUNT_NUM = "00576400195"
 GW_HISTORY_CHANGE_FIELD_ACCOUNT = "TD"
@@ -443,3 +460,13 @@ GW_DASHBOARD_INPUT_PARAMS = {
     GW_DASHBOARD_COUNT_MORTGAGE_LOAN: 'Số lượng vay cầm cố',
     GW_DASHBOARD_TOTAL_TRN_REF_NO: 'Tổng số bút toán'
 }
+
+GW_FEE_TOP_UP_0202 = '0201'  # Nộp tiền mặt trong SCB - Nhận bằng TKTT
+GW_FEE_TOP_UP_0301 = '0301'  # Nộp tiền mặt trong SCB - Nhận bằng GTĐD
+GW_FEE_TOP_UP_0302 = '0302'  # Nộp tiền mặt ngoài SCB - Nhận bằng TKTT / GTĐD
+GW_FEE_TOP_UP_0310 = '0310'  # Nộp tiền mặt chuyển tiền nhanh 24/7 - Nhận bằng TKTT / Nhận bằng số thẻ
+
+GW_FEE_TRANSFER_0303 = '0303'  # Chuyển khoản trong SCB - Nhận bằng TKTT
+GW_FEE_TRANSFER_0304 = '0304'  # Chuyển khoản trong SCB - Nhận bằng GTĐD
+GW_FEE_TRANSFER_0305 = '0305'  # Chuyển khoản ngoài SCB - Nhận bằng TKTT / GTĐD
+GW_FEE_TRANSFER_0310 = '0310'  # Chuyển khoản nhanh 24/7 - Nhận bằng TKTT / Nhận bằng số thẻ

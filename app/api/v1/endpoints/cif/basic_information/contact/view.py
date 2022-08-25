@@ -46,7 +46,7 @@ async def view_detail(
 )
 async def view_save(
         cif_id: str = Path(..., description='Id CIF ảo'),
-        contact_information_save_request: ContactInformationSaveRequest = Body(...),  # TODO: Thêm example
+        contact_information_save_request: ContactInformationSaveRequest = Body(...),
         current_user=Depends(get_current_user_from_header())
 ):
     ctr_contact_information = CtrContactInformation(current_user)

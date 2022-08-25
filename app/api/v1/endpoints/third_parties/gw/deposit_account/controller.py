@@ -372,10 +372,10 @@ class CtrGWDepositAccount(BaseController):
                     },
                     # TODO hard
                     "staff_info_checker": {
-                        "staff_name": "DIEMNTK"
+                        "staff_name": current_user.user_info.username
                     },
                     "staff_info_maker": {
-                        "staff_name": "DIEPTTN1"
+                        "staff_name": teller.user_name
                     },
                     "udf_info": {
                         # TODO hard core

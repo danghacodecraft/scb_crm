@@ -13,6 +13,9 @@ from app.api.v1.endpoints.dashboard.repository import (
 from app.api.v1.endpoints.third_parties.gw.category.controller import (
     CtrSelectCategory
 )
+from app.api.v1.endpoints.third_parties.gw.customer.controller import (
+    CtrGWCustomer
+)
 from app.api.v1.endpoints.third_parties.gw.statistics.controller import (
     CtrGWStatistic
 )
@@ -29,6 +32,7 @@ from app.utils.constant.casa import (
     CASA_TRANSFER_NUMBER_TYPE_IDENTITY_NUMBER
 )
 from app.utils.constant.cif import (
+    BUSINESS_FORM_AMOUNT_BLOCK, BUSINESS_FORM_AMOUNT_UNBLOCK,
     CIF_STAGE_ROLE_CODE_AUDIT, CIF_STAGE_ROLE_CODE_SUPERVISOR,
     CIF_STAGE_ROLE_CODE_TELLER, CIF_STAGE_ROLE_CODES
 )
@@ -137,25 +141,50 @@ class CtrDashboard(BaseController):
             mapping_datas[booking.id].update(
                 full_name_vn=customer.full_name_vn,
                 cif_id=customer.id,
-                cif_number=customer.cif_number
+                customer_cif_number=customer.cif_number
             )
 
         # lấy thông tin các giao dịch aoumut_block
-        amount_blocks = self.call_repos(
+        amount_blocks, business_form_amount_blocks = self.call_repos(
             await repos_get_amount_block_from_booking(
                 booking_ids=business_type_amount_block,
                 session=self.oracle_session
             )
         )
-        for booking, _, casa_account, customer in amount_blocks:
-            mapping_datas[booking.id].update(
+        for booking_id, _, casa_account, customer in amount_blocks:
+            mapping_datas[booking_id].update(
                 full_name_vn=customer.full_name_vn,
                 cif_id=customer.id,
-                cif_number=customer.cif_number
+                customer_cif_number=customer.cif_number
             )
 
+        for booking_id, booking_business_form in business_form_amount_blocks:
+            form_data = orjson_loads(booking_business_form.form_data)
+            if booking_business_form.business_form_id == BUSINESS_FORM_AMOUNT_BLOCK and \
+                    'fee_payment_info' in form_data:  # TODO hard code do business_form cũ
+                mapping_datas[booking_id].update(
+                    customer_cif_number=form_data['fee_payment_info']['sender_info']['cif_number']
+                    if 'sender_info' in form_data['fee_payment_info']
+                    and 'cif_number' in form_data['fee_payment_info']['sender_info'] else None,
+                    full_name_vn=form_data['fee_payment_info']['sender_info']['fullname_vn']
+                    if 'sender_info' in form_data['fee_payment_info']
+                    and 'fullname_vn' in form_data['fee_payment_info']['sender_info'] else None
+                )
+
+            if booking_business_form.business_form_id == BUSINESS_FORM_AMOUNT_UNBLOCK \
+                    and isinstance(form_data, list) and 'transaction_fee_info' in form_data[0]:  # TODO
+                form_data = form_data[0]
+                mapping_datas[booking_id].update(
+                    customer_cif_number=form_data['transaction_fee_info']['sender_info']['cif_number']
+                    if 'sender_info' in form_data['transaction_fee_info']
+                    and 'cif_number' in form_data['transaction_fee_info']['sender_info'] else None,
+                    full_name_vn=form_data['transaction_fee_info']['sender_info']['fullname_vn']
+                    if 'sender_info' in form_data['transaction_fee_info']
+                    and 'fullname_vn' in form_data['transaction_fee_info']['sender_info'] else None
+                )
+
         # Lấy thông tin các giao dịch Mở TKTT\
-        open_casa_infos = self.call_repos(
+        open_casa_infos, booking_business_form_open_casa_infos = self.call_repos(
             await repos_get_open_casa_info_from_booking(booking_ids=business_type_open_casas,
                                                         session=self.oracle_session))
         exist_booking = {}
@@ -175,11 +204,22 @@ class CtrDashboard(BaseController):
             mapping_datas[booking.parent_id].update(
                 full_name_vn=customer.full_name_vn,
                 cif_id=customer.id,
-                cif_number=customer.cif_number
+                customer_cif_number=customer.cif_number
             )
             mapping_datas[booking.parent_id]['business_type'].update(
                 numbers=account_numbers
             )
+
+        for booking_id, booking_business_form in booking_business_form_open_casa_infos:
+            form_data = orjson_loads(booking_business_form.form_data)
+            if 'cif_number' in form_data:
+                gw_customer_detail = CtrGWCustomer(current_user=self.current_user).ctr_gw_get_customer_info_detail(
+                    return_raw_data_flag=True, cif_number=form_data['cif_number'])
+                full_name_vn = gw_customer_detail['full_name']
+                mapping_datas[booking_id].update({
+                    "full_name_vn": full_name_vn,
+                    "customer_cif_number": form_data['cif_number']
+                })
 
         # Lấy thông tin các giao dịch Mở CIF
         open_cif_infos = self.call_repos(
@@ -191,7 +231,7 @@ class CtrDashboard(BaseController):
                 mapping_datas[booking.id].update(
                     full_name_vn=customer.full_name_vn,
                     cif_id=customer.id,
-                    cif_number=customer.cif_number
+                    customer_cif_number=customer.cif_number
                 )
                 mapping_datas[booking.id]['business_type'].update(
                     numbers=[dict(
@@ -225,7 +265,7 @@ class CtrDashboard(BaseController):
                     mapping_datas[booking.id].update(
                         full_name_vn=cif_info.full_name_vn,
                         cif_id=cif_info.id,
-                        cif_number=cif_number,
+                        customer_cif_number=cif_number,
                     )
                     mapping_datas[booking.id]['business_type'].update(
                         numbers=[dict(
@@ -328,6 +368,7 @@ class CtrDashboard(BaseController):
                         sender_cif_number_key = 'sender_cif_number'
                         sender_full_name_key = 'sender_full_name_vn'
                         customer_cif_number_key = 'customer_cif_number'
+                        customer_cif_full_name_vn_key = 'customer_cif_full_name_vn'
 
                         mapping_datas[booking_id].update(
                             sender_cif_number=form_data[sender_cif_number_key] if sender_cif_number_key in form_data else None,
@@ -337,6 +378,7 @@ class CtrDashboard(BaseController):
                             newest_booking_business_form = booking_business_form.created_at
                             mapping_datas[booking_id].update(
                                 customer_cif_number=form_data[customer_cif_number_key] if customer_cif_number_key in form_data else None,
+                                full_name_vn=form_data[customer_cif_full_name_vn_key] if customer_cif_full_name_vn_key in form_data else None,
                             )
 
                         numbers = []
@@ -361,28 +403,30 @@ class CtrDashboard(BaseController):
                     if booking_business_form and booking.business_type_id == BUSINESS_TYPE_CASA_TRANSFER \
                             and booking_business_form.form_data:
                         form_data = orjson_loads(booking_business_form.form_data)
-
-                        sender_cif_number_key = 'sender_cif_number'
-                        sender_full_name_key = 'sender_full_name_vn'
-                        mapping_datas[booking_id].update(
-                            cif_number=form_data[sender_cif_number_key]
-                            if sender_cif_number_key in form_data else None,
-                            full_name_vn=form_data[sender_full_name_key]
-                            if sender_full_name_key in form_data else None
-                        )
+                        sender_key = 'sender'
+                        receiver_key = 'receiver'
+                        sender_cif_number_key = 'cif_number'
+                        sender_full_name_key = 'fullname_vn'
+                        if sender_key in form_data:
+                            mapping_datas[booking_id].update(
+                                customer_cif_number=form_data[sender_key][sender_cif_number_key]
+                                if sender_cif_number_key in form_data[sender_key] else None,
+                                full_name_vn=form_data[sender_key][sender_full_name_key]
+                                if sender_full_name_key in form_data[sender_key] else None,
+                            )
                         numbers = []
-                        number_key_account_number = 'receiver_account_number'
-                        if number_key_account_number in form_data:
+                        number_key_account_number = 'account_number'
+                        if receiver_key in form_data and number_key_account_number in form_data[receiver_key]:
                             numbers.append(dict(
-                                number=form_data[number_key_account_number],
+                                number=form_data[receiver_key][number_key_account_number],
                                 number_type=CASA_TRANSFER_NUMBER_TYPE_CASA_ACCOUNT_NUMBER,
                                 approval_status=1  # TODO: trạng thái phê duyệt cho từng number
                             ))
 
-                        number_key_identity_number = 'receiver_identity_number'
-                        if number_key_identity_number in form_data:
+                        number_key_identity_number = 'identity_number'
+                        if receiver_key in form_data and number_key_identity_number in form_data[receiver_key]:
                             numbers.append(dict(
-                                number=form_data[number_key_identity_number],
+                                number=form_data[receiver_key][number_key_identity_number],
                                 number_type=CASA_TRANSFER_NUMBER_TYPE_IDENTITY_NUMBER,
                                 approval_status=1  # TODO: trạng thái phê duyệt cho từng number
                             ))

@@ -51,6 +51,8 @@ class DebitCard(Base):
                               comment='Mã thương hiệu thẻ (Visa, master)')
     card_issuance_fee_id = Column(ForeignKey('crm_card_issuance_fee.card_issuance_fee_id'),
                                   comment='Mã Phí phát hành thẻ')
+    card_annual_fee_id = Column(ForeignKey('crm_card_annual_fee.card_annual_fee_id'),
+                                comment='Mã Phí thường niên')
     card_delivery_address_id = Column(ForeignKey('crm_card_delivery_address.card_delivery_address_id'),
                                       comment='Mã địa chỉ giao nhận thẻv(PK)')
     parent_card_id = Column(ForeignKey('crm_debit_card.card_id'), comment='Mã thẻ cấp cha')
@@ -75,6 +77,9 @@ class DebitCard(Base):
     parent_card = relationship('DebitCard', remote_side=[id])
     approval_status = Column('approval_status', NUMBER(1, 0, False), nullable=False, default=0,
                              comment='Trạng thái phê duyệt thẻ ghi nợ')
+    src_code = Column('card_src_code', VARCHAR(36), comment='Source Code loại thẻ')
+    pro_code = Column('card_pro_code', VARCHAR(36), comment='Promote Code loại thẻ')
+    card_group = Column('card_group', VARCHAR(36), comment='Loại thẻ')
 
 
 class DebitCardType(Base):

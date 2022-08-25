@@ -86,7 +86,6 @@ class CtrContactInformation(BaseController):
                         'number_and_street': row.CustomerAddress.address,
                         'resident_address_flag': row.CustomerAddress.address_same_permanent_flag
                     }
-                # TODO: kiểm tra lại cờ giống địa chỉ thường trú
                 elif row.CustomerAddress.address_domestic_flag == CUSTOMER_ADDRESS_DOMESTIC_FLAG:
                     resident_address['domestic_address'].update(
                         resident_address_flag=row.CustomerAddress.address_same_permanent_flag

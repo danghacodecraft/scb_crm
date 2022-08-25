@@ -24,7 +24,8 @@ def convert_to_unsigned_vietnamese(text: str) -> str:
     return output
 
 
-def split_name(full_name: str) -> Union[Tuple[str, str, str], Tuple[str, None, str], Tuple[None, None, None]]:
+def split_name(full_name: str) -> Union[Tuple[str, str, str], Tuple[str, None, str],
+                                        Tuple[str, None, None], Tuple[None, None, None]]:
     """
     Split full_name into first_name, middle_name, last_name
     """

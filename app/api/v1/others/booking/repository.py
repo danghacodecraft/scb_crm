@@ -7,6 +7,7 @@ from sqlalchemy.sql.functions import count
 
 from app.api.base.repository import ReposReturn
 from app.api.v1.endpoints.user.schema import UserInfoResponse
+from app.third_parties.oracle.models.booking.model import BookingAuthentication
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
 )
@@ -16,6 +17,7 @@ from app.third_parties.oracle.models.cif.form.model import (
 from app.third_parties.oracle.models.cif.payment_account.model import (
     CasaAccount
 )
+from app.third_parties.oracle.models.master_data.others import BusinessType
 from app.utils.constant.booking import BOOKING_UNCOMPLETED, BOOKING_UNLOCK
 from app.utils.constant.cif import (
     BUSINESS_FORM_TTCN_GTDD_GTDD, BUSINESS_TYPE_CODE_CIF
@@ -24,8 +26,8 @@ from app.utils.error_messages import (
     ERROR_BOOKING_CODE_EXISTED, ERROR_BOOKING_ID_NOT_EXIST, MESSAGE_STATUS
 )
 from app.utils.functions import (
-    date_to_datetime, datetime_to_string, end_time_of_day, generate_uuid, now,
-    today
+    create_fcc_booking_code, date_to_datetime, datetime_to_string,
+    end_time_of_day, generate_uuid, now, today
 )
 
 
@@ -80,6 +82,12 @@ async def repos_create_booking(
                 detail=MESSAGE_STATUS[ERROR_BOOKING_CODE_EXISTED]
             )
 
+    business_type_sequence = session.execute(
+        select(
+            BusinessType.sequence
+        ).filter(BusinessType.code == business_type_code)
+    ).scalar()
+
     insert_list = [
         Booking(
             id=booking_id,
@@ -89,7 +97,13 @@ async def repos_create_booking(
             branch_id=current_user_branch_code,
             created_at=now(),
             updated_at=now(),
-            created_by=current_user.username
+            created_by=current_user.username,
+            fcc_booking_code=create_fcc_booking_code(
+                business_type_sequence=int(business_type_sequence),
+                branch_code=current_user_branch_code,
+                created_at=now(),
+                booking_code=booking_code
+            )
         )
     ]
     if business_type_code == BUSINESS_TYPE_CODE_CIF:
@@ -296,3 +310,14 @@ async def repos_get_customer_from_booking_account_amount_block(booking_id: str, 
         .filter(Booking.id == booking_id)
     ).scalars().first()
     return ReposReturn(data=customer)
+
+
+async def repos_get_booking_authentications(booking_id: str, session: Session):
+    booking_authentications = session.execute(
+        select(
+            BookingAuthentication
+        )
+        .filter(BookingAuthentication.booking_id == booking_id)
+        .order_by(BookingAuthentication.image_type_id, BookingAuthentication.created_at.desc())
+    ).scalars().all()
+    return ReposReturn(data=booking_authentications)

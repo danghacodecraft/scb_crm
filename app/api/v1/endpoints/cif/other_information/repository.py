@@ -50,8 +50,8 @@ async def repos_other_info(cif_id: str, session: Session) -> ReposReturn:
 async def repos_update_other_info(
         cif_id: str, update_other_info_req: OtherInformationUpdateRequest,
         current_user: UserInfoResponse,
-        extra_phone_number: Optional[str],
-        customer_relationship: Optional[str],
+        extra_number: Optional[str],
+        cust_relationship_type_id: Optional[str],
         session: Session
 ) -> ReposReturn:
 
@@ -59,29 +59,27 @@ async def repos_update_other_info(
         update(Customer).filter(Customer.id == cif_id).values(
             legal_agreement_flag=update_other_info_req.legal_agreement_flag,
             advertising_marketing_flag=update_other_info_req.advertising_marketing_flag,
-            mobile_number=extra_phone_number,
-            customer_relationship_flag=customer_relationship
+            extra_number=extra_number,
+            cust_relationship_type_id=cust_relationship_type_id
         )
     )
 
     new_customer_employees = []
-    if update_other_info_req.sale_staff:
-        new_customer_employees.append(
-            {
-                "staff_type_id": STAFF_TYPE_BUSINESS_CODE,
-                "employee_id": update_other_info_req.sale_staff.id,
-                "customer_id": cif_id
-            }
-        )
+    new_customer_employees.append(
+        {
+            "staff_type_id": STAFF_TYPE_BUSINESS_CODE,
+            "employee_id": update_other_info_req.sale_staff.id,
+            "customer_id": cif_id
+        }
+    )
 
-    if update_other_info_req.indirect_sale_staff:
-        new_customer_employees.append(
-            {
-                "staff_type_id": STAFF_TYPE_REFER_INDIRECT_CODE,
-                "employee_id": update_other_info_req.indirect_sale_staff.id,
-                "customer_id": cif_id
-            }
-        )
+    new_customer_employees.append(
+        {
+            "staff_type_id": STAFF_TYPE_REFER_INDIRECT_CODE,
+            "employee_id": update_other_info_req.indirect_sale_staff.id,
+            "customer_id": cif_id
+        }
+    )
 
     # xóa dữ liệu cũ
     session.execute(

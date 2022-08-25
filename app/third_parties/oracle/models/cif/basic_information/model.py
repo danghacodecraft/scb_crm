@@ -8,7 +8,7 @@ from app.third_parties.oracle.models.master_data.address import (  # noqa
 )
 from app.third_parties.oracle.models.master_data.customer import (  # noqa
     CustomerCategory, CustomerClassification, CustomerEconomicProfession,
-    CustomerStatus, CustomerType
+    CustomerRelationshipType, CustomerStatus, CustomerType
 )
 from app.third_parties.oracle.models.master_data.others import (  # noqa
     Channel, KYCLevel
@@ -62,6 +62,10 @@ class Customer(Base):
 
     grade_name = Column(VARCHAR(100), comment='Xếp hạng tín dụng Khách hàng')
     non_resident_flag = Column(NUMBER(1, 0, False), comment='Đánh dấu cif vãng lai')
+    extra_number = Column(VARCHAR(10), comment='Số điện thoại phụ')
+    cust_relationship_type_id = Column(
+        ForeignKey('crm_cust_relationship_type.cust_relationship_type_id'),
+        comment='Mối quan hệ với số điện thoại thông tin khác')
 
     channel = relationship('Channel')
     customer_category = relationship('CustomerCategory')
@@ -71,3 +75,4 @@ class Customer(Base):
     customer_economic_profession = relationship('CustomerEconomicProfession')
     kyc_level = relationship('KYCLevel')
     nationality = relationship('AddressCountry')
+    extra_number_relationship_type = relationship('CustomerRelationshipType')

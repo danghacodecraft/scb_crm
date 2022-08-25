@@ -3,8 +3,14 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
-from app.api.v1.endpoints.repository import (
-    write_transaction_log_and_update_booking
+from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
+    repos_gw_get_casa_account_by_cif_number
+)
+from app.api.v1.endpoints.third_parties.gw.ebank.repository import (
+    repos_check_and_remove_exist_ebank
+)
+from app.api.v1.endpoints.third_parties.gw.ebank_sms.repository import (
+    repos_gw_get_select_mobile_number_sms_by_account_casa
 )
 from app.third_parties.oracle.models.cif.basic_information.model import (
     Customer
@@ -19,9 +25,9 @@ from app.third_parties.oracle.models.cif.payment_account.model import (
     CasaAccount
 )
 from app.third_parties.oracle.models.master_data.account import AccountType
-from app.utils.constant.cif import (
-    BUSINESS_FORM_EB, BUSINESS_FORM_SMS_CASA, CIF_ID_TEST,
-    EBANKING_ACCOUNT_TYPE_CHECKING
+from app.utils.constant.cif import CIF_ID_TEST, EBANKING_ACCOUNT_TYPE_CHECKING
+from app.utils.constant.gw import (
+    GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA_OUT
 )
 from app.utils.error_messages import (
     ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_CIF_ID_NOT_EXIST, ERROR_NO_DATA
@@ -33,19 +39,14 @@ from app.utils.functions import generate_uuid, now
 async def repos_save_e_banking(
         session: Session,
         data_insert: json,
-        log_data: json,
         cif_id: str,
-        created_by: str,
-        history_datas: json
 ) -> ReposReturn:
 
     # 1. Customer đã có E-banking -> xóa dữ liệu cũ
-    exist_ebank_info = session.execute(select(EBankingInfo).filter(EBankingInfo.customer_id == cif_id)).first()
-    if exist_ebank_info:
-        session.execute(delete(EBankingInfoAuthentication).filter(
-            EBankingInfoAuthentication.e_banking_info_id == exist_ebank_info.EBankingInfo.id))
-
-        session.delete(exist_ebank_info.EBankingInfo)
+    await repos_check_and_remove_exist_ebank(
+        cif_id=cif_id,
+        session=session
+    )
 
     # 2. Tạo dữ liệu mới
     ebank_info = data_insert['ebank_info']
@@ -71,30 +72,28 @@ async def repos_save_e_banking(
     ])
     session.flush()
 
-    is_success, booking_response = await write_transaction_log_and_update_booking(
-        log_data=log_data,
-        history_datas=history_datas,
-        session=session,
-        customer_id=cif_id,
-        business_form_id=BUSINESS_FORM_EB
-    )
-    if not is_success:
-        return ReposReturn(is_error=True, msg=booking_response['msg'])
+    return ReposReturn(data=None)
 
-    return ReposReturn(data={
-        "cif_id": cif_id,
-        "created_at": now(),
-        "created_by": created_by
-    })
+
+async def repos_check_casa_account_have_casa_account_number(cif_id, casa_id, session: Session):
+
+    account_number = session.execute(
+        select(
+            CasaAccount.id
+        ).filter(
+            CasaAccount.customer_id == cif_id,
+            CasaAccount.id == casa_id,
+            CasaAccount.casa_account_number.is_not(None)
+        )
+    ).scalars().first()
+
+    return ReposReturn(data=True if account_number else False)
 
 
 @auto_commit
 async def repos_save_sms_casa(
         cif_id: str,
         data_insert: dict,
-        log_data: json,
-        history_datas: json,
-        created_by: str,
         session: Session
 ):
     # mapping dữ liệu cho các bảng
@@ -119,7 +118,12 @@ async def repos_save_sms_casa(
             return ReposReturn(is_error=True, msg=ERROR_CASA_ACCOUNT_NOT_EXIST)
 
         # 00. Kiểm tra casa_id có đăng ký reg_balance trước chưa -> xóa dữ liệu cũ.
-        exist_registry_balance = session.execute(select(EBankingRegisterBalance).filter(EBankingRegisterBalance.account_id == account_number)).first()
+        exist_registry_balance = session.execute(
+            select(EBankingRegisterBalance).filter(
+                EBankingRegisterBalance.account_id == account_number,
+                EBankingRegisterBalance.approval_status == False  # noqa
+            )
+        ).first()
 
         if exist_registry_balance:
             # 002
@@ -199,28 +203,13 @@ async def repos_save_sms_casa(
         EBankingRegisterBalanceOption(**reg_balance_option_item) for reg_balance_option_item in reg_balance_option_item_list
     ])
 
-    is_success, booking_response = await write_transaction_log_and_update_booking(
-        log_data=log_data,
-        history_datas=history_datas,
-        session=session,
-        customer_id=cif_id,
-        business_form_id=BUSINESS_FORM_SMS_CASA
-    )
-
-    if not is_success:
-        return ReposReturn(is_error=True, msg=booking_response['msg'])
-
     session.commit()
 
-    return ReposReturn(data={
-        "cif_id": cif_id,
-        "created_at": now(),
-        "created_by": created_by
-    })
+    return ReposReturn(data=None)
 
 
 @auto_commit
-async def repos_check_and_remove_exist_sms_casa(cif_id: str, session: Session):
+async def repos_check_and_remove_exist_sms_casa(session: Session, cif_id: str):
     # Kiểm tra các tài khoản casa theo số cif
     casa_account_numbers = session.execute(
         select(
@@ -233,7 +222,11 @@ async def repos_check_and_remove_exist_sms_casa(cif_id: str, session: Session):
     for account_number in casa_account_numbers:
         # 00. Kiểm tra casa_id có đăng ký reg_balance trước chưa -> xóa dữ liệu cũ.
         exist_registry_balance = session.execute(
-            select(EBankingRegisterBalance).filter(EBankingRegisterBalance.account_id == account_number)).first()
+            select(EBankingRegisterBalance).filter(
+                EBankingRegisterBalance.account_id == account_number,
+                EBankingRegisterBalance.approval_status == False  # noqa
+            )
+        ).first()
 
         if exist_registry_balance:
             # 002
@@ -255,12 +248,55 @@ async def repos_check_and_remove_exist_sms_casa(cif_id: str, session: Session):
     return ReposReturn(data=None)
 
 
-async def repos_check_e_banking(cif_id: str, session: Session):
-    e_banking_info = session.execute(select(EBankingInfo).filter(EBankingInfo.customer_id == cif_id)).first()
-    return e_banking_info
+async def repos_get_casa_accounts_for_sms(cif_id: str, session: Session, current_user):
+
+    casa_account_items = session.execute(
+        select(
+            Customer.full_name_vn,
+            CasaAccount.id,
+            CasaAccount.casa_account_number,
+            CasaAccount.acc_type_id,
+        ).join(
+            CasaAccount, CasaAccount.customer_id == cif_id
+        )
+        .filter(
+            Customer.id == cif_id
+        )
+    ).all()
+
+    # NEW CASA ACCOUNT
+    new_casa_accounts = []
+    for new_casa_account_item in casa_account_items:
+        if not new_casa_account_item.casa_account_number:
+            new_casa_account = {
+                "casa_account_id": new_casa_account_item.id,
+                "customer_name": new_casa_account_item.full_name_vn,
+                "acc_type_name": new_casa_account_item.acc_type_id,
+            }
+            new_casa_accounts.append(new_casa_account)
+
+    # OLD CASA ACCOUNT
+    old_casa_accounts = []
+    for old_casa_account_item in casa_account_items:
+        if old_casa_account_item.casa_account_number:
+            result = await repos_gw_get_select_mobile_number_sms_by_account_casa(
+                ebank_sms_indentify_num=old_casa_account_item.casa_account_number, current_user=current_user)
+
+            ebank_sms_info_list = result.data.get(GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA_OUT).get('data_output').get('ebank_sms_info_list')
+            if ebank_sms_info_list:
+                old_casa_account = {
+                    "casa_account_id": old_casa_account_item.id,
+                    "casa_account_number": old_casa_account_item.casa_account_number,
+                    "customer_name": old_casa_account_item.full_name_vn,
+                    "acc_type_name": old_casa_account_item.acc_type_id,
+                }
+                old_casa_accounts.append(old_casa_account)
+
+    return ReposReturn(data=(new_casa_accounts, old_casa_accounts))
 
 
 async def repos_get_e_banking(cif_id: str, session: Session) -> ReposReturn:
+
     e_bank_info = session.execute(
         select(
             EBankingInfo.account_name,
@@ -270,7 +306,6 @@ async def repos_get_e_banking(cif_id: str, session: Session) -> ReposReturn:
             EBankingInfoAuthentication, EBankingInfoAuthentication.e_banking_info_id == EBankingInfo.id
         ).filter(
             EBankingInfo.customer_id == cif_id,
-            EBankingInfo.approval_status == False  # noqa
         )
     ).all()
 
@@ -291,16 +326,7 @@ async def repos_get_e_banking(cif_id: str, session: Session) -> ReposReturn:
     return ReposReturn(data=data)
 
 
-async def repos_get_sms_data(cif_id: str, session: Session) -> ReposReturn:
-    # 1. Lấy casa_id, reg_balance
-    casa_ids = session.execute(
-        select(
-            CasaAccount.id
-        ).filter(
-            CasaAccount.customer_id == cif_id
-        )
-    ).scalars().all()
-
+async def repos_get_reg_balance_data(casa_ids, session: Session):
     reg_balance_rows = session.execute(
         select(
             EBankingRegisterBalance.id.label('reg_balance_id'),
@@ -322,7 +348,6 @@ async def repos_get_sms_data(cif_id: str, session: Session) -> ReposReturn:
         ).filter(
             EBankingRegisterBalance.account_id.in_(casa_ids),
             EBankingRegisterBalance.e_banking_register_account_type == EBANKING_ACCOUNT_TYPE_CHECKING,
-            EBankingRegisterBalance.approval_status == False  # noqa
         )
     ).all()
 
@@ -337,9 +362,11 @@ async def repos_get_sms_data(cif_id: str, session: Session) -> ReposReturn:
                 "relationship_type_id": reg_balance_row.relationship_relationship_type_id
             }
             if reg_balance_row.reg_balance_id not in reg_balance_id__receiver_noti_relationship_items:
-                reg_balance_id__receiver_noti_relationship_items[reg_balance_row.reg_balance_id] = [receiver_noti_relationship_item]
+                reg_balance_id__receiver_noti_relationship_items[reg_balance_row.reg_balance_id] = [
+                    receiver_noti_relationship_item]
             elif receiver_noti_relationship_item not in reg_balance_id__receiver_noti_relationship_items[reg_balance_row.reg_balance_id]:
-                reg_balance_id__receiver_noti_relationship_items[reg_balance_row.reg_balance_id].append(receiver_noti_relationship_item)
+                reg_balance_id__receiver_noti_relationship_items[reg_balance_row.reg_balance_id].append(
+                    receiver_noti_relationship_item)
         # TH không có đủ thông tin MQH, không hiển thị MQH này, điền list rỗng
         else:
             reg_balance_id__receiver_noti_relationship_items[reg_balance_row.reg_balance_id] = []
@@ -371,12 +398,26 @@ async def repos_get_sms_data(cif_id: str, session: Session) -> ReposReturn:
                         "main_phone_number": reg_balance_row.mobile_number,
                         "customer_full_name": reg_balance_row.full_name
                     },
-                    "receiver_noti_relationship_items": reg_balance_id__receiver_noti_relationship_items.get(reg_balance_row.reg_balance_id),
+                    "receiver_noti_relationship_items": reg_balance_id__receiver_noti_relationship_items.get(
+                        reg_balance_row.reg_balance_id),
                     "notify_code_list": reg_balance_id__notify_code_list.get(reg_balance_row.reg_balance_id)
                 }
 
         if reg_balance_item:
             registry_balance_items.append(reg_balance_item)
+
+    return ReposReturn(data=registry_balance_items)
+
+
+async def repos_get_sms_data(cif_id: str, session: Session) -> ReposReturn:
+    # 1. Lấy casa_id
+    casa_ids = session.execute(
+        select(
+            CasaAccount.id
+        ).filter(
+            CasaAccount.customer_id == cif_id
+        )
+    ).scalars().all()
 
     # 2. OTT-SMS
     sms_casa_reg_balance_options = session.execute(
@@ -388,12 +429,112 @@ async def repos_get_sms_data(cif_id: str, session: Session) -> ReposReturn:
         )
     ).scalars().all()
 
+    # 3. get registry_balance_items
+    registry_balance_items = await repos_get_reg_balance_data(casa_ids, session)
+
     response_data = {
         "reg_balance_options": sms_casa_reg_balance_options,
-        "registry_balance_items": registry_balance_items
-    } if registry_balance_items else None  # Nếu không có đăng ký sms, trả None
+        "registry_balance_items": registry_balance_items.data
+    } if registry_balance_items.data else None  # Nếu không có đăng ký sms, trả None
 
     return ReposReturn(data=response_data)
+
+
+async def repos_get_sms_data_open_casa(cif_id: str, current_user, cif_number, session: Session) -> ReposReturn:
+
+    old_casa_account_for_selects = []
+    new_casa_account_for_selects = []
+
+    # TODO: Hiện tại chỉ hiện thông tin để select, không cho tu chỉnh không cần hiện detail
+    # 1. OLD CASA SMS INFO (lấy thông tin từ Core)
+    # a. Tìm số tài khoản casa theo cif num
+    account_info_result = await repos_gw_get_casa_account_by_cif_number(
+        cif_number=cif_number,
+        current_user=current_user
+    )
+    if account_info_result.is_error:
+        return ReposReturn(
+            is_error=True,
+            msg=account_info_result.msg,
+            loc=account_info_result.loc,
+            detail=account_info_result.detail
+        )
+
+    account_info_list = account_info_result.data['selectCurrentAccountFromCIF_out']['data_output']['customer_info']['account_info_list']
+    if account_info_list:
+        core_customer_name = account_info_result.data['selectCurrentAccountFromCIF_out']['data_output']['customer_info']['full_name']
+        core_casa_account_num__info = {}
+        for account_info in account_info_list:
+            core_casa_account_num__info[account_info['account_info_item']['account_num']] = {
+                "customer_name": core_customer_name,
+                "acc_type_name": account_info['account_info_item']['account_class_name']
+            }
+
+        # b. kiểm tra thông tin sms trên từng tài khoản
+        old_casa_account_for_selects = []
+        for core_casa_account_num in core_casa_account_num__info:
+            result = await repos_gw_get_select_mobile_number_sms_by_account_casa(
+                ebank_sms_indentify_num=core_casa_account_num, current_user=current_user)
+
+            ebank_sms_info_list = result.data.get(GW_FUNC_SELECT_MOBILE_NUMBER_SMS_BY_ACCOUNT_CASA_OUT).get(
+                'data_output').get('ebank_sms_info_list')
+
+            # for select layout
+            if ebank_sms_info_list:
+                old_casa_account = {
+                    "casa_account_id": None,
+                    "casa_account_number": core_casa_account_num,
+                    "customer_name": core_casa_account_num__info[core_casa_account_num]['customer_name'],
+                    "acc_type_name": core_casa_account_num__info[core_casa_account_num]['acc_type_name']
+                }
+                old_casa_account_for_selects.append(old_casa_account)
+
+    # 2. NEW CASA SMS INFO (thông tin các TKTT mới tạo chưa approve)
+    new_casa_account_items = session.execute(
+        select(
+            Customer.full_name_vn,
+            CasaAccount.id,
+            CasaAccount.casa_account_number,
+            CasaAccount.acc_type_id,
+        ).join(
+            CasaAccount, CasaAccount.customer_id == cif_id
+        )
+        .filter(
+            Customer.id == cif_id,
+            CasaAccount.casa_account_number.is_(None)
+        )
+    ).all()
+
+    # for Select layout
+    new_casa_account_for_selects = []
+    casa_ids = []
+    for new_casa_account_item in new_casa_account_items:
+        new_casa_account = {
+            "casa_account_id": new_casa_account_item.id,
+            "customer_name": new_casa_account_item.full_name_vn,
+            "acc_type_name": new_casa_account_item.acc_type_id,
+        }
+        new_casa_account_for_selects.append(new_casa_account)
+        casa_ids.append(new_casa_account_item.id)
+
+    # for detail info
+    registry_balance_items = await repos_get_reg_balance_data(casa_ids, session)
+
+    sms_casa_reg_balance_options = session.execute(
+        select(
+            EBankingRegisterBalanceOption.customer_contact_type_id
+        ).filter(
+            EBankingRegisterBalanceOption.customer_id == cif_id,
+            EBankingRegisterBalanceOption.e_banking_register_account_type == EBANKING_ACCOUNT_TYPE_CHECKING
+        )
+    ).scalars().all()
+
+    response_data = {
+        "reg_balance_options": sms_casa_reg_balance_options,
+        "registry_balance_items": registry_balance_items.data
+    } if registry_balance_items.data else None  # Nếu không có đăng ký sms, trả None
+
+    return ReposReturn(data=(response_data, old_casa_account_for_selects, new_casa_account_for_selects))
 
 
 DETAIL_RESET_PASSWORD_E_BANKING_DATA = {

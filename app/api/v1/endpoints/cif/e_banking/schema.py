@@ -63,6 +63,18 @@ class SMSCasaInfoResponse(BaseSchema):
     registry_balance_items: List[SMSCasaItemResponse] = Field(..., description="")
 
 
+class CasaAccountForSMSResponse(BaseSchema):
+    casa_account_id: Optional[str] = Field(..., description="`ID` TKTT")
+    casa_account_number: Optional[str] = Field(defualt=None, description="Số tài khoản")
+    customer_name: str = Field(..., description="Tên tài khoản")
+    acc_type_name: str = Field(..., description="Tên sản phẩm")
+
+
+class EBankingCasaAccountListForSMSResponse(BaseSchema):
+    old_casa_accounts: List[CasaAccountForSMSResponse] = Field(..., description="Danh sách TKTT có sẵn")
+    new_casa_accounts: List[CasaAccountForSMSResponse] = Field(..., description="Danh sách TKTT tạo mới")
+
+
 class EBankingResponse(BaseSchema):
     e_banking: Optional[AccountInformationResponse] = Field(..., description='Thông tin E-Banking')
     sms_casa: Optional[SMSCasaInfoResponse] = Field(..., description="Thông tin đăng ký sms cho TKTT")

@@ -1,3 +1,5 @@
+from starlette import status
+
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_check_mobile_num, repos_get_casa_account_number_open_cif,
@@ -7,12 +9,13 @@ from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_gw_get_co_owner, repos_gw_get_customer_info_detail,
     repos_gw_get_customer_info_list, repos_push_casa_to_gw,
     repos_push_cif_to_gw, repos_push_debit_to_gw,
-    repos_push_internet_banking_to_gw, repos_push_sms_casa_to_gw
+    repos_push_internet_banking_to_gw
 )
 from app.api.v1.endpoints.third_parties.gw.customer.schema import (
     CheckMobileNumRequest
 )
 from app.api.v1.others.booking.controller import CtrBooking
+from app.api.v1.others.permission.controller import PermissionController
 from app.settings.event import service_file
 from app.third_parties.oracle.models.master_data.address import (
     AddressCountry, AddressDistrict, AddressProvince, AddressWard
@@ -24,6 +27,7 @@ from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import (
     Branch, Career, MaritalStatus, ResidentStatus
 )
+from app.utils.constant.approval import CIF_STAGE_APPROVE_KSV
 from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE
 from app.utils.constant.gw import (
@@ -32,9 +36,13 @@ from app.utils.constant.gw import (
     GW_REQUEST_PARAMETER_DEBIT_CARD, GW_REQUEST_PARAMETER_DEFAULT,
     GW_REQUEST_PARAMETER_GUARDIAN_OR_CUSTOMER_RELATIONSHIP
 )
+from app.utils.constant.idm import (
+    IDM_GROUP_ROLE_CODE_KSV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_KSV
+)
 from app.utils.error_messages import (
-    ERROR_CALL_SERVICE_GW, ERROR_OPEN_CIF, ERROR_PHONE_NUMBER,
-    ERROR_PHONE_NUMBER_NOT_EXITS, ERROR_VALIDATE_ONE_FIELD_REQUIRED
+    ERROR_CALL_SERVICE_GW, ERROR_NO_DATA, ERROR_OPEN_CIF, ERROR_PERMISSION,
+    ERROR_PHONE_NUMBER, ERROR_PHONE_NUMBER_NOT_EXITS,
+    ERROR_VALIDATE_ONE_FIELD_REQUIRED
 )
 from app.utils.functions import (
     date_string_to_other_date_string_format, is_valid_mobile_number,
@@ -760,6 +768,20 @@ class CtrGWCustomer(BaseController):
             loc=f"header -> booking-id, booking_id: {BOOKING_ID}, business_type_code: {BUSINESS_TYPE_INIT_CIF}"
         )
 
+        is_role_supervisor = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
+            auth_response=self.current_user,
+            menu_code=IDM_MENU_CODE_TTKH,
+            group_role_code=IDM_GROUP_ROLE_CODE_KSV,
+            permission_code=IDM_PERMISSION_CODE_KSV,
+            stage_code=CIF_STAGE_APPROVE_KSV
+        ))
+        if not is_role_supervisor:
+            self.response_exception(
+                loc=f"user: {self.current_user.user_info.code} - {self.current_user.user_info.username}",
+                msg=ERROR_PERMISSION,
+                error_status_code=status.HTTP_403_FORBIDDEN
+            )
+
         # Init response_info
         response_info = {
             "booking_id": BOOKING_ID,
@@ -793,7 +815,7 @@ class CtrGWCustomer(BaseController):
         response_customers = self.call_repos(await repos_get_customer_open_cif(
             cif_id=cif_id, session=self.oracle_session))
 
-        is_complete_cif, is_complete_casa, is_complete_eb, is_complete_sms, is_complete_debit = self.call_repos(
+        is_complete_cif, is_complete_casa, is_complete_eb, is_complete_debit = self.call_repos(
             await repos_get_progress_open_cif(booking_id=BOOKING_ID, session=self.oracle_session))
 
         # Push CIF (trả lỗi ngay)
@@ -844,7 +866,7 @@ class CtrGWCustomer(BaseController):
                         data=response_info,
                     )
                 else:
-                    self.call_repos(casa_account_number_result)
+                    self.call_repos(result_call_repos=casa_account_number_result)
 
             casa_account_number = casa_account_number_result.data
             is_complete_casa = True
@@ -853,49 +875,21 @@ class CtrGWCustomer(BaseController):
         # RULE: Phải hoàn thành CIF với CASA trước
         error_list = []
         if is_complete_cif and is_complete_casa:
+
+            if not casa_account_number:
+                casa_account_number = self.call_repos(await repos_get_casa_account_number_open_cif(
+                    cif_id=cif_id, session=self.oracle_session))
+
+            if not cif_number:
+                cif_number = self.call_repos(await repos_get_cif_number_open_cif(
+                    cif_id=cif_id, session=self.oracle_session))
+
             # Push EB
             if not is_complete_eb:
-                if not casa_account_number:
-                    casa_account_number = self.call_repos(await repos_get_casa_account_number_open_cif(
-                        cif_id=cif_id, session=self.oracle_session))
-
-                if not cif_number:
-                    cif_number = self.call_repos(await repos_get_cif_number_open_cif(
-                        cif_id=cif_id, session=self.oracle_session))
-
                 result = await repos_push_internet_banking_to_gw(
                     booking_id=BOOKING_ID,
                     session=self.oracle_session,
                     response_customers=response_customers,
-                    current_user=self.current_user,
-                    cif_id=cif_id,
-                    cif_number=cif_number
-                )
-                if result.is_error:
-                    error_list.append({
-                        "e_banking": {
-                            "loc": result.loc,
-                            "msg": result.msg,
-                            "detail": result.detail
-                        }
-                    })
-                else:
-                    is_complete_eb = True
-
-            # Push Registry SMS CASA
-            # RULE: có ebanking mới được đăng ký sms cho TKTT
-            if is_complete_eb and not is_complete_sms:
-                if not casa_account_number:
-                    casa_account_number = self.call_repos(await repos_get_casa_account_number_open_cif(
-                        cif_id=cif_id, session=self.oracle_session))
-
-                if not cif_number:
-                    cif_number = self.call_repos(await repos_get_cif_number_open_cif(
-                        cif_id=cif_id, session=self.oracle_session))
-
-                result = await repos_push_sms_casa_to_gw(
-                    booking_id=BOOKING_ID,
-                    session=self.oracle_session,
                     current_user=self.current_user,
                     cif_id=cif_id,
                     cif_number=cif_number,
@@ -903,39 +897,42 @@ class CtrGWCustomer(BaseController):
                     maker_staff_name=maker_staff_name
                 )
                 if result.is_error:
-                    error_list.append({
-                        "sms_casa": {
-                            "loc": result.loc,
-                            "msg": result.msg,
-                            "detail": result.detail
-                        }
-                    })
+                    if result.msg == ERROR_NO_DATA:
+                        response_info["ebank_num"]["status"] = None
+                    else:
+                        error_list.append({
+                            "e_banking": {
+                                "loc": result.loc,
+                                "msg": result.msg,
+                                "detail": result.detail
+                            }
+                        })
                 else:
-                    is_complete_sms = True
+                    is_complete_eb = True
 
             # Push Debit
             if not is_complete_debit:
-                if not cif_number:
-                    cif_number = self.call_repos(await repos_get_cif_number_open_cif(
-                        cif_id=cif_id, session=self.oracle_session))
-
                 result = await repos_push_debit_to_gw(
                     booking_id=BOOKING_ID,
                     session=self.oracle_session,
                     current_user=self.current_user,
                     cif_id=cif_id,
                     cif_number=cif_number,
+                    casa_account_number=casa_account_number,
                     response_customers=response_customers,
                     maker_staff_name=maker_staff_name
                 )
                 if result.is_error:
-                    error_list.append({
-                        "debit_card": {
-                            "loc": result.loc,
-                            "msg": result.msg,
-                            "detail": result.detail
-                        }
-                    })
+                    if result.msg == ERROR_NO_DATA:
+                        response_info["debit_num"]["status"] = None
+                    else:
+                        error_list.append({
+                            "debit_card": {
+                                "loc": result.loc,
+                                "msg": result.msg,
+                                "detail": result.detail
+                            }
+                        })
                 else:
                     is_complete_debit = True
 
@@ -951,7 +948,7 @@ class CtrGWCustomer(BaseController):
         response_info["cif_num"]["data"] = cif_number
         response_info["account_num"]["status"] = True
         response_info["account_num"]["data"] = casa_account_number
-        if is_complete_eb and is_complete_sms:
+        if is_complete_eb:
             response_info["ebank_num"]["status"] = True
         if is_complete_debit:
             response_info["debit_num"]["status"] = True
@@ -959,14 +956,12 @@ class CtrGWCustomer(BaseController):
         if error_list:
             return self.response_exception(
                 data=response_info,
-                loc="ctr_gw_open_cif -> Push EB, SMS, Debit",
+                loc="ctr_gw_open_cif",
                 msg=ERROR_OPEN_CIF,
                 detail=orjson_dumps(error_list)
             )
 
-        return self.response(
-            data=response_info
-        )
+        return self.response(data=response_info)
 
     async def ctr_check_mobile_num(self, request: CheckMobileNumRequest):
 

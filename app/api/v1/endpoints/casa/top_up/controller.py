@@ -49,7 +49,10 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_TOP_UP_CASA_ACCOUNT,
     PROFILE_HISTORY_STATUS_INIT
 )
-from app.utils.constant.gw import GW_REQUEST_DIRECT_INDIRECT
+from app.utils.constant.gw import (
+    GW_DEFAULT_VALUE, GW_FEE_TOP_UP_0202, GW_FEE_TOP_UP_0301,
+    GW_FEE_TOP_UP_0302, GW_FEE_TOP_UP_0310, GW_REQUEST_DIRECT_INDIRECT
+)
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_GDV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_GDV
 )
@@ -165,7 +168,7 @@ class CtrCasaTopUp(BaseController):
 
         receiver = dict(
             province=dropdown(province),
-            branch=dropdown(branch),
+            branch_info=dropdown(branch),
             issued_date=issued_date,
             place_of_issue=dropdown(place_of_issue),
             fullname_vn=data.receiver_full_name_vn,
@@ -273,11 +276,9 @@ class CtrCasaTopUp(BaseController):
             bank=dropdown(receiver_bank),
             bank_branch=data.receiver_bank_branch,
             fullname_vn=data.receiver_full_name_vn,
-            identity_info=dict(
-                number=data.receiver_identity_number,
-                issued_date=data.receiver_issued_date,
-                place_of_issue=dropdown(receiver_place_of_issue),
-            ),
+            identity_number=data.receiver_identity_number,
+            issued_date=data.receiver_issued_date,
+            place_of_issue=dropdown(receiver_place_of_issue),
             province=dropdown(receiver_province),
             mobile_number=data.receiver_mobile_number,
             address_full=data.receiver_address_full
@@ -412,11 +413,12 @@ class CtrCasaTopUp(BaseController):
 
         # Kiểm tra số CIF của KH
         customer_cif_number = request.customer_cif_number
-        is_existed = await CtrGWCustomer(current_user=self.current_user).ctr_gw_check_exist_customer_detail_info(
+        gw_customer = await CtrGWCustomer(current_user=self.current_user).ctr_gw_get_customer_info_detail(
             cif_number=customer_cif_number,
             return_raw_data_flag=True
         )
-        if not is_existed:
+        customer_cif_full_name_vn = gw_customer['full_name']
+        if customer_cif_full_name_vn == GW_DEFAULT_VALUE:
             return self.response_exception(msg=ERROR_CIF_NUMBER_EXIST, loc=f"cif_number: {customer_cif_number}")
 
         denominations__amounts = {}
@@ -489,30 +491,35 @@ class CtrCasaTopUp(BaseController):
         ################################################################################################################
 
         casa_top_up_info = None
+        fee_id = None
         if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
             casa_top_up_info = await self.ctr_save_casa_top_up_scb_to_account(
                 current_user=current_user,
                 receiving_method=receiving_method,
                 data=data
             )
+            fee_id = GW_FEE_TOP_UP_0202
 
         if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
             casa_top_up_info = await self.ctr_save_casa_top_up_scb_by_identity(
                 receiving_method=receiving_method,
                 data=data
             )
+            fee_id = GW_FEE_TOP_UP_0301
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
             casa_top_up_info = await self.ctr_save_casa_top_up_third_party_to_account(
                 receiving_method=receiving_method,
                 data=data
             )
+            fee_id = GW_FEE_TOP_UP_0302
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
             casa_top_up_info = await self.ctr_save_casa_top_up_third_party_by_identity(
                 receiving_method=receiving_method,
                 data=data
             )
+            fee_id = GW_FEE_TOP_UP_0302
             # (
             #     saving_customer, saving_customer_identity, saving_customer_address
             # ) = await CtrCustomer(current_user).ctr_create_non_resident_customer(request=request)
@@ -522,12 +529,14 @@ class CtrCasaTopUp(BaseController):
                 receiving_method=receiving_method,
                 data=data
             )
+            fee_id = GW_FEE_TOP_UP_0310
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
             casa_top_up_info = await self.ctr_save_casa_top_up_third_party_247_to_card(
                 receiving_method=receiving_method,
                 data=data
             )
+            fee_id = GW_FEE_TOP_UP_0310
 
         if not casa_top_up_info:
             return self.response_exception(msg="No Casa Top Up")
@@ -546,8 +555,9 @@ class CtrCasaTopUp(BaseController):
         )
 
         # Thông tin phí
-        fee_info_response = await CtrAccountFee().calculate_fee(
-            one_fee_info_request=data.fee_info, fee_note=data.fee_note, amount=data.amount
+        fee_info_response = await CtrAccountFee(current_user).calculate_fee(
+            one_fee_info_request=data.fee_info, fee_note=data.fee_note, amount=data.amount,
+            business_type_id=BUSINESS_TYPE_CASA_TOP_UP, fee_id=fee_id
         )
 
         statement_response = await CtrStatement().ctr_get_statement_info(statement_requests=data.statement)
@@ -586,6 +596,7 @@ class CtrCasaTopUp(BaseController):
 
         casa_top_up_info.update(
             customer_cif_number=customer_cif_number,
+            customer_cif_full_name_vn=customer_cif_full_name_vn,
             receiving_method=data.receiving_method,
             transfer=transfer_response,
             fee_info=fee_info_response,

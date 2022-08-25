@@ -48,7 +48,10 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_TRANSFER_CASA_ACCOUNT,
     PROFILE_HISTORY_STATUS_INIT
 )
-from app.utils.constant.gw import GW_REQUEST_DIRECT_INDIRECT
+from app.utils.constant.gw import (
+    GW_FEE_TRANSFER_0303, GW_FEE_TRANSFER_0304, GW_FEE_TRANSFER_0305,
+    GW_FEE_TRANSFER_0310, GW_REQUEST_DIRECT_INDIRECT
+)
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_GDV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_GDV
 )
@@ -531,31 +534,43 @@ class CtrCasaTransfer(BaseController):
         ################################################################################################################
 
         casa_transfer_info = None
+        fee_id = None
 
         if receiving_method == RECEIVING_METHOD_SCB_TO_ACCOUNT:
             casa_transfer_info = await self.ctr_save_casa_transfer_scb_to_account(
                 current_user=current_user, data=data
             )
+            fee_id = GW_FEE_TRANSFER_0303
 
         if receiving_method == RECEIVING_METHOD_SCB_BY_IDENTITY:
             casa_transfer_info = await self.ctr_save_casa_transfer_scb_by_identity(
-                current_user=current_user, data=data)
+                current_user=current_user, data=data
+            )
+            fee_id = GW_FEE_TRANSFER_0304
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT:
             casa_transfer_info = await self.ctr_save_casa_transfer_third_party_to_account(
-                current_user=current_user, data=data)
+                current_user=current_user, data=data
+            )
+            fee_id = GW_FEE_TRANSFER_0305
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY:
             casa_transfer_info = await self.ctr_save_casa_transfer_third_party_by_identity(
-                current_user=current_user, data=data)
+                current_user=current_user, data=data
+            )
+            fee_id = GW_FEE_TRANSFER_0305
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
             casa_transfer_info = await self.ctr_save_casa_transfer_third_party_247_to_account(
-                current_user=current_user, data=data)
+                current_user=current_user, data=data
+            )
+            fee_id = GW_FEE_TRANSFER_0310
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
             casa_transfer_info = await self.ctr_save_casa_transfer_third_party_247_to_card(
-                current_user=current_user, data=data)
+                current_user=current_user, data=data
+            )
+            fee_id = GW_FEE_TRANSFER_0310
 
         if not casa_transfer_info:
             return self.response_exception(msg="No Casa Transfer")
@@ -574,8 +589,9 @@ class CtrCasaTransfer(BaseController):
         )
 
         # Thông tin phí
-        fee_info_response = await CtrAccountFee().calculate_fee(
-            one_fee_info_request=data.fee_info, fee_note=data.fee_note, amount=data.amount
+        fee_info_response = await CtrAccountFee(current_user).calculate_fee(
+            one_fee_info_request=data.fee_info, fee_note=data.fee_note, amount=data.amount,
+            business_type_id=BUSINESS_TYPE_CASA_TRANSFER, fee_id=fee_id
         )
 
         gw_sender_account_info = await CtrGWCasaAccount(current_user).ctr_gw_get_casa_account_info(

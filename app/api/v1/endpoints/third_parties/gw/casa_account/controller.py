@@ -12,7 +12,8 @@ from app.api.v1.endpoints.casa.transfer.repository import (
 )
 from app.api.v1.endpoints.config.bank.controller import CtrConfigBank
 from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
-    repos_check_casa_account_approved, repos_gw_change_status_account,
+    repos_account_number_list_by_casa_account_ids,
+    repos_get_progress_open_casa, repos_gw_change_status_account,
     repos_gw_get_casa_account_by_cif_number, repos_gw_get_casa_account_info,
     repos_gw_get_close_casa_account,
     repos_gw_get_column_chart_casa_account_info,
@@ -20,9 +21,7 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_get_retrieve_ben_name_by_account_number,
     repos_gw_get_retrieve_ben_name_by_card_number,
     repos_gw_get_statements_casa_account_info, repos_gw_get_tele_transfer,
-    repos_gw_open_casa_account, repos_gw_withdraw,
-    repos_open_casa_get_casa_account_infos,
-    repos_update_casa_account_to_approved
+    repos_gw_withdraw, repos_push_casa_to_gw_open_casa
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWOpenCasaAccountRequest, GWReportColumnChartHistoryAccountInfoRequest,
@@ -31,6 +30,9 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
 )
 from app.api.v1.endpoints.third_parties.gw.customer.controller import (
     CtrGWCustomer
+)
+from app.api.v1.endpoints.third_parties.gw.customer.repository import (
+    repos_get_customer_open_cif
 )
 from app.api.v1.endpoints.third_parties.gw.payment.repository import (
     repos_gw_interbank_transfer, repos_gw_pay_in_cash,
@@ -423,85 +425,130 @@ class CtrGWCasaAccount(BaseController):
                 error_status_code=status.HTTP_403_FORBIDDEN
             )
 
+        # Kiểm tra số CIF có tồn tại trong CRM không, lấy cif_id
         cif_number = request.cif_number
-        # Kiểm tra số CIF có tồn tại trong CRM không
-        self.call_repos(await repos_get_customer_by_cif_number(
+        customers_row = self.call_repos(await repos_get_customer_by_cif_number(
             cif_number=cif_number,
             session=self.oracle_session
         ))
+        cif_id = None
+        if customers_row:
+            cif_id = customers_row.id
 
-        # Kiểm tra Booking Account, Account lấy ra là những account chưa được phê duyệt
+        booking = await CtrBooking().ctr_get_booking(
+            booking_id=booking_id,
+            business_type_code=BUSINESS_TYPE_OPEN_CASA
+        )
+
+        maker_staff_name = booking.created_by
+        account_number_list = []
+
         casa_accounts = await CtrBooking().ctr_get_casa_account_from_booking(
             booking_id=booking_id, session=self.oracle_session
         )
-
         casa_account_ids = []
-        booking = await CtrBooking().ctr_get_booking(booking_id=booking_id, business_type_code=BUSINESS_TYPE_OPEN_CASA)
-        maker_staff_name = booking.created_by
-
         for casa_account in casa_accounts:
             if casa_account.approve_status == CASA_ACCOUNT_STATUS_UNAPPROVED:
                 casa_account_ids.append(casa_account.id)
 
-        # RULE: tài khoản đã được phê duyệt thì không cho phép phê duyệt
-        self.call_repos(await repos_check_casa_account_approved(
-            casa_account_ids=casa_account_ids,
-            session=self.oracle_session
-        ))
+        # Init response_info
+        response_info = {
+            "booking_id": booking_id,
+            "cif_num": cif_number,
+            "account_num": {
+                "status": False,
+                "data": None
+            },
+            "ebank_num": {
+                "status": None,
+                "data": None
+            },
+            "debit_num": {
+                "status": None,
+                "data": None
+            }
+        }
+        # Lấy completed flag
+        is_complete_casa, is_complete_eb, is_complete_debit = self.call_repos(
+            await repos_get_progress_open_casa(booking_id=booking_id, session=self.oracle_session))
 
-        casa_account_infos = self.call_repos(await repos_open_casa_get_casa_account_infos(
-            casa_account_ids=casa_account_ids,
-            session=self.oracle_session
-        ))
-
-        casa_account_successes = {}
-        gw_errors = []
-        for casa_account_info in casa_account_infos:
-            self_selected_account_flag = casa_account_info.self_selected_account_flag
-
-            casa_account_id = casa_account_info.id
-
-            is_success, gw_open_casa_account_info = await repos_gw_open_casa_account(
-                cif_number=cif_number,
-                self_selected_account_flag=self_selected_account_flag,
-                casa_account_info=casa_account_info,
-                current_user=self.current_user,
-                booking_parent_id=booking_id,
+        # Push casa
+        if not is_complete_casa:
+            account_number_list_result = await repos_push_casa_to_gw_open_casa(
+                booking_id=booking_id,
                 session=self.oracle_session,
-                maker_staff_name=maker_staff_name
+                current_user=self.current_user,
+                cif_number=cif_number,
+                maker_staff_name=maker_staff_name,
+                casa_account_ids=casa_account_ids
             )
-            if not is_success:
-                gw_errors.append(dict(
-                    id=casa_account_id,
-                    msg=ERROR_CALL_SERVICE_GW,
-                    detail=str(gw_open_casa_account_info['openCASA_out'])
-                ))
-            else:
-                casa_account_successes.update({casa_account_id:
-                                               gw_open_casa_account_info['openCASA_out']['data_output']['account_info']['account_num']})
 
-        update_casa_accounts = []
-        for casa_account_id, casa_account_number in casa_account_successes.items():
-            update_casa_accounts.append(dict(
-                id=casa_account_id,
-                casa_account_number=casa_account_number,
-                approve_status=1,
-                checker_id=current_user_info.code,
-                checker_at=now()
-            ))
+            if account_number_list_result.is_error:
+                if account_number_list_result.msg == ERROR_CALL_SERVICE_GW:
+                    self.response_exception(
+                        loc=account_number_list_result.loc,
+                        msg=account_number_list_result.msg,
+                        detail=account_number_list_result.detail,
+                        data=response_info,
+                    )
+                else:
+                    self.call_repos(result_call_repos=account_number_list_result)
 
-        self.call_repos(await repos_update_casa_account_to_approved(
-            update_casa_accounts=update_casa_accounts,
-            session=self.oracle_session
-        ))
+            account_number_list = account_number_list_result.data
+            is_complete_casa = True
 
-        return self.response(data=dict(
-            successes=[dict(
-                id=casa_account_id,
-                number=casa_account_number
-            ) for casa_account_id, casa_account_number in casa_account_successes.items()],
-            errors=gw_errors
-        ))
+        # RULE: Hoàn tất mở CASA mới được mở EB, Debit
+        error_list = []
+        if is_complete_casa:
+
+            self.call_repos(await repos_get_customer_open_cif(
+                cif_id=cif_id, session=self.oracle_session))
+
+            if not account_number_list:
+                account_number_list = self.call_repos(await repos_account_number_list_by_casa_account_ids(
+                    casa_account_ids=casa_account_ids, session=self.oracle_session))
+
+        #     # Push EB
+        #     if not is_complete_eb:
+        #         result = await repos_push_internet_banking_to_gw_open_casa(
+        #             booking_id=booking_id,
+        #             session=self.oracle_session,
+        #             response_customers=response_customers,
+        #             current_user=self.current_user,
+        #             cif_id=cif_id,
+        #             cif_number=cif_number,
+        #             maker_staff_name=maker_staff_name,
+        #             account_number_list=account_number_list
+        #         )
+        #         if result.is_error:
+        #             error_list.append({
+        #                 "e_banking": {
+        #                     "loc": result.loc,
+        #                     "msg": result.msg,
+        #                     "detail": result.detail
+        #                 }
+        #             })
+        #         else:
+        #             is_complete_eb = True
+        #
+        # # Push Debit Card
+        #
+        response_info["account_num"]["status"] = True
+        response_info["account_num"]["data"] = account_number_list
+        # if is_complete_eb:
+        #     response_info["ebank_num"]["status"] = True
+        # if is_complete_debit:
+        #     response_info["debit_num"]["status"] = True
+
+        if error_list:
+            return self.response_exception(
+                data=response_info,
+                loc="ctr_gw_open_cif -> Push EB, Debit",
+                msg='ERROR_OPEN_CASA',
+                detail=orjson_dumps(error_list)
+            )
+
+        return self.response(data=response_info)
 
     async def ctr_gw_get_close_casa_account(self, booking_id):
         booking_business_form = self.call_repos(await repos_get_booking_business_form_by_booking_id(
@@ -643,7 +690,7 @@ class CtrGWCasaAccount(BaseController):
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_ACCOUNT:
             is_success, gw_response_data = await self.ctr_gw_pay_in_cash_247_by_acc_num(
-                booking_id=booking_id,
+                fcc_booking_code=booking_business_form.booking.fcc_booking_code,
                 maker=maker,
                 form_data=form_data
             )
@@ -658,7 +705,7 @@ class CtrGWCasaAccount(BaseController):
 
         if receiving_method == RECEIVING_METHOD_THIRD_PARTY_247_BY_CARD:
             is_success, gw_response_data = await self.ctr_gw_pay_in_cash_247_by_card_num(
-                booking_id=booking_id,
+                fcc_booking_code=booking_business_form.booking.fcc_booking_code,
                 maker=maker,
                 form_data=form_data
             )
@@ -674,10 +721,15 @@ class CtrGWCasaAccount(BaseController):
         if not response_data:
             return self.response_exception(msg="GW return None", loc=f'response_data: {response_data}')
 
+        form_data['transfer'].update({
+            "entry_number": xref
+        })
+
         self.call_repos(await repos_save_gw_output_data(
             booking_id=booking_id,
             business_type_id=BUSINESS_TYPE_CASA_TOP_UP,
             gw_output_data=orjson_dumps(response_data),
+            form_data=orjson_dumps(form_data),
             is_completed=is_completed,
             session=self.oracle_session
         ))
@@ -767,7 +819,7 @@ class CtrGWCasaAccount(BaseController):
             "account_info": {
                 "account_num": request_data_gw['transaction_info']['source_accounts']['account_num'],
                 "account_currency": 'VND',
-                "account_withdrawals_amount": request_data_gw['transaction_info']['receiver_info']['amount']
+                "account_withdrawals_amount": int(request_data_gw['transaction_info']['fee_info']['actual_total'])
             },
             "staff_info_checker": {
                 "staff_name": current_user_info.username
@@ -927,7 +979,6 @@ class CtrGWCasaAccount(BaseController):
         current_user = self.current_user
         sender = form_data['sender']
         receiver = form_data['receiver']
-        fee_info = form_data['fee_info']
         identity_info = sender['identity_info']
         current_user_info = current_user.user_info
 
@@ -942,7 +993,7 @@ class CtrGWCasaAccount(BaseController):
             "account_info": {
                 "account_num": receiver['account_number'],
                 "account_currency": "VND",  # TODO: hiện tại chuyển tiền chỉ dùng tiền tệ VN
-                "account_opening_amount": fee_info['actual_total']
+                "account_opening_amount": form_data['transfer']['amount']
             },
             "p_blk_denomination": "",
             "p_blk_charge": [
@@ -1051,7 +1102,7 @@ class CtrGWCasaAccount(BaseController):
             "p_details": {
                 "TT_DETAILS": {
                     "TT_CURRENCY": "VND",
-                    "TT_AMOUNT": form_data['fee_info']['actual_total'],
+                    "TT_AMOUNT": transfer['amount'],
                     "TRANSACTION_CURRENCY": "VND"
                 },
                 "BENEFICIARY_DETAILS": {
@@ -1059,12 +1110,7 @@ class CtrGWCasaAccount(BaseController):
                     "BENEFICIARY_PHONE_NO": receiver['mobile_number'] if 'mobile_number' in receiver else GW_DEFAULT_VALUE,
                     "BENEFICIARY_ID_NO": receiver['identity_number']
                     if 'identity_number' in receiver.keys() else GW_DEFAULT_VALUE,
-                    # "ID_ISSUE_DATE": date_string_to_other_date_string_format(
-                    #     date_input=receiver['issued_date'],
-                    #     from_format=GW_DATE_FORMAT,
-                    #     to_format=GW_CORE_DATE_FORMAT
-                    # ),
-                    "ID_ISSUE_DATE": receiver['issued_date'] if 'identity_number' in receiver else GW_DEFAULT_VALUE,
+                    "ID_ISSUE_DATE": receiver['issued_date'],
                     "ID_ISSUER": receiver['place_of_issue']['name'] if 'identity_number' in receiver else GW_DEFAULT_VALUE,
                     "ADDRESS": receiver['address_full'] if 'identity_number' in receiver else GW_DEFAULT_VALUE
                 },
@@ -1072,12 +1118,8 @@ class CtrGWCasaAccount(BaseController):
                     "REMITTER_NAME": sender['fullname_vn'],
                     "REMITTER_PHONE_NO": sender['mobile_phone'],
                     "REMITTER_ID_NO": sender_identity_info['number'],
-                    "ID_ISSUE_DATE": date_string_to_other_date_string_format(
-                        date_input=sender_identity_info['issued_date'],
-                        from_format=GW_CORE_DATE_FORMAT,
-                        to_format=GW_DATE_FORMAT
-                    ),
-                    "ID_ISSUER": sender_identity_info['place_of_issue'],
+                    "ID_ISSUE_DATE": sender_identity_info['issued_date'],
+                    "ID_ISSUER": sender_identity_info['place_of_issue']['name'],
                     "ADDRESS": sender['address_full']
                 },
                 "ADDITIONAL_DETAILS": {
@@ -1202,7 +1244,7 @@ class CtrGWCasaAccount(BaseController):
                     },
                     "TRANSACTION_LEG": {
                         "ACCOUNT": "101101001",
-                        "AMOUNT": fee_info['actual_total']
+                        "AMOUNT": transfer['amount']
                     },
                     "RATE": {
                         "EXCHANGE_RATE": 0,
@@ -1273,7 +1315,7 @@ class CtrGWCasaAccount(BaseController):
                     },
                     "TRANSACTION_LEG": {
                         "ACCOUNT": "101101001",
-                        "AMOUNT": fee_info['actual_total']
+                        "AMOUNT": transfer['amount']
                     },
                     "RATE": {
                         "EXCHANGE_RATE": 0,
@@ -1331,8 +1373,8 @@ class CtrGWCasaAccount(BaseController):
 
     async def ctr_gw_pay_in_cash_247_by_acc_num(
             self,
-            booking_id: str,
             maker: str,
+            fcc_booking_code: str,
             form_data: dict
     ):
         current_user = self.current_user
@@ -1356,8 +1398,8 @@ class CtrGWCasaAccount(BaseController):
             },
             "trans_date": datetime_to_string(now()),
             "time_stamp": datetime_to_string(now()),
-            "trans_id": booking_id,
-            "amount": form_data['fee_info']['actual_total'],
+            "trans_id": fcc_booking_code,
+            "amount": transfer['amount'],
             "description": transfer['content'],
             "account_to_info": {
                 "account_num": receiver['account_number']
@@ -1386,7 +1428,7 @@ class CtrGWCasaAccount(BaseController):
     async def ctr_gw_pay_in_cash_247_by_card_num(
             self,
             maker: str,
-            booking_id: str,
+            fcc_booking_code: str,
             form_data: dict
     ):
         current_user = self.current_user
@@ -1396,7 +1438,7 @@ class CtrGWCasaAccount(BaseController):
         sender_identity_issued_date = sender_identity['issued_date']
         receiver = form_data['receiver']
         transfer = form_data['transfer']
-        ben = await CtrConfigBank(current_user).ctr_get_bank_branch(bank_id=receiver['bank']['id'])
+        # ben = await CtrConfigBank(current_user).ctr_get_bank_branch(bank_id=receiver['bank']['id'])
 
         data_input = {
             "customer_info": {
@@ -1411,13 +1453,14 @@ class CtrGWCasaAccount(BaseController):
             },
             "trans_date": datetime_to_string(now()),
             "time_stamp": datetime_to_string(now()),
-            "trans_id": booking_id,
-            "amount": form_data['fee_info']['actual_total'],
+            "trans_id": fcc_booking_code,
+            "amount": transfer['amount'],
             "description": transfer['content'],
             "card_to_info": {
                 "card_num": receiver['card_number']
             },
-            "ben_id": ben['data'][0]['id'],
+            # "ben_id": ben['data'][0]['id'],
+            "ben_id": '970436',  # TODO: hiện tại chỉ có mã ngân hàng này dùng được
             "account_from_info": {
                 "account_num": "101101001"
             },
@@ -1464,7 +1507,7 @@ class CtrGWCasaAccount(BaseController):
                     "p_blk_detail": {
                         "FROM_ACCOUNT_DETAILS": {
                             "FROM_ACCOUNT_NUMBER": sender['account_number'],
-                            "FROM_ACCOUNT_AMOUNT": fee_info['actual_total']
+                            "FROM_ACCOUNT_AMOUNT": transfer['amount']
                         },
                         "TO_ACCOUNT_DETAILS": {
                             "TO_ACCOUNT_NUMBER": receiver['account_number']
@@ -1518,7 +1561,7 @@ class CtrGWCasaAccount(BaseController):
                     "p_instrument_number": p_instrument_number,
                     "p_instrument_status": "LIQD",
                     "account_info": {
-                        "account_num": sender['account_number'],
+                        "account_num": "123456787912",  # TODO
                         "account_currency": "VND"
                     },
                     "p_charges": [
@@ -1579,7 +1622,7 @@ class CtrGWCasaAccount(BaseController):
                         },
                         "TRANSACTION_LEG": {
                             "ACCOUNT": sender['account_number'],
-                            "AMOUNT": fee_info['actual_total']
+                            "AMOUNT": transfer['amount']
                         },
                         "RATE": {
                             "EXCHANGE_RATE": 0,
@@ -1661,7 +1704,7 @@ class CtrGWCasaAccount(BaseController):
                         },
                         "TRANSACTION_LEG": {
                             "ACCOUNT": sender['account_number'],
-                            "AMOUNT": fee_info['actual_total']
+                            "AMOUNT": transfer['amount']
                         },
                         "RATE": {
                             "EXCHANGE_RATE": 0,
@@ -1719,7 +1762,7 @@ class CtrGWCasaAccount(BaseController):
                     "trans_date": datetime_to_string(now()),
                     "time_stamp": datetime_to_string(now()),
                     "trans_id": "20220629160002159368",
-                    "amount": fee_info['actual_total'],
+                    "amount": transfer['amount'],
                     "description": transfer["content"],
                     "account_to_info": {
                         "account_num": receiver["account_number"]
@@ -1753,7 +1796,7 @@ class CtrGWCasaAccount(BaseController):
                     "trans_date": datetime_to_string(now()),
                     "time_stamp": datetime_to_string(now()),
                     "trans_id": "20220629160002159368",
-                    "amount": fee_info['actual_total'],
+                    "amount": transfer['amount'],
                     "description": transfer["content"],
                     "account_from_info": {
                         "account_num": sender["account_number"]

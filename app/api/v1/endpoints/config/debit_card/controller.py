@@ -1,21 +1,12 @@
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.repository import repos_get_data_model_config
 from app.third_parties.oracle.models.master_data.card import (
-    BrandOfCard, CardCustomerType, CardIssuanceFee, CardIssuanceType, CardType
+    BrandOfCard, CardAnnualFee, CardCustomerType, CardIssuanceFee,
+    CardIssuanceType, CardType
 )
-
-CARD_ANNUAL_FEES = [
-    {
-        "id": "MIEN_PHI_NAM_DAU",
-        "code": "MIEN_PHI_NAM_DAU",
-        "name": "Miễn phí năm đầu"
-    },
-    {
-        "id": "MIEN_PHI_NAM_CUOI",
-        "code": "MIEN_PHI_NAM_CUOI",
-        "name": "Miễn phí năm cuối"
-    }
-]
 
 
 class CtrDebitCard(BaseController):
@@ -71,10 +62,18 @@ class CtrDebitCard(BaseController):
         return self.response(brand_of_cards)
 
     async def ctr_card_annual_fee(self):
-        # TODO: chưa có db, tạm thời fake data
         """
             Phí thường niên
         """
-        debit_card_types = CARD_ANNUAL_FEES
+        session: Session = self.oracle_session
+        card_annual_fees = session.execute(select(
+            CardAnnualFee
+        )).scalars().all()
+
+        debit_card_types = [{
+            "id": card_type.id,
+            "code": card_type.code,
+            "name": card_type.name
+        } for card_type in card_annual_fees if card_type.active_flag]
 
         return self.response(debit_card_types)

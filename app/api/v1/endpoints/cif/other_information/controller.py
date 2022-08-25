@@ -52,16 +52,19 @@ class CtrOtherInfo(BaseController):
     async def ctr_update_other_info(self, cif_id: str, update_other_info_req: OtherInformationUpdateRequest):
         # check cif đang tạo
         cif_info = self.call_repos(await repos_get_initializing_customer(cif_id=cif_id, session=self.oracle_session))
-        if not (cif_info.mobile_number and cif_info.telephone_number):
+        if not (cif_info.mobile_number or cif_info.telephone_number):
             return self.response_exception(
                 msg=ERROR_MOBILE_NUMBER, loc=f" cif_info -> mobile_number : {cif_info.mobile_number}"
             )
+
+        customer_relationship_id = update_other_info_req.customer_relationship.id if update_other_info_req.customer_relationship else None
+
         update_other_info = self.call_repos(
             await repos_update_other_info(
                 cif_id=cif_id,
                 update_other_info_req=update_other_info_req,
-                extra_phone_number=update_other_info_req.extra_phone_number,
-                customer_relationship=update_other_info_req.customer_relationship.id,
+                extra_number=update_other_info_req.extra_phone_number,
+                cust_relationship_type_id=customer_relationship_id,
                 current_user=self.current_user.user_info,
                 session=self.oracle_session
             )

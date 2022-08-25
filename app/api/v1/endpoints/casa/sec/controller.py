@@ -8,17 +8,16 @@ from app.api.v1.endpoints.third_parties.gw.customer.controller import (
     CtrGWCustomer
 )
 from app.api.v1.others.booking.controller import CtrBooking
+from app.api.v1.others.fee.controller import CtrAccountFee
+from app.api.v1.others.sender.controller import CtrPaymentSender
 from app.api.v1.others.statement.controller import CtrStatement
 from app.api.v1.validator import validate_history_data
 from app.utils.constant.business_type import BUSINESS_TYPE_OPEN_SEC
-from app.utils.constant.casa import CASA_FEE_METHOD_CASA, CASA_FEE_METHODS
 from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_TOP_UP_CASA_ACCOUNT,
     PROFILE_HISTORY_STATUS_INIT
 )
-from app.utils.error_messages import (
-    ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_CASA_FEE_METHOD_NOT_EXIST
-)
+from app.utils.error_messages import ERROR_CASA_ACCOUNT_NOT_EXIST
 from app.utils.functions import orjson_dumps, orjson_loads
 
 
@@ -31,32 +30,7 @@ class CtrSecInfo(CtrCasa, CtrBooking, CtrGWCasaAccount, CtrGWCustomer):
             booking_id=booking_id, session=self.oracle_session
         )
         form_data = orjson_loads(get_open_sec_info.form_data)
-        total_sec_amount = 0
-        for account_info in form_data['account_infos']:
-            sec_amount = account_info['sec_amount']
-            account_info.update(
-                sec_unit_amount=sec_amount * 10,
-            )
-            total_sec_amount += sec_amount
 
-        # Lấy thông tin sender, trong controller Casa
-        sender_response = await self.get_sender_info(sender=form_data['transaction_info']['sender'])
-
-        # Lấy thông tin statement, trong controller Casa
-        statement_response = await CtrStatement(current_user=self.current_user).ctr_statement_info(
-            statement_request=form_data['transaction_info']['statement'])
-        form_data['transaction_info'].update(
-            sender=sender_response,
-            statement=statement_response,
-            total_sec_amount=total_sec_amount,
-            total_sec_unit_amount=total_sec_amount * 10
-        )
-
-        fee_info = form_data['transaction_info']['fee_info']
-        if fee_info:
-            fee_info.update(
-                total=fee_info['amount'] + fee_info['vat']
-            )
         return self.response(data=form_data)
 
     async def ctr_save_open_sec_info(
@@ -66,6 +40,7 @@ class CtrSecInfo(CtrCasa, CtrBooking, CtrGWCasaAccount, CtrGWCustomer):
     ):
         current_user = self.current_user
         current_user_info = current_user.user_info
+
         # Kiểm tra booking
         await self.ctr_get_booking_and_validate(
             booking_id=booking_id,
@@ -87,30 +62,59 @@ class CtrSecInfo(CtrCasa, CtrBooking, CtrGWCasaAccount, CtrGWCustomer):
                     loc=f"transaction_info -> account_info -> account_number: {account_number}"
                 )
 
+        account_info_response = []
+        total_sec_amount = 0
+        for account_info in request.account_infos:
+            sec_amount = account_info.sec_amount
+            account_info_response.append(
+                dict(
+                    account_number=account_info.account_number,
+                    sec_amount=sec_amount,
+                    sec_unit_amount=sec_amount * 10,
+                )
+            )
+            total_sec_amount += sec_amount
+
+        sender_info = request.transaction_info.sender
+
+        # Lấy thông tin sender, trong controller Casa
+        sender_response = await CtrPaymentSender(current_user).get_payment_sender(
+            sender_cif_number=sender_info.cif_number,
+            sender_full_name_vn=sender_info.full_name_vn,
+            sender_address_full=sender_info.address_full,
+            sender_identity_number=sender_info.identity_number,
+            sender_issued_date=sender_info.issued_date,
+            sender_mobile_number=sender_info.mobile_number,
+            sender_place_of_issue=sender_info.place_of_issue,
+            sender_note=sender_info.full_name_vn
+        )
+
+        # Lấy thông tin statement, trong controller Casa
+        statement_response = await CtrStatement(current_user).ctr_get_statement_info(
+            statement_requests=request.transaction_info.statement)
+
         # Thông tin phí
         fee_info = request.transaction_info.fee_info
-        if fee_info:
-            method = fee_info.method
-            if method not in CASA_FEE_METHODS:
-                return self.response_exception(msg=ERROR_CASA_FEE_METHOD_NOT_EXIST)
+        fee_response = await CtrAccountFee(current_user).calculate_fees(
+            fee_info_request=fee_info,
+            business_type_id=BUSINESS_TYPE_OPEN_SEC
+        )
 
-            if method == CASA_FEE_METHOD_CASA:
-                # Kiểm tra số tài khoản có tồn tại hay không
-                account_number = fee_info.account_number
-                casa_account = await CtrGWCasaAccount(current_user).ctr_gw_check_exist_casa_account_info(
-                    account_number=account_number
-                )
-                if not casa_account['data']['is_existed']:
-                    return self.response_exception(
-                        msg=ERROR_CASA_ACCOUNT_NOT_EXIST,
-                        loc=f"transaction_info -> fee_info -> account_number: {account_number}"
-                    )
-                transaction_info = request.transaction_info
-                # Bảng kê
-                await self.validate_statement(statement=transaction_info.statement)
+        response_data = {
+            "account_infos": account_info_response,
+            "transaction_info": dict(
+                content=request.transaction_info.content,
+                fee_info=fee_response,
+                sender=sender_response,
+                statements=statement_response,
+                total_sec_amount=total_sec_amount,
+                total_sec_unit_amount=total_sec_amount * 10
+            ),
+            "note": request.note
+        }
 
-                # Thông tin khách hàng giao dịch
-                await self.validate_sender(sender=transaction_info.sender)
+        if len(fee_response['fee_details']) > 1:
+            return self.response_exception(msg='ERROR_INPUT_MORE_THAN_ONE_FEE', loc="fee_response -> fee_details")
 
         history_datas = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_TOP_UP_CASA_ACCOUNT,
@@ -130,7 +134,7 @@ class CtrSecInfo(CtrCasa, CtrBooking, CtrGWCasaAccount, CtrGWCustomer):
         transaction_datas = await self.ctr_create_transaction_daily_and_transaction_stage_for_init(
             business_type_id=BUSINESS_TYPE_OPEN_SEC,
             booking_id=booking_id,
-            request_json=request.json(),
+            request_json=orjson_dumps(response_data),
             history_datas=orjson_dumps(history_datas),
         )
 

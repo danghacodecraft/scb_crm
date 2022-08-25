@@ -20,7 +20,7 @@ async def repos_get_agreement_authorization(session: Session):
     return ReposReturn(data=[{
         "id": account_structure_type_info.id,
         "content": account_structure_type_info.name,
-        "options": [  # TODO
+        "options": [
             {
                 "id": '1',
                 "title": 'Phương thức 1',

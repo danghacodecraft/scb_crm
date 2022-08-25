@@ -3,11 +3,10 @@ from typing import List, Optional
 
 from pydantic import Field
 
-from app.api.base.schema import BaseSchema
+from app.api.base.schema import BaseSchema, ResponseRequestSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
-from app.api.v1.others.fee.schema import (
-    FeeInfoResponse, MultipleFeeInfoRequest
-)
+from app.api.v1.others.fee.schema import FeeInfoResponse
+from app.api.v1.schemas.utils import DropdownRequest
 
 
 class TdAccountRequest(BaseSchema):
@@ -37,12 +36,38 @@ class DepositOpenTDAccountRequest(BaseSchema):
     td_account: List[TdAccountRequest] = Field(..., description="Danh sách TKTK")
 
 
+class StatementInfoRequest(ResponseRequestSchema):
+    denominations: str = Field(..., description="Mệnh giá")
+    amount: int = Field(..., description="Số lượng")
+
+
+#  Thông tin quản lý
+class ManagementInfoRequest(BaseSchema):
+    direct_staff_code: Optional[str] = Field(..., description="Mã nhân viên kinh doanh")
+    indirect_staff_code: Optional[str] = Field(..., description="Mã nhân viên quản lý gián tiếp")
+
+
+#  Thông tin khách hàng giao dịch
+class SenderInfoRequest(BaseSchema):
+    cif_flag: bool = Field(..., description="Cờ có CIF chưa, `true` = Có CIF, `false` = Chưa có CIF")
+    cif_number: Optional[str] = Field(None, description="Số CIF")
+    fullname_vn: Optional[str] = Field(None, description="Người giao dịch")
+    identity: Optional[str] = Field(None, description="Thông tin giấy tờ định danh")
+    issued_date: Optional[date] = Field(None, description="Ngày cấp")
+    place_of_issue: Optional[DropdownRequest] = Field(None, description="Nơi cấp")
+    address_full: Optional[str] = Field(None, description="Địa chỉ")
+    mobile_phone: Optional[str] = Field(None, description="SĐT")
+    telephone: Optional[str] = Field(None, description="SĐT")
+    otherphone: Optional[str] = Field(None, description="SĐT")
+    note: Optional[str] = Field(None, description="Ghi chú")
+
+
 class AccountForm(BaseSchema):
     pay_in: str = Field(..., description="Hình thức hạch toán")
     account_number: Optional[str] = Field(..., description="Số tài khoản")
-    full_name: Optional[str] = Field(..., description="Chủ tài khoản")
-    currency: Optional[str] = Field(..., description="Loại tiền")
-    amount: Optional[str] = Field(..., description="Số dư khả dụng")
+    # full_name: Optional[str] = Field(..., description="Chủ tài khoản")
+    # currency: Optional[str] = Field(..., description="Loại tiền")
+    # amount: Optional[str] = Field(..., description="Số dư khả dụng")
 
 
 class CurrencyExchange(BaseSchema):
@@ -70,15 +95,88 @@ class PayInAccount(BaseSchema):
 
 class AccountFormRequest(BaseSchema):
     pay_in_form: AccountForm = Field(...)
-    currency_exchange: CurrencyExchange = Field(..., description="Quy đổi ngoại tệ")
-    currency_transfer: CurrencyTransfer = Field(..., description="Ngoại tệ chuyển ra nước ngoài")
-    pay_in_account: PayInAccount = Field(..., description="Nộp tiền vào tài khoản")
+    # currency_exchange: CurrencyExchange = Field(..., description="Quy đổi ngoại tệ")
+    # currency_transfer: CurrencyTransfer = Field(..., description="Ngoại tệ chuyển ra nước ngoài")
+    # pay_in_account: PayInAccount = Field(..., description="Nộp tiền vào tài khoản")
 
 
 class DepositPayInRequest(BaseSchema):
     # TODO
     account_form: AccountFormRequest = Field(...)
-    fee_info: MultipleFeeInfoRequest = Field(..., description="Thông tin phí")
+    # fee_info: MultipleFeeInfoRequest = Field(..., description="Thông tin phí")
+    statement: List[StatementInfoRequest] = Field(..., description="I.Thông tin bảng kê")
+    management_info: ManagementInfoRequest = Field(..., description="II. Thông tin quản lý")
+    sender_info: SenderInfoRequest = \
+        Field(..., description="III. Thông tin khách hàng giao dịch")
+
+# --------------------------------------------- REDEEM-ACCOUNT --------------------------------------------------------#
+
+
+class AccountInfo(BaseSchema):
+    account_number: str = Field(..., description="Số tài khoản")
+
+
+class RedemptionDetails(BaseSchema):
+    redemption_mode: str = Field(...)
+    redemption_amount: int = Field(...)
+    waive_penalty: str = Field(...)
+    waive_interest: str = Field(...)
+
+
+class PayoutDetails(BaseSchema):
+    payout_component: str = Field(...)
+    payout_mode: str = Field(...)
+    payout_amount: int = Field(...)
+    offset_account: str = Field(...)
+
+
+class PayoutDetailRequest(BaseSchema):
+    redemption_details: RedemptionDetails = Field(...)
+    payout_details: Optional[List[PayoutDetails]] = Field(None)
+
+
+class RedeemAccountRequest(BaseSchema):
+    account_info: AccountInfo = Field(..., description="Thông tin tài khoản")
+    p_payout_detail: PayoutDetailRequest = Field(
+        ...,
+        description="""REDEMPTION_MODE: Loại tất toán (N: Tất toán toàn phần, Y: Tất toán một phần),
+            \nREDEMPTION_AMOUNT: Số tiền tất toán (0 đối với Mode N),
+            \nWAIVE_PENALTY: N (Mặc định là N),
+            \nWAIVE_INTEREST: N (Mặc định là N)
+            \nPAYOUT_COMPONENT: Loại tiền trả về (P là trả gốc, I là trả lãi, null đối với mode N, bắt buộc là 2 dòng I và P đối với mode Y),
+            \nPAYOUT_MODE: (Loại trả tiền, S là trả về tài khoản, C là trả về tiền mặt, dốid với mode Y chỉ có thể dùng S),
+            \nPAYOUT_AMOUNT:Số tiền gốc trả về đối với payout là P, Số tiền lãi trả về đối với payout là I),
+            \nOFFSET_ACCOUNT: Số tài khoản trả tiền.
+        """
+    )
+
+
+class AccountInfoResponse(BaseSchema):
+    account_number: str = Field(...)
+
+
+class RedemptionDetailsResponse(BaseSchema):
+    redemption_mode: str = Field(...)
+    redemption_amount: int = Field(...)
+    waive_penalty: str = Field(...)
+    waive_interest: str = Field(...)
+
+
+class PayoutDetailResponse(BaseSchema):
+    payout_component: str = Field(...)
+    payout_mode: str = Field(...)
+    payout_amount: int = Field(...)
+    offset_account: str = Field(...)
+
+
+class PPayoutDetailResponse(BaseSchema):
+    redemption_details: RedemptionDetailsResponse = Field(...)
+    payout_details: List[PayoutDetailResponse] = Field(...)
+
+
+class RedeemAccountResponse(BaseSchema):
+    account_info: AccountInfoResponse = Field(...)
+    p_payout_detail: PPayoutDetailResponse = Field(...)
 
 
 class DepositPayInResponse(BaseSchema):
