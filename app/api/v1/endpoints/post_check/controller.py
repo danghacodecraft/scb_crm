@@ -85,6 +85,7 @@ class CtrKSS(BaseController):
         query_data.update({'tran_type_id': query_params.tran_type_id}) if query_params.tran_type_id else None
         query_data.update({'approve_status': query_params.approve_status}) if query_params.approve_status else None
         query_data.update({'branch_id': query_params.branch_id}) if query_params.branch_id else None
+        query_data.update({'kss_status': query_params.kss_status}) if query_params.kss_status else None
         query_data.update({'zone_id': zone_id}) if zone_id else None
         query_data.update(
             {

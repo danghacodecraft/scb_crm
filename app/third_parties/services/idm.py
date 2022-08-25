@@ -30,7 +30,7 @@ class ServiceIDM:
     async def response_service(response):
         if response.status == status.HTTP_200_OK:
             return True, await response.json()
-        if response.status == status.HTTP_400_BAD_REQUEST:
+        if status.HTTP_400_BAD_REQUEST <= response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
             return False, await response.json()
         return False, {
             "message": ERROR_CALL_SERVICE_IDM,

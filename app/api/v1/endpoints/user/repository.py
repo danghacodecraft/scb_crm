@@ -13,8 +13,7 @@ from app.settings.event import (
 from app.third_parties.services.idm import ServiceIDM
 from app.utils.constant.gw import GW_FUNC_SELECT_USER_INFO_BY_USER_ID_OUT
 from app.utils.error_messages import (
-    ERROR_CALL_SERVICE_GW, ERROR_CALL_SERVICE_IDM, ERROR_INVALID_TOKEN,
-    USER_ID_NOT_EXIST
+    ERROR_CALL_SERVICE_GW, ERROR_CALL_SERVICE_IDM, ERROR_INVALID_TOKEN
 )
 from app.utils.functions import string_to_date
 
@@ -95,7 +94,7 @@ async def repos_login(username: str, password: str) -> ReposReturn:
     return ReposReturn(data=data_idm)
 
 
-async def repos_check_token(token: str) -> ReposReturn:
+async def repos_check_token(token: str, refresh_token: bool = False) -> ReposReturn:
     try:
         auth_parts = orjson.loads(zlib.decompress(base64.b64decode(token)))
     except (TypeError, UnicodeDecodeError, binascii.Error, IndexError, zlib.error):
@@ -117,11 +116,20 @@ async def repos_check_token(token: str) -> ReposReturn:
             detail="Token is invalid"
         )
 
-    menu_list = (await service_redis.get(username))['menu_list']
+    data_idm = await service_redis.get(username)
+    if refresh_token:
+        data_idm['user_info']['token'] = check_token['token']
+        data_idm['user_info']['token'] = base64.b64encode(
+            zlib.compress(orjson.dumps(data_idm['user_info']))
+        ).decode('utf-8')
+        await service_redis.getset(username, data_idm)
+        return ReposReturn(data=dict(
+            refresh_token=data_idm['user_info']['token']
+        ))
 
     return ReposReturn(data=dict(
-        user_info=auth_parts,
-        menu_list=menu_list
+        user_info=data_idm['user_info'],
+        menu_list=data_idm['menu_list']
     ))
 
 
@@ -137,13 +145,6 @@ async def repos_get_username_from_token(token: str) -> ReposReturn:
         )
 
     return ReposReturn(data=auth_parts['username'])
-
-
-async def repos_get_user_info(user_id: str) -> ReposReturn:
-    if user_id == USER_ID:
-        return ReposReturn(data=USER_INFO)
-    else:
-        return ReposReturn(is_error=True, msg=USER_ID_NOT_EXIST, loc='user_id')
 
 
 async def repos_get_user_info_core_fcc(current_user):

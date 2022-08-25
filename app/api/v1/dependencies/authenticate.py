@@ -9,7 +9,7 @@ from fastapi.security import (
 
 from app.api.base.except_custom import ExceptionHandle
 from app.api.v1.endpoints.user.repository import repos_check_token
-from app.api.v1.endpoints.user.schema import AuthResponse
+from app.api.v1.endpoints.user.schema import AuthResponse, RefreshTokenResponse
 from app.settings.service import SERVICE
 from app.utils.error_messages import ERROR_INVALID_TOKEN
 
@@ -18,7 +18,9 @@ bearer_token = HTTPBearer()
 basic_auth = HTTPBasic()
 
 
-def get_current_user_from_header(is_require_login: bool = True) -> Callable:
+def get_current_user_from_header(is_require_login: bool = True, refresh_token: bool = True) -> Callable:
+    if refresh_token:
+        return _get_authorization_header_refresh
     return _get_authorization_header if is_require_login else _get_authorization_header_optional
 
 
@@ -39,17 +41,29 @@ def check_token_ekyc(credentials) -> bool:
 
 async def _get_authorization_header(
         scheme_and_credentials: HTTPAuthorizationCredentials = Security(bearer_token),
-) -> Union[AuthResponse, bool]:
+        refresh_token: bool = False
+) -> Union[AuthResponse, RefreshTokenResponse, bool]:
     # bypass token check if service ekyc
     if check_token_ekyc(scheme_and_credentials.credentials):
         return AuthResponse(**{"user_info": {"token": ""}, "menu_list": []})
-    result_check_token = await repos_check_token(token=scheme_and_credentials.credentials)
+
+    result_check_token = await repos_check_token(token=scheme_and_credentials.credentials, refresh_token=refresh_token)
     if result_check_token.is_error:
         raise ExceptionHandle(
             errors=[{'loc': None, 'msg': ERROR_INVALID_TOKEN}],
             status_code=status.HTTP_401_UNAUTHORIZED
         )
-    return AuthResponse(**result_check_token.data)
+
+    if refresh_token:
+        return RefreshTokenResponse(**result_check_token.data)
+    else:
+        return AuthResponse(**result_check_token.data)
+
+
+async def _get_authorization_header_refresh(
+        scheme_and_credentials: HTTPAuthorizationCredentials = Security(bearer_token),
+) -> Union[AuthResponse, RefreshTokenResponse]:
+    return await _get_authorization_header(scheme_and_credentials, refresh_token=True)
 
 
 async def _get_authorization_header_optional(

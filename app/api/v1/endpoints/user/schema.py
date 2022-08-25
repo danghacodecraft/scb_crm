@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from pydantic import Field
 
-from app.api.base.schema import BaseSchema, CreatedUpdatedBaseModel
+from app.api.base.schema import BaseSchema
 
 
 class UserInfoResponse(BaseSchema):
@@ -158,104 +158,11 @@ EXAMPLE_RES_SUCCESS_DETAIL_USER = {"ex1": {
 }}
 
 
-########################################################################################################################
-# update user
-########################################################################################################################
-
-
-class UserUpdateRequest(BaseSchema):
-    full_name_vn: str = Field(..., description='Họ và tên người dùng')
-    avatar_url: str = Field(..., description='Link avatar')
-
-
-class UserUpdateResponse(CreatedUpdatedBaseModel):
-    user_id: str = Field(..., description='Id người dùng')
-    full_name_vn: str = Field(..., description='Họ và tên người dùng')
-
-
-EXAMPLE_REQ_UPDATE_USER = {
-    "ex1": {
-        "summary": "A normal example",
-        "description": "A **normal** item works correctly.",
-        "value": {
-            "full_name_vn": "Foo",
-            "avatar_url": "/cdn/abc.jpg"
-        },
-    },
-    "ex2": {
-        "summary": "An example with converted data",
-        "description": "FastAPI can convert price `strings` to actual `numbers` automatically",
-        "value": {
-            "full_name_vn": "Foo",
-            "avatar_url": "A very nice Item"
-        },
-    }
-}
-
-EXAMPLE_RES_SUCCESS_UPDATE_USER = {
-    "ex1": {
-        "summary": "Thành công 1",
-        "value": {
-            "data": {
-                "created_at": "16 10:46:08-10-2021",
-                "created_by": "system",
-                "updated_at": "16 10:46:08-10-2021",
-                "updated_by": "system",
-                "user_id": "9651cdfd9a9a4eb691f9a3a125ac46b0",
-                "full_name_vn": "abc"
-            },
-            "errors": []
-        }
-    },
-    "ex2": {
-        "summary": "Thành công 2",
-        "value": {
-            "data": {
-                "created_at": "16 10:46:50-10-2021",
-                "created_by": "system",
-                "updated_at": "16 10:46:50-10-2021",
-                "updated_by": "system",
-                "user_id": "9651cdfd9a9a4eb691f9a3a125ac46b0",
-                "full_name_vn": "xyz"
-            },
-            "errors": []
-        }
-    }
-}
-
-EXAMPLE_RES_FAIL_UPDATE_USER = {
-    "ex1": {
-        "summary": "Không gửi đúng basic auth",
-        "value": {
-            "data": "null",  # do FastAPI đang generate file openapi.json với option bỏ qua None nên tạm thời để vậy
-            "errors": [
-                {
-                    "loc": "null",
-                    "msg": "null",
-                    "detail": "Not authenticated"
-                }
-            ]
-        }
-    },
-    "ex2": {
-        "summary": "Truyền không đúng kiểu dữ liệu",
-        "value": {
-            "data": "null",  # do FastAPI đang generate file openapi.json với option bỏ qua None nên tạm thời để vậy
-            "errors": [
-                {
-                    "loc": "body -> avatar_url",
-                    "msg": "VALIDATE_ERROR",
-                    "detail": "str type expected"
-                }
-            ]
-        }
-    }
-}
-
-########################################################################################################################
-
-
 class UserBannerResponse(BaseSchema):
     banner_link_512: str = Field(..., description="Link 512")
     banner_link_1024: str = Field(..., description="Link 1024")
     banner_link_2560: str = Field(..., description="Link 2560")
+
+
+class RefreshTokenResponse(BaseSchema):
+    refresh_token: str = Field(..., description="Refresh token")
