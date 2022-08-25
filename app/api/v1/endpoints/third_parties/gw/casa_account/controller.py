@@ -821,11 +821,14 @@ class CtrGWCasaAccount(BaseController):
 
         maker = booking_business_form.booking.created_by
         request_data_gw = orjson_loads(booking_business_form.form_data)
-        p_blk_udf = []
-        p_blk_udf.append(dict(
-            UDF_NAME='MUC_DICH_GIAO_DICH',
-            UDF_VALUE='MUC_DICH_KHAC'
-        ))
+        p_blk_udf = {
+            "UDF_DETAILS": [
+                {
+                    "UDF_NAME": "MUC_DICH_GIAO_DICH",
+                    "UDF_VALUE": "MUC_DICH_KHAC"
+                }
+            ]
+        }
 
         data_input = {
             "account_info": {
