@@ -45,7 +45,9 @@ from app.api.v1.endpoints.third_parties.repository import (
 )
 from app.api.v1.others.booking.controller import CtrBooking
 from app.api.v1.others.permission.controller import PermissionController
-from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
+from app.settings.config import (
+    DATETIME_INPUT_OUTPUT_FORMAT, DATETIME_INPUT_OUTPUT_FORMAT_LOCALE
+)
 from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.utils.constant.approval import CIF_STAGE_APPROVE_KSV
 from app.utils.constant.business_type import (
@@ -281,7 +283,7 @@ class CtrGWCasaAccount(BaseController):
         customer_info = gw_check_exist_casa_account_info['retrieveCurrentAccountCASA_out']['data_output']['customer_info']
         account_info = customer_info['account_info']
         is_lower_core_fcc_date = False
-        account_open_date = string_to_date(account_info['account_open_date'], _format=DATETIME_INPUT_OUTPUT_FORMAT)
+        account_open_date = string_to_date(account_info['account_open_date'], _format=DATETIME_INPUT_OUTPUT_FORMAT_LOCALE)
         if account_open_date and current_user_info.fcc_current_date and account_open_date <= current_user_info.fcc_current_date:
             is_lower_core_fcc_date = True
 
@@ -1850,6 +1852,7 @@ class CtrGWCasaAccount(BaseController):
         ))
 
         return self.response(data=response_data)
+
     ####################################################################################################################
 
     async def get_sender_info(self, form_data):

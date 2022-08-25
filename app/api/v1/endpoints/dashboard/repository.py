@@ -29,7 +29,10 @@ from app.third_parties.oracle.models.master_data.others import (
     Branch, SlaTransaction, TransactionStage, TransactionStageRole,
     TransactionStageStatus
 )
-from app.utils.constant.cif import BUSINESS_FORM_WITHDRAW, CONTACT_ADDRESS_CODE
+from app.utils.constant.cif import (
+    BUSINESS_FORM_OPEN_CASA_OPEN_CASA, BUSINESS_FORM_WITHDRAW,
+    CONTACT_ADDRESS_CODE
+)
 from app.utils.functions import date_to_datetime, end_time_of_day
 from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese
 
@@ -458,7 +461,18 @@ async def repos_get_open_casa_info_from_booking(
         .filter(Booking.parent_id.in_(booking_ids))
     ).all()
 
-    return ReposReturn(data=open_casa_infos)
+    booking_business_form_infos = session.execute(
+        select(
+            Booking.id,
+            BookingBusinessForm
+        )
+        .join(BookingBusinessForm, Booking.id == BookingBusinessForm.booking_id,
+              BookingBusinessForm.business_form_id == BUSINESS_FORM_OPEN_CASA_OPEN_CASA)
+        .filter(Booking.id.in_(booking_ids))
+        .order_by(BookingBusinessForm.created_at)
+    )
+
+    return ReposReturn(data=(open_casa_infos, booking_business_form_infos))
 
 
 async def repos_get_open_cif_info_from_booking(

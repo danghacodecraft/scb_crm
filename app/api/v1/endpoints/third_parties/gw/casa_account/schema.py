@@ -101,7 +101,7 @@ class GWAccountInfoResponse(BaseGWSchema):
     service_escrow: Optional[str] = Field(..., description="Dịch vụ ký quỹ")
     service_escrow_ex_date: Optional[date] = Field(..., description="Ngày đáo hạn ký quỹ")
     amount_rate_close: Optional[int] = Field(..., description="Tiền lãi khi đóng tài khoản")
-    fee_close: Optional[int] = Field(..., description="Phí khi đóng tài khoản")
+    fee_close: Optional[float] = Field(..., description="Phí khi đóng tài khoản")
     total: Optional[int] = Field(..., description="Tổng số tiền")
     lock_info: List[GWCasaAccountLockInfo] = Field(..., description="Thông tin tài khoản")
     branch_info: GWBranchDropdownResponse = Field(..., description="Thông tin đơn vị")

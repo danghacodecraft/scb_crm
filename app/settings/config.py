@@ -19,12 +19,13 @@ WRITE_LOG = SERVICE['kafka']["write_log"]
 
 DATETIME_INPUT_OUTPUT_FORMAT = '%Y-%m-%d %H:%M:%S'
 
+DATETIME_INPUT_OUTPUT_FORMAT_LOCALE = '%m/%d/%Y %I:%M:%S %p'
+
 DATE_INPUT_OUTPUT_FORMAT = '%Y-%m-%d'
 
 TIME_INPUT_OUTPUT_FORMAT = '%H:%M:%S'
 
 DATE_INPUT_OUTPUT_EKYC_FORMAT = '%d/%m/%Y'
-
 
 # logging configuration
 LOGGING_LEVEL = logging.DEBUG if APPLICATION["debug"] else logging.INFO
