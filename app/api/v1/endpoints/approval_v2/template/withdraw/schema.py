@@ -4,7 +4,7 @@ from typing import List, Optional
 from pydantic import Field
 
 from app.api.base.schema import (
-    BaseSchema, CreatedUpdatedBaseModel, ResponseRequestSchema,
+    BaseSchema, ResponseRequestSchema, TMSCreatedUpdatedBaseModel,
     TMSResponseSchema
 )
 from app.api.v1.schemas.utils import DropdownResponse, OptionalDropdownRequest
@@ -94,6 +94,6 @@ class CustomerInfoResponse(BaseSchema):
         Field(..., description="III. Thông tin khách hàng giao dịch")
 
 
-class TMSWithdrawResponse(CreatedUpdatedBaseModel):
+class TMSWithdrawResponse(TMSCreatedUpdatedBaseModel):
     transaction_info: TransactionInfoResponse = Field(..., description="A. Thông tin giao dịch")
     customer_info: CustomerInfoResponse = Field(..., description="B. Thông tin khách hàng giao dịch")

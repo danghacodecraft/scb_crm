@@ -3,7 +3,7 @@ from typing import List, Optional, Union
 
 from pydantic import Field, validator
 
-from app.api.base.schema import CreatedUpdatedBaseModel, TMSResponseSchema
+from app.api.base.schema import TMSCreatedUpdatedBaseModel, TMSResponseSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
 from app.api.v1.others.fee.schema import OneFeeInfoRequest
 from app.api.v1.schemas.utils import (
@@ -231,7 +231,7 @@ class FeeDetailInfoResponse(TMSResponseSchema):
     ref_num: str = Field('', description='Số bút toán')
 
 
-class TMSCasaTopUpResponse(CreatedUpdatedBaseModel):
+class TMSCasaTopUpResponse(TMSCreatedUpdatedBaseModel):
     transfer_type: TransferTypeResponse = Field(..., description="Loại chuyển")
     receiver: ReceiverResponse = Field(..., description="Thông tin người thụ hưởng")
     transfer: TransferResponse = Field(..., description="Thông tin giao dịch")
