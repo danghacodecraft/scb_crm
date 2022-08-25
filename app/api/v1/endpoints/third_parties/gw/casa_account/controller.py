@@ -72,8 +72,7 @@ from app.utils.constant.gw import (
     GW_FUNC_INTERBANK_TRANSFER_OUT, GW_FUNC_PAY_IN_CARD_247_BY_ACC_NUM_IN,
     GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM_OUT, GW_FUNC_PAY_IN_CARD_OUT,
     GW_FUNC_TELE_TRANSFER_OUT, GW_FUNC_TT_LIQUIDATION_OUT, GW_GL_BRANCH_CODE,
-    GW_TRANSACTION_TYPE_SEND, GW_TRANSACTION_TYPE_WITHDRAW,
-    GW_UNIT_ACCOUNT_NUMBER
+    GW_TRANSACTION_TYPE_SEND, GW_TRANSACTION_TYPE_WITHDRAW
 )
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_KSV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_KSV
@@ -1172,7 +1171,7 @@ class CtrGWCasaAccount(BaseController):
         current_user = self.current_user
         data_input = {
             "account_info": {
-                "account_num": GW_UNIT_ACCOUNT_NUMBER,
+                "account_num": None,
                 "account_currency": "VND"
             },
             "branch_info": {
@@ -1574,7 +1573,7 @@ class CtrGWCasaAccount(BaseController):
                     "p_instrument_number": p_instrument_number,
                     "p_instrument_status": "LIQD",
                     "account_info": {
-                        "account_num": GW_UNIT_ACCOUNT_NUMBER,  # TODO
+                        "account_num": None,  # TODO
                         "account_currency": "VND"
                     },
                     "p_charges": [
