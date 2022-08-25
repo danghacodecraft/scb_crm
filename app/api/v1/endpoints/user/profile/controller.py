@@ -1,12 +1,14 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.third_parties.gw.employee.repository import (
+    repos_gw_get_employee_info_from_code,
     repos_gw_get_retrieve_employee_info_from_code
 )
 from app.third_parties.oracle.models.master_data.customer import CustomerGender
 from app.utils.address_functions.functions import combine_full_address
 from app.utils.constant.cif import CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE
 from app.utils.constant.gw import (
-    GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_OUT, GW_GENDER_FEMALE,
+    GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_OUT,
+    GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE_OUT, GW_GENDER_FEMALE,
     GW_GENDER_MALE
 )
 from app.utils.error_messages import MESSAGE_STATUS, USER_NOT_EXIST
@@ -26,6 +28,10 @@ class CtrProfile(BaseController):
         profile = self.call_repos(await repos_gw_get_retrieve_employee_info_from_code(
             staff_code=employee_id, current_user=self.current_user
         ))
+        gw_employee = self.call_repos(await repos_gw_get_employee_info_from_code(
+            employee_code=employee_id, current_user=self.current_user
+        ))
+        avatar = gw_employee[GW_FUNC_SELECT_EMPLOYEE_INFO_FROM_CODE_OUT]["data_output"]["employee_info"]["avatar"]  # TODO
         employee_info = profile[GW_FUNC_RETRIEVE_EMPLOYEE_INFO_FROM_CODE_OUT][
             "data_output"]["employee_info"]
 
@@ -42,7 +48,7 @@ class CtrProfile(BaseController):
         )
 
         profile = {
-            "avatar": employee_info['avatar'],
+            "avatar": avatar,
             "gender": dropdown_gender,
             "full_name_vn": employee_info['full_name'],
             "address": combine_full_address(
