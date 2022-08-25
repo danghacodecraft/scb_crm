@@ -40,6 +40,7 @@ class QueryParamsKSSRequest(BaseSchema):
     tran_type_id: Optional[str] = Field(None, description="Theo loại giao dịch")
     transaction_id: Optional[str] = Field(None, description='Theo mã giao dịch')
     approve_status: Optional[str] = Field(None, description='Theo trạng thái phê duyệt')
+    kss_status: Optional[str] = Field(None, description='Theo trạng thái KSS')
     branch_id: Optional[str] = Field(None, description='Theo đơn vị')
     step_status: Optional[str] = Field(None, description='Theo trạng thái giao dịch')
     zone_id: Optional[str] = Field(None, description='Theo vùng')
