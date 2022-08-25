@@ -213,7 +213,7 @@ class CtrDashboard(BaseController):
         for booking_id, booking_business_form in booking_business_form_open_casa_infos:
             form_data = orjson_loads(booking_business_form.form_data)
             if 'cif_number' in form_data:
-                gw_customer_detail = CtrGWCustomer(current_user=self.current_user).ctr_gw_get_customer_info_detail(
+                gw_customer_detail = await CtrGWCustomer(current_user=self.current_user).ctr_gw_get_customer_info_detail(
                     return_raw_data_flag=True, cif_number=form_data['cif_number'])
                 full_name_vn = gw_customer_detail['full_name']
                 mapping_datas[booking_id].update({
