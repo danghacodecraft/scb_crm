@@ -223,12 +223,11 @@ class FeeDetailInfoResponse(TMSResponseSchema):
     payer: Optional[str] = Field('', description="Bên thanh toán phí")
     fee_category: Optional[DropdownResponse] = Field('', description="Nhóm phí")
     fee: Optional[DropdownResponse] = Field('', description="Mã loại phí")
-    amount: int = Field('', description='Số tiền phí')
-    vat: int = Field('', description='Thuế VAT')
-    total: int = Field('', description='Tổng phí')
-    actual_total: Optional[float] = Field('', description="Số tiền thực chuyển")
-    note: str = Field('', description='Nội dung')
-    ref_num: str = Field('', description='Số bút toán')
+    vat: Optional[str] = Field('', description='Thuế VAT')
+    total: Optional[str] = Field('', description='Tổng phí')
+    actual_total: Optional[str] = Field('', description="Số tiền thực chuyển")
+    note: Optional[str] = Field('', description='Nội dung')
+    ref_num: Optional[str] = Field('', description='Số bút toán')
 
 
 class TMSCasaTopUpResponse(TMSCreatedUpdatedBaseModel):

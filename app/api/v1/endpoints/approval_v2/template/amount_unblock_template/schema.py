@@ -52,8 +52,8 @@ class StatementInfoRequest(ResponseRequestSchema):
 
 
 class ManagementInfoRequest(BaseSchema):
-    direct_staff_code: Optional[str] = Field(..., description="Mã nhân viên kinh doanh")
-    indirect_staff_code: Optional[str] = Field(..., description="Mã nhân viên quản lý gián tiếp")
+    indirect_staff_code: Optional[str] = Field(None, description="Mã nhân viên quản lý gián tiếp")
+    direct_staff_code: Optional[str] = Field(None, description="Mã nhân viên kinh doanh")
 
 
 class SenderInfoRequest(BaseSchema):
