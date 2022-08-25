@@ -3,7 +3,7 @@ from typing import List, Optional, Union
 
 from pydantic import Field, validator
 
-from app.api.base.schema import TMSResponseSchema
+from app.api.base.schema import CreatedUpdatedBaseModel, TMSResponseSchema
 from app.api.v1.endpoints.cif.base_field import CustomField
 from app.api.v1.others.fee.schema import OneFeeInfoRequest
 from app.api.v1.schemas.utils import (
@@ -216,6 +216,7 @@ class TMSStatementResponse(TMSResponseSchema):
     statements: List[StatementsResponse] = Field(..., description="Thông tin chi tiết bảng kê")
     total: str = Field(..., description="Tổng thành tiền")
     odd_difference: str = Field(..., description="Chênh lệch lẻ")
+    total_number_of_bills: Optional[str] = Field('0', description="tổng số lượng bill")
 
 
 class FeeDetailInfoResponse(TMSResponseSchema):
@@ -230,7 +231,7 @@ class FeeDetailInfoResponse(TMSResponseSchema):
     ref_num: str = Field(None, description='Số bút toán')
 
 
-class TMSCasaTopUpResponse(TMSResponseSchema):
+class TMSCasaTopUpResponse(CreatedUpdatedBaseModel):
     transfer_type: TransferTypeResponse = Field(..., description="Loại chuyển")
     receiver: ReceiverResponse = Field(..., description="Thông tin người thụ hưởng")
     transfer: TransferResponse = Field(..., description="Thông tin giao dịch")
