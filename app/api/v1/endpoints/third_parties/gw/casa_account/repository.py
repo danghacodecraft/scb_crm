@@ -402,6 +402,15 @@ async def repos_gw_withdraw(
         created_at=now()
     )))
 
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            msg=ERROR_CALL_SERVICE_GW,
+            loc='PAYMENT_AMOUNT_UNBLOCK',
+            detail=gw_withdraw.get('cashWithdrawals_out').get('transaction_info').get(
+                'transaction_error_msg')
+        )
+
     return ReposReturn(data=(is_success, gw_withdraw))
 
 
