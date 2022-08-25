@@ -36,6 +36,6 @@ class CtrTemplateDetail(BaseController):
         if object_data['business_type_id'] == BUSINESS_TYPE_CASA_TOP_UP:
             object_data = ResponseData[TMSCasaTopUpResponse](**self.response(data=object_data))
 
-        if object_data['business_type_id'] == BUSINESS_TYPE_WITHDRAW:
+        elif object_data['business_type_id'] == BUSINESS_TYPE_WITHDRAW:
             object_data = ResponseData[TMSWithdrawResponse](**self.response(data=object_data))
         return object_data

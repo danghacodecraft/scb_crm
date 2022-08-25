@@ -26,15 +26,15 @@ class StatementInfoRequest(TMSResponseSchema):
 # Common
 class CasaTopUpCommonRequest(TMSResponseSchema):
     sender_cif_number: Optional[str] = CustomField().OptionalCIFNumberField
-    sender_full_name_vn: Optional[str] = Field(None, description="Người giao dịch")
-    sender_identity_number: Optional[str] = Field(None, description="Giấy tờ định danh")
-    sender_issued_date: Optional[date] = Field(None, description="Ngày cấp")
-    sender_place_of_issue: Optional[DropdownRequest] = Field(None, description="Nơi cấp")
-    sender_address_full: Optional[str] = Field(None, description="Địa chỉ")
-    sender_mobile_number: Optional[str] = Field(None, description="Số điện thoại", regex=REGEX_NUMBER_ONLY)
-    receiving_method: str = Field(None, description=f"Hình thức nhận: {make_description_from_dict(RECEIVING_METHODS)}")
+    sender_full_name_vn: Optional[str] = Field('', description="Người giao dịch")
+    sender_identity_number: Optional[str] = Field('', description="Giấy tờ định danh")
+    sender_issued_date: Optional[date] = Field('', description="Ngày cấp")
+    sender_place_of_issue: Optional[DropdownRequest] = Field('', description="Nơi cấp")
+    sender_address_full: Optional[str] = Field('', description="Địa chỉ")
+    sender_mobile_number: Optional[str] = Field('', description="Số điện thoại", regex=REGEX_NUMBER_ONLY)
+    receiving_method: str = Field('', description=f"Hình thức nhận: {make_description_from_dict(RECEIVING_METHODS)}")
     fee_info: Optional[OneFeeInfoRequest] = Field(..., description="Thông tin phí")
-    fee_note: Optional[str] = Field(None, description="Ghi chú phí")
+    fee_note: Optional[str] = Field('', description="Ghi chú phí")
     statement: List[StatementInfoRequest] = Field(..., description="Thông tin bảng kê")
     direct_staff_code: Optional[str] = Field(..., description="Mã nhân viên kinh doanh")
     indirect_staff_code: Optional[str] = Field(..., description="Mã nhân viên quản lý gián tiếp")
@@ -42,12 +42,12 @@ class CasaTopUpCommonRequest(TMSResponseSchema):
     content: str = Field(
         ..., description="Nội dung chuyển tiền", regex=REGEX_TRANSFER_CONTENT, max_length=MAX_LENGTH_TRANSFER_CONTENT
     )
-    p_instrument_number: Optional[str] = Field(None, description="Số bút toán")
-    core_fcc_request: Optional[str] = Field(None, description="")
+    p_instrument_number: Optional[str] = Field('', description="Số bút toán")
+    core_fcc_request: Optional[str] = Field('', description="")
 
     @validator("sender_mobile_number")
     def check_valid_mobile_number(cls, v):
-        if v is not None:
+        if v != '':
             if not is_valid_mobile_number(v):
                 raise TypeError('')
         return v
@@ -101,11 +101,11 @@ class CasaTopUpThirdPartyByIdentityRequest(CasaTopUpThirdPartyCommonRequest):
     receiver_identity_number: str = Field(..., description="Số GTĐD", regex=REGEX_NUMBER_ONLY)
     receiver_issued_date: date = Field(..., description="Ngày cấp")
     receiver_place_of_issue: DropdownRequest = Field(..., description="Nơi cấp")
-    receiver_mobile_number: Optional[str] = Field(None, description="Số điện thoại")
+    receiver_mobile_number: Optional[str] = Field('', description="Số điện thoại")
 
     @validator("receiver_mobile_number")
     def check_valid_mobile_number(cls, v):
-        if v is not None:
+        if v != '':
             if not is_valid_mobile_number(v):
                 raise TypeError('')
         return v
@@ -152,19 +152,19 @@ class TransferTypeResponse(TMSResponseSchema):
 
 
 class ReceiverResponse(TMSResponseSchema):
-    account_number: Optional[str] = Field(None, description="Số tài khoản")
-    card_number: Optional[str] = Field(None, description="Số thẻ")
-    fullname_vn: Optional[str] = Field(None, description="Chủ tài khoản")
-    bank: DropdownCodeNameResponse = Field(None, description="Ngân hàng")
-    bank_branch: Optional[str] = Field(None, description="Chi nhánh ngân hàng")
-    province: DropdownCodeNameResponse = Field(None, description="Tỉnh/Thành phố")
-    branch_info: DropdownCodeNameResponse = Field(None, description="Đơn vị thụ hưởng")
-    identity_number: Optional[str] = Field(None, description="Số giấy tờ định danh")
-    issued_date: Optional[date] = Field(None, description="Ngày cấp")
-    place_of_issue: DropdownCodeNameResponse = Field(None, description="Nơi cấp")
-    mobile_number: Optional[str] = Field(None, description="Số điện thoại")
-    address_full: Optional[str] = Field(None, description="Địa chỉ")
-    currency: Optional[str] = Field(None, description="Loại tiền")
+    account_number: Optional[str] = Field('', description="Số tài khoản")
+    card_number: Optional[str] = Field('', description="Số thẻ")
+    fullname_vn: Optional[str] = Field('', description="Chủ tài khoản")
+    bank: DropdownCodeNameResponse = Field('', description="Ngân hàng")
+    bank_branch: Optional[str] = Field('', description="Chi nhánh ngân hàng")
+    province: DropdownCodeNameResponse = Field('', description="Tỉnh/Thành phố")
+    branch_info: DropdownCodeNameResponse = Field('', description="Đơn vị thụ hưởng")
+    identity_number: Optional[str] = Field('', description="Số giấy tờ định danh")
+    issued_date: Optional[date] = Field('', description="Ngày cấp")
+    place_of_issue: DropdownCodeNameResponse = Field('', description="Nơi cấp")
+    mobile_number: Optional[str] = Field('', description="Số điện thoại")
+    address_full: Optional[str] = Field('', description="Địa chỉ")
+    currency: Optional[str] = Field('', description="Loại tiền")
 
 
 class TransferResponse(TMSResponseSchema):
@@ -195,15 +195,15 @@ class StaffInfoResponse(TMSResponseSchema):
 
 
 class TMSFeeDetailInfoResponse(TMSResponseSchema):
-    payer: Optional[str] = Field(None, description="Bên thanh toán phí")
-    fee_category: Optional[DropdownResponse] = Field(None, description="Nhóm phí")
-    fee: Optional[DropdownResponse] = Field(None, description="Mã loại phí")
-    amount: int = Field(None, description='Số tiền phí')
-    vat: int = Field(None, description='Thuế VAT')
-    total: int = Field(None, description='Tổng phí')
-    actual_total: Optional[float] = Field(None, description="Số tiền thực chuyển")
-    note: str = Field(None, description='Nội dung')
-    ref_num: str = Field(None, description='Số bút toán')
+    payer: Optional[str] = Field('', description="Bên thanh toán phí")
+    fee_category: Optional[DropdownResponse] = Field('', description="Nhóm phí")
+    fee: Optional[DropdownResponse] = Field('', description="Mã loại phí")
+    amount: int = Field('', description='Số tiền phí')
+    vat: int = Field('', description='Thuế VAT')
+    total: int = Field('', description='Tổng phí')
+    actual_total: Optional[float] = Field('', description="Số tiền thực chuyển")
+    note: str = Field('', description='Nội dung')
+    ref_num: str = Field('', description='Số bút toán')
 
 
 class StatementsResponse(TMSResponseSchema):
@@ -220,15 +220,15 @@ class TMSStatementResponse(TMSResponseSchema):
 
 
 class FeeDetailInfoResponse(TMSResponseSchema):
-    payer: Optional[str] = Field(None, description="Bên thanh toán phí")
-    fee_category: Optional[DropdownResponse] = Field(None, description="Nhóm phí")
-    fee: Optional[DropdownResponse] = Field(None, description="Mã loại phí")
-    amount: int = Field(None, description='Số tiền phí')
-    vat: int = Field(None, description='Thuế VAT')
-    total: int = Field(None, description='Tổng phí')
-    actual_total: Optional[float] = Field(None, description="Số tiền thực chuyển")
-    note: str = Field(None, description='Nội dung')
-    ref_num: str = Field(None, description='Số bút toán')
+    payer: Optional[str] = Field('', description="Bên thanh toán phí")
+    fee_category: Optional[DropdownResponse] = Field('', description="Nhóm phí")
+    fee: Optional[DropdownResponse] = Field('', description="Mã loại phí")
+    amount: int = Field('', description='Số tiền phí')
+    vat: int = Field('', description='Thuế VAT')
+    total: int = Field('', description='Tổng phí')
+    actual_total: Optional[float] = Field('', description="Số tiền thực chuyển")
+    note: str = Field('', description='Nội dung')
+    ref_num: str = Field('', description='Số bút toán')
 
 
 class TMSCasaTopUpResponse(CreatedUpdatedBaseModel):
