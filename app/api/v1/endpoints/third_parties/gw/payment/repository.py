@@ -293,12 +293,12 @@ async def repos_gw_payment_amount_unblock(
         }
     }
     for item in request_data_gw.get('account_unlock'):
-        if item['account_amount_block']['p_type_unblock'] == "P":
+        if item['account_amount_block'][0]['p_type_unblock'] == "P":
             p_blk_detail = {
-                "AMOUNT": item['account_amount_block']['p_blk_detail']['amount'],
-                "HOLD_CODE": item['account_amount_block']['p_blk_detail']['hold_code'],
-                "EXPIRY_DATE": item['account_amount_block']['p_blk_detail']['expiry_date'],
-                "REMARKS": item['account_amount_block']['p_blk_detail']['remarks'],
+                "AMOUNT": item['account_amount_block'][0]['p_blk_detail']['amount'],
+                "HOLD_CODE": item['account_amount_block'][0]['p_blk_detail']['hold_code'],
+                "EXPIRY_DATE": item['account_amount_block'][0]['p_blk_detail']['expiry_date'],
+                "REMARKS": item['account_amount_block'][0]['p_blk_detail']['remarks'],
                 "CHARGE_DETAIL": {
                     "TYPE_CHARGE": "",
                     "ACCOUNT_CHARGE": ""
@@ -308,10 +308,10 @@ async def repos_gw_payment_amount_unblock(
         request_data = {
             "account_info": {
                 "balance_lock_info": {
-                    "account_ref_no": item['account_amount_block']['account_ref_no']
+                    "account_ref_no": item['account_amount_block'][0]['account_ref_no']
                 }
             },
-            "p_type_unblock": item['account_amount_block']['p_type_unblock'],
+            "p_type_unblock": item['account_amount_block'][0]['p_type_unblock'],
             "p_blk_detail": p_blk_detail,
             # TODO hard core
             "p_blk_charge": "",
