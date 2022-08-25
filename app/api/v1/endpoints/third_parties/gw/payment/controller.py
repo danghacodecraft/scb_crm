@@ -113,7 +113,7 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
             act_amount_blocks.append(item.dict())
             saving_booking_account.append({
                 "booking_id": BOOKING_ID,
-                "casa_account_num": item.account_number,
+                "account_number": item.account_number,
                 "created_at": now()
             })
 
