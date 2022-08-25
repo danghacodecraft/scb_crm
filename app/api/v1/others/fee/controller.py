@@ -14,7 +14,6 @@ from app.api.v1.others.fee.schema import (
 from app.utils.constant.casa import (
     CASA_FEE_METHOD_CASA, CASA_FEE_METHODS, PAYER_TRANSFER, PAYMENT_PAYERS
 )
-from app.utils.constant.gw import GW_UNIT_ACCOUNT_NUMBER
 from app.utils.error_messages import (
     ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_CASA_FEE_METHOD_NOT_EXIST,
     ERROR_FEE_ID_NOT_EXIST, ERROR_PAYER_NOT_EXIST, ERROR_VALIDATE
@@ -130,7 +129,7 @@ class CtrAccountFee(BaseController):
             fee_product_screen = fee_info.product_screen
             gw_fee_info = await CtrGWFeeInfo(current_user=self.current_user).ctr_gw_select_fee_from_product_name(
                 product_name=fee_product_screen,
-                account_num=GW_UNIT_ACCOUNT_NUMBER,  # TODO
+                account_num="123456787912",  # TODO
                 trans_amount=amount
             )
             data_fee_info = gw_fee_info['data']
