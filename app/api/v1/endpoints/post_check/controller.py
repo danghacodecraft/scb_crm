@@ -451,6 +451,7 @@ class CtrKSS(BaseController):
                     'kss_status': post_check_request.kss_status,
                     'user_kss': post_check_request.username,
                     'date_kss': now(),
+                    'status': customer_ekyc_detail.get('status')
                 }
                 self.call_repos(await repos_create_ekyc_customer(
                     customer=saving_customer_ekyc,

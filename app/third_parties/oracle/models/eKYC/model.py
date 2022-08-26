@@ -58,6 +58,7 @@ class EKYCCustomer(Base):
     approve_status = Column(VARCHAR(500), default=None)
     user_approve = Column(VARCHAR(500), default=None)
     date_approve = Column(DATE, default=None)
+    status = Column(VARCHAR(50), default=None)
 
 
 class EKYCCustomerStep(Base):
