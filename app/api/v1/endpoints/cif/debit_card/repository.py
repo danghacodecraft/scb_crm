@@ -44,6 +44,7 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
             DebitCard.customer_type_id,
             DebitCard.brand_of_card_id,
             DebitCard.card_issuance_fee_id,
+            DebitCard.card_annual_fee_id,
             DebitCard.parent_card_id,
             DebitCard.card_registration_flag,
             DebitCard.payment_online_flag,

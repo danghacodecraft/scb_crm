@@ -12,7 +12,8 @@ from app.third_parties.oracle.models.master_data.address import (
     AddressDistrict, AddressProvince, AddressWard
 )
 from app.third_parties.oracle.models.master_data.card import (
-    BrandOfCard, CardCustomerType, CardIssuanceFee, CardIssuanceType, CardType
+    BrandOfCard, CardAnnualFee, CardCustomerType, CardIssuanceFee,
+    CardIssuanceType, CardType
 )
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.cif import (
@@ -134,6 +135,13 @@ class CtrDebitCard(BaseController):
             model=CardIssuanceFee,
             model_id=debt_card_req.issue_debit_card.issuance_fee.id,
             loc="issue_debit_card -> issuance fee -> id",
+        )
+
+        """Kiểm tra annual_fee"""
+        await self.get_model_object_by_id(
+            model=CardAnnualFee,
+            model_id=debt_card_req.issue_debit_card.annual_fee.id,
+            loc="issue_debit_card -> annual fee -> id",
         )
 
         """Validate tên dập nổi không quá 21 kí tự"""
@@ -329,6 +337,7 @@ class CtrDebitCard(BaseController):
                     "customer_type_id": debt_card_req.issue_debit_card.customer_type.id,
                     "brand_of_card_id": debt_card_req.issue_debit_card.branch_of_card.id,
                     "card_issuance_fee_id": debt_card_req.issue_debit_card.issuance_fee.id,
+                    "card_annual_fee_id": debt_card_req.issue_debit_card.annual_fee.id,
                     "src_code": debt_card_req.issue_debit_card.src_code,
                     "pro_code": debt_card_req.issue_debit_card.pro_code,
                     "card_group": debt_card_req.issue_debit_card.card_group,
@@ -387,6 +396,7 @@ class CtrDebitCard(BaseController):
             "customer_type_id": debt_card_req.issue_debit_card.customer_type.id,
             "brand_of_card_id": debt_card_req.issue_debit_card.branch_of_card.id,
             "card_issuance_fee_id": debt_card_req.issue_debit_card.issuance_fee.id,
+            "card_annual_fee_id": debt_card_req.issue_debit_card.annual_fee.id,
             "src_code": debt_card_req.issue_debit_card.src_code,
             "pro_code": debt_card_req.issue_debit_card.pro_code,
             "card_group": debt_card_req.issue_debit_card.card_group,
