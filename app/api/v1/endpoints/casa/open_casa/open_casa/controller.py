@@ -54,7 +54,7 @@ class CtrCasaOpenCasa(BaseController):
         approval_casa_accounts = []
 
         # Lấy thông tin Lưu tài khoản cập nhật mới nhất
-        for booking, booking_account, booking_business_form in get_casa_open_casa_infos:
+        for _, _, booking_business_form in get_casa_open_casa_infos:
             form_data = orjson_loads(booking_business_form.form_data)
             form_data['account_info']['approval_status'] = booking_business_form.is_success
             form_data['account_info']['booking_business_form_id'] = booking_business_form.booking_business_form_id
