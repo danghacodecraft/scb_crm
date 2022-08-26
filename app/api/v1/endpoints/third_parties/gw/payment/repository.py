@@ -145,11 +145,11 @@ async def repos_gw_payment_amount_block(
             "p_blk_detail": {
                 "AMOUNT": item['amount'],
                 "AMOUNT_BLOCK_TYPE": item['amount_block_type'],
-                "HOLD_CODE": 'PTKHAC',
+                "HOLD_CODE": 'PTKHAC',        # TODO
                 "EFFECTIVE_DATE": item['effective_date'],
                 "EXPIRY_DATE": item['expiry_date'] if item['expiry_date'] else "",
                 "REMARKS": item['remarks'],
-                "VERIFY_AVAILABLE_BALANCE": 'N',
+                "VERIFY_AVAILABLE_BALANCE": 'N',       # TODO
                 "CHARGE_DETAIL": {
                     "TYPE_CHARGE": "",
                     "ACCOUNT_CHARGE": ""
@@ -296,8 +296,8 @@ async def repos_gw_payment_amount_unblock(
         if item['account_amount_block'][0]['p_type_unblock'] == "P":
             p_blk_detail = {
                 "AMOUNT": item['account_amount_block'][0]['p_blk_detail']['amount'],
-                "HOLD_CODE": 'PTKHAC',
-                "EXPIRY_DATE": "",
+                "HOLD_CODE": 'PTKHAC',     # TODO
+                "EXPIRY_DATE": "",         # TODO
                 "REMARKS": item['account_amount_block'][0]['p_blk_detail']['remarks'],
                 "CHARGE_DETAIL": {
                     "TYPE_CHARGE": "",
