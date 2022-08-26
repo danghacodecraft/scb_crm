@@ -658,8 +658,6 @@ class ServiceGW:
         if business_type_id == BUSINESS_TYPE_OPEN_CASA:
             self_selected_account_flag = casa_account_info['self_selected_account_flag']
             account_num = casa_account_info['casa_account_number'] if self_selected_account_flag else ''
-            print(self_selected_account_flag)
-            print(account_num)
             data_input = {
                 "customer_info": {
                     "cif_info": {
@@ -743,7 +741,6 @@ class ServiceGW:
         request_data = self.gw_create_request_body(
             current_user=current_user, function_name=GW_FUNCTION_OPEN_CASA, data_input=data_input
         )
-        print(request_data)
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_OPEN_CASA_ACCOUNT}"
 

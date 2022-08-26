@@ -784,13 +784,6 @@ async def repos_gw_push_casa_to_gw(
             business_job_ids=[BUSINESS_JOB_CODE_START_CASA, BUSINESS_JOB_CODE_OPEN_CASA]
         )
 
-        return ReposReturn(
-            is_error=True,
-            loc="open_casa",
-            msg=ERROR_CALL_SERVICE_GW,
-            detail=str(gw_open_casa_account_info)
-        )
-
     # Lưu lại transaction thành công
     await repos_save_transaction_jobs(
         session=session,
