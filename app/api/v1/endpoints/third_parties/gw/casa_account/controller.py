@@ -829,11 +829,16 @@ class CtrGWCasaAccount(BaseController):
             ]
         }
 
+        if (request_data_gw['transaction_info']['fee_info']['is_transfer_payer']):
+            actual_total = int(request_data_gw['transaction_info']['fee_info']['actual_total'])
+        else:
+            actual_total = int(request_data_gw['transaction_info']['receiver_info']['amount'])
+
         data_input = {
             "account_info": {
                 "account_num": request_data_gw['transaction_info']['source_accounts']['account_num'],
                 "account_currency": 'VND',
-                "account_withdrawals_amount": int(request_data_gw['transaction_info']['fee_info']['actual_total'])
+                "account_withdrawals_amount": actual_total
             },
             "staff_info_checker": {
                 "staff_name": current_user_info.username
