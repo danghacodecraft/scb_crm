@@ -42,6 +42,7 @@ class DebitCard(Base):
     __table_args__ = {'comment': 'THẺ Ghi nợ'}
 
     id = Column('card_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "), comment='Mã thẻ (PK)')
+    cif_number = Column(VARCHAR(21), comment='cif_number')
     customer_id = Column(ForeignKey('crm_customer.customer_id'), comment='Mã khách hàng')
 
     card_issuance_type_id = Column(ForeignKey('crm_card_issuance_type.card_issuance_type_id'),
