@@ -20,8 +20,8 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWBenNameResponse, GWCasaAccountByCIFNumberRequest,
     GWCasaAccountByCIFNumberResponse, GWCasaAccountCheckExistRequest,
     GWCasaAccountCheckExistResponse, GWCasaAccountResponse,
-    GWCloseCasaAccountResponse, GWOpenCasaAccountRequest,
-    GWOpenCasaAccountResponse, GWReportColumnChartHistoryAccountInfoRequest,
+    GWCloseCasaAccountResponse, GWOpenCasaAccountResponse,
+    GWReportColumnChartHistoryAccountInfoRequest,
     GWReportColumnChartHistoryAccountInfoResponse,
     GWReportPieChartHistoryAccountInfoRequest,
     GWReportPieChartHistoryAccountInfoResponse,
@@ -165,15 +165,13 @@ async def view_gw_get_statement_casa_account_info(
     )
 )
 async def view_gw_open_casa_account(
-        request: GWOpenCasaAccountRequest = Body(..., description="Thông tin tài khoản"),
         BOOKING_ID: str = Header(..., description="Mã phiên giao dịch"),  # noqa
         current_user=Depends(get_current_user_from_header())
 ):
-    gw_open_casa_account_info = await CtrGWCasaAccount(current_user).ctr_gw_open_casa_account(
-        request=request,
-        booking_id=BOOKING_ID
+    gw_open_casa_account_info = await CtrGWCasaAccount(current_user).ctr_gw_open_casa_accounts(
+        booking_parent_id=BOOKING_ID
     )
-    return ResponseData[GWOpenCasaAccountResponse](**gw_open_casa_account_info)
+    return ResponseData(**gw_open_casa_account_info)
 
 
 @router.post(

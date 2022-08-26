@@ -181,6 +181,24 @@ async def repos_get_casa_open_casa_info_from_booking(booking_id: str, session: S
     return ReposReturn(data=get_casa_open_casa_info)
 
 
+async def repos_get_casa_open_casa_info_from_booking_parent(booking_parent_id: str, session: Session):
+    """
+    Lấy danh sách các tài khoản trong booking parent
+    """
+    get_casa_open_casa_info = session.execute(
+        select(
+            Booking.id,
+            BookingAccount,
+            BookingBusinessForm
+        )
+        .join(BookingBusinessForm, Booking.id == BookingBusinessForm.booking_id)
+        .join(BookingAccount, Booking.id == BookingAccount.booking_id)
+        .filter(Booking.parent_id == booking_parent_id)
+        .order_by(BookingBusinessForm.created_at.desc())
+    ).all()
+    return ReposReturn(data=get_casa_open_casa_info)
+
+
 async def repos_get_acc_structure_type_by_parent(acc_structure_type_id: str, session: Session):
     """
     Tìm kiến trúc cấp trước đó của tài khoản

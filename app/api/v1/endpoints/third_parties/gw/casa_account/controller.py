@@ -5,6 +5,7 @@ from app.api.v1.endpoints.approval.repository import (
     repos_get_booking_business_form_by_booking_id
 )
 from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
+    repos_get_casa_open_casa_info_from_booking_parent,
     repos_get_customer_by_cif_number
 )
 from app.api.v1.endpoints.casa.transfer.repository import (
@@ -21,7 +22,8 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.repository import (
     repos_gw_get_retrieve_ben_name_by_account_number,
     repos_gw_get_retrieve_ben_name_by_card_number,
     repos_gw_get_statements_casa_account_info, repos_gw_get_tele_transfer,
-    repos_gw_withdraw, repos_push_casa_to_gw_open_casa
+    repos_gw_push_casa_to_gw, repos_gw_withdraw,
+    repos_push_casa_to_gw_open_casa
 )
 from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWOpenCasaAccountRequest, GWReportColumnChartHistoryAccountInfoRequest,
@@ -552,6 +554,89 @@ class CtrGWCasaAccount(BaseController):
             )
 
         return self.response(data=response_info)
+
+    async def ctr_gw_open_casa_accounts(self, booking_parent_id: str):
+        current_user = self.current_user
+        current_user_info = current_user.user_info
+        is_role_supervisor = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
+            auth_response=current_user,
+            menu_code=IDM_MENU_CODE_TTKH,
+            group_role_code=IDM_GROUP_ROLE_CODE_KSV,
+            permission_code=IDM_PERMISSION_CODE_KSV,
+            stage_code=CIF_STAGE_APPROVE_KSV
+        ))
+        if not is_role_supervisor:
+            self.response_exception(
+                loc=f"user: {current_user_info.code} - {current_user_info.username}",
+                msg=ERROR_PERMISSION,
+                error_status_code=status.HTTP_403_FORBIDDEN
+            )
+
+        booking_parent = await CtrBooking().ctr_get_booking(
+            booking_id=booking_parent_id,
+            business_type_code=BUSINESS_TYPE_OPEN_CASA
+        )
+        maker_staff_name = booking_parent.created_by
+
+        # Lấy chi tiết các TKTT
+        get_casa_open_casa_infos = self.call_repos(await repos_get_casa_open_casa_info_from_booking_parent(
+            booking_parent_id=booking_parent_id,
+            session=self.oracle_session
+        ))
+
+        casa_accounts = []
+
+        mark_created_at = None
+        # Lấy thông tin Lưu tài khoản cập nhật mới nhất
+        # Những booking con đã hoàn thành thì không thao tác nữa
+        for booking_id, booking_account, booking_business_form in get_casa_open_casa_infos:
+            if not booking_business_form.is_success:
+                if not mark_created_at:
+                    mark_created_at = booking_business_form.created_at
+                    casa_accounts.append((booking_id, booking_account, booking_business_form))
+                elif mark_created_at == booking_business_form.created_at:
+                    casa_accounts.append((booking_id, booking_account, booking_business_form))
+
+        for booking_id, booking_account, booking_business_form in casa_accounts:
+            form_data = orjson_loads(booking_business_form.form_data)
+            form_data['account_info']['approval_status'] = booking_business_form.is_success
+
+            is_success, gw_open_casa_account_info = self.call_repos(await repos_gw_push_casa_to_gw(
+                form_data=form_data,
+                booking_id=booking_id,
+                current_user=current_user,
+                maker_staff_name=maker_staff_name,
+                session=self.oracle_session
+            ))
+            if is_success:
+                account_number = gw_open_casa_account_info['openCASA_out']['data_output']['account_info']['account_num']
+                form_data['account_info']['casa_account_number'] = account_number
+                # cập nhật lại booking_business_form
+                booking_business_form.is_success = True
+                booking_business_form.form_data = orjson_dumps(form_data)
+                booking_account.account_number = account_number
+        self.oracle_session.commit()
+
+        get_casa_open_casa_infos = self.call_repos(await repos_get_casa_open_casa_info_from_booking_parent(
+            booking_parent_id=booking_parent_id,
+            session=self.oracle_session
+        ))
+        success_numbers = []
+        unsuccess_numbers = []
+        cif_number = None
+        for booking, booking_account, booking_business_form in get_casa_open_casa_infos:
+            form_data = orjson_loads(booking_business_form.form_data)
+            if booking_business_form.is_success:
+                success_numbers.append(form_data['account_info']['casa_account_number'])
+            else:
+                unsuccess_numbers.append(form_data['account_info']['casa_account_number'])
+            cif_number = form_data['cif_number']
+
+        return self.response(data=dict(
+            cif_number=cif_number,
+            succcess_numbers=[success_number for success_number in success_numbers],
+            unsucccess_numbers=[unsuccess_number for unsuccess_number in unsuccess_numbers]
+        ))
 
     async def ctr_gw_get_close_casa_account(self, booking_id):
         booking_business_form = self.call_repos(await repos_get_booking_business_form_by_booking_id(

@@ -1,7 +1,8 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
     repos_get_acc_structure_type_by_parent, repos_get_acc_structure_types,
-    repos_get_casa_open_casa_info_from_booking, repos_save_casa_casa_account
+    repos_get_casa_open_casa_info_from_booking_parent,
+    repos_save_casa_casa_account
 )
 from app.api.v1.endpoints.casa.open_casa.open_casa.schema import (
     CasaOpenCasaRequest
@@ -42,23 +43,18 @@ class CtrCasaOpenCasa(BaseController):
             self,
             booking_parent_id: str
     ):
-        get_casa_open_casa_infos = self.call_repos(await repos_get_casa_open_casa_info_from_booking(
-            booking_id=booking_parent_id,
+        get_casa_open_casa_infos = self.call_repos(await repos_get_casa_open_casa_info_from_booking_parent(
+            booking_parent_id=booking_parent_id,
             session=self.oracle_session
         ))
 
         casa_accounts = []
 
-        mark_created_at = None
         # Lấy thông tin Lưu tài khoản cập nhật mới nhất
         for booking, booking_account, booking_business_form in get_casa_open_casa_infos:
             form_data = orjson_loads(booking_business_form.form_data)
             form_data['account_info']['approval_status'] = booking_business_form.is_success
-            if not mark_created_at:
-                mark_created_at = booking_business_form.created_at
-                casa_accounts.append(form_data)
-            elif mark_created_at == booking_business_form.created_at:
-                casa_accounts.append(form_data)
+            casa_accounts.append(form_data)
 
         booking = await CtrBooking(current_user=self.current_user).ctr_get_booking(
             booking_id=booking_parent_id,
