@@ -7,6 +7,9 @@ from app.api.v1.endpoints.cif.debit_card.schema import DebitCardRequest
 from app.api.v1.endpoints.cif.repository import (
     repos_get_booking, repos_get_initializing_customer
 )
+from app.api.v1.endpoints.third_parties.gw.customer.controller import (
+    CtrGWCustomer
+)
 from app.api.v1.validator import validate_history_data
 from app.third_parties.oracle.models.master_data.address import (
     AddressDistrict, AddressProvince, AddressWard
@@ -19,7 +22,9 @@ from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_INIT_DEBIT_CARD, PROFILE_HISTORY_STATUS_INIT
 )
-from app.utils.error_messages import ERROR_NOT_REGISTER, VALIDATE_ERROR
+from app.utils.error_messages import (
+    ERROR_CIF_ID_NOT_EXIST, ERROR_NOT_REGISTER, VALIDATE_ERROR
+)
 from app.utils.functions import generate_uuid, now, orjson_dumps
 from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese
 
@@ -144,6 +149,22 @@ class CtrDebitCard(BaseController):
             loc="issue_debit_card -> annual fee -> id",
         )
 
+        """Validate first_name không None"""
+        if not first_name or first_name.strip() == "":
+            return self.response_exception(
+                msg=VALIDATE_ERROR,
+                detail="first_name is null",
+                loc="ctr_add_debit_card -> first_name"
+            )
+
+        """Validate last_name không None"""
+        if not last_name or last_name.strip() == "":
+            return self.response_exception(
+                msg=VALIDATE_ERROR,
+                detail="last_name is null",
+                loc="ctr_add_debit_card -> last_name"
+            )
+
         """Validate tên dập nổi không quá 21 kí tự"""
         lenght_name = len(first_name + last_name)
         if first_name.upper() != debt_card_req.information_debit_card.name_on_card.first_name_on_card.upper():
@@ -223,6 +244,13 @@ class CtrDebitCard(BaseController):
         """Kiểm tra validate thông tin thẻ phụ"""
         if debt_card_req.information_sub_debit_card is not None:
             for index, sub_card in enumerate(debt_card_req.information_sub_debit_card.sub_debit_cards):
+                if not CtrGWCustomer().ctr_gw_check_exist_customer_detail_info(cif_number=sub_card.cif_number,
+                                                                               return_raw_data_flag=True):
+                    return self.response_exception(
+                        msg=ERROR_CIF_ID_NOT_EXIST,
+                        detail="CIF number is not exist",
+                        loc="information_sub_debit_card -> sub_debit_cards -> cif_number"
+                    )
 
                 sub_customer_ids = self.call_repos(await get_data_customer_id(self.oracle_session, sub_card.cif_number))
 
