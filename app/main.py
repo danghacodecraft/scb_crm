@@ -29,7 +29,7 @@ sentry_sdk.init(
     dsn=f"http://{SENTRY['client_key']}@{SENTRY['host']}:{SENTRY['port']}/{SENTRY['project_id']}",
     integrations=[
         StarletteIntegration(),
-        FastApiIntegration(),
+        # FastApiIntegration(),
     ],
 
     # Set traces_sample_rate to 1.0 to capture 100%
