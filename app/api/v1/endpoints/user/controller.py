@@ -1,3 +1,4 @@
+import re
 from urllib.parse import urlparse
 
 from fastapi.security import HTTPBasicCredentials
@@ -28,14 +29,8 @@ class CtrUser(BaseController):
             replace_fileshare_url = f'{replace_fileshare_url_parse_result.scheme}://{replace_fileshare_url_parse_result.netloc}'
 
             for info_banner in info_banner_list:
-                current_fileshare_url_parse_result = urlparse(info_banner['banner_link_512'])
-                current_fileshare_url = f'{current_fileshare_url_parse_result.scheme}://{current_fileshare_url_parse_result.netloc}'
-
-                info_banner['banner_link_512'] = info_banner['banner_link_512'].replace(current_fileshare_url,
-                                                                                        replace_fileshare_url)
-                info_banner['banner_link_1024'] = info_banner['banner_link_1024'].replace(current_fileshare_url,
-                                                                                          replace_fileshare_url)
-                info_banner['banner_link_2560'] = info_banner['banner_link_2560'].replace(current_fileshare_url,
-                                                                                          replace_fileshare_url)
+                info_banner['banner_link_512'] = f"{replace_fileshare_url}{re.sub(r'.*/thumbnail/', '/thumbnail/', info_banner['banner_link_512'])}"
+                info_banner['banner_link_1024'] = f"{replace_fileshare_url}{re.sub(r'.*/thumbnail/', '/thumbnail/', info_banner['banner_link_1024'])}"
+                info_banner['banner_link_2560'] = f"{replace_fileshare_url}{re.sub(r'.*/thumbnail/', '/thumbnail/', info_banner['banner_link_2560'])}"
 
         return self.response(info_banner_list)
