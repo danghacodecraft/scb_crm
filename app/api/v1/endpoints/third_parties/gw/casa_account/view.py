@@ -20,7 +20,7 @@ from app.api.v1.endpoints.third_parties.gw.casa_account.schema import (
     GWBenNameResponse, GWCasaAccountByCIFNumberRequest,
     GWCasaAccountByCIFNumberResponse, GWCasaAccountCheckExistRequest,
     GWCasaAccountCheckExistResponse, GWCasaAccountResponse,
-    GWCloseCasaAccountResponse, GWOpenCasaAccountResponse,
+    GWCloseCasaAccountResponse, GWOpenCasaOpenCasaResponse,
     GWReportColumnChartHistoryAccountInfoRequest,
     GWReportColumnChartHistoryAccountInfoResponse,
     GWReportPieChartHistoryAccountInfoRequest,
@@ -160,7 +160,7 @@ async def view_gw_get_statement_casa_account_info(
     name="[GW] Mở tài khoản thanh toán",
     description="[GW] Khởi tạo TK Thanh toán",
     responses=swagger_response(
-        response_model=ResponseData[GWOpenCasaAccountResponse],
+        response_model=ResponseData[GWOpenCasaOpenCasaResponse],
         success_status_code=status.HTTP_200_OK
     )
 )
@@ -171,7 +171,7 @@ async def view_gw_open_casa_account(
     gw_open_casa_account_info = await CtrGWCasaAccount(current_user).ctr_gw_open_casa_accounts(
         booking_parent_id=BOOKING_ID
     )
-    return ResponseData(**gw_open_casa_account_info)
+    return ResponseData[GWOpenCasaOpenCasaResponse](**gw_open_casa_account_info)
 
 
 @router.post(
