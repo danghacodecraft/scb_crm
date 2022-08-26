@@ -13,11 +13,8 @@ class ServiceRabbitmq:
         self.username = rabbitmq_config['server_username']
         self.password = rabbitmq_config['server_password']
 
-        self.connection = None
-        self.channel = None
-
-    def create_connection(self):
-        self.connection = pika.BlockingConnection(
+    def publish(self, message, routing_key):
+        connection = pika.BlockingConnection(
             pika.ConnectionParameters(
                 host=self.host,
                 port=self.port,
@@ -25,22 +22,16 @@ class ServiceRabbitmq:
                 credentials=pika.credentials.PlainCredentials(self.username, self.password)
             )
         )
-        self.channel = self.connection.channel()
-
-    def stop(self):
-        if self.connection:
-            self.connection.close()
-
-    def publish(self, message, routing_key):
-        if not self.connection or self.connection.is_closed:
-            self.create_connection()
+        channel = connection.channel()
 
         if isinstance(message, dict):
             message = orjson_dumps(message)
 
-        self.channel.basic_publish(
+        channel.basic_publish(
             exchange=RABBITMQ_EXCHANGE_AMQ_TOPIC,
             routing_key=routing_key,
             body=message,
             properties=pika.BasicProperties(content_type='application/json')
         )
+
+        connection.close()

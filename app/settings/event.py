@@ -40,6 +40,5 @@ def create_stop_app_handler(app: FastAPI) -> Callable:  # noqa
         await service_ekyc.stop()
         await service_gw.stop()
         await service_redis.stop()
-        service_rabbitmq.stop()
 
     return stop_app
