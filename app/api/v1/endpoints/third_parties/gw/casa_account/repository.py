@@ -30,6 +30,7 @@ from app.utils.constant.approval import (
     BUSINESS_JOB_CODE_OPEN_CASA_EB, BUSINESS_JOB_CODE_START_CASA,
     BUSINESS_JOB_CODE_WITHDRAW
 )
+from app.utils.constant.business_type import BUSINESS_TYPE_OPEN_CASA
 from app.utils.constant.casa import CASA_ACCOUNT_STATUS_APPROVED
 from app.utils.constant.cif import (
     BUSINESS_FORM_CLOSE_CASA_PD, BUSINESS_FORM_OPEN_CASA_PD,
@@ -748,3 +749,54 @@ async def repos_push_internet_banking_to_gw_open_casa(booking_id: str,
         )
 
     return ReposReturn(data=None)
+
+
+########################################################################################################################
+# OPEN CASA
+########################################################################################################################
+async def repos_gw_push_casa_to_gw(
+        booking_id: str,
+        form_data: dict,
+        current_user: AuthResponse,
+        maker_staff_name: str,
+        session: Session
+):
+    """
+    Mở TKTT nghiệp vụ OPEN_CASA
+    """
+    casa_account = form_data['account_info']
+    is_success, gw_open_casa_account_info = await service_gw.get_open_casa_account(
+        cif_number=form_data['cif_number'],
+        self_selected_account_flag=casa_account['self_selected_account_flag'],
+        casa_account_info=casa_account,
+        current_user=current_user.user_info,
+        maker_staff_name=maker_staff_name,
+        business_type_id=BUSINESS_TYPE_OPEN_CASA
+    )
+
+    # Chỉ Lưu transaction job bị fail
+    if not is_success:
+        await repos_save_transaction_jobs(
+            session=session,
+            booking_id=booking_id,
+            is_success=is_success,
+            response_data=gw_open_casa_account_info,
+            business_job_ids=[BUSINESS_JOB_CODE_START_CASA, BUSINESS_JOB_CODE_OPEN_CASA]
+        )
+
+        return ReposReturn(
+            is_error=True,
+            loc="open_casa",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail=str(gw_open_casa_account_info)
+        )
+
+    # Lưu lại transaction thành công
+    await repos_save_transaction_jobs(
+        session=session,
+        booking_id=booking_id,
+        is_success=True,
+        response_data=None,
+        business_job_ids=[BUSINESS_JOB_CODE_START_CASA, BUSINESS_JOB_CODE_OPEN_CASA]
+    )
+    return ReposReturn(data=(is_success, gw_open_casa_account_info))
