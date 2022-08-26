@@ -12,6 +12,9 @@ from app.api.v1.endpoints.third_parties.gw.email.schema import (
     open_ebank_failure_response, open_ebank_success_response
 )
 from app.api.v1.endpoints.user.schema import UserInfoResponse
+from app.utils.constant.business_type import (
+    BUSINESS_TYPE_INIT_CIF, BUSINESS_TYPE_OPEN_CASA
+)
 from app.utils.constant.debit_card import (
     GW_DEFAULT_CUSTOMER_EDUCATION, GW_DEFAULT_CUSTOMER_NATIONALITY,
     GW_DEFAULT_CUSTOMER_RESIDENT_STATUS, GW_DEFAULT_CUSTOMER_RESIDENT_TYPE,
@@ -562,130 +565,194 @@ class ServiceGW:
             cif_number,
             self_selected_account_flag: bool,
             casa_account_info,
-            maker_staff_name
+            maker_staff_name,
+            business_type_id: str = BUSINESS_TYPE_INIT_CIF
     ):
         """
         Mở tài khoản thanh toán
         """
-        account_num = casa_account_info.casa_account_number if casa_account_info.casa_account_number else ''
-        data_input = {
-            "customer_info": {
-                "cif_info": {
-                    "cif_num": cif_number
-                },
-                "account_info": {
-                    "acc_spl": GW_SELF_SELECTED_ACCOUNT_FLAG if self_selected_account_flag else GW_SELF_UNSELECTED_ACCOUNT_FLAG,
-                    "account_num": account_num,
-                    "account_currency": casa_account_info.currency_id,
-                    "account_class_code": casa_account_info.acc_class_id,
-                    "p_blk_cust_account": "",
-                    "p_blk_provision_main": "",
-                    "p_blk_provdetails": "",
-                    "p_blk_report_gentime1": "",
-                    "p_blk_accmaintinstr": "",
-                    "p_blk_report_gentime2": "",
-                    "p_blk_multi_account_generation": "",
-                    "p_blk_account_generation": "",
-                    "p_blk_interim_details": "",
-                    "p_blk_accprdres": "",
-                    "p_blk_acctxnres": "",
-                    "p_blk_authbicdetails": "",
-                    "p_blk_acstatuslines": "",
-                    "p_blk_jointholders": "",
-                    "p_blk_acccrdrlmts": "",
-                    "p_blk_intdetails": "",
-                    "p_blk_intprodmap": "",
-                    "p_blk_inteffdtmap": "",
-                    "p_blk_intsde": "",
-                    "p_blk_tddetails": "",
-                    "p_blk_amount_dates": "",
-                    "p_blk_turnovers": "",
-                    "p_blk_noticepref": "",
-                    "p_blk_acc_nominees": "",
-                    "p_blk_dcdmaster": "",
-                    "p_blk_tdpayindetails": "",
-                    "p_blk_tdpayoutdetails": "",
-                    "p_blk_tod_renew": "",
-                    "p_blk_od_limit": "",
-                    "p_blk_doctype_checklist": "",
-                    "p_blk_doctype_remarks": "",
-                    "p_blk_sttms_od_coll_linkages": "",
-                    "p_blk_cust_acc_check": "",
-                    "p_blk_cust_acc_card": "",
-                    "p_blk_intermediary": "",
-                    "p_blk_summary": "",
-                    "p_blk_accls_rollover": "",
-                    "p_blk_promotions": "",
-                    "p_blk_link_pricing": "",
-                    "p_blk_linkedentities": "",
-                    "p_blk_custacc_icccspcn": "",
-                    "p_blk_custacc_icchspcn": "",
-                    "p_blk_custacc_iccinstr": "",
-                    "p_blk_custaccdet": "",
-                    "p_blk_custacc_sicdiary": "",
-                    "p_blk_custacc_stccusbl": "",
-                    "p_blk_accclose": "",
-                    "p_blk_acc_svcacsig": "",
-                    "p_blk_sttms_debit": "",
-                    "p_blk_tddetailsprn": "",
-                    "p_blk_extsys_ws_master": "",
-                    "p_blk_custacc_iccintpo": "",
-                    "p_blk_sttms_cust_account": "",
-                    "p_blk_customer_acc": "",
-                    "p_blk_customer_accis": "",
-                    "p_blk_master": "",
-                    "p_blk_sttms_cust_acc_swp": "",
-                    "p_blk_acc_chnl": ""
-                },
-                "staff_info_checker": {
-                    "staff_name": current_user.username
-                },
-                "staff_info_maker": {
-                    "staff_name": maker_staff_name
-                },
-                "udf_info": {
-                    "udf_json_array": []
+        data_input = {}
+        if business_type_id == BUSINESS_TYPE_INIT_CIF:
+            account_num = casa_account_info.casa_account_number if casa_account_info.casa_account_number else ''
+            data_input = {
+                "customer_info": {
+                    "cif_info": {
+                        "cif_num": cif_number
+                    },
+                    "account_info": {
+                        "acc_spl": GW_SELF_SELECTED_ACCOUNT_FLAG if self_selected_account_flag else GW_SELF_UNSELECTED_ACCOUNT_FLAG,
+                        "account_num": account_num,
+                        "account_currency": casa_account_info.currency_id,
+                        "account_class_code": casa_account_info.acc_class_id,
+                        "p_blk_cust_account": "",
+                        "p_blk_provision_main": "",
+                        "p_blk_provdetails": "",
+                        "p_blk_report_gentime1": "",
+                        "p_blk_accmaintinstr": "",
+                        "p_blk_report_gentime2": "",
+                        "p_blk_multi_account_generation": "",
+                        "p_blk_account_generation": "",
+                        "p_blk_interim_details": "",
+                        "p_blk_accprdres": "",
+                        "p_blk_acctxnres": "",
+                        "p_blk_authbicdetails": "",
+                        "p_blk_acstatuslines": "",
+                        "p_blk_jointholders": "",
+                        "p_blk_acccrdrlmts": "",
+                        "p_blk_intdetails": "",
+                        "p_blk_intprodmap": "",
+                        "p_blk_inteffdtmap": "",
+                        "p_blk_intsde": "",
+                        "p_blk_tddetails": "",
+                        "p_blk_amount_dates": "",
+                        "p_blk_turnovers": "",
+                        "p_blk_noticepref": "",
+                        "p_blk_acc_nominees": "",
+                        "p_blk_dcdmaster": "",
+                        "p_blk_tdpayindetails": "",
+                        "p_blk_tdpayoutdetails": "",
+                        "p_blk_tod_renew": "",
+                        "p_blk_od_limit": "",
+                        "p_blk_doctype_checklist": "",
+                        "p_blk_doctype_remarks": "",
+                        "p_blk_sttms_od_coll_linkages": "",
+                        "p_blk_cust_acc_check": "",
+                        "p_blk_cust_acc_card": "",
+                        "p_blk_intermediary": "",
+                        "p_blk_summary": "",
+                        "p_blk_accls_rollover": "",
+                        "p_blk_promotions": "",
+                        "p_blk_link_pricing": "",
+                        "p_blk_linkedentities": "",
+                        "p_blk_custacc_icccspcn": "",
+                        "p_blk_custacc_icchspcn": "",
+                        "p_blk_custacc_iccinstr": "",
+                        "p_blk_custaccdet": "",
+                        "p_blk_custacc_sicdiary": "",
+                        "p_blk_custacc_stccusbl": "",
+                        "p_blk_accclose": "",
+                        "p_blk_acc_svcacsig": "",
+                        "p_blk_sttms_debit": "",
+                        "p_blk_tddetailsprn": "",
+                        "p_blk_extsys_ws_master": "",
+                        "p_blk_custacc_iccintpo": "",
+                        "p_blk_sttms_cust_account": "",
+                        "p_blk_customer_acc": "",
+                        "p_blk_customer_accis": "",
+                        "p_blk_master": "",
+                        "p_blk_sttms_cust_acc_swp": "",
+                        "p_blk_acc_chnl": ""
+                    },
+                    "staff_info_checker": {
+                        "staff_name": current_user.username
+                    },
+                    "staff_info_maker": {
+                        "staff_name": maker_staff_name
+                    },
+                    "udf_info": {
+                        "udf_json_array": []
+                    }
                 }
             }
-        }
+
+        if business_type_id == BUSINESS_TYPE_OPEN_CASA:
+            self_selected_account_flag = casa_account_info['self_selected_account_flag']
+            account_num = casa_account_info['casa_account_number'] if self_selected_account_flag else ''
+            print(self_selected_account_flag)
+            print(account_num)
+            data_input = {
+                "customer_info": {
+                    "cif_info": {
+                        "cif_num": cif_number
+                    },
+                    "account_info": {
+                        "acc_spl": GW_SELF_SELECTED_ACCOUNT_FLAG if self_selected_account_flag else GW_SELF_UNSELECTED_ACCOUNT_FLAG,
+                        "account_num": account_num,
+                        "account_currency": casa_account_info['currency']['id'],
+                        "account_class_code": casa_account_info['account_class']['id'],
+                        "p_blk_cust_account": "",
+                        "p_blk_provision_main": "",
+                        "p_blk_provdetails": "",
+                        "p_blk_report_gentime1": "",
+                        "p_blk_accmaintinstr": "",
+                        "p_blk_report_gentime2": "",
+                        "p_blk_multi_account_generation": "",
+                        "p_blk_account_generation": "",
+                        "p_blk_interim_details": "",
+                        "p_blk_accprdres": "",
+                        "p_blk_acctxnres": "",
+                        "p_blk_authbicdetails": "",
+                        "p_blk_acstatuslines": "",
+                        "p_blk_jointholders": "",
+                        "p_blk_acccrdrlmts": "",
+                        "p_blk_intdetails": "",
+                        "p_blk_intprodmap": "",
+                        "p_blk_inteffdtmap": "",
+                        "p_blk_intsde": "",
+                        "p_blk_tddetails": "",
+                        "p_blk_amount_dates": "",
+                        "p_blk_turnovers": "",
+                        "p_blk_noticepref": "",
+                        "p_blk_acc_nominees": "",
+                        "p_blk_dcdmaster": "",
+                        "p_blk_tdpayindetails": "",
+                        "p_blk_tdpayoutdetails": "",
+                        "p_blk_tod_renew": "",
+                        "p_blk_od_limit": "",
+                        "p_blk_doctype_checklist": "",
+                        "p_blk_doctype_remarks": "",
+                        "p_blk_sttms_od_coll_linkages": "",
+                        "p_blk_cust_acc_check": "",
+                        "p_blk_cust_acc_card": "",
+                        "p_blk_intermediary": "",
+                        "p_blk_summary": "",
+                        "p_blk_accls_rollover": "",
+                        "p_blk_promotions": "",
+                        "p_blk_link_pricing": "",
+                        "p_blk_linkedentities": "",
+                        "p_blk_custacc_icccspcn": "",
+                        "p_blk_custacc_icchspcn": "",
+                        "p_blk_custacc_iccinstr": "",
+                        "p_blk_custaccdet": "",
+                        "p_blk_custacc_sicdiary": "",
+                        "p_blk_custacc_stccusbl": "",
+                        "p_blk_accclose": "",
+                        "p_blk_acc_svcacsig": "",
+                        "p_blk_sttms_debit": "",
+                        "p_blk_tddetailsprn": "",
+                        "p_blk_extsys_ws_master": "",
+                        "p_blk_custacc_iccintpo": "",
+                        "p_blk_sttms_cust_account": "",
+                        "p_blk_customer_acc": "",
+                        "p_blk_customer_accis": "",
+                        "p_blk_master": "",
+                        "p_blk_sttms_cust_acc_swp": "",
+                        "p_blk_acc_chnl": ""
+                    },
+                    "staff_info_checker": {
+                        "staff_name": current_user.username
+                    },
+                    "staff_info_maker": {
+                        "staff_name": maker_staff_name
+                    },
+                    "udf_info": {
+                        "udf_json_array": []
+                    }
+                }
+            }
         request_data = self.gw_create_request_body(
             current_user=current_user, function_name=GW_FUNCTION_OPEN_CASA, data_input=data_input
         )
+        print(request_data)
 
         api_url = f"{self.url}{GW_ENDPOINT_URL_RETRIEVE_OPEN_CASA_ACCOUNT}"
 
-        return_errors = dict(
-            loc="SERVICE GW",
-            msg="",
-            detail=""
+        return await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key='openCASA_out',
+            service_name='OPEN_CASA'
         )
-        return_data = dict(
-            status=None,
-            data=None,
-            errors=return_errors
-        )
-
-        try:
-            async with self.session.post(url=api_url, json=request_data) as response:
-                logger.log("SERVICE", f"[GW][Report] {response.status} {api_url}")
-                if response.status != status.HTTP_200_OK:
-                    if response.status < status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return_error = await response.json()
-                        return_data.update(
-                            status=response.status,
-                            errors=return_error['errors']
-                        )
-                    return False, return_data, request_data
-                else:
-                    return_data = await response.json()
-                    if return_data['openCASA_out']['transaction_info']['transaction_error_code'] \
-                            != GW_RESPONSE_STATUS_SUCCESS:
-                        return False, return_data, request_data
-
-                    return True, return_data, request_data
-        except aiohttp.ClientConnectorError as ex:
-            logger.error(str(ex))
-            return False, return_data, request_data
 
     async def get_close_casa_account(
             self,

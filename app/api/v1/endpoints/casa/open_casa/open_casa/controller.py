@@ -1,7 +1,9 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
     repos_get_acc_structure_type_by_parent, repos_get_acc_structure_types,
-    repos_get_casa_open_casa_info_from_booking, repos_save_casa_casa_account
+    repos_get_booking_business_form,
+    repos_get_casa_open_casa_info_from_booking_parent,
+    repos_save_casa_casa_account
 )
 from app.api.v1.endpoints.casa.open_casa.open_casa.schema import (
     CasaOpenCasaRequest
@@ -29,7 +31,8 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_STATUS_INIT, STAFF_TYPE_BUSINESS_CODE
 )
 from app.utils.error_messages import (
-    ERROR_ACCOUNT_NUMBER_NOT_NULL, ERROR_CASA_ACCOUNT_EXIST,
+    ERROR_ACCOUNT_NUMBER_NOT_NULL, ERROR_BOOKING_BUSINESS_FORM_NOT_EXIST,
+    ERROR_CASA_ACCOUNT_APPROVED, ERROR_CASA_ACCOUNT_EXIST,
     ERROR_CASA_ACCOUNT_NOT_EXIST, ERROR_FIELD_REQUIRED, ERROR_VALIDATE
 )
 from app.utils.functions import (
@@ -42,22 +45,22 @@ class CtrCasaOpenCasa(BaseController):
             self,
             booking_parent_id: str
     ):
-        get_casa_open_casa_infos = self.call_repos(await repos_get_casa_open_casa_info_from_booking(
-            booking_id=booking_parent_id,
+        get_casa_open_casa_infos = self.call_repos(await repos_get_casa_open_casa_info_from_booking_parent(
+            booking_parent_id=booking_parent_id,
             session=self.oracle_session
         ))
 
         casa_accounts = []
+        approval_casa_accounts = []
 
-        mark_created_at = None
         # Lấy thông tin Lưu tài khoản cập nhật mới nhất
         for booking, booking_account, booking_business_form in get_casa_open_casa_infos:
             form_data = orjson_loads(booking_business_form.form_data)
             form_data['account_info']['approval_status'] = booking_business_form.is_success
-            if not mark_created_at:
-                mark_created_at = booking_business_form.created_at
-                casa_accounts.append(form_data)
-            elif mark_created_at == booking_business_form.created_at:
+            form_data['account_info']['booking_business_form_id'] = booking_business_form.booking_business_form_id
+            if booking_business_form.is_success:
+                approval_casa_accounts.append(form_data)
+            else:
                 casa_accounts.append(form_data)
 
         booking = await CtrBooking(current_user=self.current_user).ctr_get_booking(
@@ -70,6 +73,8 @@ class CtrCasaOpenCasa(BaseController):
             transaction_code=booking.code,
             total_item=len(casa_accounts),
             casa_accounts=casa_accounts,
+            total_approval_casa_account=len(approval_casa_accounts),
+            approval_casa_accounts=approval_casa_accounts,
             read_only=booking.completed_flag
         ))
 
@@ -85,6 +90,7 @@ class CtrCasaOpenCasa(BaseController):
         saving_casa_accounts = []
         saving_bookings = []
         saving_booking_accounts = []
+        updating_booking_child_business_forms = []
         saving_booking_child_business_forms = []
         is_errors = []
 
@@ -104,6 +110,7 @@ class CtrCasaOpenCasa(BaseController):
         acc_type_ids = []
         acc_class_ids = []
         account_structure_type_level_2_ids = []
+        updating_booking_child_business_form_ids = []
 
         gw_customer_detail = self.call_repos(await repos_gw_get_customer_info_detail(
             cif_number=cif_number,
@@ -113,7 +120,7 @@ class CtrCasaOpenCasa(BaseController):
         for index, request in enumerate(casa_accounts):
             self_selected_account_flag = request.self_selected_account_flag
             account_salary_organization_account = request.account_salary_organization_account
-            account_structure_type_level_2_id = None
+            account_structure_type_level_2_id = request.account_structure_type_level_2.id
             acc_salary_org_name = None
 
             # Nếu tài khoản số đẹp phải truyền số TKTT
@@ -126,7 +133,6 @@ class CtrCasaOpenCasa(BaseController):
             # Nếu là TKTT tự chọn
             if self_selected_account_flag:
                 # check acc_structure_type_level_3_id exist
-                account_structure_type_level_2_id = request.account_structure_type_level_2.id
                 if not account_structure_type_level_2_id:
                     is_errors.append(dict(
                         loc=f'{index} -> account_info -> account_structure_type_level_2 -> id',
@@ -155,6 +161,8 @@ class CtrCasaOpenCasa(BaseController):
                         )
                     acc_salary_org_name = "account_organization_info['full_name']"
 
+            booking_id = generate_uuid()
+            current_user_info = self.current_user.user_info
             currency_id = request.currency.id
             currency_ids.append(currency_id)
 
@@ -165,49 +173,6 @@ class CtrCasaOpenCasa(BaseController):
             acc_class_ids.append(acc_class_id)
 
             casa_account_id = generate_uuid()
-
-            saving_casa_accounts.append(dict(
-                id=casa_account_id,
-                casa_account_number=casa_account_number,
-                currency_id=currency_id,
-                acc_type_id=acc_type_id,
-                acc_class_id=acc_class_id,
-                acc_structure_type_id=account_structure_type_level_2_id,
-                staff_type_id=STAFF_TYPE_BUSINESS_CODE,
-                acc_salary_org_name=acc_salary_org_name,
-                acc_salary_org_acc=request.account_salary_organization_account,
-                maker_id=self.current_user.user_info.username,
-                maker_at=now(),
-                checker_id=None,
-                checker_at=None,
-                approve_status=CASA_ACCOUNT_STATUS_UNAPPROVED,
-                self_selected_account_flag=self_selected_account_flag,
-                acc_active_flag=1,
-                created_at=now(),
-                updated_at=now()
-            ))
-
-            booking_id = generate_uuid()
-            current_user_info = self.current_user.user_info
-
-            saving_bookings.append(dict(
-                id=booking_id,
-                parent_id=booking_parent_id,
-                code=None,
-                transaction_id=None,
-                business_type_id=BUSINESS_TYPE_OPEN_CASA,
-                branch_id=current_user_info.hrm_branch_code,
-                created_at=now(),
-                updated_at=now()
-            ))
-
-            saving_booking_accounts.append(dict(
-                booking_id=booking_id,
-                account_number=request.casa_account_number,
-                created_at=now(),
-                updated_at=now()
-            ))
-
             # Check Currency
             dropdown_currency = await self.get_model_object_by_id(
                 model_id=currency_id,
@@ -239,16 +204,18 @@ class CtrCasaOpenCasa(BaseController):
                     session=self.oracle_session
                 ))
                 if not dropdown_account_structure_type_level_2:
-                    return self.response_exception(msg=ERROR_VALIDATE, loc=f"{index} -> account_structure_type_level_2_id")
+                    return self.response_exception(msg=ERROR_VALIDATE,
+                                                   loc=f"{index} -> account_structure_type_level_2_id")
 
                 dropdown_account_structure_type_level_1 = self.call_repos(await repos_get_acc_structure_type_by_parent(
                     acc_structure_type_id=account_structure_type_level_2_id,
                     session=self.oracle_session
                 ))
 
-            saving_booking_child_business_forms.append(dict(
+            booking_child_business_form = dict(
                 booking_business_form_id=generate_uuid(),
                 booking_id=booking_id,
+                business_form_id=BUSINESS_TYPE_OPEN_CASA,
                 form_data=orjson_dumps(dict(
                     cif_number=cif_number,
                     account_info=dict(
@@ -269,11 +236,75 @@ class CtrCasaOpenCasa(BaseController):
                         account_salary_organization_name=acc_salary_org_name
                     )
                 )),
-                business_form_id=BUSINESS_TYPE_OPEN_CASA,
-                created_at=now(),
+                updated_at=now(),
                 save_flag=True,
-                log_data=None
+                log_data=None,
+                is_success=False
+            )
+
+            booking_business_form_id = request.booking_business_form_id
+            if booking_business_form_id:
+                booking_business_form = self.call_repos(await repos_get_booking_business_form(
+                    booking_business_form_id=booking_business_form_id,
+                    session=self.oracle_session
+                ))
+                if not booking_business_form:
+                    self.response_exception(
+                        msg=ERROR_BOOKING_BUSINESS_FORM_NOT_EXIST,
+                        loc=f"{index} -> booking_business_form_id"
+                    )
+                # Tài khoản cập nhật phải là tài khoản chưa tạo thành công
+                if booking_business_form.is_success:
+                    self.response_exception(
+                        msg=ERROR_CASA_ACCOUNT_APPROVED,
+                        loc=f"{index} -> booking_business_form_id"
+                    )
+
+                booking_child_business_form.update(booking_business_form_id=booking_business_form_id)
+                updating_booking_child_business_forms.append(booking_child_business_form)
+                updating_booking_child_business_form_ids.append(booking_business_form_id)
+                continue
+
+            saving_casa_accounts.append(dict(
+                id=casa_account_id,
+                casa_account_number=casa_account_number,
+                currency_id=currency_id,
+                acc_type_id=acc_type_id,
+                acc_class_id=acc_class_id,
+                acc_structure_type_id=account_structure_type_level_2_id,
+                staff_type_id=STAFF_TYPE_BUSINESS_CODE,
+                acc_salary_org_name=acc_salary_org_name,
+                acc_salary_org_acc=request.account_salary_organization_account,
+                maker_id=self.current_user.user_info.username,
+                maker_at=now(),
+                checker_id=None,
+                checker_at=None,
+                approve_status=CASA_ACCOUNT_STATUS_UNAPPROVED,
+                self_selected_account_flag=self_selected_account_flag,
+                acc_active_flag=1,
+                created_at=now(),
+                updated_at=now()
             ))
+
+            saving_bookings.append(dict(
+                id=booking_id,
+                parent_id=booking_parent_id,
+                code=None,
+                transaction_id=None,
+                business_type_id=BUSINESS_TYPE_OPEN_CASA,
+                branch_id=current_user_info.hrm_branch_code,
+                created_at=now(),
+                updated_at=now()
+            ))
+
+            saving_booking_accounts.append(dict(
+                booking_id=booking_id,
+                account_number=request.casa_account_number,
+                created_at=now(),
+                updated_at=now()
+            ))
+
+            saving_booking_child_business_forms.append(booking_child_business_form)
 
         if is_errors:
             return self.response_exception(msg=ERROR_VALIDATE, detail=str(is_errors))
@@ -299,6 +330,22 @@ class CtrCasaOpenCasa(BaseController):
                 level=ACC_STRUCTURE_TYPE_LEVEL_2,
                 session=self.oracle_session
             )
+        )
+
+        # Lấy những booking_business có thể xóa
+        get_casa_open_casa_infos = self.call_repos(await repos_get_casa_open_casa_info_from_booking_parent(
+            booking_parent_id=booking_parent_id,
+            session=self.oracle_session
+        ))
+
+        booking_business_forms = []
+
+        for _, _, booking_business_form in get_casa_open_casa_infos:
+            if booking_business_form.is_success:
+                booking_business_forms.append(booking_business_form.booking_business_form_id)
+
+        deletable_booking_business_form_ids = list(
+            set(booking_business_forms) - set(updating_booking_child_business_form_ids)
         )
 
         history_datas = self.make_history_log_data(
@@ -331,8 +378,6 @@ class CtrCasaOpenCasa(BaseController):
             saving_transaction_daily, saving_transaction_sender, saving_transaction_job, saving_booking_business_form
         ) = transaction_datas
 
-        print(saving_booking_child_business_forms)
-
         self.call_repos(await repos_save_casa_casa_account(
             saving_casa_accounts=saving_casa_accounts,
             saving_bookings=saving_bookings,
@@ -349,6 +394,8 @@ class CtrCasaOpenCasa(BaseController):
             saving_transaction_job=saving_transaction_job,
             saving_booking_business_form=saving_booking_business_form,
             saving_booking_child_business_forms=saving_booking_child_business_forms,
+            updating_booking_child_business_forms=updating_booking_child_business_forms,
+            deletable_booking_business_form_ids=deletable_booking_business_form_ids,
             session=self.oracle_session
         ))
 
