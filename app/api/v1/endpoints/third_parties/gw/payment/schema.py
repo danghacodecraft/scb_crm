@@ -51,14 +51,9 @@ class AccountAmountBlockDetailRequest(BaseSchema):
                     "value='A':System,"
                     "value='C':Account, value='B':Bulk Salary, value='I':P2P)"
     )
-    hold_code: str = Field(..., description="Mã lý do bị phong tỏa")
     effective_date: str = Field(..., description="Ngày hiệu lực phong tỏa. format`DD/MM/YYYY`")
-    expiry_date: str = Field(None, description="Ngày hết hiệu lực phong tỏa. format`DD/MM/YYYY`")
+    expiry_date: Optional[str] = Field(None, description="Ngày hết hiệu lực phong tỏa. format`DD/MM/YYYY`")
     remarks: str = Field(..., description="Ghi chú")
-    verify_available_balance: str = Field(
-        ...,
-        description="Có hoặc không kiểm tra giá trị số dư trước khi phong tỏa. Giá trị Y/N"
-    )
 
 
 class FeePaymentInfoRequest(BaseSchema):
@@ -76,8 +71,6 @@ class AccountAmountBlockRequest(BaseSchema):
 
 class AmountUnblockDetail(BaseSchema):
     amount: int = Field(..., description="Số dư")
-    hold_code: str = Field(..., description="Mã lý do")
-    expiry_date: str = Field(..., description='Ngày hết hiệu lực')
     remarks: str = Field(..., description="Ghi chú")
 
 
