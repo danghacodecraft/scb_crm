@@ -16,6 +16,7 @@ class CasaOpenCasaRequest(BaseSchema):
 
 
 class CasaAccountInfoResponse(BaseSchema):
+    booking_business_form_id: str = Field(..., description="Mã giao dịch tài khoản thanh toán")
     self_selected_account_flag: bool = Field(..., description="""Cờ tự chọn số tài khoản
                                                                   \nSố tài khoản thường => `False`
                                                                   \nSố tài khoản yêu cầu => `True`""")
