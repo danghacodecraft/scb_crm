@@ -7,8 +7,7 @@ from app.third_parties.oracle.base import Base
 class EKYCCustomer(Base):
     __tablename__ = 'crm_ekyc_customer'
 
-    id = Column(NUMBER, primary_key=True)
-    customer_id = Column(VARCHAR(100), nullable=False)
+    customer_id = Column(VARCHAR(100), primary_key=True, nullable=False)
     document_id = Column(VARCHAR(12), nullable=True)
     document_type = Column(NUMBER(2), nullable=True)
     date_of_issue = Column(DATE, nullable=True)
@@ -58,6 +57,7 @@ class EKYCCustomer(Base):
     approve_status = Column(VARCHAR(500), default=None)
     user_approve = Column(VARCHAR(500), default=None)
     date_approve = Column(DATE, default=None)
+    status = Column(VARCHAR(50), default=None)
 
 
 class EKYCCustomerStep(Base):
