@@ -64,7 +64,7 @@ class CasaAccountInfoResponse(BaseSchema):
     account_salary_organization_account: Optional[str] = Field(..., description="Tài khoản của tổ chức chi lương",
                                                                nullable=True)
     account_salary_organization_name: Optional[str] = Field(..., description="Chủ tài khoản chi lương", nullable=True)
-    approve_status: Optional[bool] = Field(..., description="Trạng thái phê duyệt tài khoản", nullable=True)
+    approval_status: Optional[bool] = Field(..., description="Trạng thái phê duyệt tài khoản", nullable=True)
 
 
 class CasaAccountResponse(BaseSchema):
