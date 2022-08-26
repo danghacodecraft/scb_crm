@@ -581,11 +581,13 @@ async def repos_gw_save_casa_transfer_info(
     if casa_transfer.get('transaction_info').get('transaction_error_code') != GW_RESPONSE_STATUS_SUCCESS:
         return ReposReturn(is_error=True, msg=casa_transfer.get('transaction_info').get('transaction_error_msg'))
 
+    data_output = casa_transfer['data_output']
+
     response_data = {
         "booking_id": booking_id,
-        "p_contract_ref": casa_transfer['data_output']['p_contract_ref'],
         "server_ref_num": casa_transfer['transaction_info']['server_ref_num'],
-        "p_xref": casa_transfer.get('data_output').get('p_xref')
+        "p_contract_ref": data_output['p_contract_ref'] if 'p_contract_ref' in data_output else None,
+        "p_xref": data_output['p_xref'] if 'p_xref' in data_output else None
     }
 
     return ReposReturn(data=(response_data, gw_casa_transfer, is_success))

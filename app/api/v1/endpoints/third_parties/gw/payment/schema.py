@@ -209,5 +209,6 @@ class AccountAmountBlockPDResponse(PaymentSuccessResponse):
 
 class GWCasaTransferAccountResponse(BaseSchema):
     booking_id: str = Field(..., description="Booking")
+    p_xref: Optional[str] = Field(..., description="Số bút toán")
     p_contract_ref: Optional[str] = Field(..., description="Mã hợp đồng")
     server_ref_num: str = Field(..., description="Sinh ra từ microservice")
