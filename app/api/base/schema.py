@@ -50,6 +50,7 @@ class ResponseRequestSchema(BaseSchema):
     """
     RequestSchema parse blank string to null
     """
+
     @validator('*', pre=True)
     def check_blank_str(string):
         if string == '':
@@ -87,6 +88,26 @@ class CreatedUpdatedBaseModel(BaseSchema):
 
     updated_at: datetime = Field(..., description='Cập nhật vào lúc, format dạng: `YYYY-mm-dd HH:MM:SS`',
                                  example='2021-15-12 06:07:08')
+
+    updated_by: str = Field(..., description='Cập nhật vào lúc')
+
+
+class TMSCreatedUpdatedBaseModel(BaseSchema):
+    created_at_datetime: datetime = Field(..., description='Tạo mới vào lúc, format dạng: `YYYY-mm-dd HH:MM:SS`',
+                                          example='2021-15-12 06:07:08')
+    created_at_date: date = Field(..., description='Tạo mới vào lúc, format dạng: `YYYY-mm-dd`',
+                                  example='2021-15-12')
+    # created_at_time: time = Field(..., description='Tạo mới vào lúc, format dạng: ` HH:MM:SS`',
+    #                               example='06:07:08')
+
+    created_by: str = Field(..., description='Tạo mới bởi')
+
+    updated_at_datetime: datetime = Field(..., description='Cập nhật vào lúc, format dạng: `YYYY-mm-dd HH:MM:SS`',
+                                          example='2021-15-12')
+    updated_at_date: date = Field(..., description='Cập nhật vào lúc, format dạng: `YYYY-mm-dd`',
+                                  example='2021-15-12 06:07:08')
+    # updated_at_time: time = Field(..., description='Cập nhật vào lúc, format dạng: ` HH:MM:SS`',
+    #                                       example='06:07:08')
 
     updated_by: str = Field(..., description='Cập nhật vào lúc')
 
