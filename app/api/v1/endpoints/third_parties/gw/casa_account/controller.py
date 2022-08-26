@@ -622,7 +622,7 @@ class CtrGWCasaAccount(BaseController):
                 booking_account.account_number = account_number
             else:
                 error_list.update({booking_business_form.booking_business_form_id: dict(
-                    detail=str(gw_open_casa_account_info)
+                    detail=gw_open_casa_account_info
                 )})
         self.oracle_session.commit()
 
@@ -644,8 +644,8 @@ class CtrGWCasaAccount(BaseController):
 
         return self.response(data=dict(
             cif_number=cif_number,
-            succcess_numbers=[success_number for success_number in success_numbers],
-            unsucccess_numbers=[dict(
+            success_numbers=[success_number for success_number in success_numbers],
+            unsuccess_numbers=[dict(
                 booking_business_form_id=k,
                 data=v
             ) for k, v in error_list.items()]

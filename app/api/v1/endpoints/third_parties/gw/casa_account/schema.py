@@ -233,6 +233,25 @@ class GWOpenCasaAccountResponse(BaseGWSchema):
     debit_num: GWOpenCIFStatusIdNumberResponse = Field(..., description="Thông tin thẻ ghi nợ")
 
 
+class UnsuccessNumberDetailResponse(BaseGWSchema):
+    detail: dict = Field(..., description="Chi tiết lỗi")
+    form_data: dict = Field(..., description="Data nhập vào")
+
+
+class UnsuccessNumberResponse(BaseGWSchema):
+    booking_business_form_id: str = Field(..., description="ID tài khoản")
+    data: UnsuccessNumberDetailResponse = Field(..., description="ID tài khoản")
+
+
+class GWOpenCasaOpenCasaResponse(BaseGWSchema):
+    """
+    Response dùng cho business_type OPEN_CASA
+    """
+    cif_number: str = Field(..., description="cif_number Customer")
+    success_numbers: List[str] = Field(..., description="Danh sách tài khoản thành công")
+    unsuccess_numbers: List[UnsuccessNumberResponse] = Field(..., description="Danh sách tài khoản không thành công")
+
+
 class GWAccountInfoCloseCasaRequest(BaseGWSchema):
     account_num: Optional[str] = Field(..., description="Số tài khoản chọn để khóa")
 
