@@ -589,21 +589,21 @@ class CtrGWCasaAccount(BaseController):
         mark_created_at = None
         # Lấy thông tin Lưu tài khoản cập nhật mới nhất
         # Những booking con đã hoàn thành thì không thao tác nữa
-        for booking_id, booking_account, booking_business_form in get_casa_open_casa_infos:
+        for booking, booking_account, booking_business_form in get_casa_open_casa_infos:
             if not booking_business_form.is_success:
                 if not mark_created_at:
                     mark_created_at = booking_business_form.created_at
-                    casa_accounts.append((booking_id, booking_account, booking_business_form))
+                    casa_accounts.append((booking, booking_account, booking_business_form))
                 elif mark_created_at == booking_business_form.created_at:
-                    casa_accounts.append((booking_id, booking_account, booking_business_form))
+                    casa_accounts.append((booking, booking_account, booking_business_form))
 
-        for booking_id, booking_account, booking_business_form in casa_accounts:
+        for booking, booking_account, booking_business_form in casa_accounts:
             form_data = orjson_loads(booking_business_form.form_data)
             form_data['account_info']['approval_status'] = booking_business_form.is_success
 
             is_success, gw_open_casa_account_info = self.call_repos(await repos_gw_push_casa_to_gw(
                 form_data=form_data,
-                booking_id=booking_id,
+                booking_id=booking.id,
                 current_user=current_user,
                 maker_staff_name=maker_staff_name,
                 session=self.oracle_session
@@ -612,6 +612,7 @@ class CtrGWCasaAccount(BaseController):
                 account_number = gw_open_casa_account_info['openCASA_out']['data_output']['account_info']['account_num']
                 form_data['account_info']['casa_account_number'] = account_number
                 # cập nhật lại booking_business_form
+                booking.completed_flag = True
                 booking_business_form.is_success = True
                 booking_business_form.form_data = orjson_dumps(form_data)
                 booking_account.account_number = account_number
@@ -624,7 +625,7 @@ class CtrGWCasaAccount(BaseController):
         success_numbers = []
         unsuccess_numbers = []
         cif_number = None
-        for booking, booking_account, booking_business_form in get_casa_open_casa_infos:
+        for _, _, booking_business_form in get_casa_open_casa_infos:
             form_data = orjson_loads(booking_business_form.form_data)
             if booking_business_form.is_success:
                 success_numbers.append(form_data['account_info']['casa_account_number'])

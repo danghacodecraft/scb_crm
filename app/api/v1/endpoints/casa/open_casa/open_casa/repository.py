@@ -209,7 +209,7 @@ async def repos_get_casa_open_casa_info_from_booking_parent(booking_parent_id: s
     """
     get_casa_open_casa_info = session.execute(
         select(
-            Booking.id,
+            Booking,
             BookingAccount,
             BookingBusinessForm
         )
