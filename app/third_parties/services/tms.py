@@ -1,13 +1,15 @@
+import json
+
 import aiohttp
 from starlette import status
 
-from app.settings.service import SERVICE
-
 
 class ServiceTMS:
-    tms_service = SERVICE["tms"]
-    __host = tms_service['url']
-    __header = tms_service['headers']
+    def __init__(self, init_service):
+        self.session = None
+        self.tms_service = init_service
+        self.tms_url = self.tms_service["tms"]['url']
+        self.tms_header = self.tms_service["tms"]['headers']
 
     def start(self):
         self.session = aiohttp.ClientSession()  # noqa
@@ -17,37 +19,35 @@ class ServiceTMS:
         self.session = None  # noqa
 
     async def fill_form(self, body: dict, path: str):
-        method = "POST"
-        url = f"{self.__host}{path}"
+        url = f"{self.tms_url}{path}fill_data_and_show_list_detail_field/"
+        body = json.dumps(body)
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.request(
-                        method=method,
-                        url=url,
-                        headers=self.__header,
-                        json=body
-                ) as res:
-                    # handle response
-                    if res.status == status.HTTP_500_INTERNAL_SERVER_ERROR:
-                        return False, {
-                            "url": url,
-                            "headers": self.__header,
-                            "message": f"Status: {res.status}",
-                        }
-                    elif res.status != status.HTTP_200_OK:
-                        return False, {
-                            "url": url,
-                            "headers": self.__header,
-                            "message": f"Status: {res.status}" + str(await res.json()),
-                        }
+            async with self.session.post(
+                    url=url,
+                    headers=self.tms_header,
+                    data=body
+            ) as res:
+                # handle response
+                if res.status == status.HTTP_500_INTERNAL_SERVER_ERROR:
+                    return False, {
+                        "url": url,
+                        "headers": self.tms_header,
+                        "message": f"Status: {res.status}",
+                    }
+                elif res.status != status.HTTP_200_OK:
+                    return False, {
+                        "url": url,
+                        "headers": self.tms_header,
+                        "message": f"Status: {res.status}" + str(await res.json()),
+                    }
 
-                    data = await res.json()
+                data = await res.json()
 
-                    return True, data
+                return True, data
 
         except Exception as ex:  # noqa
             return False, {
                 "url": url,
-                "headers": self.__header,
+                "headers": self.tms_header,
                 "message": str(ex),
             }

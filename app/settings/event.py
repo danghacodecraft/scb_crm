@@ -11,6 +11,7 @@ from app.third_parties.services.idm import ServiceIDM
 from app.third_parties.services.kafka import ServiceKafka
 from app.third_parties.services.rabbitmq import ServiceRabbitmq
 from app.third_parties.services.redis import ServiceRedis
+from app.third_parties.services.tms import ServiceTMS
 
 INIT_SERVICE = SERVICE
 service_file = ServiceFile(init_service=INIT_SERVICE)
@@ -20,6 +21,7 @@ service_idm = ServiceIDM(init_service=INIT_SERVICE)
 service_kafka = ServiceKafka(init_service=INIT_SERVICE)
 service_redis = ServiceRedis(init_service=INIT_SERVICE)
 service_rabbitmq = ServiceRabbitmq(init_service=INIT_SERVICE)
+service_tms = ServiceTMS(init_service=INIT_SERVICE)
 
 
 
@@ -30,6 +32,7 @@ def create_start_app_handler(app: FastAPI) -> Callable:  # noqa
         service_gw.start()
         service_idm.start()
         service_redis.start()
+        service_tms.start()
     return start_app
 
 
