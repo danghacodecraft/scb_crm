@@ -2493,6 +2493,7 @@ class ServiceGW:
         marital_status = mapping_marital_status_crm_to_core(customer_info.CustomerIndividualInfo.marital_status_id)
         identity_code = mapping_identity_code_crm_to_core(customer_info.CustomerIdentity.identity_type_id)
         resident_pr_stat = mapping_resident_pr_stat_crm_to_core(customer_info.CustomerIndividualInfo.resident_status_id)
+        telephone_number = customer_info.Customer.telephone_number if customer_info.Customer.telephone_number else customer_info.Customer.mobile_number
 
         # Ràng buộc nhập số điện thoại để mở thẻ
         if not customer_info.Customer.mobile_number:
@@ -2578,7 +2579,7 @@ class ServiceGW:
                     "district_name": customer_info.AddressDistrict.name,
                     "city_name": customer_info.CustomerAddress.address,
                     "country_name": customer_info.AddressCountry.id,
-                    "telephone1": customer_info.Customer.telephone_number
+                    "telephone1": telephone_number
                 },
                 # @TODO: resident_type tạm hard Local
                 "customer_info": {
@@ -2596,7 +2597,7 @@ class ServiceGW:
                     "district_name": customer_info.AddressDistrict.name,
                     "city_name": customer_info.CustomerAddress.address,
                     "country_name": customer_info.AddressCountry.id,
-                    "telephone1": customer_info.Customer.telephone_number,
+                    "telephone1": telephone_number,
                     "mobile_phone": customer_info.Customer.mobile_number
                 },
                 "smsInd": GW_DEFAULT_NO,
@@ -2619,7 +2620,7 @@ class ServiceGW:
                     "district_name": GW_DEFAULT_VALUE,
                     "city_name": GW_DEFAULT_VALUE,
                     "country_name": GW_DEFAULT_VALUE,
-                    "telephone1": GW_DEFAULT_VALUE,
+                    "telephone1": telephone_number,
                     "phone_ext1": GW_DEFAULT_VALUE,
                     "telephone2": GW_DEFAULT_VALUE,
                     "phone_ext2": GW_DEFAULT_VALUE,
@@ -2640,7 +2641,7 @@ class ServiceGW:
                     "district_name": GW_DEFAULT_VALUE,
                     "city_name": GW_DEFAULT_VALUE,
                     "country_name": GW_DEFAULT_VALUE,
-                    "telephone1": GW_DEFAULT_VALUE,
+                    "telephone1": telephone_number,
                     "phone_ext1": GW_DEFAULT_VALUE
                 }
             },
@@ -2684,7 +2685,7 @@ class ServiceGW:
                     "district_name": GW_DEFAULT_VALUE,
                     "city_name": GW_DEFAULT_VALUE,
                     "country_name": GW_DEFAULT_VALUE,
-                    "telephone1": GW_DEFAULT_VALUE,
+                    "telephone1": telephone_number,
                     "phone_ext1": GW_DEFAULT_VALUE
                 },
                 "spcEmpPosi": GW_DEFAULT_VALUE,
@@ -2694,7 +2695,7 @@ class ServiceGW:
             "emergency_info": {
                 "emerContcPrsn": customer_info.Customer.full_name_vn,
                 "emerGender": customer_info.CustomerIndividualInfo.gender_id,
-                "emerPhoneNo": customer_info.Customer.telephone_number,
+                "emerPhoneNo": telephone_number,
                 "emerMobileNo": customer_info.Customer.mobile_number,
                 "emerRelt": GW_DEFAULT_emerRelt
             },
