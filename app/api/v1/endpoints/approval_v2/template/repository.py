@@ -1,18 +1,25 @@
+from typing import Any, Union
+
 from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn
+from app.settings.event import service_tms
 from app.third_parties.oracle.models.cif.form.model import (
     Booking, BookingBusinessForm
 )
 from app.third_parties.oracle.models.template.model import Template
 from app.utils.error_messages import (
     ERROR_BOOKING_BUSINESS_FORM_NOT_EXIST, ERROR_BOOKING_ID_NOT_EXIST,
-    ERROR_TEMPLATE_NOT_EXIST
+    ERROR_CALL_SERVICE_TEMPLATE, ERROR_TEMPLATE_NOT_EXIST
 )
 
 
-async def repos_get_template_data(template_id: str, booking_id: str, session: Session):
+async def repos_check_exist_and_get_info_template_booking(
+        template_id: str,
+        booking_id: str,
+        session: Session) -> Union[dict, Any]:
+
     booking = session.execute(
         select(Booking).filter(
             Booking.id == booking_id
@@ -40,10 +47,14 @@ async def repos_get_template_data(template_id: str, booking_id: str, session: Se
             detail='Can not found template'
         )
 
+    return ReposReturn(data={'template_info': template_info, "booking_info": booking})
+
+
+async def repos_get_template_data(booking, session: Session):
     booking_business_forms = session.execute(select(
         BookingBusinessForm
     ).filter(
-        BookingBusinessForm.booking_id == booking_id
+        BookingBusinessForm.booking_id == booking.id
     ).order_by(
         desc(BookingBusinessForm.business_form_id),
         desc(BookingBusinessForm.created_at)
@@ -74,3 +85,24 @@ async def repos_get_template_data(template_id: str, booking_id: str, session: Se
     }
 
     return ReposReturn(data=data_return)
+
+
+async def repo_form(template_id: str, booking_id: str, path: str) -> ReposReturn:
+    body = {
+        "parameter_values": {
+            "str_id": template_id,
+            "str_booking_id": booking_id
+        },
+        "data_fill": {}
+    }
+
+    is_success, response = await service_tms.fill_form(body=body, path=path)
+
+    if not is_success:
+        return ReposReturn(
+            is_error=True,
+            msg=ERROR_CALL_SERVICE_TEMPLATE,
+            detail=str(response['message'])
+        )
+
+    return ReposReturn(data=response)
