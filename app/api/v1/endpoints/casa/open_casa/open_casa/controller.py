@@ -51,17 +51,12 @@ class CtrCasaOpenCasa(BaseController):
         ))
 
         casa_accounts = []
-        approval_casa_accounts = []
-
         # Lấy thông tin Lưu tài khoản cập nhật mới nhất
         for _, _, booking_business_form in get_casa_open_casa_infos:
             form_data = orjson_loads(booking_business_form.form_data)
             form_data['account_info']['approval_status'] = booking_business_form.is_success
             form_data['account_info']['booking_business_form_id'] = booking_business_form.booking_business_form_id
-            if booking_business_form.is_success:
-                approval_casa_accounts.append(form_data)
-            else:
-                casa_accounts.append(form_data)
+            casa_accounts.append(form_data)
 
         booking = await CtrBooking(current_user=self.current_user).ctr_get_booking(
             booking_id=booking_parent_id,
@@ -73,8 +68,6 @@ class CtrCasaOpenCasa(BaseController):
             transaction_code=booking.code,
             total_item=len(casa_accounts),
             casa_accounts=casa_accounts,
-            total_approval_casa_account=len(approval_casa_accounts),
-            approval_casa_accounts=approval_casa_accounts,
             read_only=booking.completed_flag
         ))
 
