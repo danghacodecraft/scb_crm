@@ -69,11 +69,11 @@ class TMSResponseSchema(BaseSchema):
             return ""
         return string
 
-    @validator('*')
-    def parse_to_string(cls, string):
-        if string and (isinstance(string, int) or isinstance(string, float)):
-            return str(string)
-        return string
+    # @validator('*')
+    # def parse_to_string(cls, string):
+    #     if string and (isinstance(string, int) or isinstance(string, float)):
+    #         return str(string)
+    #     return string
 
 
 class BaseGenericSchema(BaseSchema, GenericModel):
