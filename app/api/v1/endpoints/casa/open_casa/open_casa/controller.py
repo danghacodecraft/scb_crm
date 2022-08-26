@@ -331,8 +331,6 @@ class CtrCasaOpenCasa(BaseController):
             saving_transaction_daily, saving_transaction_sender, saving_transaction_job, saving_booking_business_form
         ) = transaction_datas
 
-        print(saving_booking_child_business_forms)
-
         self.call_repos(await repos_save_casa_casa_account(
             saving_casa_accounts=saving_casa_accounts,
             saving_bookings=saving_bookings,
