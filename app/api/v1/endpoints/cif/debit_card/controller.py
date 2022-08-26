@@ -1,7 +1,6 @@
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.debit_card.repository import (
-    get_data_customer_id, get_data_debit_card_by_cif_num, repos_add_debit_card,
-    repos_debit_card
+    get_data_debit_card_by_cif_num, repos_add_debit_card, repos_debit_card
 )
 from app.api.v1.endpoints.cif.debit_card.schema import DebitCardRequest
 from app.api.v1.endpoints.cif.repository import (
@@ -23,7 +22,7 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_INIT_DEBIT_CARD, PROFILE_HISTORY_STATUS_INIT
 )
 from app.utils.error_messages import (
-    ERROR_CIF_ID_NOT_EXIST, ERROR_NOT_REGISTER, VALIDATE_ERROR
+    ERROR_CIF_NUMBER_NOT_EXIST, ERROR_NOT_REGISTER, VALIDATE_ERROR
 )
 from app.utils.functions import generate_uuid, now, orjson_dumps
 from app.utils.vietnamese_converter import convert_to_unsigned_vietnamese
@@ -247,12 +246,11 @@ class CtrDebitCard(BaseController):
                 if not CtrGWCustomer().ctr_gw_check_exist_customer_detail_info(cif_number=sub_card.cif_number,
                                                                                return_raw_data_flag=True):
                     return self.response_exception(
-                        msg=ERROR_CIF_ID_NOT_EXIST,
-                        detail="CIF number is not exist",
+                        msg=ERROR_CIF_NUMBER_NOT_EXIST,
                         loc="information_sub_debit_card -> sub_debit_cards -> cif_number"
                     )
 
-                sub_customer_ids = self.call_repos(await get_data_customer_id(self.oracle_session, sub_card.cif_number))
+                # sub_customer_ids = self.call_repos(await get_data_customer_id(self.oracle_session, sub_card.cif_number))
 
                 """Kiểm tra sub physical_card_type (Tính vật lý) tồn tại"""
                 sub_card_type = []
@@ -360,7 +358,8 @@ class CtrDebitCard(BaseController):
                 # thong tin (the phu)
                 sub_data_debit_card = {
                     "id": generate_uuid(),
-                    "customer_id": sub_customer_ids[0],
+                    "customer_id": None,
+                    "cif_number": sub_card.cif_number,
                     "card_issuance_type_id": sub_card.card_issuance_type.id,
                     "customer_type_id": debt_card_req.issue_debit_card.customer_type.id,
                     "brand_of_card_id": debt_card_req.issue_debit_card.branch_of_card.id,
