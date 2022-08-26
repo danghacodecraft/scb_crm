@@ -556,6 +556,9 @@ class CtrGWCasaAccount(BaseController):
         return self.response(data=response_info)
 
     async def ctr_gw_open_casa_accounts(self, booking_parent_id: str):
+        """
+        Mở TKTT cho nhiều TK màn hình OPEN_CASA
+        """
         current_user = self.current_user
         current_user_info = current_user.user_info
         is_role_supervisor = self.call_repos(await PermissionController.ctr_approval_check_permission_stage(
@@ -597,6 +600,7 @@ class CtrGWCasaAccount(BaseController):
                 elif mark_created_at == booking_business_form.created_at:
                     casa_accounts.append((booking, booking_account, booking_business_form))
 
+        error_list = {}
         for booking, booking_account, booking_business_form in casa_accounts:
             form_data = orjson_loads(booking_business_form.form_data)
             form_data['account_info']['approval_status'] = booking_business_form.is_success
@@ -616,6 +620,10 @@ class CtrGWCasaAccount(BaseController):
                 booking_business_form.is_success = True
                 booking_business_form.form_data = orjson_dumps(form_data)
                 booking_account.account_number = account_number
+            else:
+                error_list.update({booking_business_form.booking_business_form_id: dict(
+                    detail=str(gw_open_casa_account_info)
+                )})
         self.oracle_session.commit()
 
         get_casa_open_casa_infos = self.call_repos(await repos_get_casa_open_casa_info_from_booking_parent(
@@ -623,20 +631,24 @@ class CtrGWCasaAccount(BaseController):
             session=self.oracle_session
         ))
         success_numbers = []
-        unsuccess_numbers = []
         cif_number = None
         for _, _, booking_business_form in get_casa_open_casa_infos:
             form_data = orjson_loads(booking_business_form.form_data)
             if booking_business_form.is_success:
                 success_numbers.append(form_data['account_info']['casa_account_number'])
             else:
-                unsuccess_numbers.append(form_data['account_info']['casa_account_number'])
+                error_list[booking_business_form.booking_business_form_id].update(
+                    form_data=form_data
+                )
             cif_number = form_data['cif_number']
 
         return self.response(data=dict(
             cif_number=cif_number,
             succcess_numbers=[success_number for success_number in success_numbers],
-            unsucccess_numbers=[unsuccess_number for unsuccess_number in unsuccess_numbers]
+            unsucccess_numbers=[dict(
+                booking_business_form_id=k,
+                data=v
+            ) for k, v in error_list.items()]
         ))
 
     async def ctr_gw_get_close_casa_account(self, booking_id):
