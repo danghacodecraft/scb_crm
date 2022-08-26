@@ -64,7 +64,7 @@ class CasaAccountInfoResponse(BaseSchema):
     account_salary_organization_account: Optional[str] = Field(..., description="Tài khoản của tổ chức chi lương",
                                                                nullable=True)
     account_salary_organization_name: Optional[str] = Field(..., description="Chủ tài khoản chi lương", nullable=True)
-    approve_status: Optional[int] = Field(..., description="Trạng thái phê duyệt tài khoản", nullable=True)
+    approve_status: Optional[bool] = Field(..., description="Trạng thái phê duyệt tài khoản", nullable=True)
 
 
 class CasaAccountResponse(BaseSchema):
@@ -78,5 +78,3 @@ class CasaOpenCasaResponse(BaseSchema):
     read_only: bool = Field(..., description="có read only không")
     total_item: int = Field(..., description="Tổng số TKTT")
     casa_accounts: List[CasaAccountResponse] = Field(..., description="Danh sách TKTT")
-    total_approval_casa_account: int = Field(..., description="Tổng số TKTT phê duyệt thành công")
-    approval_casa_accounts: List[CasaAccountResponse] = Field(..., description="Danh sách TKTT đã phê duyệt thành công")
