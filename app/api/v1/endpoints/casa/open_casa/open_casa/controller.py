@@ -236,6 +236,7 @@ class CtrCasaOpenCasa(BaseController):
                         account_salary_organization_name=acc_salary_org_name
                     )
                 )),
+                created_at=now(),
                 updated_at=now(),
                 save_flag=True,
                 log_data=None,
