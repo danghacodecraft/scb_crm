@@ -1937,7 +1937,7 @@ class CtrGWCasaAccount(BaseController):
             booking_id=BOOKING_ID,
             business_type_id=BUSINESS_TYPE_CASA_TRANSFER,
             is_completed=is_completed,
-            form_data=form_data,
+            form_data=orjson_dumps(form_data),
             gw_output_data=orjson_dumps(gw_casa_transfer),
             session=self.oracle_session
         ))
