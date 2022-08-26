@@ -912,8 +912,6 @@ class CtrGWCustomer(BaseController):
 
             # Push Debit
             if not is_complete_debit:
-                is_cif_number_is_exist = self.ctr_gw_check_exist_customer_detail_info(cif_number=cif_number,
-                                                                                      return_raw_data_flag=True)
                 result = await repos_push_debit_to_gw(
                     booking_id=BOOKING_ID,
                     session=self.oracle_session,
@@ -922,8 +920,7 @@ class CtrGWCustomer(BaseController):
                     cif_number=cif_number,
                     casa_account_number=casa_account_number,
                     response_customers=response_customers,
-                    maker_staff_name=maker_staff_name,
-                    is_cif_number_is_exist=is_cif_number_is_exist
+                    maker_staff_name=maker_staff_name
                 )
                 if result.is_error:
                     if result.msg == ERROR_NO_DATA:
