@@ -171,7 +171,7 @@ async def view_gw_open_casa_account(
     gw_open_casa_account_info = await CtrGWCasaAccount(current_user).ctr_gw_open_casa_accounts(
         booking_parent_id=BOOKING_ID
     )
-    return ResponseData[GWOpenCasaOpenCasaResponse](**gw_open_casa_account_info)
+    return ResponseData(**gw_open_casa_account_info)
 
 
 @router.post(
