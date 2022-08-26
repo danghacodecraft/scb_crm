@@ -3,16 +3,16 @@ from app.api.v1.endpoints.approval.repository import (
     repos_get_booking_business_form_by_booking_id
 )
 from app.api.v1.endpoints.casa.open_casa.open_casa.repository import (
-    repos_get_customer_by_cif_number
+    repos_get_customer_by_cif_number_optional
 )
 from app.api.v1.endpoints.deposit.open_deposit.repository import (
-    repos_save_redeem_account, repos_save_td_account, repos_update_td_account
+    repos_save_pay_in, repos_save_redeem_account, repos_save_td_account
 )
 from app.api.v1.endpoints.deposit.open_deposit.schema import (
     DepositPayInRequest
 )
-from app.api.v1.endpoints.third_parties.gw.deposit_account.repository import (
-    repos_get_booking_account_by_booking
+from app.api.v1.endpoints.third_parties.gw.customer.controller import (
+    CtrGWCustomer
 )
 from app.api.v1.endpoints.third_parties.gw.employee.controller import (
     CtrGWEmployee
@@ -26,12 +26,14 @@ from app.utils.constant.business_type import (
     BUSINESS_TYPE_REDEEM_ACCOUNT, BUSINESS_TYPE_TD_ACCOUNT_OPEN_ACCOUNT
 )
 from app.utils.constant.cif import (
-    BUSINESS_FORM_OPEN_TD_ACCOUNT_PAY, BUSINESS_FORM_REDEEM_ACCOUNT,
+    BUSINESS_FORM_REDEEM_ACCOUNT, BUSINESS_FORM_TD_ACCOUNT_PAY,
     PROFILE_HISTORY_DESCRIPTIONS_INIT_REDEEM_ACCOUNT,
     PROFILE_HISTORY_DESCRIPTIONS_INIT_SAVING_TD_ACCOUNT,
     PROFILE_HISTORY_STATUS_INIT
 )
-from app.utils.error_messages import ERROR_DENOMINATIONS_NOT_EXIST
+from app.utils.error_messages import (
+    ERROR_CIF_NUMBER_NOT_EXIST, ERROR_DENOMINATIONS_NOT_EXIST
+)
 from app.utils.functions import generate_uuid, now, orjson_dumps, orjson_loads
 
 
@@ -39,7 +41,7 @@ class CtrDeposit(BaseController):
     async def ctr_get_deposit_pay_in(self, booking_id: str):
         booking_business_form = self.call_repos(await repos_get_booking_business_form_by_booking_id(
             booking_id=booking_id,
-            business_form_id=BUSINESS_FORM_OPEN_TD_ACCOUNT_PAY,
+            business_form_id=BUSINESS_FORM_TD_ACCOUNT_PAY,
             session=self.oracle_session
         ))
 
@@ -59,12 +61,22 @@ class CtrDeposit(BaseController):
             loc=f'booking_id: {BOOKING_ID}'
         )
 
-        # Kiểm tra số CIF có tồn tại trong CRM không
-        customer = self.call_repos(await repos_get_customer_by_cif_number(
-            cif_number=deposit_account_request.cif_number,
-            session=self.oracle_session
-        ))
+        is_existed = await CtrGWCustomer(
+            current_user=self.current_user).ctr_gw_check_exist_customer_detail_info(
+            cif_number=deposit_account_request.cif_number
+        )
 
+        if not is_existed:
+            return self.response_exception(
+                msg=ERROR_CIF_NUMBER_NOT_EXIST, loc=f"open_td_account -> cif_number : {deposit_account_request.cif_number}"
+            )
+        # lấy thông tin trên crm
+        customer = self.call_repos(
+            await repos_get_customer_by_cif_number_optional(
+                cif_number=deposit_account_request.cif_number,
+                session=self.oracle_session
+            )
+        )
         td_account_ids = []
         td_accounts = []
         td_account_resigns = []
@@ -73,7 +85,7 @@ class CtrDeposit(BaseController):
             td_account_ids.append(td_account_id)
             td_accounts.append({
                 "id": td_account_id,
-                "customer_id": customer.id,
+                "customer_id": customer.id if customer else None,
                 "currency_id": item.currency_id,
                 "account_type_id": item.account_type_id,
                 "account_class_id": item.account_class_id,
@@ -109,13 +121,14 @@ class CtrDeposit(BaseController):
             saving_booking_account.append({
                 "booking_id": BOOKING_ID,
                 "td_account_id": account_id,
-                "customer_id": customer.id,
+                "customer_id": customer.id if customer else None,
                 "created_at": now()
             })
 
             saving_booking_customer.append({
                 "booking_id": BOOKING_ID,
-                "customer_id": customer.id
+                "customer_id": customer.id if customer else None,
+                "cif_number": deposit_account_request.cif_number
             })
 
         history_datas = self.make_history_log_data(
@@ -174,20 +187,8 @@ class CtrDeposit(BaseController):
     async def ctr_save_deposit_pay_in(self, booking_id: str, deposit_pay_in_request: DepositPayInRequest):
         current_user = self.current_user # noqa
 
-        booking_accounts = self.call_repos(await repos_get_booking_account_by_booking(
-            booking_id=booking_id,
-            session=self.oracle_session
-        ))
-        update_td_account = []
         statement = deposit_pay_in_request.statement
         sender_info = deposit_pay_in_request.sender_info
-
-        for item in booking_accounts:
-            update_td_account.append({
-                "id": item,
-                "pay_in_casa_account": deposit_pay_in_request.account_form.pay_in_form.account_number,
-                "pay_in_type": deposit_pay_in_request.account_form.pay_in_form.pay_in,
-            })
 
         denominations__amounts = {}
         statement_info = self.call_repos(await repos_get_denominations(currency_id="VND", session=self.oracle_session))
@@ -255,8 +256,8 @@ class CtrDeposit(BaseController):
         )
         account_form_response = dict(
             pay_in_form=dict(
-                pay_in=deposit_pay_in_request.account_form.pay_in_form.pay_in,
-                account_number=deposit_pay_in_request.account_form.pay_in_form.account_number
+                pay_in=deposit_pay_in_request.account_form.pay_in,
+                account_number=deposit_pay_in_request.account_form.account_number
             )
         )
 
@@ -279,17 +280,16 @@ class CtrDeposit(BaseController):
 
         saving_booking_business_form = dict(
             booking_id=booking_id,
-            business_form_id=BUSINESS_FORM_OPEN_TD_ACCOUNT_PAY,
+            business_form_id=BUSINESS_FORM_TD_ACCOUNT_PAY,
             booking_business_form_id=generate_uuid(),
             save_flag=True,
             created_at=now(),
-            updated_at=now(),
+            updated_at=None,
             form_data=orjson_dumps(request_data)
         )
 
-        self.call_repos(await repos_update_td_account(
+        self.call_repos(await repos_save_pay_in(
             booking_id=booking_id,
-            update_td_account=update_td_account,
             saving_booking_business_form=saving_booking_business_form,
             session=self.oracle_session
         ))

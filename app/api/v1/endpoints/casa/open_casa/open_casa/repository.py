@@ -107,6 +107,16 @@ async def repos_get_customer_by_cif_number(
     return ReposReturn(data=customers)
 
 
+async def repos_get_customer_by_cif_number_optional(cif_number: str, session: Session):
+    customer = session.execute(
+        select(
+            Customer
+        ).filter(Customer.cif_number == cif_number)
+    ).scalar()
+
+    return ReposReturn(data=customer)
+
+
 async def repos_get_acc_structure_types(acc_structure_type_ids: List[str], level: int, session: Session):
     unique_acc_structure_type_ids = set(acc_structure_type_ids)
 
