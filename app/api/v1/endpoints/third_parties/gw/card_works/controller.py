@@ -6,6 +6,7 @@ from app.utils.constant.gw import (
     GW_FUNC_OPEN_CARDS_OUT, GW_FUNC_SELECT_CARD_INFO_OUT
 )
 from app.utils.error_messages import ERROR_CALL_SERVICE_GW
+from app.utils.functions import strip_dict
 
 
 class CtrGWCardWorks(BaseController):
@@ -33,4 +34,4 @@ class CtrGWCardWorks(BaseController):
 
         response_data = select_card_info[GW_FUNC_SELECT_CARD_INFO_OUT]['data_output']
 
-        return self.response(data=response_data)
+        return self.response(data=strip_dict(response_data))

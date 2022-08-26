@@ -305,6 +305,26 @@ def calculate_percentage(unit, total):
 
 def create_fcc_booking_code(
         business_type_sequence: int, branch_code: str, created_at: datetime, booking_code: str):
-
     date_code = datetime_to_string(created_at, _format='%Y%m%d')
     return f"{business_type_sequence:02d}{branch_code}{date_code}{booking_code[-7:]}"
+
+
+def strip_dict(data_dict):
+    """
+    Remove white spaces from dict.
+    """
+    def strip_list(data_list):
+        return [strip_dict(x)
+                if isinstance(x, dict) else strip_list(x)
+                if isinstance(x, list) else clean(x) for x in data_list]
+
+    def clean(value):
+        if isinstance(value, str):
+            return value.strip()
+        return value
+
+    return {key.strip(): strip_dict(value)
+            if isinstance(value, dict) else strip_list(value)
+            if isinstance(value, list) else clean(value)
+            if value is None else clean(value)
+            for key, value in data_dict.items()}
