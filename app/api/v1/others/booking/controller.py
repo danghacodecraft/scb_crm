@@ -225,24 +225,42 @@ class CtrBooking(BaseController):
     async def ctr_get_booking_business_form(
             self,
             booking_id: str,
+            bussines_form_id: Optional[str],
             session: Session,
             check_completed_booking: bool = True
     ):
         """
         check_completed_booking: True -> Trả lỗi nếu booking hoàn thành
         """
-        booking_business_form = session.execute(
-            select(
-                BookingBusinessForm,
-                Booking
-            )
-            .join(BookingBusinessForm, and_(
-                Booking.id == BookingBusinessForm.booking_id,
-                BookingBusinessForm.business_form_id.notilike('%_GW')
-            ))
-            .filter(Booking.id == booking_id)
-            .order_by(desc(BookingBusinessForm.created_at))
-        ).scalars().all()
+        if bussines_form_id:
+            booking_business_form = session.execute(
+                select(
+                    BookingBusinessForm,
+                    Booking
+                )
+                .join(BookingBusinessForm, and_(
+                    Booking.id == BookingBusinessForm.booking_id,
+                    BookingBusinessForm.business_form_id.notilike('%_GW')
+                ))
+                .filter(
+                    Booking.id == booking_id
+                    and BookingBusinessForm.business_form_id == bussines_form_id
+                )
+            ).scalars().all()
+        else:
+            booking_business_form = session.execute(
+                select(
+                    BookingBusinessForm,
+                    Booking
+                )
+                .join(BookingBusinessForm, and_(
+                    Booking.id == BookingBusinessForm.booking_id,
+                    BookingBusinessForm.business_form_id.notilike('%_GW')
+                ))
+                .filter(Booking.id == booking_id)
+                .order_by(desc(BookingBusinessForm.created_at))
+            ).scalars().all()
+
         if not booking_business_form:
             return self.response_exception(msg=ERROR_BOOKING_BUSINESS_FORM_NOT_EXIST, loc=f"booking_id: {booking_id}")
 
