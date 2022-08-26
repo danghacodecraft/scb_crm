@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlalchemy import and_, select, update
+from sqlalchemy import and_, delete, select, update
 from sqlalchemy.orm import Session, aliased
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -27,7 +27,7 @@ from app.utils.constant.cif import ACTIVE_FLAG_ACTIVED
 from app.utils.error_messages import (
     ERROR_CIF_NUMBER_NOT_EXIST, ERROR_IDS_NOT_EXIST
 )
-from app.utils.functions import get_index_positions
+from app.utils.functions import get_index_positions, now
 
 
 @auto_commit
@@ -47,11 +47,33 @@ async def repos_save_casa_casa_account(
         saving_transaction_job: dict,
         saving_booking_business_form: dict,
         saving_booking_child_business_forms: List[dict],
+        updating_booking_child_business_forms: List[dict],
+        deletable_booking_business_form_ids: List,
         session: Session
 ):
+    # Xóa những id cũ, trừ những id đã push vào core rồi
+    session.execute(
+        delete(
+            BookingBusinessForm
+        )
+        .filter(BookingBusinessForm.booking_business_form_id.in_(deletable_booking_business_form_ids))
+    )
+
     # Cập nhật lại bằng dữ liệu mới
+    if updating_booking_child_business_forms:
+        for updating_booking_child_business_form in updating_booking_child_business_forms:
+            session.execute(
+                update(BookingBusinessForm).filter(
+                    BookingBusinessForm.booking_business_form_id == updating_booking_child_business_form['booking_business_form_id']
+                ).values(
+                    form_data=updating_booking_child_business_form['form_data'],
+                    updated_at=now()
+                )
+            )
+
     session.bulk_save_objects([Booking(**saving_booking) for saving_booking in saving_bookings])
-    session.bulk_save_objects([BookingAccount(**saving_booking_account) for saving_booking_account in saving_booking_accounts])
+    session.bulk_save_objects(
+        [BookingAccount(**saving_booking_account) for saving_booking_account in saving_booking_accounts])
     session.bulk_save_objects([BookingBusinessForm(
         **saving_booking_child_business_form
     ) for saving_booking_child_business_form in saving_booking_child_business_forms
@@ -214,3 +236,13 @@ async def repos_get_acc_structure_type_by_parent(acc_structure_type_id: str, ses
         .filter(AccountStructureType.id == acc_structure_type_id)
     ).scalar()
     return ReposReturn(data=acc_structure_type)
+
+
+async def repos_get_booking_business_form(booking_business_form_id: str, session: Session):
+    booking_business_form = session.execute(
+        select(
+            BookingBusinessForm
+        )
+        .filter(BookingBusinessForm.booking_business_form_id == booking_business_form_id)
+    ).scalar()
+    return ReposReturn(data=booking_business_form)
