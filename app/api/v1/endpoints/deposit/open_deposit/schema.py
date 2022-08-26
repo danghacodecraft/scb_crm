@@ -43,6 +43,7 @@ class StatementInfoRequest(ResponseRequestSchema):
 
 #  Thông tin quản lý
 class ManagementInfoRequest(BaseSchema):
+    mobilization_program: Optional[str] = Field(None, description="Chương trình huy động")
     direct_staff_code: Optional[str] = Field(..., description="Mã nhân viên kinh doanh")
     indirect_staff_code: Optional[str] = Field(..., description="Mã nhân viên quản lý gián tiếp")
 

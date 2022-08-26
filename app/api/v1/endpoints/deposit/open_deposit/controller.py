@@ -247,7 +247,9 @@ class CtrDeposit(BaseController):
             code=gw_indirect_staff['staff_code'],
             name=gw_indirect_staff['staff_name']
         )
+        mobilization_program = deposit_pay_in_request.management_info.mobilization_program
         management_info_response = dict(
+            mobilization_program=mobilization_program,
             direct_staff=direct_staff,
             indirect_staff=indirect_staff
         )
