@@ -1063,7 +1063,7 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
     # sub card
     for sub_card in card_data['information_sub_debit_card']['sub_debit_cards']:
         sub_card_info = {
-            "card_indicator": SUB_CARD.lower(),
+            "card_indicator": SUB_CARD,
             "card_type": sub_card["card_group"],
             "card_auto_renew": GW_DEFAULT_CARD_AUTO_RENEW,
             "card_release_form": GW_DEFAULT_NORMAL if sub_card["physical_issuance_type"][
@@ -1079,6 +1079,7 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
             "card_customer_type": sub_card["customer_type"]["id"],
             "srcCde": sub_card["src_code"].strip(),
             "promoCde": sub_card["pro_code"].strip(),
+            "prinCrdNo": sub_card["prinCrdNo"],
 
             # additional field
             "account_type": GW_DEFAULT_ATM_CARD_ACCOUNT_PROVIDER,

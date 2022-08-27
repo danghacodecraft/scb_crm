@@ -242,3 +242,12 @@ async def repos_gw_select_card_info(current_user: UserInfoResponse,
         card_branched=card_branched
     )
     return ReposReturn(data=gw_select_card_info)
+
+
+async def repos_gw_select_credit_cards_by_cif(current_user: UserInfoResponse, cif_num, channel):
+    gw_select_card_info = await service_gw.select_credit_cards_by_cif(
+        current_user=current_user,
+        cif_num=cif_num,
+        channel=channel
+    )
+    return ReposReturn(data=gw_select_card_info)

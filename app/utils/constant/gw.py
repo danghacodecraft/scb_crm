@@ -82,7 +82,6 @@ GW_ENDPOINT_URL_REGISTER_SMS_SERVICE_BY_ACCOUNT_CASA = "/ebanksms/v1.0/rest/regi
 GW_ENDPOINT_URL_REGISTER_SMS_SERVICE_BY_MOBILE_NUMBER = "/ebanksms/v1.0/rest/registerSMSServiceByMobileNumber"
 GW_ENDPOINT_URL_SEND_SMS_VIA_EB_GW = "/ebanksms/v1.0/rest/sendSMSviaEBGW"
 
-
 # ---------------------------------------------- EBANK IB MB ---------------------------------------------- #
 GW_ENDPOINT_URL_CHECK_USERNAME_IB_MB_EXIST = "/ebankibmb/v1.0/rest/checkUsernameIBMBExist"
 GW_ENDPOINT_URL_RETRIEVE_IB_INFO_BY_CIF = "/ebankibmb/v1.0/rest/retrieveIBInfoByCif"
@@ -95,11 +94,10 @@ GW_ENDPOINT_URL_SELECT_SERVICE_PACK_IB = "/ebankibmb/v1.0/rest/selectServicePack
 # ---------------------------------------------- EMAIL ---------------------------------------------- #
 GW_ENDPOINT_URL_SEND_EMAIL = "/email/v1.0/rest/sendEmail"
 
-
 # ---------------------------------------------- CardWorks ---------------------------------------------- #
 GW_ENDPOINT_URL_OPEN_CARDS = "/cardworks/v1.0/rest/openCards"
 GW_ENDPOINT_URL_SELECT_CARD_INFO = "/cardworks/v1.0/rest/selectCardInfo"
-
+GW_ENDPOINT_URL_SELECT_CREDIT_CARDS_BY_CIF = "/cardworks/v1.0/rest/selectCreditCardsByCif"
 # -----------------------------------------------FeeInfo--------------------------------------------------- #
 GW_ENDPOINT_URL_SELECT_FEE_BY_PRODUCT_NAME = "/fee/v1.0/rest/selectFeeByProductName"
 
@@ -136,7 +134,6 @@ GW_FUNC_SELECT_DISCIPLINE_INFO_FROM_CODE_IN = "selectDisciplineInfoFromCode_in"
 GW_FUNC_SELECT_DISCIPLINE_INFO_FROM_CODE_OUT = "selectDisciplineInfoFromCode_out"
 GW_FUNC_SELECT_DISCIPLINE_INFO_FROM_CODE = "selectDisciplineInfoFromCode"
 
-
 GW_FUNC_SELECT_TOPIC_INFO_FROM_CODE_IN = "selectTopicInfoFromCode_in"
 GW_FUNC_SELECT_TOPIC_INFO_FROM_CODE_OUT = "selectTopicInfoFromCode_out"
 GW_FUNC_SELECT_TOPIC_INFO_FROM_CODE = "selectTopicInfoFromCode"
@@ -149,7 +146,6 @@ GW_FUNC_SELECT_STAFF_OTHER_INFO_FROM_CODE_IN = "selectStaffOtherInfoFromCode_in"
 GW_FUNC_SELECT_STAFF_OTHER_INFO_FROM_CODE_OUT = "selectStaffOtherInfoFromCode_out"
 GW_FUNC_SELECT_STAFF_OTHER_INFO_FROM_CODE = "selectStaffOtherInfoFromCode"
 
-
 # Payment
 
 GW_FUNC_AMOUNT_BLOCK_IN = "amountBlock_in"
@@ -159,7 +155,6 @@ GW_FUNC_AMOUNT_BLOCK = "amountBlock"
 GW_FUNC_AMOUNT_UNBLOCK_IN = "amountUnBlock_in"
 GW_FUNC_AMOUNT_UNBLOCK_OUT = "amountUnBlock_out"
 GW_FUNC_AMOUNT_UNBLOCK = "amountUnBlock"
-
 
 GW_FUNC_REDEEM_ACCOUNT_IN = "redeemAccount_in"
 GW_FUNC_REDEEM_ACCOUNT_OUT = "redeemAccount_out"
@@ -264,7 +259,6 @@ GW_FUNC_RETRIEVE_IB_INFO_BY_CIF_IN = "retrieveIBInfoByCif_in"
 GW_FUNC_RETRIEVE_IB_INFO_BY_CIF_OUT = "retrieveIBInfoByCif_out"
 GW_FUNC_RETRIEVE_IB_INFO_BY_CIF = "retrieveIBInfoByCif"
 
-
 GW_FUNC_RETRIEVE_MB_INFO_BY_CIF_IN = "RetrieveMBInfoByCif_in"
 GW_FUNC_RETRIEVE_MB_INFO_BY_CIF_OUT = "RetrieveMBInfoByCif_out"
 GW_FUNC_RETRIEVE_MB_INFO_BY_CIF = "retrieveMBInfoByCif"
@@ -276,7 +270,6 @@ GW_FUNC_SUMMARY_BP_TRANS_BY_SERVICE = "summaryBPTransByService"
 GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE_IN = "SummaryBPTransByInvoice_in"
 GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE_OUT = "SummaryBPTransByInvoice_out"
 GW_FUNC_SUMMARY_BP_TRANS_BY_INVOICE = "summaryBPTransByInvoice"
-
 
 GW_FUNC_OPEN_MB_IN = "openMB_in"
 GW_FUNC_OPEN_MB_OUT = "openMB_out"
@@ -306,6 +299,11 @@ GW_FUNC_SELECT_CARD_INFO = "selectCardInfo"
 GW_FUNC_SELECT_FEE_INFO_IN = 'selectFeeByProductName_in'
 GW_FUNC_SELECT_FEE_INFO_OUT = 'selectFeeByProductName_out'
 GW_FUNC_SELECT_FEE_INFO = 'selectFeeByProductName'
+
+# selectCreditCardsByCif
+GW_FUNC_SELECT_CREDIT_CARDS_BY_CIF_IN = "selectCreditCardsByCif_in"
+GW_FUNC_SELECT_CREDIT_CARDS_BY_CIF = "selectCreditCardsByCif"
+GW_FUNC_SELECT_CREDIT_CARDS_BY_CIF_OUT = "selectCreditCardsByCif_out"
 
 ########################################################################################################################
 #                                         END GW FUNCTION NAME

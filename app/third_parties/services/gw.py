@@ -81,6 +81,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_SELECT_BRANCH_BY_BRANCH_ID,
     GW_ENDPOINT_URL_SELECT_BRANCH_BY_REGION_ID,
     GW_ENDPOINT_URL_SELECT_CARD_INFO, GW_ENDPOINT_URL_SELECT_CATEGORY,
+    GW_ENDPOINT_URL_SELECT_CREDIT_CARDS_BY_CIF,
     GW_ENDPOINT_URL_SELECT_DATA_FOR_CHART_DASHBOARD,
     GW_ENDPOINT_URL_SELECT_EMPLOYEE_INFO_FROM_CODE,
     GW_ENDPOINT_URL_SELECT_FEE_BY_PRODUCT_NAME,
@@ -139,6 +140,8 @@ from app.utils.constant.gw import (
     GW_FUNC_SELECT_BRANCH_BY_REGION_ID_IN,
     GW_FUNC_SELECT_BRANCH_BY_REGION_ID_OUT, GW_FUNC_SELECT_CARD_INFO,
     GW_FUNC_SELECT_CARD_INFO_IN, GW_FUNC_SELECT_CARD_INFO_OUT,
+    GW_FUNC_SELECT_CREDIT_CARDS_BY_CIF, GW_FUNC_SELECT_CREDIT_CARDS_BY_CIF_IN,
+    GW_FUNC_SELECT_CREDIT_CARDS_BY_CIF_OUT,
     GW_FUNC_SELECT_DISCIPLINE_INFO_FROM_CODE,
     GW_FUNC_SELECT_DISCIPLINE_INFO_FROM_CODE_IN,
     GW_FUNC_SELECT_DISCIPLINE_INFO_FROM_CODE_OUT,
@@ -2820,6 +2823,29 @@ class ServiceGW:
             api_url=api_url,
             output_key=GW_FUNC_SELECT_CARD_INFO_OUT,
             service_name=GW_FUNC_SELECT_CARD_INFO
+        )
+        return response_data
+
+    async def select_credit_cards_by_cif(self, current_user: UserInfoResponse,
+                                         cif_num, channel):
+        request_data = self.gw_create_request_body(
+            current_user=current_user,
+            function_name=GW_FUNC_SELECT_CREDIT_CARDS_BY_CIF_IN,
+            data_input={
+                "cif_info": {
+                    "cif_num": cif_num
+                },
+                "channel": channel
+
+            }
+        )
+
+        api_url = f"{self.url}{GW_ENDPOINT_URL_SELECT_CREDIT_CARDS_BY_CIF}"
+        response_data = await self.call_api(
+            request_data=request_data,
+            api_url=api_url,
+            output_key=GW_FUNC_SELECT_CREDIT_CARDS_BY_CIF_OUT,
+            service_name=GW_FUNC_SELECT_CREDIT_CARDS_BY_CIF
         )
         return response_data
 
