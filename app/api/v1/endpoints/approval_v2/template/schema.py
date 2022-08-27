@@ -1,9 +1,12 @@
-from datetime import date
+from datetime import date, datetime
 from typing import List, Optional, Union
 
 from pydantic import Field, validator
 
-from app.api.base.schema import TMSCreatedUpdatedBaseModel, TMSResponseSchema
+from app.api.base.schema import (
+    BaseSchema, CreatedUpdatedBaseModel, TMSCreatedUpdatedBaseModel,
+    TMSResponseSchema
+)
 from app.api.v1.endpoints.cif.base_field import CustomField
 from app.api.v1.others.fee.schema import OneFeeInfoRequest
 from app.api.v1.schemas.utils import (
@@ -239,3 +242,34 @@ class TMSCasaTopUpResponse(TMSCreatedUpdatedBaseModel):
     sender: CustomerResponse = Field(..., description="Thông tin khách hàng giao dịch")
     direct_staff: StaffInfoResponse = Field(..., description="Thông tin khách hàng giao dịch")
     indirect_staff: StaffInfoResponse = Field(..., description="Thông tin khách hàng giao dịch")
+
+
+class TemplateFieldWarning(BaseSchema):
+    id: int = Field(..., description="id template field ")
+    key: str = Field(..., description="key tempalte field")
+    label: str = Field(..., description="nhãn template field")
+    error_description: str = Field(..., description="Mô tả lỗi")
+
+
+class TemplateGroupWaring(BaseSchema):
+    group_id: int = Field(..., description="id group")
+    group_name: str = Field(..., description="Tên group")
+    error_description: str = Field(..., description="Mô tả lỗi")
+
+
+class TMSFillDatResponse(BaseSchema):
+    template_id: str = Field(..., description='id template')
+    template_name: str = Field(..., description="Tên template")
+    file_url: str = Field(..., description="đường đẫn file từ Minio")
+    created_at: datetime = Field(..., description="thời gian fill data vào biểu mẫu")
+    is_warning: bool = Field(..., description='Có cảnh báo `False`: Không có cảnh báo, <br> `True`: Có cảnh báo')
+    template_field_warnings: List[TemplateFieldWarning] = Field(...)
+    group_warning: List[TemplateGroupWaring] = Field(...)
+    fill_data_version_id: int = Field(..., description="Id phiên bản nhập liệu")
+    fill_data_history_id: int = Field(..., description="Id lịch sử nhập liêu")
+    file_uuid: str = Field(..., description="file uuid sau khi đổ dữ liệu")
+
+
+class TMSApprovalResponse(CreatedUpdatedBaseModel):
+    folder_name: str = Field(..., description='Tên folder')
+    templates: List[TMSFillDatResponse] = Field(...)

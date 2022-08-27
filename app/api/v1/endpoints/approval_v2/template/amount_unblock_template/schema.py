@@ -37,6 +37,9 @@ class AmountUnblockDetail(TMSResponseSchema):
 class AccountAmountUnblock(TMSResponseSchema):
     account_ref_no: Optional[str] = Field("", description="Số tham chiếu của lệnh phong tỏa tài khoản trước đó")
     p_type_unblock: Optional[str] = Field("", description="Loại hình giải tỏa: C:Toàn phần/P: Một phần")
+    checkox_value: Optional[str] = Field(
+        "", description='C: Toàn bộ số tiền tạm khóa/ P: Một phần số tiền tạm khóa, số tiền:'
+    )
     p_blk_detail: Optional[AmountUnblockDetail] = Field('',
                                                         description="Chi tiết giải tỏa một phần (NULL nếu giải tỏa toàn phần)")
 
