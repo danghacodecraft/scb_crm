@@ -763,18 +763,19 @@ class CtrGWCasaAccount(BaseController):
                     detail=str(tele_transfer_response_data)
                 )
 
-            is_success, tt_liquidation_response_data = await self.ctr_tt_liquidation(
-                maker=maker,
-                p_instrument_number=p_instrument_number
-            )
-            if not is_success:
-                return self.response_exception(
-                    loc='tt_liquidation',
-                    msg=ERROR_CALL_SERVICE_GW,
-                    detail=str(tt_liquidation_response_data)
-                )
-            p_contract_ref = tt_liquidation_response_data[GW_FUNC_TT_LIQUIDATION_OUT]['data_output']['p_contract_ref']
-            response_data = tt_liquidation_response_data
+            # is_success, tt_liquidation_response_data = await self.ctr_tt_liquidation(
+            #     maker=maker,
+            #     p_instrument_number=p_instrument_number
+            # )
+            # if not is_success:
+            #     return self.response_exception(
+            #         loc='tt_liquidation',
+            #         msg=ERROR_CALL_SERVICE_GW,
+            #         detail=str(tt_liquidation_response_data)
+            #     )
+            # p_contract_ref = tt_liquidation_response_data[GW_FUNC_TT_LIQUIDATION_OUT]['data_output']['p_contract_ref']
+            # response_data = tt_liquidation_response_data
+            xref = p_instrument_number
             is_completed = True
             function_out = GW_FUNC_TT_LIQUIDATION_OUT
 
