@@ -394,7 +394,7 @@ class CtrDebitCard(BaseController):
                     "created_at": now(),
                     "active_flag": 1,
                     # todo thẻ phụ cần
-                    "prinCrdNo": prin_crd_no
+                    "prin_crd_no": prin_crd_no
                 }
                 if sub_card.name_on_card.middle_name_on_card:
                     sub_data_debit_card.update({

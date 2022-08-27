@@ -54,6 +54,7 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
             DebitCard.card_delivery_address_flag,
             DebitCard.src_code,
             DebitCard.pro_code,
+            DebitCard.prin_crd_no,
             DebitCard.card_group,
             DebitCardType.card_id,
             DebitCardType.card_type_id,
@@ -176,6 +177,7 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
                 "card_group": item.card_group,
                 "src_code": item.src_code,
                 "pro_code": item.pro_code,
+                "prin_crd_no": item.prin_crd_no,
                 "physical_issuance_type": dropdown(item.CardIssuanceType),
                 "customer_type": dropdown(item.CardCustomerType),
 

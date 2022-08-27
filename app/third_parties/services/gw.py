@@ -2594,7 +2594,7 @@ class ServiceGW:
                 "card_bill_option": card_info["card_bill_option"],
                 "card_statement_delivery_option": card_info["card_statement_delivery_option"]
             },
-            "prinCrdNo": GW_DEFAULT_VALUE,
+            "prinCrdNo": card_info['prin_crd_no'],
             "customer_info": {
                 "birthday": datetime_to_string(customer_info.CustomerIndividualInfo.date_of_birth, _format="%Y-%m-%d"),
                 "title": card_info["title"],

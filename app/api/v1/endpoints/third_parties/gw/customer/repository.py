@@ -1079,7 +1079,7 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
             "card_customer_type": sub_card["customer_type"]["id"],
             "srcCde": sub_card["src_code"].strip(),
             "promoCde": sub_card["pro_code"].strip(),
-            "prinCrdNo": sub_card["prinCrdNo"],
+            "prin_crd_no": sub_card["prin_crd_no"],
 
             # additional field
             "account_type": GW_DEFAULT_ATM_CARD_ACCOUNT_PROVIDER,
