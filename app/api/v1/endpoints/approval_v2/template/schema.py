@@ -258,8 +258,6 @@ class TemplateGroupWaring(BaseSchema):
 
 
 class TMSFillDatResponse(BaseSchema):
-    template_id: str = Field(..., description='id template')
-    template_name: str = Field(..., description="Tên template")
     file_url: str = Field(..., description="đường đẫn file từ Minio")
     created_at: datetime = Field(..., description="thời gian fill data vào biểu mẫu")
     is_warning: bool = Field(..., description='Có cảnh báo `False`: Không có cảnh báo, <br> `True`: Có cảnh báo')
@@ -270,6 +268,12 @@ class TMSFillDatResponse(BaseSchema):
     file_uuid: str = Field(..., description="file uuid sau khi đổ dữ liệu")
 
 
+class TMSTemplateInfoResponse(BaseSchema):
+    template_id: int = Field(..., description='id template')
+    template_name: str = Field(..., description="Tên template")
+    template_fill_data_info: TMSFillDatResponse = Field(...)
+
+
 class TMSApprovalResponse(CreatedUpdatedBaseModel):
     folder_name: str = Field(..., description='Tên folder')
-    templates: List[TMSFillDatResponse] = Field(...)
+    templates: List[TMSTemplateInfoResponse] = Field(...)

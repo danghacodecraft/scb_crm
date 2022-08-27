@@ -23,25 +23,22 @@ async def repos_check_exist_and_get_info_template_booking(
 
 ) -> Union[dict, Any]:
 
-    print("da vaa ", template_id, booking_id)
     booking = session.execute(
         select(Booking).filter(
             Booking.id == booking_id
         )
     ).scalar()
-    print("da vaa 2222")
+
     if not booking:
         return ReposReturn(
             is_error=True,
             msg=ERROR_BOOKING_ID_NOT_EXIST,
             detail='Can not found booking'
         )
-    print(template_id)
     if not template_id:
-        print("hahahah")
         template_info = None
     else:
-        print("voooooooooooo")
+
         template_info = session.execute(
             select(Template).filter(
                 Template.template_id == template_id,
@@ -55,7 +52,6 @@ async def repos_check_exist_and_get_info_template_booking(
                 msg=ERROR_TEMPLATE_NOT_EXIST,
                 detail='Can not found template'
             )
-    print({'template_info': template_info, "booking_info": booking})
     return ReposReturn(data={'template_info': template_info, "booking_info": booking})
 
 
@@ -128,5 +124,4 @@ async def repos_get_all_template_of_booking(business_type_id: str, session: Sess
             Template.business_type_id == business_type_id
         )
     ).all()
-    print(templates)
     return ReposReturn(data=templates)

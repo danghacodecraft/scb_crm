@@ -74,7 +74,8 @@ class CtrTemplateDetail(BaseController):
 
     async def ctr_get_template_after_fill(self, booking_id: str):
         template_booking_info = self.call_repos(
-            await repos_check_exist_and_get_info_template_booking(template_id=None, booking_id=booking_id, session=self.oracle_session)
+            await repos_check_exist_and_get_info_template_booking(template_id=None, booking_id=booking_id,
+                                                                  session=self.oracle_session)
         )
 
         all_template_of_booking = self.call_repos(
@@ -83,14 +84,18 @@ class CtrTemplateDetail(BaseController):
                 session=self.oracle_session)
         )
 
-        template_ids = [template.id for template in all_template_of_booking]  # noqa
-        data_return = {  # noqa
+        data_return = {
             'folder_name': all_template_of_booking[0].BusinessType.name,
             'templates': []
         }
-        for template in all_template_of_booking:
-            template_after_fill = self.call_repos(  # noqa
-                await repo_form(template_id=template.template_id, booking_id=booking_id, path=template.template_url)
-            )
+        for template, _ in all_template_of_booking:
+            data_return['templates'].append({
+                'template_id': template.template_id,
+                'template_name': template.name,
+                'template_fill_data_info': self.call_repos(
+                    await repo_form(template_id=str(template.template_id), booking_id=booking_id,
+                                    path=template.template_url)
+                )
+            })
 
-        return self.response(None)
+        return self.response(data_return)
