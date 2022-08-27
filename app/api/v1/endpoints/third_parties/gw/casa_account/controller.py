@@ -71,8 +71,8 @@ from app.utils.constant.gw import (
     GW_CORE_DATE_FORMAT, GW_DATE_FORMAT, GW_DATETIME_FORMAT, GW_DEFAULT_VALUE,
     GW_FUNC_INTERBANK_TRANSFER_OUT, GW_FUNC_PAY_IN_CARD_247_BY_ACC_NUM_IN,
     GW_FUNC_PAY_IN_CARD_247_BY_CARD_NUM_OUT, GW_FUNC_PAY_IN_CARD_OUT,
-    GW_FUNC_TELE_TRANSFER_OUT, GW_FUNC_TT_LIQUIDATION_OUT, GW_GL_BRANCH_CODE,
-    GW_TRANSACTION_TYPE_SEND, GW_TRANSACTION_TYPE_WITHDRAW
+    GW_FUNC_TELE_TRANSFER_OUT, GW_GL_BRANCH_CODE, GW_TRANSACTION_TYPE_SEND,
+    GW_TRANSACTION_TYPE_WITHDRAW
 )
 from app.utils.constant.idm import (
     IDM_GROUP_ROLE_CODE_KSV, IDM_MENU_CODE_TTKH, IDM_PERMISSION_CODE_KSV
@@ -774,10 +774,10 @@ class CtrGWCasaAccount(BaseController):
             #         detail=str(tt_liquidation_response_data)
             #     )
             # p_contract_ref = tt_liquidation_response_data[GW_FUNC_TT_LIQUIDATION_OUT]['data_output']['p_contract_ref']
-            # response_data = tt_liquidation_response_data
+            response_data = tele_transfer_response_data
             xref = p_instrument_number
             is_completed = True
-            function_out = GW_FUNC_TT_LIQUIDATION_OUT
+            function_out = GW_FUNC_TELE_TRANSFER_OUT
 
         if receiving_method in [RECEIVING_METHOD_THIRD_PARTY_TO_ACCOUNT, RECEIVING_METHOD_THIRD_PARTY_BY_IDENTITY]:
             is_success, gw_response_data = await self.ctr_gw_interbank_transfer(
@@ -829,7 +829,7 @@ class CtrGWCasaAccount(BaseController):
 
         if not response_data:
             return self.response_exception(msg="GW return None", loc=f'response_data: {response_data}')
-
+        print(xref)
         form_data['transfer'].update({
             "entry_number": xref
         })
