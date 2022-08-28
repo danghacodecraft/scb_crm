@@ -40,7 +40,6 @@ class CtrGWCardWorks(BaseController):
 
     async def ctr_gw_select_credit_cards_by_cif(self, cif_num, channel):
         is_success, select_card_info = self.call_repos(await repos_gw_select_credit_cards_by_cif(
-            current_user=self.current_user.user_info,
             cif_num=cif_num,
             channel=channel
         ))

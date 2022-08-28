@@ -27,7 +27,8 @@ from app.utils.constant.debit_card import (
 from app.utils.constant.gw import (
     GW_AUTHORIZED_REF_DATA_MGM_ACC_NUM, GW_CO_OWNER_REF_DATA_MGM_ACC_NUM,
     GW_CURRENT_ACCOUNT_CASA, GW_CURRENT_ACCOUNT_FROM_CIF,
-    GW_CUSTOMER_REF_DATA_MGMT_CIF_NUM, GW_DEFAULT_NO, GW_DEFAULT_VALUE,
+    GW_CUSTOMER_REF_DATA_MGMT_CIF_NUM, GW_DEFAULT_CITY_CODE,
+    GW_DEFAULT_CITY_NAME, GW_DEFAULT_NO, GW_DEFAULT_VALUE,
     GW_DEPOSIT_ACCOUNT_FROM_CIF, GW_DEPOSIT_ACCOUNT_TD, GW_EMPLOYEE_FROM_CODE,
     GW_EMPLOYEE_FROM_NAME, GW_EMPLOYEES,
     GW_ENDPOINT_URL_CHECK_EXITS_ACCOUNT_CASA,
@@ -1846,8 +1847,7 @@ class ServiceGW:
     # START --- UTILS
     ####################################################################################################################
     @staticmethod
-    def gw_create_request_body(current_user: UserInfoResponse, data_input: dict,
-                               function_name: str):
+    def gw_create_request_body(data_input: dict, function_name: str, current_user: UserInfoResponse = None):
         return {
             function_name: {
                 "transaction_info": {
@@ -1856,8 +1856,8 @@ class ServiceGW:
                     "client_ip": "10.4.4.x",
                     "server_ref_num": "string",
                     "branch_info": {
-                        "branch_name": current_user.hrm_branch_name,
-                        "branch_code": current_user.hrm_branch_code
+                        "branch_name": "" if not current_user else current_user.hrm_branch_name,
+                        "branch_code": "" if not current_user else current_user.hrm_branch_code
                     }
                 },
                 "data_input": data_input if len(data_input) != 0 else ""
@@ -2554,7 +2554,8 @@ class ServiceGW:
                          maker_staff_name: str,
                          direct_staff: str,
                          indirect_staff: str,
-                         casa_currency_number: str
+                         casa_currency_number: str,
+                         is_sub_card=False
                          ):
 
         marital_status = mapping_marital_status_crm_to_core(customer_info.CustomerIndividualInfo.marital_status_id)
@@ -2594,7 +2595,8 @@ class ServiceGW:
                 "card_bill_option": card_info["card_bill_option"],
                 "card_statement_delivery_option": card_info["card_statement_delivery_option"]
             },
-            "prinCrdNo": card_info['prin_crd_no'],
+            # todo prinCrdNo
+            "prinCrdNo": card_info['prin_crd_no'] if is_sub_card else GW_DEFAULT_VALUE,
             "customer_info": {
                 "birthday": datetime_to_string(customer_info.CustomerIndividualInfo.date_of_birth, _format="%Y-%m-%d"),
                 "title": card_info["title"],
@@ -2625,7 +2627,7 @@ class ServiceGW:
             "srcCde": card_info["srcCde"],
             "promoCde": card_info["promoCde"],
             "branch_issued": {
-                "branhch_code": current_user.hrm_branch_code
+                "branhch_code": current_user.hrm_branch_code if not is_sub_card else card_info["primary_card_branch_code"]
             },
             "direct_staff": {
                 "staff_code": direct_staff
@@ -2730,12 +2732,14 @@ class ServiceGW:
                 "address_info": {
                     "line": card_info["address_info_line"] if card_info["address_info_line"] else "",
                     "ward_name": card_info["address_info_ward_name"] if card_info["address_info_ward_name"] else "",
-                    "contact_address_line": GW_DEFAULT_VALUE,
-                    "city_code": GW_DEFAULT_VALUE,
+                    "contact_address_line": card_info["address_info_line"] if card_info["address_info_line"] and is_sub_card else GW_DEFAULT_VALUE,
+                    # todo hard  city_code cho sub card
+                    "city_code": GW_DEFAULT_CITY_CODE if is_sub_card else GW_DEFAULT_VALUE,
                     "district_name": card_info["address_info_district_name"] if card_info[
                         "address_info_district_name"] else "",
                     "city_name": card_info["address_info_city_name"] if card_info["address_info_city_name"] else "",
-                    "country_name": GW_DEFAULT_VALUE
+                    # todo hard  country_name cho sub card
+                    "country_name": GW_DEFAULT_CITY_NAME if is_sub_card else GW_DEFAULT_VALUE
                 },
                 "delivBrchId": card_info["delivBrchId"]
             },
@@ -2792,7 +2796,6 @@ class ServiceGW:
                 "staff_code": current_user.username
             }
         }
-
         request_data = self.gw_create_request_body(
             current_user=current_user, function_name=GW_FUNC_OPEN_CARDS_IN,
             data_input=data_input
@@ -2826,10 +2829,8 @@ class ServiceGW:
         )
         return response_data
 
-    async def select_credit_cards_by_cif(self, current_user: UserInfoResponse,
-                                         cif_num, channel):
+    async def select_credit_cards_by_cif(self, cif_num, channel):
         request_data = self.gw_create_request_body(
-            current_user=current_user,
             function_name=GW_FUNC_SELECT_CREDIT_CARDS_BY_CIF_IN,
             data_input={
                 "cif_info": {

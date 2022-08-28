@@ -81,7 +81,9 @@ class DebitCard(Base):
     src_code = Column('card_src_code', VARCHAR(36), comment='Source Code loại thẻ')
     pro_code = Column('card_pro_code', VARCHAR(36), comment='Promote Code loại thẻ')
     card_group = Column('card_group', VARCHAR(36), comment='Loại thẻ')
-    prin_crd_no = Column(VARCHAR(36), comment='prinCrdNo')
+    # todo prinCrdNo
+    # prin_crd_no = Column(VARCHAR(36), comment='prinCrdNo')
+    # primary_card_branch_code = Column(VARCHAR(21), comment='primary_card_branch_code')
 
 
 class DebitCardType(Base):
