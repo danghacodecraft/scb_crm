@@ -2734,9 +2734,8 @@ class ServiceGW:
                     "contact_address_line": card_info["address_info_line"] if card_info["address_info_line"] and is_sub_card else GW_DEFAULT_VALUE,
                     # todo hard  city_code cho sub card
                     "city_code": GW_DEFAULT_VALUE if not is_sub_card else card_info["city_code"],
-                    "district_name": card_info["address_info_district_name"]["name"] if card_info[
-                        "address_info_district_name"] else "",
-                    "city_name": card_info["address_info_city_name"]["name"] if card_info["address_info_city_name"] else "",
+                    "district_name": card_info["address_info_district_name"]["name"] if is_sub_card and card_info["address_info_district_name"]["name"] else card_info["address_info_district_name"],
+                    "city_name": card_info["address_info_city_name"]["name"] if is_sub_card and card_info["address_info_city_name"]["name"] else card_info["address_info_city_name"],
                     # todo hard  country_name cho sub card
                     "country_name": GW_DEFAULT_CITY_NAME if is_sub_card else GW_DEFAULT_VALUE
                 },
