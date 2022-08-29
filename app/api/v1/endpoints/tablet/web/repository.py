@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from sqlalchemy import and_, delete, select
+from sqlalchemy import and_, delete, desc, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -134,3 +134,28 @@ async def repos_get_customer_avatar_url_and_full_name_if_exist_by_booking_authen
         "avatar_uuid": avatar_url,
         "full_name": customer_id_and_full_name[1]
     })
+
+
+async def repos_retrieve_and_init_if_not_found_booking_authentication(
+        tablet_id: str, teller_username: str, session: Session
+) -> ReposReturn:
+    booking_authentication = session.execute(
+        select(
+            BookingAuthentication
+        ).filter(
+            BookingAuthentication.tablet_id == tablet_id
+        ).order_by(desc(BookingAuthentication.created_at))
+    ).scalars().first()
+    if not booking_authentication:
+        booking_authentication = BookingAuthentication(
+            tablet_id=tablet_id,
+            teller_username=teller_username,
+            created_at=now()
+        )
+        session.add(
+            booking_authentication
+        )
+        session.flush()
+        session.commit()
+
+    return ReposReturn(data=booking_authentication)

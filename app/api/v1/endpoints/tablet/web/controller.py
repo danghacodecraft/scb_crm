@@ -3,12 +3,13 @@ from pydantic import ValidationError
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.file.repository import repos_download_file
 from app.api.v1.endpoints.tablet.mobile.repository import (
-    repos_retrieve_current_booking_authentication_by_tablet_id,
+    repos_init_booking_authentication,
     repos_update_current_booking_authentication_by_tablet_id
 )
 from app.api.v1.endpoints.tablet.web.repository import (
     repos_create_tablet_otp, repos_delete_tablet_if_exists,
     repos_get_customer_avatar_url_and_full_name_if_exist_by_booking_authentication_id,
+    repos_retrieve_and_init_if_not_found_booking_authentication,
     repos_retrieve_tablet
 )
 from app.api.v1.endpoints.tablet.web.schema import (
@@ -124,6 +125,18 @@ class CtrTabletWeb(BaseController):
         extra_data = request.extra_data
         data = {}
 
+        # trường hợp khách hàng không nhập số giấy tờ định danh mà bảo gdv giao dịch thẳng
+        # -> Tự động tạo booking authentication
+        # trường hợp khách hàng đã nhập số giấy tờ định danh
+        # -> Lấy thông tin booking authentication đã tạo ở bước nhập ra
+        booking_authentication = self.call_repos(
+            await repos_retrieve_and_init_if_not_found_booking_authentication(
+                tablet_id=tablet_info['tablet_id'],
+                teller_username=self.current_user.user_info.username,
+                session=self.oracle_session
+            )
+        )
+
         if action == MOBILE_ACTION_PROCESS_TRANSACTION:
             # check extra data
             try:
@@ -141,21 +154,32 @@ class CtrTabletWeb(BaseController):
             if not booking:
                 return self.response_exception(msg=ERROR_BOOKING_ID_NOT_EXIST, loc='booking_id')
 
-            booking_authentication = self.call_repos(
-                await repos_retrieve_current_booking_authentication_by_tablet_id(
-                    tablet_id=tablet_info['tablet_id'],
-                    session=self.oracle_session
+            # khách hàng thực hiện 2 giao dịch
+            # -> giao dịch trước thì booking_id đã được lưu, giao dịch sau thì clone 1 dòng booking_authentication
+            if booking_authentication.booking_id and booking_authentication.booking_id != extra_data['booking_id']:
+                self.call_repos(
+                    await repos_init_booking_authentication(
+                        tablet_id=booking_authentication.tablet_id,
+                        teller_username=booking_authentication.teller_username,
+                        identity_number=booking_authentication.identity_number,
+                        cif_number=booking_authentication.cif_number,
+                        session=self.oracle_session,
+                        identity_front_document_file_uuid=booking_authentication.identity_front_document_file_uuid,
+                        identity_front_document_file_uuid_ekyc=booking_authentication.identity_front_document_file_uuid_ekyc,
+                        face_file_uuid=booking_authentication.face_file_uuid,
+                        face_file_uuid_ekyc=booking_authentication.face_file_uuid_ekyc,
+                        booking_id=extra_data['booking_id'],
+                    )
                 )
-            )
+            else:
+                booking_authentication.booking_id = extra_data['booking_id']
 
-            booking_authentication.booking_id = extra_data['booking_id']
-
-            self.call_repos(
-                await repos_update_current_booking_authentication_by_tablet_id(
-                    need_to_update_booking_authentication=booking_authentication,
-                    session=self.oracle_session
+                self.call_repos(
+                    await repos_update_current_booking_authentication_by_tablet_id(
+                        need_to_update_booking_authentication=booking_authentication,
+                        session=self.oracle_session
+                    )
                 )
-            )
 
             avatar_uuid_and_full_name = self.call_repos(
                 await repos_get_customer_avatar_url_and_full_name_if_exist_by_booking_authentication_id(
@@ -176,13 +200,6 @@ class CtrTabletWeb(BaseController):
             }
             data['transaction_name'] = extra_data['transaction_name']
         elif action == MOBILE_ACTION_NEW_TRANSACTION:
-            booking_authentication = self.call_repos(
-                await repos_retrieve_current_booking_authentication_by_tablet_id(
-                    tablet_id=tablet_info['tablet_id'],
-                    session=self.oracle_session
-                )
-            )
-
             avatar_uuid_and_full_name = self.call_repos(
                 await repos_get_customer_avatar_url_and_full_name_if_exist_by_booking_authentication_id(
                     booking_authentication_id=booking_authentication.id,
