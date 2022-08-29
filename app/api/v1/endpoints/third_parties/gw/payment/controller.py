@@ -42,7 +42,7 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
     ):
         booking_business_form = await CtrBooking().ctr_get_booking_business_form_by_bussines_form(
             booking_id=BOOKING_ID,
-            bussines_form_id=BUSINESS_TYPE_AMOUNT_BLOCK,
+            bussines_form_id=BUSINESS_FORM_AMOUNT_BLOCK,
             session=self.oracle_session)
         form_data = orjson_loads(booking_business_form.form_data)
         form_data.update(
