@@ -48,15 +48,26 @@ async def repos_save_casa_casa_account(
         saving_booking_business_form: dict,
         saving_booking_child_business_forms: List[dict],
         updating_booking_child_business_forms: List[dict],
-        deletable_booking_business_form_ids: List,
+        updating_booking_child_ids: List[str],
         session: Session
 ):
+    # Lấy những booking_business có thể xóa
     # Xóa những id cũ, trừ những id đã push vào core rồi
+    deletable_booking_ids = session.execute(
+        select(
+            Booking.id
+        )
+        .filter(and_(
+            Booking.parent_id == booking_parent_id,
+            Booking.completed_flag == 0,
+            Booking.id.notin_(updating_booking_child_ids)
+        ))
+    ).scalars().all()
     session.execute(
         delete(
-            BookingBusinessForm
+            Booking
         )
-        .filter(BookingBusinessForm.booking_business_form_id.in_(deletable_booking_business_form_ids))
+        .filter(Booking.id.in_(deletable_booking_ids))
     )
 
     # Cập nhật lại bằng dữ liệu mới
@@ -248,11 +259,11 @@ async def repos_get_acc_structure_type_by_parent(acc_structure_type_id: str, ses
     return ReposReturn(data=acc_structure_type)
 
 
-async def repos_get_booking_business_form(booking_business_form_id: str, session: Session):
+async def repos_get_booking_business_form(booking_id: str, session: Session):
     booking_business_form = session.execute(
         select(
             BookingBusinessForm
         )
-        .filter(BookingBusinessForm.booking_business_form_id == booking_business_form_id)
+        .filter(BookingBusinessForm.booking_id == booking_id)
     ).scalar()
     return ReposReturn(data=booking_business_form)

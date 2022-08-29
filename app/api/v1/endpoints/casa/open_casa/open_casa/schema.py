@@ -15,7 +15,7 @@ from app.utils.error_messages import (
 
 
 class SavePaymentAccountRequest(BaseSchema):
-    booking_business_form_id: Optional[str] = Field(
+    booking_id: Optional[str] = Field(
         ...,
         description="Mã giao dịch tài khoản thanh toán, "
                     "nếu có truyền vào thì là cập nhật thông tin tài khoản đó"
@@ -50,7 +50,7 @@ class CasaOpenCasaRequest(BaseSchema):
 
 
 class CasaAccountInfoResponse(BaseSchema):
-    booking_business_form_id: str = Field(..., description="Mã giao dịch tài khoản thanh toán")
+    booking_id: str = Field(..., description="Mã giao dịch tài khoản thanh toán")
     self_selected_account_flag: bool = Field(..., description="""Cờ tự chọn số tài khoản
                                                                   \nSố tài khoản thường => `False`
                                                                   \nSố tài khoản yêu cầu => `True`""")
