@@ -155,6 +155,8 @@ class BookingCustomer(Base):
 
     id = Column('booking_customer_id', VARCHAR(36), primary_key=True, server_default=text("sys_guid() "))
     customer_id = Column(VARCHAR(50))
+    cif_number = Column(VARCHAR(7))
+    identity_number = Column(VARCHAR(25))
     booking_id = Column(ForeignKey('crm_booking.booking_id'))
 
     booking = relationship('Booking')

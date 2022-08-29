@@ -81,6 +81,16 @@ async def repos_get_deposit_pay_in(
 
 
 @auto_commit
+async def repos_save_pay_in(
+    booking_id,
+    saving_booking_business_form,
+    session
+):
+    session.add(BookingBusinessForm(**saving_booking_business_form))
+    return ReposReturn(data=booking_id)
+
+
+@auto_commit
 async def repos_save_redeem_account(
     booking_id,
     saving_transaction_stage_status: dict,

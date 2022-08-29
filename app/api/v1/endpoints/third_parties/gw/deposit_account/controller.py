@@ -5,8 +5,8 @@ from app.api.v1.endpoints.third_parties.gw.customer.repository import (
 from app.api.v1.endpoints.third_parties.gw.deposit_account.repository import (
     ctr_gw_get_statement_deposit_account_td,
     repos_get_booking_account_by_booking,
-    repos_get_customer_by_booking_account, repos_get_td_account,
-    repos_gw_deposit_open_account_td,
+    repos_get_cif_number_by_booking_customer, repos_get_pay_in,
+    repos_get_td_account, repos_gw_deposit_open_account_td,
     repos_gw_get_column_chart_deposit_account_info,
     repos_gw_get_deposit_account_by_cif_number, repos_gw_get_deposit_account_td
 )
@@ -16,8 +16,7 @@ from app.api.v1.endpoints.third_parties.gw.deposit_account.schema import (
 )
 from app.settings.config import DATETIME_INPUT_OUTPUT_FORMAT
 from app.utils.constant.gw import GW_DEFAULT_VALUE
-from app.utils.error_messages import ERROR_NO_DATA
-from app.utils.functions import string_to_date
+from app.utils.functions import orjson_loads, string_to_date
 
 
 class CtrGWDepositAccount(BaseController):
@@ -254,14 +253,12 @@ class CtrGWDepositAccount(BaseController):
             )
         )
 
-        customer = self.call_repos(
-            await repos_get_customer_by_booking_account(
-                td_accounts=booking_account,
+        cif_number = self.call_repos(
+            await repos_get_cif_number_by_booking_customer(
+                booking_id=BOOKING_ID,
                 session=self.oracle_session
             )
         )
-        response_data = []
-
         td_accounts = self.call_repos(
             await repos_get_td_account(
                 td_accounts=booking_account,
@@ -272,20 +269,28 @@ class CtrGWDepositAccount(BaseController):
             booking_id=BOOKING_ID,
             session=self.oracle_session
         ))
-        pay_in_casa_account = []
+        pay_in_td_account = self.call_repos(
+            await repos_get_pay_in(booking_id=BOOKING_ID, session=self.oracle_session)
+        )
 
-        for td_account in td_accounts:
-            if td_account.TdAccount.pay_in_casa_account:
-                pay_in_casa_account.append(td_account.TdAccount.pay_in_casa_account)
-        if len(pay_in_casa_account) != len(td_accounts):
-            return self.response_exception(msg="DEPOSIT_ACCOUNT", detail=ERROR_NO_DATA)
+        pay_in = orjson_loads(pay_in_td_account.form_data)
+        pay_in_account = pay_in['account_form']['pay_in_form']['account_number']
+
+        update_td_account = {
+            "pay_in_type": pay_in['account_form']['pay_in_form']['pay_in'],
+            "pay_in_casa_account": pay_in_account
+        }
+        response_data = []
 
         for item in td_accounts:
             # TODO hard core data_input open_account_td
+            update_td_account.update({
+                "id": item.TdAccount.id
+            })
             data_input = {
                 "customer_info": {
                     "cif_info": {
-                        "cif_num": customer.cif_number
+                        "cif_num": cif_number.cif_number
                     },
                     "account_info": {
                         "account_currency": item.TdAccount.currency_id,
@@ -331,7 +336,7 @@ class CtrGWDepositAccount(BaseController):
                                 "PAYIN_TYPE": "S",
                                 "PAYIN_PERCENTAGE": "100",
                                 "PAYIN_TDAMOUNT": int(item.TdAccount.pay_in_amount) if item.TdAccount.pay_in_amount else GW_DEFAULT_VALUE,
-                                "PAYIN_ACC": item.TdAccount.pay_in_casa_account if item.TdAccount.pay_in_casa_account else GW_DEFAULT_VALUE
+                                "PAYIN_ACC": pay_in_account if pay_in_account else GW_DEFAULT_VALUE
                             }
                         ],
                         "p_blk_tdpayoutdetails": "",
@@ -370,7 +375,6 @@ class CtrGWDepositAccount(BaseController):
                         "p_blk_acc_chnl": "",
                         "p_blk_acc": ""
                     },
-                    # TODO hard
                     "staff_info_checker": {
                         "staff_name": current_user.user_info.username
                     },
@@ -392,6 +396,7 @@ class CtrGWDepositAccount(BaseController):
                 current_user=current_user.user_info,
                 data_input=data_input,
                 booking_id=BOOKING_ID,
+                update_td_account=update_td_account,
                 session=self.oracle_session
             ))
             if gw_deposit_open_account_td['openTD_out']['transaction_info']['transaction_error_code'] == "00":

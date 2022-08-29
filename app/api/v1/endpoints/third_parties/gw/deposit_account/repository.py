@@ -1,7 +1,7 @@
 from datetime import date
 from typing import List
 
-from sqlalchemy import select
+from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
 from app.api.base.repository import ReposReturn, auto_commit
@@ -13,7 +13,7 @@ from app.third_parties.oracle.models.cif.e_banking.model import (
     TdAccount, TdAccountResign
 )
 from app.third_parties.oracle.models.cif.form.model import (
-    BookingAccount, BookingBusinessForm
+    BookingAccount, BookingBusinessForm, BookingCustomer
 )
 from app.third_parties.oracle.models.master_data.others import TransactionJob
 from app.utils.constant.approval import BUSINESS_JOB_CODE_OPEN_TD_ACCOUNT
@@ -22,7 +22,7 @@ from app.utils.constant.gw import (
     GW_ENDPOINT_URL_RETRIEVE_REPORT_TD_FROM_CIF,
     GW_TRANSACTION_NAME_COLUMN_CHART_TD, GW_TRANSACTION_NAME_STATEMENT
 )
-from app.utils.error_messages import ERROR_CALL_SERVICE_GW
+from app.utils.error_messages import ERROR_CALL_SERVICE_GW, ERROR_NO_DATA
 from app.utils.functions import generate_uuid, now, orjson_dumps
 
 
@@ -102,23 +102,48 @@ async def repos_gw_get_column_chart_deposit_account_info(
 
 
 @auto_commit
-async def repos_gw_deposit_open_account_td(current_user, booking_id, data_input, session):
+async def repos_gw_deposit_open_account_td(
+        current_user,
+        booking_id,
+        update_td_account,
+        data_input,
+        session
+):
     is_success, gw_deposit_open_account_td = await service_gw.deposit_open_account_td(
         current_user=current_user,
         data_input=data_input
     )
+    if is_success:
+        update_td_account.update({
+            "td_account_number": gw_deposit_open_account_td
+        })
+        session.add(
+            BookingBusinessForm(**dict(
+                booking_business_form_id=generate_uuid(),
+                booking_id=booking_id,
+                form_data=orjson_dumps(data_input),
+                business_form_id=BUSINESS_FORM_OPEN_TD_OPEN_TD_ACCOUNT_PD,
+                is_success=True,
+                save_flag=True,
+                created_at=now(),
+                out_data=orjson_dumps(gw_deposit_open_account_td)
+            ))
+        )
 
-    session.add(
-        BookingBusinessForm(**dict(
-            booking_business_form_id=generate_uuid(),
-            booking_id=booking_id,
-            form_data=orjson_dumps(data_input),
-            business_form_id=BUSINESS_FORM_OPEN_TD_OPEN_TD_ACCOUNT_PD,
-            save_flag=True,
-            created_at=now(),
-            out_data=orjson_dumps(gw_deposit_open_account_td)
-        ))
-    )
+    else:
+        session.add(
+            BookingBusinessForm(**dict(
+                booking_business_form_id=generate_uuid(),
+                booking_id=booking_id,
+                form_data=orjson_dumps(data_input),
+                business_form_id=BUSINESS_FORM_OPEN_TD_OPEN_TD_ACCOUNT_PD,
+                is_success=False,
+                save_flag=True,
+                created_at=now(),
+                out_data=orjson_dumps(gw_deposit_open_account_td)
+            ))
+        )
+
     session.add(TransactionJob(**dict(
         transaction_id=generate_uuid(),
         booking_id=booking_id,
@@ -128,7 +153,8 @@ async def repos_gw_deposit_open_account_td(current_user, booking_id, data_input,
         error_desc=gw_deposit_open_account_td.get('openTD_out').get('transaction_info').get('transaction_error_msg'),
         created_at=now()
     )))
-    return ReposReturn(data=gw_deposit_open_account_td)
+
+    return ReposReturn(data=booking_id)
 
 
 async def repos_get_booking_account_by_booking(booking_id, session: Session):
@@ -153,6 +179,36 @@ async def repos_get_customer_by_booking_account(td_accounts: List, session):
         )
     ).scalar()
     return ReposReturn(data=customer)
+
+
+async def repos_get_cif_number_by_booking_customer(booking_id, session):
+    customer = session.execute(
+        select(
+            BookingCustomer
+        ).filter(BookingCustomer.booking_id == booking_id)
+    ).scalar()
+    return ReposReturn(data=customer)
+
+
+async def repos_get_pay_in(booking_id, session):
+    pay_in = session.execute(
+        select(
+            BookingBusinessForm
+        ).filter(
+            and_(
+                BookingBusinessForm.booking_id == booking_id,
+                BookingBusinessForm.business_form_id == "TD_ACCOUNT_PAY_IN"
+            )
+        )
+    ).scalar()
+    if not pay_in:
+        return ReposReturn(
+            is_error=True,
+            loc=ERROR_NO_DATA,
+            msg=ERROR_NO_DATA,
+            detail=f"{ERROR_NO_DATA} PAY_IN"
+        )
+    return ReposReturn(data=pay_in)
 
 
 async def repos_get_td_account(td_accounts: List, session):

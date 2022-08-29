@@ -95,7 +95,8 @@ class PayInAccount(BaseSchema):
 
 
 class AccountFormRequest(BaseSchema):
-    pay_in_form: AccountForm = Field(...)
+    pay_in: str = Field(..., description="Hình thức hạch toán")
+    account_number: Optional[str] = Field(..., description="Số tài khoản")
     # currency_exchange: CurrencyExchange = Field(..., description="Quy đổi ngoại tệ")
     # currency_transfer: CurrencyTransfer = Field(..., description="Ngoại tệ chuyển ra nước ngoài")
     # pay_in_account: PayInAccount = Field(..., description="Nộp tiền vào tài khoản")
