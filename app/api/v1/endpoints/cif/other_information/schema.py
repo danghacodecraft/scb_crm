@@ -3,7 +3,7 @@ from typing import Optional
 from pydantic import Field
 
 from app.api.base.schema import BaseSchema
-from app.api.v1.schemas.utils import DropdownRequest
+from app.api.v1.schemas.utils import DropdownRequest, OptionalDropdownRequest
 
 
 class EmployeeDropdownResponse(BaseSchema):
@@ -24,7 +24,7 @@ class OtherInformationResponse(BaseSchema):
     indirect_sale_staff: Optional[EmployeeDropdownResponse] = Field(..., description="Mã nhân viên kinh doanh gián tiếp"
                                                                                      "`có thể null`")
     extra_phone_number: Optional[str] = Field(None, description='Số điện thoại phụ')
-    customer_relationship: Optional[DropdownRequest] = Field(None, description='Mối quan hệ khách hàng')
+    customer_relationship: Optional[OptionalDropdownRequest] = Field(None, description='Mối quan hệ khách hàng')
 
 
 class OtherInformationUpdateRequest(BaseSchema):
