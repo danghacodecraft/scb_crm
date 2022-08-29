@@ -120,7 +120,7 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
     physical_card_type = []
     sub_debit_card = {}
     for item in list_debit_card_info_engine:
-        if len(item.card_num_mask) != 16:
+        if item.card_num_mask and len(item.card_num_mask) != 16:
             return ReposReturn(
                 is_error=True,
                 msg="main_card_number",
