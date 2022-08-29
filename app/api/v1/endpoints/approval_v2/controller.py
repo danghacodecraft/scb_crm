@@ -1101,11 +1101,14 @@ class CtrApproval(BaseController):
             mapping_datas.update({business_job_code.code: INIT_RESPONSE})
 
         for business_job in business_jobs:
-            mapping_datas[business_job.business_job_id] = dict(
-                error_code=business_job.error_code,
-                error_description=business_job.error_desc,
-                status=business_job.complete_flag
-            )
+            if business_job.complete_flag or (
+                not business_job.complete_flag and mapping_datas[business_job.business_job_id]['status'] is None
+            ):
+                mapping_datas[business_job.business_job_id] = dict(
+                    error_code=business_job.error_code,
+                    error_description=business_job.error_desc,
+                    status=business_job.complete_flag
+                )
 
         response_datas = []
         for business_job_id, value in mapping_datas.items():
