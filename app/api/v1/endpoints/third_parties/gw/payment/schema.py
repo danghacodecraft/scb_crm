@@ -94,7 +94,7 @@ class AccountUnlockRequest(BaseSchema):
 
 class TransactionFeeInfoRequest(BaseSchema):
     fee_info: MultipleFeeInfoRequest = Field(..., description="I. Phương thức tính phí")
-    statement: List[StatementInfoRequest] = Field(..., description="II.Thông tin bảng kê")
+    statement_info: StatementInfoRequest = Field(..., description="II.Thông tin bảng kê")
     management_info: ManagementInfoRequest = Field(..., description="III.1. Thông tin quản lý")
     sender_info: SenderInfoRequest = \
         Field(..., description="III.2. Thông tin khách hàng giao dịch")
