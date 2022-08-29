@@ -1081,6 +1081,22 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
                 prin_crd_no = card["card_info_item"]["card_account_num"] + card["card_info_item"]["card_num_mask"][-4:]
                 primary_card_branch_code = card["card_info_item"]["card_branch_issue"]
 
+    if prin_crd_no == "":
+        return ReposReturn(
+            is_error=True,
+            loc="open_cif -> repos_push_debit_to_gw subcard prin_crd_no",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail="GW prinCrdNo is null"
+        )
+
+    if primary_card_branch_code == "":
+        return ReposReturn(
+            is_error=True,
+            loc="open_cif -> repos_push_debit_to_gw subcard branch_code",
+            msg=ERROR_CALL_SERVICE_GW,
+            detail="GW branch_code is null"
+        )
+
     for sub_card in card_data['information_sub_debit_card']['sub_debit_cards']:
         sub_card_info = {
             "card_indicator": SUB_CARD,
