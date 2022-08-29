@@ -102,6 +102,7 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
         saving_booking_customer = []  # noqa
         saving_booking_account = []
         cif_number = None
+        full_name = None
         for item in account_amount_blocks:
             account_numbers.append(item.account_number)
             account_info = await CtrGWCasaAccount(current_user=self.current_user).ctr_gw_get_casa_account_info(
@@ -114,6 +115,7 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
                     loc=str(denominations_errors)
                 )
             cif_number = account_info['customer_info']['cif_info']['cif_num']
+            full_name = account_info['customer_info']['full_name']
             act_amount_blocks.append(item.dict())
             saving_booking_account.append({
                 "booking_id": BOOKING_ID,
@@ -161,7 +163,8 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
                 "management_info": management_info,
                 "sender_info": sender_response
             },
-            "customer_cif_number": cif_number
+            "customer_cif_number": cif_number,
+            "full_name": full_name
         }
 
         history_datas = self.make_history_log_data(
@@ -283,7 +286,7 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
         management = request.transaction_fee_info.management_info
         sender_info = request.transaction_fee_info.sender_info
         cif_number = None
-
+        full_name = None
         denominations__amounts = {}
         statement_info = self.call_repos(await repos_get_denominations(currency_id="VND", session=self.oracle_session))
 
@@ -322,6 +325,7 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
                     loc=str(denominations_errors)
                 )
             cif_number = account_info['customer_info']['cif_info']['cif_num']
+            full_name = account_info['customer_info']['full_name']
             saving_booking_account.append({
                 "booking_id": BOOKING_ID,
                 "account_number": item.account_number,
@@ -369,7 +373,8 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
                 },
                 "sender_info": sender_response
             },
-            "customer_cif_number": cif_number
+            "customer_cif_number": cif_number,
+            "full_name": full_name
         })
 
         history_data = self.make_history_log_data(
