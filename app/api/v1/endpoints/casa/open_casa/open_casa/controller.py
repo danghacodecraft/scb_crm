@@ -52,10 +52,10 @@ class CtrCasaOpenCasa(BaseController):
 
         casa_accounts = []
         # Lấy thông tin Lưu tài khoản cập nhật mới nhất
-        for _, _, booking_business_form in get_casa_open_casa_infos:
+        for booking, _, booking_business_form in get_casa_open_casa_infos:
             form_data = orjson_loads(booking_business_form.form_data)
             form_data['account_info']['approval_status'] = booking_business_form.is_success
-            form_data['account_info']['booking_business_form_id'] = booking_business_form.booking_business_form_id
+            form_data['account_info']['booking_id'] = booking.id
             casa_accounts.append(form_data)
 
         booking = await CtrBooking(current_user=self.current_user).ctr_get_booking(
@@ -103,7 +103,7 @@ class CtrCasaOpenCasa(BaseController):
         acc_type_ids = []
         acc_class_ids = []
         account_structure_type_level_2_ids = []
-        updating_booking_child_business_form_ids = []
+        updating_booking_child_ids = []
 
         gw_customer_detail = self.call_repos(await repos_gw_get_customer_info_detail(
             cif_number=cif_number,
@@ -236,10 +236,10 @@ class CtrCasaOpenCasa(BaseController):
                 is_success=False
             )
 
-            booking_business_form_id = request.booking_business_form_id
-            if booking_business_form_id:
+            booking_child_id = request.booking_id
+            if booking_child_id:
                 booking_business_form = self.call_repos(await repos_get_booking_business_form(
-                    booking_business_form_id=booking_business_form_id,
+                    booking_id=booking_child_id,
                     session=self.oracle_session
                 ))
                 if not booking_business_form:
@@ -254,9 +254,9 @@ class CtrCasaOpenCasa(BaseController):
                         loc=f"{index} -> booking_business_form_id"
                     )
 
-                booking_child_business_form.update(booking_business_form_id=booking_business_form_id)
+                booking_child_business_form.update(booking_id=booking_child_id)
                 updating_booking_child_business_forms.append(booking_child_business_form)
-                updating_booking_child_business_form_ids.append(booking_business_form_id)
+                updating_booking_child_ids.append(booking_child_id)
                 continue
 
             saving_casa_accounts.append(dict(
@@ -326,22 +326,6 @@ class CtrCasaOpenCasa(BaseController):
             )
         )
 
-        # Lấy những booking_business có thể xóa
-        get_casa_open_casa_infos = self.call_repos(await repos_get_casa_open_casa_info_from_booking_parent(
-            booking_parent_id=booking_parent_id,
-            session=self.oracle_session
-        ))
-
-        booking_business_forms = []
-
-        for _, _, booking_business_form in get_casa_open_casa_infos:
-            if booking_business_form.is_success:
-                booking_business_forms.append(booking_business_form.booking_business_form_id)
-
-        deletable_booking_business_form_ids = list(
-            set(booking_business_forms) - set(updating_booking_child_business_form_ids)
-        )
-
         history_datas = self.make_history_log_data(
             description=PROFILE_HISTORY_DESCRIPTIONS_OPEN_CASA_ACCOUNT,
             history_status=PROFILE_HISTORY_STATUS_INIT,
@@ -389,9 +373,11 @@ class CtrCasaOpenCasa(BaseController):
             saving_booking_business_form=saving_booking_business_form,
             saving_booking_child_business_forms=saving_booking_child_business_forms,
             updating_booking_child_business_forms=updating_booking_child_business_forms,
-            deletable_booking_business_form_ids=deletable_booking_business_form_ids,
+            updating_booking_child_ids=updating_booking_child_ids,
             session=self.oracle_session
         ))
+
+        saving_booking_accounts.extend(updating_booking_child_business_forms)
 
         return self.response(data=dict(
             booking_parent_id=booking_parent_id,
