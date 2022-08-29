@@ -449,16 +449,20 @@ class CtrDebitCard(BaseController):
             }
         # thong tin the chinh
         session: Session = self.oracle_session
-        main_card_cif_num = session.execute(select(Customer.cif_number).filter(
+        main_card_cif_num_list = session.execute(select(Customer.cif_number).filter(
             Customer.id == cif_id
-        )).scalar()
-
+        )).scalars().all()
+        if len(main_card_cif_num_list) != 1:
+            return self.response_exception(
+                msg=len(main_card_cif_num_list),
+                loc="ctr_debit_card -> main_card_cif_num_list",
+                detail="Customer.cif_number must be 1"
+            )
         # lưu thông tin thẻ chính dựa vào cif_id thẻ chính gọi qua gw để dùng cho mở thẻ phụ
-        list_primary_card = []
-        if main_card_cif_num:
-            gw_list_select_credit_cards_by_cif = await CtrGWCardWorks().ctr_gw_select_credit_cards_by_cif(
-                cif_num=main_card_cif_num, channel=GW_DEFAULT_SUB_CARD_CHANEL)
-            list_primary_card = gw_list_select_credit_cards_by_cif.get("data", {}).get("card_info_list")
+
+        gw_list_select_credit_cards_by_cif = await CtrGWCardWorks().ctr_gw_select_credit_cards_by_cif(
+            cif_num=main_card_cif_num_list[0], channel=GW_DEFAULT_SUB_CARD_CHANEL)
+        list_primary_card = gw_list_select_credit_cards_by_cif.get("data", {}).get("card_info_list")
 
         card_active_date = None
         card_expire_date = None
