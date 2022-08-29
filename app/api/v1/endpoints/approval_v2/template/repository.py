@@ -119,7 +119,7 @@ async def repos_get_all_template_of_booking(business_type_id: str, session: Sess
             Template,
             BusinessType
         ).join(
-            BusinessType, Template.business_type_id == BusinessType.code
+            BusinessType, Template.business_type_id == BusinessType.id
         ).filter(
             Template.business_type_id == business_type_id
         )

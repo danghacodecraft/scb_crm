@@ -65,6 +65,9 @@ class CtrTemplateDetail(BaseController):
             object_data = ResponseData[TMSAccountAmountUnblockRequest](**self.response(data=object_data))
 
         elif object_data['business_type_id'] == BUSINESS_TYPE_AMOUNT_BLOCK:
+            if object_data['account_amount_blocks']:
+                object_data['effective_date'] = object_data['account_amount_blocks'][0]['effective_date']
+
             object_data = ResponseData[TMSAccountAmountBlockResponse](**self.response(data=object_data))
 
         elif object_data['business_type_id'] == BUSINESS_TYPE_CASA_TRANSFER:

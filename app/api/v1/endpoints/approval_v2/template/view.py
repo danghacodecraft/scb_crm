@@ -26,7 +26,7 @@ router = APIRouter()
 )
 async def fill_data_template(
         booking_id: str = Header(..., description="Mã phiên giao dịch"),
-        current_user=Depends(get_current_user_from_header())
+        current_user=Depends(get_current_user_from_header())  # noqa
 ):
 
     template_detail_info = await CtrTemplateDetail().ctr_get_template_after_fill(
