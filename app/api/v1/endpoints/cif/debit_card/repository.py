@@ -144,10 +144,10 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
 
                 },
                 "main_card_number": {
-                    "number_part_1": item.card_num_mask[:4] if item.card_num_mask else "123",
-                    "number_part_2": item.card_num_mask[4:8] if item.card_num_mask else "456",
-                    "number_part_3": item.card_num_mask[8:12] if item.card_num_mask else "789",
-                    "number_part_4": item.card_num_mask[12:16] if item.card_num_mask else "999"
+                    "number_part_1": item.card_num_mask[:4] if item.card_num_mask and len(item.card_num_mask) >= 16 else "123",
+                    "number_part_2": item.card_num_mask[4:8] if item.card_num_mask and len(item.card_num_mask) >= 16 else "456",
+                    "number_part_3": item.card_num_mask[8:12] if item.card_num_mask and len(item.card_num_mask) >= 16 else "789",
+                    "number_part_4": item.card_num_mask[12:16] if item.card_num_mask and len(item.card_num_mask) >= 16 else "999"
                 },
                 "card_image_url": "https://vi.wikipedia.org/wiki/Trang_Ch%C3%ADn"
             }
@@ -198,10 +198,10 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
                     "note": item.CardDeliveryAddress.card_delivery_address_note
                 },
                 "main_card_number": {
-                    "number_part_1": item.card_num_mask[:4] if item.card_num_mask else "777",
-                    "number_part_2": item.card_num_mask[4:8] if item.card_num_mask else "555",
-                    "number_part_3": item.card_num_mask[8:12] if item.card_num_mask else "444",
-                    "number_part_4": item.card_num_mask[12:16] if item.card_num_mask else "333"
+                    "number_part_1": item.card_num_mask[:4] if item.card_num_mask and len(item.card_num_mask) >= 16 else "777",
+                    "number_part_2": item.card_num_mask[4:8] if item.card_num_mask and len(item.card_num_mask) >= 16 else "555",
+                    "number_part_3": item.card_num_mask[8:12] if item.card_num_mask and len(item.card_num_mask) >= 16 else "444",
+                    "number_part_4": item.card_num_mask[12:16] if item.card_num_mask and len(item.card_num_mask) >= 16 else "333"
                 },
                 "card_image_url": "https://vi.wikipedia.org/wiki/Trang_Ch%C3%ADn"  # TODO
 
