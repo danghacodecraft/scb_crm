@@ -734,7 +734,7 @@ async def repos_push_casa_to_gw(booking_id: str,
         account_structure_type_level_2, account_structure_type_level_1, address_country
     ) = detail_payment_account_info_result.data
 
-    is_success, gw_open_casa_account_info, _ = await service_gw.get_open_casa_account(
+    is_success, gw_open_casa_account_info = await service_gw.get_open_casa_account(
         cif_number=cif_number,
         self_selected_account_flag=casa_account.self_selected_account_flag,
         casa_account_info=casa_account,

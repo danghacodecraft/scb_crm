@@ -9,7 +9,7 @@ from app.api.v1.endpoints.third_parties.gw.customer.repository import (
     repos_gw_get_co_owner, repos_gw_get_customer_info_detail,
     repos_gw_get_customer_info_list, repos_push_casa_to_gw,
     repos_push_cif_to_gw, repos_push_debit_to_gw,
-    repos_push_internet_banking_to_gw
+    repos_push_internet_banking_to_gw, repos_save_transaction_jobs
 )
 from app.api.v1.endpoints.third_parties.gw.customer.schema import (
     CheckMobileNumRequest
@@ -27,7 +27,10 @@ from app.third_parties.oracle.models.master_data.identity import PlaceOfIssue
 from app.third_parties.oracle.models.master_data.others import (
     Branch, Career, MaritalStatus, ResidentStatus
 )
-from app.utils.constant.approval import CIF_STAGE_APPROVE_KSV
+from app.utils.constant.approval import (
+    BUSINESS_JOB_CODE_CASA_INFO, BUSINESS_JOB_CODE_CIF_INFO,
+    CIF_STAGE_APPROVE_KSV
+)
 from app.utils.constant.business_type import BUSINESS_TYPE_INIT_CIF
 from app.utils.constant.cif import CRM_GENDER_TYPE_FEMALE, CRM_GENDER_TYPE_MALE
 from app.utils.constant.gw import (
@@ -781,6 +784,15 @@ class CtrGWCustomer(BaseController):
                 msg=ERROR_PERMISSION,
                 error_status_code=status.HTTP_403_FORBIDDEN
             )
+
+        # Trạng thái khởi tạo cho giao dịch
+        self.call_repos(await repos_save_transaction_jobs(
+            booking=booking.id,
+            is_success=False,
+            business_job_ids=[BUSINESS_JOB_CODE_CASA_INFO, BUSINESS_JOB_CODE_CIF_INFO],
+            session=self.oracle_session,
+            response_data=[]
+        ))
 
         # Init response_info
         response_info = {
