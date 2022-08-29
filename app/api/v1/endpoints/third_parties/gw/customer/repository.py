@@ -846,6 +846,7 @@ async def repos_push_internet_banking_to_gw(booking_id: str,
                 "email": customer.email if customer.email else GW_DEFAULT_VALUE
             },
             "authentication_info": authentication_info,
+            "sendPwdMethod": e_banking["method_active_password_id"],
             "service_package_info": {
                 "service_package_code": GW_DEFAULT_VALUE
             },
