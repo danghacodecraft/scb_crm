@@ -1,7 +1,7 @@
-from datetime import date
 from typing import List, Optional
 
 from pydantic import Field
+from pydantic.schema import date
 
 from app.api.base.schema import BaseSchema
 
@@ -26,6 +26,7 @@ class UserInfoResponse(BaseSchema):
     hrm_position_code: str = Field(None, description="Mã Chức vụ")
     hrm_position_name: str = Field(None, description="Tên Chức vụ")
     fcc_current_date: date = Field(None, description="Ngày giao dịch trên hệ thống")
+    expired_time: int = Field(None, description="Thời gian sống token")
 
 
 class PermissionResponse(BaseSchema):
@@ -166,6 +167,7 @@ class UserBannerResponse(BaseSchema):
 
 class RefreshTokenResponse(BaseSchema):
     refresh_token: str = Field(..., description="Refresh token")
+    expired_time: int = Field(..., description="Thời gian hết hạn")
 
 
 EXAMPLE_RES_REFRESH_TOKEN = {

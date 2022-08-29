@@ -1,6 +1,7 @@
 import base64
 import binascii
 import zlib
+from datetime import timedelta
 
 import orjson
 from starlette import status
@@ -15,7 +16,7 @@ from app.utils.constant.gw import GW_FUNC_SELECT_USER_INFO_BY_USER_ID_OUT
 from app.utils.error_messages import (
     ERROR_CALL_SERVICE_GW, ERROR_CALL_SERVICE_IDM, ERROR_INVALID_TOKEN
 )
-from app.utils.functions import string_to_date
+from app.utils.functions import now, string_to_date
 
 USER_ID = "9651cdfd9a9a4eb691f9a3a125ac46b0"
 USER_TOKEN = "OTY1MWNkZmQ5YTlhNGViNjkxZjlhM2ExMjVhYzQ2YjA6N2VlN2E2ZTg1MTUzN2M2YzFmYWIwMWQzODYzMWU4YTIx"
@@ -82,7 +83,7 @@ async def repos_login(username: str, password: str) -> ReposReturn:
             ) > 0, lst_data))
 
     ))
-
+    data_idm['user_info']['expired_time'] = int((now() + timedelta(minutes=15)).timestamp())
     if not filter_permission_code:
         return ReposReturn(
             is_error=True,
@@ -106,7 +107,19 @@ async def repos_check_token(token: str, refresh_token: bool = False) -> ReposRet
         )
 
     username = auth_parts['username']
+    bearer_token = auth_parts['token']
 
+    data_idm_redis = await service_redis.get(username)
+
+    user_info_redis = orjson.loads(zlib.decompress(base64.b64decode(data_idm_redis['user_info']['token'])))
+    # Check if user use another browser to login
+    if bearer_token != user_info_redis['token']:
+        return ReposReturn(
+            is_error=True,
+            msg=ERROR_INVALID_TOKEN,
+            loc='token',
+            error_status_code=status.HTTP_401_UNAUTHORIZED
+        )
     is_success, check_token = await service_idm.check_token(username=username, bearer_token=auth_parts['token'])
 
     if not is_success:
@@ -116,20 +129,21 @@ async def repos_check_token(token: str, refresh_token: bool = False) -> ReposRet
             detail="Token is invalid"
         )
 
-    data_idm = await service_redis.get(username)
     if refresh_token:
-        data_idm['user_info']['token'] = check_token['token']
-        data_idm['user_info']['token'] = base64.b64encode(
-            zlib.compress(orjson.dumps(data_idm['user_info']))
+        data_idm_redis['user_info']['token'] = check_token['token']
+        data_idm_redis['user_info']['expired_time'] = int((now() + timedelta(minutes=15)).timestamp())
+        data_idm_redis['user_info']['token'] = base64.b64encode(
+            zlib.compress(orjson.dumps(data_idm_redis['user_info']))
         ).decode('utf-8')
-        await service_redis.getset(username, data_idm)
+        await service_redis.getset(username, data_idm_redis)
         return ReposReturn(data=dict(
-            refresh_token=data_idm['user_info']['token']
+            refresh_token=data_idm_redis['user_info']['token'],
+            expired_time=data_idm_redis['user_info']['expired_time']
         ))
 
     return ReposReturn(data=dict(
-        user_info=data_idm['user_info'],
-        menu_list=data_idm['menu_list']
+        user_info=data_idm_redis['user_info'],
+        menu_list=data_idm_redis['menu_list']
     ))
 
 
