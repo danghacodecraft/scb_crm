@@ -847,3 +847,45 @@ class SelectCardInfoCardInfoListResponse(BaseSchema):
 
 class SelectCardInfoResponse(BaseSchema):
     card_info_list: List[SelectCardInfoCardInfoListResponse]
+
+
+########################################################################################################################
+
+#  SelectCreditCardsByCif
+
+class SelectCreditCardsByCifRequest(BaseSchema):
+    cif_num: str = Field(..., description="Số CIF", example="0002187")
+    channel: str = Field(..., description="""Kênh kết nối với hệ thống Thẻ:
+    - `EBANK`
+
+    - `LOCALPAYMENT`
+
+    - `OTHER`
+
+    - Default giá trị `EBANK`""", example="EBANK")
+
+
+class SelectCreditCardsByCifCardAccountCasaInfoItemResponse(BaseSchema):
+    account_num: str = Field(..., description="Số tài khoản casa liên kết thẻ")
+
+
+class SelectCreditCardsByCifItemResponse(BaseSchema):
+    card_holder_name: str = Field(..., description="Họ tên chủ thẻ")
+    card_num: str = Field(..., description="Số thẻ")
+    card_active_date: str = Field(..., description="Ngày kích hoạt thẻ")
+    card_expire_date: str = Field(..., description="Ngày hết hạn của thẻ")
+    card_status: str = Field(..., description="Tình trạng thẻ (Hoạt động, khóa, hết hạn.v.v...)")
+    card_is_primary_card: str = Field(..., description="Loại thẻ chính/phụ. Thẻ chính: 'Y', thẻ phụ: 'N'")
+    card_credit_limit_avaiable: str = Field(..., description="Hạn mức sử dụng còn lại của thẻ")
+    card_credit_current_trans_balance: str = Field(..., description="Dư nợ giao dịch thông thường hiện tại")
+    card_account: str = Field(..., description="Số tài khoản thẻ   ")
+    pan_mask: str = Field(..., description="pan_mask")
+    card_account_casa: SelectCreditCardsByCifCardAccountCasaInfoItemResponse
+
+
+class SelectCreditCardsByCifCardInfoListResponse(BaseSchema):
+    card_info_item: SelectCreditCardsByCifItemResponse
+
+
+class SelectCreditCardsByCifResponse(BaseSchema):
+    card_info_list: List[SelectCreditCardsByCifCardInfoListResponse]

@@ -10,7 +10,8 @@ from app.api.v1.endpoints.third_parties.gw.card_works.controller import (
     CtrGWCardWorks
 )
 from app.api.v1.endpoints.third_parties.gw.card_works.schema import (
-    OpenCardsRequest, SelectCardInfoRequest, SelectCardInfoResponse
+    OpenCardsRequest, SelectCardInfoRequest, SelectCardInfoResponse,
+    SelectCreditCardsByCifRequest, SelectCreditCardsByCifResponse
 )
 
 router = APIRouter()
@@ -50,5 +51,25 @@ async def view_gw_select_card_info(
 ):
     gw_select_card_info = await CtrGWCardWorks(current_user).ctr_gw_select_card_info(
         card_branched=request.card_branched
+    )
+    return ResponseData(**gw_select_card_info)
+
+
+@router.post(
+    path="/select-credit-cards-by-cif/",
+    name="[GW] Lấy danh sách các thẻ Tín dụng theo CIF",
+    description="[GW] Lấy danh sách các thẻ Tín dụng theo CIF",
+    responses=swagger_response(
+        response_model=SelectCreditCardsByCifResponse,
+        success_status_code=status.HTTP_200_OK
+    )
+)
+async def view_gw_select_credit_cards_by_cif(
+        request: SelectCreditCardsByCifRequest = Body(...),
+        current_user=Depends(get_current_user_from_header())
+):
+    gw_select_card_info = await CtrGWCardWorks(current_user).ctr_gw_select_credit_cards_by_cif(
+        cif_num=request.cif_num,
+        channel=request.channel
     )
     return ResponseData(**gw_select_card_info)

@@ -10,6 +10,9 @@ from app.api.v1.endpoints.cif.payment_account.detail.repository import (
     repos_get_detail_payment_account
 )
 from app.api.v1.endpoints.cif.repository import repos_get_customer
+from app.api.v1.endpoints.third_parties.gw.card_works.controller import (
+    CtrGWCardWorks
+)
 from app.api.v1.endpoints.third_parties.gw.ebank.repository import (
     repos_get_e_banking_from_db_by_cif_id,
     repos_get_sms_casa_mobile_number_from_db_by_cif_id
@@ -59,12 +62,13 @@ from app.utils.constant.cif import (
     IMAGE_TYPE_FACE, RESIDENT_ADDRESS_CODE, STAFF_TYPE_BUSINESS_CODE
 )
 from app.utils.constant.debit_card import (
-    CRM_CUST_TITLE_MR, CRM_DELIVERY_ADDRESS_FLAG_FALSE, GW_CUST_TITLE_MR,
+    CRM_CUST_TITLE_MR, CRM_DELIVERY_ADDRESS_FLAG_FALSE,
+    GW_CARD_IS_PRIMARY_CARD, GW_CARD_STATUS_IN_USE, GW_CUST_TITLE_MR,
     GW_CUST_TITLE_MRS, GW_DEFAULT_ATM_CARD_ACCOUNT_PROVIDER,
     GW_DEFAULT_CARD_AUTO_RENEW, GW_DEFAULT_CARD_BILL_OPTION,
     GW_DEFAULT_CARD_RELATION_TO_PRIMARY,
     GW_DEFAULT_CARD_STATEMENT_DELIVERY_OPTION, GW_DEFAULT_NORMAL,
-    GW_DEFAULT_QUICK, MAIN_CARD, SUB_CARD
+    GW_DEFAULT_QUICK, GW_DEFAULT_SUB_CARD_CHANEL, MAIN_CARD, SUB_CARD
 )
 from app.utils.constant.gw import (
     GW_AUTO, GW_CUSTOMER_TYPE_B, GW_CUSTOMER_TYPE_I, GW_DATE_FORMAT,
@@ -530,7 +534,8 @@ async def repos_push_cif_to_gw(booking_id: str, session: Session, response_custo
     }
     birthday = date_to_string(cust_individual.date_of_birth,
                               _format=GW_DATE_FORMAT) if cust_individual.date_of_birth else GW_DEFAULT_VALUE
-    is_children = True if (now().year - datetime.datetime.strptime(birthday, "%Y-%m-%d").year) < GW_OPEN_CIF_CHILD_AGE else False
+    is_children = True if (now().year - datetime.datetime.strptime(birthday,
+                                                                   "%Y-%m-%d").year) < GW_OPEN_CIF_CHILD_AGE else False
     # địa chỉ liên lạc doanh nghiệp hoặc người giám hộ
     address_contact_info_c = {
         "contact_address_line": GW_DEFAULT_VALUE,
@@ -590,7 +595,8 @@ async def repos_push_cif_to_gw(booking_id: str, session: Session, response_custo
         "tax": customer.tax_number if customer.tax_number else GW_DEFAULT_VALUE,
         "resident_status": mapping_resident_status_crm_to_core(cust_individual.resident_status_id),
         "legal_guardian": GW_DEFAULT_VALUE,
-        "co_owner": GW_DEFAULT_VALUE if not is_children and not SERVICE['production']['production_flag'] else GW_OPEN_CO_OWNER_CIF_INFO,
+        "co_owner": GW_DEFAULT_VALUE if not is_children and not SERVICE['production'][
+            'production_flag'] else GW_OPEN_CO_OWNER_CIF_INFO,
         "nationality": customer.nationality_id if customer.nationality_id else GW_DEFAULT_VALUE,
         "birth_country": GW_DEFAULT_VALUE,
         # TODO hard core language
@@ -710,7 +716,6 @@ async def repos_push_casa_to_gw(booking_id: str,
                                 cif_id: str,
                                 cif_number: str,
                                 maker_staff_name):
-
     detail_payment_account_info_result = await repos_get_detail_payment_account(
         cif_id=cif_id,
         session=session
@@ -929,7 +934,6 @@ async def repos_push_internet_banking_to_gw(booking_id: str,
 
 async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user, cif_id: str, cif_number: str,
                                  casa_account_number, response_customers, maker_staff_name):
-
     card_result = await repos_debit_card(cif_id=cif_id, session=session)
 
     if card_result.is_error:
@@ -1061,9 +1065,24 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
             debit_card_id=debit_card_id, session=session
         )
     # sub card
+    # todo prinCrdNo
+    # lấy prinCrdNo cho thẻ phụ
+    gw_list_select_credit_cards_by_cif = await CtrGWCardWorks().ctr_gw_select_credit_cards_by_cif(
+        cif_num=cif_number, channel=GW_DEFAULT_SUB_CARD_CHANEL)
+    list_primary_card = gw_list_select_credit_cards_by_cif.get("data", {}).get("card_info_list")
+    prin_crd_no = ""
+    primary_card_branch_code = ""
+
+    if list_primary_card:
+        for card in list_primary_card:
+            # todo hard GW_CARD_IS_PRIMARY_CARD GW_CARD_STATUS_IN_USE
+            if card["card_info_item"]["card_is_primary_card"] == GW_CARD_IS_PRIMARY_CARD and card["card_info_item"]["card_status"] == GW_CARD_STATUS_IN_USE:
+                prin_crd_no = card["card_info_item"]["card_account_num"] + card["card_info_item"]["card_num_mask"][-4:]
+                primary_card_branch_code = card["card_info_item"]["card_branch_issue"]
+
     for sub_card in card_data['information_sub_debit_card']['sub_debit_cards']:
         sub_card_info = {
-            "card_indicator": SUB_CARD.lower(),
+            "card_indicator": SUB_CARD,
             "card_type": sub_card["card_group"],
             "card_auto_renew": GW_DEFAULT_CARD_AUTO_RENEW,
             "card_release_form": GW_DEFAULT_NORMAL if sub_card["physical_issuance_type"][
@@ -1079,7 +1098,9 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
             "card_customer_type": sub_card["customer_type"]["id"],
             "srcCde": sub_card["src_code"].strip(),
             "promoCde": sub_card["pro_code"].strip(),
-
+            # todo prinCrdNo
+            "prin_crd_no": prin_crd_no,
+            "primary_card_branch_code": primary_card_branch_code,
             # additional field
             "account_type": GW_DEFAULT_ATM_CARD_ACCOUNT_PROVIDER,
             "title": GW_CUST_TITLE_MR if customer_info.CustomerIndividualInfo.title_id == CRM_CUST_TITLE_MR else GW_CUST_TITLE_MRS,
@@ -1099,6 +1120,9 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
             "address_info_district_name": sub_card["card_delivery_address"]["delivery_address"]["district"],
             "address_info_city_name": sub_card["card_delivery_address"]["delivery_address"]["province"],
 
+            "city_code": sub_card["card_delivery_address"]["delivery_address"]["province"]['id']
+            if sub_card["card_delivery_address"]["delivery_address"]["province"]['id'] else None,
+
             # thông tin chi nhánh nhận thẻ
             "delivBrchId": sub_card.get("card_delivery_address", {}).get("scb_branch").get("id")
             if isinstance(sub_card.get("card_delivery_address", {}).get("scb_branch"), dict) else
@@ -1110,16 +1134,17 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
         if not is_sub_card_already_exists:
             is_open_sub_card_success, response_open_sub_card_data = await service_gw.open_cards(
                 current_user=current_user.user_info,
-                cif_number=cif_number,
+                cif_number=sub_card["cif_number"] if sub_card["cif_number"] else cif_number,
                 casa_account_number=casa_account_number,
                 card_info=sub_card_info,
                 customer_info=response_customers[0],
                 maker_staff_name=maker_staff_name,
                 direct_staff=direct_staff,
                 indirect_staff=indirect_staff,
-                casa_currency_number=casa_currency_number.data
+                casa_currency_number=casa_currency_number.data,
+                is_sub_card=True
             )
-
+            print(response_open_sub_card_data)
             if is_open_sub_card_success:
                 await repos_save_transaction_jobs(
                     session=session,
@@ -1204,7 +1229,8 @@ async def repos_get_sms_casa_mobile_number_from_db_by_account_number(account_num
     ).scalars().first()
 
     if not casa_id:
-        return ReposReturn(is_error=True, msg=ERROR_NO_DATA, loc="repos_get_sms_casa_mobile_number_from_db_by_account_number -> casa_id")
+        return ReposReturn(is_error=True, msg=ERROR_NO_DATA,
+                           loc="repos_get_sms_casa_mobile_number_from_db_by_account_number -> casa_id")
 
     balance_and_relationship_info = session.execute(
         select(
@@ -1235,11 +1261,11 @@ async def repos_get_sms_casa_mobile_number_from_db_by_account_number(account_num
 
 @auto_commit
 async def repos_save_transaction_jobs(
-    session: Session,
-    booking_id: str,
-    is_success: bool,
-    response_data,
-    business_job_ids: List[str]
+        session: Session,
+        booking_id: str,
+        is_success: bool,
+        response_data,
+        business_job_ids: List[str]
 ):
     for business_job_id in business_job_ids:
         session.add(TransactionJob(**{

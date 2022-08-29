@@ -355,6 +355,7 @@ class CtrDebitCard(BaseController):
                         "card_delivery_address_note": sub_card.card_delivery_address.note,
                     }
                     list_sub_delivery_address.append(sub_delivery_add)
+
                 # thong tin (the phu)
                 sub_data_debit_card = {
                     "id": generate_uuid(),
@@ -376,7 +377,7 @@ class CtrDebitCard(BaseController):
                     "last_name_on_card": last_name.upper(),  # uppercase last name
                     "card_delivery_address_flag": sub_card.card_delivery_address.delivery_address_flag,
                     "created_at": now(),
-                    "active_flag": 1
+                    "active_flag": 1,
                 }
                 if sub_card.name_on_card.middle_name_on_card:
                     sub_data_debit_card.update({

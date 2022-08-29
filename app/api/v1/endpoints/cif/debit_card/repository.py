@@ -54,6 +54,9 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
             DebitCard.card_delivery_address_flag,
             DebitCard.src_code,
             DebitCard.pro_code,
+            DebitCard.cif_number,
+            # DebitCard.prin_crd_no,
+            # DebitCard.primary_card_branch_code,
             DebitCard.card_group,
             DebitCardType.card_id,
             DebitCardType.card_type_id,
@@ -165,7 +168,9 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
                 return ReposReturn(is_error=True, msg=ERROR_CIF_ID_NOT_EXIST, loc=item.Customer.cif_number)
             sub_debit_card_data = {
                 "id": item.DebitCard.id,
-                "cif_number": item.Customer.cif_number,
+                # "cif_number": item.Customer.cif_number,
+                # todo cif_number tu nhap
+                "cif_number": item.cif_number,
                 "approval_status": item.DebitCard.approval_status,
                 "name_on_card": {
                     "last_name_on_card": item.DebitCard.last_name_on_card,
@@ -176,6 +181,8 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
                 "card_group": item.card_group,
                 "src_code": item.src_code,
                 "pro_code": item.pro_code,
+                # "prin_crd_no": item.prin_crd_no,
+                # "primary_card_branch_code": item.primary_card_branch_code,
                 "physical_issuance_type": dropdown(item.CardIssuanceType),
                 "customer_type": dropdown(item.CardCustomerType),
 
