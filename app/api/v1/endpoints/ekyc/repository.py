@@ -53,6 +53,8 @@ async def repos_get_ekyc_customer(customer_ekyc_id: str, session: Session):
 @auto_commit
 async def repos_update_ekyc_customer_kss(update_customer_ekyc_kss, session: Session):
     session.execute(
-        update(EKYCCustomer).values(update_customer_ekyc_kss)
+        update(EKYCCustomer).where(
+            EKYCCustomer.customer_id == update_customer_ekyc_kss.customer_id
+        ).values(update_customer_ekyc_kss)
     )
     return ReposReturn(data=None)
