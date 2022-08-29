@@ -52,6 +52,7 @@ class AccountUnlockRequest(TMSResponseSchema):
 class StatementInfoRequest(ResponseRequestSchema):
     denominations: Optional[str] = Field("", description="Mệnh giá")
     amount: Optional[str] = Field("", description="Số lượng")
+    into_money: Optional[str] = Field("", description="Thành tiền")
 
 
 class ManagementInfoRequest(TMSResponseSchema):
