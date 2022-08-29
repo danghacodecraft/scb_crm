@@ -14,9 +14,15 @@ from app.api.v1.schemas.utils import DropdownRequest
 
 
 # II. Bảng kê
-class StatementInfoRequest(ResponseRequestSchema):
+class StatementDetailInfo(BaseSchema):
     denominations: str = Field(..., description="Mệnh giá")
     amount: int = Field(..., description="Số lượng")
+
+
+class StatementInfoRequest(ResponseRequestSchema):
+    statement_type: str = Field(..., description="Loại bảng kê")
+    currency_type: str = Field(..., description="Loại bảng kê")
+    statement_detail: List[StatementDetailInfo] = Field(..., description="Chi tiết bảng kê")
 
 
 # III.1 Thông tin quản lý
@@ -58,7 +64,7 @@ class AccountAmountBlockDetailRequest(BaseSchema):
 
 class FeePaymentInfoRequest(BaseSchema):
     fee_info: MultipleFeeInfoRequest = Field(..., description="I. Phương thức tính phí")
-    statement: List[StatementInfoRequest] = Field(..., description="II.Thông tin bảng kê")
+    statement_info: StatementInfoRequest = Field(..., description="II.Thông tin bảng kê")
     management_info: ManagementInfoRequest = Field(..., description="III.1. Thông tin quản lý")
     sender_info: SenderInfoRequest = \
         Field(..., description="III.2. Thông tin khách hàng giao dịch")
