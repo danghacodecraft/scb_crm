@@ -1,3 +1,6 @@
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from app.api.base.controller import BaseController
 from app.api.v1.endpoints.cif.debit_card.repository import (
     get_data_debit_card_by_cif_num, repos_add_debit_card, repos_debit_card
@@ -13,6 +16,9 @@ from app.api.v1.endpoints.third_parties.gw.customer.controller import (
     CtrGWCustomer
 )
 from app.api.v1.validator import validate_history_data
+from app.third_parties.oracle.models.cif.basic_information.model import (
+    Customer
+)
 from app.third_parties.oracle.models.master_data.address import (
     AddressDistrict, AddressProvince, AddressWard
 )
@@ -369,7 +375,7 @@ class CtrDebitCard(BaseController):
                 gw_list_sub_card_select_credit_cards_by_cif = await CtrGWCardWorks().ctr_gw_select_credit_cards_by_cif(
                     cif_num=sub_card.cif_number, channel=GW_DEFAULT_SUB_CARD_CHANEL)
                 list_primary_card = gw_list_sub_card_select_credit_cards_by_cif.get("data", {}).get("card_info_list")
-                sub_card_num_mask = ""
+                sub_card_num_mask = None
 
                 if list_primary_card:
                     for card in list_primary_card:
@@ -440,18 +446,23 @@ class CtrDebitCard(BaseController):
                 "card_delivery_address_note": debt_card_req.card_delivery_address.note,
             }
         # thong tin the chinh
+        session: Session = self.oracle_session
+        main_card_cif_num = session.execute(select(Customer.cif_number).filter(
+            Customer.id == cif_id
+        )).scalar()
 
         # lưu thông tin thẻ chính dựa vào cif_id thẻ chính gọi qua gw để dùng cho mở thẻ phụ
+
         gw_list_select_credit_cards_by_cif = await CtrGWCardWorks().ctr_gw_select_credit_cards_by_cif(
-            cif_num=cif_id, channel=GW_DEFAULT_SUB_CARD_CHANEL)
+            cif_num=main_card_cif_num, channel=GW_DEFAULT_SUB_CARD_CHANEL)
         list_primary_card = gw_list_select_credit_cards_by_cif.get("data", {}).get("card_info_list")
-        card_active_date = ""
-        card_expire_date = ""
-        card_status = ""
-        card_account_num = ""
-        card_num_mask = ""
-        card_branch_issue = ""
-        casa_account_num = ""
+        card_active_date = None
+        card_expire_date = None
+        card_status = None
+        card_account_num = None
+        card_num_mask = None
+        card_branch_issue = None
+        casa_account_num = None
 
         if list_primary_card:
             for card in list_primary_card:
