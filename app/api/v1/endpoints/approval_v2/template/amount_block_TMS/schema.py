@@ -75,5 +75,7 @@ class FeePaymentInfoResponse(TMSResponseSchema):
 
 class TMSAccountAmountBlockResponse(TMSCreatedUpdatedBaseModel):
     account_amount_blocks: List[AccountAmountBlockDetailRequest] = Field(..., description="Danh sách tài khoản")
+    effective_date: Optional[str] = Field('', description="Ngày hiệu lực phong tỏa. format`DD/MM/YYYY`")
     fee_payment_info: FeePaymentInfoResponse = Field(..., description='thông tin phí')
     customer_cif_number: Optional[str] = Field('')
+    fullname_vn: Optional[str] = Field("", description="Họ và tên chủ tk theo cif")
