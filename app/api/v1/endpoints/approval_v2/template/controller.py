@@ -10,7 +10,7 @@ from app.api.v1.endpoints.approval_v2.template.amount_unblock_template.schema im
 )
 from app.api.v1.endpoints.approval_v2.template.repository import (
     repo_form, repos_check_exist_and_get_info_template_booking,
-    repos_get_template_data
+    repos_get_all_template_of_booking, repos_get_template_data
 )
 from app.api.v1.endpoints.approval_v2.template.schema import (
     TMSCasaTopUpResponse
@@ -56,6 +56,12 @@ class CtrTemplateDetail(BaseController):
             object_data = ResponseData[TMSWithdrawResponse](**self.response(data=object_data))
 
         elif object_data['business_type_id'] == BUSINESS_TYPE_AMOUNT_UNBLOCK:
+            # for account_unlock in object_data['account_unlock']:
+            #     if account_unlock['account_amount_block']['p_type_unblock'] == 'C':
+            #         account_unlock['account_amount_block']['checkbox_value'] = 'Toàn bộ số tiền tạm khóa'
+            #     else:
+            #         account_unlock['account_amount_block']['checkbox_value'] = 'Một phần số tiền tạm khóa, số tiền:'
+
             object_data = ResponseData[TMSAccountAmountUnblockRequest](**self.response(data=object_data))
 
         elif object_data['business_type_id'] == BUSINESS_TYPE_AMOUNT_BLOCK:
@@ -66,14 +72,30 @@ class CtrTemplateDetail(BaseController):
 
         return object_data
 
-    async def ctr_get_template_after_fill(self, template_id: str, booking_id: str):
+    async def ctr_get_template_after_fill(self, booking_id: str):
         template_booking_info = self.call_repos(
-            await repos_check_exist_and_get_info_template_booking(template_id, booking_id, session=self.oracle_session)
-        )
-        path = template_booking_info['template_info'].template_url
-
-        template_after_fill = self.call_repos(
-            await repo_form(template_id=template_id, booking_id=booking_id, path=path)
+            await repos_check_exist_and_get_info_template_booking(template_id=None, booking_id=booking_id,
+                                                                  session=self.oracle_session)
         )
 
-        return self.response(template_after_fill)
+        all_template_of_booking = self.call_repos(
+            await repos_get_all_template_of_booking(
+                template_booking_info['booking_info'].business_type_id,
+                session=self.oracle_session)
+        )
+
+        data_return = {
+            'folder_name': all_template_of_booking[0].BusinessType.name,
+            'templates': []
+        }
+        for template, _ in all_template_of_booking:
+            data_return['templates'].append({
+                'template_id': template.template_id,
+                'template_name': template.name,
+                'template_fill_data_info': self.call_repos(
+                    await repo_form(template_id=str(template.template_id), booking_id=booking_id,
+                                    path=template.template_url)
+                )
+            })
+
+        return self.response(data_return)
