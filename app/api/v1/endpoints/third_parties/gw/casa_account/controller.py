@@ -634,10 +634,11 @@ class CtrGWCasaAccount(BaseController):
         cif_number = None
         for _, _, booking_business_form in get_casa_open_casa_infos:
             form_data = orjson_loads(booking_business_form.form_data)
+            is_success = bool(booking_business_form.is_success)
             # Status: True, False, None
-            if booking_business_form.is_success is True:
+            if is_success is True:
                 success_numbers.append(form_data['account_info']['casa_account_number'])
-            elif booking_business_form.is_success is False:
+            elif is_success is False:
                 error_list[booking_business_form.booking_business_form_id].update(
                     form_data=form_data
                 )
