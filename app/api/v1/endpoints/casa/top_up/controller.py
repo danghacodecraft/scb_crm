@@ -433,7 +433,7 @@ class CtrCasaTopUp(BaseController):
                 str(int(item.denominations)): 0
             })
         denominations_errors = []
-        for index, row in enumerate(statement):
+        for index, row in enumerate(statement.statement_detail):
             denominations = row.denominations
             if denominations not in denominations__amounts:
                 denominations_errors.append(dict(

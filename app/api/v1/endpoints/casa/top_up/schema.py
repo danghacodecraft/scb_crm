@@ -19,9 +19,15 @@ from app.utils.regex import (
 )
 
 
-class StatementInfoRequest(ResponseRequestSchema):
+class StatementDetailInfo(ResponseRequestSchema):
     denominations: str = Field(..., description="Mệnh giá")
     amount: int = Field(..., description="Số lượng")
+
+
+class StatementInfoRequest(ResponseRequestSchema):
+    statement_type: str = Field(..., description="Loại bảng kê")
+    currency_type: str = Field(..., description="Loại bảng kê")
+    statement_detail: List[StatementDetailInfo] = Field(..., description="Chi tiết bảng kê")
 
 
 # Common
@@ -36,7 +42,7 @@ class CasaTopUpCommonRequest(ResponseRequestSchema):
     receiving_method: str = Field(None, description=f"Hình thức nhận: {make_description_from_dict(RECEIVING_METHODS)}")
     fee_info: Optional[OneFeeInfoRequest] = Field(..., description="Thông tin phí")
     fee_note: Optional[str] = Field(None, description="Ghi chú phí")
-    statement: List[StatementInfoRequest] = Field(..., description="Thông tin bảng kê")
+    statement: StatementInfoRequest = Field(..., description="Thông tin bảng kê")
     direct_staff_code: Optional[str] = Field(..., description="Mã nhân viên kinh doanh")
     indirect_staff_code: Optional[str] = Field(..., description="Mã nhân viên quản lý gián tiếp")
     amount: int = Field(..., description="Số tiền")
