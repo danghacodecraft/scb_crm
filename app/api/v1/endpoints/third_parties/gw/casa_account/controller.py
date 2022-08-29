@@ -830,7 +830,7 @@ class CtrGWCasaAccount(BaseController):
 
         if not response_data:
             return self.response_exception(msg="GW return None", loc=f'response_data: {response_data}')
-        print(xref)
+
         form_data['transfer'].update({
             "entry_number": xref
         })
