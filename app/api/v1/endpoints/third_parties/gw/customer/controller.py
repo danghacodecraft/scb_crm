@@ -787,7 +787,7 @@ class CtrGWCustomer(BaseController):
 
         # Trạng thái khởi tạo cho giao dịch
         self.call_repos(await repos_save_transaction_jobs(
-            booking=booking.id,
+            booking_id=BOOKING_ID,
             is_success=False,
             business_job_ids=[BUSINESS_JOB_CODE_CASA_INFO, BUSINESS_JOB_CODE_CIF_INFO],
             session=self.oracle_session,
