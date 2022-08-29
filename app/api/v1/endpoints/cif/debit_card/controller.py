@@ -25,7 +25,8 @@ from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_INIT_DEBIT_CARD, PROFILE_HISTORY_STATUS_INIT
 )
 from app.utils.constant.debit_card import (
-    GW_CARD_IS_PRIMARY_CARD, GW_CARD_STATUS_IN_USE, GW_DEFAULT_SUB_CARD_CHANEL
+    GW_CARD_IS_PRIMARY_CARD, GW_CARD_IS_SUB_CARD, GW_CARD_STATUS_IN_USE,
+    GW_DEFAULT_SUB_CARD_CHANEL
 )
 from app.utils.error_messages import (
     ERROR_CIF_NUMBER_NOT_EXIST, ERROR_NOT_REGISTER, VALIDATE_ERROR
@@ -363,6 +364,21 @@ class CtrDebitCard(BaseController):
                     list_sub_delivery_address.append(sub_delivery_add)
 
                 # thong tin (the phu)
+
+                # lưu thông tin card_num_mask thẻ phụ sử dụng để get mã thẻ
+                gw_list_sub_card_select_credit_cards_by_cif = await CtrGWCardWorks().ctr_gw_select_credit_cards_by_cif(
+                    cif_num=sub_card.cif_number, channel=GW_DEFAULT_SUB_CARD_CHANEL)
+                list_primary_card = gw_list_sub_card_select_credit_cards_by_cif.get("data", {}).get("card_info_list")
+                sub_card_num_mask = ""
+
+                if list_primary_card:
+                    for card in list_primary_card:
+                        # todo hard GW_CARD_IS_SUB_CARD GW_CARD_STATUS_IN_USE
+                        if card["card_info_item"][
+                            "card_is_primary_card"].lower() == GW_CARD_IS_SUB_CARD.lower() and \
+                                card["card_info_item"]["card_status"].lower() == GW_CARD_STATUS_IN_USE.lower():
+                            sub_card_num_mask = card["card_info_item"]["card_num_mask"]
+
                 sub_data_debit_card = {
                     "id": generate_uuid(),
                     "customer_id": None,
@@ -384,6 +400,7 @@ class CtrDebitCard(BaseController):
                     "card_delivery_address_flag": sub_card.card_delivery_address.delivery_address_flag,
                     "created_at": now(),
                     "active_flag": 1,
+                    "card_num_mask": sub_card_num_mask
                 }
                 if sub_card.name_on_card.middle_name_on_card:
                     sub_data_debit_card.update({
