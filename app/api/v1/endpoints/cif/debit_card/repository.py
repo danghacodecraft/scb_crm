@@ -55,8 +55,7 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
             DebitCard.src_code,
             DebitCard.pro_code,
             DebitCard.cif_number,
-            # DebitCard.prin_crd_no,
-            # DebitCard.primary_card_branch_code,
+            DebitCard.card_num_mask,
             DebitCard.card_group,
             DebitCardType.card_id,
             DebitCardType.card_type_id,
@@ -121,6 +120,13 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
     physical_card_type = []
     sub_debit_card = {}
     for item in list_debit_card_info_engine:
+        if len(item.card_num_mask) != 16:
+            return ReposReturn(
+                is_error=True,
+                msg="main_card_number",
+                loc="repos_debit_card -> card_num_mask",
+                detail="item.card_num_mask must be 16"
+            )
         if item.parent_card_id is None:
             physical_card_type.append(dropdown(item.CardType)),
             issue_debit_card = {
@@ -144,11 +150,11 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
                     "first_name_on_card": item.first_name_on_card,
 
                 },
-                "main_card_number": {  # TODO
-                    "number_part_1": "1234",
-                    "number_part_2": "5678",
-                    "number_part_3": "9875",
-                    "number_part_4": "5781"
+                "main_card_number": {
+                    "number_part_1": item.card_num_mask[:4],
+                    "number_part_2": item.card_num_mask[4:8],
+                    "number_part_3": item.card_num_mask[8:12],
+                    "number_part_4": item.card_num_mask[12:16]
                 },
                 "card_image_url": "https://vi.wikipedia.org/wiki/Trang_Ch%C3%ADn"
             }
@@ -181,8 +187,6 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
                 "card_group": item.card_group,
                 "src_code": item.src_code,
                 "pro_code": item.pro_code,
-                # "prin_crd_no": item.prin_crd_no,
-                # "primary_card_branch_code": item.primary_card_branch_code,
                 "physical_issuance_type": dropdown(item.CardIssuanceType),
                 "customer_type": dropdown(item.CardCustomerType),
 
@@ -200,11 +204,11 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
                     },
                     "note": item.CardDeliveryAddress.card_delivery_address_note
                 },
-                "main_card_number": {  # TODO
-                    "number_part_1": "1234",
-                    "number_part_2": "5678",
-                    "number_part_3": "9875",
-                    "number_part_4": "5781"
+                "main_card_number": {
+                    "number_part_1": item.card_num_mask[:4],
+                    "number_part_2": item.card_num_mask[4:8],
+                    "number_part_3": item.card_num_mask[8:12],
+                    "number_part_4": item.card_num_mask[12:16],
                 },
                 "card_image_url": "https://vi.wikipedia.org/wiki/Trang_Ch%C3%ADn"  # TODO
 
