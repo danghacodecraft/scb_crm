@@ -63,19 +63,20 @@ async def repos_save_casa_casa_account(
             Booking.id.notin_(updating_booking_child_ids)
         ))
     ).scalars().all()
-    session.execute(
-        delete(
-            Booking
+    if deletable_booking_ids:
+        session.execute(
+            delete(
+                Booking
+            )
+            .filter(Booking.id.in_(deletable_booking_ids))
         )
-        .filter(Booking.id.in_(deletable_booking_ids))
-    )
 
     # Cập nhật lại bằng dữ liệu mới
     if updating_booking_child_business_forms:
         for updating_booking_child_business_form in updating_booking_child_business_forms:
             session.execute(
                 update(BookingBusinessForm).filter(
-                    BookingBusinessForm.booking_business_form_id == updating_booking_child_business_form['booking_business_form_id']
+                    BookingBusinessForm.booking_id == updating_booking_child_business_form['booking_id']
                 ).values(
                     form_data=updating_booking_child_business_form['form_data'],
                     updated_at=now()
