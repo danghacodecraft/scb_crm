@@ -46,7 +46,7 @@ async def view_get_otp(
     name="Switch to others screen in tablet",
     description="""Chuyển tablet sang màn hình khác
 - Khi bắt đầu giao dịch với khách hàng, giao dịch viên chọn giao dịch tương ứng mong muốn khách hàng:
-action=`PROCESS_TRANSACTION` và extra_data=`{"transaction_name": "chuyển tiền"}`.
+action=`PROCESS_TRANSACTION` và extra_data=`{"booking_id": "B255B53E39444E378EAC4A71122F0BD7", "transaction_name": "chuyển tiền"}`.
 Tablet chuyển đến screen giao dịch đang xử lý.
 
 - Trong quá trình giao dịch, giao dịch viên muốn chụp ảnh giấy tờ:
