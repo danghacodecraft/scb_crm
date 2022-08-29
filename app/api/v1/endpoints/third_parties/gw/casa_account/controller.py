@@ -587,7 +587,7 @@ class CtrGWCasaAccount(BaseController):
             session=self.oracle_session
         ))
 
-        casa_accounts = []
+        unsuccess_casa_accounts = []
 
         mark_created_at = None
         # Lấy thông tin Lưu tài khoản cập nhật mới nhất
@@ -596,12 +596,12 @@ class CtrGWCasaAccount(BaseController):
             if not booking_business_form.is_success:
                 if not mark_created_at:
                     mark_created_at = booking_business_form.created_at
-                    casa_accounts.append((booking, booking_account, booking_business_form))
+                    unsuccess_casa_accounts.append((booking, booking_account, booking_business_form))
                 elif mark_created_at == booking_business_form.created_at:
-                    casa_accounts.append((booking, booking_account, booking_business_form))
+                    unsuccess_casa_accounts.append((booking, booking_account, booking_business_form))
 
         error_list = {}
-        for booking, booking_account, booking_business_form in casa_accounts:
+        for booking, booking_account, booking_business_form in unsuccess_casa_accounts:
             form_data = orjson_loads(booking_business_form.form_data)
             form_data['account_info']['approval_status'] = booking_business_form.is_success
 
@@ -634,9 +634,10 @@ class CtrGWCasaAccount(BaseController):
         cif_number = None
         for _, _, booking_business_form in get_casa_open_casa_infos:
             form_data = orjson_loads(booking_business_form.form_data)
-            if booking_business_form.is_success:
+            # Status: True, False, None
+            if booking_business_form.is_success is True:
                 success_numbers.append(form_data['account_info']['casa_account_number'])
-            else:
+            elif booking_business_form.is_success is False:
                 error_list[booking_business_form.booking_business_form_id].update(
                     form_data=form_data
                 )
