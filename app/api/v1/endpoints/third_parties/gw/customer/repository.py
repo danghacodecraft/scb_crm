@@ -1076,7 +1076,8 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
     if list_primary_card:
         for card in list_primary_card:
             # todo hard GW_CARD_IS_PRIMARY_CARD GW_CARD_STATUS_IN_USE
-            if card["card_info_item"]["card_is_primary_card"] == GW_CARD_IS_PRIMARY_CARD and card["card_info_item"]["card_status"] == GW_CARD_STATUS_IN_USE:
+            if card["card_info_item"]["card_is_primary_card"].lower() == GW_CARD_IS_PRIMARY_CARD.lower() and\
+                    card["card_info_item"]["card_status"].lower() == GW_CARD_STATUS_IN_USE.lower():
                 prin_crd_no = card["card_info_item"]["card_account_num"] + card["card_info_item"]["card_num_mask"][-4:]
                 primary_card_branch_code = card["card_info_item"]["card_branch_issue"]
 

@@ -81,9 +81,14 @@ class DebitCard(Base):
     src_code = Column('card_src_code', VARCHAR(36), comment='Source Code loại thẻ')
     pro_code = Column('card_pro_code', VARCHAR(36), comment='Promote Code loại thẻ')
     card_group = Column('card_group', VARCHAR(36), comment='Loại thẻ')
-    # todo prinCrdNo
-    # prin_crd_no = Column(VARCHAR(36), comment='prinCrdNo')
-    # primary_card_branch_code = Column(VARCHAR(21), comment='primary_card_branch_code')
+    # lưu thông tin thẻ chính dựa vào cif_id thẻ chính gọi qua gw để dùng cho mở thẻ phụ
+    card_active_date = Column(DateTime, comment='Ngày kích hoạt thẻ')
+    card_expire_date = Column(DateTime, comment='Ngày hết hạn của thẻ')
+    card_status = Column(VARCHAR(36), comment='Tình trạng thẻ (Hoạt động, khóa, hết hạn.v.v...)')
+    card_account_num = Column(VARCHAR(36), comment='Số tài khoản thẻ')
+    card_num_mask = Column(VARCHAR(36), comment='Số thẻ được ẩn, chỉ chừa thông tin 4 số đầu và 4 số cuối')
+    card_branch_issue = Column(VARCHAR(36), comment='Đơn vị mở thẻ')
+    casa_account_num = Column(VARCHAR(36), comment='Số tài khoản casa liên kết thẻ')
 
 
 class DebitCardType(Base):

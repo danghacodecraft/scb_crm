@@ -6,6 +6,9 @@ from app.api.v1.endpoints.cif.debit_card.schema import DebitCardRequest
 from app.api.v1.endpoints.cif.repository import (
     repos_get_booking, repos_get_initializing_customer
 )
+from app.api.v1.endpoints.third_parties.gw.card_works.controller import (
+    CtrGWCardWorks
+)
 from app.api.v1.endpoints.third_parties.gw.customer.controller import (
     CtrGWCustomer
 )
@@ -20,6 +23,9 @@ from app.third_parties.oracle.models.master_data.card import (
 from app.third_parties.oracle.models.master_data.others import Branch
 from app.utils.constant.cif import (
     PROFILE_HISTORY_DESCRIPTIONS_INIT_DEBIT_CARD, PROFILE_HISTORY_STATUS_INIT
+)
+from app.utils.constant.debit_card import (
+    GW_CARD_IS_PRIMARY_CARD, GW_CARD_STATUS_IN_USE, GW_DEFAULT_SUB_CARD_CHANEL
 )
 from app.utils.error_messages import (
     ERROR_CIF_NUMBER_NOT_EXIST, ERROR_NOT_REGISTER, VALIDATE_ERROR
@@ -417,6 +423,32 @@ class CtrDebitCard(BaseController):
                 "card_delivery_address_note": debt_card_req.card_delivery_address.note,
             }
         # thong tin the chinh
+
+        # lưu thông tin thẻ chính dựa vào cif_id thẻ chính gọi qua gw để dùng cho mở thẻ phụ
+        gw_list_select_credit_cards_by_cif = await CtrGWCardWorks().ctr_gw_select_credit_cards_by_cif(
+            cif_num=cif_id, channel=GW_DEFAULT_SUB_CARD_CHANEL)
+        list_primary_card = gw_list_select_credit_cards_by_cif.get("data", {}).get("card_info_list")
+        card_active_date = ""
+        card_expire_date = ""
+        card_status = ""
+        card_account_num = ""
+        card_num_mask = ""
+        card_branch_issue = ""
+        casa_account_num = ""
+
+        if list_primary_card:
+            for card in list_primary_card:
+                # todo hard GW_CARD_IS_PRIMARY_CARD GW_CARD_STATUS_IN_USE
+                if card["card_info_item"]["card_is_primary_card"].lower() == GW_CARD_IS_PRIMARY_CARD.lower() and \
+                        card["card_info_item"]["card_status"].lower() == GW_CARD_STATUS_IN_USE.lower():
+                    card_active_date = card["card_info_item"]["card_active_date"]
+                    card_expire_date = card["card_info_item"]["card_expire_date"]
+                    card_status = card["card_info_item"]["card_status"]
+                    card_account_num = card["card_info_item"]["card_account_num"]
+                    card_num_mask = card["card_info_item"]["card_num_mask"]
+                    card_branch_issue = card["card_info_item"]["card_branch_issue"]
+                    casa_account_num = card["card_info_item"]["casa_account_num"]
+
         data_debit_card = {
             "id": id_primary_card,
             "customer_id": cif_id,
@@ -437,6 +469,14 @@ class CtrDebitCard(BaseController):
             "card_delivery_address_flag": debt_card_req.card_delivery_address.delivery_address_flag,
             "created_at": now(),
             "active_flag": 1,
+            # lưu thông tin thẻ chính dựa vào cif_id thẻ chính gọi qua gw để dùng cho mở thẻ phụ
+            "card_active_date": card_active_date,
+            "card_expire_date": card_expire_date,
+            "card_status": card_status,
+            "card_account_num": card_account_num,
+            "card_num_mask": card_num_mask,
+            "card_branch_issue": card_branch_issue,
+            "casa_account_num": casa_account_num
         }
         if debt_card_req.information_debit_card.name_on_card.middle_name_on_card:
             data_debit_card.update({
