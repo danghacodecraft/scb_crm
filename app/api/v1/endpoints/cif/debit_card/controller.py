@@ -372,9 +372,11 @@ class CtrDebitCard(BaseController):
                 # thong tin (the phu)
 
                 # lưu thông tin card_num_mask thẻ phụ sử dụng để get mã thẻ
-                gw_list_sub_card_select_credit_cards_by_cif = await CtrGWCardWorks().ctr_gw_select_credit_cards_by_cif(
-                    cif_num=sub_card.cif_number, channel=GW_DEFAULT_SUB_CARD_CHANEL)
-                list_primary_card = gw_list_sub_card_select_credit_cards_by_cif.get("data", {}).get("card_info_list")
+                list_primary_card = []
+                if sub_card.cif_number:
+                    gw_list_sub_card_select_credit_cards_by_cif = await CtrGWCardWorks().ctr_gw_select_credit_cards_by_cif(
+                        cif_num=sub_card.cif_number, channel=GW_DEFAULT_SUB_CARD_CHANEL)
+                    list_primary_card = gw_list_sub_card_select_credit_cards_by_cif.get("data", {}).get("card_info_list")
                 sub_card_num_mask = None
 
                 if list_primary_card:
@@ -456,8 +458,7 @@ class CtrDebitCard(BaseController):
         if main_card_cif_num:
             gw_list_select_credit_cards_by_cif = await CtrGWCardWorks().ctr_gw_select_credit_cards_by_cif(
                 cif_num=main_card_cif_num, channel=GW_DEFAULT_SUB_CARD_CHANEL)
-            list_primary_card = gw_list_select_credit_cards_by_cif.get("data", {}).get("card_info_list") \
-                if isinstance(gw_list_select_credit_cards_by_cif, dict) else []
+            list_primary_card = gw_list_select_credit_cards_by_cif.get("data", {}).get("card_info_list")
 
         card_active_date = None
         card_expire_date = None
