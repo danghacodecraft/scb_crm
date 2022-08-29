@@ -2570,6 +2570,42 @@ class ServiceGW:
                 loc="open_cif -> repos_push_debit_to_gw_open_cards_mobile_number",
                 detail="Customer mobile_number cannot null"
             )
+        # Ràng buộc địa chỉ nhận thẻ cho mở thẻ phụ
+        if is_sub_card and card_info["address_info_line"] == "":
+            return ReposReturn(
+                is_error=True,
+                msg=ERROR_OPEN_CIF,
+                loc="open_cif -> address_info_line",
+                detail="address_info_line is missing"
+            )
+        if is_sub_card and card_info["address_info_ward_name"] == "":
+            return ReposReturn(
+                is_error=True,
+                msg=ERROR_OPEN_CIF,
+                loc="open_cif -> address_info_ward_name",
+                detail="address_info_ward_name is missing"
+            )
+        if is_sub_card and card_info["city_code"] == "":
+            return ReposReturn(
+                is_error=True,
+                msg=ERROR_OPEN_CIF,
+                loc="open_cif -> city_code",
+                detail="city_code is missing"
+            )
+        if is_sub_card and card_info["address_info_district_name"]["name"] == "":
+            return ReposReturn(
+                is_error=True,
+                msg=ERROR_OPEN_CIF,
+                loc="open_cif -> address_info_district_name",
+                detail="address_info_district_name.name is missing"
+            )
+        if is_sub_card and card_info["address_info_city_name"]["name"] == "":
+            return ReposReturn(
+                is_error=True,
+                msg=ERROR_OPEN_CIF,
+                loc="open_cif -> address_info_city_name",
+                detail="address_info_city_name.name is missing"
+            )
 
         data_input = {
             "sequenceNo": datetime_to_string(now(), _format="%Y%m%d%H%M%S%f")[:-4],
@@ -2731,6 +2767,7 @@ class ServiceGW:
                 "address_info": {
                     "line": card_info["address_info_line"] if card_info["address_info_line"] else "",
                     "ward_name": card_info["address_info_ward_name"] if card_info["address_info_ward_name"] else "",
+                    # todo hard  contact_address_line cho sub card
                     "contact_address_line": card_info["address_info_line"] if card_info["address_info_line"] and is_sub_card else GW_DEFAULT_VALUE,
                     # todo hard  city_code cho sub card
                     "city_code": GW_DEFAULT_VALUE if not is_sub_card else card_info["city_code"],
