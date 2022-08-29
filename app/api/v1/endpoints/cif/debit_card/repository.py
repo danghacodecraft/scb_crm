@@ -149,10 +149,10 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
                     "number_part_3": item.card_num_mask[8:12],
                     "number_part_4": item.card_num_mask[12:16]
                 } if item.card_num_mask and item.approval_status and len(item.card_num_mask) == 16 else {
-                    "number_part_1": "1234",
+                    "number_part_1": "XXXX",
                     "number_part_2": "XXXX",
-                    "number_part_3": "1289",
-                    "number_part_4": "1111"
+                    "number_part_3": "XXXX",
+                    "number_part_4": "XXXX"
                 },
                 "card_image_url": "https://vi.wikipedia.org/wiki/Trang_Ch%C3%ADn"
             }
@@ -208,10 +208,10 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
                     "number_part_3": item.card_num_mask[8:12],
                     "number_part_4": item.card_num_mask[12:16],
                 } if item.card_num_mask and item.approval_status and len(item.card_num_mask) == 16 else {
-                    "number_part_1": "9999",
+                    "number_part_1": "XXXX",
                     "number_part_2": "XXXX",
-                    "number_part_3": "2244",
-                    "number_part_4": "3331"
+                    "number_part_3": "XXXX",
+                    "number_part_4": "XXXX"
                 },
                 "card_image_url": "https://vi.wikipedia.org/wiki/Trang_Ch%C3%ADn"  # TODO
 
