@@ -34,6 +34,26 @@ from app.utils.tablet_functions import (
 
 class CtrTabletWeb(BaseController):
     async def ctr_get_otp_and_mqtt_info(self):
+        old_tablet_info = self.call_repos(
+            await repos_retrieve_tablet(
+                teller_username=self.current_user.user_info.username,
+                session=self.oracle_session
+            )
+        )
+        if old_tablet_info['tablet_id']:
+            # gửi cho mobile (tablet đã kết nối trước đó) message thông báo unpaired
+            service_rabbitmq.publish(
+                message={
+                    "action": MOBILE_ACTION_UNPAIRED,
+                    "data": {}
+                },
+                routing_key=get_topic_name(
+                    device_type=DEVICE_TYPE_MOBILE,
+                    tablet_id=old_tablet_info['tablet_id'],
+                    otp=old_tablet_info['otp']
+                )
+            )
+
         otp_info = self.call_repos(
             await repos_create_tablet_otp(
                 teller_username=self.current_user.user_info.username,
