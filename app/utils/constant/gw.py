@@ -470,4 +470,3 @@ GW_FEE_TRANSFER_0305 = '0305'  # Chuyển khoản ngoài SCB - Nhận bằng TKT
 GW_FEE_TRANSFER_0310 = '0310'  # Chuyển khoản nhanh 24/7 - Nhận bằng TKTT / Nhận bằng số thẻ
 
 GW_DEFAULT_CITY_NAME = "VN"
-GW_DEFAULT_CITY_CODE = "70000"

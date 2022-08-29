@@ -27,10 +27,9 @@ from app.utils.constant.debit_card import (
 from app.utils.constant.gw import (
     GW_AUTHORIZED_REF_DATA_MGM_ACC_NUM, GW_CO_OWNER_REF_DATA_MGM_ACC_NUM,
     GW_CURRENT_ACCOUNT_CASA, GW_CURRENT_ACCOUNT_FROM_CIF,
-    GW_CUSTOMER_REF_DATA_MGMT_CIF_NUM, GW_DEFAULT_CITY_CODE,
-    GW_DEFAULT_CITY_NAME, GW_DEFAULT_NO, GW_DEFAULT_VALUE,
-    GW_DEPOSIT_ACCOUNT_FROM_CIF, GW_DEPOSIT_ACCOUNT_TD, GW_EMPLOYEE_FROM_CODE,
-    GW_EMPLOYEE_FROM_NAME, GW_EMPLOYEES,
+    GW_CUSTOMER_REF_DATA_MGMT_CIF_NUM, GW_DEFAULT_CITY_NAME, GW_DEFAULT_NO,
+    GW_DEFAULT_VALUE, GW_DEPOSIT_ACCOUNT_FROM_CIF, GW_DEPOSIT_ACCOUNT_TD,
+    GW_EMPLOYEE_FROM_CODE, GW_EMPLOYEE_FROM_NAME, GW_EMPLOYEES,
     GW_ENDPOINT_URL_CHECK_EXITS_ACCOUNT_CASA,
     GW_ENDPOINT_URL_CHECK_USERNAME_IB_MB_EXIST,
     GW_ENDPOINT_URL_DEPOSIT_OPEN_ACCOUNT_TD,
@@ -2734,10 +2733,10 @@ class ServiceGW:
                     "ward_name": card_info["address_info_ward_name"] if card_info["address_info_ward_name"] else "",
                     "contact_address_line": card_info["address_info_line"] if card_info["address_info_line"] and is_sub_card else GW_DEFAULT_VALUE,
                     # todo hard  city_code cho sub card
-                    "city_code": GW_DEFAULT_CITY_CODE if is_sub_card else GW_DEFAULT_VALUE,
-                    "district_name": card_info["address_info_district_name"] if card_info[
-                        "address_info_district_name"] else "",
-                    "city_name": card_info["address_info_city_name"] if card_info["address_info_city_name"] else "",
+                    "city_code": GW_DEFAULT_VALUE if not is_sub_card else card_info["city_code"],
+                    "district_name": card_info["address_info_district_name"]["name"] if card_info[
+                        "address_info_district_name"]["name"] else "",
+                    "city_name": card_info["address_info_city_name"]["name"] if card_info["address_info_city_name"]["name"] else "",
                     # todo hard  country_name cho sub card
                     "country_name": GW_DEFAULT_CITY_NAME if is_sub_card else GW_DEFAULT_VALUE
                 },
@@ -2796,6 +2795,7 @@ class ServiceGW:
                 "staff_code": current_user.username
             }
         }
+
         request_data = self.gw_create_request_body(
             current_user=current_user, function_name=GW_FUNC_OPEN_CARDS_IN,
             data_input=data_input

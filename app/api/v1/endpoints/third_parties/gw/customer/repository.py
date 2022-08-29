@@ -1075,9 +1075,10 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
 
     if list_primary_card:
         for card in list_primary_card:
+            # todo hard GW_CARD_IS_PRIMARY_CARD GW_CARD_STATUS_IN_USE
             if card["card_info_item"]["card_is_primary_card"] == GW_CARD_IS_PRIMARY_CARD and card["card_info_item"]["card_status"] == GW_CARD_STATUS_IN_USE:
-                prin_crd_no = card["card_info_item"]["card_account"] + card["card_info_item"]["card_num"][-4:]
-                primary_card_branch_code = card["card_info_item"]["card_branch_code"]
+                prin_crd_no = card["card_info_item"]["card_account_num"] + card["card_info_item"]["card_num_mask"][-4:]
+                primary_card_branch_code = card["card_info_item"]["card_branch_issue"]
 
     for sub_card in card_data['information_sub_debit_card']['sub_debit_cards']:
         sub_card_info = {
@@ -1119,6 +1120,9 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
             "address_info_district_name": sub_card["card_delivery_address"]["delivery_address"]["district"],
             "address_info_city_name": sub_card["card_delivery_address"]["delivery_address"]["province"],
 
+            "city_code": sub_card["card_delivery_address"]["delivery_address"]["province"]['id']
+            if sub_card["card_delivery_address"]["delivery_address"]["province"]['id'] else None,
+
             # thông tin chi nhánh nhận thẻ
             "delivBrchId": sub_card.get("card_delivery_address", {}).get("scb_branch").get("id")
             if isinstance(sub_card.get("card_delivery_address", {}).get("scb_branch"), dict) else
@@ -1130,7 +1134,7 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
         if not is_sub_card_already_exists:
             is_open_sub_card_success, response_open_sub_card_data = await service_gw.open_cards(
                 current_user=current_user.user_info,
-                cif_number=sub_card["cif_number"],
+                cif_number=sub_card["cif_number"] if sub_card["cif_number"] else cif_number,
                 casa_account_number=casa_account_number,
                 card_info=sub_card_info,
                 customer_info=response_customers[0],
