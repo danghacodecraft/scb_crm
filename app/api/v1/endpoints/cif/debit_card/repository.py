@@ -143,7 +143,7 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
                     "first_name_on_card": item.first_name_on_card,
 
                 },
-                "main_card_number": {
+                "main_card_number": {  # TODO
                     "number_part_1": item.card_num_mask[:4],
                     "number_part_2": item.card_num_mask[4:8],
                     "number_part_3": item.card_num_mask[8:12],
@@ -202,12 +202,12 @@ async def repos_debit_card(cif_id: str, session: Session) -> ReposReturn:
                     },
                     "note": item.CardDeliveryAddress.card_delivery_address_note
                 },
-                "main_card_number": {
+                "main_card_number": {  # TODO
                     "number_part_1": item.card_num_mask[:4],
                     "number_part_2": item.card_num_mask[4:8],
                     "number_part_3": item.card_num_mask[8:12],
                     "number_part_4": item.card_num_mask[12:16],
-                }if item.card_num_mask and item.approval_status and len(item.card_num_mask) == 16 else {
+                } if item.card_num_mask and item.approval_status and len(item.card_num_mask) == 16 else {
                     "number_part_1": "999",
                     "number_part_2": "222",
                     "number_part_3": "789",
