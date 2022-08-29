@@ -34,7 +34,8 @@ class CtrWithdraw(BaseController):
             request: WithdrawRequest
     ):
         current_user = self.current_user
-        statement = request.customer_info.statement
+        statement_detail = request.customer_info.statement_info.statement_detail
+        statement = request.customer_info.statement_info
         # Check exist Booking
         await CtrBooking().ctr_get_booking_and_validate(
             business_type_code=BUSINESS_TYPE_WITHDRAW,
@@ -51,7 +52,7 @@ class CtrWithdraw(BaseController):
                 str(int(item.denominations)): 0
             })
         denominations_errors = []
-        for index, row in enumerate(statement):
+        for index, row in enumerate(statement_detail):
             denominations = row.denominations
             if denominations not in denominations__amounts:
                 denominations_errors.append(dict(
@@ -99,7 +100,7 @@ class CtrWithdraw(BaseController):
             sender_note=sender_info.note
         )
 
-        statement_info = await CtrStatement().ctr_get_statement_info(statement_requests=request.customer_info.statement)
+        statement_info = await CtrStatement().ctr_get_statement_info(statement_requests=statement)
         amount = request.transaction_info.receiver_info.amount
         ################################################################################################################
         # Thông tin phí
@@ -323,6 +324,8 @@ class CtrWithdraw(BaseController):
         statement_info = form_data['customer_info']['statement_info']
         management_info = form_data['customer_info']['management_info']
         sender_info = form_data['customer_info']['sender_info']
+        print('statement_infooooooooooooo')
+        print(statement_info)
 
         response_data = dict(
             casa_account=dict(

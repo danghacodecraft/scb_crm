@@ -177,14 +177,20 @@ class SenderInfoRequest(BaseSchema):
     note: Optional[str] = Field(None, description="Ghi chú")
 
 
-class StatementInfoRequest(ResponseRequestSchema):
+class StatementDetailInfo(BaseSchema):
     denominations: str = Field(..., description="Mệnh giá")
     amount: int = Field(..., description="Số lượng")
 
 
+class StatementInfoRequest(ResponseRequestSchema):
+    statement_type: str = Field(..., description="Loại bảng kê")
+    currency_type: str = Field(..., description="Loại bảng kê")
+    statement_detail: List[StatementDetailInfo] = Field(..., description="Chi tiết bảng kê")
+
+
 # B. THÔNG TIN KHÁCH HÀNG GIAO DỊCH
 class CustomerInfoRequest(BaseSchema):
-    statement: List[StatementInfoRequest] = Field(..., description="I.Thông tin bảng kê")
+    statement_info: StatementInfoRequest = Field(..., description="I.Thông tin bảng kê")
     management_info: ManagementInfoRequest = Field(..., description="II. Thông tin quản lý")
     sender_info: SenderInfoRequest = \
         Field(..., description="III. Thông tin khách hàng giao dịch")

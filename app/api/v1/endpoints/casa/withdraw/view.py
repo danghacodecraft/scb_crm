@@ -71,4 +71,4 @@ async def view_withdraw_info(
         booking_id=BOOKING_ID
     )
 
-    return ResponseData[WithdrawResponse](**casa_info)
+    return ResponseData(**casa_info)
