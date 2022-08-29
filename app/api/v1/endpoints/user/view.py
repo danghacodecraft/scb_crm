@@ -9,7 +9,8 @@ from app.api.base.swagger import swagger_response
 from app.api.v1.dependencies.authenticate import get_current_user_from_header
 from app.api.v1.endpoints.user.controller import CtrUser
 from app.api.v1.endpoints.user.schema import (
-    EXAMPLE_RES_FAIL_LOGIN, EXAMPLE_RES_SUCCESS_DETAIL_USER, AuthResponse,
+    EXAMPLE_RES_FAIL_LOGIN, EXAMPLE_RES_FAIL_REFRESH_TOKEN,
+    EXAMPLE_RES_REFRESH_TOKEN, EXAMPLE_RES_SUCCESS_DETAIL_USER, AuthResponse,
     RefreshTokenResponse, UserBannerResponse
 )
 
@@ -56,8 +57,8 @@ async def view_login(credentials: HTTPBasicCredentials = Depends(security)) -> R
     responses=swagger_response(
         response_model=ResponseData[RefreshTokenResponse],
         success_status_code=status.HTTP_200_OK,
-        # fail_examples=EXAMPLE_RES_FAIL_LOGIN,
-        # success_examples=EXAMPLE_RES_SUCCESS_DETAIL_USER
+        fail_examples=EXAMPLE_RES_FAIL_REFRESH_TOKEN,
+        success_examples=EXAMPLE_RES_REFRESH_TOKEN
     ),
 )
 async def view_refresh_token(

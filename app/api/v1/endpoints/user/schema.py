@@ -166,3 +166,32 @@ class UserBannerResponse(BaseSchema):
 
 class RefreshTokenResponse(BaseSchema):
     refresh_token: str = Field(..., description="Refresh token")
+
+
+EXAMPLE_RES_REFRESH_TOKEN = {
+    "ex1": {
+        "summary": "Lấy refresh token thành công",
+        "value": {
+            "data": {
+                "refresh_token": "eJx1kE1ymzAAha+iYV3bgB0Hd1XsYsAZcP0DSVYeAQIUG4kKicbOZNXpQTpd9QrNstOD+CYFFxY0k41meN/Te088SZzuEZHeS4t9YdlXH+ne0T6ttutruNUi0/BMfpeVq8FCx85MLs04PvmYjA3n9r4wdbxW76x5cBzvF"
+                                 "+Z2owmCl+l4Rh+nx6k2pFhRY2s1FX4+XE+S+RfZFvNTIMqDFi78+ek24Y8e/KwYq9S6shPpnURghqolbiKO55dvBOgkBf6fnxUJaVQTWZNHSvUpCsQas++5ei3BEnLIdoIdKnEQRqSXMxrjAxrwVGTB4HK1/5CjughlE"
+                                 "Ne+UhCofCjCoB/SrF+SCqUs20Uoh4xniPBd0+Kcf/0gCbjB55evGSjo7+8cFFC89jdDr7UGBQySMG1jrKUNNssGccwPqCUzy7s3XODb1TGzbNcCN7bhVGZ9Cza6BxzdNbtSk5LTAnNMSRvU7W3/myx3Slt5JPdUdfR/"
+                                 "UkNfPw5HlazKQ6UTdlHfiGpZd9U/9bIpDsNdKBir4yPI0aVAmfQUpadOpOe/Ri7alQ=="
+            },
+            "errors": []
+        }
+    }
+}
+
+EXAMPLE_RES_FAIL_REFRESH_TOKEN = {
+    "ex1": {
+        "summary": "Lấy refresh token thất bại", "value": {
+            "data": "null",
+            "errors": [
+                {
+                    "loc": "null",
+                    "msg": "INVALID_TOKEN",
+                    "detail": "Token is invalid"
+                }
+            ]
+        }}}

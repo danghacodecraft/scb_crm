@@ -41,29 +41,34 @@ def check_token_ekyc(credentials) -> bool:
 
 async def _get_authorization_header(
         scheme_and_credentials: HTTPAuthorizationCredentials = Security(bearer_token),
-        refresh_token: bool = False
 ) -> Union[AuthResponse, RefreshTokenResponse, bool]:
     # bypass token check if service ekyc
     if check_token_ekyc(scheme_and_credentials.credentials):
         return AuthResponse(**{"user_info": {"token": ""}, "menu_list": []})
 
-    result_check_token = await repos_check_token(token=scheme_and_credentials.credentials, refresh_token=refresh_token)
+    result_check_token = await repos_check_token(token=scheme_and_credentials.credentials)
+    if result_check_token.is_error:
+        raise ExceptionHandle(
+            errors=[{'loc': None, 'msg': ERROR_INVALID_TOKEN}],
+            status_code=status.HTTP_401_UNAUTHORIZED
+        )
+    return AuthResponse(**result_check_token.data)
+
+
+async def _get_authorization_header_refresh(
+        scheme_and_credentials: HTTPAuthorizationCredentials = Security(bearer_token),
+) -> Union[RefreshTokenResponse]:
+    if check_token_ekyc(scheme_and_credentials.credentials):
+        return AuthResponse(**{"user_info": {"token": ""}, "menu_list": []})
+
+    result_check_token = await repos_check_token(token=scheme_and_credentials.credentials, refresh_token=True)
     if result_check_token.is_error:
         raise ExceptionHandle(
             errors=[{'loc': None, 'msg': ERROR_INVALID_TOKEN}],
             status_code=status.HTTP_401_UNAUTHORIZED
         )
 
-    if refresh_token:
-        return RefreshTokenResponse(**result_check_token.data)
-    else:
-        return AuthResponse(**result_check_token.data)
-
-
-async def _get_authorization_header_refresh(
-        scheme_and_credentials: HTTPAuthorizationCredentials = Security(bearer_token),
-) -> Union[AuthResponse, RefreshTokenResponse]:
-    return await _get_authorization_header(scheme_and_credentials, refresh_token=True)
+    return RefreshTokenResponse(**result_check_token.data)
 
 
 async def _get_authorization_header_optional(
