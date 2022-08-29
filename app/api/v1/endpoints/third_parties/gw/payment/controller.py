@@ -278,7 +278,8 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
         account_unlock_info = []
         account_numbers = []
         saving_booking_account = []
-        statement = request.transaction_fee_info.statement
+        statement_detail = request.transaction_fee_info.statement_info.statement_detail
+        statement = request.transaction_fee_info.statement_info
         management = request.transaction_fee_info.management_info
         sender_info = request.transaction_fee_info.sender_info
         cif_number = None
@@ -291,7 +292,7 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
                 str(int(item.denominations)): 0
             })
         denominations_errors = []
-        for index, row in enumerate(statement):
+        for index, row in enumerate(statement_detail):
             denominations = row.denominations
             if denominations not in denominations__amounts:
                 denominations_errors.append(dict(
