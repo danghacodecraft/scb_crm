@@ -1144,7 +1144,6 @@ async def repos_push_debit_to_gw(booking_id: str, session: Session, current_user
                 casa_currency_number=casa_currency_number.data,
                 is_sub_card=True
             )
-            print(response_open_sub_card_data)
             if is_open_sub_card_success:
                 await repos_save_transaction_jobs(
                     session=session,
