@@ -20,8 +20,10 @@ class CtrOtherInfo(BaseController):
         customer_employee = self.call_repos(await repos_other_info(cif_id, self.oracle_session))
         sale_staff = None
         indirect_sale_staff = None
+        extra_phone_number = None
+        customer_relationship = {}
 
-        for _, staff_type, employee in customer_employee:
+        for customer, staff_type, employee in customer_employee:
             if staff_type and employee:
                 employee = await CtrGWEmployee(self.current_user).ctr_gw_get_employee_info_from_code(
                     employee_code=employee.employee_id
@@ -34,6 +36,10 @@ class CtrOtherInfo(BaseController):
                     sale_staff = staff_info
                 if staff_type.code == STAFF_TYPE_REFER_INDIRECT_CODE:
                     indirect_sale_staff = staff_info
+            extra_phone_number = customer.extra_number
+            customer_relationship.update(
+                id=customer.cust_relationship_type_id
+            )
 
         legal_agreement_flag = customer_employee[0][0].legal_agreement_flag
         advertising_marketing_flag = customer_employee[0][0].advertising_marketing_flag
@@ -47,6 +53,8 @@ class CtrOtherInfo(BaseController):
             advertising_marketing_flag=advertising_marketing_flag,
             sale_staff=sale_staff,
             indirect_sale_staff=indirect_sale_staff,
+            extra_phone_number=extra_phone_number,
+            customer_relationship=customer_relationship
         ))
 
     async def ctr_update_other_info(self, cif_id: str, update_other_info_req: OtherInformationUpdateRequest):
