@@ -289,10 +289,10 @@ class CtrTabletMobile(BaseController):
         #     return self.response_exception(
         #         msg="INVALID_IS_IDENTIFY_CUSTOMER_STEP", detail="Customer has not taken an authentic photo"
         #     )
-        # elif is_identify_customer_step and booking_authentication.identity_front_document_file_uuid and booking_authentication.face_file_uuid:
-        #     return self.response_exception(
-        #         msg="INVALID_IS_IDENTIFY_CUSTOMER_STEP", detail="Customer has taken authentic photos before"
-        #     )
+        if is_identify_customer_step and booking_authentication.identity_front_document_file_uuid and booking_authentication.face_file_uuid:
+            return self.response_exception(
+                msg="INVALID_IS_IDENTIFY_CUSTOMER_STEP", detail="Customer has taken authentic photos before"
+            )
 
         data_file_upload = await file_upload.read()
 

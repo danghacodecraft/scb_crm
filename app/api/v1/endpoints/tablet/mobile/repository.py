@@ -62,15 +62,24 @@ async def repos_retrieve_table_by_tablet_token(tablet_id: str, otp: str, session
     })
 
 
-async def repos_init_booking_authentication(tablet_id: str, teller_username: str, identity_number: str, cif_number: str,
-                                            session: Session) -> ReposReturn:
+async def repos_init_booking_authentication(
+        tablet_id: str, teller_username: str, identity_number: str, cif_number: str,
+        session: Session,
+        identity_front_document_file_uuid: str = None, identity_front_document_file_uuid_ekyc: str = None,
+        face_file_uuid: str = None, face_file_uuid_ekyc: str = None, booking_id: str = None
+) -> ReposReturn:
     session.add(
         BookingAuthentication(
             tablet_id=tablet_id,
             teller_username=teller_username,
             identity_number=identity_number,
             created_at=now(),
-            cif_number=cif_number
+            cif_number=cif_number,
+            identity_front_document_file_uuid=identity_front_document_file_uuid,
+            identity_front_document_file_uuid_ekyc=identity_front_document_file_uuid_ekyc,
+            face_file_uuid=face_file_uuid,
+            face_file_uuid_ekyc=face_file_uuid_ekyc,
+            booking_id=booking_id,
         )
     )
     session.commit()
