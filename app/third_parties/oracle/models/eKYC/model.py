@@ -54,7 +54,7 @@ class EKYCCustomer(Base):
     kss_status = Column(VARCHAR(500), default=None)
     user_kss = Column(VARCHAR(500), default=None)
     date_kss = Column(DATE, default=None)
-    approve_status = Column(VARCHAR(500), default=None)
+    approve_status = Column(NUMBER(1), default=None)
     user_approve = Column(VARCHAR(500), default=None)
     date_approve = Column(DATE, default=None)
     status = Column(VARCHAR(50), default=None)
