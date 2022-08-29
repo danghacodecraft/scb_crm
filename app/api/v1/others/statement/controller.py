@@ -1,12 +1,10 @@
-from typing import List
-
 from app.api.base.controller import BaseController
 from app.api.v1.others.statement.repository import repos_get_denominations
 from app.api.v1.others.statement.schema import StatementInfoRequest
 
 
 class CtrStatement(BaseController):
-    async def ctr_get_statement_info(self, statement_requests: List[StatementInfoRequest]):
+    async def ctr_get_statement_info(self, statement_requests: StatementInfoRequest):
         statement = {}
         statement_info = self.call_repos(await repos_get_denominations(currency_id="VND", session=self.oracle_session))
 
@@ -15,7 +13,7 @@ class CtrStatement(BaseController):
                 str(int(item.denominations)): 0
             })
 
-        for row in statement_requests:
+        for row in statement_requests.statement_detail:
             statement.update({row.denominations: row.amount})
 
         statements = []
@@ -33,6 +31,8 @@ class CtrStatement(BaseController):
         odd_difference = 0
 
         statement_response = dict(
+            statement_type=statement_requests.statement_type,
+            currency_type=statement_requests.currency_type,
             total_number_of_bills=total_number_of_bills,
             statements=statements,
             total=total_amount,

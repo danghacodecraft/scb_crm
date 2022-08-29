@@ -56,7 +56,8 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
             request: AccountAmountBlockRequest
     ):
         current_user = self.current_user # noqa
-        statement = request.fee_payment_info.statement
+        statement_detail = request.fee_payment_info.statement_info.statement_detail
+        statement = request.fee_payment_info.statement_info
 
         # Kiểm tra booking
         await CtrBooking().ctr_get_booking_and_validate(
@@ -76,7 +77,7 @@ class CtrGWPayment(CtrGWCasaAccount, CtrAccountFee):
                 str(int(item.denominations)): 0
             })
         denominations_errors = []
-        for index, row in enumerate(statement):
+        for index, row in enumerate(statement_detail):
             denominations = row.denominations
             if denominations not in denominations__amounts:
                 denominations_errors.append(dict(

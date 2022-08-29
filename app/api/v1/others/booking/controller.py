@@ -271,9 +271,10 @@ class CtrBooking(BaseController):
                 Booking.id == BookingBusinessForm.booking_id,
                 BookingBusinessForm.business_form_id.notilike('%_GW')
             ))
-            .filter(
-                Booking.id == booking_id
-                and BookingBusinessForm.business_form_id == bussines_form_id
+            .filter(and_(
+                Booking.id == booking_id,
+                BookingBusinessForm.business_form_id == bussines_form_id
+            )
             )
         ).scalars().all()
 
