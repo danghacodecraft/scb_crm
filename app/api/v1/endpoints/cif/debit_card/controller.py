@@ -452,10 +452,13 @@ class CtrDebitCard(BaseController):
         )).scalar()
 
         # lưu thông tin thẻ chính dựa vào cif_id thẻ chính gọi qua gw để dùng cho mở thẻ phụ
+        list_primary_card = []
+        if main_card_cif_num:
+            gw_list_select_credit_cards_by_cif = await CtrGWCardWorks().ctr_gw_select_credit_cards_by_cif(
+                cif_num=main_card_cif_num, channel=GW_DEFAULT_SUB_CARD_CHANEL)
+            list_primary_card = gw_list_select_credit_cards_by_cif.get("data", {}).get("card_info_list") \
+                if isinstance(gw_list_select_credit_cards_by_cif, dict) else []
 
-        gw_list_select_credit_cards_by_cif = await CtrGWCardWorks().ctr_gw_select_credit_cards_by_cif(
-            cif_num=main_card_cif_num, channel=GW_DEFAULT_SUB_CARD_CHANEL)
-        list_primary_card = gw_list_select_credit_cards_by_cif.get("data", {}).get("card_info_list")
         card_active_date = None
         card_expire_date = None
         card_status = None
