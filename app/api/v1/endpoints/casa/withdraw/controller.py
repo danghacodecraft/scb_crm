@@ -324,8 +324,6 @@ class CtrWithdraw(BaseController):
         statement_info = form_data['customer_info']['statement_info']
         management_info = form_data['customer_info']['management_info']
         sender_info = form_data['customer_info']['sender_info']
-        print('statement_infooooooooooooo')
-        print(statement_info)
 
         response_data = dict(
             casa_account=dict(
